@@ -1,0 +1,22 @@
+.git/
+.llm-wiki-local/
+.env.local
+.claude/
+.codex/
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
+# 대용량 산출물은 프로젝트 폴더에 두지 않는다 (CKPT_ROOT / DATA_ROOT 사용)
+*.ckpt
+*.pt
+*.pth
+*.wav
+*.flac
+*.tar
+*.tar.gz
+*.npz
+*.png

@@ -1,0 +1,487 @@
+{
+ "n": 757,
+ "hours": 196.55935810763884,
+ "events": {
+  "SHIFT": 121020,
+  "HOLD": 206712,
+  "INTERRUPT": 6618,
+  "BACKCHANNEL": 51520
+ },
+ "vad_agree": null,
+ "speech_ratio": {
+  "n": 757,
+  "mean": 0.31390686743232066,
+  "median": 0.319664865732193,
+  "p10": 0.19820161759853366
+ },
+ "sec": 511.94935846328735,
+ "events_recomputed": "2026-09-03 09:14",
+ "bad_files": [],
+ "flagged": {
+  "2_6443G2A4_6444G2A4_T1_2D06T0229C000008_031676": {
+   "speech_ratio": [
+    0.101,
+    0.245
+   ],
+   "duration": 16.4,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_6443G2A4_6444G2A4_T1_2D08T0347C000005_031625": {
+   "speech_ratio": [
+    0.185,
+    0.255
+   ],
+   "duration": 14.3,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_6444G2A4_6443G2A4_T1_2D08T0347C000005_031621": {
+   "speech_ratio": [
+    0.12,
+    0.134
+   ],
+   "duration": 8.2,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_6487G1A2_6486G1A2_T1_2D07T0300C000196_029781": {
+   "speech_ratio": [
+    0.047,
+    0.576
+   ],
+   "duration": 968.7,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_6487G1A2_6486G1A2_T1_2D07T0300C000200_029793": {
+   "speech_ratio": [
+    0.047,
+    0.565
+   ],
+   "duration": 944.1,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_6487G1A2_6486G1A2_T1_2D07T0300C000253_029779": {
+   "speech_ratio": [
+    0.035,
+    0.586
+   ],
+   "duration": 1210.4,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D01T0032C000004_035881": {
+   "speech_ratio": [
+    0.282,
+    0.015
+   ],
+   "duration": 16.4,
+   "flags": [
+    "one_channel_silent",
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D01T0041C000002_035885": {
+   "speech_ratio": [
+    0.229,
+    0.084
+   ],
+   "duration": 14.3,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D03T0124C000002_035889": {
+   "speech_ratio": [
+    0.544,
+    0.032
+   ],
+   "duration": 14.3,
+   "flags": [
+    "one_channel_silent",
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D04T0147C000003_035925": {
+   "speech_ratio": [
+    0.051,
+    0.041
+   ],
+   "duration": 10.2,
+   "flags": [
+    "one_channel_silent",
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D05T0197C000001_035597": {
+   "speech_ratio": [
+    0.261,
+    0.078
+   ],
+   "duration": 16.4,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D06T0242C000003_035599": {
+   "speech_ratio": [
+    0.2,
+    0.094
+   ],
+   "duration": 16.4,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D08T0342C000002_035896": {
+   "speech_ratio": [
+    0.223,
+    0.04
+   ],
+   "duration": 14.3,
+   "flags": [
+    "one_channel_silent",
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D08T0346C000008_035883": {
+   "speech_ratio": [
+    0.441,
+    0.232
+   ],
+   "duration": 26.6,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D08T0369C000003_035887": {
+   "speech_ratio": [
+    0.205,
+    0.068
+   ],
+   "duration": 14.3,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D09T0401C000006_035863": {
+   "speech_ratio": [
+    0.453,
+    0.569
+   ],
+   "duration": 20.5,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_6690G2A2_7864G1A2_T1_2D11T0468C000003_035894": {
+   "speech_ratio": [
+    0.305,
+    0.086
+   ],
+   "duration": 14.3,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_7069G1A2_7070G1A2_T1_2D06T0226C000342_032196": {
+   "speech_ratio": [
+    0.049,
+    0.503
+   ],
+   "duration": 1105.9,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_7323G1A2_7165G1A2_T1_2D07T0300C000340_033132": {
+   "speech_ratio": [
+    0.048,
+    0.606
+   ],
+   "duration": 907.3,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_7323G1A2_7165G1A2_T1_2D07T0300C000435_033124": {
+   "speech_ratio": [
+    0.014,
+    0.664
+   ],
+   "duration": 1208.3,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_7467G1A2_7336G1A2_T1_2D07T0300C000162_033652": {
+   "speech_ratio": [
+    0.007,
+    0.673
+   ],
+   "duration": 1206.3,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_7467G1A2_7336G1A2_T1_2D07T0300C000363_033702": {
+   "speech_ratio": [
+    0.046,
+    0.595
+   ],
+   "duration": 954.4,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_7473G1A2_7474G1A2_T1_2D09T0412C000402_034115": {
+   "speech_ratio": [
+    0.021,
+    0.328
+   ],
+   "duration": 1175.6,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_7746G1A2_7639G1A2_T1_2D07T0316C000427_034837": {
+   "speech_ratio": [
+    0.045,
+    0.663
+   ],
+   "duration": 1234.9,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_7864G1A2_6690G2A2_T1_2D01T0006C000002_035598": {
+   "speech_ratio": [
+    0.089,
+    0.136
+   ],
+   "duration": 16.4,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_7864G1A2_6690G2A2_T1_2D02T0089C000004_035903": {
+   "speech_ratio": [
+    0.068,
+    0.23
+   ],
+   "duration": 14.3,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_7864G1A2_6690G2A2_T1_2D02T0103C000002_035590": {
+   "speech_ratio": [
+    0.061,
+    0.126
+   ],
+   "duration": 16.4,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_7864G1A2_6690G2A2_T1_2D06T0243C000003_035891": {
+   "speech_ratio": [
+    0.055,
+    0.306
+   ],
+   "duration": 12.3,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_7864G1A2_6690G2A2_T1_2D09T0416C000003_035900": {
+   "speech_ratio": [
+    0.061,
+    0.13
+   ],
+   "duration": 14.3,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_8024G1A2_8025G1A2_T1_2D02T0076C000172_036627": {
+   "speech_ratio": [
+    0.313,
+    0.101
+   ],
+   "duration": 6.1,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_8098G1A2_8099G1A2_T1_2D04T0155C000296_036450": {
+   "speech_ratio": [
+    0.236,
+    0.006
+   ],
+   "duration": 788.5,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8098G1A2_8099G1A2_T1_2D09T0405C000229_036459": {
+   "speech_ratio": [
+    0.269,
+    0.029
+   ],
+   "duration": 739.3,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8099G1A2_8098G1A2_T1_2D06T0245C000207_036455": {
+   "speech_ratio": [
+    0.03,
+    0.233
+   ],
+   "duration": 694.3,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8099G1A2_8098G1A2_T1_2D06T0268C000196_036447": {
+   "speech_ratio": [
+    0.005,
+    0.277
+   ],
+   "duration": 491.5,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8170G2A3_8171G2A3_T1_2D08T0374C000163_036649": {
+   "speech_ratio": [
+    0.0,
+    0.015
+   ],
+   "duration": 774.1,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8170G2A3_8171G2A3_T1_2D08T0374C000310_036636": {
+   "speech_ratio": [
+    0.0,
+    0.07
+   ],
+   "duration": 1167.4,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8170G2A3_8171G2A3_T1_2D11T0473C000106_036675": {
+   "speech_ratio": [
+    0.0,
+    0.004
+   ],
+   "duration": 716.8,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8171G2A3_8170G2A3_T1_2D08T0374C000218_036626": {
+   "speech_ratio": [
+    0.113,
+    0.017
+   ],
+   "duration": 845.8,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8201G1A2_8503G1A2_T1_2D05T0183C000178_038636": {
+   "speech_ratio": [
+    0.004,
+    0.281
+   ],
+   "duration": 522.2,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8201G1A2_8503G1A2_T1_2D06T0246C000256_038694": {
+   "speech_ratio": [
+    0.0,
+    0.255
+   ],
+   "duration": 976.9,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8201G1A2_8503G1A2_T1_2D09T0398C000274_038631": {
+   "speech_ratio": [
+    0.005,
+    0.159
+   ],
+   "duration": 766.0,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8201G1A2_8503G1A2_T1_2D11T0473C000218_038652": {
+   "speech_ratio": [
+    0.001,
+    0.251
+   ],
+   "duration": 749.6,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8503G1A2_8201G1A2_T1_2D03T0113C000199_038642": {
+   "speech_ratio": [
+    0.21,
+    0.005
+   ],
+   "duration": 624.6,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_8503G1A2_8201G1A2_T1_2D06T0269C000267_038669": {
+   "speech_ratio": [
+    0.237,
+    0.001
+   ],
+   "duration": 647.2,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_B603G2A2_B602G2A2_T1_2D03T0125C000536_051398": {
+   "speech_ratio": [
+    0.036,
+    0.294
+   ],
+   "duration": 1151.0,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "2_B752G1A2_B753G1A2_T1_2D09T0399C000360_052233": {
+   "speech_ratio": [
+    0.489,
+    0.033
+   ],
+   "duration": 1148.9,
+   "flags": [
+    "one_channel_silent"
+   ]
+  }
+ },
+ "n_flagged": 46
+}

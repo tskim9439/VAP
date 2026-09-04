@@ -1,0 +1,45 @@
+---
+type: task
+status: doing
+owner: tskim
+due: 2026-09-25
+priority: p0
+created: 2026-09-04
+updated: 2026-09-04
+summary: USLM U0.5 — Nemotron→thinker adapter bridge test: 캐시 특징 증류 초기화 → 오프라인 ASR 미세조정 → WER 관문(AuT+thinker·RNN-T 대비 ≤10–15%)
+sources:
+  - [[decision-asr-backbone]]
+  - [[output-interleaved-streaming-slm-architecture]]
+---
+
+# USLM U0.5 — adapter bridge test
+
+## 배경
+
+최종 backbone 은 Nemotron [56,0] → adapter → Qwen3-ASR thinker ([[decision-asr-backbone]]). 유일한 신규 위험은 **adapter 가 분포 간극을
+메우는가** 다. 같은 205 h 에 대해 Nemotron 과 AuT 특징이 모두 캐시되어 있어 라벨 없이 초기화를 만들 수 있다.
+
+## 완료 조건
+
+- [x] **증류 초기화** — block8s 타깃(35 h, 129 쌍) 4 epoch: held-out cosine **0.777** (항등 0.004), mse/var 0.38 → `adapter-distill-qwen-aut-block8s/adapter.pt`
+- [~] 증류-init fine-tune(6000 step, lr 2e-4/adapter 5e-4) — step 2000 otoSpeech 37.3 % → **step 4000 21.5 % / 실내 20.9 / 실외 19.5** (random-init step 3000 18.7/20.6/18.3 과 동급, 우위 없음) (random-init step 2000 은 19.3 %), 1900→2000 step 손실 스파이크(0.56→1.37). 증류된 adapter 가 높은 lr 에서 불안정한 것으로 의심 → **lr 1e-4/1e-4 hedge run 병행 시작**. 6000 step 결과로 판정. (운영 메모: bg 로그 glob `bg-u05-ft-distill-*` 가 `-lowlr` 로그까지 잡아 상태를 오독함 → 이름 충돌 주의. 첫 lowlr 시도는 GPU 34 GB 점유 상황에서 OOM → 중복 증류(cc1s) 종료 후 재시작)
+- [x] thinker 주입 경로 — `<|audio_pad|>`(151676) 위치에 `inputs_embeds` scatter, 프롬프트 `…assistant\nlanguage {Lang}<asr_text>` 재현 (`vapasr/uslm/model.py`)
+- [~] **오프라인 ASR 미세조정** — `experiments/u05_asr_finetune.py` (캐시 Nemotron 특징 발화 슬라이스 → adapter → thinker LoRA r16, 14.3M 학습, 121,827 발화). 스모크 통과. **random-init 대조 run(3000 step) 실행 중**; 증류 init run 은 block8s 증류 후
+- [x] 기준선 (val 400 발화, jiwer, KO 는 공백 제거 CER):
+      | 시스템 | otoSpeech WER | AI Hub 실내 CER | AI Hub 실외 CER |
+      |---|---:|---:|---:|
+      | 원본 Qwen3-ASR (AuT+thinker, 오프라인) | **13.9 %** | **13.5 %** | **13.3 %** |
+      | Nemotron RNN-T `[56,0]` 80 ms 스트리밍 (태그 제거 후) | **25.4 %** | **23.4 %** | **24.5 %** |
+      | Nemotron RNN-T `[56,13]` 1120 ms (태그 제거 후) | 19.0 % | 16.9 % | 17.0 % |
+      | random-init adapter+LoRA, 3000 step (참고) | 18.7 % | 20.6 % | 18.3 % |
+      ※ 첫 Nemotron 수치(35.8/37.0/34.5)는 출력의 언어 태그 `<ko-KR>` 가 문자로 세어져 ~10 pt 과대였다(정규화에서 태그 제거). 그래도 오프라인 Qwen 의 약 2배이며, chunk 크기 탓이 아니다. Nemotron RNN-T 는 짧은 자발적 발화(맞장구 '음' 등)에서 빈 가설을 내는 경향(예시 '음'→'') — 발화 길이별 오류율·빈 가설 비율을 확인할 것. 모델 카드 7.12 % 는 정제된 읽기 음성 기준.
+      → **관문 분모를 재정의**: 스트리밍 RNN-T `[56,0]` 은 35.8 % 로 오프라인 Qwen 보다 훨씬 나쁘다. 관문은 "오프라인 Qwen3-ASR 대비 ≤ +15 %" 로 두고, 스트리밍 RNN-T 는 참고선.
+- [ ] **관문**: 상대 열화 ≤ 10–15 % → U1 착수. 실패 → adapter 용량·정렬·초기화·encoder/thinker unfreeze 범위를 재설계하고 재평가. backbone 자동 교체 없음
+- [ ] 12.5 Hz 그대로 vs 13 Hz 리샘플 ablation(작게)
+
+## 진행 기록
+
+- 2026-09-04: random-init 대조 step 1000: otoSpeech WER 29.6 % / 실내 CER 40.6 % / 실외 27.7 % (사용자 지시로 참고용, 이미 실행 중이라 완주).
+- 2026-09-04: block8s 타깃(35 h) 추출 완료 → 정식 증류 실행. 스크립트 4종 완성(distill / baselines / finetune / data·model 모듈).
+- 2026-09-04: 착수. `experiments/u05_distill_adapter.py` 작성, 증류 타깃용 `qwen-aut-block8s`(학습 분포) 특징 35 h 추출 중; 빠른 신호로 cc1s 타깃 증류 실행 중.
+- 2026-09-04: 생성 (최종 backbone 확정에 따라).

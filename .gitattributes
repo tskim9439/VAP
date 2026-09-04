@@ -1,0 +1,5 @@
+# Markdown 충돌은 의미 단위로 재합성한다 (AGENTS.md: Merge And Conflict Resynthesis).
+# union 병합은 의미를 깨뜨리므로 사용하지 않는다.
+*.md text eol=lf
+*.sh text eol=lf
+*.yaml text eol=lf

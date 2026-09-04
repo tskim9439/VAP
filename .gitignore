@@ -1,0 +1,18 @@
+# 로컬 사용자 신원 — 절대 커밋/푸시 금지 (AGENTS.md: Local User Identity)
+.llm-wiki-local/
+
+# 스킬 런타임 경로 — scripts/install-skills.sh 가 생성하는 링크
+.claude/skills/
+.codex/skills/
+
+# OS / 편집기 부산물
+.DS_Store
+Thumbs.db
+*.swp
+.obsidian/workspace.json
+
+# 머신별 환경 덮어쓰기 (.env 는 커밋한다)
+.env.local
+
+# AI Hub 다운로드 도구 바이너리
+.aihubshell

@@ -1,0 +1,30 @@
+# VAP-ASR 학습 환경 — 손으로 정리한 최소 의존성.
+# 정확한 재현은 requirements-lock.txt (pip freeze, 서버에서 생성) 를 쓴다.
+# 설치 절차 전체는 scripts/setup-container-env.sh 참조.
+#
+# 기준 환경 (2026-09-03): Ubuntu 20.04, driver 550.54.15 / CUDA 12.4, Python 3.11, A100-40GB x4
+
+# --- torch (cu124 index 필요: --index-url https://download.pytorch.org/whl/cu124)
+torch==2.6.0
+torchaudio==2.6.0
+
+# --- Nemotron 3.5 ASR streaming (cache-aware FastConformer + RNNT)
+# PyPI 3.0.0 과 git main(3.1.0) 모두 로드 OK. 언어는 manifest "lang" 필드로 전달해야 한다 (target_lang 키워드는 무효).
+nemo_toolkit[asr]>=3.0.0   # 의존성용. 실제 코드는 git main (--no-deps) — setup 스크립트 참조
+Cython
+packaging
+
+# --- Qwen3-ASR-0.6B / Qwen3-ForcedAligner-0.6B
+qwen-asr
+transformers  # qwen-asr 0.0.6 이 4.57.x 로 고정한다 (5.x 설치해도 다운그레이드됨)
+accelerate
+huggingface_hub
+
+# --- 오디오 / 데이터 / 유틸
+soundfile
+librosa
+datasets
+einops
+python-dotenv
+matplotlib
+soxr

@@ -1,0 +1,466 @@
+{
+ "audio": "/data3/tskim/smoke/libri1.wav",
+ "duration_s": 14.84,
+ "cuts_s": [
+  3.0,
+  6.0,
+  9.0,
+  12.0
+ ],
+ "rel_tol": 0.001,
+ "results": [
+  {
+   "encoder": "nemotron[56,0]",
+   "frame_ms": 80.0,
+   "out_frames_full": 187,
+   "lookahead_ms_min": 80.0,
+   "lookahead_ms_max": 80.0,
+   "lookahead_ms_mean": 80.0,
+   "cuts": [
+    {
+     "cut_s": 3.0,
+     "out_frames": 39,
+     "lookahead_frames": 1,
+     "lookahead_ms": 80.0,
+     "changed_frames": 1,
+     "max_rel": 1.3036808967590332
+    },
+    {
+     "cut_s": 6.0,
+     "out_frames": 76,
+     "lookahead_frames": 1,
+     "lookahead_ms": 80.0,
+     "changed_frames": 1,
+     "max_rel": 0.0739927589893341
+    },
+    {
+     "cut_s": 9.0,
+     "out_frames": 114,
+     "lookahead_frames": 1,
+     "lookahead_ms": 80.0,
+     "changed_frames": 1,
+     "max_rel": 1.7109462022781372
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 151,
+     "lookahead_frames": 1,
+     "lookahead_ms": 80.0,
+     "changed_frames": 1,
+     "max_rel": 0.023143716156482697
+    }
+   ],
+   "documented_right_ms": 0,
+   "frontend_normalize": "NA",
+   "frontend_window_ms": 25.0,
+   "conv_context_size": "[8, 0]"
+  },
+  {
+   "encoder": "nemotron[56,1]",
+   "frame_ms": 80.0,
+   "out_frames_full": 187,
+   "lookahead_ms_min": 80.0,
+   "lookahead_ms_max": 160.0,
+   "lookahead_ms_mean": 120.0,
+   "cuts": [
+    {
+     "cut_s": 3.0,
+     "out_frames": 39,
+     "lookahead_frames": 1,
+     "lookahead_ms": 80.0,
+     "changed_frames": 1,
+     "max_rel": 1.2404518127441406
+    },
+    {
+     "cut_s": 6.0,
+     "out_frames": 76,
+     "lookahead_frames": 2,
+     "lookahead_ms": 160.0,
+     "changed_frames": 2,
+     "max_rel": 0.06314058601856232
+    },
+    {
+     "cut_s": 9.0,
+     "out_frames": 114,
+     "lookahead_frames": 2,
+     "lookahead_ms": 160.0,
+     "changed_frames": 2,
+     "max_rel": 1.9651880264282227
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 151,
+     "lookahead_frames": 1,
+     "lookahead_ms": 80.0,
+     "changed_frames": 1,
+     "max_rel": 1.5534474849700928
+    }
+   ],
+   "documented_right_ms": 80,
+   "frontend_normalize": "NA",
+   "frontend_window_ms": 25.0,
+   "conv_context_size": "[8, 0]"
+  },
+  {
+   "encoder": "nemotron[56,3]",
+   "frame_ms": 80.0,
+   "out_frames_full": 187,
+   "lookahead_ms_min": 160.0,
+   "lookahead_ms_max": 320.0,
+   "lookahead_ms_mean": 240.0,
+   "cuts": [
+    {
+     "cut_s": 3.0,
+     "out_frames": 39,
+     "lookahead_frames": 3,
+     "lookahead_ms": 240.0,
+     "changed_frames": 3,
+     "max_rel": 1.469187617301941
+    },
+    {
+     "cut_s": 6.0,
+     "out_frames": 76,
+     "lookahead_frames": 4,
+     "lookahead_ms": 320.0,
+     "changed_frames": 4,
+     "max_rel": 0.09619485586881638
+    },
+    {
+     "cut_s": 9.0,
+     "out_frames": 114,
+     "lookahead_frames": 2,
+     "lookahead_ms": 160.0,
+     "changed_frames": 2,
+     "max_rel": 1.6456481218338013
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 151,
+     "lookahead_frames": 3,
+     "lookahead_ms": 240.0,
+     "changed_frames": 3,
+     "max_rel": 1.784381628036499
+    }
+   ],
+   "documented_right_ms": 240,
+   "frontend_normalize": "NA",
+   "frontend_window_ms": 25.0,
+   "conv_context_size": "[8, 0]"
+  },
+  {
+   "encoder": "nemotron[56,6]",
+   "frame_ms": 80.0,
+   "out_frames_full": 187,
+   "lookahead_ms_min": 160.0,
+   "lookahead_ms_max": 480.0,
+   "lookahead_ms_mean": 320.0,
+   "cuts": [
+    {
+     "cut_s": 3.0,
+     "out_frames": 39,
+     "lookahead_frames": 4,
+     "lookahead_ms": 320.0,
+     "changed_frames": 4,
+     "max_rel": 1.541108250617981
+    },
+    {
+     "cut_s": 6.0,
+     "out_frames": 76,
+     "lookahead_frames": 6,
+     "lookahead_ms": 480.0,
+     "changed_frames": 6,
+     "max_rel": 1.7283985614776611
+    },
+    {
+     "cut_s": 9.0,
+     "out_frames": 114,
+     "lookahead_frames": 2,
+     "lookahead_ms": 160.0,
+     "changed_frames": 2,
+     "max_rel": 1.5511571168899536
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 151,
+     "lookahead_frames": 4,
+     "lookahead_ms": 320.0,
+     "changed_frames": 4,
+     "max_rel": 1.4450260400772095
+    }
+   ],
+   "documented_right_ms": 480,
+   "frontend_normalize": "NA",
+   "frontend_window_ms": 25.0,
+   "conv_context_size": "[8, 0]"
+  },
+  {
+   "encoder": "nemotron[56,13]",
+   "frame_ms": 80.0,
+   "out_frames_full": 187,
+   "lookahead_ms_min": 160.0,
+   "lookahead_ms_max": 880.0,
+   "lookahead_ms_mean": 600.0,
+   "cuts": [
+    {
+     "cut_s": 3.0,
+     "out_frames": 39,
+     "lookahead_frames": 11,
+     "lookahead_ms": 880.0,
+     "changed_frames": 11,
+     "max_rel": 1.4448537826538086
+    },
+    {
+     "cut_s": 6.0,
+     "out_frames": 76,
+     "lookahead_frames": 6,
+     "lookahead_ms": 480.0,
+     "changed_frames": 6,
+     "max_rel": 1.5655608177185059
+    },
+    {
+     "cut_s": 9.0,
+     "out_frames": 114,
+     "lookahead_frames": 2,
+     "lookahead_ms": 160.0,
+     "changed_frames": 2,
+     "max_rel": 1.5452215671539307
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 151,
+     "lookahead_frames": 11,
+     "lookahead_ms": 880.0,
+     "changed_frames": 11,
+     "max_rel": 1.9455770254135132
+    }
+   ],
+   "documented_right_ms": 1040,
+   "frontend_normalize": "NA",
+   "frontend_window_ms": 25.0,
+   "conv_context_size": "[8, 0]"
+  },
+  {
+   "encoder": "qwen-aut[sdpa full-utterance]",
+   "frame_ms": 80.0,
+   "out_frames_full": 193,
+   "lookahead_ms_min": 3120.0,
+   "lookahead_ms_max": 12480.0,
+   "lookahead_ms_mean": 7800.0,
+   "cuts": [
+    {
+     "cut_s": 3.0,
+     "out_frames": 39,
+     "lookahead_frames": 39,
+     "lookahead_ms": 3120.0,
+     "changed_frames": 39,
+     "max_rel": 2.2373619079589844
+    },
+    {
+     "cut_s": 6.0,
+     "out_frames": 78,
+     "lookahead_frames": 78,
+     "lookahead_ms": 6240.0,
+     "changed_frames": 78,
+     "max_rel": 4.573791980743408
+    },
+    {
+     "cut_s": 9.0,
+     "out_frames": 117,
+     "lookahead_frames": 117,
+     "lookahead_ms": 9360.0,
+     "changed_frames": 117,
+     "max_rel": 3.9567296504974365
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 156,
+     "lookahead_frames": 156,
+     "lookahead_ms": 12480.0,
+     "changed_frames": 156,
+     "max_rel": 4.219172954559326
+    }
+   ],
+   "mode": "sdpa, attention_mask=None",
+   "conv_chunk_ms": 1000,
+   "frontend": "WhisperFeatureExtractor(log-mel, utterance max 정규화)"
+  },
+  {
+   "encoder": "qwen-aut[per-block 1000 ms]",
+   "frame_ms": 80.0,
+   "out_frames_full": 193,
+   "lookahead_ms_min": 0.0,
+   "lookahead_ms_max": 800.0,
+   "lookahead_ms_mean": 420.0,
+   "cuts": [
+    {
+     "cut_s": 3.5,
+     "out_frames": 46,
+     "lookahead_frames": 7,
+     "lookahead_ms": 560.0,
+     "changed_frames": 7,
+     "max_rel": 7.594071865081787
+    },
+    {
+     "cut_s": 6.25,
+     "out_frames": 82,
+     "lookahead_frames": 4,
+     "lookahead_ms": 320.0,
+     "changed_frames": 4,
+     "max_rel": 5.272003173828125
+    },
+    {
+     "cut_s": 9.75,
+     "out_frames": 127,
+     "lookahead_frames": 10,
+     "lookahead_ms": 800.0,
+     "changed_frames": 10,
+     "max_rel": 5.037292003631592
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 156,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 0.0
+    }
+   ],
+   "mode": "per-block independent forward",
+   "block_ms": 1000,
+   "expected_lookahead": "0 ~ block_ms (평균 block_ms/2)",
+   "cuts_note": "블록 경계 비정렬"
+  },
+  {
+   "encoder": "qwen-aut[per-block 2000 ms]",
+   "frame_ms": 80.0,
+   "out_frames_full": 193,
+   "lookahead_ms_min": 0.0,
+   "lookahead_ms_max": 1840.0,
+   "lookahead_ms_mean": 940.0,
+   "cuts": [
+    {
+     "cut_s": 3.5,
+     "out_frames": 46,
+     "lookahead_frames": 20,
+     "lookahead_ms": 1600.0,
+     "changed_frames": 20,
+     "max_rel": 3.733257532119751
+    },
+    {
+     "cut_s": 6.25,
+     "out_frames": 82,
+     "lookahead_frames": 4,
+     "lookahead_ms": 320.0,
+     "changed_frames": 4,
+     "max_rel": 5.241853713989258
+    },
+    {
+     "cut_s": 9.75,
+     "out_frames": 127,
+     "lookahead_frames": 23,
+     "lookahead_ms": 1840.0,
+     "changed_frames": 23,
+     "max_rel": 6.626020431518555
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 156,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 0.0
+    }
+   ],
+   "mode": "per-block independent forward",
+   "block_ms": 2000,
+   "expected_lookahead": "0 ~ block_ms (평균 block_ms/2)",
+   "cuts_note": "블록 경계 비정렬"
+  },
+  {
+   "encoder": "cpc-encoder",
+   "frame_ms": 20.0,
+   "out_frames_full": 742,
+   "lookahead_ms_min": 0.0,
+   "lookahead_ms_max": 0.0,
+   "lookahead_ms_mean": 0.0,
+   "cuts": [
+    {
+     "cut_s": 3.0,
+     "out_frames": 150,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 0.0
+    },
+    {
+     "cut_s": 6.0,
+     "out_frames": 300,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 0.0
+    },
+    {
+     "cut_s": 9.0,
+     "out_frames": 450,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 1.7089561197281e-06
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 600,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 0.0
+    }
+   ],
+   "note": "파형 절단 (프론트엔드 없음)"
+  },
+  {
+   "encoder": "vap-full(probs)",
+   "frame_ms": 20.0,
+   "out_frames_full": 742,
+   "lookahead_ms_min": 0.0,
+   "lookahead_ms_max": 0.0,
+   "lookahead_ms_mean": 0.0,
+   "cuts": [
+    {
+     "cut_s": 3.0,
+     "out_frames": 150,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 8.957542377174832e-06
+    },
+    {
+     "cut_s": 6.0,
+     "out_frames": 300,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 8.957542377174832e-06
+    },
+    {
+     "cut_s": 9.0,
+     "out_frames": 450,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 8.957542377174832e-06
+    },
+    {
+     "cut_s": 12.0,
+     "out_frames": 600,
+     "lookahead_frames": 0,
+     "lookahead_ms": 0.0,
+     "changed_frames": 0,
+     "max_rel": 8.957542377174832e-06
+    }
+   ],
+   "note": "파형 절단 (프론트엔드 없음)"
+  }
+ ]
+}

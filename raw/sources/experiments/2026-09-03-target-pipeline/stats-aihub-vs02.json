@@ -1,0 +1,93 @@
+{
+ "n": 186,
+ "hours": 51.6936594965278,
+ "events": {
+  "SHIFT": 35392,
+  "HOLD": 43785,
+  "INTERRUPT": 2302,
+  "BACKCHANNEL": 28599
+ },
+ "vad_agree": null,
+ "speech_ratio": {
+  "n": 186,
+  "mean": 0.40752305923610604,
+  "median": 0.4091554582118988,
+  "p10": 0.3159460723400116
+ },
+ "sec": 138.41133427619934,
+ "events_recomputed": "2026-09-03 08:34",
+ "bad_files": [],
+ "flagged": {
+  "2_0004G2A2_0008G1A6_T2_2D06T0241C000000_000166": {
+   "speech_ratio": [
+    0.377,
+    0.343
+   ],
+   "duration": 14.3,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_0008G1A6_0004G2A2_T2_2D06T0241C000005_000165": {
+   "speech_ratio": [
+    0.25,
+    0.447
+   ],
+   "duration": 16.4,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_0225G2A5_0360G2A4_T2_2D02T0053C000009_001414": {
+   "speech_ratio": [
+    0.373,
+    0.27
+   ],
+   "duration": 21.5,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_0296G2A5_0297G2A5_T2_2D05T0210C000009_001220": {
+   "speech_ratio": [
+    0.268,
+    0.378
+   ],
+   "duration": 26.6,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_0349G2A5_0351G2A5_T2_2D02T0052C000007_001373": {
+   "speech_ratio": [
+    0.3,
+    0.123
+   ],
+   "duration": 21.5,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_0382G2A5_0383G2A5_T2_2D02T0053C000005_001445": {
+   "speech_ratio": [
+    0.224,
+    0.47
+   ],
+   "duration": 17.4,
+   "flags": [
+    "too_short"
+   ]
+  },
+  "2_0484G2A5_0485G2A5_T2_2D08T0374C000004_001822": {
+   "speech_ratio": [
+    0.164,
+    0.419
+   ],
+   "duration": 12.3,
+   "flags": [
+    "too_short"
+   ]
+  }
+ },
+ "n_flagged": 7
+}
