@@ -1,0 +1,68 @@
+{
+ "n": 420,
+ "hours": 104.94009486111113,
+ "events": {
+  "SHIFT": 28798,
+  "HOLD": 42154,
+  "INTERRUPT": 2246,
+  "BACKCHANNEL": 12457
+ },
+ "vad_agree": {
+  "n": 420,
+  "mean": 0.8399710424344367,
+  "median": 0.8692842044992539,
+  "p10": 0.6957761980963473
+ },
+ "speech_ratio": {
+  "n": 420,
+  "mean": 0.35163659305710876,
+  "median": 0.39101241528987885,
+  "p10": 0.1630539044737816
+ },
+ "sec": 725.801234960556,
+ "events_recomputed": "2026-09-03 08:33",
+ "bad_files": [],
+ "flagged": {
+  "oto-292": {
+   "speech_ratio": [
+    0.049,
+    0.063
+   ],
+   "duration": 897.4,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "oto-293": {
+   "speech_ratio": [
+    0.043,
+    0.019
+   ],
+   "duration": 886.3,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "oto-352": {
+   "speech_ratio": [
+    0.042,
+    0.055
+   ],
+   "duration": 885.2,
+   "flags": [
+    "one_channel_silent"
+   ]
+  },
+  "oto-381": {
+   "speech_ratio": [
+    0.055,
+    0.035
+   ],
+   "duration": 830.8,
+   "flags": [
+    "one_channel_silent"
+   ]
+  }
+ },
+ "n_flagged": 4
+}

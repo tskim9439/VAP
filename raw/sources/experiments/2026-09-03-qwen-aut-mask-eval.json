@@ -1,0 +1,103 @@
+{
+ "audio": "/data3/tskim/smoke/libri1.wav",
+ "base_text": "With her white paint and her scarlet smokestack, the Inverishield—one of the two small steamers that during the summer months plied up and down the lock—and incidentally carried on communication between Inverishield and Cryonon.",
+ "cuts": [
+  3.5,
+  6.25,
+  9.75,
+  12.0
+ ],
+ "results": [
+  {
+   "mode": "none",
+   "lookahead_ms": [
+    3680,
+    6560,
+    10160,
+    12480
+   ],
+   "lookahead_mean": 8220.0,
+   "lookahead_max": 12480.0,
+   "wer_vs_base": 0.0,
+   "text": "With her white paint and her scarlet smokestack, the Inverishield—one of the two small steamers that during the summer months plied up and down the lock—and incidentally carried on communication between Inverishield and Cryonon."
+  },
+  {
+   "mode": "block[1000 ms]",
+   "lookahead_ms": [
+    560,
+    320,
+    800,
+    0
+   ],
+   "lookahead_mean": 420.0,
+   "lookahead_max": 800.0,
+   "wer_vs_base": 0.08823529411764706,
+   "text": "With her white paint and her scarlet smokestack, the Inverishill—one of the two small steamers that during the summer months plied up and down the lock—and incidentally carried on communication between Inverishill and Croydon."
+  },
+  {
+   "mode": "block[8000 ms]",
+   "lookahead_ms": [
+    3680,
+    6560,
+    1840,
+    4160
+   ],
+   "lookahead_mean": 4060.0,
+   "lookahead_max": 6560.0,
+   "wer_vs_base": 0.11764705882352941,
+   "text": "With her white paint and her scarlet smokestack, the Inverishield, one of the two small steamers that during the summer months plied up and down the lock, and incidentally carried on communication between Inverishield and Cryonon."
+  },
+  {
+   "mode": "chunked-causal[1000 ms]",
+   "lookahead_ms": [
+    560,
+    320,
+    800,
+    0
+   ],
+   "lookahead_mean": 420.0,
+   "lookahead_max": 800.0,
+   "wer_vs_base": 0.058823529411764705,
+   "text": "With her white paint and her scarlet smokestack, the Inverishio—one of the two small steamers that during the summer months plied up and down the lock—and incidentally carried on communication between Inverishio and Cryonon."
+  },
+  {
+   "mode": "chunked-causal[1000 ms, left 7 blk]",
+   "lookahead_ms": [
+    560,
+    320,
+    800,
+    0
+   ],
+   "lookahead_mean": 420.0,
+   "lookahead_max": 800.0,
+   "wer_vs_base": 0.058823529411764705,
+   "text": "With her white paint and her scarlet smokestack, the Inverishio—one of the two small steamers that during the summer months plied up and down the lock—and incidentally carried on communication between Inverishio and Cryonon."
+  },
+  {
+   "mode": "chunked-causal[2000 ms]",
+   "lookahead_ms": [
+    1600,
+    320,
+    1840,
+    0
+   ],
+   "lookahead_mean": 940.0,
+   "lookahead_max": 1840.0,
+   "wer_vs_base": 0.058823529411764705,
+   "text": "With her white paint and her scarlet smokestack, the Inverishio—one of the two small steamers that during the summer months plied up and down the lock—and incidentally carried on communication between Inverishio and Cryonon."
+  },
+  {
+   "mode": "causal[1000 ms]",
+   "lookahead_ms": [
+    80,
+    80,
+    80,
+    0
+   ],
+   "lookahead_mean": 60.0,
+   "lookahead_max": 80.0,
+   "wer_vs_base": 0.23529411764705882,
+   "text": "With her white paint and her scarlet smokestack, the inverse shear—one of the two steamers that during the summer months ply up and down the lake—and incidentally carried on communication between inverse shear and cryonite."
+  }
+ ]
+}

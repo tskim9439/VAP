@@ -1,0 +1,38 @@
+{
+ "n": 38,
+ "hours": 7.307464826388889,
+ "events": {
+  "SHIFT": 992,
+  "HOLD": 1658,
+  "INTERRUPT": 318,
+  "BACKCHANNEL": 753
+ },
+ "vad_agree": {
+  "n": 38,
+  "mean": 0.6940857543735334,
+  "median": 0.6887029207005313,
+  "p10": 0.6159940444054597
+ },
+ "speech_ratio": {
+  "n": 38,
+  "mean": 0.3518679523105292,
+  "median": 0.36726686358451843,
+  "p10": 0.16467991322278977
+ },
+ "sec": 82.09779143333435,
+ "events_recomputed": "2026-09-03 08:34",
+ "bad_files": [],
+ "flagged": {
+  "tb-172": {
+   "speech_ratio": [
+    0.012,
+    0.008
+   ],
+   "duration": 615.0,
+   "flags": [
+    "one_channel_silent"
+   ]
+  }
+ },
+ "n_flagged": 1
+}
