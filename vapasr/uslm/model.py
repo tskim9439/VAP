@@ -113,19 +113,21 @@ class InterleavedASR(nn.Module):
         g = torch.gather(ce, 1, chunk_of.clamp(min=0)[..., None].expand(-1, -1, D))
         return torch.where(is_audio[..., None], g, E)
 
-    def forward(self, feats, ids, is_audio, chunk_of, labels, mask):
+    def forward(self, feats, ids, is_audio, chunk_of, labels, mask, next_weight: float = 1.0):
+        """next_weight < 1: `<NEXT_AUDIO>`(= RNN-T blank) 위치의 CE 를 낮춰 클래스 불균형(라벨의 70–85 %)을 완화한다."""
         E = self.build(feats, ids, is_audio, chunk_of)
         out = self.thinker(inputs_embeds=E, attention_mask=mask)
         logits = out.logits[:, :-1].float(); tgt = labels[:, 1:]
-        loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), tgt.reshape(-1), ignore_index=-100)
-        with torch.no_grad():                            # 진단: NEXT_AUDIO 위치 / 텍스트 위치 손실 분리
-            tok_loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), tgt.reshape(-1), ignore_index=-100, reduction="none").view_as(tgt)
-            na = tgt == self.next_audio; tx = (tgt != -100) & ~na
+        tok_loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), tgt.reshape(-1), ignore_index=-100, reduction="none").view_as(tgt)
+        na = tgt == self.next_audio; tx = (tgt != -100) & ~na
+        w = torch.where(na, tok_loss.new_tensor(next_weight), tok_loss.new_tensor(1.0)) * (tgt != -100)
+        loss = (tok_loss * w).sum() / w.sum().clamp(min=1)
+        with torch.no_grad():
             parts = dict(loss_next=tok_loss[na].mean().item() if na.any() else 0.0, loss_text=tok_loss[tx].mean().item() if tx.any() else 0.0)
         return loss, parts
 
     @torch.inference_mode()
-    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 4):
+    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 4, next_bias: float = 0.0):
         """feats (2,K,Din) 를 chunk 별로 넣고 greedy 로 방출. → [(chunk k, token id, speaker)], forced_next 횟수.
         chunk k 의 방출 시각 = (k+1)·80 ms (chunk 오디오를 다 본 뒤). KV cache 로 위치당 forward 1 회."""
         from transformers import DynamicCache
@@ -138,7 +140,8 @@ class InterleavedASR(nn.Module):
         for k in range(ce.shape[0]):
             logits = step(ce[k]); n = 0
             while True:
-                logits[self.blocked] = float("-inf"); tid = int(logits.argmax())
+                logits[self.blocked] = float("-inf"); logits[self.next_audio] -= next_bias   # RNN-T blank penalty 와 같은 역할
+                tid = int(logits.argmax())
                 if tid == self.next_audio or n >= max_per_chunk:
                     forced += int(tid != self.next_audio); step(e_next); break
                 if tid in self.spk_ids: spk = self.spk_ids.index(tid)

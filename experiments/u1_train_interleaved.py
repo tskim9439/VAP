@@ -15,7 +15,7 @@ ap.add_argument("--train", default="otoSpeech,aihub-ts01-5"); ap.add_argument("-
 ap.add_argument("--init-ckpt", default=None, help="U0.5 ckpt.pt (adapter+lora) 또는 U1 ckpt"); ap.add_argument("--window-s", type=float, default=30.0)
 ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--M", type=int, default=4); ap.add_argument("--eval-delay", type=int, default=2)
 ap.add_argument("--steps", type=int, default=12000); ap.add_argument("--bs", type=int, default=4); ap.add_argument("--accum", type=int, default=2, help="gradient accumulation (유효 배치 = bs·accum)"); ap.add_argument("--lr", type=float, default=1e-4); ap.add_argument("--lr-adapter", type=float, default=1e-4)
-ap.add_argument("--lora-r", type=int, default=16); ap.add_argument("--eval-every", type=int, default=2000); ap.add_argument("--eval-windows", type=int, default=12)
+ap.add_argument("--next-weight", type=float, default=1.0, help="<NEXT_AUDIO> 위치 CE 가중치(<1 이면 텍스트 방출 쪽으로 기움)"); ap.add_argument("--eval-bias", default="0", help="평가 시 <NEXT_AUDIO> 로짓 페널티 sweep (쉼표 구분)"); ap.add_argument("--lora-r", type=int, default=16); ap.add_argument("--eval-every", type=int, default=2000); ap.add_argument("--eval-windows", type=int, default=12)
 ap.add_argument("--windows-per-conv", type=int, default=None); ap.add_argument("--log-every", type=int, default=50); ap.add_argument("--tag", default=""); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--eval-only", action="store_true")
 a = ap.parse_args(); torch.manual_seed(a.seed); random.seed(a.seed); dev = "cuda"
 out = os.path.join(os.environ.get("CKPT_EXP_DIR", "/tmp"), "uslm", f"u1-interleaved{('-' + a.tag) if a.tag else ''}"); os.makedirs(out, exist_ok=True)
@@ -53,22 +53,27 @@ def latency_stats(hyp, ref):
 def evaluate():
     model.eval(); res = {}
     if a.lora_r > 0: model.thinker.merge_adapter()          # 스트리밍 디코드는 위치당 forward 1 회 → LoRA 분기 오버헤드 제거
+    biases = [float(x) for x in a.eval_bias.split(",")]
     for name, ds in val_ds.items():
-        lang = LANG[name]; R, H, lat, forced_tot, chunks_tot, n_tok = [], [], [], 0, 0, 0; t0 = time.time(); ex = None
-        for (nm, cid, ws) in ds.items:
-            f, streams, chunks, st = ds.window(nm, cid, ws, a.eval_delay)
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                emitted, forced = model.stream_decode(torch.from_numpy(f).to(dev), ds.prefix(lang, a.eval_delay), a.M)
-            forced_tot += forced; chunks_tot += ds.K; n_tok += len(emitted)
-            for s in (0, 1):
-                hyp = [(k, t) for k, t, spk in emitted if spk == s]; ref = streams[s]
-                if not ref and not hyp: continue
-                R.append(normalize_text(tok.decode([t for t, _ in ref]), lang)); H.append(normalize_text(tok.decode([t for _, t in hyp]), lang)); lat += latency_stats(hyp, ref)
-                if ex is None and ref: ex = (R[-1][:50], H[-1][:50])
-        lat = np.array(lat) if lat else np.zeros(1); err = jiwer.cer(R, H) if lang == "Korean" else jiwer.wer(R, H)
-        res[name] = {("cer" if lang == "Korean" else "wer"): err, "windows": len(ds.items), "segs": len(R), "matched": int(len(lat)), "lat_p50": float(np.median(lat)), "lat_p90": float(np.percentile(lat, 90)),
-                     "lat_p99": float(np.percentile(lat, 99)), "viol": float((lat < 0).mean()), "viol_80ms": float((lat < -0.08).mean()), "forced_frac": forced_tot / max(1, chunks_tot), "tok_per_chunk": n_tok / max(1, chunks_tot), "sec": time.time() - t0, "example": ex}
-        print(f"  [val] {name}: " + json.dumps(res[name], ensure_ascii=False), flush=True)
+        lang = LANG[name]; best = None
+        for bias in biases:
+            R, H, lat, forced_tot, chunks_tot, n_tok = [], [], [], 0, 0, 0; t0 = time.time(); ex = None
+            for (nm, cid, ws) in ds.items:
+                f, streams, chunks, st = ds.window(nm, cid, ws, a.eval_delay)
+                with torch.autocast("cuda", dtype=torch.bfloat16):
+                    emitted, forced = model.stream_decode(torch.from_numpy(f).to(dev), ds.prefix(lang, a.eval_delay), a.M, next_bias=bias)
+                forced_tot += forced; chunks_tot += ds.K; n_tok += len(emitted)
+                for s in (0, 1):
+                    hyp = [(k, t) for k, t, spk in emitted if spk == s]; ref = streams[s]
+                    if not ref and not hyp: continue
+                    R.append(normalize_text(tok.decode([t for t, _ in ref]), lang)); H.append(normalize_text(tok.decode([t for _, t in hyp]), lang)); lat += latency_stats(hyp, ref)
+                    if ex is None and ref: ex = (R[-1][:50], H[-1][:50])
+            lat = np.array(lat) if lat else np.zeros(1); err = jiwer.cer(R, H) if lang == "Korean" else jiwer.wer(R, H)
+            r = {("cer" if lang == "Korean" else "wer"): err, "bias": bias, "windows": len(ds.items), "segs": len(R), "matched": int(len(lat)), "lat_p50": float(np.median(lat)), "lat_p90": float(np.percentile(lat, 90)),
+                 "lat_p99": float(np.percentile(lat, 99)), "viol": float((lat < 0).mean()), "viol_80ms": float((lat < -0.08).mean()), "forced_frac": forced_tot / max(1, chunks_tot), "tok_per_chunk": n_tok / max(1, chunks_tot), "sec": time.time() - t0, "example": ex}
+            print(f"  [val] {name} bias={bias}: " + json.dumps(r, ensure_ascii=False), flush=True)
+            if best is None or err < best[("cer" if lang == "Korean" else "wer")]: best = r
+        res[name] = best
     if a.lora_r > 0: model.thinker.unmerge_adapter()
     model.train(); torch.cuda.empty_cache(); return res
 
@@ -79,7 +84,7 @@ step = 0; micro = 0; t0 = time.time(); model.train(); acc = {}; opt.zero_grad(se
 while step < a.steps:
     for b in dl:
         with torch.autocast("cuda", dtype=torch.bfloat16):
-            loss, parts = model(b["feats"].to(dev), b["ids"].to(dev), b["is_audio"].to(dev), b["chunk_of"].to(dev), b["labels"].to(dev), b["mask"].to(dev))
+            loss, parts = model(b["feats"].to(dev), b["ids"].to(dev), b["is_audio"].to(dev), b["chunk_of"].to(dev), b["labels"].to(dev), b["mask"].to(dev), next_weight=a.next_weight)
         (loss / a.accum).backward(); micro += 1
         for k, v in parts.items(): acc[k] = acc.get(k, 0) + v / a.accum
         if micro % a.accum: continue

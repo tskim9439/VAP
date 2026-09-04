@@ -45,3 +45,15 @@ A 안이 기각되어 fallback 이 없다 — 조기 판정이 중요하다.
 - 2026-09-04 23:10 KST: **v0 run 시작** (`u1-interleaved-v0`, 12k step, bs 8, lr 1e-4/1e-4, δ∈{2,3,4,6}, M=4, U0.5 distill-12k 초기화, 평가 3000 step 마다 8 창/코퍼스). 예상 ≈ 4–5 h.
 - 2026-09-04 23:31 KST: **v0 재시작**. 첫 v0(step 1750) 은 QC 필터 이전 정렬을 써서 중단했다 — otoSpeech 창의 일부가 최대 14.5 s backlog 를 담고 있어 지연 목표가 오염된다.
   재시작본(`u1-v0b`)은 `bad_utterance` 필터 적용, 나머지 설정 동일(12k step, bs 4 × accum 2, δ∈{2,3,4,6}, M=4). 손실 궤적은 이전과 동일(step 150 에서 next 0.14 / text 4.0).
+- 2026-09-05 00:10 KST: **v0(next_weight 1.0) step 3000 평가 — 방출 0, WER 1.0.** 원인 진단(`experiments/u1_diag_emission.py`, teacher forcing 4 창):
+  | 위치 | P(정답) | P(`<NEXT_AUDIO>`) | 정답 top-1 | 정답 top-5 |
+  |---|---|---|---|---|
+  | 텍스트를 내야 하는 위치(n=221) | 0.376 | **0.463** | 39.8 % | 92.8 % |
+  | 무방출 위치(n=750) | 0.902 | 0.902 | 97.3 % | 100 % |
+  → 모델은 **무엇을 쓸지는 안다**(top-5 92.8 %). 문제는 **언제 쓸지의 결정**이다. 정확한 chunk 하나만 정답으로 두는 CE 는 ±1 chunk 모호성을 허용하지 않아
+  모델이 "지금은 아님"(라벨의 83 %)으로 헤지하고, greedy argmax 가 매 chunk `<NEXT_AUDIO>` 를 고른다. RNN-T 의 blank 지배와 같은 구조.
+  디코드 페널티 sweep(`next_bias`, blank penalty 유사): 0 → 방출 0; **2 → tok/chunk 0.135**(목표 0.20), WER 0.85; 4 → 폭주(tok/chunk 3.28, M 강제 68 %).
+  = 작동 구간이 좁고 불안정 → 디코드 보정만으로는 부족, **학습 목표를 고쳐야 한다**.
+- 2026-09-05 00:22 KST: **v1 시작 — `--next-weight 0.3`** (`<NEXT_AUDIO>` 위치 CE 가중치 0.3, 불균형 83:17 ≈ 5:1 을 부분 보정). 평가에 **bias sweep(0,1,2)** 내장.
+  v0 는 `u1-interleaved-nw1.0/` 로 보존(next_weight 1.0 대조군, step 3000 ckpt + 진단 수치).
+  다음 후보(효과 없을 시): (a) 목표 시각 허용 창(±1 chunk 라벨 스무딩 또는 lattice), (b) U2 self-conditioning 조기 도입(교사 강제 100 % 가 방출 오류 회복을 못 배우게 함), (c) 방출 결정을 별도 헤드로 분리.
