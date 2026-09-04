@@ -13,7 +13,7 @@ from vapasr.uslm.model import Adapter, InterleavedASR
 ap = argparse.ArgumentParser()
 ap.add_argument("--train", default="otoSpeech,aihub-ts01-5"); ap.add_argument("--val", default="otoSpeech,aihub-ts01-5,aihub-vs02")
 ap.add_argument("--init-ckpt", default=None, help="U0.5 ckpt.pt (adapter+lora) 또는 U1 ckpt"); ap.add_argument("--window-s", type=float, default=30.0)
-ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--M", type=int, default=4); ap.add_argument("--eval-delay", type=int, default=2)
+ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--M", type=int, default=4); ap.add_argument("--audio-per-chunk", type=int, default=1, choices=(1, 2), help="1=두 화자 merge 토큰, 2=화자별 토큰"); ap.add_argument("--eval-delay", type=int, default=2)
 ap.add_argument("--steps", type=int, default=12000); ap.add_argument("--bs", type=int, default=4); ap.add_argument("--accum", type=int, default=2, help="gradient accumulation (유효 배치 = bs·accum)"); ap.add_argument("--lr", type=float, default=1e-4); ap.add_argument("--lr-adapter", type=float, default=1e-4)
 ap.add_argument("--next-weight", type=float, default=1.0, help="<NEXT_AUDIO> 위치 CE 가중치(<1 이면 텍스트 방출 쪽으로 기움)"); ap.add_argument("--eval-bias", default="0", help="평가 시 <NEXT_AUDIO> 로짓 페널티 sweep (쉼표 구분)"); ap.add_argument("--lora-r", type=int, default=16); ap.add_argument("--eval-every", type=int, default=2000); ap.add_argument("--eval-windows", type=int, default=12)
 ap.add_argument("--windows-per-conv", type=int, default=None); ap.add_argument("--log-every", type=int, default=50); ap.add_argument("--tag", default=""); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--eval-only", action="store_true")
@@ -25,8 +25,8 @@ qm = Qwen3ASRModel.from_pretrained("Qwen/Qwen3-ASR-0.6B", dtype=torch.bfloat16, 
 root = next(v for v in vars(qm).values() if isinstance(v, nn.Module)); thinker = root.thinker; tok = qm.processor.tokenizer
 del root.thinker.audio_tower
 delays = tuple(int(x) for x in a.delays.split(","))
-train_ds = InterleavedWindowDataset(a.train.split(","), tok, split="train", window_s=a.window_s, delays=delays, max_per_chunk=a.M, windows_per_conv=a.windows_per_conv, seed=a.seed)
-val_ds = {m: InterleavedWindowDataset([m], tok, split="val", window_s=a.window_s, delays=(a.eval_delay,), max_per_chunk=a.M, windows_per_conv=4, max_windows=a.eval_windows, seed=1) for m in a.val.split(",")}
+train_ds = InterleavedWindowDataset(a.train.split(","), tok, split="train", window_s=a.window_s, delays=delays, max_per_chunk=a.M, windows_per_conv=a.windows_per_conv, seed=a.seed, per_chunk_audio=a.audio_per_chunk)
+val_ds = {m: InterleavedWindowDataset([m], tok, split="val", window_s=a.window_s, delays=(a.eval_delay,), max_per_chunk=a.M, windows_per_conv=4, max_windows=a.eval_windows, seed=1, per_chunk_audio=a.audio_per_chunk) for m in a.val.split(",")}
 print(f"train windows {len(train_ds)} ({len(train_ds.convs)} convs) | val " + ", ".join(f"{k}:{len(v)}" for k, v in val_ds.items()), flush=True)
 adapter = Adapter()
 model = InterleavedASR(thinker, tok, adapter, train_ds.sp_ids, lora_r=a.lora_r).to(dev); model.adapter.float(); model.merge.float()
@@ -61,7 +61,7 @@ def evaluate():
             for (nm, cid, ws) in ds.items:
                 f, streams, chunks, st = ds.window(nm, cid, ws, a.eval_delay)
                 with torch.autocast("cuda", dtype=torch.bfloat16):
-                    emitted, forced = model.stream_decode(torch.from_numpy(f).to(dev), ds.prefix(lang, a.eval_delay), a.M, next_bias=bias)
+                    emitted, forced = model.stream_decode(torch.from_numpy(f).to(dev), ds.prefix(lang, a.eval_delay), a.M, next_bias=bias, per_chunk_audio=a.audio_per_chunk)
                 forced_tot += forced; chunks_tot += ds.K; n_tok += len(emitted)
                 for s in (0, 1):
                     hyp = [(k, t) for k, t, spk in emitted if spk == s]; ref = streams[s]
@@ -84,7 +84,7 @@ step = 0; micro = 0; t0 = time.time(); model.train(); acc = {}; opt.zero_grad(se
 while step < a.steps:
     for b in dl:
         with torch.autocast("cuda", dtype=torch.bfloat16):
-            loss, parts = model(b["feats"].to(dev), b["ids"].to(dev), b["is_audio"].to(dev), b["chunk_of"].to(dev), b["labels"].to(dev), b["mask"].to(dev), next_weight=a.next_weight)
+            loss, parts = model(b["feats"].to(dev), b["ids"].to(dev), b["is_audio"].to(dev), b["chunk_of"].to(dev), b["labels"].to(dev), b["mask"].to(dev), next_weight=a.next_weight, audio_spk=b["audio_spk"].to(dev))
         (loss / a.accum).backward(); micro += 1
         for k, v in parts.items(): acc[k] = acc.get(k, 0) + v / a.accum
         if micro % a.accum: continue

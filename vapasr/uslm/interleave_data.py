@@ -77,21 +77,24 @@ class AlignedConv:
         """end_time ∈ [t0, t1) 인 토큰(창 상대 시각)."""
         return [[(tid, te - t0) for tid, te in s[bisect.bisect_left(e, t0): bisect.bisect_left(e, t1)]] for s, e in zip(self.streams, self._ends)]
 
-def build_sequence(chunks, K: int, prefix: List[int], audio_pad: int, drop_tail: bool = True):
-    """build_interleaved 출력 → (ids, is_audio, chunk_of). drop_tail: 창 끝 flush(EMPTY_AUDIO) 항목 제거."""
-    ids = list(prefix); is_audio = [False] * len(prefix); chunk_of = [-1] * len(prefix)
+def build_sequence(chunks, K: int, prefix: List[int], audio_pad: int, per_chunk_audio: int = 1):
+    """build_interleaved 출력 → (ids, is_audio, chunk_of, audio_spk).
+    per_chunk_audio=1: chunk 당 오디오 토큰 1 개(두 화자 merge). =2: 화자별 1 개씩(A, B 순) — merge 로 인한
+    분포 이동·겹침 손상을 피하는 대신 오디오 위치가 2 배가 된다. audio_spk: 오디오 위치의 화자(-1=merge/비오디오)."""
+    ids = list(prefix); is_audio = [False] * len(prefix); chunk_of = [-1] * len(prefix); audio_spk = [-1] * len(prefix)
     for k, emits in chunks:
         if k >= K: break
-        ids.append(audio_pad); is_audio.append(True); chunk_of.append(k)
-        ids += emits; is_audio += [False] * len(emits); chunk_of += [-1] * len(emits)
-    return ids, is_audio, chunk_of
+        for s in ([-1] if per_chunk_audio == 1 else [0, 1]):
+            ids.append(audio_pad); is_audio.append(True); chunk_of.append(k); audio_spk.append(s)
+        ids += emits; is_audio += [False] * len(emits); chunk_of += [-1] * len(emits); audio_spk += [-1] * len(emits)
+    return ids, is_audio, chunk_of, audio_spk
 
 class InterleavedWindowDataset(Dataset):
     def __init__(self, manifests: List[str], tok, encoder: str = "nemotron-c0", split: str = "train", window_s: float = 30.0, delays=(2, 3, 4, 6),
                  max_per_chunk: int = 4, val_frac: float = 0.08, windows_per_conv: Optional[int] = None, max_windows: Optional[int] = None,
-                 seed: int = 0, align_root: Optional[str] = None):
+                 seed: int = 0, align_root: Optional[str] = None, per_chunk_audio: int = 1):
         self.tok = tok; self.sp_ids = add_specials(tok); self.sp = specials_of(self.sp_ids); self.window_s = window_s; self.K = int(round(window_s / CHUNK_S))
-        self.delays = tuple(delays); self.M = max_per_chunk; self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>")
+        self.delays = tuple(delays); self.M = max_per_chunk; self.per_chunk_audio = per_chunk_audio; self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>")
         self._pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]
         self.items: List[Tuple[str, str, float]] = []; self.convs: Dict[Tuple[str, str], AlignedConv] = {}; self.feat: Dict[str, FeatureIndex] = {}
         rng = random.Random(seed); align_root = align_root or os.path.join(MAN, "align")
@@ -126,15 +129,15 @@ class InterleavedWindowDataset(Dataset):
     def __getitem__(self, i):
         name, cid, t0 = self.items[i]; delay = random.choice(self.delays); lang = LANG[name]
         f, streams, chunks, st = self.window(name, cid, t0, delay)
-        pre = self.prefix(lang, delay); ids, is_audio, chunk_of = build_sequence(chunks, self.K, pre, self.audio_pad)
+        pre = self.prefix(lang, delay); ids, is_audio, chunk_of, audio_spk = build_sequence(chunks, self.K, pre, self.audio_pad, self.per_chunk_audio)
         lab = [(-100 if (a or j < len(pre)) else t) for j, (t, a) in enumerate(zip(ids, is_audio))]
-        return dict(feats=torch.from_numpy(f), ids=torch.tensor(ids), is_audio=torch.tensor(is_audio), chunk_of=torch.tensor(chunk_of), labels=torch.tensor(lab),
+        return dict(feats=torch.from_numpy(f), ids=torch.tensor(ids), is_audio=torch.tensor(is_audio), chunk_of=torch.tensor(chunk_of), audio_spk=torch.tensor(audio_spk), labels=torch.tensor(lab),
                     lang=lang, delay=delay, manifest=name, conv=cid, t0=t0, n_text=st.tokens, overflow=st.overflow_tokens)
 
 def collate_windows(batch):
     B = len(batch); L = max(len(b["ids"]) for b in batch); K, D = batch[0]["feats"].shape[1:]
     feats = torch.stack([b["feats"] for b in batch]); ids = torch.zeros(B, L, dtype=torch.long); is_audio = torch.zeros(B, L, dtype=torch.bool)
-    chunk_of = torch.full((B, L), -1, dtype=torch.long); labels = torch.full((B, L), -100, dtype=torch.long); mask = torch.zeros(B, L, dtype=torch.long)
+    chunk_of = torch.full((B, L), -1, dtype=torch.long); audio_spk = torch.full((B, L), -1, dtype=torch.long); labels = torch.full((B, L), -100, dtype=torch.long); mask = torch.zeros(B, L, dtype=torch.long)
     for i, b in enumerate(batch):
-        n = len(b["ids"]); ids[i, :n] = b["ids"]; is_audio[i, :n] = b["is_audio"]; chunk_of[i, :n] = b["chunk_of"]; labels[i, :n] = b["labels"]; mask[i, :n] = 1
-    return dict(feats=feats, ids=ids, is_audio=is_audio, chunk_of=chunk_of, labels=labels, mask=mask, meta=[{k: b[k] for k in ("lang", "delay", "manifest", "conv", "t0", "n_text", "overflow")} for b in batch])
+        n = len(b["ids"]); ids[i, :n] = b["ids"]; is_audio[i, :n] = b["is_audio"]; chunk_of[i, :n] = b["chunk_of"]; audio_spk[i, :n] = b["audio_spk"]; labels[i, :n] = b["labels"]; mask[i, :n] = 1
+    return dict(feats=feats, ids=ids, is_audio=is_audio, chunk_of=chunk_of, audio_spk=audio_spk, labels=labels, mask=mask, meta=[{k: b[k] for k in ("lang", "delay", "manifest", "conv", "t0", "n_text", "overflow")} for b in batch])

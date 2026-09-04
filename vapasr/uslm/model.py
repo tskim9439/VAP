@@ -105,17 +105,23 @@ class InterleavedASR(nn.Module):
         m = self.thinker.base_model.model if hasattr(self.thinker, "base_model") else self.thinker
         return m.get_input_embeddings()
 
-    def chunk_embed(self, feats):                       # (B,2,K,Din) → (B,K,D)
-        a = self.adapter(feats.float()); return self.merge(torch.cat([a[:, 0], a[:, 1]], -1))
+    def chunk_embed(self, feats):                       # (B,2,K,Din) → merge (B,K,D) 와 화자별 (B,2,K,D)
+        a = self.adapter(feats.float()); return self.merge(torch.cat([a[:, 0], a[:, 1]], -1)), a
 
-    def build(self, feats, ids, is_audio, chunk_of):
-        emb = self._embed(); E = emb(ids); ce = self.chunk_embed(feats).to(E.dtype); D = E.shape[-1]
-        g = torch.gather(ce, 1, chunk_of.clamp(min=0)[..., None].expand(-1, -1, D))
+    def build(self, feats, ids, is_audio, chunk_of, audio_spk=None):
+        """audio_spk 가 있고 값이 0/1 이면 그 화자의 adapter 출력을 그대로 쓴다(화자별 오디오 토큰). -1 이면 merge."""
+        emb = self._embed(); E = emb(ids); ce, a = self.chunk_embed(feats); ce = ce.to(E.dtype); D = E.shape[-1]
+        idx = chunk_of.clamp(min=0)[..., None].expand(-1, -1, D)
+        g = torch.gather(ce, 1, idx)
+        if audio_spk is not None and (audio_spk >= 0).any():
+            sp = audio_spk.clamp(min=0); a = a.to(E.dtype)
+            g0 = torch.gather(a[:, 0], 1, idx); g1 = torch.gather(a[:, 1], 1, idx)
+            g = torch.where((audio_spk >= 0)[..., None], torch.where((sp == 0)[..., None], g0, g1), g)
         return torch.where(is_audio[..., None], g, E)
 
-    def forward(self, feats, ids, is_audio, chunk_of, labels, mask, next_weight: float = 1.0):
+    def forward(self, feats, ids, is_audio, chunk_of, labels, mask, next_weight: float = 1.0, audio_spk=None):
         """next_weight < 1: `<NEXT_AUDIO>`(= RNN-T blank) 위치의 CE 를 낮춰 클래스 불균형(라벨의 70–85 %)을 완화한다."""
-        E = self.build(feats, ids, is_audio, chunk_of)
+        E = self.build(feats, ids, is_audio, chunk_of, audio_spk)
         out = self.thinker(inputs_embeds=E, attention_mask=mask)
         logits = out.logits[:, :-1].float(); tgt = labels[:, 1:]
         tok_loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), tgt.reshape(-1), ignore_index=-100, reduction="none").view_as(tgt)
@@ -127,18 +133,21 @@ class InterleavedASR(nn.Module):
         return loss, parts
 
     @torch.inference_mode()
-    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 4, next_bias: float = 0.0):
+    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 4, next_bias: float = 0.0, per_chunk_audio: int = 1):
         """feats (2,K,Din) 를 chunk 별로 넣고 greedy 로 방출. → [(chunk k, token id, speaker)], forced_next 횟수.
         chunk k 의 방출 시각 = (k+1)·80 ms (chunk 오디오를 다 본 뒤). KV cache 로 위치당 forward 1 회."""
         from transformers import DynamicCache
         emb = self._embed(); dev = feats.device; cache = DynamicCache()
-        ce = self.chunk_embed(feats[None])[0].to(emb.weight.dtype)                      # (K,D)
+        ce_m, a_s = self.chunk_embed(feats[None]); ce = ce_m[0].to(emb.weight.dtype); a_s = a_s[0].to(emb.weight.dtype)   # (K,D), (2,K,D)
         def step(e):
             out = self.thinker(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=cache, use_cache=True); return out.logits[0, -1].float()
         step(emb(torch.tensor(prefix_ids, device=dev)))
         e_next = emb.weight[self.next_audio]; out, spk, forced = [], 0, 0
         for k in range(ce.shape[0]):
-            logits = step(ce[k]); n = 0
+            if per_chunk_audio == 1: logits = step(ce[k])
+            else:
+                step(a_s[0, k]); logits = step(a_s[1, k])
+            n = 0
             while True:
                 logits[self.blocked] = float("-inf"); logits[self.next_audio] -= next_bias   # RNN-T blank penalty 와 같은 역할
                 tid = int(logits.argmax())
