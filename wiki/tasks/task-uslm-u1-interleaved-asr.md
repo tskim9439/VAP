@@ -37,3 +37,8 @@ A 안이 기각되어 fallback 이 없다 — 조기 판정이 중요하다.
   - `vapasr/uslm/model.py::InterleavedASR` — chunk 임베딩 = merge([adapter(f_A); adapter(f_B)]), merge 는 [½I ½I](+미세 비대칭) 로 초기화해 U0.5 adapter 를 그대로 잇는다. 특수 토큰 12 개(`<NEXT_AUDIO> <EMPTY_AUDIO> <SPK_A> <SPK_B> <DELAY_1..8>`)는 thinker 임베딩 행렬의 여유 행(151705–151716)을 쓰고 grad mask 로 그 행만 학습(lm_head tied). `stream_decode` = KV cache 로 chunk 마다 greedy: `<NEXT_AUDIO>` 또는 M 도달 시 다음 chunk(강제 횟수 기록).
   - `experiments/u1_train_interleaved.py` — U0.5 ckpt(adapter+LoRA) 초기화, cosine 스케줄, 진단용 손실 분리(NEXT_AUDIO vs 텍스트). 평가 = 고정 val 창(코퍼스당 20)을 스트리밍 디코드 → 화자별 WER/CER, 토큰 지연((k+1)·80 ms − 정렬 종료 시각; difflib 단조 매칭) p50/p90/p99, evidence 위반률(지연 < 0, < −80 ms), M 강제 비율, chunk 당 토큰 수.
   - v0 에서 뺀 것: aux CTC, 지연 커리큘럼(무작위화로 대체), 인코더 unfreeze(ablation 으로 예정), gated residual fusion(U3 ablation).
+- 2026-09-04: **스모크 2 회 통과** (`u1-smoke`, `u1-smoke2`). 학습 창 1,651(대화당 3 개 표본 시) / 전체 침묵 격자 사용 시 훨씬 많음. 시퀀스 길이 ≈ 850–930 (30 s 창: audio 375 + NEXT_AUDIO 375 + 텍스트 ≈ 150).
+  150 step(bs 4) 손실: 전체 11.1 → 0.9, `<NEXT_AUDIO>` 위치 16.0 → 0.2, 텍스트 위치 6.2 → 4.2 — 모델이 먼저 "무방출(84 % chunk)" 을 학습하고 텍스트는 뒤따른다(초기 평가 tok/chunk 0 → 정상적인 초기 상태, v0 step 3000 평가로 확인).
+  스트리밍 평가 속도: LoRA 미병합 시 forward 당 68 ms(창 128 s) → `merge_adapter()` 후 56 ms(창 21 s). HF 단일 토큰 forward 의 파이썬 오버헤드가 지배 → **개선 후보: 창 배치 디코드(ragged KV) 또는 CUDA graph**. 현재는 코퍼스당 8 창 × 3 = 8–10 min/평가.
+  vs02 val 창 0 — vs02 정렬이 id 정렬 앞부분(107/186)까지만 끝나 val 분할(뒤 8 %)이 비어 있음 → 정렬 완료 후 채워짐.
+- 2026-09-04 23:05 KST: **v0 run 시작** (`u1-interleaved-v0`, 12k step, bs 8, lr 1e-4/1e-4, δ∈{2,3,4,6}, M=4, U0.5 distill-12k 초기화, 평가 3000 step 마다 8 창/코퍼스). 예상 ≈ 4–5 h.
