@@ -66,7 +66,7 @@
 
 | 단계 | 내용 | 관문 | 상태 |
 |---|---|---|---|
-| **U0** streamability + 타당성 | encoder truncation audit(완료) · Qwen3 tokenizer 토큰율 → chunk 당 M 예산 · ForcedAligner 정렬·QC · interleaved target 생성기 | — | **진행 중(09-04)** — 토큰율(KO p99 0.78 tok/80 ms, 폭주 없음)·M=4·생성기 완료; 정렬 aihub-ts01-5 완료, otoSpeech 334/420 |
+| **U0** streamability + 타당성 | encoder truncation audit(완료) · Qwen3 tokenizer 토큰율 → chunk 당 M 예산 · ForcedAligner 정렬·QC · interleaved target 생성기 | — | **진행 중(09-04)** — 토큰율(KO p99 0.78 tok/80 ms, 폭주 없음)·**M=4 확정**(aihub 전체 정렬 기준 이월 2.1 %)·생성기 완료; 정렬 aihub-ts01-5 완료, otoSpeech 334/420 |
 | **U0.5** adapter bridge test | 캐시 특징 증류로 Nemotron→thinker adapter 초기화 → 오프라인 ASR 미세조정 → WER | **≤ +10–15 % vs AuT+thinker / RNN-T** | **실험 완료(09-04)** — 최선 oto 18.2–18.8 / 실내 17.5 / 실외 14.5–15.1 %. 관문 원안 부분 미달이나 동일 인코더 RNN-T(25.4 %) 대비 −6 pt → adapter 병목 아님. **판정 대기(관문 재정의 or encoder unfreeze)** |
 | **U1** aligned interleaved ASR | Nemotron frozen + Qwen3-0.6B(LoRA) + adapter, 텍스트 스트림만, 지연 커리큘럼, aux CTC | **WER/CER 상대 열화 ≤ 10 % vs RNN-T** | 대기 (p0, ~10-16) |
 | U2 self-conditioned streaming | self history 혼합, gold/self 격차, corruption 학습, 20–60 s 창 carry | 격차 보고 | 대기 (p1, ~10-30) |
