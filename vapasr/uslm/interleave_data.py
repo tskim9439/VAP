@@ -28,12 +28,24 @@ def add_specials(tok) -> Dict[str, int]:
 def specials_of(ids: Dict[str, int]) -> Specials:
     return Specials(next_audio=ids["<NEXT_AUDIO>"], empty_audio=ids["<EMPTY_AUDIO>"], spk=(ids["<SPK_A>"], ids["<SPK_B>"]))
 
+def bad_utterance(u: dict, max_same: int = 8, max_rate: float = 25.0) -> Optional[str]:
+    """정렬 실패 발화 판정. aligner 가 긴 발화에서 항목을 못 만들면 BPE 토큰 수십~수백 개가 같은 종료 시각을 갖고,
+    그 뭉치가 chunk 예산을 넘겨 수 초짜리 backlog 를 만든다(otoSpeech 최악 132 토큰/동일 시각 → backlog 181 chunk = 14.5 s)."""
+    ts = [t["end_time"] for t in u["tokens"]]
+    if not ts: return "empty"
+    from collections import Counter
+    if max(Counter(ts).values()) > max_same: return "same_time"
+    if len(ts) / max(0.1, u["end"] - u["start"]) > max_rate: return "rate"
+    return None
+
 class AlignedConv:
     """한 대화의 정렬: 화자별 [(token_id, end_time)] + 발화 구간 + 침묵 시작점 후보."""
-    def __init__(self, path: str):
-        self.utts: List[dict] = [json.loads(l) for l in open(path)]
+    def __init__(self, path: str, qc: bool = True, max_same: int = 8, max_rate: float = 25.0):
+        self.utts: List[dict] = [json.loads(l) for l in open(path) if l.strip()]
+        self.dropped = [u for u in self.utts if qc and bad_utterance(u, max_same, max_rate)] if qc else []
+        keep = [u for u in self.utts if u not in self.dropped] if self.dropped else self.utts
         self.streams: List[List[Tuple[int, float]]] = [[], []]
-        for u in self.utts:
+        for u in keep:
             for t in u["tokens"]: self.streams[u["speaker"]].append((int(t["id"]), float(t["end_time"])))
         for s in self.streams: s.sort(key=lambda x: x[1])
         self.duration = max([u["end"] for u in self.utts], default=0.0)
@@ -81,6 +93,7 @@ class InterleavedWindowDataset(Dataset):
                 p = os.path.join(align_root, name, cid + ".jsonl")
                 if not os.path.exists(p): continue
                 ac = AlignedConv(p); starts = ac.silent_starts(window_s)
+                if ac.dropped: starts = [t for t in starts if not any(u["start"] < t + window_s and u["end"] > t for u in ac.dropped)]   # 불량 발화가 걸친 창 제외
                 if not starts: continue
                 if windows_per_conv and len(starts) > windows_per_conv: starts = rng.sample(starts, windows_per_conv)
                 self.convs[(name, cid)] = ac; self.items += [(name, cid, s) for s in starts]

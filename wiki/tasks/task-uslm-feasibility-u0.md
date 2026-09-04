@@ -25,7 +25,11 @@ sources:
 - [x] 토큰율(발화 균등 가정, `experiments/u0_token_rate.py`, 라벨 624 h KO / 71 h EN): **KO tok/s p50 4.2 · p99 9.7, tok/80ms p99 0.78** (12.5 tok/s 초과 발화 0.18 %); EN p50 4.8 · p99 20 (초과 2.6 %, 짧은 발화 꼬리). chars/token KO 1.43 / EN 3.87 — **한국어 BPE 폭주 없음**
 - [x] **M 예산 (chunk 단위, 정렬 토큰 기준, δ=2, 테스트 80 발화)**: EN M=2 이월 2.8 % / M=3 0.9 %; KO M=2 **21.6 %** / M=3 6.1 % / M=4 2.6 % — 정렬기가 음절 토큰들에 같은 종료 시각을 주어 chunk 내 burst. → **M=4 기본(KO 2.6 %, EN 0.35 %)**, M=3 ablation. **전체 aihub-ts01-5 정렬(190 대화, 692k 토큰, 2.3M chunk)로 재확인(09-04): M=2 22.3 % / M=3 6.9 % / M=4 2.1 %**, max backlog 13–15 chunk(≈1.1 s, 극단 burst), chunk 의 84 % 가 무방출 → **M=4 확정**. otoSpeech 전체는 정렬 완료 후 자동 집계(bg `u0-istats-oto`)
 - [~] Qwen3-ForcedAligner 정렬 — `experiments/u0_align.py` (aligner 단어/음절 시각 → BPE 토큰 종료 시각, offsets 매핑). 소규모 테스트 통과(발화당 0.33 s, 라벨 끝−마지막 토큰 끝 중앙값 EN 20 ms / KO 45 ms). **전체 실행**: aihub-ts01-5 190 완료(09-04), otoSpeech 334/420 진행, vs02 미착수(≈70 s/대화) → `$DATA_MANIFEST_DIR/align/`
-- [ ] 정렬 QC: aligner 시각 vs 에너지 VAD 온셋 오차 분포, 불량 발화 마스킹 규칙
+- [x] **정렬 QC + 불량 발화 마스킹 규칙 (`experiments/u0_align_qc.py`, `vapasr/uslm/interleave_data.py::bad_utterance`)** — aligner 가 **긴 발화(대개 20 s 상한)** 에서 항목을 못 만들면 BPE 토큰 수십~수백 개가 **같은 종료 시각**을 갖는다(최악: otoSpeech 132 토큰, aihub 127 토큰/동일 시각). 이 뭉치가 chunk 예산을 넘겨 **수 초짜리 backlog** 를 만든다.
+  규칙: 한 발화 내 동일 종료 시각 토큰 > 8 개(`same_time`) 또는 토큰율 > 25 tok/s(`rate`) 이면 발화를 버리고, **그 발화가 걸친 창 자체를 학습에서 제외**한다(창 선택은 원본 발화 구간으로 침묵 판정).
+  효과(M=4, δ=2): otoSpeech 이월 **5.92 % → 0.62 %**, max backlog **181 chunk(14.5 s) → 13(1.0 s)**; aihub-ts01-5 이월 2.08 → 2.00 %, backlog 13 → 8. 버리는 양은 otoSpeech 4.4 %, aihub 0.31 % 토큰.
+  (미해결) 근본 수정은 20 s 발화를 쪼개 재정렬하는 것 — U1 v0 이후로 미룸.
+- [x] **otoSpeech 전체 정렬 완료(420 대화, 110.7 만 토큰)**, aihub-ts01-5 190 완료, aihub-vs02 154/186 진행 중(단일 워커 pid 373412). 정렬기는 동시 실행 시 `.tmp` 경합이 있어 **프로세스별 고유 tmp + 선점 확인**으로 수정(`u0_align.py`).
 - [x] **interleaved target 시퀀스 생성기** — `vapasr/data/interleave.py` (δ, M, backlog 이월, <SPK> 태그, <NEXT_AUDIO>/<EMPTY_AUDIO>) + `experiments/u0_interleave_stats.py`
 - [ ] (구) 시간 동기 PAD 스트림 — 정렬 토큰 종료 시각 + δ 이후 chunk 에 배치, `<NEXT_AUDIO>` 삽입, 지연 스케줄 무작위화 옵션 — `vapasr/data/` 에 추가 (시간 동기 PAD 스트림은 ablation 용 옵션)
 - [ ] 결과를 [[output-unified-slm-architecture-plan]] 에 반영, U1 착수 여부 판단

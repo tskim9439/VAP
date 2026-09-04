@@ -64,7 +64,8 @@ for cid, wavs in convs:
     outp = os.path.join(a.out, cid + ".jsonl")
     if os.path.exists(outp): continue
     audio = {}
-    with open(outp + ".tmp", "w") as f:
+    tmpp = outp + f".{os.getpid()}.tmp"
+    with open(tmpp, "w") as f:
         for spk, s, e, text in utterances(cid, wavs):
             if spk not in audio:
                 x, sr = sf.read(wavs[spk] if a.corpus != "aihub" else wavs[0], dtype="float32", always_2d=True); audio[spk] = (x[:, spk if a.corpus == "aihub" else 0], sr)
@@ -78,7 +79,8 @@ for cid, wavs in convs:
             st["utts"] += 1; st["tokens"] += len(toks); n_utt += 1
             if toks: st["offset_err_ms"].append((e - toks[-1]["end_time"]) * 1000)       # 라벨 끝 − 마지막 토큰 끝
             if a.limit_utts and n_utt >= a.limit_utts: break
-    os.replace(outp + ".tmp", outp); st["convs"] += 1
+    if os.path.exists(outp): os.remove(tmpp); continue      # 다른 워커가 먼저 완료(동시 실행 안전)
+    os.replace(tmpp, outp); st["convs"] += 1
     print(f"  {cid}: utts {st['utts']} tokens {st['tokens']} {time.time()-t0:.0f}s", flush=True)
     if a.limit_utts and n_utt >= a.limit_utts: break
 st["sec"] = time.time() - t0; st["utts_per_sec"] = st["utts"] / max(1e-9, st["sec"])

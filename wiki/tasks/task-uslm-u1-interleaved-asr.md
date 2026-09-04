@@ -43,3 +43,5 @@ A 안이 기각되어 fallback 이 없다 — 조기 판정이 중요하다.
   vs02 val 창 0 — vs02 정렬이 id 정렬 앞부분(107/186)까지만 끝나 val 분할(뒤 8 %)이 비어 있음 → 정렬 완료 후 채워짐.
 - 2026-09-04 23:08 KST: 첫 v0 시도 bs 8 OOM — GPU 1 은 **40 GB 카드**, fp32 logits(B·L·152k) 가 4.4 GB 씩 → `--accum` 추가, bs 4 × accum 2 로 재시작(25.8 GB, 0.7 s/step, 12k ≈ 2.5 h + 평가).
 - 2026-09-04 23:10 KST: **v0 run 시작** (`u1-interleaved-v0`, 12k step, bs 8, lr 1e-4/1e-4, δ∈{2,3,4,6}, M=4, U0.5 distill-12k 초기화, 평가 3000 step 마다 8 창/코퍼스). 예상 ≈ 4–5 h.
+- 2026-09-04 23:31 KST: **v0 재시작**. 첫 v0(step 1750) 은 QC 필터 이전 정렬을 써서 중단했다 — otoSpeech 창의 일부가 최대 14.5 s backlog 를 담고 있어 지연 목표가 오염된다.
+  재시작본(`u1-v0b`)은 `bad_utterance` 필터 적용, 나머지 설정 동일(12k step, bs 4 × accum 2, δ∈{2,3,4,6}, M=4). 손실 궤적은 이전과 동일(step 150 에서 next 0.14 / text 4.0).
