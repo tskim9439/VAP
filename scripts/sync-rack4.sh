@@ -4,7 +4,11 @@
 #
 #   scripts/sync-rack4.sh status          환경 점검 (접속·컨테이너·경로·GPU·디스크·차이)
 #   scripts/sync-rack4.sh push [-n]       로컬 → 원격 (정본은 로컬). -n 은 dry-run
-#   scripts/sync-rack4.sh pull [-n]       원격 → 로컬 (--delete 없음, 안전)
+#   scripts/sync-rack4.sh pull [-n]       원격 → 로컬. -n 은 dry-run
+#
+#   push/pull 모두 --delete 를 쓰지 않는다. 원격 파일은 어떤 경우에도 삭제하지
+#   않는다(사용자 지시, 2026-09-04). 로컬에서 지운 파일은 원격에 그대로 남으므로
+#   필요하면 사람이 직접 확인하고 지운다.
 #   scripts/sync-rack4.sh shell           컨테이너 안에서 대화형 셸
 #   scripts/sync-rack4.sh exec <명령...>  컨테이너 안 프로젝트 폴더에서 명령 실행
 #   scripts/sync-rack4.sh bg <이름> <명령...>   컨테이너 안에서 세션과 무관하게(nohup) 실행. 로그: $DATA_LOG_DIR/bg-<이름>-<ts>.log
@@ -21,7 +25,7 @@ set -a; source .env; [[ -f .env.local ]] && source .env.local; set +a
 : "${REMOTE_PROJECT_DIR:?.env 에 REMOTE_PROJECT_DIR 가 없습니다}"
 : "${DOCKER_CONTAINER:?.env 에 DOCKER_CONTAINER 가 없습니다}"
 
-# 안전장치: 원격 경로가 비었거나 루트면 절대 진행하지 않는다 (--delete 사용)
+# 안전장치: 원격 경로가 비었거나 루트면 절대 진행하지 않는다
 case "$REMOTE_PROJECT_DIR" in
   ""|"/"|"/home"|"/root"|"/data3"|"/data4")
     echo "오류: REMOTE_PROJECT_DIR 이 위험한 값입니다: '$REMOTE_PROJECT_DIR'" >&2; exit 1 ;;
@@ -75,7 +79,7 @@ cmd_status() {
 
   echo "── 동기화 차이 (로컬 → 원격, dry-run) ───────────"
   local out=""
-  out="$(rsync "${rsync_opts[@]}" --delete --dry-run --itemize-changes \
+  out="$(rsync "${rsync_opts[@]}" --dry-run --itemize-changes \
         -e "$SSH" ./ "$REMOTE_HOST:$REMOTE_PROJECT_DIR/" 2>/dev/null \
         | grep -E '^[<>ch*.]' || true)"
   if [[ -z "$out" ]]; then echo "  동기화됨 — 차이 없음"; else
@@ -90,7 +94,8 @@ cmd_push() {
   if [[ "${1:-}" == "-n" || "${1:-}" == "--dry-run" ]]; then dry="--dry-run"; echo "(dry-run)"; fi
   $SSH "$REMOTE_HOST" "mkdir -p '$REMOTE_PROJECT_DIR'"
   echo "▶ push: $repo_root → $REMOTE_HOST:$REMOTE_PROJECT_DIR"
-  rsync "${rsync_opts[@]}" ${dry} --delete -e "$SSH" ./ "$REMOTE_HOST:$REMOTE_PROJECT_DIR/"
+  # --delete 를 쓰지 않는다: 원격에만 있는 파일은 절대 지우지 않는다.
+  rsync "${rsync_opts[@]}" ${dry} -e "$SSH" ./ "$REMOTE_HOST:$REMOTE_PROJECT_DIR/"
   [[ -z "$dry" ]] && echo "✓ push 완료"
   return 0
 }

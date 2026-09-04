@@ -109,7 +109,8 @@ Nemotron 3.5 FastConformer [56,0]  (causal ≤80 ms, 12.5 Hz, 잡음 강건, ko-
 
 1. **U0.5 adapter bridge test (관문, GPU ≈ 1 일)** — 캐시된 Nemotron·Qwen audio tower 특징(205 h 동일 대화)으로 adapter 를 **표현 증류**로 초기화
    (Nemotron → 기존 Qwen audio tower의 thinker 입력 임베딩 회귀, cosine + L2, 라벨 불필요) → 오프라인 ASR 손실로 adapter + thinker LoRA 짧게 학습 →
-   WER 을 AuT+thinker 오프라인, Nemotron RNN-T 와 비교. **10–15 % 이내면 통과.** 회귀 잔차가 크면 조기 경고.
+   WER 을 AuT+thinker 오프라인, Nemotron RNN-T 와 비교. ~~10–15 % 이내면 통과~~ → **관문 재정의(2026-09-04, 사용자)**: 원안은 비인과 오프라인 인코더를 기준으로 인과 `[56,0]` 시스템을 재는 잘못된 비교였다.
+   새 관문 = (a) **동일 인코더 Nemotron RNN-T `[56,0]` 보다 우수** + (b) **오프라인 Qwen 대비 상대 열화 ≤ +50 %**. 결과 oto 18.2–18.8 / 실내 17.5 / 실외 14.5–15.1 % 로 **통과** — [[output-uslm-u05-adapter-bridge]].
 2. 통과 시 U1(interleaved streaming ASR) 로 간다. 실패하면 adapter 용량·시간 정렬·증류 목표·encoder/thinker unfreeze 범위를 재설계한다.
    **AuT+thinker로 자동 교체하지 않는다.** backbone 변경은 실험 관문에 내장된 fallback이 아니라 별도의 사용자 결정이 필요한 범위 변경이다.
 3. 세부: 12.5 → 13 Hz nearest 리샘플 기본(12.5 그대로는 ablation), 두 화자는 화자별 인코딩 → merge → adapter → joint chunk token 1개,

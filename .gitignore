@@ -16,3 +16,7 @@ Thumbs.db
 
 # AI Hub 다운로드 도구 바이너리
 .aihubshell
+
+# Python 부산물
+__pycache__/
+*.pyc

@@ -73,9 +73,9 @@
 
 ## Phase 2 — IS-SLM 본체 (10~11월) ← 이중 프레임율/RNN-T 안은 2026-09-04 기각
 
-- [ ] **U0.5 adapter bridge test** — 캐시 특징 증류 초기화 → 오프라인 ASR WER 관문 ≤ +10–15 %
+- [x] **U0.5 adapter bridge test** — 4 run 완료, 최선 18.2–18.8 / 17.5 / 14.5–15.1 %. 관문 재정의(RNN-T `[56,0]` 우수 + 오프라인 ≤ +50 %) 후 **통과** (09-04) → `output-uslm-u05-adapter-bridge`
       `wiki/tasks/task-uslm-u05-adapter-bridge.md` · p0 · ~09-25
-- [ ] **U1 aligned interleaved ASR** — Nemotron [56,0] → adapter → Qwen3-ASR thinker LoRA, 텍스트 스트림만. **관문 WER ≤ +10 % vs RNN-T**
+- [~] **U1 aligned interleaved ASR** — Nemotron [56,0] → adapter → Qwen3-ASR thinker LoRA, 텍스트 스트림만. **관문 WER ≤ +10 % vs RNN-T `[56,0]`**. 09-04 착수: 데이터/모델/학습·스트리밍 평가 코드 완성, 스모크 → v0 run
       `wiki/tasks/task-uslm-u1-interleaved-asr.md` · p0 · ~10-16
 - [ ] **U2 self-conditioned streaming** — gold/self 격차, corruption 학습
       `wiki/tasks/task-uslm-u2-self-conditioned.md` · p1 · ~10-30
