@@ -38,8 +38,8 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 
 - [ ] `.llm-wiki-local/user.yaml` 의 `member_id: tskim` 확인 —
       에이전트가 git config 기반으로 생성했으므로 사용자 확인 필요
-- [ ] 원격 저장소(private) 연결 및 `main` 브랜치 보호 설정
-- [ ] 초기 커밋
+- [x] 원격 `origin` = github.com:tskim9439/VAP — **회사망이 22 번 포트를 차단**하므로 remote URL 을 `ssh://git@ssh.github.com:443/...` 로 설정(2026-09-04). 첫 커밋 598a8bd → `main` 푸시 완료. `gh` 는 KT 엔터프라이즈 토큰만 허용되어 API 사용 불가(SSH 는 됨)
+- [ ] `main` 브랜치 보호 설정(GitHub 웹에서)
 - [ ] 대용량 바이너리 정책 결정 — 오디오 데이터를 볼트에 넣지 않는다는 방침 명문화 필요
 - [ ] `AGENTS.md` Directory Contract 에 `.env` / `sync-rack4.sh` 반영 (유지보수 PR)
 

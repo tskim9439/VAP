@@ -213,4 +213,5 @@
 | 자료 추가 | `raw/inbox/` 에 넣고 "ingest 해줘" |
 | 질문 / 태스크 / 린트 / 병합 준비 | wiki-query · wiki-task · wiki-lint · wiki-merge 스킬 |
 
-`wiki/index.md` · `wiki/log.md` · `wiki/todo.md` 는 생성 파일 — 직접 편집 금지. `main` 은 보호(PR 병합). Git 원격·초기 커밋은 아직 없다.
+`wiki/index.md` · `wiki/log.md` · `wiki/todo.md` 는 생성 파일 — 직접 편집 금지. `main` 은 보호(PR 병합).
+Git 원격: `origin` = github.com:tskim9439/VAP, **SSH 443 경유**(`ssh://git@ssh.github.com:443/tskim9439/VAP.git` — 회사망이 22 번 차단). 첫 커밋 2026-09-04.
