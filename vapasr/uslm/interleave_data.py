@@ -28,6 +28,15 @@ def add_specials(tok) -> Dict[str, int]:
 def specials_of(ids: Dict[str, int]) -> Specials:
     return Specials(next_audio=ids["<NEXT_AUDIO>"], empty_audio=ids["<EMPTY_AUDIO>"], spk=(ids["<SPK_A>"], ids["<SPK_B>"]))
 
+def _read_jsonl(path: str) -> List[dict]:
+    """손상 줄(중단된 워커가 남긴 NUL 블록 등)은 건너뛴다."""
+    out = []
+    for l in open(path, errors="replace"):
+        if not l.strip() or "\x00" in l: continue
+        try: out.append(json.loads(l))
+        except json.JSONDecodeError: continue
+    return out
+
 def bad_utterance(u: dict, max_same: int = 8, max_rate: float = 25.0) -> Optional[str]:
     """정렬 실패 발화 판정. aligner 가 긴 발화에서 항목을 못 만들면 BPE 토큰 수십~수백 개가 같은 종료 시각을 갖고,
     그 뭉치가 chunk 예산을 넘겨 수 초짜리 backlog 를 만든다(otoSpeech 최악 132 토큰/동일 시각 → backlog 181 chunk = 14.5 s)."""
@@ -41,7 +50,7 @@ def bad_utterance(u: dict, max_same: int = 8, max_rate: float = 25.0) -> Optiona
 class AlignedConv:
     """한 대화의 정렬: 화자별 [(token_id, end_time)] + 발화 구간 + 침묵 시작점 후보."""
     def __init__(self, path: str, qc: bool = True, max_same: int = 8, max_rate: float = 25.0):
-        self.utts: List[dict] = [json.loads(l) for l in open(path) if l.strip()]
+        self.utts: List[dict] = _read_jsonl(path)
         self.dropped = [u for u in self.utts if qc and bad_utterance(u, max_same, max_rate)] if qc else []
         keep = [u for u in self.utts if u not in self.dropped] if self.dropped else self.utts
         self.streams: List[List[Tuple[int, float]]] = [[], []]

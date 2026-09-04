@@ -5,7 +5,7 @@ python experiments/u0_align_qc.py [--dirs otoSpeech,aihub-ts01-5] [--max-same 8]
 import os, sys, json, glob, argparse, collections
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from vapasr.data.interleave import build_interleaved, Specials
-from vapasr.uslm.interleave_data import bad_utterance
+from vapasr.uslm.interleave_data import bad_utterance, _read_jsonl
 ap = argparse.ArgumentParser(); ap.add_argument("--root", default=os.path.join(os.environ.get("DATA_MANIFEST_DIR", "/data3/tskim/manifests"), "align"))
 ap.add_argument("--dirs", default="otoSpeech,aihub-ts01-5,aihub-vs02"); ap.add_argument("--max-same", type=int, default=8); ap.add_argument("--max-rate", type=float, default=25.0)
 ap.add_argument("--M", type=int, default=4); ap.add_argument("--delay", type=int, default=2); a = ap.parse_args()
@@ -15,9 +15,8 @@ for d in a.dirs.split(","):
     if not files: print(f"== {d}: 없음"); continue
     reasons = collections.Counter(); n_utt = n_tok = bad_tok = 0; worst = []
     for f in files:
-        for l in open(f):
-            if not l.strip(): continue
-            u = json.loads(l); n_utt += 1; n_tok += len(u["tokens"]); r = bad_utterance(u, a.max_same, a.max_rate)
+        for u in _read_jsonl(f):
+            n_utt += 1; n_tok += len(u["tokens"]); r = bad_utterance(u, a.max_same, a.max_rate)
             if r:
                 reasons[r] += 1; bad_tok += len(u["tokens"])
                 worst.append((len(u["tokens"]), os.path.basename(f), round(u["start"], 1), round(u["end"] - u["start"], 1), u["text"][:40]))
@@ -29,9 +28,8 @@ for d in a.dirs.split(","):
         tot = dict(chunks=0, tokens=0, ov=0, mb=0)
         for f in files:
             streams = [[], []]; dur = 0.0
-            for l in open(f):
-                if not l.strip(): continue
-                u = json.loads(l); dur = max(dur, u["end"])
+            for u in _read_jsonl(f):
+                dur = max(dur, u["end"])
                 if filt and bad_utterance(u, a.max_same, a.max_rate): continue
                 for t in u["tokens"]: streams[u["speaker"]].append((t["id"], t["end_time"]))
             for s in streams: s.sort(key=lambda x: x[1])
