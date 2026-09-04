@@ -41,4 +41,5 @@ A 안이 기각되어 fallback 이 없다 — 조기 판정이 중요하다.
   150 step(bs 4) 손실: 전체 11.1 → 0.9, `<NEXT_AUDIO>` 위치 16.0 → 0.2, 텍스트 위치 6.2 → 4.2 — 모델이 먼저 "무방출(84 % chunk)" 을 학습하고 텍스트는 뒤따른다(초기 평가 tok/chunk 0 → 정상적인 초기 상태, v0 step 3000 평가로 확인).
   스트리밍 평가 속도: LoRA 미병합 시 forward 당 68 ms(창 128 s) → `merge_adapter()` 후 56 ms(창 21 s). HF 단일 토큰 forward 의 파이썬 오버헤드가 지배 → **개선 후보: 창 배치 디코드(ragged KV) 또는 CUDA graph**. 현재는 코퍼스당 8 창 × 3 = 8–10 min/평가.
   vs02 val 창 0 — vs02 정렬이 id 정렬 앞부분(107/186)까지만 끝나 val 분할(뒤 8 %)이 비어 있음 → 정렬 완료 후 채워짐.
-- 2026-09-04 23:05 KST: **v0 run 시작** (`u1-interleaved-v0`, 12k step, bs 8, lr 1e-4/1e-4, δ∈{2,3,4,6}, M=4, U0.5 distill-12k 초기화, 평가 3000 step 마다 8 창/코퍼스). 예상 ≈ 4–5 h.
+- 2026-09-04 23:08 KST: 첫 v0 시도 bs 8 OOM — GPU 1 은 **40 GB 카드**, fp32 logits(B·L·152k) 가 4.4 GB 씩 → `--accum` 추가, bs 4 × accum 2 로 재시작(25.8 GB, 0.7 s/step, 12k ≈ 2.5 h + 평가).
+- 2026-09-04 23:10 KST: **v0 run 시작** (`u1-interleaved-v0`, 12k step, bs 8, lr 1e-4/1e-4, δ∈{2,3,4,6}, M=4, U0.5 distill-12k 초기화, 평가 3000 step 마다 8 창/코퍼스). 예상 ≈ 4–5 h.

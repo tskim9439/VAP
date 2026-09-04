@@ -14,7 +14,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--train", default="otoSpeech,aihub-ts01-5"); ap.add_argument("--val", default="otoSpeech,aihub-ts01-5,aihub-vs02")
 ap.add_argument("--init-ckpt", default=None, help="U0.5 ckpt.pt (adapter+lora) 또는 U1 ckpt"); ap.add_argument("--window-s", type=float, default=30.0)
 ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--M", type=int, default=4); ap.add_argument("--eval-delay", type=int, default=2)
-ap.add_argument("--steps", type=int, default=12000); ap.add_argument("--bs", type=int, default=8); ap.add_argument("--lr", type=float, default=1e-4); ap.add_argument("--lr-adapter", type=float, default=1e-4)
+ap.add_argument("--steps", type=int, default=12000); ap.add_argument("--bs", type=int, default=4); ap.add_argument("--accum", type=int, default=2, help="gradient accumulation (유효 배치 = bs·accum)"); ap.add_argument("--lr", type=float, default=1e-4); ap.add_argument("--lr-adapter", type=float, default=1e-4)
 ap.add_argument("--lora-r", type=int, default=16); ap.add_argument("--eval-every", type=int, default=2000); ap.add_argument("--eval-windows", type=int, default=12)
 ap.add_argument("--windows-per-conv", type=int, default=None); ap.add_argument("--log-every", type=int, default=50); ap.add_argument("--tag", default=""); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--eval-only", action="store_true")
 a = ap.parse_args(); torch.manual_seed(a.seed); random.seed(a.seed); dev = "cuda"
@@ -75,13 +75,15 @@ def evaluate():
 hist = []
 if a.eval_only:
     r = evaluate(); json.dump(dict(args=vars(a), eval=r), open(os.path.join(out, "eval.json"), "w"), indent=1, ensure_ascii=False); sys.exit(0)
-step = 0; t0 = time.time(); model.train(); acc = {}
+step = 0; micro = 0; t0 = time.time(); model.train(); acc = {}; opt.zero_grad(set_to_none=True)
 while step < a.steps:
     for b in dl:
         with torch.autocast("cuda", dtype=torch.bfloat16):
             loss, parts = model(b["feats"].to(dev), b["ids"].to(dev), b["is_audio"].to(dev), b["chunk_of"].to(dev), b["labels"].to(dev), b["mask"].to(dev))
-        opt.zero_grad(set_to_none=True); loss.backward(); torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0); opt.step(); sched.step(); step += 1
-        for k, v in parts.items(): acc[k] = acc.get(k, 0) + v
+        (loss / a.accum).backward(); micro += 1
+        for k, v in parts.items(): acc[k] = acc.get(k, 0) + v / a.accum
+        if micro % a.accum: continue
+        torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0); opt.step(); sched.step(); opt.zero_grad(set_to_none=True); step += 1
         if step % a.log_every == 0:
             print(f"  step {step}/{a.steps} loss {loss.item():.3f} next {acc['loss_next']/a.log_every:.3f} text {acc['loss_text']/a.log_every:.3f} L {b['ids'].shape[1]} {time.time()-t0:.0f}s", flush=True); acc = {}
         if step % a.eval_every == 0 or step == a.steps:
