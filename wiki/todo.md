@@ -10,8 +10,7 @@
 
 | 상태 | 우선순위 | 마감 | 태스크 |
 |------|----------|------|--------|
-| **doing** | **p0** | 2026-09-25 | [[task-uslm-u05-adapter-bridge]] — USLM U0.5 adapter bridge test — 4 run 완료(최선 oto 18.2–18.8 / 실내 17.5 / 실외 14.5–15.1 %), adapter 병목 아님; 관문 재정의 vs encoder unfreeze 판정 대기 |
-| open | **p0** | 2026-10-16 | [[task-uslm-u1-interleaved-asr]] — USLM U1 — Nemotron frozen + Qwen3-0.6B LoRA interleaved ASR(텍스트 스트림만), WER 상대 열화 ≤10% 관문 |
+| **doing** | **p0** | 2026-10-16 | [[task-uslm-u1-interleaved-asr]] — USLM U1 — Nemotron frozen + Qwen3-0.6B LoRA interleaved ASR(텍스트 스트림만), WER 상대 열화 ≤10% 관문 |
 | **doing** | **p0** | 2026-10-22 | [[task-stage1-encoder-probing]] — frozen encoder 비교 실험 — CPC/WavLM/FastConformer/AuT/DualTurn + random floor, 교란 통제 |
 | open | **p0** | 2026-11-27 | [[task-uslm-u3-multitask]] — USLM U3 — audio-clock 헤드(VAP/τ/VAD)+이벤트 토큰 멀티태스크, 50Hz 사이드 브랜치 하이브리드 ablation, encoder-only probe와 비교(H2) |
 | open | p1 | 2026-09-17 | [[task-secure-english-corpora]] — otoSpeech·CANDOR 라이선스 동의 및 확보, SpokenWOZ 채널 구조 확인 |

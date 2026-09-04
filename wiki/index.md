@@ -42,6 +42,7 @@ _(없음 — 모델·시스템 정보는 현재 `wiki/sources/` 에 통합되어
 - [[question-spokenwoz-channel-structure]] — SpokenWOZ가 화자별 분리 채널로 배포되는지
 
 ## Outputs
+- [[output-uslm-u05-adapter-bridge]] — **U0.5 결과 보고**: 4 run 모두 oto 18–20 / 실내 17–19 / 실외 15–17 % 수렴, adapter 병목 아님, 관문 재정의 후 통과
 - [[output-stage1-encoder-probing]] — Stage 1 frozen probing 잠정 판정: 프레임율 > 인코더, H1 미지지, Qwen 실외 취약
 - [[output-interleaved-streaming-slm-architecture]] — **채택 기본 구조** IS-SLM: 80 ms soft token + `<NEXT_AUDIO>` 가변 방출 + audio-clock 헤드; 말미에 볼트 검토·통합 절
 - [[output-unified-slm-architecture-plan]] — 통합 스트리밍 SLM(합산 융합·시간 동기) 구조 계획 + 12항목 비판 평가 + U0–U4 검증 계획
