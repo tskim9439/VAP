@@ -66,8 +66,8 @@
 
 | 단계 | 내용 | 관문 | 상태 |
 |---|---|---|---|
-| **U0** streamability + 타당성 | encoder truncation audit(완료) · Qwen3 tokenizer 토큰율 → chunk 당 M 예산 · ForcedAligner 정렬·QC · interleaved target 생성기 | — | **착수 대기** (p1, ~09-18) |
-| **U0.5** adapter bridge test | 캐시 특징 증류로 Nemotron→thinker adapter 초기화 → 오프라인 ASR 미세조정 → WER | **≤ +10–15 % vs AuT+thinker / RNN-T** | 대기 (p0, ~09-25) |
+| **U0** streamability + 타당성 | encoder truncation audit(완료) · Qwen3 tokenizer 토큰율 → chunk 당 M 예산 · ForcedAligner 정렬·QC · interleaved target 생성기 | — | **진행 중(09-04)** — 토큰율(KO p99 0.78 tok/80 ms, 폭주 없음)·M=4·생성기 완료; 정렬 aihub-ts01-5 완료, otoSpeech 334/420 |
+| **U0.5** adapter bridge test | 캐시 특징 증류로 Nemotron→thinker adapter 초기화 → 오프라인 ASR 미세조정 → WER | **≤ +10–15 % vs AuT+thinker / RNN-T** | **실험 완료(09-04)** — 최선 oto 18.2–18.8 / 실내 17.5 / 실외 14.5–15.1 %. 관문 원안 부분 미달이나 동일 인코더 RNN-T(25.4 %) 대비 −6 pt → adapter 병목 아님. **판정 대기(관문 재정의 or encoder unfreeze)** |
 | **U1** aligned interleaved ASR | Nemotron frozen + Qwen3-0.6B(LoRA) + adapter, 텍스트 스트림만, 지연 커리큘럼, aux CTC | **WER/CER 상대 열화 ≤ 10 % vs RNN-T** | 대기 (p0, ~10-16) |
 | U2 self-conditioned streaming | self history 혼합, gold/self 격차, corruption 학습, 20–60 s 창 carry | 격차 보고 | 대기 (p1, ~10-30) |
 | **U3** conversational multi-task | audio-clock 헤드 + onset/endpoint/speaker 토큰 + **50 Hz 사이드 브랜치 하이브리드** ablation, encoder-only probe 와 비교(H2) | WER 가드레일 ≤ 5 %, turn·총 RTF | 대기 (p0, ~11-27) |
@@ -133,7 +133,7 @@
 | **p0** | 10-22 | Stage 1 encoder probing — **doing** | 매트릭스 마무리 → seed 반복 · EN-only 학습 조건 · 최종 표·H1 판정 |
 | p1 | 09-17 | 영어 코퍼스 확보 | otoSpeech·TurnBench 완료, **CANDOR·SpokenWOZ 채널 확인 남음** |
 | p1 | 09-18 | **USLM U0** streamability+타당성 — **doing** | 토큰율 ✓(KO 폭주 없음, M=4), 생성기 ✓, ForcedAligner 정렬 실행 중(밤새) |
-| **p0** | 09-25 | **USLM U0.5** adapter bridge test — **doing** | 기준선: 오프라인 Qwen 13.9/13.5/13.3 %, 스트리밍 RNN-T[56,0] 35.8/37.0/34.5 %; random-init 3000 step 18.7/20.6/18.3 %; 증류(cos 0.77) init 6000 step: lr 2e-4 20.0/18.3/16.9 %, **lr 1e-4 18.2/19.2/16.1 %** (수렴 전, 관문 16.0/15.5 미달); random-init 12k 수렴점 **20.1/17.7/16.6 %**(관문 미달, 정체); 증류-init lr 1e-4 12k 진행 중(결정적). 단, adapter+thinker 는 이미 같은 `[56,0]` 인코더의 자체 RNN-T(25.4/23.4/24.5 %)보다 우수 → 관문 정의 재검토 필요(태스크 페이지) |
+| **p0** | 09-25 | **USLM U0.5** adapter bridge test — **doing** | 기준선: 오프라인 Qwen 13.9/13.5/13.3 %, 스트리밍 RNN-T[56,0] 35.8/37.0/34.5 %; random-init 3000 step 18.7/20.6/18.3 %; 증류(cos 0.77) init 6000 step: lr 2e-4 20.0/18.3/16.9 %, **lr 1e-4 18.2/19.2/16.1 %** (수렴 전, 관문 16.0/15.5 미달); random-init 12k **20.1/17.7/16.6 %**, 증류-init 12k **19.3/17.8/15.1 %**(8000 step 18.8/17.5/14.5) — 4 run 모두 oto 18–20 / 실내 17–19 / 실외 15–17 % 수렴, 증류 이득은 잡음 범위. adapter+thinker 는 이미 같은 `[56,0]` 인코더의 자체 RNN-T(25.4/23.4/24.5 %)보다 우수 → 관문 정의 재검토 필요(태스크 페이지) |
 | **p0** | 10-16 | **USLM U1** interleaved ASR | Nemotron frozen + Qwen3-0.6B LoRA, **WER 관문 ≤10 %** |
 | p1 | 10-30 | USLM U2 self-conditioned | gold/self 격차 |
 | **p0** | 11-27 | **USLM U3** 멀티태스크 | 헤드 + 50 Hz 하이브리드 + H2 |

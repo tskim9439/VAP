@@ -1,7 +1,7 @@
 <!-- generated: do not edit -->
 # 인덱스
 
-마지막 생성: 2026-09-03
+마지막 생성: 2026-09-04
 
 각 페이지의 `summary` frontmatter 로부터 생성된다. 직접 편집하지 말고 페이지의
 `summary` 를 고친 뒤 병합 시 재생성한다 (wiki-merge 스킬).
@@ -74,18 +74,18 @@ _(없음)_
 - [[task-korean-benchmark-design]] — 한국어 어노테이션 프로토콜 설계
 - [[task-korean-turn-cue-literature-review]] — 한국어 turn 단서 문헌 조사
 - [[task-latency-quality-curve]] — chunk별 latency-quality 곡선
-- [[task-uslm-feasibility-u0]] — USLM U0: streamability+타당성 (p1)
-- [[task-uslm-u05-adapter-bridge]] — USLM U0.5: Nemotron→thinker adapter bridge test, WER 관문 (p0)
+- [[task-uslm-feasibility-u0]] — USLM U0: 토큰율(KO 폭주 없음)·M=4·생성기 완료, 정렬 진행 중 (p1)
+- [[task-uslm-u05-adapter-bridge]] — USLM U0.5: 4 run 완료, 최선 18.2/17.5/14.5 %, adapter 병목 아님 → 관문 판정 대기 (p0)
 - [[task-uslm-u1-interleaved-asr]] — USLM U1: interleaved ASR, WER 관문 (p0)
 - [[task-uslm-u2-self-conditioned]] — USLM U2: self-conditioned streaming (p1)
 - [[task-uslm-u3-multitask]] — USLM U3: 멀티태스크 헤드 + 하이브리드 + H2 (p0)
-- [[task-qwen-aut-causal-adaptation]] — Qwen AuT causal 적응 연구. 마스크 주입 완료, causal fine-tune 회복 폭이 핵심 (p1)
+- [[task-qwen-aut-causal-adaptation]] — (취소) 최종 backbone 확정으로 주 경로에서 제거; 마스크 주입 코드는 유지
 - [[task-paper1-scoping]] — Paper 1 범위 확정과 아웃라인
 - [[task-reproduce-vap-turnbench-baseline]] — **완료** VAP 재현, dev 0.841/0.045/463 ms
 - [[task-secure-english-corpora]] — otoSpeech·CANDOR 확보
 - [[task-setup-training-environment]] — 컨테이너에 torch·NeMo·transformers 구축, GPU 확인
 - [[task-checkpoint-retention-policy]] — /data4 여유 575G 상황의 체크포인트 보존·정리 규칙
-- [[task-stage1-encoder-probing]] — frozen encoder 비교 실험. Paper 1의 핵심 결과
+- [[task-stage1-encoder-probing]] — frozen encoder 비교 실험(14 run 완료, seed 반복·EN-only·DualTurn 잔여). Paper 1의 핵심 결과
 - [[task-stage2-multitask-vap-with-wer-guardrail]] — (폐기) A 안 전용 → U3
 - [[task-stage3-linguistic-state-fusion]] — (폐기) A 안 전용 → U3
 - [[task-time-to-next-turn-survival-head]] — τ head를 discrete-time hazard로 구현
