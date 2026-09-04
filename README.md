@@ -133,7 +133,7 @@
 | **p0** | 10-22 | Stage 1 encoder probing — **doing** | 매트릭스 마무리 → seed 반복 · EN-only 학습 조건 · 최종 표·H1 판정 |
 | p1 | 09-17 | 영어 코퍼스 확보 | otoSpeech·TurnBench 완료, **CANDOR·SpokenWOZ 채널 확인 남음** |
 | p1 | 09-18 | **USLM U0** streamability+타당성 — **doing** | 토큰율 ✓(KO 폭주 없음, M=4), 생성기 ✓, ForcedAligner 정렬 실행 중(밤새) |
-| **p0** | 09-25 | **USLM U0.5** adapter bridge test — **doing** | 기준선: 오프라인 Qwen 13.9/13.5/13.3 %, 스트리밍 RNN-T[56,0] 35.8/37.0/34.5 %; random-init 3000 step 18.7/20.6/18.3 %; 증류(cos 0.77) init 6000 step: lr 2e-4 20.0/18.3/16.9 %, **lr 1e-4 18.2/19.2/16.1 %** (수렴 전, 관문 16.0/15.5 미달); 12k step run 2 종(random-init → 증류-init) 순차 진행 중 |
+| **p0** | 09-25 | **USLM U0.5** adapter bridge test — **doing** | 기준선: 오프라인 Qwen 13.9/13.5/13.3 %, 스트리밍 RNN-T[56,0] 35.8/37.0/34.5 %; random-init 3000 step 18.7/20.6/18.3 %; 증류(cos 0.77) init 6000 step: lr 2e-4 20.0/18.3/16.9 %, **lr 1e-4 18.2/19.2/16.1 %** (수렴 전, 관문 16.0/15.5 미달); random-init 12k 수렴점 **20.1/17.7/16.6 %**(관문 미달, 정체); 증류-init lr 1e-4 12k 진행 중(결정적). 단, adapter+thinker 는 이미 같은 `[56,0]` 인코더의 자체 RNN-T(25.4/23.4/24.5 %)보다 우수 → 관문 정의 재검토 필요(태스크 페이지) |
 | **p0** | 10-16 | **USLM U1** interleaved ASR | Nemotron frozen + Qwen3-0.6B LoRA, **WER 관문 ≤10 %** |
 | p1 | 10-30 | USLM U2 self-conditioned | gold/self 격차 |
 | **p0** | 11-27 | **USLM U3** 멀티태스크 | 헤드 + 50 Hz 하이브리드 + H2 |
