@@ -1,7 +1,7 @@
 <!-- generated: do not edit -->
 # TODO
 
-마지막 생성: 2026-09-04
+마지막 생성: 2026-09-05
 
 `wiki/tasks/` 의 `open` / `doing` / `blocked` 태스크를 owner 별로 모은 대시보드.
 직접 편집하지 않는다. 단계별 실행 체크리스트는 저장소 루트 `TODO.md` 를 본다.
