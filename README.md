@@ -11,21 +11,31 @@
 
 ## 1. 목표
 
-기존 endpointing(Muse Voice Transcribe 등)은 "**지금** 발화가 끝났는가"를 묻는다. 이 프로젝트는 VAP(Voice Activity Projection)처럼 "**앞으로** 누가 언제 말할 것인가"를 묻되, 그것을 **스트리밍 ASR 과 같은 모델·같은 표현**에서 낸다.
+**Muse Voice Transcribe 와 같은 모델을 직접 만든다.** 하나의 스트리밍 speech LM 이 80 ms 오디오 토큰과 텍스트 토큰을 교차 처리하며 전사·화자·발화 경계를 한 스트림으로 내는 구조다. Muse 는 closed weights·API 전용이라 설계 아이디어만 알려져 있다. 이 프로젝트의 일차 목표는 **그 구조를 한국어·영어에서 실제로 동작하는 공개 구현으로 세우는 것**이고, 가설 검증은 그 위에서 따라온다.
 
-- 사람은 상대 턴이 끝나기 **−151 ms** 전에 이미 움직인다. 최고 성능 VAP 는 **368 ms**(TurnBench test). 이 격차를 줄이는 것이 목표다.
-- 전사와 대화 역학을 따로 돌리는 cascade 가 아니라, **한 모델이 한 번의 계산**으로 둘 다 내야 한다 — 지연·비용·일관성 모두에서 이유가 있다.
-- 최종 산출물: 한국어·영어 대화에 대해 **80 ms 마다** (전사 토큰, 화자, 미래 2 s 활동 확률, 다음 발화 시작까지의 시간 분포)를 내는 단일 체크포인트와, 그것을 재는 평가 프로토콜.
+Muse 와 같은 점과 다른 점:
 
-**검증할 가설** — 각각 하나의 ablation 으로 대응한다.
-
-| | 가설 | 어디서 |
+| | Muse Voice Transcribe | 이 프로젝트 |
 |---|---|---|
-| H1 | ASR 로 사전학습된 스트리밍 표현이 CPC 등 SSL 표현보다 turn-taking 에 유리하다 | Stage 0 probing — **현재까지 지지되지 않음**(프레임율 효과가 더 큼) |
-| H2 | ASR 의 incremental linguistic state 를 음향 VAP 와 결합하면 mid-turn pause 와 true EOT 를 더 잘 가른다 | Stage 3 |
-| H3 | binary EOT 보다 future activity + time-to-next-turn(hazard) joint 예측이 더 빠르면서 FP 가 낮다 | Stage 3–4 |
+| 입력 | mono 스트리밍 오디오 | 같음 — **마이크 하나, 두 화자 혼합** |
+| 구조 | 80 ms soft token + 텍스트 토큰 interleave, 결정 토큰으로 방출 제어 | 같음 — Nemotron `[56,0]` encoder + adapter + Qwen3-ASR thinker(LoRA) |
+| 출력 | 전사 + endpoint("지금 끝났는가") | 전사 + 화자 태그 + endpoint **+ 미래 2 s 투사**(VAP256, next-onset hazard) |
+| 언어 | 영어 중심 | **한국어·영어** |
+| 공개 | closed | 코드·체크포인트·평가 프로토콜 공개 |
 
-경쟁 가설 **DualTurn**(dual-channel 생성형 사전학습, VAP 대비 F1 0.633 vs 0.389)은 필수 baseline 이다.
+**우리가 더하는 것** — VAP(Voice Activity Projection)의 "**앞으로** 누가 언제 말할 것인가"를 같은 hidden 위 헤드로 낸다. 사람은 상대 턴이 끝나기 −151 ms 전에 움직이고 최고 성능 VAP 는 368 ms(TurnBench test)다. Muse 식 endpoint 만으로는 이 격차를 못 줄이므로 미래 투사 헤드가 필요하다.
+
+**최종 산출물** — 한국어·영어 대화 mono 오디오에 대해 **80 ms 마다** (전사 토큰, 화자, endpoint, 미래 2 s 활동 확률, 다음 onset 시간 분포)를 내는 단일 체크포인트와 그것을 재는 평가 프로토콜.
+
+**부수 연구 질문** — 구현이 서면 자연히 답할 수 있는 것들이다. 목표가 아니라 부산물로 다룬다.
+
+| | 질문 | 어디서 |
+|---|---|---|
+| H1 | ASR 사전학습 표현이 SSL(CPC) 표현보다 turn-taking 에 유리한가 | Stage 0 probing — **지지되지 않음**(프레임율 효과가 더 큼). 이미 답이 나온 셈 |
+| H2 | LM 의 linguistic state 가 mid-turn pause 와 true EOT 구분을 돕는가 | Stage 3 — encoder-only probe 와 비교하면 얻어짐 |
+| H3 | future activity + hazard joint 예측이 binary EOT 보다 빠르고 FP 가 낮은가 | Stage 3–4 |
+
+baseline: VAP(oto fine-tune), DualTurn(dual-channel 생성형 사전학습), Nemotron RNN-T(전사), cascade(ASR→LLM endpoint).
 
 ---
 
