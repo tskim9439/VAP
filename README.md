@@ -33,12 +33,14 @@
 
 ### 2.1 시간축에서 본 입출력
 
-두 화자의 오디오가 80 ms chunk 로 들어오고, 모델은 매 chunk 마다 **토큰 0~M 개**(전사·화자·제어)를 내고 `<NEXT_AUDIO>` 로 다음 chunk 를 기다린다. 같은 시점의 hidden 위에서 **audio-clock 헤드**가 미래 2 s 활동과 다음 발화 시작 시각 분포를 낸다.
+입력은 **마이크 하나의 mono 오디오**다 — 두 화자가 한 채널에 섞여 들어온다. 모델은 80 ms chunk 마다 **토큰 0~M 개**(전사·화자·제어)를 내고 `<NEXT_AUDIO>` 로 다음 chunk 를 기다린다. 같은 시점의 hidden 위에서 **audio-clock 헤드**가 두 화자 각각의 미래 2 s 활동과 다음 발화 시작 시각 분포를 낸다. 화자 구분은 별도 모듈이 아니라 **모델이 혼합 신호에서 스스로** 한다.
 
 ```text
 시간 →      0 ms      80       160      240      320      400      480      560   ...
-화자 A  ▁▁▁▁▁▁▁▁▁███████████████████████████████████▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
-화자 B  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁████████████
+입력 (mono) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+             한 채널. 아래 두 줄은 입력이 아니라 "실제로 일어난 일" — 학습 라벨이자 예측 대상
+  (실제) A  ▁▁▁▁▁▁▁▁▁███████████████████████████████████▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+  (실제) B  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁████████████
              │        │        │        │        │        │        │        │
 chunk       [z₀]     [z₁]     [z₂]     [z₃]     [z₄]     [z₅]     [z₆]     [z₇]
              │        │        │        │        │        │        │        │
@@ -52,6 +54,7 @@ VAP 헤드    ──────────────────────
 hazard 헤드  τ(다음 onset 까지) 분포 — 560 ms 이전에 이미 "곧" 으로 수렴
 ```
 
+- **입력은 mono 한 채널.** 코퍼스의 화자별 분리 채널은 (a) 누가 언제 말했는지의 **라벨**과 (b) overlap 비율을 제어한 **혼합 오디오 합성**에만 쓴다. 모델에는 절대 채널별로 넣지 않는다.
 - **전사는 토큰으로**(필요할 때만 방출, 지연 ≈ δ·80 ms + 정렬 오차), **대화 역학은 매 chunk 확률로**. 두 출력 clock 이 다르다.
 - `<NEXT_AUDIO>` 는 RNN-T 의 blank 와 같은 역할이다. 학습 라벨의 70–85 % 가 이것이라 **가중치 보정 없이는 방출이 붕괴**한다(U1 v0 에서 실측).
 - 지연 δ 는 학습 시 무작위화(`<DELAY_d>`)해 추론 시 조절 가능하게 둔다.
@@ -59,9 +62,9 @@ hazard 헤드  τ(다음 onset 까지) 분포 — 560 ms 이전에 이미 "곧" 
 ### 2.2 모델 구조 — IS-SLM (Interleaved Streaming SLM)
 
 ```text
- audio A ─┐  80 ms chunk
- audio B ─┴─→ Nemotron 3.5 FastConformer [56,0]  ─→ adapter ─→ soft token z_k ─┐
-              (causal ≤80 ms · 12.5 Hz · frozen)    (1024-d → thinker 임베딩)    │
+ mono audio ──→ Nemotron 3.5 FastConformer [56,0]  ─→ adapter ─→ soft token z_k ─┐
+ (두 화자 혼합,   (causal ≤80 ms · 12.5 Hz · frozen)    (1024-d → thinker 임베딩)    │
+  80 ms chunk)                                                                   │
                                                                                 │
    ┌────────────────────────────────────────────────────────────────────────────┘
    │
@@ -73,7 +76,7 @@ hazard 헤드  τ(다음 onset 까지) 분포 — 560 ms 이전에 이미 "곧" 
 ```
 
 - **backbone 은 확정**(2026-09-04): Nemotron `[56,0]` encoder + 새 adapter + Qwen3-ASR thinker. AuT 로의 교체 계획 없음 → `decision-asr-backbone`.
-- Muse Voice Transcribe 는 closed weights — 설계 참조 + API black-box 비교 대상. 차별점은 **미래 투사 헤드**와 **두 화자 스트림**.
+- Muse Voice Transcribe 는 closed weights — 설계 참조 + API black-box 비교 대상. 차별점은 **미래 투사 헤드**와 **mono 입력에서의 두 화자 예측**(화자 구분 포함).
 - 기각된 안: 이중 프레임율(50 Hz CPC + 12.5 Hz) + RNN-T 융합. 그 근거(50 Hz 가 타이밍에 유리)는 사이드 브랜치로 흡수.
 - 구조 상세: `wiki/outputs/output-interleaved-streaming-slm-architecture.md`.
 
@@ -88,7 +91,7 @@ hazard 헤드  τ(다음 onset 까지) 분포 — 560 ms 이전에 이미 "곧" 
 | **0** 준비 (완료) | 환경 · causality 감사 · 데이터 검증 · VAP baseline 재현 · 표현 비교 probing · 정렬 · adapter bridge | — | **완료** — H1 미지지, backbone 확정, U0.5 통과 |
 | **1** 단일 화자 스트리밍 ASR **파일럿** | LibriSpeech 100 h + KsponSpeech 100 h 로 `[z_k] → text 0..M → <NEXT_AUDIO>` 시퀀스 자체를 검증. 방출·정렬·지연 파이프라인 탐색 | loss·방출 정상, held-out WER/CER 지속 하락, evidence-time 위반 0 | **다음 실행** (v2 진단 run 종료 후) |
 | **2** 단일 화자 **대규모** ASR | LibriSpeech 960 h + KsponSpeech 965 h → 대화 mono(otoSpeech·AI Hub 분리 채널) 적응 | **WER/CER 상대 열화 ≤ 10 % vs Nemotron RNN-T `[56,0]`** | 계획 |
-| **3** 다화자 대화 — 화자 구분 + turn-taking | 두 채널 → `<SPK_A/B>` → 비중첩 → 실제 overlap 순으로 복잡도 추가. VAP·hazard·VAD 헤드 + onset/endpoint 토큰. H2 판정 | WER 가드레일 ≤ 5 % · TurnBench EOT/INT recall@FP · 화자 귀속 오류 | 계획 (v1/v2 two-speaker 실험은 진단으로 보존) |
+| **3** 다화자 대화 — 화자 구분 + turn-taking | **mono 혼합 입력**에서 비중첩 대화 → `<SPK_A/B>` 화자 태그 → 실제 overlap 순으로 복잡도 추가. VAP·hazard·VAD 헤드 + onset/endpoint 토큰. H2 판정 | WER 가드레일 ≤ 5 % · TurnBench EOT/INT recall@FP · 화자 귀속 오류 | 계획 (두 채널 입력이던 v1/v2 실험은 진단 기록으로만 보존) |
 | **4** 실전 스트리밍 | 자기 이력 조건화(노출 편향) · 지연–정확도 적응 방출 · 장문 KV 요약 · 한국어 벤치마크 · 배포 | gold/self 격차 · WER–delay Pareto · 1 h RTF · p99 tick < 80 ms | 계획 |
 
 **결정 관문(요약)** — 상세는 `PLAN.md` §관문.
@@ -98,7 +101,7 @@ hazard 헤드  τ(다음 onset 까지) 분포 — 560 ms 이전에 이미 "곧" 
 | Lookahead | backbone lookahead > 320 ms | **발동(Qwen AuT)** → Nemotron `[56,0]` 확정 |
 | H1 | probing 에서 기각 | IS-SLM 의 turn 기대치 하향. 정당성은 H2 + 한 모델·공유 계산. 50 Hz 하이브리드 필수 |
 | Stage 2 | WER/CER 열화 > 10 % 또는 evidence-time 위반 | Stage 3 진행 금지. loss weighting·정렬·emission·encoder unfreeze 재설계 |
-| Stage 3 | Stage 2 통과 후 stereo 에서만 실패 | channel merge·speaker token·overlap 직렬화 분리 ablation. 실패 시 구조 재고 |
+| Stage 3 | Stage 2 통과 후 혼합·다화자 입력에서만 실패 | 혼합(비중첩)·speaker token·overlap 직렬화를 분리 ablation. 실패 시 구조 재고 |
 
 ---
 

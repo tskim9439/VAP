@@ -13,7 +13,8 @@
 1. **복잡도를 한 축씩 올린다.** 단일 화자 ASR → 대규모 → 두 채널·화자 태그 → 겹침 → turn-taking 헤드 → 실전 제약. 두 축을 동시에 바꾸지 않는다.
 2. **각 단계는 이전 단계의 체크포인트에서 시작한다.** 새 단계에서 실패하면 그 단계에서 추가한 축만 의심한다.
 3. **관문은 같은 encoder 의 자체 baseline 을 분모로 둔다.** 비인과 오프라인 모델을 인과 스트리밍 모델의 기준으로 쓰지 않는다(U0.5 에서 배운 것).
-4. **공통 불변 설정** — 80 ms causal chunk · Nemotron `[56,0]` frozen · `<NEXT_AUDIO>/<EMPTY_AUDIO>` · `<DELAY_d>` 무작위화 · M=4 · KV cache · committed-prefix decode. 이 설정은 단계가 올라가도 바꾸지 않는다.
+4. **입력은 항상 mono 한 채널이다.** 실제 마이크가 그렇다. 코퍼스의 화자별 분리 채널은 라벨(누가 언제)과 overlap 비율을 제어한 혼합 합성에만 쓰고, 모델에 채널별로 넣지 않는다. 화자 구분(`<SPK_A/B>`)은 모델이 혼합 신호에서 스스로 한다.
+5. **공통 불변 설정** — 80 ms causal chunk · Nemotron `[56,0]` frozen · `<NEXT_AUDIO>/<EMPTY_AUDIO>` · `<DELAY_d>` 무작위화 · M=4 · KV cache · committed-prefix decode. 이 설정은 단계가 올라가도 바꾸지 않는다.
 
 ---
 
@@ -28,9 +29,9 @@
 | 데이터 검증 | AI Hub 분리 stereo · otoSpeech · TurnBench · target 파이프라인(55,139 창) | `output-vap-target-pipeline` |
 | U0 정렬 | ForcedAligner 로 3 코퍼스 전량, M=4·δ=2 QC | `task-uslm-feasibility-u0` |
 | U0.5 adapter bridge | Nemotron→thinker adapter, RNN-T 대비 −6 pt → **통과** | `output-uslm-u05-adapter-bridge` |
-| U1 two-speaker 선행 실험 | v0 방출 붕괴 → v1 next_weight 0.3 으로 해소, 정확도 미달(EN 0.52) → **단일 화자로 회귀 결정** | `task-uslm-u1-interleaved-asr` |
+| U1 two-speaker 선행 실험 | v0 방출 붕괴 → v1 next_weight 0.3 으로 해소, 정확도 미달(EN 0.52) → **단일 화자로 회귀 결정**. 이 실험들은 **두 채널을 따로 넣는 입력**(merge / 화자별 오디오 토큰)이었고, 이 입력 방식은 폐기한다 | `task-uslm-u1-interleaved-asr` |
 
-Stage 0 의 두 결정이 이후를 규정한다: (a) backbone = Nemotron `[56,0]` → adapter → Qwen3-ASR thinker, (b) two-speaker 를 한 번에 풀지 않는다.
+Stage 0 의 세 결정이 이후를 규정한다: (a) backbone = Nemotron `[56,0]` → adapter → Qwen3-ASR thinker, (b) two-speaker 를 한 번에 풀지 않는다, (c) **입력은 mono 한 채널** — 화자별 채널 입력은 쓰지 않는다.
 
 ---
 
@@ -102,17 +103,17 @@ Stage 0 의 두 결정이 이후를 규정한다: (a) backbone = Nemotron `[56,0
 
 ## Stage 3 — 다화자 대화: 화자 구분 + turn-taking
 
-**목표** — Stage 2 체크포인트에 **대화의 축**을 하나씩 더한다: 두 채널 → 화자 태그(경량 diarization) → 비중첩 대화 → 실제 overlap → turn-taking 헤드. 마지막에 H2 를 판정한다.
+**목표** — Stage 2 체크포인트에 **대화의 축**을 하나씩 더한다: mono 혼합(비중첩) → 화자 태그(= 혼합 신호에서의 diarization) → 실제 overlap → turn-taking 헤드. 마지막에 H2 를 판정한다.
 
-**학습 DB** — otoSpeech(EN, 104.9 h) · AI Hub 성인 TS_01_5 실내 196.6 h + VS_02 실외 51.7 h(KO) · TurnBench dev(평가 전용). 모두 화자별 분리 채널. target(VAP256·hazard·이벤트)은 `vapasr/data/targets.py` 로 이미 생성돼 있다(55,139 창).
+**학습 DB** — otoSpeech(EN, 104.9 h) · AI Hub 성인 TS_01_5 실내 196.6 h + VS_02 실외 51.7 h(KO) · TurnBench dev(평가 전용). 모두 화자별 분리 채널로 배포되지만 **모델 입력은 두 채널을 합산한 mono 혼합**(원 녹음에 혼합 채널이 있으면 그것)이다. 분리 채널은 (a) 화자별 VAD·ForcedAligner 정렬 → `<SPK_A/B>`·VAP256·hazard 라벨, (b) 3-1 에서 overlap 을 제외한 혼합, 3-3 에서 overlap 비율 제어에 쓴다. target 은 `vapasr/data/targets.py` 로 이미 생성돼 있다(55,139 창).
 
 **하위 단계와 추가하는 축**
 
 | 하위 | 추가하는 것 | 데이터 처리 | 관문 |
 |---|---|---|---|
-| 3-1 두 채널 | 화자별 오디오 토큰(chunk 당 A·B 2 개, merge 없음 — v2 진단 결과로 확정) | 비중첩 구간만 | Stage 2 관문 유지 |
-| 3-2 화자 태그 | `<SPK_A/B>` 방출 (**diarization 은 별도 모듈이 아니라 이 토큰이다**) | 〃 | 화자 귀속 오류율 보고, WER 유지 |
-| 3-3 overlap | 겹침 직렬화 규약, backlog 관리 | 실제 overlap 포함 | WER 유지 + backlog p99 보고 |
+| 3-1 mono 혼합 대화 | 두 화자를 한 채널로 합산한 입력. 화자 태그 없이 **전사만** — 화자가 바뀌어도 한 스트림으로 이어 쓴다 | 비중첩 구간만(분리 채널로 overlap 제외) | Stage 2 관문 유지 |
+| 3-2 화자 태그 | `<SPK_A/B>` 방출 (**diarization 은 별도 모듈이 아니라 이 토큰이다** — 혼합 신호에서 모델이 스스로 가른다) | 〃 | 화자 귀속 오류율 보고, WER 유지 |
+| 3-3 overlap | 겹침 직렬화 규약, backlog 관리 | 실제 overlap 포함(비율은 분리 채널로 제어해 점증) | WER 유지 + backlog p99 보고 |
 | 3-4 turn-taking 헤드 | VAP256 · next-onset hazard τ · VAD 헤드 + `<SPEECH_ONSET|ENDPOINT>` 토큰 | 전체 | 아래 turn 평가 |
 | 3-5 하이브리드 ablation | 50 Hz CPC 사이드 브랜치 (Stage 0 의 프레임율 결과 흡수) | 〃 | 3-4 대비 EOT/INT 개선 여부 |
 
@@ -127,7 +128,7 @@ Stage 0 의 두 결정이 이후를 규정한다: (a) backbone = Nemotron `[56,0
 
 **H2 판정** — "IS-SLM 상태 위 헤드" 가 "같은 encoder 의 encoder-only probe" 보다 EOT/INT 에서 유의하게 나으면 지지. 아니면 통합의 가치는 시스템 이점(한 모델·공유 계산)으로 제한된다.
 
-**실패 시** — stereo 에서만 실패하면 3-1~3-3 을 분리 ablation(어느 축이 깨뜨리는지). turn 헤드에서 실패하면 손실 가중·헤드 구조·50 Hz 하이브리드 순으로. Stage 2 결과를 건드리지 않는다.
+**실패 시** — 혼합·다화자 입력에서만 실패하면 3-1~3-3 을 분리 ablation(혼합 자체인지, 화자 태그인지, overlap 인지). turn 헤드에서 실패하면 손실 가중·헤드 구조·50 Hz 하이브리드 순으로. Stage 2 결과를 건드리지 않는다.
 
 **태스크** — `task-uslm-u1-interleaved-asr`(U1b/c) · `task-uslm-u3-multitask` · `task-add-missing-baselines` · `task-time-to-next-turn-survival-head` · `task-event-label-heuristics-validation`
 
@@ -158,7 +159,7 @@ Stage 0 의 두 결정이 이후를 규정한다: (a) backbone = Nemotron `[56,0
 | U0.5 | adapter 가 RNN-T 보다 나쁨 | **통과** |
 | Stage 1 | 방출·정렬·지연 비정상 | Stage 2 금지, 시퀀스 재설계 |
 | Stage 2 | WER/CER 열화 > 10 % 또는 evidence 위반 | Stage 3 금지, 한 차례 재설계 후 구조 재고 |
-| Stage 3 | stereo 에서만 실패 / turn 헤드 실패 | 축 분리 ablation / 헤드 재설계 |
+| Stage 3 | 혼합 입력에서만 실패 / turn 헤드 실패 | 혼합·화자 태그·overlap 분리 ablation / 헤드 재설계 |
 | AI Hub 약관 | 어노테이션 파생물 공개 불가 | 한국어 기여를 내부 평가로 격하 (**약관 원문 확인 미완**) |
 | 디스크 | rack4 /data4 < 200 G | 체크포인트 정리 → mxc Lustre 로 이전 검토 |
 
@@ -170,8 +171,8 @@ Stage 0 의 두 결정이 이후를 규정한다: (a) backbone = Nemotron `[56,0
 |---|---|---|---|---|---|
 | LibriSpeech | EN | 960 h (+dev/test) | 낭독, mono, jsonl 동봉 | 1, 2 | mxc `$MXC_LIBRISPEECH_DIR` |
 | KsponSpeech | KO | 965 h (+eval) | 자유대화 **발화 단위**, mono | 1, 2 | mxc `$MXC_KSPONSPEECH_DIR` |
-| otoSpeech | EN | 104.9 h | 대화, 화자별 채널 | 2-2, 3 | rack4 `/data3/tskim/corpora` |
-| AI Hub 성인 TS_01_5 / VS_02 | KO | 196.6 / 51.7 h | 대화, 분리 stereo, 실내/실외 | 2-2, 3, 4-5 | rack4 (성인 전체 2,765 h 수신 가능) |
+| otoSpeech | EN | 104.9 h | 대화, 화자별 분리 채널 → **입력은 합산 mono**, 분리 채널은 라벨·혼합 제어용 | 2-2, 3 | rack4 `/data3/tskim/corpora` |
+| AI Hub 성인 TS_01_5 / VS_02 | KO | 196.6 / 51.7 h | 대화, 분리 stereo → 〃, 실내/실외 | 2-2, 3, 4-5 | rack4 (성인 전체 2,765 h 수신 가능) |
 | TurnBench dev / test | EN | 7.3 h / 116 대화 | 평가 전용, gold EOT/INT | 3 | rack4 |
 | 특징 캐시 · 정렬 | — | 447 GB · 3 코퍼스 | Stage 0 산출물 | 2-2 부터 재사용 | rack4 → mxc 전송 필요 |
 
