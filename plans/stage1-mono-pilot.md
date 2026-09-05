@@ -274,3 +274,4 @@ Nemotron 3.5 FastConformer [56,0]  frozen, 캐시 특징 (1024-d, 12.5 Hz)
 | KsponSpeech 스트림이 짧음(평균 5.6 s) | 긴 문맥 동작을 KO 로는 못 봄 | 긴 스트림 검증은 LibriSpeech 담당. KO 긴 스트림은 Stage 2-2(AI Hub 대화 mono)에서 |
 | 한국어 자발 발화 정렬 품질(간투사·반복) | evidence 위반이 정렬 오차로 오염 | `viol`(< 0) 1 % 허용 + `viol_80ms` = 0 이중 기준 |
 | 공용 GPU 점유 | run 지연 | 자동 선택 + bg 실행, 2 GPU 이상은 잡지 않는다 |
+| transformers 4.57 의 "incorrect regex pattern" 토크나이저 경고 | 정렬·학습 토큰이 원본과 다르면 LM 사전지식 상실 | **해소(2026-09-05)**: `experiments/s1_tok_check.py` — 로컬 dir 기본 / `fix_mistral_regex=True` / 허브 원본 / qwen_asr processor 네 방식이 EN 150 + KO 150 문장에서 **id 완전 일치**, round-trip 불일치 0. 경고는 이 토크나이저에 해당 없는 오탐 |
