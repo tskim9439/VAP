@@ -172,7 +172,7 @@ hazard 헤드  τ(다음 onset 까지) 분포 — 560 ms 이전에 이미 "곧" 
 
 ## 7. 문서 지도
 
-- **계획**: [`PLAN.md`](PLAN.md)(단계별 실행 계획) · `wiki/outputs/output-interleaved-streaming-slm-architecture`(구조) · `output-streaming-vap-research-plan`(연구 계획 v2)
+- **계획**: [`PLAN.md`](PLAN.md)(단계별 실행 계획) · [`plans/stage1-mono-pilot.md`](plans/stage1-mono-pilot.md)(Stage 1 실행 계획서) · `wiki/outputs/output-interleaved-streaming-slm-architecture`(구조) · `output-streaming-vap-research-plan`(연구 계획 v2)
 - **결정**: `wiki/decisions/decision-asr-backbone` · `decision-target-architecture` · `decision-compute-environment` · `decision-korean-benchmark-release-scope`
 - **결과**: `output-stage1-encoder-probing` · `output-uslm-u05-adapter-bridge` · `output-encoder-causality-audit` · `output-vap-turnbench-baseline-reproduction` · `output-feature-cache-and-compute-budget`
 - **개념**: `voice-activity-projection` · `streaming-causality-and-latency-budget` · `turn-taking-objectives` · `turn-taking-evaluation-protocol` · `acoustic-linguistic-fusion` · `korean-turn-taking-cues`

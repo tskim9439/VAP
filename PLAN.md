@@ -37,6 +37,8 @@ Stage 0 의 세 결정이 이후를 규정한다: (a) backbone = Nemotron `[56,0
 
 ## Stage 1 — 단일 화자 스트리밍 ASR 파일럿 (모델 시퀀스 탐색)
 
+> **실행 계획서: [`plans/stage1-mono-pilot.md`](plans/stage1-mono-pilot.md)** — 데이터 구성(스트림 생성·정규화·파이프라인), 입력 시퀀스 규약, 학습 설정, 평가 지표와 통과 기준, 실행 순서.
+
 **목표** — `[z_k] → text 0..M → <NEXT_AUDIO>` 라는 **시퀀스 자체**가 학습 가능한지, 방출 결정·정렬·지연 파이프라인이 설계대로 동작하는지 작은 데이터로 빠르게 확인한다. 성능이 아니라 **동작의 정상성**을 본다.
 
 **학습 DB**
@@ -54,7 +56,7 @@ Stage 0 의 세 결정이 이후를 규정한다: (a) backbone = Nemotron `[56,0
 
 | 지표 | 데이터 | 기준 |
 |---|---|---|
-| WER / CER | LibriSpeech `dev-clean`·`dev-other`, KsponSpeech `eval_clean`·`eval_other` | 학습 진행에 따라 **지속 하락**(절대값 관문 없음) |
+| WER / CER | 선택: LibriSpeech `dev-clean`·`dev-other`, KsponSpeech `dev` · **보고: LibriSpeech `test-clean`·`test-other`, KsponSpeech `eval_clean`·`eval_other`** (스트림 + 발화 단위) | 학습 진행에 따라 **지속 하락**(절대값 관문 없음). 같은 세트에서 Nemotron RNN-T `[56,0]` 대비 상대 열화 추적 |
 | 방출 건강도 | held-out 스트림 | tok/chunk 가 참조 토큰율(EN·KO 각각)에 수렴, `<NEXT_AUDIO>` 지배 없음, M 강제 비율 < 5 % |
 | 지연 | 정렬 종료 시각 대비 | p50 ≈ δ·80 ms + 정렬 오차, **evidence-time 위반 0** |
 | 속도 | 스트리밍 디코드 | p99 tick < 80 ms |
