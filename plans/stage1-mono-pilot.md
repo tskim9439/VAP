@@ -152,7 +152,7 @@ Nemotron 3.5 FastConformer [56,0]  frozen, 캐시 특징 (1024-d, 12.5 Hz)
 |---|---|
 | 초기화 | **전부 random init.** 기존 U0.5 체크포인트는 쓰지 않는다 — 대화 코퍼스·두 채널 입력 규약·다른 방출 목적에 맞춰진 task-specific 파라미터라 재사용 이익보다 해석 혼선이 크다. 기반 모델(Nemotron, Qwen3-ASR thinker)만 공유 |
 | 학습 파라미터 | adapter ≈ 4.2 M + LoRA 14.3 M + 특수 토큰 행 ≈ **18.5 M** (thinker 본체 0.6 B frozen) |
-| 12.5 → 13 Hz 리샘플 | nearest 로 13 Hz 로 맞춘다(thinker 가 AuT 의 13 Hz 임베딩으로 학습됨). 12.5 Hz 그대로는 ablation |
+| 프레임율 | **12.5 Hz 그대로** — chunk 1 개 = Nemotron 프레임 1 개 = 오디오 토큰 1 개. (U0.5 의 13 Hz 리샘플은 오프라인 ASR 용이었고 interleave 에는 적용하지 않는다; U1 코드도 12.5 Hz) |
 | 정밀도 | bf16 autocast, logits fp32 |
 | 대조군 (같은 세트에서 미리 잰다) | ① Nemotron RNN-T `[56,0]` 80 ms 스트리밍 — **관문 분모** ② Qwen3-ASR 오프라인(`$MXC_QWEN_ASR_DIR`) — 참고선 ③ (있으면) Nemotron 모델 카드의 LibriSpeech 수치 |
 
