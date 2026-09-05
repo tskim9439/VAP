@@ -2,10 +2,11 @@
 type: output
 status: active
 created: 2026-09-05
-updated: 2026-09-05
-summary: Stage 1 단일 화자 mono 스트리밍 ASR 파일럿의 데이터 준비·overfit·타이밍 판정을 누적하는 실행 보고서
+updated: 2026-09-06
+summary: Stage 1 mono 스트리밍 ASR은 @900 overfit 기능 관문을 통과했고 새 정규화·정렬 규약 재검증을 대기 중
 sources:
   - [[source-stage1-mono-overfit-600-timing]]
+  - [[source-stage1-mono-overfit-1500]]
   - [[source-asr-output-style-probe]]
   - [[decision-mono-input]]
   - [[decision-asr-backbone]]
@@ -30,36 +31,34 @@ Nemotron `[56,0]`의 80 ms mono 특징을 adapter로 Qwen3-ASR thinker에 넣고
 |---:|---:|---:|---:|---:|---|
 | 300 | 0.364 | 0.917 | — | 0.141 | EN·KO 내용 미수렴, 특히 EN 방출률 부족 |
 | 600 | 0.000 | 0.141 | 0.267 / 참조 0.267 | 0.211 / 참조 0.218 | 두 언어의 방출률과 중심 지연 학습 |
+| 900 | 0.000 | 0.000 | 0.267 / 참조 0.267 | 0.218 / 참조 0.218 | 기능 관문 전 항목 통과 |
+| 1200 | 0.000 | 0.000 | 0.267 / 참조 0.267 | 0.218 / 참조 0.218 | @900 결과 유지 |
+| 1500 | 0.000 | 0.000 | 0.267 / 참조 0.267 | 0.218 / 참조 0.218 | @900 결과 유지 |
 
-@600 결과는 [[source-stage1-mono-overfit-600-timing]]에 상세히 기록한다.
+@600 중간 결과는 [[source-stage1-mono-overfit-600-timing]], 최종 결과는
+[[source-stage1-mono-overfit-1500]]에 기록한다.
 
-## @600 타이밍 잠정 판정
+## @1500 기능 관문 판정
 
-- **KO: 학습 가능성 관문 통과.** 418개 매칭 토큰 모두 증거 뒤에 방출됐고,
-  p50 189 ms는 설계값 160 ms에 정렬 오차 약 30 ms를 더한 위치다.
-- **EN: 중심 지연은 통과, evidence-time 꼬리는 보류.** p50/p90은 201/227 ms로
-  KO와 같지만 `viol80=7.3%`다. @300의 76%보다 빠르게 감소 중이므로 @900–1500에서
-  WER과 함께 0으로 수렴하는지 본다.
-- **실시간 deadline은 미통과.** tick p99가 KO 186 ms, EN 151 ms로 80 ms보다 크다.
-  이는 학습 가능성 판정과 분리해 기록하되 배포 전 해결해야 하는 구조적 병목이다.
+- **EN·KO 내용과 방출 타이밍 통과.** @900부터 WER/CER와 `viol80`이 모두 0이고
+  tok/chunk가 참조율과 정확히 같으며 M 강제는 없다. @1500까지 변화 없이 유지됐다.
+- **지연 설계 일치.** @1500 EN p50/p90/p99는 201/231/240 ms, KO는
+  189/232/312 ms로 `delta=2` 설계값 160 ms와 정렬 오차 위에 모였다.
+- **@600 EN 꼬리 해소.** WER 14.1%일 때의 `viol80=7.3%`는 내용 수렴과 함께
+  @900에서 0이 됐고 이후 재발하지 않았다.
+- **실시간성은 별도 미통과.** 경합 전 decoder-only tick p99 151–186 ms가 이미
+  80 ms보다 크다. @1200 이후 679–755 ms는 GPU 경합으로 오염돼 속도 판정에서 제외한다.
 
 KO 분포는 음향 증거를 따라 방출한 결과와 일치하지만 고정 16개 overfit만으로 이를
 증명하지는 못한다. 같은 발화 앞에 0.4–1.6초 무음을 추가했을 때 방출 chunk도 정확히
 그만큼 이동하는 leading-silence shift test로 절대 위치 암기를 배제한다.
 
-## EN `viol80` 판정 절차
+## EN `viol80` 판정 결과
 
-@900–1500에서 단순 비율만 보지 않고 다음 순서로 판단한다.
-
-1. 위반 토큰별로 발화 ID, 토큰, 앞뒤 문맥, 참조 종료시각, 방출 chunk를 덤프한다.
-2. 참조·가설에서 한 번만 나오는 토큰 또는 주변 n-gram이 고유한 토큰의 위반율을
-   따로 낸다.
-3. 반복 토큰의 모호한 대응과 ForcedAligner 오류를 분리한다.
-4. WER이 0에 가까운 표본에서도 `viol80`이 남으면 실제 조기 방출로 판정한다.
-
-이 절차는 매칭 방식을 지연값에 맞춰 고르는 것을 피한다. 시간에 유리한 참조 위치로
-재매칭하면 실제 위반을 숨길 수 있으므로, 원 단조 매칭 수치와 고유 문맥 감사 수치를
-둘 다 보존한다.
+@900에서 EN WER과 `viol80`이 동시에 0이 됐고 @1500까지 유지됐다. 따라서 현재
+overfit 관문을 막는 evidence-time 문제는 해소됐다. 반복 토큰의 `difflib` 모호성은
+dev에서 WER이 남아 있을 때 다시 나타날 수 있으므로, dev 평가에서 `viol80>0`이면
+위반 토큰의 발화 ID·문맥·참조 시각·방출 chunk를 덤프해 감사한다.
 
 ## 실시간성 보강 지표
 
@@ -88,10 +87,15 @@ fusion을 먼저 구현·측정하고, 그 다음 CUDA graph·fused runtime을 �
 
 ## 다음 판정 순서
 
-1. 기존 overfit의 @900/@1200/@1500에서 EN WER·`viol80` 추세 확인.
-2. KO·EN overfit 표본의 leading-silence shift test로 방출의 음향 의존성 확인.
-3. deferred `<NEXT_AUDIO>`+다음 audio 2-token forward로 decoder 호출 수를 줄여 tick 재측정.
-4. 새 KsponSpeech 발음형 manifest·`align2/`의 QC 완료.
-5. 새 규약 데이터로 overfit을 다시 실행해 내용·타이밍 재현.
-6. Qwen 오프라인과 Nemotron RNN-T `[56,0]` 대조군 측정.
-7. 6,000-step 파일럿 진행.
+1. 새 KsponSpeech 발음형 manifest·LibriSpeech `align2/` 완료를 대기한다.
+2. `overfit-v2`가 선택한 ID를 기록하고 KO 구규약 대비 변경 표본 수와 EN 다중발화
+   경계 검사 수가 각각 1 이상인지 확인한다. 0이면 표적 회귀 표본을 따로 만든다.
+3. 새 규약 `overfit-v2`를 900 step 실행해 KO 숫자 읽기와 EN 발화 경계를 재검증한다.
+4. 결과가 같으면 Qwen 오프라인과 Nemotron RNN-T `[56,0]` 대조군을 측정한다.
+5. 6,000-step 파일럿을 진행한다.
+6. 최종 체크포인트에서 한가한 GPU로 decoder-only 및 end-to-end tick을 단독 측정한다.
+7. 필요하면 deferred `<NEXT_AUDIO>`+다음 audio forward, CUDA graph 순으로 최적화한다.
+
+leading-silence shift test는 overfit의 절대 위치 암기를 구분하는 유용한 보강 검사지만,
+새 규약 overfit과 dev 일반화 평가가 이어지므로 6,000-step 착수의 필수 차단 조건으로
+두지는 않는다.
