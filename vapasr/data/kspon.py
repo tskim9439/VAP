@@ -14,9 +14,15 @@ NOISE = re.compile(r"(?<!\S)[blonu]/(?!\S)")               # 단독 표지
 FILLER = re.compile(r"(\S+?)/(?=\s|$)")                     # 아/ 그/ → 단어 유지
 PUNCT = re.compile(r"(?<!\d)[.,](?!\d)|(?<=\d)[.,](?!\d)|(?<!\d)[.,](?=\d)|[?!]")   # 숫자 사이의 . , (0.1, 1,000) 는 남긴다
 
-def normalize_kspon(raw: str, form: str = "spelling") -> str:
-    """form: spelling(왼쪽 철자형, 기본) | pron(오른쪽 발음형, 참고용)."""
-    s = DUAL.sub(lambda m: m.group(1) if form == "spelling" else m.group(2), raw)
+def normalize_kspon(raw: str, form: str = "auto") -> str:
+    """form: auto(기본) — 숫자·라틴을 포함한 이중표기는 발음형, 나머지는 철자형 → 한글 전용(Qwen3-ASR·Nemotron 출력 규약과 동일, 2026-09-05 실측)
+             spelling — 항상 왼쪽 철자형 | pron — 항상 오른쪽 발음형."""
+    def pick(m):
+        a, b = m.group(1), m.group(2)
+        if form == "spelling": return a
+        if form == "pron": return b
+        return b if re.search(r"[0-9A-Za-z]", a) else a
+    s = DUAL.sub(pick, raw)
     s = NOISE.sub(" ", s); s = PUNCT.sub("", s)                  # 구두점을 먼저 지워야 '뭐/.' 의 표지가 잡힌다
     s = FILLER.sub(r"\1", s); s = s.replace("+", "").replace("*", "")
     return re.sub(r"\s+", " ", s).strip()

@@ -29,7 +29,7 @@ if "CUDA_VISIBLE_DEVICES" not in os.environ:
         a.gpu = str(max([[int(v) for v in l.split(",")] for l in q.stdout.strip().splitlines()], key=lambda r: r[2] - r[1])[0])
     os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import numpy as np, torch, torch.nn as nn, jiwer
-from vapasr.uslm.data import normalize_text, _TAG, _PUNCT
+from vapasr.data.textnorm import score_en, score_ko        # 채점 정규화 — 타깃 규약과 동일, 대조군 출력에도 같은 규칙
 from vapasr.uslm.mono_data import MonoStreamDataset, BucketBatchSampler, collate_streams, CHUNK_S
 from vapasr.uslm.mono_model import MonoInterleavedASR
 from vapasr.uslm.model import Adapter
@@ -65,9 +65,6 @@ n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad) - model._em
 print(f"trainable {n_tr/1e6:.1f}M (random init: adapter + LoRA r{a.lora_r} + 특수 토큰 행 {len(model.special_rows)})", flush=True)
 
 # ───────────────────────────── 평가 ─────────────────────────────
-def norm_ko(t, spaces: bool):
-    t = _TAG.sub(" ", t); t = unicodedata.normalize("NFKC", t).lower(); t = _PUNCT.sub(" ", t); t = re.sub(r"\s+", " ", t).strip()
-    return t if spaces else t.replace(" ", "")
 def latency_stats(hyp, ref):
     h_ids = [t for _, t in hyp]; r_ids = [t for t, _ in ref]; lat = []
     for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, h_ids, r_ids, autojunk=False).get_opcodes():
@@ -90,9 +87,9 @@ def eval_set(ds, bias, delay):
              tok_per_chunk=n_tok / max(1, chunks), ref_per_chunk=n_ref / max(1, chunks), forced_frac=forced / max(1, chunks), backlog_p99=pct(np.array(backlog), 99),
              flush_rounds_mean=float(np.mean(rounds)) if rounds else None, tick_ms_p50=pct(ticks, 50), tick_ms_p99=pct(ticks, 99), example=(R[0][:60], H[0][:60]) if R else None)
     if lang == "Korean":
-        r["cer_official"] = jiwer.cer([norm_ko(x, True) for x in R], [norm_ko(x, True) for x in H]); r["cer_nospace"] = jiwer.cer([norm_ko(x, False) for x in R], [norm_ko(x, False) for x in H]); r["err"] = r["cer_nospace"]
+        r["cer_official"] = jiwer.cer([score_ko(x, True) for x in R], [score_ko(x, True) for x in H]); r["cer_nospace"] = jiwer.cer([score_ko(x, False) for x in R], [score_ko(x, False) for x in H]); r["err"] = r["cer_nospace"]
     else:
-        r["wer"] = jiwer.wer([normalize_text(x, "English") for x in R], [normalize_text(x, "English") for x in H]); r["err"] = r["wer"]
+        r["wer"] = jiwer.wer([score_en(x) for x in R], [score_en(x) for x in H]); r["err"] = r["wer"]
     return r
 
 def evaluate(sets, biases, delay, label):

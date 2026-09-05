@@ -15,7 +15,8 @@ import os, sys, json, glob, random, argparse, collections
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from vapasr.data.kspon import read_trn, normalize_kspon, resolve_path, pcm_duration
+from vapasr.data.kspon import read_trn, resolve_path, pcm_duration
+from vapasr.data.textnorm import target_en, target_ko          # 모든 코퍼스의 타깃 텍스트는 여기서 한 규약으로
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--kspon-root", default=os.environ.get("MXC_KSPONSPEECH_DIR", os.environ.get("KSPONSPEECH_DIR")))
@@ -46,7 +47,7 @@ def libri_utts(split):
         spk, chap = tp.split(os.sep)[-3:-1]
         for line in open(tp):
             uid, txt = line.rstrip("\n").split(" ", 1)
-            utts.append(dict(utt_id=uid, speaker=spk, chapter=chap, path=os.path.join(root, spk, chap, uid + ".flac"), text=txt.lower().strip()))
+            utts.append(dict(utt_id=uid, speaker=spk, chapter=chap, path=os.path.join(root, spk, chap, uid + ".flac"), text=target_en(txt)))
     import soundfile as sf
     with ThreadPoolExecutor(a.workers) as ex:
         for u, d in zip(utts, ex.map(lambda u: sf.info(u["path"]).duration, utts)): u["dur_s"] = round(float(d), 3)
@@ -94,7 +95,7 @@ def kspon_utts(trn_name, subset):
             if parts[0] != "KsponSpeech_01" or not (lo <= int(parts[1].split("_")[1]) <= hi): continue
         p = resolve_path(a.kspon_root, rel)
         if p is None: st["missing"] += 1; continue
-        txt = normalize_kspon(raw)
+        txt = target_ko(raw, "kspon")
         if not txt: st["empty_text"] += 1; continue
         out.append(dict(utt_id=os.path.splitext(os.path.basename(rel))[0], rel=rel, path=p, raw=raw, text=txt, speaker=None, chapter=None)); st["kept"] += 1
     with ThreadPoolExecutor(a.workers) as ex:
