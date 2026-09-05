@@ -49,9 +49,23 @@ def make_sets(spec, cap_stream, cap_utt, seed=1):
     return {lab: MonoStreamDataset([m], tok, mode=mode, subsets=[sub], delays=(a.eval_delay,), max_per_chunk=a.M, seed=seed, max_items=(cap_stream if mode == "stream" else cap_utt))
             for lab, m, sub, mode in spec}
 training = not (a.eval_only or a.final or a.select)
-train_ds = {m: MonoStreamDataset([m], tok, mode="stream", delays=delays, max_per_chunk=a.M, seed=a.seed, max_items=(a.overfit or None)) for m in a.train.split(",")} if training else {}
-if a.overfit:   # 같은 표본으로 학습·디코드. 타깃 보존 assert.
+train_ds = {m: MonoStreamDataset([m], tok, mode="stream", delays=delays, max_per_chunk=a.M, seed=a.seed) for m in a.train.split(",")} if training else {}
+if a.overfit:   # 같은 표본으로 학습·디코드. 표적 사례(KO 숫자·라틴 이중표기 / EN 발화 경계)를 절반 이상 포함시키고 ID·커버리지를 출력. 타깃 보존 assert.
+    from vapasr.data.kspon import read_trn, DUAL
+    MANROOT = os.environ.get("MXC_DATA_MANIFEST_DIR", os.environ.get("DATA_MANIFEST_DIR", "/tmp"))
     for m, ds in train_ds.items():
+        rows = {}
+        for l in open(os.path.join(MANROOT, m, "streams.jsonl"), encoding="utf-8"): r = json.loads(l); rows[r["id"]] = r
+        if m.startswith("kspon"):
+            raw = {os.path.splitext(os.path.basename(rel))[0]: t for rel, t in read_trn(os.path.join(os.environ["MXC_KSPONSPEECH_DIR"], "train.trn"))}
+            flag = lambda it: any(re.search(r"[0-9A-Za-z]", x) for x, _ in DUAL.findall(raw.get(rows[it["id"]]["segments"][0]["utt_id"], ""))); label = "숫자·라틴 이중표기→발음형"
+        else:
+            flag = lambda it: rows[it["id"]]["n_utts"] >= 2; label = "발화 경계(선행 공백)"
+        tgt = [it for it in ds.items if flag(it)]; rest = [it for it in ds.items if not flag(it)]     # ds.items 는 seed 셔플 순서 → 결정적
+        n_t = min(len(tgt), max(a.overfit // 2, 1)); ds.items = (tgt[:n_t] + rest[: a.overfit - n_t])[: a.overfit]
+        cov = sum(flag(it) for it in ds.items); assert cov > 0, f"{m}: 표적 사례({label})가 표본에 없음 — 별도 회귀 표본 필요"
+        print(f"overfit 표본 {m}: {len(ds.items)} 개 · {label} {cov} 개 (후보 {len(tgt)}/{len(tgt)+len(rest)})\n  ids: {[it['id'] for it in ds.items]}", flush=True)
+        for it in ds.items[:2] if flag(ds.items[0]) else []: print(f"  예: {it['id']} → {it['text'][:70]}", flush=True)
         assert all(ds.check_targets(i, 2) for i in range(len(ds))), f"{m}: 시퀀스 라벨이 참조 토큰열과 다름 (flush/이월 규약 오류)"
     dev_sets = {f"overfit/{m}": ds for m, ds in train_ds.items()}; print(f"overfit: 타깃 보존 OK, " + ", ".join(f"{m}:{len(ds)}" for m, ds in train_ds.items()), flush=True)
 else:
