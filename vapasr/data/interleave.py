@@ -39,6 +39,8 @@ def build_interleaved(streams: List[List[Tuple[int, float]]], duration_s: float,
         st.overflow_tokens += len(backlog); st.max_backlog = max(st.max_backlog, len(backlog)); st.extra_delay_frames += len(backlog)
         st.per_chunk_hist[n_txt] = st.per_chunk_hist.get(n_txt, 0) + 1
         emit.append(sp.next_audio); out.append((k, emit))
-    if backlog:   # 스트림 종료: EMPTY_AUDIO 뒤 flush
+    backlog += buckets[n_chunks]   # δ 때문에 스트림 끝을 넘긴 토큰 — 이전에는 여기서 조용히 버려졌다(2026-09-05 수정)
+    if backlog:   # 스트림 종료: 남은 토큰 flush (mono 경로는 <EMPTY_AUDIO> 입력 라운드로 다시 나눈다 — uslm/mono_data.build_mono_sequence)
+        st.tokens += len(backlog); st.overflow_tokens += len(buckets[n_chunks])
         out.append((n_chunks, [tid for _, _, tid in sorted(backlog)] + [sp.empty_audio]))
     return out, st
