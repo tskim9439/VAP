@@ -44,7 +44,7 @@
 | LibriSpeech `test-clean` / `test-other` | **보고** EN (최종 1 회) | 5.4 / 5.1 h | 2,620 / 2,939 | 〃 |
 | KsponSpeech `KsponSpeech_01/KsponSpeech_0001 ~ 0062` | 학습 KO | ~100 h (manifest 에서 실측) | 62,000 | **raw PCM** 16 kHz·16-bit LE·mono·headerless, `train.trn` (`경로 :: 전사`) |
 | KsponSpeech `dev.trn` | **선택** KO | ~4 h | 2,545 | 〃 |
-| KsponSpeech `eval_clean` / `eval_other` | **보고** KO (최종 1 회) | ~3.5 / 3.5 h | 3,000 / 3,000 | 〃 (`.wav` 도 RIFF 헤더 없는 raw PCM) |
+| KsponSpeech `eval_clean` / **`eval_other-partial[E03314–E06000, n=2687]`** | **보고** KO (최종 1 회) | 2.6 / 3.4 h | 3,000 / **2,687** | 〃 (`.wav` 도 RIFF 헤더 없는 raw PCM). **서버에 E03001–E03313 이 없다** — 공개 3,000 개 수치와 직접 비교하지 말고 대조군도 같은 2,687 개로 잰다. eval PCM 은 끝에 여분 1 바이트(홀수 길이) → 리더가 제외 |
 
 경로: `$MXC_LIBRISPEECH_DIR`, `$MXC_KSPONSPEECH_DIR` (공용·읽기 전용).
 
@@ -59,6 +59,7 @@
 **LibriSpeech** — 화자·챕터가 파일명에 있으므로 **같은 화자·같은 챕터 안에서 발화를 원래 순서대로 이어 붙인다.** 발화 사이 무음 `g ~ U(0.3, 1.5) s`(디지털 0 이 아니라 인접 발화 앞뒤 20 ms 배경을 늘린 것), 스트림 첫 발화 앞에 0.3–1.0 s 무음. 스트림 길이 목표 25 s(20–30). 챕터 경계는 넘지 않는다. **긴 스트림에서의 동작(KV 누적·이월·지연 유지)은 LibriSpeech 로 검증한다.**
 
 **KsponSpeech** — 파일명·폴더 순서가 화자·세션을 보장하지 않는다. 따라서 **발화 하나 = 스트림 하나**(가변 길이, 평균 5.6 s). 앞뒤에 0.3–1.0 s 무음(padding)만 붙이고, **다른 파일의 음성은 절대 연결하지 않는다.** 짧은 스트림이 많아지는 대신 단일 화자 조건이 지켜진다.
+실측 무음 비율은 **19 %**(96.3 h 발화 → 118.7 h 스트림)다. 이번 파일럿은 이대로 간다 — δ 지연 뒤 마지막 토큰을 낼 시간이 필요하고 캐시가 이미 진행 중이다. 단 무해하다고 단정하지 않는다: 학습 로그의 `NEXT_AUDIO` 라벨 비율과 `loss_next / loss_text` 를 기록하고, **방출 붕괴가 나타날 때만** 다음 실험에서 0.2–0.5 s 로 줄인다.
 
 이 규칙은 학습·선택·보고 세트에 동일하게 적용한다. LibriSpeech 보고 WER 은 **스트림 모드와 발화 단위 모드 둘 다** 낸다(발화 단위는 공개 test-clean/other 수치와 비교용). KsponSpeech 는 발화 = 스트림이므로 하나다.
 
@@ -98,7 +99,7 @@
 - [ ] 정렬 QC 통과 (3.4-(4))
 - [ ] 토큰율: 언어별 tok/80 ms 분포(p50/p99). U0 실측 KO p99 0.78 — EN 은 여기서 처음 잰다. p99 > M 이면 M 재검토
 - [ ] 특징 캐시 spot-check: 스트림 3 개를 캐시 없이 직접 인코딩해 npy 와 fp32 일치 확인
-- [ ] **소규모 overfit**: 스트림 32 개로 300 step 학습해 손실이 0 근처로 내려가고 방출이 나오는지 — 파이프라인 결함을 본 run 전에 잡는다
+- [ ] **소규모 overfit** (`--overfit 16 --steps 300`): **EN 16 + KO 16 개 고정, δ=2 고정, 같은 32 개로 학습하고 greedy 디코드.** 시작 시 타깃 보존 assert(라벨 위치 토큰을 이으면 참조 토큰열과 동일). 300 step 뒤 텍스트 top-1 → 1 근처, WER/CER → 0 근처, tok/chunk ≈ 참조율, flush 라운드가 마지막 토큰을 내는지. 전체 데이터로 `--steps 300` 만 돌리는 것은 overfit 이 아니라 smoke 다
 
 ---
 
@@ -115,8 +116,11 @@ chunk 1   [AUDIO_1]                     <NEXT_AUDIO>          ← 방출 없음 
 chunk 2   [AUDIO_2]  tok tok tok tok    <NEXT_AUDIO>          ← M=4 상한, 초과분은 chunk 3 으로 이월
 ...
 chunk K-1 [AUDIO_K-1] tok               <NEXT_AUDIO>
-(끝)      tok tok  <EMPTY_AUDIO>                              ← 스트림 종료 후 잔여 flush
+flush 1   <EMPTY_AUDIO>  tok tok        <NEXT_AUDIO>          ← 스트림 종료: 오디오 자리 대신 <EMPTY_AUDIO>(입력, 손실 없음)
+flush 2   <EMPTY_AUDIO>                 <NEXT_AUDIO>          ← 빈 라운드 = "남은 것 없음". 항상 마지막에 하나
 ```
+
+**flush 규약** — δ 때문에 스트림 끝을 넘긴 토큰(`k ≥ K`)은 오디오 없이 방출해야 한다. `<EMPTY_AUDIO>` 를 오디오 자리 대신 **입력**하고 최대 M 토큰 + `<NEXT_AUDIO>` 를 한 라운드로, `ceil(n_flush / M)` 라운드 뒤 빈 라운드를 하나 더 둔다. 디코드도 같은 라운드를 돌아 토큰 없이 `<NEXT_AUDIO>` 가 나오면 끝낸다(상한 8 라운드). flush 토큰의 chunk 번호는 `K + 라운드`. 이 규약이 없으면 KsponSpeech 는 발화마다 마지막 δ·80 ms 어치가 삭제로 잡히고, 학습 시퀀스는 범위 밖 프레임(`chunk_of = K`)을 gather 한다 — 2026-09-05 검토에서 잡힌 결함.
 
 | 항목 | 값 | 근거 |
 |---|---|---|
@@ -164,13 +168,13 @@ Nemotron 3.5 FastConformer [56,0]  frozen, 캐시 특징 (1024-d, 12.5 Hz)
 |---|---|---|
 | 서버 / GPU | mxc `sa_tskim`, H200 1 장(여유 최대 자동 선택) | bs 8 도 여유 |
 | run | **단일 run** (random init, next_weight 0.3) | sweep 은 관문 실패 시에만(§8) |
-| step / bs | **6,000 step**, bs 8 (길이 버킷, accum 1) | 파일럿 = 학습 가능성 검증. 수렴 성능이 아니다 |
-| lr | adapter 5e-4 · LoRA 2e-4, cosine, warmup 300 | random init 선례(U0.5 noinit run: 2e-4 / 5e-4). 300 step 에서 손실이 안 내려가면 절반 |
-| 언어 샘플링 | EN:KO = 1:1 (batch 단위 교대) | 시간 균형(100 h : 100 h) |
+| step / bs | **6,000 step**. 배치는 언어별: **EN 2 스트림 · KO 8 스트림** (길이 버킷, accum 1) | LibriSpeech 스트림(≈30 s)이 KsponSpeech(≈5.4 s)의 4–5 배라 같은 bs 는 시간 불균형. 2:8 이 프레임 예산 근사 |
+| 언어 교대 | optimizer step 마다 EN, KO 교대 | **"optimizer-step 기준 1:1"** 이지 시간 균형 자체는 아니다 — 위 bs 로 근사 |
+| lr / wd | adapter 5e-4 · LoRA 2e-4, cosine, warmup 300, wd 0.01. **임베딩 행렬은 wd 0** | 임베딩은 특수 토큰 행만 grad 지만 AdamW 의 decay 는 전 행(tied lm_head)에 걸린다 → 반드시 별도 그룹 |
 | δ | {2,3,4,6} 균등 | |
-| 평가 주기 | **1,000 step 마다 dev 3 세트만**(LibriSpeech dev-clean·dev-other, KsponSpeech dev). 보고 세트(test/eval)는 **체크포인트·bias 선택 후 최종 1 회** | 누수 방지 |
-| 예상 시간 | ≈ 0.5 s/step × 6 k ≈ 50 min + dev 평가 6 회 × 8 min ≈ **1.5–2 시간** | |
-| 산출물 | `$MXC_CKPT_EXP_DIR/uslm/s1-mono-pilot/{ckpt-<step>.pt, log.jsonl, eval/dev-*.json, eval/final-*.json}` | 1 k 마다 ckpt, dev best + last 보존 |
+| 평가 3 종 | ① **sentinel**(1,000 step 마다): dev 3 세트 작은 고정 표본(스트림 20 / 발화 200) — 추세 관찰용 ② **select**(학습 후, `--select`): 마지막 ckpt 3 개를 **큰 고정 표본**(스트림 200 / 발화 1,000, seed 7)으로 평가해 ckpt·bias 선택 → `best.pt` ③ **final**(`--final`): best.pt 로 보고 세트 **전량** 1 회 + δ 추종 | sentinel 20/200 으로는 ckpt 선택이 불안정. test/eval 누수 방지. 축소 실행은 `--smoke-eval` 로만 |
+| 예상 시간 | 학습 ≈ 50 min + sentinel 6 회 × 8 min + select 3 × 40 min + final ≈ 1.5 h ≈ **반나절** | |
+| 산출물 | `$MXC_CKPT_EXP_DIR/uslm/s1-mono-pilot/{ckpt-<step>.pt, best.pt, results.json, eval/sentinel-*.json, eval/final.json}` | |
 
 로그는 `<NEXT_AUDIO>` 위치 손실과 텍스트 위치 손실을 **분리**해 남긴다(U1 v0 진단이 이것으로 원인을 찾았다).
 
@@ -204,6 +208,8 @@ Nemotron 3.5 FastConformer [56,0]  frozen, 캐시 특징 (1024-d, 12.5 Hz)
 | M 강제 비율 | chunk 당 4 개를 다 채운 chunk 비율 | < 5 % |
 | backlog | 이월 토큰의 최대 누적 | p99 ≤ 4 chunk (320 ms) |
 | tick 시간 p99 | chunk 당 디코드 시간(LoRA merge 후) | < 80 ms (H200 기준으로 기록, 배포 GPU 별도) |
+
+매칭 토큰이 **0 개**면(방출 붕괴 등) 지연·위반 지표는 `null` 로 두고 `matched=0`, `latency_available=false` 로 명시한다 — 가짜 0 을 넣어 "위반 0" 으로 읽히게 하지 않는다. tick 은 chunk 마다 재서 **p50·p99** 를 낸다(flush 라운드 포함).
 
 ### 7.3 건강도 진단 (관문 아님, 매 평가마다 기록)
 
@@ -246,10 +252,12 @@ Nemotron 3.5 FastConformer [56,0]  frozen, 캐시 특징 (1024-d, 12.5 Hz)
 | 3 | `experiments/s1_verify_data.py` — PCM 검증기 + `.trn` 파서 + 100 개 검토 출력 | 검증 기록 → task 페이지 | 반나절 |
 | 4 | `experiments/s1_build_manifest.py` — LibriSpeech(trans.txt, 챕터 스트림) · KsponSpeech(trn, PCM 바이트 시간, 파일 = 스트림) | manifests 6 개 + stats | 반나절 |
 | 5 | `u0_align.py` 어댑터 → 정렬 (bg) · `extract_features.py --mono` → nemotron-c0 캐시 (bg) | align/ 6 개, features/ 18 GB | 3–4 h (GPU) |
-| 6 | QC(§3.4-(4)) + 토큰율 + 캐시 spot-check + **소규모 overfit**(32 스트림 300 step) | task 페이지 표 | 2 h |
-| 7 | 대조군 측정: Nemotron RNN-T `[56,0]` · Qwen 오프라인 on dev 3 + 보고 4 세트 | `eval/baselines.json` | 2 h (GPU) |
-| 8 | `mono_data.py` + `s1_train_mono.py` → **random-init 6,000 step 파일럿 (bg)** | ckpt·dev eval | 2 h |
-| 9 | dev 에서 체크포인트·bias 선택 → 보고 세트 4 개 최종 1 회 평가 → 관문 판정 → `output-stage1-mono-pilot` 보고서, `PLAN.md` Stage 1 상태 갱신 | 위키 | 2 h |
+| 6 | QC(§3.4-(4)) + 토큰율 + 캐시 spot-check + 토크나이저 일치 테스트(§10) | task 페이지 표 | 1 h |
+| 7 | **소규모 overfit** — `--overfit 16 --steps 300` (§3.5). 그 전에 flush 규약·임베딩 wd 수정이 코드에 들어가 있어야 한다(2026-09-05 반영) | overfit-300.json | 30 min |
+| 8 | 대조군 측정: Nemotron RNN-T `[56,0]` · Qwen 오프라인 on dev 3 + 보고 세트(eval_other 는 같은 2,687 개) | `eval/baselines.json` | 2 h (GPU) |
+| 9 | **random-init 6,000 step 파일럿 (bg)** — sentinel 1 k 마다 | ckpt-*.pt, sentinel-*.json | 1.5 h |
+| 10 | `--select 4000,5000,6000` 큰 dev 표본으로 ckpt·bias 선택 → `best.pt` | results.json | 2 h |
+| 11 | `--final` 보고 세트 전량 + δ 추종 → 관문 판정 → `output-stage1-mono-pilot` 보고서, `PLAN.md` Stage 1 상태 갱신 | 위키 | 3 h |
 
 코드 신규 5 개: `experiments/s1_verify_data.py`, `experiments/s1_build_manifest.py`, `vapasr/uslm/mono_data.py`, `experiments/s1_train_mono.py`, `u0_align.py`/`extract_features.py` 어댑터. 기존 두 채널 코드는 건드리지 않는다. **체크포인트 전송·초기화 작업은 없다.**
 
