@@ -28,3 +28,7 @@ einops
 python-dotenv
 matplotlib
 soxr
+
+# --- 학습·평가 (Stage 1 mono 경로)
+peft            # LoRA
+jiwer           # WER/CER 채점 (u1_train_interleaved, s1_train_mono)

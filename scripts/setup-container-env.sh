@@ -31,7 +31,7 @@ nemo)
 hf)
   log "transformers / accelerate / 오디오 / 유틸"
   conda activate "$ENV"
-  pip install -U transformers accelerate huggingface_hub soundfile librosa python-dotenv datasets einops matplotlib soxr
+  pip install -U transformers accelerate huggingface_hub soundfile librosa python-dotenv datasets einops matplotlib soxr peft jiwer
   pip install -U qwen-asr   # Qwen3-ASR / Qwen3-ForcedAligner 로더
   python -c "import transformers;print('transformers',transformers.__version__)" ;;
 verify)
