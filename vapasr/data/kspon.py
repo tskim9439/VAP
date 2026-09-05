@@ -17,8 +17,8 @@ PUNCT = re.compile(r"(?<!\d)[.,](?!\d)|(?<=\d)[.,](?!\d)|(?<!\d)[.,](?=\d)|[?!]"
 def normalize_kspon(raw: str, form: str = "spelling") -> str:
     """form: spelling(왼쪽 철자형, 기본) | pron(오른쪽 발음형, 참고용)."""
     s = DUAL.sub(lambda m: m.group(1) if form == "spelling" else m.group(2), raw)
-    s = NOISE.sub(" ", s); s = FILLER.sub(r"\1", s)
-    s = s.replace("+", "").replace("*", ""); s = PUNCT.sub("", s)
+    s = NOISE.sub(" ", s); s = PUNCT.sub("", s)                  # 구두점을 먼저 지워야 '뭐/.' 의 표지가 잡힌다
+    s = FILLER.sub(r"\1", s); s = s.replace("+", "").replace("*", "")
     return re.sub(r"\s+", " ", s).strip()
 
 def read_text(path: str) -> str:
