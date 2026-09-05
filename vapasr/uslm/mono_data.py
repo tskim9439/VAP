@@ -41,12 +41,15 @@ class MonoStreamDataset(Dataset):
                  delays=(2, 3, 4, 6), max_per_chunk: int = 4, max_items: Optional[int] = None, seed: int = 0, qc: bool = True, align_root: Optional[str] = None):
         self.tok = tok; self.sp_ids = add_specials(tok); self.sp = specials_of(self.sp_ids); self.delays = tuple(delays); self.M = max_per_chunk
         self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>"); self._pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]
-        align_root = align_root or os.path.join(MAN, "align"); self.items: List[dict] = []; self.dropped = 0; self.no_align = 0
+        self.items: List[dict] = []; self.dropped = 0; self.no_align = 0; self.align_dirs: Dict[str, str] = {}
         for name in manifests:
             fi = FeatureIndex(FEAT, encoder, name); assert abs(fi.frame_hz - 1 / CHUNK_S) < 1e-6, f"{encoder} frame_hz {fi.frame_hz} != 12.5"
+            # 정렬 루트: 명시 > align2(선행 공백 규약, 2026-09-05) > align. 서버 산출물은 지우지 않으므로 새 규약은 새 루트에 쌓인다.
+            cands = [align_root] if align_root else [os.path.join(MAN, "align2"), os.path.join(MAN, "align")]
+            adir = next((os.path.join(c, name) for c in cands if os.path.isdir(os.path.join(c, name))), os.path.join(cands[-1], name)); self.align_dirs[name] = adir
             for sid, row in fi.rows.items():
                 if row.get("mode", "stream") != mode or (subsets and row.get("subset") not in subsets): continue
-                p = os.path.join(align_root, name, sid + ".jsonl")
+                p = os.path.join(adir, sid + ".jsonl")
                 if not os.path.exists(p): self.no_align += 1; continue
                 utts = _read_jsonl(p); bad = [u for u in utts if qc and bad_utterance(u)]
                 if bad: self.dropped += 1; continue                     # 불량 발화(동일 종료시각 뭉침)가 있는 스트림은 통째로 제외

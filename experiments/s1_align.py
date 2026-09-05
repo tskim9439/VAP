@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser()
 ap.add_argument("--manifest", required=True); ap.add_argument("--mode", default="all"); ap.add_argument("--limit", type=int, default=None); ap.add_argument("--ids", default=None)
 ap.add_argument("--gpu", default=None); ap.add_argument("--min-dur", type=float, default=0.3)
+ap.add_argument("--out-root", default=None, help="출력 루트(기본 $MXC_DATA_MANIFEST_DIR/align). 규약이 바뀌면 align2 처럼 새 루트로 — 기존 산출물은 지우지 않는다")
 a = ap.parse_args()
 if "CUDA_VISIBLE_DEVICES" not in os.environ:
     if a.gpu is None:
@@ -26,7 +27,7 @@ from vapasr.data.kspon import SR
 MAN = os.environ.get("MXC_DATA_MANIFEST_DIR", os.environ.get("DATA_MANIFEST_DIR", "/tmp"))
 ALIGNER = os.environ.get("MXC_ALIGNER_DIR", "Qwen/Qwen3-ForcedAligner-0.6B"); QWEN = os.environ.get("MXC_QWEN_ASR_DIR", "Qwen/Qwen3-ASR-0.6B")
 mdir = a.manifest if os.path.isdir(a.manifest) else os.path.join(MAN, a.manifest); mname = os.path.basename(mdir.rstrip("/"))
-out = os.path.join(MAN, "align", mname); os.makedirs(out, exist_ok=True)
+out = os.path.join(a.out_root or os.path.join(MAN, "align"), mname); os.makedirs(out, exist_ok=True)
 rows = read_streams(mdir, mode=None if a.mode == "all" else a.mode)
 if a.ids: keep = set(a.ids.split(",")); rows = [r for r in rows if r["id"] in keep]
 rows = rows[: a.limit] if a.limit else rows
@@ -64,7 +65,9 @@ for r in rows:
             if x is None:
                 x = load_utt_audio(u["path"]); audio_cache[u["path"]] = x
                 if len(audio_cache) > 256: audio_cache.clear(); audio_cache[u["path"]] = x
-            try: toks = align_tokens(x, u["text"], r["lang"])
+            # 스트림 안에서 두 번째 발화부터는 선행 공백을 붙여 토큰화한다 — 없으면 이어 붙인 텍스트가 'lost'+'i' → 'losti' 로 붙는다(2026-09-05 overfit 예시).
+            # 텍스트 자체는 기록에 그대로 두고 토큰 id 만 공백 포함 형이 된다. 정렬기에는 공백 포함 텍스트를 준다(offset 은 공백을 첫 토큰에 흡수).
+            try: toks = align_tokens(x, (" " + u["text"]) if u.get("idx", 0) > 0 else u["text"], r["lang"])
             except Exception as ex: st["fail"] += 1; print(f"  ! {r['id']} {u['utt_id']}: {type(ex).__name__}: {str(ex)[:80]}", flush=True); continue
             for t in toks: t["end_time"] = round(u["start"] + t["end_time"], 3)      # 스트림 절대 시각
             f.write(json.dumps(dict(speaker=0, start=u["start"], end=u["end"], text=u["text"], tokens=toks), ensure_ascii=False) + "\n")

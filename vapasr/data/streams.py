@@ -52,5 +52,5 @@ def assemble_stream(row: dict, cache: Optional[Dict[str, np.ndarray]] = None) ->
 
 def iter_utterances(row: dict) -> Iterator[dict]:
     """정렬·채점용: 발화 단위 (start, end, text, path) — 스트림 시각 기준."""
-    for seg in row["segments"]:
-        yield dict(start=seg["offset_s"], end=round(seg["offset_s"] + seg["dur_s"], 3), text=seg["text"], path=seg["path"], utt_id=seg["utt_id"])
+    for i, seg in enumerate(row["segments"]):
+        yield dict(idx=i, start=seg["offset_s"], end=round(seg["offset_s"] + seg["dur_s"], 3), text=seg["text"], path=seg["path"], utt_id=seg["utt_id"])
