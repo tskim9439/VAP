@@ -50,7 +50,7 @@ Stage 0 의 세 결정이 이후를 규정한다: (a) backbone = Nemotron `[56,0
 
 두 코퍼스 모두 mxc 공용 영역에 있다(읽기 전용). 정렬은 Qwen3-ForcedAligner(`$MXC_ALIGNER_DIR`)로 80 ms 격자에 붙인다.
 
-**모델 / 시퀀스** — U0.5 adapter + LoRA 에서 초기화. `<SPK_A/B>`·두 채널 merge·overlap 직렬화·VAP/event 헤드는 **제거**. `next_weight` 는 v1 에서 확인된 0.3 부근에서 시작하되 sweep 한다.
+**모델 / 시퀀스** — 새 mono adapter + LoRA + 특수 토큰 행을 **random init** 에서 학습한다(기존 U0.5 체크포인트는 대화 코퍼스·두 채널 규약에 맞춘 파라미터라 쓰지 않음). `<SPK_A/B>`·두 채널 merge·overlap 직렬화·VAP/event 헤드는 **제거**. `next_weight` 0.3, 단일 run.
 
 **평가**
 
