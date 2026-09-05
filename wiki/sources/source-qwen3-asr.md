@@ -2,13 +2,21 @@
 type: source
 status: stable
 created: 2026-09-03
-updated: 2026-09-03
-summary: Qwen3-ASR-0.6B — AuT encoder 180M, 8x downsample 12.5Hz/80ms, Apache 2.0, 한국어 지원, main backbone 후보
+updated: 2026-09-05
+summary: Qwen3-ASR-0.6B — AuT 180M·80ms, 한국어 지원; 실측 출력은 영어 단어형 숫자와 한국어 한글 읽기
 url: https://arxiv.org/html/2601.21337v2
 observed: 2026-09-03
 ---
 
 # Qwen3-ASR
+
+## 출력 표기 실측 (2026-09-05)
+
+[[source-asr-output-style-probe]]의 영어 6개·한국어 6개 표본에서 영어 숫자는 단어,
+한국어 숫자는 한글 읽기로 출력했다. 영어 아포스트로피를 보존하고 대소문자·문장부호를
+적극 생성했으며, 한국어에는 주로 마침표를 붙였다. 이 결과는 [[asr-text-normalization]]의
+숫자 타깃 규약을 정하는 직접 근거지만, 12개 목적 표본이므로 모든 숫자 문맥의 규칙으로
+일반화하지 않는다.
 
 ## 스펙 (확인됨)
 

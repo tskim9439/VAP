@@ -2,13 +2,21 @@
 type: source
 status: stable
 created: 2026-09-03
-updated: 2026-09-03
-summary: NVIDIA Nemotron 3.5 ASR Streaming 0.6B — cache-aware FastConformer 24층 + RNNT, ko-KR 7.12% WER, 첫 baseline backbone
+updated: 2026-09-05
+summary: Nemotron 3.5 ASR Streaming 0.6B — 80ms FastConformer+RNN-T; 실측 숫자 표기는 Qwen과 일치
 url: https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b
 observed: 2026-09-03
 ---
 
 # Nemotron 3.5 ASR Streaming 0.6B
+
+## 출력 표기 실측 (2026-09-05)
+
+[[source-asr-output-style-probe]]의 영어 6개·한국어 6개 표본에서 영어 숫자는 단어,
+한국어 숫자는 한글 읽기로 출력해 Qwen3-ASR과 일치했다. 영어 아포스트로피도 보존했다.
+다만 구두점은 불규칙했고 발화 중간에 `<en-US>`·`<ko-KR>` 태그를 생성했다. 따라서
+[[asr-text-normalization]]은 숫자 표기만 학습 타깃에 반영하고, 언어 태그와 구두점은
+참조·가설 양쪽의 채점 정규화에서 제거한다.
 
 ## 스펙 (확인됨)
 

@@ -2,13 +2,13 @@
 type: status
 status: active
 created: 2026-09-03
-updated: 2026-09-04
+updated: 2026-09-05
 summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 ---
 
 # 상태
 
-마지막 갱신: 2026-09-04
+마지막 갱신: 2026-09-05
 
 ## 볼트 상태
 
@@ -24,12 +24,19 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 - causality 감사 완료 — Nemotron 80 ms chunk 통과, Qwen AuT 조건 위반 → [[decision-asr-backbone]] 수정.
 - 학습 스택 구축 완료 — conda `vapasr`, torch 2.6 cu124, NeMo git, qwen-asr, 원 VAP. 스모크 4종 통과.
   → [[decision-compute-environment]]
-- 위키 페이지 34개 (source 7, concept 7, question 6, decision 4, output 9, task 25).
-- 파생 파일 재생성 완료.
+- **ASR 출력 표기 실측·정규화 계층 도입** — Qwen3-ASR과 Nemotron 모두 EN 숫자는
+  단어, KO 숫자는 한글 읽기로 출력. `vapasr/data/textnorm.py`로 타깃·채점 규약을
+  통합하고 KsponSpeech 숫자 이중표기는 발음형을 선택한다. → [[source-asr-output-style-probe]],
+  [[asr-text-normalization]]
+- 위키 페이지 수와 파생 파일은 이 ingest 브랜치의 병합 전 절차에서 다시 생성·집계한다.
 
 ## 다음 액션
 
-- **U0.5 통과(관문 재정의, 09-04)** → U1 착수. 보고서 [[output-uslm-u05-adapter-bridge]]. U1 v0 run 결과로 스트리밍 방출 열화 판정.
+- **Stage 1 mono 파일럿 준비 중** — 새 KsponSpeech 규약으로 manifest와 `align2/`를
+  재생성한 뒤 overfit 재검증 → 대조군 측정 → 6,000-step 순서. 기존 정렬 산출물은 보존.
+- **영어 숫자 정규화 재현성 선행 수정** — `num2words`를 환경 의존성에 고정하고,
+  미설치 시 조용히 숫자를 통과시키지 않도록 해야 한다. 연도·통화 소수·서수 표본도
+  새 DB 투입 전에 검증한다. → [[asr-text-normalization]]
 
 ### 연구 (Phase 0 — 나머지 전부를 막고 있음)
 
@@ -56,6 +63,8 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 | 한국어 turn 단서 근거 부재 | 논문 서술 | [[question-korean-turn-cue-literature]] |
 | SpokenWOZ 채널 구조 불명 | 영어 데이터 규모 | [[question-spokenwoz-channel-structure]] |
 | **`/data4` 97% 사용, 575G 여유** | 체크포인트 저장 공간 | [[decision-compute-environment]] |
+| `num2words` 미고정·silent fallback | 환경별 영어 학습 타깃 불일치 | [[asr-text-normalization]] |
+| 영어 숫자의 문맥별 읽기 미검증 | 연도·통화·소수·전화번호 전사 왜곡 가능 | [[asr-text-normalization]] |
 
 ## 스키마 이슈 (유지보수 PR 필요)
 
