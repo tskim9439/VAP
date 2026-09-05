@@ -76,8 +76,10 @@ def _load_cpc():
     return Encoder("cpc", 50.0, 256, "0", True, fn, ctx_s=60.0, module=enc)   # GRU 상태 잔차: 20 s 에서 rel 7e-3 → 60 s
 
 def _load_nemotron(right: int):
-    import nemo.collections.asr as nemo_asr
-    m = nemo_asr.models.ASRModel.from_pretrained("nvidia/nemotron-3.5-asr-streaming-0.6b", map_location="cpu").cuda().eval().float()
+    import glob, nemo.collections.asr as nemo_asr
+    local = sorted(glob.glob(os.path.join(os.environ.get("MXC_NEMOTRON_DIR", os.environ.get("NEMOTRON_DIR", "")), "*.nemo")))   # mxc: /soundai/Model 의 로컬 체크포인트 우선
+    m = (nemo_asr.models.ASRModel.restore_from(local[0], map_location="cpu") if local
+         else nemo_asr.models.ASRModel.from_pretrained("nvidia/nemotron-3.5-asr-streaming-0.6b", map_location="cpu")).cuda().eval().float()
     m.encoder.set_default_att_context_size([56, right]); pre, enc = m.preprocessor, m.encoder
     def fn(x):
         L = torch.full((x.shape[0],), x.shape[1], device=x.device)
