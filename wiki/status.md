@@ -28,12 +28,22 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
   단어, KO 숫자는 한글 읽기로 출력. `vapasr/data/textnorm.py`로 타깃·채점 규약을
   통합하고 KsponSpeech 숫자 이중표기는 발음형을 선택한다. → [[source-asr-output-style-probe]],
   [[asr-text-normalization]]
+- **Stage 1 mono overfit @600 방출 학습 확인** — KO는 CER 0과 evidence 위반 0,
+  EN은 WER 14.1%·중심 지연 통과이나 `viol80=7.3%`가 남았다. tick p99는
+  151–186 ms로 80 ms deadline 미통과. → [[output-stage1-mono-pilot]]
 - 위키 페이지 수와 파생 파일은 이 ingest 브랜치의 병합 전 절차에서 다시 생성·집계한다.
 
 ## 다음 액션
 
 - **Stage 1 mono 파일럿 준비 중** — 새 KsponSpeech 규약으로 manifest와 `align2/`를
   재생성한 뒤 overfit 재검증 → 대조군 측정 → 6,000-step 순서. 기존 정렬 산출물은 보존.
+- **기존 overfit @900–1500 판정** — EN WER과 `viol80`이 함께 0으로 수렴하는지 보고,
+  반복 토큰의 `difflib` 매칭 잡음을 위반 사례 덤프로 분리한다. tick은 deadline miss율과
+  누적 `runtime_lag`를 추가해 실제 처리 backlog를 측정한다. leading-silence shift test로
+  고정 표본의 절대 위치 암기도 배제한다. → [[output-stage1-mono-pilot]]
+- **decoder tick 최적화** — 현재 수치는 encoder·adapter·flush를 제외한 하한이며 한 chunk가
+  최대 `M+2` thinker forward를 호출한다. `<NEXT_AUDIO>`와 다음 audio를 한 2-token forward로
+  합친 뒤 end-to-end service time을 다시 잰다. → [[output-stage1-mono-pilot]]
 - **영어 숫자 정규화 재현성 선행 수정** — `num2words`를 환경 의존성에 고정하고,
   미설치 시 조용히 숫자를 통과시키지 않도록 해야 한다. 연도·통화 소수·서수 표본도
   새 DB 투입 전에 검증한다. → [[asr-text-normalization]]
@@ -65,6 +75,8 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 | **`/data4` 97% 사용, 575G 여유** | 체크포인트 저장 공간 | [[decision-compute-environment]] |
 | `num2words` 미고정·silent fallback | 환경별 영어 학습 타깃 불일치 | [[asr-text-normalization]] |
 | 영어 숫자의 문맥별 읽기 미검증 | 연도·통화·소수·전화번호 전사 왜곡 가능 | [[asr-text-normalization]] |
+| EN overfit `viol80=7.3%` | 실제 조기 방출과 반복 토큰 매칭 오류가 혼재 | [[output-stage1-mono-pilot]] |
+| mono decoder tick p99 151–186 ms | 80 ms 실시간 deadline 미충족 | [[output-stage1-mono-pilot]] |
 
 ## 스키마 이슈 (유지보수 PR 필요)
 
