@@ -12,6 +12,8 @@ mxc 컨테이너에서:  conda activate vapasr && python experiments/s1_verify_d
 """
 import os, re, sys, json, glob, random, argparse, collections
 import numpy as np
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from vapasr.data.kspon import SR, BPS, DUAL, NOISE, FILLER, PUNCT, normalize_kspon, read_text, read_trn, read_pcm   # 파서·리더는 공유 모듈
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--kspon-root", default=os.environ.get("MXC_KSPONSPEECH_DIR", os.environ.get("KSPONSPEECH_DIR")))
@@ -22,42 +24,8 @@ ap.add_argument("--libri-limit", type=int, default=None, help="flac 헤더 읽�
 ap.add_argument("--skip", default="", help="건너뛸 절: A,B,C 쉼표 구분")
 a = ap.parse_args(); random.seed(a.seed); os.makedirs(a.out, exist_ok=True); skip = set(a.skip.split(",")) if a.skip else set()
 assert a.kspon_root and a.libri_root, "코퍼스 경로 없음: .env 의 MXC_KSPONSPEECH_DIR / MXC_LIBRISPEECH_DIR 을 로드하거나 --kspon-root/--libri-root"
-SR, BPS = 16000, 2
 report = {}
 def hdr(t): print(f"\n=== {t} ===", flush=True)
-
-# ───────────────────────────── .trn 파서 ─────────────────────────────
-DUAL = re.compile(r"\(([^()]*)\)/\(([^()]*)\)")           # (철자)/(발음)
-NOISE = re.compile(r"(?<!\S)[blonu]/(?!\S)")               # b/ l/ o/ n/ u/ 단독 표지
-FILLER = re.compile(r"(\S+?)/(?=\s|$)")                     # 아/ 그/ → 단어 유지
-PUNCT = re.compile(r"[.,?!]")
-
-def normalize_kspon(raw: str, form: str = "spelling") -> str:
-    """KsponSpeech 전사 → 학습·채점용 텍스트. form: spelling(왼쪽) | pron(오른쪽)."""
-    s = DUAL.sub(lambda m: m.group(1) if form == "spelling" else m.group(2), raw)
-    s = NOISE.sub(" ", s); s = FILLER.sub(r"\1", s)
-    s = s.replace("+", "").replace("*", ""); s = PUNCT.sub("", s)
-    return re.sub(r"\s+", " ", s).strip()
-
-def read_text(path):
-    for enc in ("utf-8", "cp949"):
-        try: return open(path, encoding=enc).read()
-        except UnicodeDecodeError: continue
-    raise RuntimeError(f"인코딩 판별 실패: {path}")
-
-def read_trn(path):
-    rows = []
-    for line in read_text(path).splitlines():
-        if " :: " not in line: continue
-        p, t = line.split(" :: ", 1); rows.append((p.strip(), t.strip()))
-    return rows
-
-# ───────────────────────────── PCM 리더 ─────────────────────────────
-def read_pcm(path):
-    """raw int16 LE mono. 홀수 바이트면 마지막 1 바이트 제외. → (float32 [-1,1], odd:bool)"""
-    b = open(path, "rb").read(); odd = len(b) % 2 == 1
-    if odd: b = b[:-1]
-    return np.frombuffer(b, dtype="<i2").astype(np.float32) / 32768.0, odd
 
 def band_ratio(x, lo=300, hi=3400):
     """가운데 1 s 구간의 300–3400 Hz 에너지 비율. 음성이면 보통 0.6 이상, 잡음/형식 오류면 낮다."""
