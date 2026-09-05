@@ -5,7 +5,7 @@ decision_status: proposed
 owner: tskim
 review: 2026-10-22
 created: 2026-09-04
-updated: 2026-09-04
+updated: 2026-09-05
 summary: IS-SLM(Interleaved Streaming SLM)이 Paper 1·2 모두의 단일 주력 모델. 이중 프레임율+RNN-T 안(A)은 2026-09-04 사용자 결정으로 기각
 sources:
   - [[output-unified-slm-architecture-plan]]
@@ -32,7 +32,9 @@ sources:
 ## 결정 (2026-09-04 사용자 확정)
 
 **IS-SLM(B′)이 단일 주력 모델이다.** 이중 프레임율 + RNN-T 안(A)은 **완전 기각** — 대조군으로도 개발하지 않는다.
-B′ 는 50 Hz 음향 사이드 브랜치 하이브리드(U3 ablation) + joint chunk token 기본 + 겹침 텍스트 직렬화 규약 + U1 WER 관문을 포함한다.
+B′ 는 50 Hz 음향 사이드 브랜치 하이브리드(U3 ablation) + ~~joint chunk token 기본~~ + 겹침 텍스트 직렬화 규약 + U1 WER 관문을 포함한다.
+~~joint chunk token~~ 은 **superseded (2026-09-05)** — 두 화자를 채널별로 인코딩해 합치는 입력은 쓰지 않는다. 입력은 두 화자가 섞인 **mono 한 채널**이며
+chunk token 은 그 mono 오디오 하나에서 나온다 → [[decision-mono-input]]. IS-SLM 단일 주력이라는 이 페이지의 결정 자체는 유효하다.
 합산 융합(B v0)은 gated residual ablation 으로만 남긴다.
 
 대조군은 외부 것으로 한다: VAP(oto fine-tune, 공식 예측 재현 완료), TurnBench 동봉 baseline(rms_vad·dualturn·wavlm_causal 등),

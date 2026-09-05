@@ -5,7 +5,7 @@ decision_status: accepted
 owner: tskim
 review: 2026-10-22
 created: 2026-09-03
-updated: 2026-09-04
+updated: 2026-09-05
 summary: IS-SLM 최종 backbone은 Nemotron 3.5 FastConformer [56,0] → new adapter → Qwen3-ASR-0.6B-hf thinker LM이며 계획된 encoder 교체는 없다
 sources:
   - [[source-nemotron-3-5-asr-streaming]]
@@ -113,7 +113,8 @@ Nemotron 3.5 FastConformer [56,0]  (causal ≤80 ms, 12.5 Hz, 잡음 강건, ko-
    새 관문 = (a) **동일 인코더 Nemotron RNN-T `[56,0]` 보다 우수** + (b) **오프라인 Qwen 대비 상대 열화 ≤ +50 %**. 결과 oto 18.2–18.8 / 실내 17.5 / 실외 14.5–15.1 % 로 **통과** — [[output-uslm-u05-adapter-bridge]].
 2. 통과 시 U1(interleaved streaming ASR) 로 간다. 실패하면 adapter 용량·시간 정렬·증류 목표·encoder/thinker unfreeze 범위를 재설계한다.
    **AuT+thinker로 자동 교체하지 않는다.** backbone 변경은 실험 관문에 내장된 fallback이 아니라 별도의 사용자 결정이 필요한 범위 변경이다.
-3. 세부: 12.5 → 13 Hz nearest 리샘플 기본(12.5 그대로는 ablation), 두 화자는 화자별 인코딩 → merge → adapter → joint chunk token 1개,
+3. 세부: 12.5 → 13 Hz nearest 리샘플 기본(12.5 그대로는 ablation), ~~두 화자는 화자별 인코딩 → merge → adapter → joint chunk token 1개~~
+   → **superseded (2026-09-05)**: 입력은 두 화자가 섞인 **mono 한 채널**이며 화자별 인코딩·merge 는 쓰지 않는다 — [[decision-mono-input]].
    LLM 0.6B 로 시작(p99 tick < 80 ms), 50 Hz CPC 사이드 브랜치는 U3 에서 dense 헤드에.
 4. 라이선스: OpenMDW-1.1(Nemotron) + Apache 2.0(Qwen3-ASR) — 배포 시 두 조건 병기.
 5. [[task-qwen-aut-causal-adaptation]]은 주 경로에서 취소한다. Qwen AuT 결과는 비교 근거로 보존하지만 causal 적응이나 향후 encoder 교체를 일정에 넣지 않는다.

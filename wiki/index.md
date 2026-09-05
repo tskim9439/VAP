@@ -57,6 +57,7 @@ _(없음 — 모델·시스템 정보는 현재 `wiki/sources/` 에 통합되어
 _(없음)_
 
 ## Decisions
+- [[decision-mono-input]] — **입력은 mono 단일 채널** (2026-09-05 확정). 화자별 채널 입력·merge·joint chunk token 폐기, 분리 채널은 라벨·혼합 합성에만
 - [[decision-target-architecture]] — **IS-SLM 단일 주력**, 이중 프레임율+RNN-T 기각 (2026-09-04 확정)
 - [[decision-compute-environment]] — 학습은 rack4의 tskim_env 컨테이너, 체크포인트 /data4, 데이터 /data3, 설정은 `.env` 단일 관리 (accepted)
 - [[decision-asr-backbone]] — **확정** IS-SLM backbone = Nemotron [56,0] → adapter → Qwen3-ASR thinker; 관문 U0.5, fallback AuT+thinker
