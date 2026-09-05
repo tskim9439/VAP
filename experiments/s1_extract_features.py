@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser()
 ap.add_argument("--manifest", required=True, help="이름(예: kspon-100) 또는 디렉토리 경로"); ap.add_argument("--encoder", default="nemotron-c0")
 ap.add_argument("--mode", default="all", help="stream | utt | all"); ap.add_argument("--limit", type=int, default=None); ap.add_argument("--ids", default=None)
-ap.add_argument("--gpu", default=None, help="CUDA 장치 번호. 없으면 여유 최대 자동")
+ap.add_argument("--gpu", default=None, help="CUDA 장치 번호. 없으면 여유 최대 자동"); ap.add_argument("--shard", default=None, help="k/n: 병렬 워커 k 가 rows[k::n] 만 처리")
 a = ap.parse_args()
 if "CUDA_VISIBLE_DEVICES" not in os.environ:
     if a.gpu is None:
@@ -28,7 +28,9 @@ out = os.path.join(FEAT, a.encoder, mname); os.makedirs(out, exist_ok=True)
 rows = read_streams(mdir, mode=None if a.mode == "all" else a.mode)
 if a.ids: keep = set(a.ids.split(",")); rows = [r for r in rows if r["id"] in keep]
 rows = rows[: a.limit] if a.limit else rows
-print(f"{a.encoder} ← {mname} ({a.mode}): {len(rows)} 스트림, {sum(r['duration_s'] for r in rows)/3600:.1f} h → {out}  [GPU {os.environ['CUDA_VISIBLE_DEVICES']}]", flush=True)
+if a.shard:
+    k, n = (int(x) for x in a.shard.split("/")); rows = rows[k::n]
+print(f"{a.encoder} ← {mname} ({a.mode}): {len(rows)} 스트림{' shard ' + a.shard if a.shard else ''}, {sum(r['duration_s'] for r in rows)/3600:.1f} h → {out}  [GPU {os.environ['CUDA_VISIBLE_DEVICES']}]", flush=True)
 
 enc = load_encoder(a.encoder); print(f"encoder {enc.name}: {enc.frame_hz} Hz, D={enc.dim}, lookahead {enc.lookahead_ms} ms, causal={enc.causal}", flush=True)
 ip = os.path.join(out, "index.jsonl"); done = {json.loads(l)["id"] for l in open(ip)} if os.path.exists(ip) and os.path.getsize(ip) else set(); idx = open(ip, "a")

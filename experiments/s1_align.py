@@ -12,6 +12,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--manifest", required=True); ap.add_argument("--mode", default="all"); ap.add_argument("--limit", type=int, default=None); ap.add_argument("--ids", default=None)
 ap.add_argument("--gpu", default=None); ap.add_argument("--min-dur", type=float, default=0.3)
 ap.add_argument("--out-root", default=None, help="출력 루트(기본 $MXC_DATA_MANIFEST_DIR/align). 규약이 바뀌면 align2 처럼 새 루트로 — 기존 산출물은 지우지 않는다")
+ap.add_argument("--shard", default=None, help="k/n: 병렬 워커 k 가 rows[k::n] 만 처리 (같은 manifest 를 여러 프로세스로)")
 a = ap.parse_args()
 if "CUDA_VISIBLE_DEVICES" not in os.environ:
     if a.gpu is None:
@@ -31,7 +32,9 @@ out = os.path.join(a.out_root or os.path.join(MAN, "align"), mname); os.makedirs
 rows = read_streams(mdir, mode=None if a.mode == "all" else a.mode)
 if a.ids: keep = set(a.ids.split(",")); rows = [r for r in rows if r["id"] in keep]
 rows = rows[: a.limit] if a.limit else rows
-print(f"align ← {mname} ({a.mode}): {len(rows)} 스트림 → {out}  [GPU {os.environ['CUDA_VISIBLE_DEVICES']}]", flush=True)
+if a.shard:   # 병렬 워커: k/n → rows[k::n]. 각 워커가 다른 행을 맡아 중복 없이 나눠 처리(기존 파일은 건너뜀)
+    k, n = (int(x) for x in a.shard.split("/")); rows = rows[k::n]
+print(f"align ← {mname} ({a.mode}): {len(rows)} 스트림{' shard ' + a.shard if a.shard else ''} → {out}  [GPU {os.environ['CUDA_VISIBLE_DEVICES']}]", flush=True)
 
 aligner = Qwen3ForcedAligner.from_pretrained(ALIGNER, dtype=torch.bfloat16, device_map="cuda"); tok = AutoTokenizer.from_pretrained(QWEN)
 _tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
