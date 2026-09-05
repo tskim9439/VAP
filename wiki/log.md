@@ -1,9 +1,43 @@
 <!-- generated: do not edit -->
 # 활동 로그
 
-마지막 생성: 2026-09-05
+마지막 생성: 2026-09-06
 
 `wiki/log/` 의 샤드를 최신순으로 이어붙인 다이제스트다. 직접 편집하지 않는다.
+
+## [2026-09-06] task | Stage 1 mono 파일럿 준비 완료 — overfit 통과(옛·새 규약), 대화 코퍼스 mxc 업로드, 6,000-step 파일럿 시작
+
+- Changed: `task-uslm-u1-interleaved-asr`(U1a-0 절 신설: 데이터·검증·코드 결함 수정·overfit 결과·업로드), `plans/stage1-mono-pilot.md`(§3.3 텍스트 규약, §4 flush 규약, §8 판정 기록),
+  `.env`(MXC_OTOSPEECH_DIR·MXC_AIHUB_*·MXC_TURNBENCH_* 추가), `raw/sources/experiments/2026-09-05-asr-output-style-probe.md`(신설).
+  코드: `vapasr/data/{kspon,streams,textnorm}.py`, `vapasr/uslm/{mono_data,mono_model}.py`, `experiments/s1_{verify_data,build_manifest,align,extract_features,train_mono,tok_check}.py`, `vapasr/data/interleave.py`(끝 토큰 폐기 결함 수정).
+- Reason: [[decision-mono-input]] 에 따른 단일 화자 mono 경로 신설. 검증기·manifest·정렬·특징 캐시·데이터셋·모델·학습기를 새로 두고 overfit 으로 파이프라인 정상성을 확인했다.
+  텍스트 규약은 Qwen3-ASR·Nemotron 출력 실측(EN 숫자 단어, KO 숫자 한글 읽기)에 맞춰 `textnorm.py` 로 통일하고 KsponSpeech 를 `align2/` 에 재정렬했다.
+  overfit: 옛 규약 1,500 step·새 규약 900 step 모두 EN/KO 오류 0, tok/chunk = 참조, evidence 위반 0, 지연 p50 ≈ +200 ms(δ=2). tick p99 151–186 ms 는 80 ms 미달 → 실시간성 관문은 단독 측정 전까지 미통과.
+  대화 코퍼스(otoSpeech16k 23 GB, AI Hub 71631 wav 54 GB, TurnBench 17 GB)는 rack4 → 맥 T5 → mxc `/soundai/DB/raw/` 로 업로드(rack4→mxc 직접 전송은 정책상 불가, 맥에서는 HF 차단).
+- Next: 6,000-step 파일럿(`s1-mono-pilot`, sentinel 1 k 마다) → `--select` 큰 dev 표본으로 ckpt·bias 선택 → `--final` 보고 세트 전량. 대조군(Nemotron RNN-T `[56,0]`·Qwen 오프라인, eval_other 는 같은 2,687 개) 측정.
+  tick p99 단독 측정 + CUDA graph/배치 디코드 검토. mxc 잡파일(`._*` 70 개, `_xfer_test` 768 MB)·rack4 azcopy 정리는 사용자 승인 대기.
+- By: tskim
+
+## [2026-09-06] ingest | Stage 1 mono overfit 1,500-step 완료
+
+- Changed: `raw/sources/experiments/2026-09-06-stage1-mono-overfit-1500.md`, `wiki/sources/source-stage1-mono-overfit-1500.md`, `wiki/outputs/output-stage1-mono-pilot.md`, `wiki/status.md`
+- Reason: @900부터 EN·KO 내용·방출률·설계 지연·evidence-time이 모두 수렴해 @1500까지 유지된 결과를 근거로 overfit 기능 관문을 통과 처리하고, GPU 경합으로 오염된 tick 측정과 여전히 남은 80 ms 실시간성 관문을 분리했다.
+- Next: `align2` 완료 후 `overfit-v2` 선택 ID의 KO 변경 타깃·EN 다중발화 경계 coverage를 확인하고, 부족하면 표적 회귀 표본을 추가한다. 900-step 재검증 통과 시 대조군 측정 후 6,000-step 파일럿을 실행하며 최종 tick은 한가한 GPU에서 단독 측정한다.
+- By: tskim
+
+## [2026-09-05] ingest | Stage 1 mono overfit @600 타이밍
+
+- Changed: `raw/sources/experiments/2026-09-05-stage1-mono-overfit-600-timing.md`, `wiki/sources/source-stage1-mono-overfit-600-timing.md`, `wiki/outputs/output-stage1-mono-pilot.md`, `wiki/status.md`
+- Reason: KO·EN 16개 overfit의 내용·방출 타이밍·처리시간 결과를 보존하고, EN evidence-time 위반에서 실제 선행 방출과 반복 토큰 매칭 오류를 분리하며, 라벨 이월과 런타임 처리 backlog를 구분하기 위해 합성했다.
+- Next: @900–1500 위반 토큰 문맥 감사, leading-silence shift test, deferred `<NEXT_AUDIO>`+다음 audio forward 최적화, 새 KsponSpeech 발음형 `align2/` QC와 overfit 재현, end-to-end chunk service time 기반 deadline miss·누적 runtime lag 측정.
+- By: tskim
+
+## [2026-09-05] ingest | Qwen3-ASR · Nemotron 출력 표기 실측
+
+- Changed: `wiki/sources/source-asr-output-style-probe.md`, `wiki/concepts/asr-text-normalization.md`, `wiki/sources/source-qwen3-asr.md`, `wiki/sources/source-nemotron-3-5-asr-streaming.md`, `wiki/status.md`
+- Reason: 두 사전학습 ASR의 실제 영어·한국어 숫자 출력과 구두점·태그 동작을 근거로, 늘어나는 코퍼스의 학습 타깃과 채점 표기를 하나의 규약으로 관리하기 위해 합성했다. 12개 목적 표본의 일반화 한계와 구현 감사에서 드러난 `num2words` 재현성 위험도 함께 기록했다.
+- Next: `num2words` 의존성과 실패 정책을 고정하고 숫자 문맥별 단위 검사를 추가한 뒤, 새 KsponSpeech manifest·`align2/`로 overfit을 재검증한다.
+- By: tskim
 
 ## [2026-09-05] decision | 모델 입력을 mono 단일 채널로 확정, 채널별 입력(merge·화자별 오디오 토큰) 폐기
 

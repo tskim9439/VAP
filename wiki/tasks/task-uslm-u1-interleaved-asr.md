@@ -5,7 +5,7 @@ owner: tskim
 due: 2026-10-16
 priority: p0
 created: 2026-09-04
-updated: 2026-09-04
+updated: 2026-09-06
 summary: USLM U1 — Nemotron frozen + Qwen3-0.6B LoRA interleaved ASR(텍스트 스트림만), WER 상대 열화 ≤10% 관문
 sources:
   - [[output-interleaved-streaming-slm-architecture]]
@@ -92,3 +92,11 @@ A 안이 기각되어 fallback 이 없다 — 조기 판정이 중요하다.
   U0.5 오프라인(EN 18.2 / 실내 17.5 / 실외 14.5 %) 대비 EN 3 배, KO 2 배 열화 — U1 관문(RNN-T `[56,0]` 대비 ≤ +10 %, 즉 EN ≤ 27.9 %)에 크게 미달.
 - 2026-09-05 10:57 KST: **v2 시작 — `--audio-per-chunk 2`**(화자별 오디오 토큰, merge 제거). 시퀀스 L 900 → 1240, 26.9 GB, ≈0.83 s/step(12k ≈ 2.8 h).
   가설 (b) 검증: U0.5 adapter 는 단일 채널로 학습됐는데 v1 은 두 채널 평균을 넣어 분포가 이동했다. 같은 step 수에서 v1 과 직접 비교한다.
+
+### U1a-0 — 단일 화자 mono 파일럿 (Stage 1, `plans/stage1-mono-pilot.md`)
+
+- 2026-09-05: **입력 mono 단일 채널 결정**([[decision-mono-input]]) 에 따라 두 채널 경로(v1 merge / v2 화자별 오디오 토큰)는 진단 기록으로만 보존하고, mono 경로를 새로 둔다: `vapasr/uslm/mono_data.py`·`mono_model.py`, `experiments/s1_*.py`. 데이터는 LibriSpeech train-clean-100(100.6 h, 챕터 내 연결 20–30 s 스트림 13,182) + KsponSpeech_01 0001~0062(96.3 h, 파일 = 스트림 62,000). 검증기(PCM 16 kHz·16-bit 가정 통과, `.trn` 파서, LibriSpeech 집계) 통과. 텍스트 규약은 `vapasr/data/textnorm.py` 로 통일(EN 숫자 단어, KO 숫자 한글 읽기 — Qwen3-ASR·Nemotron 출력 실측과 동일, `raw/sources/experiments/2026-09-05-asr-output-style-probe.md`).
+- 2026-09-05: 코드 결함 3 건 수정 — (1) `build_interleaved` 가 δ 로 스트림 끝을 넘긴 토큰을 `buckets[n_chunks]` 에서 버리던 것(두 채널 경로도 동일) → `<EMPTY_AUDIO>` 입력 flush 라운드 규약으로 학습·디코드 양쪽 처리, (2) 임베딩 행렬이 AdamW weight decay 에 전 행 감쇠 → wd 0 그룹, (3) overfit 모드 신설(언어별 16 고정, δ=2, 타깃 보존 assert, 표적 사례 강제 포함). 평가 3 종 분리(sentinel/select/final), matched=0 처리, tick p99, 언어별 bs 2/8.
+- 2026-09-05 **overfit(1,500 step, 옛 규약)**: 900 step 부터 EN WER 0.000 / KO CER 0.000, tok/chunk = 참조, viol80 = 0, 지연 p50 +201 / +189 ms, p99 +240 / +312 ms — **기능 관문 통과**. tick p99 151–186 ms(경합 전) > 80 ms → **실시간성 관문 미통과**(단독 측정 전).
+- 2026-09-06 **overfit-v2(900 step, 새 규약 `align2/` + textnorm)**: 표본 EN 16(발화 경계 8) + KO 16(숫자 이중표기→발음형 8). @900 EN WER **0.000** (tok/chunk 0.237 = 참조, p50 +201, p90 +231, p99 +240 ms, viol80 0) · KO CER **0.000** (0.292 = 참조, p50 +202, p99 +278, viol80 0). 새 규약에서도 동일하게 통과. `losti` 결합 해소 확인.
+- 2026-09-06: mxc 에 대화 코퍼스 업로드 완료(rack4 → 맥 T5 → mxc; rack4→mxc 직접은 정책상 불가): otoSpeech16k 2,100 파일 23 GB, AI Hub 71631 wav 943 파일 54 GB(라벨은 기존 zip), TurnBench dev(refs/main c29aa4e)+test 41 파일 17 GB → `.env` `MXC_OTOSPEECH_DIR` 등. **6,000-step 파일럿(`s1-mono-pilot`) 시작**(GPU 6).
