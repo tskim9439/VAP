@@ -29,8 +29,12 @@ case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*) ;; *) echo "!! conda e
 # ── 1. adapter 증류 초기화(공유, 없으면 1 GPU 로 생성; A/B 동시 실행 시 mkdir 잠금으로 한쪽만 만들고 다른 쪽은 기다린다)
 ADAPTER=$ROOT/uslm/s1-adapter-distill/adapter.pt
 if [ ! -f "$ADAPTER" ]; then
+  # 증류 타깃(AuT block8s) 캐시는 추출이 끝나야 stats.json 이 생긴다(index.jsonl 은 진행 중에도 존재). 없으면 최대 8 h 대기.
   for m in librispeech-100 kspon-100; do
-    [ -f "$MXC_DATA_FEATURE_CACHE_DIR/qwen-aut-block8s/$m/index.jsonl" ] || { echo "!! 증류 타깃 캐시 없음: qwen-aut-block8s/$m — experiments/s1_extract_features.py --encoder qwen-aut-block8s 먼저"; exit 1; }
+    n=0; until [ -f "$MXC_DATA_FEATURE_CACHE_DIR/qwen-aut-block8s/$m/stats.json" ]; do
+      [ $n -eq 0 ] && echo "[$(date '+%T')] 증류 타깃 캐시 미완성: qwen-aut-block8s/$m — 추출 완료(stats.json) 대기"
+      n=$((n+1)); [ $n -gt 96 ] && { echo "!! 8 h 대기 후에도 없음 — experiments/s1_extract_features.py --encoder qwen-aut-block8s --manifest $m 확인"; exit 1; }; sleep 300
+    done
   done
   if mkdir "$ROOT/uslm/.distill.lock" 2>/dev/null; then
     echo "[$(date '+%T')] adapter 증류 시작"; CUDA_VISIBLE_DEVICES=0 python -u experiments/s1_distill_adapter.py --epochs 2 --gpu 0 || { rmdir "$ROOT/uslm/.distill.lock"; exit 1; }
