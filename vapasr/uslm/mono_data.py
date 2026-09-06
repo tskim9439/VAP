@@ -47,14 +47,32 @@ class MonoStreamDataset(Dataset):
             # 정렬 루트: 명시 > align2(선행 공백 규약, 2026-09-05) > align. 서버 산출물은 지우지 않으므로 새 규약은 새 루트에 쌓인다.
             cands = [align_root] if align_root else [os.path.join(MAN, "align2"), os.path.join(MAN, "align")]
             adir = next((os.path.join(c, name) for c in cands if os.path.isdir(os.path.join(c, name))), os.path.join(cands[-1], name)); self.align_dirs[name] = adir
-            for sid, row in fi.rows.items():
-                if row.get("mode", "stream") != mode or (subsets and row.get("subset") not in subsets): continue
-                p = os.path.join(adir, sid + ".jsonl")
-                if not os.path.exists(p): self.no_align += 1; continue
-                utts = _read_jsonl(p); bad = [u for u in utts if qc and bad_utterance(u)]
-                if bad: self.dropped += 1; continue                     # 불량 발화(동일 종료시각 뭉침)가 있는 스트림은 통째로 제외
-                toks = sorted(((t["id"], t["end_time"]) for u in utts for t in u["tokens"]), key=lambda x: x[1])
-                self.items.append(dict(name=name, id=sid, K=int(row["frames"]), npy=row["npy"], lang=lang_of(name), subset=row.get("subset"), tokens=toks, text=" ".join(u["text"] for u in utts)))
+            # 항목 캐시: 정렬 jsonl 수만 개를 매 프로세스가 읽으면 Lustre 에서 수십 분 걸린다(8-rank DDP 면 ×8). 한 번 만들어 _items.json.gz 에 저장하고
+            # (정렬 파일 수가 같으면) 재사용한다. 모든 mode·subset 을 담고 메모리에서 거른다.
+            import gzip
+            n_files = sum(1 for f in os.listdir(adir) if f.endswith(".jsonl")) if os.path.isdir(adir) else 0; cache = os.path.join(adir, "_items.json.gz"); allitems = None
+            if os.path.exists(cache):
+                try:
+                    c = json.load(gzip.open(cache, "rt", encoding="utf-8"))
+                    if c.get("n_files") == n_files and c.get("n_rows") == len(fi.rows): allitems = c["items"]; self.dropped += c["dropped"]; self.no_align += c["no_align"]
+                except Exception: allitems = None
+            if allitems is None:
+                allitems, dropped, no_align = [], 0, 0
+                for sid, row in fi.rows.items():
+                    p = os.path.join(adir, sid + ".jsonl")
+                    if not os.path.exists(p): no_align += 1; continue
+                    utts = _read_jsonl(p); bad = [u for u in utts if qc and bad_utterance(u)]
+                    if bad: dropped += 1; continue                       # 불량 발화(동일 종료시각 뭉침)가 있는 스트림은 통째로 제외
+                    toks = sorted(((t["id"], t["end_time"]) for u in utts for t in u["tokens"]), key=lambda x: x[1])
+                    allitems.append(dict(name=name, id=sid, K=int(row["frames"]), npy=row["npy"], lang=lang_of(name), subset=row.get("subset"), mode=row.get("mode", "stream"), tokens=toks, text=" ".join(u["text"] for u in utts)))
+                self.dropped += dropped; self.no_align += no_align
+                try:
+                    with gzip.open(cache + f".tmp{os.getpid()}", "wt", encoding="utf-8") as f: json.dump(dict(n_files=n_files, n_rows=len(fi.rows), dropped=dropped, no_align=no_align, items=allitems), f, ensure_ascii=False)
+                    os.replace(cache + f".tmp{os.getpid()}", cache)
+                except Exception: pass
+            for it in allitems:
+                if it["mode"] != mode or (subsets and it["subset"] not in subsets): continue
+                self.items.append(dict(it, tokens=[tuple(t) for t in it["tokens"]]))
         random.Random(seed).shuffle(self.items)
         if max_items: self.items = self.items[:max_items]
 

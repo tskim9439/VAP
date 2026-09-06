@@ -66,6 +66,7 @@ def make_sets(spec, cap_stream, cap_utt, seed=1):
     return {lab: MonoStreamDataset([m], tok, mode=mode, subsets=[sub], delays=(a.eval_delay,), max_per_chunk=a.M, seed=seed, max_items=(cap_stream if mode == "stream" else cap_utt))
             for lab, m, sub, mode in spec}
 training = not (a.eval_only or a.final or a.select)
+if world > 1 and not main: barrier()            # rank 0 이 정렬 항목 캐시(_items.json.gz)를 먼저 만들고, 나머지는 그것을 읽는다 (Lustre 소파일 7.5만 개 ×8 회피)
 train_ds = {m: MonoStreamDataset([m], tok, mode="stream", delays=delays, max_per_chunk=a.M, seed=a.seed) for m in a.train.split(",")} if training else {}
 if a.overfit:   # 같은 표본으로 학습·디코드. 표적 사례(KO 숫자·라틴 이중표기 / EN 발화 경계)를 절반 이상 포함시키고 ID·커버리지를 출력. 타깃 보존 assert.
     import re
@@ -88,6 +89,7 @@ if a.overfit:   # 같은 표본으로 학습·디코드. 표적 사례(KO 숫자
     dev_sets = {f"overfit/{m}": ds for m, ds in train_ds.items()}; log(f"overfit: 타깃 보존 OK, " + ", ".join(f"{m}:{len(ds)}" for m, ds in train_ds.items()))
 else:
     dev_sets = make_sets(DEV, a.sentinel_stream, a.sentinel_utt) if main or not training else {}
+if world > 1 and main: barrier()                # 캐시 생성 완료 → 다른 rank 진행
 sp_ids = (next(iter(dev_sets.values())) if dev_sets else next(iter(train_ds.values()))).sp_ids
 log("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align})" for k, v in train_ds.items()) + " | dev " + ", ".join(f"{k}:{len(v)}" for k, v in dev_sets.items()) + f" | world {world}")
 
