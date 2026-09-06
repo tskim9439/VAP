@@ -37,7 +37,8 @@ if world == 1 and "CUDA_VISIBLE_DEVICES" not in os.environ:
     os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import numpy as np, torch, torch.nn as nn, jiwer
 if world > 1:
-    import torch.distributed as dist; dist.init_process_group("nccl"); torch.cuda.set_device(local)
+    import torch.distributed as dist; from datetime import timedelta
+    dist.init_process_group("nccl", timeout=timedelta(hours=3)); torch.cuda.set_device(local)   # rank 0 의 sentinel 평가(수십 분) 동안 다른 rank 가 barrier 에서 기다린다 — 기본 10 분이면 죽는다
 dev = f"cuda:{local}" if world > 1 else "cuda"; main = rank == 0
 def log(*s):
     if main: print(*s, flush=True)
