@@ -1,0 +1,200 @@
+{
+ "args": {
+  "sets": "all",
+  "cap_stream": 200,
+  "cap_utt": 1000,
+  "all": false,
+  "models": "nemotron,qwen",
+  "gpu": "2",
+  "seed": 7
+ },
+ "note": "eval_other 는 서버 결손분(E03001–E03313 없음) 그대로 n=2687. 채점은 textnorm.score_*(태그·구두점·대문자 제거, EN 숫자→단어).",
+ "results": {
+  "dev-clean": {
+   "nemotron_rnnt_56_0": {
+    "n": 200,
+    "wer": 0.04384205794896619,
+    "example": [
+     "it was the season when the ancient sun god had been accustom",
+     "It was the season when the ancient sun god had been accustom"
+    ],
+    "sec": 145
+   },
+   "qwen3_asr_offline": {
+    "n": 200,
+    "wer": 0.023511513726574926,
+    "example": [
+     "it was the season when the ancient sun god had been accustom",
+     "It was the season when the ancient sun god had been accustom"
+    ],
+    "sec": 607
+   }
+  },
+  "dev-other": {
+   "nemotron_rnnt_56_0": {
+    "n": 200,
+    "wer": 0.08153008515984922,
+    "example": [
+     "i am and always have been opposed to large public funerals s",
+     "I am and always have been opposed to large public funerals, "
+    ],
+    "sec": 164
+   },
+   "qwen3_asr_offline": {
+    "n": 200,
+    "wer": 0.04278933407790032,
+    "example": [
+     "i am and always have been opposed to large public funerals s",
+     "I am and always have been opposed to large public funerals,\""
+    ],
+    "sec": 591
+   }
+  },
+  "kspon-dev": {
+   "nemotron_rnnt_56_0": {
+    "n": 1000,
+    "cer_official": 0.20075483091787438,
+    "cer_nospace": 0.20187300520745843,
+    "example": [
+     "나 매운맛 찐따야 아닌데",
+     ""
+    ],
+    "sec": 674
+   },
+   "qwen3_asr_offline": {
+    "n": 1000,
+    "cer_official": 0.11757246376811595,
+    "cer_nospace": 0.12187132538216025,
+    "example": [
+     "나 매운맛 찐따야 아닌데",
+     "나 면 맛 진짜야? 아닌데."
+    ],
+    "sec": 960
+   }
+  },
+  "test-clean/stream": {
+   "nemotron_rnnt_56_0": {
+    "n": 200,
+    "wer": 0.0427615002519617,
+    "example": [
+     "he moved uneasily and his chair creaked yes yes she hurried ",
+     "He moved uneasily and his chair creaked. <en-US> Yes, yes, s"
+    ],
+    "sec": 141
+   },
+   "qwen3_asr_offline": {
+    "n": 200,
+    "wer": 0.02469224677848967,
+    "example": [
+     "he moved uneasily and his chair creaked yes yes she hurried ",
+     "He moved uneasily, and his chair creaked. Yes, yes, she hurr"
+    ],
+    "sec": 574
+   }
+  },
+  "test-clean/utt": {
+   "nemotron_rnnt_56_0": {
+    "n": 1000,
+    "wer": 0.037295562235695724,
+    "example": [
+     "there was something individual about the great farm a most u",
+     "There was something individual about the great farm, a most "
+    ],
+    "sec": 664
+   },
+   "qwen3_asr_offline": {
+    "n": 1000,
+    "wer": 0.021246242421154533,
+    "example": [
+     "there was something individual about the great farm a most u",
+     "There was something individual about the great farm—a most u"
+    ],
+    "sec": 1032
+   }
+  },
+  "test-other/stream": {
+   "nemotron_rnnt_56_0": {
+    "n": 200,
+    "wer": 0.08151453873509518,
+    "example": [
+     "the man who is controlled by moral influence acts in accorda",
+     "The man who was controlled by moral influence accent accorda"
+    ],
+    "sec": 138
+   },
+   "qwen3_asr_offline": {
+    "n": 200,
+    "wer": 0.04281430862561886,
+    "example": [
+     "the man who is controlled by moral influence acts in accorda",
+     "The man who is controlled by moral influence acts in accorda"
+    ],
+    "sec": 615
+   }
+  },
+  "test-other/utt": {
+   "nemotron_rnnt_56_0": {
+    "n": 1000,
+    "wer": 0.08937787103725968,
+    "example": [
+     "i know they are bless them",
+     "I know they are bless them"
+    ],
+    "sec": 653
+   },
+   "qwen3_asr_offline": {
+    "n": 1000,
+    "wer": 0.04656042647309023,
+    "example": [
+     "i know they are bless them",
+     "I know they are. Bless them."
+    ],
+    "sec": 948
+   }
+  },
+  "eval_clean": {
+   "nemotron_rnnt_56_0": {
+    "n": 1000,
+    "cer_official": 0.2065272351183636,
+    "cer_nospace": 0.20454975108702503,
+    "example": [
+     "그거라도 해야지",
+     "그걸 도여"
+    ],
+    "sec": 653
+   },
+   "qwen3_asr_offline": {
+    "n": 1000,
+    "cer_official": 0.11804182946449092,
+    "cer_nospace": 0.11771378158674145,
+    "example": [
+     "그거라도 해야지",
+     "그거라도 해지."
+    ],
+    "sec": 739
+   }
+  },
+  "eval_other-partial[E03314-E06000,n=2687]": {
+   "nemotron_rnnt_56_0": {
+    "n": 1000,
+    "cer_official": 0.17849517193027184,
+    "cer_nospace": 0.17344301834783357,
+    "example": [
+     "아니 서로 흥미가 되게 없어보여",
+     "아니 서로 흥미가 되게 없어 보여. <ko-KR>"
+    ],
+    "sec": 658
+   },
+   "qwen3_asr_offline": {
+    "n": 1000,
+    "cer_official": 0.11310111858249147,
+    "cer_nospace": 0.10711516926522525,
+    "example": [
+     "아니 서로 흥미가 되게 없어보여",
+     "아니 서로 흥미가 되게 없어 보여."
+    ],
+    "sec": 967
+   }
+  }
+ }
+}
