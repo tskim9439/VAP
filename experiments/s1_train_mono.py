@@ -185,7 +185,11 @@ hist, best_score, best_bias, step = [], None, 0.0, 0
 # ── 재개
 last = os.path.join(out, "ckpt-last.pt"); rp = None if a.resume == "none" else (last if a.resume == "auto" else a.resume)
 if rp and os.path.exists(rp):
-    ck = torch.load(rp, map_location="cpu"); model.load_trainable_state(ck["model"]); opt.load_state_dict(ck["opt"]); sched.load_state_dict(ck["sched"]); step = ck["step"]; hist = ck.get("hist", []); best_score, best_bias = ck.get("best_score"), ck.get("best_bias", 0.0)
+    try: ck = torch.load(rp, map_location="cpu")
+    except Exception as e:                        # 저장 도중 선점되어 잘린 파일 → 직전 ckpt-last.prev.pt 로 폴백
+        prev = rp + ".prev"; assert os.path.exists(prev), f"ckpt-last 손상({type(e).__name__})이고 .prev 도 없음: {rp}"
+        log(f"!! {rp} 로드 실패({type(e).__name__}) → {prev} 로 재개"); ck = torch.load(prev, map_location="cpu"); rp = prev
+    model.load_trainable_state(ck["model"]); opt.load_state_dict(ck["opt"]); sched.load_state_dict(ck["sched"]); step = ck["step"]; hist = ck.get("hist", []); best_score, best_bias = ck.get("best_score"), ck.get("best_bias", 0.0)
     for _ in range(step): pass   # 데이터 순서는 epoch 시드로 결정되므로 step 만 복원해도 충분(같은 epoch 안의 정확한 위치 복원은 생략)
     log(f"재개 ← {rp} (step {step})")
 # ── 선점 신호
@@ -195,6 +199,9 @@ signal.signal(signal.SIGUSR1, _sig); signal.signal(signal.SIGTERM, _sig)
 def save_last():
     if not main: return
     st = dict(model=model.trainable_state(), opt=opt.state_dict(), sched=sched.state_dict(), step=step, hist=hist, best_score=best_score, best_bias=best_bias, args=vars(a))
+    if os.path.exists(last):                       # 직전 저장본은 .prev 로 보존(6 GB 저장 중 선점되어 잘리면 재개 시 .prev 로 폴백)
+        try: os.replace(last, last + ".prev")
+        except OSError: pass
     try:                                           # 원자적 교체 시도. /soundai(Azure Blob NFS) 는 방금 쓴 파일의 rename 이 실패할 수 있어 직접 쓰기로 폴백
         torch.save(st, last + ".tmp"); os.replace(last + ".tmp", last)
     except OSError as e:
