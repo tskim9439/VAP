@@ -1,0 +1,80 @@
+{
+ "dev-clean": {
+  "n": 20,
+  "tf_text_top1": 0.72822910578609,
+  "tf_text_top5": 0.9392168322618352,
+  "tf_next_acc": 0.9200684751119305,
+  "free_err": 0.23289473684210527,
+  "sub": 232,
+  "dele": 30,
+  "ins": 92,
+  "hits": 1258,
+  "ref_tokens": 1520,
+  "examples": [
+   [
+    "no a very natural one i should say and the glance she cast him while not meeting his eye s",
+    "no age very natural one i was should say and the thing was as she cast her while not meeti"
+   ],
+   [
+    "put the sugar with one quarter pint of water in a saucepan over the fire remove the scum a",
+    "put the sugar with a one quarter pint of water in a saucepan of the fire remove the stump "
+   ],
+   [
+    "the zeal of cyril exposed him to the penalties of the julian law but in a feeble governmen",
+    "the truth is that caroline exposed him to the penalties of the julian law but in her feebl"
+   ]
+  ]
+ },
+ "dev-other": {
+  "n": 20,
+  "tf_text_top1": 0.5945945945945946,
+  "tf_text_top5": 0.8864864864864865,
+  "tf_next_acc": 0.9245201327752922,
+  "free_err": 0.32616753150481836,
+  "sub": 293,
+  "dele": 79,
+  "ins": 68,
+  "hits": 977,
+  "ref_tokens": 1349,
+  "examples": [
+   [
+    "addison's note was a fiction in which unconnected fragments of his lucubrations were purpo",
+    "adidas most was a in which unconnected fragments of his lucubriques were purposefully jumb"
+   ],
+   [
+    "he swallowed down the dry choking sobs which had been heaving up from his heart hitherto a",
+    "he swallowed down the dry choking of sobs which had been heaving out from his heart he had"
+   ],
+   [
+    "now shall we be friends she asked lightly to be sure i should want you to my dear such a g",
+    "now i shall be friends she asked lightly to be sure i shall be one of you my such a girl i"
+   ]
+  ]
+ },
+ "kspon-dev": {
+  "n": 20,
+  "tf_text_top1": 0.6484375,
+  "tf_text_top5": 0.8489583333333334,
+  "tf_next_acc": 0.8987430167597765,
+  "free_err": 0.6538461538461539,
+  "sub": 73,
+  "dele": 173,
+  "ins": 9,
+  "hits": 144,
+  "ref_tokens": 390,
+  "examples": [
+   [
+    "소개팅 앱을 쓰는 사람은 남자가 더 많대 한 칠십 퍼가 남자래",
+    "아 쇼케"
+   ],
+   [
+    "흔들다 신나다 너무 어려운데 그냥 박수치는 영상이나 넣을까",
+    "근데 달라 달라 너무"
+   ],
+   [
+    "안 내",
+    "안돼"
+   ]
+  ]
+ }
+}
