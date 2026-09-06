@@ -57,7 +57,7 @@ esac
 # ── 3. 선점 신호(USR1, 종료 180 s 전): PREEMPT 파일 → 학습기가 다음 step 경계에서 ckpt-last 저장 후 종료 → requeue
 rm -f "$OUT/PREEMPT"
 on_preempt() { echo "[$(date '+%T')] USR1 수신 → PREEMPT 표시, 저장 대기"; touch "$OUT/PREEMPT"; wait "$PID"; echo "requeue $SLURM_JOB_ID"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }
-trap on_preempt USR1
+trap on_preempt USR1 TERM             # USR1: 시간 제한 180 s 전, TERM: 파티션 선점(GraceTime) — 둘 다 저장 후 requeue
 
 echo "[$(date '+%T')] torchrun 시작: $COMMON $EXTRA"
 torchrun --nproc_per_node=8 --master_port=$((20000 + SLURM_JOB_ID % 10000)) experiments/s1_train_mono.py $COMMON $EXTRA &
