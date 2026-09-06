@@ -101,7 +101,7 @@ def _load_qwen(mode: str):
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     from experiments.qwen_aut_mask import patch_aut
     from qwen_asr import Qwen3ASRModel
-    m = Qwen3ASRModel.from_pretrained("Qwen/Qwen3-ASR-0.6B", dtype=torch.float32, device_map="cuda", max_new_tokens=8)
+    m = Qwen3ASRModel.from_pretrained(os.environ.get("MXC_QWEN_ASR_DIR", "Qwen/Qwen3-ASR-0.6B"), dtype=torch.float32, device_map="cuda", max_new_tokens=8)   # mxc: 로컬 체크포인트 우선
     root = next(v for v in vars(m).values() if isinstance(v, nn.Module)); enc = root.thinker.audio_tower.float().eval(); fe = m.processor.feature_extractor
     mod = sys.modules[type(enc).__module__]; gl = getattr(enc, "_get_feat_extract_output_lengths", None) or mod._get_feat_extract_output_lengths
     # 마스크: 학습 블록(8 s)에 맞춰 좌측 7 블록(=8 s 창)으로 제한 → 층당 수용장 8 s, 18 층 = 144 s → ctx 150 s 면 exact
@@ -135,7 +135,7 @@ def _load_qwen_block8s():
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     from experiments.qwen_aut_mask import patch_aut
     from qwen_asr import Qwen3ASRModel
-    m = Qwen3ASRModel.from_pretrained("Qwen/Qwen3-ASR-0.6B", dtype=torch.float32, device_map="cuda", max_new_tokens=8)
+    m = Qwen3ASRModel.from_pretrained(os.environ.get("MXC_QWEN_ASR_DIR", "Qwen/Qwen3-ASR-0.6B"), dtype=torch.float32, device_map="cuda", max_new_tokens=8)   # mxc: 로컬 체크포인트 우선
     root = next(v for v in vars(m).values() if isinstance(v, nn.Module)); enc = root.thinker.audio_tower.float().eval(); fe = m.processor.feature_extractor
     mod = sys.modules[type(enc).__module__]; gl = getattr(enc, "_get_feat_extract_output_lengths", None) or mod._get_feat_extract_output_lengths
     patch_aut(enc, mode="block", block_fbank_frames=800)

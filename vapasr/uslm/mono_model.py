@@ -10,13 +10,18 @@ from .model import Adapter
 
 class MonoInterleavedASR(nn.Module):
     def __init__(self, thinker, tokenizer, adapter: Adapter, sp_ids: Dict[str, int], lora_r: int = 16, lora_alpha: int = 32,
-                 lora_targets=("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj")):
+                 lora_targets=("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"), full_ft: bool = False):
+        """full_ft=True: thinker 0.6B 전체를 학습(LoRA 없음, fp32 master + autocast bf16). 임베딩은 전 행 학습(grad mask 없음)."""
         super().__init__()
-        self.tok = tokenizer; self.adapter = adapter; self.sp_ids = dict(sp_ids)
-        for p in thinker.parameters(): p.requires_grad_(False)
-        if lora_r > 0:
-            from peft import LoraConfig, get_peft_model
-            thinker = get_peft_model(thinker, LoraConfig(r=lora_r, lora_alpha=lora_alpha, lora_dropout=0.05, target_modules=list(lora_targets), bias="none"))
+        self.tok = tokenizer; self.adapter = adapter; self.sp_ids = dict(sp_ids); self.full_ft = full_ft
+        if full_ft:
+            thinker = thinker.float()
+            for p in thinker.parameters(): p.requires_grad_(True)
+        else:
+            for p in thinker.parameters(): p.requires_grad_(False)
+            if lora_r > 0:
+                from peft import LoraConfig, get_peft_model
+                thinker = get_peft_model(thinker, LoraConfig(r=lora_r, lora_alpha=lora_alpha, lora_dropout=0.05, target_modules=list(lora_targets), bias="none"))
         self.thinker = thinker
         c = thinker.config if not hasattr(thinker, "base_model") else thinker.base_model.model.config
         self.audio_pad = c.audio_token_id
@@ -25,8 +30,10 @@ class MonoInterleavedASR(nn.Module):
         with torch.no_grad():
             mu = W[: len(tokenizer) - len(self.sp_ids)].float().mean(0)
             for r in self.special_rows: W[r] = (mu + 0.02 * torch.randn_like(mu)).to(W.dtype)
-        W.requires_grad_(True); mask = torch.zeros(W.shape[0], 1, dtype=W.dtype, device=W.device); mask[self.special_rows] = 1
-        W.register_hook(lambda g: g * mask.to(g.device, g.dtype))                       # 특수 토큰 행만 갱신 (lm_head 는 tied)
+        W.requires_grad_(True)
+        if not full_ft:                                                                  # LoRA 모드: 특수 토큰 행만 갱신 (lm_head 는 tied). full FT 는 전 행 학습
+            mask = torch.zeros(W.shape[0], 1, dtype=W.dtype, device=W.device); mask[self.special_rows] = 1
+            W.register_hook(lambda g: g * mask.to(g.device, g.dtype))
         self.next_audio = self.sp_ids["<NEXT_AUDIO>"]
         blocked = [self.audio_pad, c.audio_start_token_id, c.audio_end_token_id, tokenizer.convert_tokens_to_ids("<|im_end|>"), tokenizer.convert_tokens_to_ids("<|im_start|>"),
                    tokenizer.convert_tokens_to_ids("<asr_text>"), self.sp_ids["<EMPTY_AUDIO>"], self.sp_ids["<SPK_A>"], self.sp_ids["<SPK_B>"]] \
@@ -90,11 +97,14 @@ class MonoInterleavedASR(nn.Module):
 
     def trainable_state(self):
         W = self._embed().weight.detach().cpu()
+        if self.full_ft:   # thinker 전체(bf16 로 저장, 0.6B ≈ 1.2 GB)
+            return dict(adapter=self.adapter.state_dict(), thinker={k: v.detach().to(torch.bfloat16).cpu() for k, v in self.thinker.state_dict().items()}, sp_ids=self.sp_ids, mono=True, full_ft=True)
         return dict(adapter=self.adapter.state_dict(), lora={k: v for k, v in self.thinker.state_dict().items() if "lora" in k},
                     special_rows={int(r): W[r].clone() for r in self.special_rows}, sp_ids=self.sp_ids, mono=True)
 
     def load_trainable_state(self, st):
         self.adapter.load_state_dict(st["adapter"])
+        if st.get("thinker"): self.thinker.load_state_dict({k: v.to(next(self.thinker.parameters()).dtype) for k, v in st["thinker"].items()}, strict=False); return
         if st.get("lora"): self.thinker.load_state_dict(st["lora"], strict=False)
         with torch.no_grad():
             W = self._embed().weight

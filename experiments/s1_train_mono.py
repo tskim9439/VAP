@@ -16,6 +16,9 @@ ap.add_argument("--train", default="librispeech-100,kspon-100"); ap.add_argument
 ap.add_argument("--bs-en", type=int, default=2); ap.add_argument("--bs-ko", type=int, default=8)
 ap.add_argument("--lr", type=float, default=2e-4); ap.add_argument("--lr-adapter", type=float, default=5e-4); ap.add_argument("--warmup", type=int, default=300); ap.add_argument("--wd", type=float, default=0.01)
 ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--M", type=int, default=4); ap.add_argument("--next-weight", type=float, default=0.3); ap.add_argument("--lora-r", type=int, default=16)
+ap.add_argument("--next-weight-ko", type=float, default=None, help="KO 배치의 <NEXT_AUDIO> 가중치(기본 --next-weight). KO 과소 방출 대응")
+ap.add_argument("--full-ft", action="store_true", help="thinker 0.6B 전체 학습(LoRA 없음). --lr 은 thinker lr (권장 2e-5)")
+ap.add_argument("--init-adapter", default=None, help="s1_distill_adapter.py 의 adapter.pt 로 adapter 만 초기화(증류 init). LoRA/thinker 는 그대로")
 ap.add_argument("--eval-every", type=int, default=1000); ap.add_argument("--eval-bias", default="0,1,2"); ap.add_argument("--eval-delay", type=int, default=2)
 ap.add_argument("--sentinel-stream", type=int, default=20, help="학습 중 sentinel dev: 스트림 세트당 수"); ap.add_argument("--sentinel-utt", type=int, default=200, help="〃 발화 세트당 수")
 ap.add_argument("--select", default=None, help="쉼표 구분 step 목록: 큰 dev 표본으로 ckpt·bias 선택"); ap.add_argument("--select-stream", type=int, default=200); ap.add_argument("--select-utt", type=int, default=1000)
@@ -73,10 +76,12 @@ else:
 sp_ids = next(iter(dev_sets.values())).sp_ids
 print("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align})" for k, v in train_ds.items()) + " | dev " + ", ".join(f"{k}:{len(v)}" for k, v in dev_sets.items()), flush=True)
 
-model = MonoInterleavedASR(thinker, tok, Adapter(), sp_ids, lora_r=a.lora_r).to(dev); model.adapter.float()
+model = MonoInterleavedASR(thinker, tok, Adapter(), sp_ids, lora_r=a.lora_r, full_ft=a.full_ft).to(dev); model.adapter.float()
+if a.init_adapter:
+    st0 = torch.load(a.init_adapter, map_location="cpu"); model.adapter.load_state_dict(st0["adapter"]); print(f"adapter 증류 init ← {a.init_adapter} (val cos {st0.get('hist', [{}])[-1].get('cos', float('nan')):.3f})", flush=True)
 if a.ckpt: model.load_trainable_state(torch.load(a.ckpt, map_location="cpu")); print("ckpt ←", a.ckpt, flush=True)
-n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad) - model._embed().weight.numel() + len(model.special_rows) * model._embed().weight.shape[1]
-print(f"trainable {n_tr/1e6:.1f}M (random init: adapter + LoRA r{a.lora_r} + 특수 토큰 행 {len(model.special_rows)})", flush=True)
+n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad) if a.full_ft else sum(p.numel() for p in model.parameters() if p.requires_grad) - model._embed().weight.numel() + len(model.special_rows) * model._embed().weight.shape[1]
+print(f"trainable {n_tr/1e6:.1f}M ({'thinker full FT + adapter' if a.full_ft else f'adapter + LoRA r{a.lora_r} + 특수 토큰 행 {len(model.special_rows)}'}; adapter {'증류 init' if a.init_adapter else 'random'})", flush=True)
 
 # ───────────────────────────── 평가 ─────────────────────────────
 def latency_stats(hyp, ref):
@@ -108,7 +113,7 @@ def eval_set(ds, bias, delay):
 
 def evaluate(sets, biases, delay, label):
     model.eval()
-    if a.lora_r > 0: model.thinker.merge_adapter()
+    if a.lora_r > 0 and not a.full_ft: model.thinker.merge_adapter()
     res = {}
     for name, ds in sets.items():
         runs = {b: eval_set(ds, b, delay) for b in biases}; best_b = min(runs, key=lambda b: runs[b]["err"]); b0 = runs.get(0.0, runs[min(runs)])
@@ -116,7 +121,7 @@ def evaluate(sets, biases, delay, label):
         v80 = "n/a" if b0["viol_80ms"] is None else f"{b0['viol_80ms']:.4f}"; p50 = "n/a" if b0["lat_p50"] is None else f"{b0['lat_p50']*1000:.0f}ms"
         print(f"  [{label}] {name}: bias0 err {b0['err']:.3f} tok/chunk {b0['tok_per_chunk']:.3f} (ref {b0['ref_per_chunk']:.3f}) matched {b0['matched']} viol80 {v80} p50 {p50} "
               f"tick p99 {b0['tick_ms_p99']:.1f}ms | best bias {best_b} err {runs[best_b]['err']:.3f}", flush=True)
-    if a.lora_r > 0: model.thinker.unmerge_adapter()
+    if a.lora_r > 0 and not a.full_ft: model.thinker.unmerge_adapter()
     model.train(); torch.cuda.empty_cache(); return res
 biases = [float(x) for x in a.eval_bias.split(",")]
 
@@ -158,7 +163,8 @@ hist, best_score, best_bias = [], None, 0.0; step = 0; t0 = time.time(); acc = {
 while step < a.steps:
     b = next(its[step % len(its)])                                         # 언어 교대 (EN, KO, EN, …) — optimizer step 기준 1:1, 배치 크기는 언어별
     with torch.autocast("cuda", dtype=torch.bfloat16):
-        loss, parts = model(b["feats"].to(dev), b["ids"].to(dev), b["is_audio"].to(dev), b["chunk_of"].to(dev), b["labels"].to(dev), b["mask"].to(dev), next_weight=a.next_weight)
+        nw = a.next_weight_ko if (a.next_weight_ko is not None and b["lang"][0] == "Korean") else a.next_weight     # 언어별 <NEXT_AUDIO> 가중치
+        loss, parts = model(b["feats"].to(dev), b["ids"].to(dev), b["is_audio"].to(dev), b["chunk_of"].to(dev), b["labels"].to(dev), b["mask"].to(dev), next_weight=nw)
     loss.backward(); torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0); opt.step(); sched.step(); opt.zero_grad(set_to_none=True); step += 1
     for k, v in parts.items(): acc[k] = acc.get(k, 0) + v
     lab = b["labels"]; n_lab += int((lab != -100).sum()); n_next += int((lab == sp_ids["<NEXT_AUDIO>"]).sum()); n_flush += b["n_flush"]
