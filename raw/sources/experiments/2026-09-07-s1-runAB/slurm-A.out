@@ -1,0 +1,205 @@
+[2026-09-07 00:16:44] job 65330 RUN=A node=slurmmxch200v5-hpc-42 restart=0
+adapter: /soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt
+[00:16:51] torchrun 시작: --tag A --out-dir /soundai/Model/VAPASR/s1-A --epochs 15 --bs-en 12 --bs-ko 48 --init-adapter /soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt --next-weight 0.3 --next-weight-ko 0.15
+        --eval-every 1000 --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every 300 --warmup 200 --resume auto --lora-r 16 --lr 4e-4 --lr-adapter 1e-3
+/lustre/soundai/users/tskim/VAPKT/conda/envs/vapasr/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:4876: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  warnings.warn(  # warn only once
+[rank0]:[W907 00:17:25.208922258 ProcessGroupNCCL.cpp:5068] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
+NCCL version 2.27.5+cuda12.9
+[2026-09-07T00:18:07.502] error: *** JOB 65330 ON slurmmxch200v5-hpc-42 CANCELLED AT 2026-09-07T00:18:07 DUE TO PREEMPTION ***
+[00:18:07] USR1 수신 → PREEMPT 표시, 저장 대기
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+/lustre/soundai/users/tskim/VAPKT/conda/envs/vapasr/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:4876: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  warnings.warn(  # warn only once
+train librispeech-100:13182 (drop 0, no-align 0), kspon-100:61939 (drop 61, no-align 0) | dev dev-clean:10, dev-other:10, kspon-dev:100 | world 8
+adapter 증류 init ← /soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt (val cos 0.737)
+trainable 14.3M (adapter + LoRA r16 + 특수 토큰 행 12; adapter 증류 init) → /soundai/Model/VAPASR/s1-A
+rank 당 배치/epoch: librispeech-100:137, kspon-100:161 → steps/epoch 298, 총 4470 step (epochs 15.0), 유효 배치 EN 96 / KO 384
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+[2026-09-07 00:21:54] job 65330 RUN=A node=slurmmxch200v5-hpc-63 restart=1
+adapter: /soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt
+[00:22:01] torchrun 시작: --tag A --out-dir /soundai/Model/VAPASR/s1-A --epochs 15 --bs-en 12 --bs-ko 48 --init-adapter /soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt --next-weight 0.3 --next-weight-ko 0.15
+        --eval-every 1000 --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every 300 --warmup 200 --resume auto --lora-r 16 --lr 4e-4 --lr-adapter 1e-3
+/lustre/soundai/users/tskim/VAPKT/conda/envs/vapasr/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:4876: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  warnings.warn(  # warn only once
+[rank0]:[W907 00:22:30.652515277 ProcessGroupNCCL.cpp:5068] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
+NCCL version 2.27.5+cuda12.9
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+/lustre/soundai/users/tskim/VAPKT/conda/envs/vapasr/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:4876: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  warnings.warn(  # warn only once
+train librispeech-100:13182 (drop 0, no-align 0), kspon-100:61939 (drop 61, no-align 0) | dev dev-clean:10, dev-other:10, kspon-dev:100 | world 8
+adapter 증류 init ← /soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt (val cos 0.737)
+trainable 14.3M (adapter + LoRA r16 + 특수 토큰 행 12; adapter 증류 init) → /soundai/Model/VAPASR/s1-A
+rank 당 배치/epoch: librispeech-100:137, kspon-100:161 → steps/epoch 298, 총 4470 step (epochs 15.0), 유효 배치 EN 96 / KO 384
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+  step 50/4470 loss 3.010 next 3.850 text 6.331 top1 0.114 NEXT비율 0.809 flush 41 L 221 K 86 Ko 35.67h/50step lr 1.0e-04 40s
+  step 100/4470 loss 2.845 next 0.767 text 4.740 top1 0.174 NEXT비율 0.805 flush 56 L 288 K 109 Ko 37.11h/50step lr 2.0e-04 77s
+  step 150/4470 loss 2.454 next 0.748 text 4.354 top1 0.203 NEXT비율 0.803 flush 36 L 119 K 43 Ko 38.35h/50step lr 3.0e-04 112s
+  step 200/4470 loss 2.479 next 0.554 text 4.154 top1 0.204 NEXT비율 0.809 flush 27 L 198 K 74 Ko 36.14h/50step lr 4.0e-04 149s
+  step 250/4470 loss 2.222 next 0.539 text 3.856 top1 0.243 NEXT비율 0.803 flush 40 L 88 K 33 Ko 39.70h/50step lr 4.0e-04 185s
+  step 300/4470 loss 2.080 next 0.539 text 2.930 top1 0.351 NEXT비율 0.803 flush 25 L 149 K 55 Ko 38.56h/50step lr 4.0e-04 224s
+  step 350/4470 loss 1.715 next 0.474 text 2.267 top1 0.466 NEXT비율 0.806 flush 39 L 122 K 45 Ko 37.97h/50step lr 3.9e-04 266s
+  step 400/4470 loss 1.492 next 0.558 text 1.812 top1 0.558 NEXT비율 0.799 flush 33 L 714 K 288 Ko 41.15h/50step lr 3.9e-04 303s
+  step 450/4470 loss 1.356 next 0.395 text 1.615 top1 0.592 NEXT비율 0.805 flush 42 L 105 K 37 Ko 37.06h/50step lr 3.9e-04 337s
+  step 500/4470 loss 1.304 next 0.407 text 1.413 top1 0.643 NEXT비율 0.804 flush 47 L 170 K 64 Ko 38.64h/50step lr 3.9e-04 373s
+  step 550/4470 loss 0.917 next 0.371 text 1.402 top1 0.641 NEXT비율 0.805 flush 58 L 515 K 205 Ko 36.09h/50step lr 3.9e-04 407s
+  step 600/4470 loss 1.408 next 0.348 text 1.336 top1 0.661 NEXT비율 0.807 flush 24 L 121 K 44 Ko 36.34h/50step lr 3.8e-04 445s
+  step 650/4470 loss 1.030 next 0.394 text 1.211 top1 0.688 NEXT비율 0.803 flush 48 L 248 K 92 Ko 38.60h/50step lr 3.8e-04 486s
+  step 700/4470 loss 0.816 next 0.365 text 1.081 top1 0.712 NEXT비율 0.802 flush 35 L 372 K 143 Ko 41.41h/50step lr 3.8e-04 522s
+[2026-09-07T00:32:13.009] error: *** JOB 65330 ON slurmmxch200v5-hpc-63 CANCELLED AT 2026-09-07T00:32:13 DUE TO PREEMPTION ***
+[00:32:13] USR1 수신 → PREEMPT 표시, 저장 대기
+선점/종료 신호 → ckpt-last 저장 후 종료 (step 701). 재시작하면 이어서 학습.
+[rank0]:[W907 00:32:19.848976200 ProcessGroupNCCL.cpp:1524] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+requeue 65330
+Job is pending execution for job 65330
+[2026-09-07 00:37:05] job 65330 RUN=A node=slurmmxch200v5-hpc-12 restart=2
+adapter: /soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt
+[00:37:12] torchrun 시작: --tag A --out-dir /soundai/Model/VAPASR/s1-A --epochs 15 --bs-en 12 --bs-ko 48 --init-adapter /soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt --next-weight 0.3 --next-weight-ko 0.15
+        --eval-every 1000 --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every 300 --warmup 200 --resume auto --lora-r 16 --lr 4e-4 --lr-adapter 1e-3
+/lustre/soundai/users/tskim/VAPKT/conda/envs/vapasr/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:4876: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  warnings.warn(  # warn only once
+[rank0]:[W907 00:37:45.224148294 ProcessGroupNCCL.cpp:5068] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
+NCCL version 2.27.5+cuda12.9
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+/lustre/soundai/users/tskim/VAPKT/conda/envs/vapasr/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py:4876: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  warnings.warn(  # warn only once
+train librispeech-100:13182 (drop 0, no-align 0), kspon-100:61939 (drop 61, no-align 0) | dev dev-clean:10, dev-other:10, kspon-dev:100 | world 8
+adapter 증류 init ← /soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt (val cos 0.737)
+trainable 14.3M (adapter + LoRA r16 + 특수 토큰 행 12; adapter 증류 init) → /soundai/Model/VAPASR/s1-A
+rank 당 배치/epoch: librispeech-100:137, kspon-100:161 → steps/epoch 298, 총 4470 step (epochs 15.0), 유효 배치 EN 96 / KO 384
+재개 ← /soundai/Model/VAPASR/s1-A/ckpt-last.pt (step 701)
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+  step 750/4470 loss 0.970 next 0.353 text 1.093 top1 0.691 NEXT비율 0.809 flush 35 L 221 K 86 Ko 34.77h/50step lr 3.7e-04 40s
+  step 800/4470 loss 0.921 next 0.353 text 1.026 top1 0.728 NEXT비율 0.805 flush 46 L 288 K 109 Ko 36.97h/50step lr 3.7e-04 76s
+  step 850/4470 loss 1.235 next 0.355 text 0.977 top1 0.738 NEXT비율 0.803 flush 38 L 119 K 43 Ko 38.52h/50step lr 3.7e-04 112s
+  step 900/4470 loss 0.913 next 0.337 text 1.008 top1 0.736 NEXT비율 0.809 flush 44 L 198 K 74 Ko 36.19h/50step lr 3.6e-04 148s
+  step 950/4470 loss 0.931 next 0.331 text 0.891 top1 0.763 NEXT비율 0.803 flush 36 L 88 K 33 Ko 39.78h/50step lr 3.6e-04 189s
+  step 1000/4470 loss 1.011 next 0.326 text 0.931 top1 0.750 NEXT비율 0.802 flush 32 L 149 K 55 Ko 38.67h/50step lr 3.5e-04 228s
+  [sentinel@1000] dev-clean: bias0 err 0.353 tok/chunk 0.263 (ref 0.233) matched 687 viol80 0.0146 p50 178ms tick p99 89.7ms | best bias 0.0 err 0.353
+  [sentinel@1000] dev-other: bias0 err 0.462 tok/chunk 0.242 (ref 0.215) matched 532 viol80 0.0169 p50 206ms tick p99 86.4ms | best bias 0.0 err 0.462
+  [sentinel@1000] kspon-dev: bias0 err 0.685 tok/chunk 0.320 (ref 0.284) matched 977 viol80 0.0993 p50 152ms tick p99 126.7ms | best bias 0.0 err 0.685
+  step 1050/4470 loss 0.840 next 0.316 text 0.932 top1 0.751 NEXT비율 0.807 flush 40 L 122 K 45 Ko 37.76h/50step lr 3.5e-04 1066s
+  step 1100/4470 loss 0.643 next 0.306 text 0.878 top1 0.765 NEXT비율 0.799 flush 35 L 714 K 288 Ko 41.13h/50step lr 3.4e-04 1102s
+  step 1150/4470 loss 0.879 next 0.313 text 0.880 top1 0.763 NEXT비율 0.805 flush 41 L 105 K 37 Ko 37.06h/50step lr 3.4e-04 1136s
+  step 1200/4470 loss 0.919 next 0.315 text 0.879 top1 0.760 NEXT비율 0.804 flush 47 L 170 K 64 Ko 38.67h/50step lr 3.3e-04 1172s
+  step 1250/4470 loss 0.645 next 0.285 text 0.886 top1 0.757 NEXT비율 0.804 flush 58 L 515 K 205 Ko 36.07h/50step lr 3.3e-04 1210s
+  step 1300/4470 loss 0.930 next 0.303 text 0.852 top1 0.776 NEXT비율 0.807 flush 25 L 121 K 44 Ko 36.50h/50step lr 3.2e-04 1249s
+  step 1350/4470 loss 0.702 next 0.293 text 0.803 top1 0.786 NEXT비율 0.803 flush 46 L 248 K 92 Ko 38.44h/50step lr 3.2e-04 1286s
+  step 1400/4470 loss 0.618 next 0.306 text 0.712 top1 0.803 NEXT비율 0.802 flush 36 L 372 K 143 Ko 41.58h/50step lr 3.1e-04 1323s
+  step 1450/4470 loss 0.587 next 0.289 text 0.772 top1 0.790 NEXT비율 0.803 flush 56 L 649 K 261 Ko 40.30h/50step lr 3.0e-04 1362s
+  step 1500/4470 loss 0.697 next 0.277 text 0.759 top1 0.793 NEXT비율 0.806 flush 37 L 249 K 93 Ko 37.27h/50step lr 3.0e-04 1397s
+  step 1550/4470 loss 0.580 next 0.288 text 0.758 top1 0.795 NEXT비율 0.806 flush 34 L 74 K 26 Ko 38.36h/50step lr 2.9e-04 1436s
+  step 1600/4470 loss 0.903 next 0.276 text 0.732 top1 0.799 NEXT비율 0.797 flush 37 L 159 K 59 Ko 41.97h/50step lr 2.9e-04 1474s
+  step 1650/4470 loss 0.902 next 0.289 text 0.701 top1 0.810 NEXT비율 0.803 flush 48 L 135 K 50 Ko 37.99h/50step lr 2.8e-04 1507s
+  step 1700/4470 loss 0.740 next 0.265 text 0.714 top1 0.805 NEXT비율 0.809 flush 44 L 85 K 30 Ko 35.40h/50step lr 2.7e-04 1543s
+  step 1750/4470 loss 0.699 next 0.268 text 0.678 top1 0.815 NEXT비율 0.804 flush 42 L 137 K 52 Ko 39.20h/50step lr 2.7e-04 1583s
+  step 1800/4470 loss 0.820 next 0.277 text 0.671 top1 0.814 NEXT비율 0.808 flush 25 L 112 K 40 Ko 36.00h/50step lr 2.6e-04 1618s
+  step 1850/4470 loss 0.675 next 0.269 text 0.672 top1 0.817 NEXT비율 0.802 flush 33 L 190 K 73 Ko 37.66h/50step lr 2.5e-04 1661s
+  step 1900/4470 loss 0.591 next 0.261 text 0.671 top1 0.812 NEXT비율 0.812 flush 27 L 480 K 191 Ko 34.03h/50step lr 2.5e-04 1694s
+  step 1950/4470 loss 0.539 next 0.278 text 0.586 top1 0.840 NEXT비율 0.793 flush 39 L 452 K 179 Ko 48.38h/50step lr 2.4e-04 1732s
+  step 2000/4470 loss 0.661 next 0.260 text 0.650 top1 0.822 NEXT비율 0.804 flush 46 L 95 K 33 Ko 38.51h/50step lr 2.3e-04 1770s
+  [sentinel@2000] dev-clean: bias0 err 0.223 tok/chunk 0.245 (ref 0.233) matched 728 viol80 0.0082 p50 177ms tick p99 89.0ms | best bias 0.0 err 0.223
+  [sentinel@2000] dev-other: bias0 err 0.286 tok/chunk 0.218 (ref 0.215) matched 590 viol80 0.0119 p50 212ms tick p99 86.4ms | best bias 0.0 err 0.286
+  [sentinel@2000] kspon-dev: bias0 err 0.601 tok/chunk 0.319 (ref 0.284) matched 1145 viol80 0.0856 p50 145ms tick p99 129.8ms | best bias 0.0 err 0.601
+  step 2050/4470 loss 0.604 next 0.269 text 0.586 top1 0.839 NEXT비율 0.798 flush 36 L 361 K 139 Ko 40.92h/50step lr 2.3e-04 2612s
+  step 2100/4470 loss 0.764 next 0.244 text 0.624 top1 0.825 NEXT비율 0.812 flush 40 L 161 K 61 Ko 34.53h/50step lr 2.2e-04 2650s
+  step 2150/4470 loss 0.551 next 0.261 text 0.583 top1 0.840 NEXT비율 0.806 flush 40 L 400 K 158 Ko 39.62h/50step lr 2.1e-04 2690s
+  step 2200/4470 loss 0.841 next 0.252 text 0.609 top1 0.830 NEXT비율 0.809 flush 39 L 126 K 46 Ko 35.89h/50step lr 2.0e-04 2726s
+  step 2250/4470 loss 0.567 next 0.248 text 0.605 top1 0.831 NEXT비율 0.805 flush 41 L 893 K 365 Ko 38.39h/50step lr 2.0e-04 2761s
+  step 2300/4470 loss 0.548 next 0.261 text 0.558 top1 0.843 NEXT비율 0.798 flush 48 L 98 K 35 Ko 45.32h/50step lr 1.9e-04 2799s
+  step 2350/4470 loss 0.622 next 0.244 text 0.564 top1 0.842 NEXT비율 0.807 flush 48 L 108 K 40 Ko 36.24h/50step lr 1.8e-04 2836s
+  step 2400/4470 loss 0.743 next 0.243 text 0.537 top1 0.850 NEXT비율 0.810 flush 45 L 188 K 74 Ko 35.47h/50step lr 1.8e-04 2872s
+  step 2450/4470 loss 0.564 next 0.239 text 0.557 top1 0.843 NEXT비율 0.806 flush 42 L 124 K 47 Ko 37.33h/50step lr 1.7e-04 2916s
+  step 2500/4470 loss 0.563 next 0.237 text 0.526 top1 0.852 NEXT비율 0.801 flush 54 L 105 K 39 Ko 39.81h/50step lr 1.6e-04 2952s
+  step 2550/4470 loss 0.648 next 0.249 text 0.561 top1 0.845 NEXT비율 0.808 flush 38 L 169 K 65 Ko 36.01h/50step lr 1.6e-04 2988s
+  step 2600/4470 loss 0.579 next 0.241 text 0.558 top1 0.845 NEXT비율 0.807 flush 31 L 217 K 84 Ko 34.60h/50step lr 1.5e-04 3024s
+  step 2650/4470 loss 0.548 next 0.245 text 0.506 top1 0.857 NEXT비율 0.803 flush 49 L 136 K 52 Ko 39.62h/50step lr 1.4e-04 3061s
+  step 2700/4470 loss 0.544 next 0.236 text 0.487 top1 0.864 NEXT비율 0.808 flush 40 L 181 K 68 Ko 35.53h/50step lr 1.4e-04 3097s
+  step 2750/4470 loss 0.416 next 0.232 text 0.465 top1 0.869 NEXT비율 0.805 flush 37 L 91 K 32 Ko 38.47h/50step lr 1.3e-04 3137s
+  step 2800/4470 loss 0.564 next 0.221 text 0.492 top1 0.863 NEXT비율 0.810 flush 56 L 353 K 138 Ko 34.57h/50step lr 1.2e-04 3174s
+  step 2850/4470 loss 0.539 next 0.240 text 0.481 top1 0.868 NEXT비율 0.803 flush 44 L 145 K 55 Ko 39.00h/50step lr 1.2e-04 3210s
+  step 2900/4470 loss 0.442 next 0.234 text 0.491 top1 0.863 NEXT비율 0.797 flush 40 L 117 K 43 Ko 43.40h/50step lr 1.1e-04 3246s
+  step 2950/4470 loss 0.492 next 0.237 text 0.462 top1 0.868 NEXT비율 0.799 flush 53 L 502 K 200 Ko 41.96h/50step lr 1.0e-04 3285s
+  step 3000/4470 loss 0.453 next 0.225 text 0.459 top1 0.871 NEXT비율 0.806 flush 22 L 361 K 140 Ko 38.12h/50step lr 9.8e-05 3322s
+  [sentinel@3000] dev-clean: bias0 err 0.223 tok/chunk 0.243 (ref 0.233) matched 732 viol80 0.0068 p50 168ms tick p99 89.2ms | best bias 0.0 err 0.223
+  [sentinel@3000] dev-other: bias0 err 0.286 tok/chunk 0.225 (ref 0.215) matched 605 viol80 0.0099 p50 190ms tick p99 87.2ms | best bias 0.0 err 0.286
+  [sentinel@3000] kspon-dev: bias0 err 0.509 tok/chunk 0.312 (ref 0.284) matched 1271 viol80 0.0787 p50 150ms tick p99 127.1ms | best bias 0.0 err 0.509
+  step 3050/4470 loss 0.502 next 0.226 text 0.441 top1 0.875 NEXT비율 0.805 flush 35 L 121 K 45 Ko 36.96h/50step lr 9.2e-05 4159s
+  step 3100/4470 loss 0.571 next 0.220 text 0.450 top1 0.871 NEXT비율 0.812 flush 43 L 239 K 89 Ko 34.86h/50step lr 8.6e-05 4194s
+  step 3150/4470 loss 0.560 next 0.221 text 0.461 top1 0.872 NEXT비율 0.805 flush 48 L 121 K 43 Ko 36.54h/50step lr 8.0e-05 4234s
+  step 3200/4470 loss 0.602 next 0.211 text 0.439 top1 0.875 NEXT비율 0.812 flush 46 L 181 K 69 Ko 34.96h/50step lr 7.5e-05 4271s
+  step 3250/4470 loss 0.515 next 0.213 text 0.438 top1 0.878 NEXT비율 0.810 flush 55 L 263 K 102 Ko 35.53h/50step lr 6.9e-05 4305s
+  step 3300/4470 loss 0.454 next 0.214 text 0.409 top1 0.885 NEXT비율 0.806 flush 54 L 160 K 59 Ko 36.68h/50step lr 6.4e-05 4344s
+  step 3350/4470 loss 0.501 next 0.220 text 0.404 top1 0.887 NEXT비율 0.808 flush 48 L 148 K 51 Ko 37.10h/50step lr 5.9e-05 4386s
+  step 3400/4470 loss 0.489 next 0.224 text 0.413 top1 0.884 NEXT비율 0.798 flush 28 L 255 K 99 Ko 42.33h/50step lr 5.4e-05 4423s
+  step 3450/4470 loss 0.438 next 0.220 text 0.407 top1 0.888 NEXT비율 0.804 flush 46 L 123 K 47 Ko 37.89h/50step lr 4.9e-05 4458s
+  step 3500/4470 loss 0.472 next 0.210 text 0.399 top1 0.888 NEXT비율 0.812 flush 37 L 110 K 40 Ko 35.79h/50step lr 4.5e-05 4494s
+  step 3550/4470 loss 0.427 next 0.203 text 0.377 top1 0.895 NEXT비율 0.811 flush 45 L 327 K 127 Ko 34.89h/50step lr 4.0e-05 4530s
+  step 3600/4470 loss 0.394 next 0.218 text 0.386 top1 0.891 NEXT비율 0.800 flush 37 L 333 K 130 Ko 40.59h/50step lr 3.6e-05 4567s
+  step 3650/4470 loss 0.355 next 0.214 text 0.380 top1 0.893 NEXT비율 0.803 flush 46 L 149 K 57 Ko 39.50h/50step lr 3.2e-05 4610s
+  step 3700/4470 loss 0.395 next 0.214 text 0.376 top1 0.896 NEXT비율 0.804 flush 38 L 412 K 162 Ko 37.17h/50step lr 2.9e-05 4646s
+  step 3750/4470 loss 0.448 next 0.205 text 0.355 top1 0.903 NEXT비율 0.806 flush 43 L 704 K 276 Ko 37.86h/50step lr 2.5e-05 4682s
+  step 3800/4470 loss 0.480 next 0.218 text 0.378 top1 0.893 NEXT비율 0.796 flush 42 L 249 K 95 Ko 42.97h/50step lr 2.2e-05 4720s
+  step 3850/4470 loss 0.398 next 0.203 text 0.381 top1 0.895 NEXT비율 0.811 flush 49 L 335 K 132 Ko 35.82h/50step lr 1.9e-05 4756s
+  step 3900/4470 loss 0.451 next 0.215 text 0.374 top1 0.896 NEXT비율 0.805 flush 31 L 184 K 72 Ko 38.38h/50step lr 1.6e-05 4793s
+  step 3950/4470 loss 0.221 next 0.211 text 0.358 top1 0.900 NEXT비율 0.801 flush 29 L 88 K 30 Ko 39.19h/50step lr 1.3e-05 4835s
+  step 4000/4470 loss 0.413 next 0.210 text 0.367 top1 0.900 NEXT비율 0.803 flush 48 L 129 K 47 Ko 40.42h/50step lr 1.1e-05 4871s
+  [sentinel@4000] dev-clean: bias0 err 0.220 tok/chunk 0.243 (ref 0.233) matched 732 viol80 0.0068 p50 169ms tick p99 88.1ms | best bias 0.0 err 0.220
+  [sentinel@4000] dev-other: bias0 err 0.301 tok/chunk 0.217 (ref 0.215) matched 578 viol80 0.0156 p50 190ms tick p99 87.0ms | best bias 0.0 err 0.301
+  [sentinel@4000] kspon-dev: bias0 err 0.512 tok/chunk 0.310 (ref 0.284) matched 1236 viol80 0.0809 p50 150ms tick p99 127.9ms | best bias 0.0 err 0.512
+  step 4050/4470 loss 0.482 next 0.207 text 0.359 top1 0.902 NEXT비율 0.804 flush 34 L 172 K 64 Ko 38.74h/50step lr 8.7e-06 5705s
+  step 4100/4470 loss 0.452 next 0.211 text 0.363 top1 0.897 NEXT비율 0.805 flush 56 L 271 K 101 Ko 39.03h/50step lr 6.7e-06 5743s
+  step 4150/4470 loss 0.431 next 0.209 text 0.365 top1 0.898 NEXT비율 0.807 flush 44 L 248 K 94 Ko 38.43h/50step lr 5.0e-06 5778s
+  step 4200/4470 loss 0.395 next 0.201 text 0.354 top1 0.901 NEXT비율 0.804 flush 43 L 192 K 74 Ko 37.06h/50step lr 3.6e-06 5814s
+  step 4250/4470 loss 0.429 next 0.205 text 0.371 top1 0.899 NEXT비율 0.811 flush 41 L 189 K 73 Ko 34.65h/50step lr 2.4e-06 5855s
+  step 4300/4470 loss 0.472 next 0.204 text 0.345 top1 0.904 NEXT비율 0.806 flush 44 L 258 K 101 Ko 37.11h/50step lr 1.4e-06 5892s
+  step 4350/4470 loss 0.414 next 0.211 text 0.363 top1 0.898 NEXT비율 0.807 flush 61 L 215 K 82 Ko 36.46h/50step lr 7.1e-07 5930s
+  step 4400/4470 loss 0.297 next 0.202 text 0.354 top1 0.905 NEXT비율 0.810 flush 24 L 115 K 41 Ko 35.86h/50step lr 2.4e-07 5967s
+  step 4450/4470 loss 0.302 next 0.208 text 0.370 top1 0.898 NEXT비율 0.804 flush 51 L 96 K 35 Ko 37.78h/50step lr 2.0e-08 6002s
+  [sentinel@4470] dev-clean: bias0 err 0.205 tok/chunk 0.243 (ref 0.233) matched 741 viol80 0.0067 p50 177ms tick p99 89.7ms | best bias 0.0 err 0.205
+  [sentinel@4470] dev-other: bias0 err 0.284 tok/chunk 0.218 (ref 0.215) matched 598 viol80 0.0151 p50 189ms tick p99 89.0ms | best bias 0.0 err 0.284
+  [sentinel@4470] kspon-dev: bias0 err 0.518 tok/chunk 0.307 (ref 0.284) matched 1239 viol80 0.0702 p50 151ms tick p99 127.5ms | best bias 0.0 err 0.518
+saved /soundai/Model/VAPASR/s1-A
+[02:33:23] 학습 완료 → DONE

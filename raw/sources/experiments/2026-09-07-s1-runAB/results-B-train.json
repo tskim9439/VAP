@@ -1,0 +1,178 @@
+{
+ "args": {
+  "train": "librispeech-100,kspon-100",
+  "steps": 4470,
+  "epochs": 15.0,
+  "bs_en": 12,
+  "bs_ko": 48,
+  "lr": 4e-05,
+  "lr_adapter": 0.001,
+  "warmup": 200,
+  "wd": 0.01,
+  "delays": "2,3,4,6",
+  "M": 4,
+  "next_weight": 0.3,
+  "lora_r": 16,
+  "next_weight_ko": 0.15,
+  "full_ft": true,
+  "no_grad_ckpt": false,
+  "init_adapter": "/soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt",
+  "eval_every": 1000,
+  "eval_bias": "0",
+  "eval_delay": 2,
+  "sentinel_stream": 10,
+  "sentinel_utt": 100,
+  "select": null,
+  "select_stream": 200,
+  "select_utt": 1000,
+  "final": false,
+  "smoke_eval": false,
+  "overfit": 0,
+  "eval_only": false,
+  "ckpt": null,
+  "out_dir": "/soundai/Model/VAPASR/s1-B",
+  "resume": "auto",
+  "save_every": 300,
+  "tag": "B",
+  "seed": 0,
+  "log_every": 50,
+  "gpu": null
+ },
+ "hist": [
+  {
+   "step": 1000,
+   "score": 0.4412925396565022,
+   "dev-clean": {
+    "bias0_err": 0.31202046035805625,
+    "best_err": 0.31202046035805625,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.2505224660397074,
+    "matched": 692
+   },
+   "dev-other": {
+    "bias0_err": 0.39805825242718446,
+    "best_err": 0.39805825242718446,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.23229847494553377,
+    "matched": 543
+   },
+   "kspon-dev": {
+    "bias0_err": 0.6137989061842659,
+    "best_err": 0.6137989061842659,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.3160877954655089,
+    "matched": 1078
+   }
+  },
+  {
+   "step": 2000,
+   "score": 0.3545010620841184,
+   "dev-clean": {
+    "bias0_err": 0.20843989769820973,
+    "best_err": 0.20843989769820973,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.24346917450365727,
+    "matched": 738
+   },
+   "dev-other": {
+    "bias0_err": 0.3106796116504854,
+    "best_err": 0.3106796116504854,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.22249455337690632,
+    "matched": 580
+   },
+   "kspon-dev": {
+    "bias0_err": 0.5443836769036601,
+    "best_err": 0.5443836769036601,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.3068017366136035,
+    "matched": 1150
+   }
+  },
+  {
+   "step": 3000,
+   "score": 0.32809182459230746,
+   "dev-clean": {
+    "bias0_err": 0.18030690537084398,
+    "best_err": 0.18030690537084398,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.23772204806687566,
+    "matched": 748
+   },
+   "dev-other": {
+    "bias0_err": 0.289875173370319,
+    "best_err": 0.289875173370319,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.21568627450980393,
+    "matched": 575
+   },
+   "kspon-dev": {
+    "bias0_err": 0.5140933950357593,
+    "best_err": 0.5140933950357593,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.29835986493005306,
+    "matched": 1165
+   }
+  },
+  {
+   "step": 4000,
+   "score": 0.2977060371785211,
+   "dev-clean": {
+    "bias0_err": 0.14066496163682865,
+    "best_err": 0.14066496163682865,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.2361546499477534,
+    "matched": 776
+   },
+   "dev-other": {
+    "bias0_err": 0.26907073509015256,
+    "best_err": 0.26907073509015256,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.2181372549019608,
+    "matched": 593
+   },
+   "kspon-dev": {
+    "bias0_err": 0.48338241480858224,
+    "best_err": 0.48338241480858224,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.29896285576459236,
+    "matched": 1245
+   }
+  },
+  {
+   "step": 4470,
+   "score": 0.2972962306861516,
+   "dev-clean": {
+    "bias0_err": 0.14066496163682865,
+    "best_err": 0.14066496163682865,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.2358934169278997,
+    "matched": 771
+   },
+   "dev-other": {
+    "bias0_err": 0.2787794729542302,
+    "best_err": 0.2787794729542302,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.21541394335511982,
+    "matched": 578
+   },
+   "kspon-dev": {
+    "bias0_err": 0.4724442574673959,
+    "best_err": 0.4724442574673959,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.29872165943077666,
+    "matched": 1273
+   }
+  }
+ ],
+ "sentinel_best_score": 0.2972962306861516,
+ "best_bias": 0.0,
+ "trainable_m": 600.249344,
+ "train_streams": {
+  "librispeech-100": 13182,
+  "kspon-100": 61939
+ },
+ "steps_per_epoch": 298,
+ "world": 8,
+ "note": "sentinel 은 추세 관찰용(작은 고정 표본). ckpt 선택은 --select 로 큰 표본에서."
+}
