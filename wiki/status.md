@@ -31,16 +31,22 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 - **Stage 1 mono overfit 기능 관문 통과** — @900부터 EN·KO WER/CER 0,
   `viol80=0`, 방출률=참조율이며 @1500까지 유지. 경합 전 decoder-only tick p99는
   151–186 ms로 실시간성 관문은 별도 미통과. → [[output-stage1-mono-pilot]]
+- **Stage 1 mono 6,000-step 학습 완료, 마지막 sentinel 진행 중** — @5000 EN은
+  dev-clean 22.1% / dev-other 28.9%, KO bias-0 CER 65.9%·방출률은 참조의 51%다.
+  언어별 노출이 0.39–0.46 epoch뿐이고 LR이 0으로 끝나 과소학습 영향이 크지만,
+  RNN-T 대비 절대 격차도 커서 Stage 2 전에 원인 분해가 필요하다.
+  → [[source-stage1-mono-pilot-6000-sentinel-partial]]
 - 위키 페이지 수와 파생 파일은 이 ingest 브랜치의 병합 전 절차에서 다시 생성·집계한다.
 
 ## 다음 액션
 
-- **새 규약 overfit-v2 자동 대기 중** — `align2/kspon-100` 완료 신호와
-  LibriSpeech 정렬 13,182개를 감지하면 EN·KO 각 16개, 900 step을 실행한다.
-  선택된 KO 16개에 실제 타깃 변경 표본이 있는지, EN 16개에 검사 가능한 발화 경계가
-  있는지 먼저 출력한다. coverage가 0이면 표적 회귀 검사를 별도로 붙인다. 이후
-  대조군 → 6,000-step 순서.
+- **파일럿 선택·진단** — @6000 sentinel 완료 후 ckpt 4000/5000/6000을 같은 큰 dev
+  표본에서 비교한다. 선택 checkpoint의 교사강제 top-1/top-5와 자유실행 S/D/I로
+  과소학습·노출 편향·방출 calibration을 분해한 뒤 KO next-weight sweep 여부를 정한다.
   → [[output-stage1-mono-pilot]]
+- **Stage 2 전에 1-epoch 연장 대조** — 현재 200 h에서 total 13k–16k까지 곡선을
+  확인한다. Stage 2의 LR schedule은 고정 step이 아니라 언어별 본 시간·effective epoch에
+  맞춰 정의한다. → [[output-stage1-mono-pilot]]
 - **decoder tick 최적화** — 현재 수치는 encoder·adapter·flush를 제외한 하한이며 한 chunk가
   최대 `M+2` thinker forward를 호출한다. `<NEXT_AUDIO>`와 다음 audio를 한 2-token forward로
   합친 뒤 end-to-end service time을 다시 잰다. → [[output-stage1-mono-pilot]]
@@ -76,6 +82,7 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 | `num2words` 미고정·silent fallback | 환경별 영어 학습 타깃 불일치 | [[asr-text-normalization]] |
 | 영어 숫자의 문맥별 읽기 미검증 | 연도·통화·소수·전화번호 전사 왜곡 가능 | [[asr-text-normalization]] |
 | mono decoder tick p99 151–186 ms | 80 ms 실시간 deadline 미충족 | [[output-stage1-mono-pilot]] |
+| Stage 1 EN WER 22–29%, KO CER 약 61–66% | 1 epoch 미만 과소학습과 adapter/방출 병목이 혼재 | [[source-stage1-mono-pilot-6000-sentinel-partial]] |
 
 ## 스키마 이슈 (유지보수 PR 필요)
 

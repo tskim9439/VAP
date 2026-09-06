@@ -3,10 +3,11 @@ type: output
 status: active
 created: 2026-09-05
 updated: 2026-09-06
-summary: Stage 1 mono 스트리밍 ASR은 @900 overfit 기능 관문을 통과했고 새 정규화·정렬 규약 재검증을 대기 중
+summary: Stage 1 mono 6,000-step 파일럿은 학습 가능성을 보였지만 1 epoch 미만 학습으로 WER·CER와 KO 과소 방출이 남음
 sources:
   - [[source-stage1-mono-overfit-600-timing]]
   - [[source-stage1-mono-overfit-1500]]
+  - [[source-stage1-mono-pilot-6000-sentinel-partial]]
   - [[source-asr-output-style-probe]]
   - [[decision-mono-input]]
   - [[decision-asr-backbone]]
@@ -99,3 +100,32 @@ fusion을 먼저 구현·측정하고, 그 다음 CUDA graph·fused runtime을 �
 leading-silence shift test는 overfit의 절대 위치 암기를 구분하는 유용한 보강 검사지만,
 새 규약 overfit과 dev 일반화 평가가 이어지므로 6,000-step 착수의 필수 차단 조건으로
 두지는 않는다.
+
+## 6,000-step 파일럿 sentinel — 잠정 결과
+
+마지막 dev-other·kspon-dev 평가는 진행 중이다. 현재까지 EN WER은 @5000에서
+dev-clean 22.1%, dev-other 28.9%까지 내려왔고 @6000 dev-clean은 22.8%다.
+KO bias-0 CER은 @1000 85.1%에서 @5000 65.9%로 개선됐지만, 방출률은
+0.140 tok/chunk로 참조 0.273의 절반 수준이다. 세부 곡선과 대조군은
+[[source-stage1-mono-pilot-6000-sentinel-partial]]에 기록한다.
+
+### 잠정 판정
+
+- **학습 가능성은 확인했다.** EN 내용 오류와 evidence 위반이 함께 감소했고 방출률과
+  p50 지연은 정상 범위에 들어왔다.
+- **ASR 성능은 아직 성립했다고 보기 어렵다.** RNN-T `[56,0]` 참고값은
+  dev-clean 4.4%, dev-other 8.2%, kspon-dev 20.2%로 격차가 크다.
+- **6,000-step은 수렴 실험이 아니다.** 언어 교대로 각 언어가 받은 update는 3,000회뿐이며,
+  EN은 약 0.46 epoch, KO는 약 0.39 epoch를 봤다. cosine LR도 이때 0이 된다.
+- **KO 과소 방출은 NEXT 비율만으로 설명되지 않는다.** KO 참조 text density가 EN보다
+  높다. 교사강제 정확도와 자유실행 S/D/I를 분해한 뒤 next-weight sweep을 해석한다.
+
+### 변경된 다음 순서
+
+1. @6000 sentinel의 나머지 두 세트를 완료한다.
+2. ckpt 4000/5000/6000을 동일한 큰 dev 표본에서 선택하고 bias를 확정한다.
+3. 선택 checkpoint에서 교사강제 top-1/top-5와 자유실행 S/D/I를 측정한다.
+4. KO deletion·과소 방출이 주원인이면 `next_weight` 0.2/0.1을 짧게 비교한다.
+5. Stage 2 확장 전, 현재 200 h에서 total 13k–16k까지 한 epoch 근처 연장 곡선을
+   확보해 과소학습과 구조 한계를 구분한다.
+6. 속도는 한가한 GPU에서 단독 측정한다.
