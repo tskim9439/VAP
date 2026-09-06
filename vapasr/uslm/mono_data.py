@@ -86,14 +86,17 @@ class MonoStreamDataset(Dataset):
                     lang=it["lang"], delay=delay, name=it["name"], id=it["id"], n_text=st.tokens, overflow=st.overflow_tokens, n_flush=n_flush, K=it["K"], rounds=n_rounds)
 
 class BucketBatchSampler(Sampler):
-    """길이(K) 순으로 정렬해 비슷한 길이끼리 배치 → padding 낭비를 줄인다. 배치 순서는 매 epoch 셔플."""
-    def __init__(self, ds: MonoStreamDataset, bs: int, seed: int = 0, drop_last: bool = True):
+    """길이(K) 순으로 정렬해 비슷한 길이끼리 배치 → padding 낭비를 줄인다. 배치 순서는 매 epoch 셔플(seed+epoch 로 결정적).
+    DDP: rank/world 를 주면 셔플된 배치 목록을 rank 별로 나눠 갖는다(모든 rank 가 같은 epoch 에 같은 순열을 만들고 자기 몫만 취함)."""
+    def __init__(self, ds: MonoStreamDataset, bs: int, seed: int = 0, drop_last: bool = True, rank: int = 0, world: int = 1):
         order = sorted(range(len(ds)), key=lambda i: ds.items[i]["K"]); self.batches = [order[i: i + bs] for i in range(0, len(order), bs)]
         if drop_last and self.batches and len(self.batches[-1]) < bs: self.batches = self.batches[:-1]
-        self.rng = random.Random(seed)
+        self.seed, self.rank, self.world, self.epoch = seed, rank, world, 0
+        self.n = len(self.batches) // world                      # rank 당 배치 수(균등, 나머지 버림)
+    def set_epoch(self, e: int): self.epoch = e
     def __iter__(self):
-        b = list(self.batches); self.rng.shuffle(b); return iter(b)
-    def __len__(self): return len(self.batches)
+        b = list(self.batches); random.Random(f"{self.seed}:{self.epoch}").shuffle(b); return iter(b[self.rank::self.world][: self.n])
+    def __len__(self): return self.n
 
 def collate_streams(batch):
     B = len(batch); K = max(b["feats"].shape[1] for b in batch); D = batch[0]["feats"].shape[2]; L = max(len(b["ids"]) for b in batch)
