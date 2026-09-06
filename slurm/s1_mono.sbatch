@@ -23,7 +23,7 @@ echo "[$(date '+%F %T')] job $SLURM_JOB_ID RUN=$RUN node=$(hostname) restart=${S
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
 source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
 export MXC_CKPT_EXP_DIR=$ROOT          # 학습 산출물·증류 adapter 를 모두 /soundai/Model/VAPASR 아래로
-export OMP_NUM_THREADS=8 NCCL_DEBUG=WARN TOKENIZERS_PARALLELISM=false
+export OMP_NUM_THREADS=8 NCCL_DEBUG=WARN TOKENIZERS_PARALLELISM=false PYTORCH_ALLOC_CONF=expandable_segments:True
 case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*) ;; *) echo "!! conda env 아님: $(which python)"; exit 1;; esac
 
 # ── 1. adapter 증류 초기화(공유, 없으면 1 GPU 로 생성; A/B 동시 실행 시 mkdir 잠금으로 한쪽만 만들고 다른 쪽은 기다린다)

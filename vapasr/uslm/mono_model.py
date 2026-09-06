@@ -40,9 +40,9 @@ class MonoInterleavedASR(nn.Module):
                   + [v for k, v in self.sp_ids.items() if k.startswith("<DELAY_")]
         self.register_buffer("blocked", torch.tensor(sorted(set(blocked))), persistent=False)
 
-    def _embed(self):
-        m = self.thinker.base_model.model if hasattr(self.thinker, "base_model") else self.thinker
-        return m.get_input_embeddings()
+    def _lm(self):                                      # PEFT 래퍼를 벗긴 Qwen3ASRThinkerForConditionalGeneration (.model 디코더, .lm_head)
+        return self.thinker.base_model.model if hasattr(self.thinker, "base_model") else self.thinker
+    def _embed(self): return self._lm().get_input_embeddings()
 
     def chunk_embed(self, feats):                       # (B,1,K,Din) → (B,K,D)
         return self.adapter(feats[:, 0].float())
@@ -54,14 +54,16 @@ class MonoInterleavedASR(nn.Module):
 
     def forward(self, feats, ids, is_audio, chunk_of, labels, mask, next_weight: float = 1.0):
         """next_weight < 1: <NEXT_AUDIO>(= RNN-T blank) 위치 CE 를 낮춰 라벨 불균형(70–85 %)을 완화."""
-        out = self.thinker(inputs_embeds=self.build(feats, ids, is_audio, chunk_of), attention_mask=mask)
-        logits = out.logits[:, :-1].float(); tgt = labels[:, 1:]
-        tok_loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), tgt.reshape(-1), ignore_index=-100, reduction="none").view_as(tgt)
-        na = tgt == self.next_audio; tx = (tgt != -100) & ~na
-        w = torch.where(na, tok_loss.new_tensor(next_weight), tok_loss.new_tensor(1.0)) * (tgt != -100)
+        # lm_head 는 라벨 위치에서만 계산한다. 전 위치 (B,L,152k) fp32 logits 는 KO bs 48 에서 >100 GB 라 140 GB GPU 에서도 OOM (job 65258).
+        lm = self._lm(); h = lm.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of), attention_mask=mask).last_hidden_state
+        tgt = labels[:, 1:]; sel = tgt != -100; t = tgt[sel]                                       # (N,)
+        logits = lm.lm_head(h[:, :-1][sel]).float()                                                 # (N,V)
+        tok_loss = F.cross_entropy(logits, t, reduction="none")
+        na = t == self.next_audio; tx = ~na
+        w = torch.where(na, tok_loss.new_tensor(next_weight), tok_loss.new_tensor(1.0))
         loss = (tok_loss * w).sum() / w.sum().clamp(min=1)
         with torch.no_grad():
-            top1 = (logits.argmax(-1) == tgt) & tx
+            top1 = (logits.argmax(-1) == t) & tx
             parts = dict(loss_next=tok_loss[na].mean().item() if na.any() else 0.0, loss_text=tok_loss[tx].mean().item() if tx.any() else 0.0,
                          top1_text=(top1.sum() / tx.sum().clamp(min=1)).item())
         return loss, parts
