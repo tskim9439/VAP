@@ -23,7 +23,7 @@ class MonoInterleavedASR(nn.Module):
                 from peft import LoraConfig, get_peft_model
                 thinker = get_peft_model(thinker, LoraConfig(r=lora_r, lora_alpha=lora_alpha, lora_dropout=0.05, target_modules=list(lora_targets), bias="none"))
         self.thinker = thinker
-        c = thinker.config if not hasattr(thinker, "base_model") else thinker.base_model.model.config
+        c = thinker.base_model.model.config if hasattr(thinker, "peft_config") else thinker.config   # HF 모델도 base_model 속성이 있어 PEFT 판별은 peft_config 로
         self.audio_pad = c.audio_token_id
         emb = self._embed(); W = emb.weight; self.special_rows = sorted(self.sp_ids.values())
         assert max(self.special_rows) < W.shape[0], "임베딩 행렬에 특수 토큰 여유 행 없음 → resize 필요"
@@ -41,7 +41,7 @@ class MonoInterleavedASR(nn.Module):
         self.register_buffer("blocked", torch.tensor(sorted(set(blocked))), persistent=False)
 
     def _lm(self):                                      # PEFT 래퍼를 벗긴 Qwen3ASRThinkerForConditionalGeneration (.model 디코더, .lm_head)
-        return self.thinker.base_model.model if hasattr(self.thinker, "base_model") else self.thinker
+        return self.thinker.base_model.model if hasattr(self.thinker, "peft_config") else self.thinker
     def _embed(self): return self._lm().get_input_embeddings()
 
     def chunk_embed(self, feats):                       # (B,1,K,Din) → (B,K,D)
