@@ -246,6 +246,10 @@ Nemotron 3.5 FastConformer [56,0]  frozen, 캐시 특징 (1024-d, 12.5 Hz)
 
 - 2026-09-06 **6,000-step 파일럿(random init·LoRA·1 GPU)**: dev-clean WER 0.22 / dev-other 0.29 / kspon-dev CER 0.62 (RNN-T `[56,0]`: 4.4 / 8.2 / 20.2 %). EN 은 단조 하락·방출률 일치·타이밍 정상, KO 는 bias 0 에서 방출률이 참조의 절반. **WER 진단**: EN 은 교사강제 top-1 0.73 ≈ 자유실행 정확도 → 노출 편향 아님, 음향 유사어 치환(용량·학습량 < 0.5 epoch); KO 는 자유실행 오류의 2/3 가 **삭제**(문장 중간 방출 중단) → 방출 결정 붕괴.
   → **개선 run A/B (SLURM `slurm/s1_mono.sbatch`, 노드 1 × H200 8, `/soundai/Model/VAPASR/s1-{A,B}`)**: 공통 = mono adapter **증류 init**(`s1_distill_adapter.py`: Nemotron 12.5 Hz → Qwen AuT block8s 임베딩 13 Hz, LibriSpeech·KsponSpeech 로 새로 도출) + KO `next_weight` 0.15 + 유효 배치 EN 96 / KO 384(GPU 당 12 / 48) + **15 epoch** + sentinel 1k 마다(bias 0, 10/10/100). **A** = LoRA r16(lr 4e-4, adapter 1e-3), **B** = thinker 0.6B **full FT**(lr 4e-5, adapter 1e-3). encoder 는 계속 동결(특징 캐시). 파일럿이 대조군: A−파일럿 = 증류 init·배치·epoch 효과, B−A = full FT 효과. 선점 시 `PREEMPT`/USR1 → ckpt-last 저장 → requeue 자동 재개.
+- 2026-09-06 **run A/B 제출 기록**: 8-GPU 실제 배치(EN 12 / KO 48 per GPU)에서 두 결함이 드러나 첫 제출(65258/65259)은 첫 step 전에 실패, 수정 후 65330(A)/65331(B) 재제출.
+  (1) 손실이 전 위치 × 152k 어휘 fp32 logits 를 만들어 KO 최장 배치에서 >140 GB → **lm_head 를 라벨 위치에서만** 계산(`df6ab63`). (2) PEFT 판별을 `base_model` 속성으로 해 full-FT 경로가 잘못된 config 를 잡음 → `peft_config` 로(`b345e84`).
+  시퀀스 길이 ≈ 2K + 토큰(청크당 `[AUDIO]`+`<NEXT_AUDIO>`)이라 최장 KO 배치는 48 × 984 토큰. checkpointing 없이 3.3 MB/token(KO 24 배치 78.5 GB) → **thinker gradient checkpointing 기본 켬**(`93a913c`): 최장 배치 LoRA 48.5 GB / full-FT 52.6 GB, 시간 손해 없음(`experiments/s1_mem_probe.py`).
+  운영: `/soundai`(Blob NFS) 는 tmp→rename 이 간헐 실패 → 직접 저장 폴백; full-FT `ckpt-last` 6.3 GB(저장 ≈1 min)라 `.prev` 보존 + 손상 시 폴백 재개(`68e6b5b`). `low_p_hpc` 는 대기 중에도 선점이 잦음(2 h 동안 A 3 회·B 2 회) → 300 step 저장 주기 유지. 증류 adapter 는 로그인 노드에서 미리 생성(val cos 0.737).
 
 **실패 시 — 한 번에 하나만 바꾼다** (의심 순서):
 
