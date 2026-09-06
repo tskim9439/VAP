@@ -19,7 +19,7 @@ ap.add_argument("--bs-en", type=int, default=2); ap.add_argument("--bs-ko", type
 ap.add_argument("--lr", type=float, default=2e-4, help="LoRA lr (full FT 면 thinker lr, 권장 2e-5~5e-5)"); ap.add_argument("--lr-adapter", type=float, default=5e-4); ap.add_argument("--warmup", type=int, default=300); ap.add_argument("--wd", type=float, default=0.01)
 ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--M", type=int, default=4); ap.add_argument("--next-weight", type=float, default=0.3); ap.add_argument("--lora-r", type=int, default=16)
 ap.add_argument("--next-weight-ko", type=float, default=None, help="KO 배치의 <NEXT_AUDIO> 가중치(기본 --next-weight). KO 과소 방출 대응")
-ap.add_argument("--full-ft", action="store_true", help="thinker 0.6B 전체 학습(LoRA 없음)"); ap.add_argument("--init-adapter", default=None, help="s1_distill_adapter.py 의 adapter.pt 로 adapter 초기화(증류 init)")
+ap.add_argument("--full-ft", action="store_true", help="thinker 0.6B 전체 학습(LoRA 없음)"); ap.add_argument("--no-grad-ckpt", action="store_true", help="thinker gradient checkpointing 끄기(기본 켬: 최장 KO 배치 48×~1k 토큰이 140 GB 를 넘김)"); ap.add_argument("--init-adapter", default=None, help="s1_distill_adapter.py 의 adapter.pt 로 adapter 초기화(증류 init)")
 ap.add_argument("--eval-every", type=int, default=1000); ap.add_argument("--eval-bias", default="0"); ap.add_argument("--eval-delay", type=int, default=2)
 ap.add_argument("--sentinel-stream", type=int, default=20); ap.add_argument("--sentinel-utt", type=int, default=200)
 ap.add_argument("--select", default=None); ap.add_argument("--select-stream", type=int, default=200); ap.add_argument("--select-utt", type=int, default=1000)
@@ -94,6 +94,7 @@ sp_ids = (next(iter(dev_sets.values())) if dev_sets else next(iter(train_ds.valu
 log("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align})" for k, v in train_ds.items()) + " | dev " + ", ".join(f"{k}:{len(v)}" for k, v in dev_sets.items()) + f" | world {world}")
 
 model = MonoInterleavedASR(thinker, tok, Adapter(), sp_ids, lora_r=a.lora_r, full_ft=a.full_ft).to(dev); model.adapter.float()
+if not a.no_grad_ckpt: model._lm().gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})   # 활성화 메모리 ≈5.9 MB/token → 수 배 절감, 연산 +30 %
 if a.init_adapter:
     st0 = torch.load(a.init_adapter, map_location="cpu"); model.adapter.load_state_dict(st0["adapter"]); log(f"adapter 증류 init ← {a.init_adapter} (val cos {st0.get('hist', [{}])[-1].get('cos', float('nan')):.3f})")
 if a.ckpt: model.load_trainable_state(torch.load(a.ckpt, map_location="cpu")); log("ckpt ←", a.ckpt)
