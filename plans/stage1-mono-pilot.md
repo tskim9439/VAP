@@ -244,6 +244,9 @@ Nemotron 3.5 FastConformer [56,0]  frozen, 캐시 특징 (1024-d, 12.5 Hz)
 - overfit 표본은 seed 셔플 후 **표적 사례를 절반 이상 강제 포함**(KO: 숫자·라틴 이중표기 발화, EN: 발화 경계가 있는 스트림)하고 ID·커버리지를 출력한다. 표적이 없으면 별도 회귀 표본으로 검사한다.
 - 2026-09-06 **overfit-v2**(새 규약: `align2/` 선행 공백 + `textnorm`, 900 step, EN 16 중 발화 경계 8 / KO 16 중 숫자 이중표기 8): @900 EN WER 0.000(tok/chunk 0.237 = 참조, p50 +201 / p99 +240 ms, viol80 0) · KO CER 0.000(0.292 = 참조, p50 +202 / p99 +278 ms, viol80 0). **새 규약에서도 기능 관문 통과.** 600 에서 EN 0.574 였던 것은 표본이 전부 긴 다발화 스트림이라 v1 보다 느렸을 뿐 900 에서 수렴. → 6,000-step 파일럿(`s1-mono-pilot`) 착수.
 
+- 2026-09-06 **6,000-step 파일럿(random init·LoRA·1 GPU)**: dev-clean WER 0.22 / dev-other 0.29 / kspon-dev CER 0.62 (RNN-T `[56,0]`: 4.4 / 8.2 / 20.2 %). EN 은 단조 하락·방출률 일치·타이밍 정상, KO 는 bias 0 에서 방출률이 참조의 절반. **WER 진단**: EN 은 교사강제 top-1 0.73 ≈ 자유실행 정확도 → 노출 편향 아님, 음향 유사어 치환(용량·학습량 < 0.5 epoch); KO 는 자유실행 오류의 2/3 가 **삭제**(문장 중간 방출 중단) → 방출 결정 붕괴.
+  → **개선 run A/B (SLURM `slurm/s1_mono.sbatch`, 노드 1 × H200 8, `/soundai/Model/VAPASR/s1-{A,B}`)**: 공통 = mono adapter **증류 init**(`s1_distill_adapter.py`: Nemotron 12.5 Hz → Qwen AuT block8s 임베딩 13 Hz, LibriSpeech·KsponSpeech 로 새로 도출) + KO `next_weight` 0.15 + 유효 배치 EN 96 / KO 384(GPU 당 12 / 48) + **15 epoch** + sentinel 1k 마다(bias 0, 10/10/100). **A** = LoRA r16(lr 4e-4, adapter 1e-3), **B** = thinker 0.6B **full FT**(lr 4e-5, adapter 1e-3). encoder 는 계속 동결(특징 캐시). 파일럿이 대조군: A−파일럿 = 증류 init·배치·epoch 효과, B−A = full FT 효과. 선점 시 `PREEMPT`/USR1 → ckpt-last 저장 → requeue 자동 재개.
+
 **실패 시 — 한 번에 하나만 바꾼다** (의심 순서):
 
 | 증상 | 첫 조치 | 다음 조치 |
