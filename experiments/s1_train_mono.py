@@ -193,7 +193,13 @@ def _sig(*_): stop["flag"] = True
 signal.signal(signal.SIGUSR1, _sig); signal.signal(signal.SIGTERM, _sig)
 def save_last():
     if not main: return
-    torch.save(dict(model=model.trainable_state(), opt=opt.state_dict(), sched=sched.state_dict(), step=step, hist=hist, best_score=best_score, best_bias=best_bias, args=vars(a)), last + ".tmp"); os.replace(last + ".tmp", last)
+    st = dict(model=model.trainable_state(), opt=opt.state_dict(), sched=sched.state_dict(), step=step, hist=hist, best_score=best_score, best_bias=best_bias, args=vars(a))
+    try:                                           # 원자적 교체 시도. /soundai(Azure Blob NFS) 는 방금 쓴 파일의 rename 이 실패할 수 있어 직접 쓰기로 폴백
+        torch.save(st, last + ".tmp"); os.replace(last + ".tmp", last)
+    except OSError as e:
+        print(f"  (ckpt-last rename 실패 {type(e).__name__} → 직접 저장)", flush=True); torch.save(st, last)
+        try: os.remove(last + ".tmp")
+        except OSError: pass
 def should_stop():
     f = stop["flag"] or os.path.exists(os.path.join(out, "PREEMPT"))
     if world > 1:
