@@ -2,7 +2,7 @@
 type: source
 status: active
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-07
 summary: 학습·평가용 대화 코퍼스 4종의 채널 구조, 규모, 라이선스 제약 정리
 observed: 2026-09-03
 ---
@@ -82,3 +82,7 @@ CC BY-NC — 비상업 연구는 가능하나 상업적 파생물은 불가. vid
 다만 **1,000시간도 Stage 1 probing 에는 과하다.** frozen encoder probing 은
 50–100시간이면 encoder 간 순위가 안정된다. 데이터를 늘리기 전에
 [[task-stage1-encoder-probing]] 의 결론을 먼저 낸다.
+
+단일 화자 ASR 확장용 NIKL·Switchboard·AMI·MNSC·방송/콜센터 DB의 준비 순위는
+[[output-stage1-asr-data-expansion-priority]]에서 비교한다. 서버 실물 조사와 공식 규모의
+차이는 [[source-mxc-soundai-dataset-survey]]에 기록한다.

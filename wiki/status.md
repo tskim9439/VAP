@@ -28,12 +28,12 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
   단어, KO 숫자는 한글 읽기로 출력. `vapasr/data/textnorm.py`로 타깃·채점 규약을
   통합하고 KsponSpeech 숫자 이중표기는 발음형을 선택한다. → [[source-asr-output-style-probe]],
   [[asr-text-normalization]]
-- **`asr-tn-v1.0.0` 동결 후보 규약 작성** — Stage 2 LibriSpeech·KsponSpeech 범위의
-  EN/KO target·score, 영어 lexical/display 이중 view, 지원·미지원 숫자 문법,
-  quarantine, golden test, manifest fingerprint와 버전 정책을 명문화했다. 영어
-  대소문자·문장부호는 최종 출력 필수 능력이며 provenance가 있는 label로만 학습한다.
-  일부 구현은 들어왔지만 golden 준수와 전체 transcript/display audit 전에는 frozen이
-  아니다. → [[output-asr-tn-v1-spec]]
+- **lexical `asr-tn-v1.0.0` 규약·구현 동결** — LibriSpeech·KsponSpeech의 EN/KO
+  target·score, 지원·미지원 숫자 문법, quarantine, golden/tokenizer test, manifest
+  fingerprint를 고정했다. 전체 transcript audit에서 LibriSpeech 잔존 digit 0,
+  KsponSpeech train 620k 중 quarantine 68건을 확인했다. 목적 표본 사람 검토는 남았고,
+  영어 display 학습은 lexical 관문 뒤로 연기했다.
+  → [[output-asr-tn-v1-spec]], [[source-asr-tn-v1-audit]]
 - **Stage 1 mono overfit 기능 관문 통과** — @900부터 EN·KO WER/CER 0,
   `viol80=0`, 방출률=참조율이며 @1500까지 유지. 경합 전 decoder-only tick p99는
   151–186 ms로 실시간성 관문은 별도 미통과. → [[output-stage1-mono-pilot]]
@@ -43,6 +43,10 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
   EN은 @4000 이후 정체해 같은 데이터의 30 epoch 반복보다 Stage 2 데이터 확장과
   windowed alignment·latency loss가 우선이다. → [[source-stage1-mono-run-ab]],
   [[output-stage1-mono-pilot]]
+- **1,930 h lexical ASR 30 epoch 학습 진행 중**(사용자, 2026-09-07). 현재 recipe와
+  `asr-tn-v1.0.0`은 기준선으로 유지하고, 다음 run용 데이터 확장은 NIKL 500 h와
+  Switchboard·otoSpeech·AMI IHM 묶음을 먼저 준비한다.
+  → [[output-stage1-asr-data-expansion-priority]]
 - 위키 페이지 수와 파생 파일은 현재 작업 브랜치의 병합 전 절차에서 다시 생성·집계한다.
 
 ## 다음 액션
@@ -56,13 +60,15 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 - **decoder tick 최적화** — 현재 수치는 encoder·adapter·flush를 제외한 하한이며 한 chunk가
   최대 `M+2` thinker forward를 호출한다. `<NEXT_AUDIO>`와 다음 audio를 한 2-token forward로
   합친 뒤 end-to-end service time을 다시 잰다. → [[output-stage1-mono-pilot]]
-- **TN v1 구현·audit·동결** — [[output-asr-tn-v1-spec|`asr-tn-v1.0.0`]]에 맞춰
-  숫자 변환을 결정적으로 만들고 golden/tokenizer-ID test, LibriSpeech 960 h와
-  KsponSpeech_01–05 transcript audit, 기존 230 h diff, manifest fingerprint를 완료한다.
-  영어는 lexical/display 이중 view로 저장하고, 출처 있는 대소문자·문장부호 label,
-  loss mask, Qwen pseudo-label lexical exact-match와 display 평가 subset까지 검증한다.
-  lexical 관문 전에는 1,930 h 정렬을 시작하지 않고, display 관문 전에는 full-FT를
-  시작하지 않는다. display만 바뀌면 lexical alignment는 재사용한다.
+- **다음 ASR DB 준비** — NIKL 500 h, Switchboard train, otoSpeech train, AMI IHM을
+  Pack X1으로 준비한다. 모든 DB에 speaker/session split, overlap filter, audio dedup,
+  corpus parser와 license metadata 관문을 적용한다. MNSC는 local 4,035 h와 official
+  2,000 h 차이를 해소한 뒤 500 h cap으로 시작한다.
+  → [[output-stage1-asr-data-expansion-priority]]
+- **TN v1 후속** — lexical `asr-tn-v1.0.0`은 현재 1,930 h 기준선에 고정한다. 새 corpus
+  parser는 `asr-tn-v1.1.0`으로 분리하고 기존 LibriSpeech·KsponSpeech target을 바꾸지
+  않는다. 영어 display 계약과 학습은 lexical 관문 뒤로 연기한다.
+  → [[output-asr-tn-v1-spec]], [[source-asr-tn-v1-audit]]
 
 ### 연구 (Phase 0 — 나머지 전부를 막고 있음)
 
@@ -89,7 +95,7 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 | 한국어 turn 단서 근거 부재 | 논문 서술 | [[question-korean-turn-cue-literature]] |
 | SpokenWOZ 채널 구조 불명 | 영어 데이터 규모 | [[question-spokenwoz-channel-structure]] |
 | **`/data4` 97% 사용, 575G 여유** | 체크포인트 저장 공간 | [[decision-compute-environment]] |
-| TN v1은 규약·부분 구현만 있고 lexical audit·영어 display label 검증 전 | lexical 동결 전에는 1,930 h alignment 불가, display 동결 전에는 full-FT 불가 | [[output-asr-tn-v1-spec]] |
+| KsponSpeech TN 목적 표본 5×40행 사람 검토 미완료 | current lexical run의 사후 감사; 오류 발견 시 기존 산출물을 덮지 않고 새 TN version으로 수정 | [[source-asr-tn-v1-audit]] |
 | 영어 미지원 숫자의 문맥별 읽기 | 연도·전화·분수·단위 등을 부분 변환하면 라벨 왜곡 | [[output-asr-tn-v1-spec]] |
 | B mono decoder tick p99 105–145 ms | 80 ms 실시간 deadline 미충족 | [[output-stage1-mono-pilot]] |
 | B full FT도 RNN-T 대비 오류 2.2–3.8배 | 데이터 규모와 단일시점 정렬 목표의 일반화 한계를 분리해야 함 | [[source-stage1-mono-run-ab]] |
