@@ -161,7 +161,7 @@ def nikl_utts(subset, sample_hours=None):
             if not k.startswith("json:"): continue
             jsons.append(jp)
             for u in read_dialogue(jp):
-                st["utts"] += 1; p = pcm_path(idx, u["id"])
+                st["utts_total"] += 1; p = pcm_path(idx, u["id"])
                 if p is None: st["no_pcm_dir"] += 1; continue
                 text = target_ko(u["raw"], "nikl"); fl = set(target_flags(text, "Korean", u["raw"], "nikl"))
                 if "발화겹침" in u["note"]: fl.add("overlap")
