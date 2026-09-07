@@ -1,0 +1,12 @@
+[01:37:33] select B steps 3000,4000,4470 gpu 6
+  [select@3000] dev-clean: bias0 err 0.194 tok/chunk 0.224 (ref 0.219) matched 3266 viol80 0.0015 p50 197ms tick p99 102.2ms | best bias 0.0 err 0.194
+  [select@3000] dev-other: bias0 err 0.278 tok/chunk 0.219 (ref 0.213) matched 2877 viol80 0.0066 p50 216ms tick p99 100.8ms | best bias 0.0 err 0.278
+  [select@3000] kspon-dev: bias0 err 0.469 tok/chunk 0.295 (ref 0.273) matched 3893 viol80 0.0670 p50 166ms tick p99 147.2ms | best bias 0.0 err 0.469
+  [select@4000] dev-clean: bias0 err 0.167 tok/chunk 0.223 (ref 0.219) matched 3334 viol80 0.0018 p50 221ms tick p99 99.3ms | best bias 0.0 err 0.167
+  [select@4000] dev-other: bias0 err 0.235 tok/chunk 0.215 (ref 0.213) matched 2981 viol80 0.0027 p50 239ms tick p99 100.1ms | best bias 0.0 err 0.235
+  [select@4000] kspon-dev: bias0 err 0.448 tok/chunk 0.293 (ref 0.273) matched 3957 viol80 0.0536 p50 177ms tick p99 145.7ms | best bias 0.0 err 0.448
+  [select@4470] dev-clean: bias0 err 0.169 tok/chunk 0.222 (ref 0.219) matched 3326 viol80 0.0027 p50 221ms tick p99 104.6ms | best bias 0.0 err 0.169
+  [select@4470] dev-other: bias0 err 0.237 tok/chunk 0.215 (ref 0.213) matched 2964 viol80 0.0030 p50 237ms tick p99 104.6ms | best bias 0.0 err 0.237
+  [select@4470] kspon-dev: bias0 err 0.438 tok/chunk 0.288 (ref 0.273) matched 4024 viol80 0.0485 p50 176ms tick p99 144.6ms | best bias 0.0 err 0.438
+select → best step 4470 score 0.2813 bias 0.0
+SELECT-B-DONE 04:38:12

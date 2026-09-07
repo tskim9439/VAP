@@ -250,6 +250,17 @@ Nemotron 3.5 FastConformer [56,0]  frozen, 캐시 특징 (1024-d, 12.5 Hz)
   (1) 손실이 전 위치 × 152k 어휘 fp32 logits 를 만들어 KO 최장 배치에서 >140 GB → **lm_head 를 라벨 위치에서만** 계산(`df6ab63`). (2) PEFT 판별을 `base_model` 속성으로 해 full-FT 경로가 잘못된 config 를 잡음 → `peft_config` 로(`b345e84`).
   시퀀스 길이 ≈ 2K + 토큰(청크당 `[AUDIO]`+`<NEXT_AUDIO>`)이라 최장 KO 배치는 48 × 984 토큰. checkpointing 없이 3.3 MB/token(KO 24 배치 78.5 GB) → **thinker gradient checkpointing 기본 켬**(`93a913c`): 최장 배치 LoRA 48.5 GB / full-FT 52.6 GB, 시간 손해 없음(`experiments/s1_mem_probe.py`).
   운영: `/soundai`(Blob NFS) 는 tmp→rename 이 간헐 실패 → 직접 저장 폴백; full-FT `ckpt-last` 6.3 GB(저장 ≈1 min)라 `.prev` 보존 + 손상 시 폴백 재개(`68e6b5b`). `low_p_hpc` 는 대기 중에도 선점이 잦음(2 h 동안 A 3 회·B 2 회) → 300 step 저장 주기 유지. 증류 adapter 는 로그인 노드에서 미리 생성(val cos 0.737).
+- 2026-09-07 **run A/B 결과** (4,470 step = 15 epoch, 유효 배치 EN 96 / KO 384, 증류 adapter init, KO next_weight 0.15; 학습 ≈1 h/run, 선점 1 회 재개 정상). `--select`(스트림 50/세트 + 발화 300, bias 0, δ=2):
+
+  | dev (select) | A LoRA r16 @4000 | **B full FT @4470** | 파일럿 @6k | RNN-T |
+  |---|---|---|---|---|
+  | dev-clean WER | 0.212 | **0.169** | 0.228 | 0.044 |
+  | dev-other WER | 0.304 | **0.237** | 0.311 | 0.082 |
+  | kspon-dev CER | 0.474 | **0.438** | 0.623 | 0.202 |
+
+  **판정: B(full FT) 채택.** 세 세트 모두 B 가 앞서고, sentinel 추세에서 A 는 2k 이후 정체(LoRA 용량 한계), B 는 4,470 까지 계속 하락(학습 top-1 0.98 이지만 dev 반등 없음 → 아직 under-trained). KO 방출 붕괴는 사라짐(tok/chunk 0.288 vs 참조 0.273, 파일럿은 참조의 절반) — 대신 KO viol80 5 % 의 조기 방출 경향. 타이밍: p50 +170–240 ms, viol80 EN < 0.3 %. tick p99 100–147 ms 로 실시간성 관문은 여전히 미통과(로그인 노드 경합 상태 측정). 인식 관문(추세 하락)은 통과, RNN-T 대비 격차는 여전히 3–4 배.
+  산출물: `/soundai/Model/VAPASR/s1-{A,B}/` (ckpt-{1000..4470}.pt, results.json, eval/), 로컬 `raw/sources/experiments/2026-09-07-s1-runAB/`.
+  다음: (1) B 를 더 길게(epoch 30+, lr 유지) 또는 데이터 추가(서베이의 EN 코퍼스·NIKL) — 정체 지점을 먼저 본다, (2) KO 조기 방출: next_weight_ko 0.15 → 0.2 비교, (3) `--final` 은 디코더 배치화(ragged KV) 후 — 현재 속도로 보고 세트 전량은 30 h+.
 
 **실패 시 — 한 번에 하나만 바꾼다** (의심 순서):
 

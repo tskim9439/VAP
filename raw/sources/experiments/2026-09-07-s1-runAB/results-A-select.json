@@ -1,0 +1,686 @@
+{
+ "args": {
+  "train": "librispeech-100,kspon-100",
+  "steps": 4470,
+  "epochs": 15.0,
+  "bs_en": 12,
+  "bs_ko": 48,
+  "lr": 0.0004,
+  "lr_adapter": 0.001,
+  "warmup": 200,
+  "wd": 0.01,
+  "delays": "2,3,4,6",
+  "M": 4,
+  "next_weight": 0.3,
+  "lora_r": 16,
+  "next_weight_ko": 0.15,
+  "full_ft": false,
+  "no_grad_ckpt": false,
+  "init_adapter": "/soundai/Model/VAPASR/uslm/s1-adapter-distill/adapter.pt",
+  "eval_every": 1000,
+  "eval_bias": "0",
+  "eval_delay": 2,
+  "sentinel_stream": 10,
+  "sentinel_utt": 100,
+  "select": null,
+  "select_stream": 200,
+  "select_utt": 1000,
+  "final": false,
+  "smoke_eval": false,
+  "overfit": 0,
+  "eval_only": false,
+  "ckpt": null,
+  "out_dir": "/soundai/Model/VAPASR/s1-A",
+  "resume": "auto",
+  "save_every": 300,
+  "tag": "A",
+  "seed": 0,
+  "log_every": 50,
+  "gpu": null
+ },
+ "hist": [
+  {
+   "step": 1000,
+   "score": 0.49989887839742014,
+   "dev-clean": {
+    "bias0_err": 0.35294117647058826,
+    "best_err": 0.35294117647058826,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.26306165099268547,
+    "matched": 687
+   },
+   "dev-other": {
+    "bias0_err": 0.4618585298196949,
+    "best_err": 0.4618585298196949,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.2421023965141612,
+    "matched": 532
+   },
+   "kspon-dev": {
+    "bias0_err": 0.6848969289019773,
+    "best_err": 0.6848969289019773,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.31958514230583696,
+    "matched": 977
+   }
+  },
+  {
+   "step": 2000,
+   "score": 0.36965931220762527,
+   "dev-clean": {
+    "bias0_err": 0.22250639386189258,
+    "best_err": 0.22250639386189258,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.24503657262277953,
+    "matched": 728
+   },
+   "dev-other": {
+    "bias0_err": 0.2857142857142857,
+    "best_err": 0.2857142857142857,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.2181372549019608,
+    "matched": 590
+   },
+   "kspon-dev": {
+    "bias0_err": 0.6007572570466975,
+    "best_err": 0.6007572570466975,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.31898215147129766,
+    "matched": 1145
+   }
+  },
+  {
+   "step": 3000,
+   "score": 0.3392287975532991,
+   "dev-clean": {
+    "bias0_err": 0.22250639386189258,
+    "best_err": 0.22250639386189258,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.24268547544409613,
+    "matched": 732
+   },
+   "dev-other": {
+    "bias0_err": 0.2857142857142857,
+    "best_err": 0.2857142857142857,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.2246732026143791,
+    "matched": 605
+   },
+   "kspon-dev": {
+    "bias0_err": 0.509465713083719,
+    "best_err": 0.509465713083719,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.3119874577906416,
+    "matched": 1271
+   }
+  },
+  {
+   "step": 4000,
+   "score": 0.34430320871021475,
+   "dev-clean": {
+    "bias0_err": 0.21994884910485935,
+    "best_err": 0.21994884910485935,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.24346917450365727,
+    "matched": 732
+   },
+   "dev-other": {
+    "bias0_err": 0.30097087378640774,
+    "best_err": 0.30097087378640774,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.21650326797385622,
+    "matched": 578
+   },
+   "kspon-dev": {
+    "bias0_err": 0.5119899032393773,
+    "best_err": 0.5119899032393773,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.31017848528702363,
+    "matched": 1236
+   }
+  },
+  {
+   "step": 4470,
+   "score": 0.3357437607844859,
+   "dev-clean": {
+    "bias0_err": 0.20460358056265984,
+    "best_err": 0.20460358056265984,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.24346917450365727,
+    "matched": 741
+   },
+   "dev-other": {
+    "bias0_err": 0.2843273231622746,
+    "best_err": 0.2843273231622746,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.2178649237472767,
+    "matched": 598
+   },
+   "kspon-dev": {
+    "bias0_err": 0.5183003786285233,
+    "best_err": 0.5183003786285233,
+    "best_bias": 0.0,
+    "tok_per_chunk": 0.30692233478051134,
+    "matched": 1239
+   }
+  }
+ ],
+ "sentinel_best_score": 0.3357437607844859,
+ "best_bias": 0.0,
+ "trainable_m": 14.304256,
+ "train_streams": {
+  "librispeech-100": 13182,
+  "kspon-100": 61939
+ },
+ "steps_per_epoch": 298,
+ "world": 8,
+ "note": "sentinel 은 추세 관찰용(작은 고정 표본). ckpt 선택은 --select 로 큰 표본에서.",
+ "selection": {
+  "3000": {
+   "score": 0.34561532524738037,
+   "best_bias": 0.0,
+   "sets": {
+    "dev-clean": {
+     "bias0": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 3256,
+      "latency_available": true,
+      "lat_p50": 0.17100000000000026,
+      "lat_p90": 0.25550000000000095,
+      "lat_p99": 0.3747999999999988,
+      "viol": 0.018734643734643733,
+      "viol_80ms": 0.007371007371007371,
+      "tok_per_chunk": 0.22800958163890592,
+      "ref_per_chunk": 0.21859506434181938,
+      "forced_frac": 0.0,
+      "backlog_p99": 0.509999999999998,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 49.368858337402344,
+      "tick_ms_p99": 97.47886657714844,
+      "example": [
+       "it was the season when the ancient sun god had been accustom",
+       "it was the season of the ancient sun god's having been accus"
+      ],
+      "wer": 0.22062084257206208,
+      "err": 0.22062084257206208
+     },
+     "best": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 3256,
+      "latency_available": true,
+      "lat_p50": 0.17100000000000026,
+      "lat_p90": 0.25550000000000095,
+      "lat_p99": 0.3747999999999988,
+      "viol": 0.018734643734643733,
+      "viol_80ms": 0.007371007371007371,
+      "tok_per_chunk": 0.22800958163890592,
+      "ref_per_chunk": 0.21859506434181938,
+      "forced_frac": 0.0,
+      "backlog_p99": 0.509999999999998,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 49.368858337402344,
+      "tick_ms_p99": 97.47886657714844,
+      "example": [
+       "it was the season when the ancient sun god had been accustom",
+       "it was the season of the ancient sun god's having been accus"
+      ],
+      "wer": 0.22062084257206208,
+      "err": 0.22062084257206208
+     },
+     "best_bias": 0.0
+    },
+    "dev-other": {
+     "bias0": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 2800,
+      "latency_available": true,
+      "lat_p50": 0.18900000000000006,
+      "lat_p90": 0.2950999999999998,
+      "lat_p99": 0.46799999999999997,
+      "viol": 0.016428571428571428,
+      "viol_80ms": 0.008214285714285714,
+      "tok_per_chunk": 0.2209754471725364,
+      "ref_per_chunk": 0.2130874347294745,
+      "forced_frac": 0.0,
+      "backlog_p99": 1.0,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 50.32217502593994,
+      "tick_ms_p99": 99.0548658370972,
+      "example": [
+       "i am and always have been opposed to large public funerals s",
+       "i am and am always have been opposed to large public funeral"
+      ],
+      "wer": 0.3176136363636364,
+      "err": 0.3176136363636364
+     },
+     "best": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 2800,
+      "latency_available": true,
+      "lat_p50": 0.18900000000000006,
+      "lat_p90": 0.2950999999999998,
+      "lat_p99": 0.46799999999999997,
+      "viol": 0.016428571428571428,
+      "viol_80ms": 0.008214285714285714,
+      "tok_per_chunk": 0.2209754471725364,
+      "ref_per_chunk": 0.2130874347294745,
+      "forced_frac": 0.0,
+      "backlog_p99": 1.0,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 50.32217502593994,
+      "tick_ms_p99": 99.0548658370972,
+      "example": [
+       "i am and always have been opposed to large public funerals s",
+       "i am and am always have been opposed to large public funeral"
+      ],
+      "wer": 0.3176136363636364,
+      "err": 0.3176136363636364
+     },
+     "best_bias": 0.0
+    },
+    "kspon-dev": {
+     "bias0": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 300,
+      "matched": 3839,
+      "latency_available": true,
+      "lat_p50": 0.15899999999999892,
+      "lat_p90": 0.30500000000000016,
+      "lat_p99": 0.8910000000000009,
+      "viol": 0.1385777546235999,
+      "viol_80ms": 0.07970825735868715,
+      "tok_per_chunk": 0.30168471250439743,
+      "ref_per_chunk": 0.27330649259273737,
+      "forced_frac": 0.0005081499433217371,
+      "backlog_p99": 3.0,
+      "flush_rounds_mean": 1.0233333333333334,
+      "tick_ms_p50": 51.65576934814453,
+      "tick_ms_p99": 147.8263711929322,
+      "example": [
+       "데 이제 걔가 이제 동영상 하나가 조회 수가 이천이 나왔대",
+       "니 집에 그 이제 동영상이 하나 가져왔어 가서 이천 년에 나왔대"
+      ],
+      "cer_official": 0.4456238734227919,
+      "cer_nospace": 0.4986114968064427,
+      "err": 0.4986114968064427
+     },
+     "best": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 300,
+      "matched": 3839,
+      "latency_available": true,
+      "lat_p50": 0.15899999999999892,
+      "lat_p90": 0.30500000000000016,
+      "lat_p99": 0.8910000000000009,
+      "viol": 0.1385777546235999,
+      "viol_80ms": 0.07970825735868715,
+      "tok_per_chunk": 0.30168471250439743,
+      "ref_per_chunk": 0.27330649259273737,
+      "forced_frac": 0.0005081499433217371,
+      "backlog_p99": 3.0,
+      "flush_rounds_mean": 1.0233333333333334,
+      "tick_ms_p50": 51.65576934814453,
+      "tick_ms_p99": 147.8263711929322,
+      "example": [
+       "데 이제 걔가 이제 동영상 하나가 조회 수가 이천이 나왔대",
+       "니 집에 그 이제 동영상이 하나 가져왔어 가서 이천 년에 나왔대"
+      ],
+      "cer_official": 0.4456238734227919,
+      "cer_nospace": 0.4986114968064427,
+      "err": 0.4986114968064427
+     },
+     "best_bias": 0.0
+    }
+   }
+  },
+  "4000": {
+   "score": 0.33010395314453383,
+   "best_bias": 0.0,
+   "sets": {
+    "dev-clean": {
+     "bias0": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 3259,
+      "latency_available": true,
+      "lat_p50": 0.1739999999999995,
+      "lat_p90": 0.2560000000000002,
+      "lat_p99": 0.35600000000000165,
+      "viol": 0.012887388769561215,
+      "viol_80ms": 0.003988953666768947,
+      "tok_per_chunk": 0.22594841513007632,
+      "ref_per_chunk": 0.21859506434181938,
+      "forced_frac": 0.0,
+      "backlog_p99": 0.509999999999998,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 50.44746398925781,
+      "tick_ms_p99": 99.41494464874268,
+      "example": [
+       "it was the season when the ancient sun god had been accustom",
+       "it was the season of the ancient sun god the accustomed to r"
+      ],
+      "wer": 0.2123059866962306,
+      "err": 0.2123059866962306
+     },
+     "best": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 3259,
+      "latency_available": true,
+      "lat_p50": 0.1739999999999995,
+      "lat_p90": 0.2560000000000002,
+      "lat_p99": 0.35600000000000165,
+      "viol": 0.012887388769561215,
+      "viol_80ms": 0.003988953666768947,
+      "tok_per_chunk": 0.22594841513007632,
+      "ref_per_chunk": 0.21859506434181938,
+      "forced_frac": 0.0,
+      "backlog_p99": 0.509999999999998,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 50.44746398925781,
+      "tick_ms_p99": 99.41494464874268,
+      "example": [
+       "it was the season when the ancient sun god had been accustom",
+       "it was the season of the ancient sun god the accustomed to r"
+      ],
+      "wer": 0.2123059866962306,
+      "err": 0.2123059866962306
+     },
+     "best_bias": 0.0
+    },
+    "dev-other": {
+     "bias0": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 2840,
+      "latency_available": true,
+      "lat_p50": 0.1899999999999995,
+      "lat_p90": 0.2931000000000007,
+      "lat_p99": 0.46661000000000086,
+      "viol": 0.014084507042253521,
+      "viol_80ms": 0.008450704225352112,
+      "tok_per_chunk": 0.22208643484057328,
+      "ref_per_chunk": 0.2130874347294745,
+      "forced_frac": 0.0,
+      "backlog_p99": 1.0,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 50.35960674285889,
+      "tick_ms_p99": 100.06892919540411,
+      "example": [
+       "i am and always have been opposed to large public funerals s",
+       "i am and am always to have an opposed to large public funera"
+      ],
+      "wer": 0.30369318181818183,
+      "err": 0.30369318181818183
+     },
+     "best": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 2840,
+      "latency_available": true,
+      "lat_p50": 0.1899999999999995,
+      "lat_p90": 0.2931000000000007,
+      "lat_p99": 0.46661000000000086,
+      "viol": 0.014084507042253521,
+      "viol_80ms": 0.008450704225352112,
+      "tok_per_chunk": 0.22208643484057328,
+      "ref_per_chunk": 0.2130874347294745,
+      "forced_frac": 0.0,
+      "backlog_p99": 1.0,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 50.35960674285889,
+      "tick_ms_p99": 100.06892919540411,
+      "example": [
+       "i am and always have been opposed to large public funerals s",
+       "i am and am always to have an opposed to large public funera"
+      ],
+      "wer": 0.30369318181818183,
+      "err": 0.30369318181818183
+     },
+     "best_bias": 0.0
+    },
+    "kspon-dev": {
+     "bias0": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 300,
+      "matched": 3952,
+      "latency_available": true,
+      "lat_p50": 0.1559999999999997,
+      "lat_p90": 0.2889999999999997,
+      "lat_p99": 0.9450000000000003,
+      "viol": 0.12980769230769232,
+      "viol_80ms": 0.076417004048583,
+      "tok_per_chunk": 0.3007856779892898,
+      "ref_per_chunk": 0.27330649259273737,
+      "forced_frac": 0.00035179611460735646,
+      "backlog_p99": 3.0,
+      "flush_rounds_mean": 1.02,
+      "tick_ms_p50": 50.62460899353027,
+      "tick_ms_p99": 143.66293907165527,
+      "example": [
+       "데 이제 걔가 이제 동영상 하나가 조회 수가 이천이 나왔대",
+       "니 집에 그 얘긴 조용상 한 조용히 술을 이십데니다네이때"
+      ],
+      "cer_official": 0.4233927498497897,
+      "cer_nospace": 0.4743126909191891,
+      "err": 0.4743126909191891
+     },
+     "best": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 300,
+      "matched": 3952,
+      "latency_available": true,
+      "lat_p50": 0.1559999999999997,
+      "lat_p90": 0.2889999999999997,
+      "lat_p99": 0.9450000000000003,
+      "viol": 0.12980769230769232,
+      "viol_80ms": 0.076417004048583,
+      "tok_per_chunk": 0.3007856779892898,
+      "ref_per_chunk": 0.27330649259273737,
+      "forced_frac": 0.00035179611460735646,
+      "backlog_p99": 3.0,
+      "flush_rounds_mean": 1.02,
+      "tick_ms_p50": 50.62460899353027,
+      "tick_ms_p99": 143.66293907165527,
+      "example": [
+       "데 이제 걔가 이제 동영상 하나가 조회 수가 이천이 나왔대",
+       "니 집에 그 얘긴 조용상 한 조용히 술을 이십데니다네이때"
+      ],
+      "cer_official": 0.4233927498497897,
+      "cer_nospace": 0.4743126909191891,
+      "err": 0.4743126909191891
+     },
+     "best_bias": 0.0
+    }
+   }
+  },
+  "4470": {
+   "score": 0.337010297346984,
+   "best_bias": 0.0,
+   "sets": {
+    "dev-clean": {
+     "bias0": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 3250,
+      "latency_available": true,
+      "lat_p50": 0.1739999999999995,
+      "lat_p90": 0.2560000000000002,
+      "lat_p99": 0.37003999999999987,
+      "viol": 0.01323076923076923,
+      "viol_80ms": 0.0036923076923076922,
+      "tok_per_chunk": 0.22622695114478303,
+      "ref_per_chunk": 0.21859506434181938,
+      "forced_frac": 5.5707202941340315e-05,
+      "backlog_p99": 0.509999999999998,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 51.093101501464844,
+      "tick_ms_p99": 100.78978538513184,
+      "example": [
+       "it was the season when the ancient sun god had been accustom",
+       "it was the season of the ancient sun god the accustomed to r"
+      ],
+      "wer": 0.21313747228381374,
+      "err": 0.21313747228381374
+     },
+     "best": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 3250,
+      "latency_available": true,
+      "lat_p50": 0.1739999999999995,
+      "lat_p90": 0.2560000000000002,
+      "lat_p99": 0.37003999999999987,
+      "viol": 0.01323076923076923,
+      "viol_80ms": 0.0036923076923076922,
+      "tok_per_chunk": 0.22622695114478303,
+      "ref_per_chunk": 0.21859506434181938,
+      "forced_frac": 5.5707202941340315e-05,
+      "backlog_p99": 0.509999999999998,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 51.093101501464844,
+      "tick_ms_p99": 100.78978538513184,
+      "example": [
+       "it was the season when the ancient sun god had been accustom",
+       "it was the season of the ancient sun god the accustomed to r"
+      ],
+      "wer": 0.21313747228381374,
+      "err": 0.21313747228381374
+     },
+     "best_bias": 0.0
+    },
+    "dev-other": {
+     "bias0": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 2810,
+      "latency_available": true,
+      "lat_p50": 0.18999999999999773,
+      "lat_p90": 0.28900000000000015,
+      "lat_p99": 0.43900000000000045,
+      "viol": 0.016370106761565837,
+      "viol_80ms": 0.008896797153024912,
+      "tok_per_chunk": 0.22053105210532162,
+      "ref_per_chunk": 0.2130874347294745,
+      "forced_frac": 0.0,
+      "backlog_p99": 1.0,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 51.548123359680176,
+      "tick_ms_p99": 102.41651058197021,
+      "example": [
+       "i am and always have been opposed to large public funerals s",
+       "i am and am always to have an opposed to large public funera"
+      ],
+      "wer": 0.30511363636363636,
+      "err": 0.30511363636363636
+     },
+     "best": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 50,
+      "matched": 2810,
+      "latency_available": true,
+      "lat_p50": 0.18999999999999773,
+      "lat_p90": 0.28900000000000015,
+      "lat_p99": 0.43900000000000045,
+      "viol": 0.016370106761565837,
+      "viol_80ms": 0.008896797153024912,
+      "tok_per_chunk": 0.22053105210532162,
+      "ref_per_chunk": 0.2130874347294745,
+      "forced_frac": 0.0,
+      "backlog_p99": 1.0,
+      "flush_rounds_mean": 1.0,
+      "tick_ms_p50": 51.548123359680176,
+      "tick_ms_p99": 102.41651058197021,
+      "example": [
+       "i am and always have been opposed to large public funerals s",
+       "i am and am always to have an opposed to large public funera"
+      ],
+      "wer": 0.30511363636363636,
+      "err": 0.30511363636363636
+     },
+     "best_bias": 0.0
+    },
+    "kspon-dev": {
+     "bias0": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 300,
+      "matched": 3854,
+      "latency_available": true,
+      "lat_p50": 0.15500000000000025,
+      "lat_p90": 0.29700000000000015,
+      "lat_p99": 0.989569999999994,
+      "viol": 0.13129216398546964,
+      "viol_80ms": 0.07939802802283343,
+      "tok_per_chunk": 0.2994957589023961,
+      "ref_per_chunk": 0.27330649259273737,
+      "forced_frac": 0.0004299730289645468,
+      "backlog_p99": 3.0,
+      "flush_rounds_mean": 1.02,
+      "tick_ms_p50": 51.39517784118652,
+      "tick_ms_p99": 147.1122884750367,
+      "example": [
+       "데 이제 걔가 이제 동영상 하나가 조회 수가 이천이 나왔대",
+       "니 집에 그 얘긴 조용상 한 조용히 술을 이십다네이타"
+      ],
+      "cer_official": 0.4359102743841378,
+      "cer_nospace": 0.4927797833935018,
+      "err": 0.4927797833935018
+     },
+     "best": {
+      "bias": 0.0,
+      "delay": 2,
+      "n": 300,
+      "matched": 3854,
+      "latency_available": true,
+      "lat_p50": 0.15500000000000025,
+      "lat_p90": 0.29700000000000015,
+      "lat_p99": 0.989569999999994,
+      "viol": 0.13129216398546964,
+      "viol_80ms": 0.07939802802283343,
+      "tok_per_chunk": 0.2994957589023961,
+      "ref_per_chunk": 0.27330649259273737,
+      "forced_frac": 0.0004299730289645468,
+      "backlog_p99": 3.0,
+      "flush_rounds_mean": 1.02,
+      "tick_ms_p50": 51.39517784118652,
+      "tick_ms_p99": 147.1122884750367,
+      "example": [
+       "데 이제 걔가 이제 동영상 하나가 조회 수가 이천이 나왔대",
+       "니 집에 그 얘긴 조용상 한 조용히 술을 이십다네이타"
+      ],
+      "cer_official": 0.4359102743841378,
+      "cer_nospace": 0.4927797833935018,
+      "err": 0.4927797833935018
+     },
+     "best_bias": 0.0
+    }
+   }
+  }
+ },
+ "best_step": "4000",
+ "select_sizes": {
+  "stream": 50,
+  "utt": 300
+ }
+}
