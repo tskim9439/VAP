@@ -101,7 +101,9 @@ model = MonoInterleavedASR(thinker, tok, Adapter(), sp_ids, lora_r=a.lora_r, ful
 if not a.no_grad_ckpt: model._lm().gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})   # 활성화 메모리 ≈5.9 MB/token → 수 배 절감, 연산 +30 %
 if a.init_adapter:
     st0 = torch.load(a.init_adapter, map_location="cpu"); model.adapter.load_state_dict(st0["adapter"]); log(f"adapter 증류 init ← {a.init_adapter} (val cos {st0.get('hist', [{}])[-1].get('cos', float('nan')):.3f})")
-if a.ckpt: model.load_trainable_state(torch.load(a.ckpt, map_location="cpu")); log("ckpt ←", a.ckpt)
+if a.ckpt:
+    _ck = torch.load(a.ckpt, map_location="cpu"); _ck = _ck["model"] if "model" in _ck and "adapter" not in _ck else _ck   # ckpt-last.pt(재개용 묶음) 도 허용
+    model.load_trainable_state(_ck); log("ckpt ←", a.ckpt, f"(step {_ck.get('step', '?')})" if isinstance(_ck, dict) and "step" in _ck else "")
 n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad) if a.full_ft else sum(p.numel() for p in model.parameters() if p.requires_grad) - model._embed().weight.numel() + len(model.special_rows) * model._embed().weight.shape[1]
 log(f"trainable {n_tr/1e6:.1f}M ({'thinker full FT + adapter' if a.full_ft else f'adapter + LoRA r{a.lora_r} + 특수 토큰 행 {len(model.special_rows)}'}; adapter {'증류 init' if a.init_adapter else 'random'}) → {out}")
 
