@@ -4,7 +4,7 @@
 #          sbatch --export=ALL,RUN=B slurm/s1_mono.sbatch
 #          sbatch --export=ALL,RUN=C,TRAIN=librispeech-960,kspon-full,EPOCHS=15 slurm/s1_mono.sbatch   # Stage 2 (온라인 특징)
 #   산출물: /soundai/Model/VAPASR/s1-<RUN>/  (ckpt-last.pt 재개용 · ckpt-<step>.pt · results.json · eval/ · DONE)
-#   로그:   /soundai/Model/VAPASR/logs/SA_SFT_FullduplexStage5-<jobid>.out
+#   로그:   /soundai/Model/VAPASR/logs/train/SA_SFT_FullduplexStage5-<jobid>.out|.err
 #SBATCH --job-name=SA_SFT_FullduplexStage5
 #SBATCH --partition=low_p_hpc
 #SBATCH --nodes=1
@@ -14,10 +14,11 @@
 #SBATCH --requeue
 #SBATCH --open-mode=append
 #SBATCH --signal=B:USR1@180
-#SBATCH --output=/soundai/Model/VAPASR/logs/%x-%j.out
+#SBATCH --output=/soundai/Model/VAPASR/logs/train/%x-%j.out
+#SBATCH --error=/soundai/Model/VAPASR/logs/train/%x-%j.err
 set -uo pipefail
 RUN=${RUN:?RUN=A|B 를 --export 로 주세요}
-ROOT=/soundai/Model/VAPASR; OUT=$ROOT/s1-$RUN; mkdir -p "$OUT" "$ROOT/logs"
+ROOT=/soundai/Model/VAPASR; OUT=$ROOT/s1-$RUN; mkdir -p "$OUT" "$ROOT/logs/train"
 echo "[$(date '+%F %T')] job $SLURM_JOB_ID RUN=$RUN node=$(hostname) restart=${SLURM_RESTART_COUNT:-0}"
 [ -f "$OUT/DONE" ] && { echo "이미 완료(DONE) — 종료"; exit 0; }
 

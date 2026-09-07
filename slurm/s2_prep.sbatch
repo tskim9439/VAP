@@ -2,6 +2,7 @@
 # Stage 2 준비: asr-tn-v1.0.0 manifest 의 강제 정렬(align-asr-tn-v1/) + 항목 캐시. 노드 1 × GPU 8 (manifest 마다 8 shard). 특징은 학습 중 온라인(FEATURES=1 이면 캐시도 생성).
 #   제출:  sbatch --export=ALL,MANIFESTS=librispeech-dev:librispeech-test:kspon-dev:kspon-eval:kspon-full:librispeech-960 slurm/s2_prep.sbatch
 #          (manifest 구분자는 콜론 — --export 의 쉼표와 충돌. WPG=4: GPU 당 워커 수, BATCH=128 BATCH_SEC=960)
+#   로그:   logs/prep/<job>-<id>.out|.err, 워커별 logs/prep/<id>/align-<manifest>-<k>.log
 #   재개 가능(파일 단위 skip) — 선점되면 requeue 로 이어서. 완료 표식: $ROOT/prep-DONE-<manifest 목록 hash>
 #SBATCH --job-name=SA_SFT_FullduplexStage5
 #SBATCH --partition=low_p_hpc
@@ -11,9 +12,11 @@
 #SBATCH --cpus-per-task=64
 #SBATCH --requeue
 #SBATCH --open-mode=append
-#SBATCH --output=/soundai/Model/VAPASR/logs/%x-%j-prep.out
+#SBATCH --output=/soundai/Model/VAPASR/logs/prep/%x-%j.out
+#SBATCH --error=/soundai/Model/VAPASR/logs/prep/%x-%j.err
 set -uo pipefail
-MANIFESTS=${MANIFESTS:?manifest 이름 목록 — sbatch --export 는 쉼표를 구분자로 먹으므로 콜론(:)으로 구분}; MANIFESTS=${MANIFESTS//:/,}; ENC=${ENC:-nemotron-c0}; FEATURES=${FEATURES:-0}; ROOT=/soundai/Model/VAPASR; mkdir -p $ROOT/logs
+WLOG=$ROOT/logs/prep/$SLURM_JOB_ID; mkdir -p "$WLOG"   # 워커(shard) 로그는 job 별 하위 폴더
+MANIFESTS=${MANIFESTS:?manifest 이름 목록 — sbatch --export 는 쉼표를 구분자로 먹으므로 콜론(:)으로 구분}; MANIFESTS=${MANIFESTS//:/,}; ENC=${ENC:-nemotron-c0}; FEATURES=${FEATURES:-0}; ROOT=/soundai/Model/VAPASR; mkdir -p $ROOT/logs/prep
 DONE=$ROOT/prep-DONE-$(echo "$MANIFESTS" | md5sum | cut -c1-8)   # manifest 목록별 완료 표식(여러 job 으로 나눠 제출 가능)
 echo "[$(date '+%F %T')] prep job $SLURM_JOB_ID node=$(hostname) restart=${SLURM_RESTART_COUNT:-0} manifests=$MANIFESTS"
 [ -f "$DONE" ] && { echo "이미 완료($DONE)"; exit 0; }
@@ -35,7 +38,7 @@ PY
 WPG=${WPG:-4}                       # GPU 당 워커 수: 정렬기는 CPU(특징 추출) 병목이라 GPU 하나에 여러 워커(GPU 메모리 워커당 ≈5 GB)
 run8() {  # run8 <script> <manifest> [extra…]: 8 GPU × WPG 워커 shard 병렬
   local s=$1 m=$2; shift 2; PIDS=""; local N=$((8 * WPG))
-  for k in $(seq 0 $((N - 1))); do CUDA_VISIBLE_DEVICES=$((k % 8)) OMP_NUM_THREADS=2 python -u experiments/$s --manifest $m --mode all --shard $k/$N "$@" > $ROOT/logs/prep-$s-$m-$k.log 2>&1 & PIDS="$PIDS $!"; done
+  for k in $(seq 0 $((N - 1))); do CUDA_VISIBLE_DEVICES=$((k % 8)) OMP_NUM_THREADS=2 python -u experiments/$s --manifest $m --mode all --shard $k/$N "$@" > $WLOG/${s%.py}-$m-$k.log 2>&1 & PIDS="$PIDS $!"; done
   wait $PIDS
 }
 for m in ${MANIFESTS//,/ }; do
