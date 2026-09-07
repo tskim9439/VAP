@@ -20,3 +20,4 @@ venv/
 *.tar.gz
 *.npz
 *.png
+logs/
