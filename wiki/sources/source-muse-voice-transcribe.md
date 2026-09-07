@@ -2,7 +2,7 @@
 type: source
 status: stable
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-07
 summary: Meta Muse Voice Transcribe — 80ms soft token 기반 streaming ASR+diarization+endpointing 통합 모델, closed weights
 url: https://research.meta.ai/blog/introducing-muse-voice-transcribe
 observed: 2026-09-03
@@ -47,3 +47,6 @@ multimodal 모델** 로 푸는 실시간 음성 인식 모델. Muse Spark 계열
 Muse 는 **"무엇을 듣고 있으며 언제 끝났는가"** 를 푼다. 이 볼트의 연구 목표인
 [[streaming-conversational-projection-asr]] 는 **"앞으로 누가 언제 말할 것인가"**
 까지 예측한다. 이 구분이 novelty 의 근거다.
+
+논문·기술 소개 사이의 구조, 지연 지표, 재현성 비교는
+[[source-streaming-speech-llm-related-work]]에 정리한다.

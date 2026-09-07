@@ -2,9 +2,10 @@
 type: output
 status: active
 created: 2026-09-04
-updated: 2026-09-04
+updated: 2026-09-07
 summary: RNN-T 없이 80ms speech soft token과 text token을 교차 처리하는 통합 streaming SLM 구조 및 실패 조건
 sources:
+  - [[source-streaming-speech-llm-related-work]]
   - [[source-muse-voice-transcribe]]
   - [[source-qwen3-asr]]
   - [[streaming-conversational-projection-asr]]

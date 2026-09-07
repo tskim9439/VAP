@@ -5,6 +5,7 @@ created: 2026-09-05
 updated: 2026-09-07
 summary: Stage 1 mono는 full FT로 개선됐으나 RNN-T 동급 정확도와 예측 가능한 지연에는 데이터·목표·런타임 개선이 필요
 sources:
+  - [[source-streaming-speech-llm-related-work]]
   - [[source-stage1-mono-overfit-600-timing]]
   - [[source-stage1-mono-overfit-1500]]
   - [[source-stage1-mono-pilot-6000-sentinel-partial]]
