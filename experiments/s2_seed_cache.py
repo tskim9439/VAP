@@ -32,8 +32,11 @@ if a.feat == "1":
   print(f"  특징 {a.encoder}: {n} 개 이어받음 → {nd}", flush=True)
 # 정렬
 oa, na = os.path.join(MAN, a.old_align, a.old), os.path.join(a.new_align_root or os.path.join(MAN, a.new_align), a.new); os.makedirs(na, exist_ok=True); m = 0
-for i in same_text:
+from concurrent.futures import ThreadPoolExecutor                       # 다른 파일시스템(Lustre → Blob NFS)이면 복사가 되므로 스레드 32 개로 병렬
+have = set(os.listdir(na))
+def _one(i):
     src = os.path.join(oa, i + ".jsonl")
-    if os.path.exists(src) and link(src, os.path.join(na, i + ".jsonl")): m += 1
+    return os.path.exists(src) and (i + ".jsonl") not in have and link(src, os.path.join(na, i + ".jsonl"))
+with ThreadPoolExecutor(32) as ex: m = sum(1 for ok in ex.map(_one, same_text) if ok)
 fp = json.load(open(os.path.join(MAN, a.new, "stats.json")))["fingerprint"]; json.dump(fp, open(os.path.join(na, "fingerprint.json"), "w"), indent=1)
 print(f"  정렬: {m} 개 이어받음 → {na} (fingerprint.json 기록)", flush=True)
