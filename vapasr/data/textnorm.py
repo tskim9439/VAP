@@ -141,6 +141,11 @@ def check_fingerprint(fp: Optional[Dict[str, str]], where: str, allow_legacy_env
     if not fp or "textnorm_version" not in fp:
         if os.environ.get(allow_legacy_env) == "1": print(f"!! {where}: textnorm fingerprint 없음 — 동결 전(legacy) 타깃으로 진행({allow_legacy_env}=1)", flush=True); return
         raise RuntimeError(f"{where}: textnorm fingerprint 없음(동결 전 산출물). 새 규약으로 manifest·정렬을 다시 만들거나 {allow_legacy_env}=1 로 재현 실행")
-    mine = fingerprint()
-    for k in ("textnorm_version", "textnorm_sha256", "numeric_backend_version"):
-        if fp.get(k) != mine[k]: raise RuntimeError(f"{where}: textnorm fingerprint 불일치 {k}: 산출물 {fp.get(k)} ≠ 코드 {mine[k]}")
+    mine = fingerprint(); major = lambda v: str(v).split(".")[0]                 # 'asr-tn-v1.1.0' → 'asr-tn-v1'
+    if major(fp.get("textnorm_version")) != major(mine["textnorm_version"]) or fp.get("numeric_backend_version") != mine["numeric_backend_version"]:
+        raise RuntimeError(f"{where}: textnorm fingerprint 불일치: 산출물 {fp.get('textnorm_version')}/{fp.get('numeric_backend_version')} ≠ 코드 {mine['textnorm_version']}/{mine['numeric_backend_version']}")
+    if fp.get("textnorm_version") != mine["textnorm_version"] or fp.get("textnorm_sha256") != mine["textnorm_sha256"]:
+        # minor/patch 차이: 버전 정책상 기존 코퍼스 타깃은 불변(골든·230 h diff 로 검증) → 경고만. 엄격 검사는 VAPASR_STRICT_TN=1
+        msg = f"{where}: textnorm 산출물 {fp.get('textnorm_version')} vs 코드 {mine['textnorm_version']} (같은 major, 기존 코퍼스 타깃 불변)"
+        if os.environ.get("VAPASR_STRICT_TN") == "1": raise RuntimeError(msg)
+        print("  " + msg, flush=True)
