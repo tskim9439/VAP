@@ -1,0 +1,115 @@
+{
+ "librispeech-100": {
+  "counts": {
+   "segments": 28539,
+   "same": 28525,
+   "text_changed": 14
+  },
+  "examples": [
+   {
+    "utt_id": "163-122947-0086",
+    "old": "they will say their honesty' that is their devilry and nothing else what does it matter and even if they were right have not all gods hitherto been such sanctified",
+    "new": "they will say their honesty that is their devilry and nothing else what does it matter and even if they were right have not all gods hitherto been such sanctified"
+   },
+   {
+    "utt_id": "1867-148436-0027",
+    "old": "an i won't ask much cash to boot i begin wonderin what pa was drivin at but i didn't say nothin' jest held myself together and waited look over there to the corral says pa and pointed",
+    "new": "an i won't ask much cash to boot i begin wonderin what pa was drivin at but i didn't say nothin jest held myself together and waited look over there to the corral says pa and pointed"
+   },
+   {
+    "utt_id": "2007-132570-0047",
+    "old": "you have dared to question my right now dare to question my power i have a punishment which you think not of it is terrible this night this very night' this",
+    "new": "you have dared to question my right now dare to question my power i have a punishment which you think not of it is terrible this night this very night this"
+   },
+   {
+    "utt_id": "2182-181173-0016",
+    "old": "he's such a game little feller an' an such a queer little un and when they turned away he stood and looked after them in a dazed kind of way and there was still a mist in his eyes and a lump in his throat",
+    "new": "he's such a game little feller an an such a queer little un and when they turned away he stood and looked after them in a dazed kind of way and there was still a mist in his eyes and a lump in his throat"
+   },
+   {
+    "utt_id": "2518-154826-0016",
+    "old": "i wish i had a thimbleful of powder to make this whistle sound' and he took maskew's silver butted pistol again from his bosom and handled it lovingly",
+    "new": "i wish i had a thimbleful of powder to make this whistle sound and he took maskew's silver butted pistol again from his bosom and handled it lovingly"
+   },
+   {
+    "utt_id": "307-127535-0010",
+    "old": "well what is it anyway ah deposed' that's it is it very pretty wrote to be sure like print i swear your hand o write george",
+    "new": "well what is it anyway ah deposed that's it is it very pretty wrote to be sure like print i swear your hand o write george"
+   },
+   {
+    "utt_id": "5192-19397-0028",
+    "old": "from tearing the very flesh off your bones in contestation whether that year is not always the last cast year of the last cast almanack' i tell you plainly it was but from a different reason than you wot of it was the year next him",
+    "new": "from tearing the very flesh off your bones in contestation whether that year is not always the last cast year of the last cast almanack i tell you plainly it was but from a different reason than you wot of it was the year next him"
+   },
+   {
+    "utt_id": "5339-14133-0024",
+    "old": "and then my master saw another girl that he liked better' william almost choked in his endeavour to keep down all appearance of violent anger and then went on and that he played t same game wi as i've heerd tell and how did thy sister take it",
+    "new": "and then my master saw another girl that he liked better william almost choked in his endeavour to keep down all appearance of violent anger and then went on and that he played t same game wi as i've heerd tell and how did thy sister take it"
+   },
+   {
+    "utt_id": "5456-62014-0002",
+    "old": "you chillen is wusser dan night owls said the old woman ef you keeps on wid dis settin' up all night bizness",
+    "new": "you chillen is wusser dan night owls said the old woman ef you keeps on wid dis settin up all night bizness"
+   },
+   {
+    "utt_id": "5456-62014-0004",
+    "old": "dey all made der bre'kfus offen roas'in' years er de new cawn an den de darnse begun an lasted fo days an fo nights",
+    "new": "dey all made der bre'kfus offen roas'in years er de new cawn an den de darnse begun an lasted fo days an fo nights"
+   },
+   {
+    "utt_id": "5514-19193-0034",
+    "old": "every time that the flat nosed face of the spectre approached the urchin administered to it a fillip one bullet however better aimed or more treacherous than the rest finally struck the will o' the wisp of a child",
+    "new": "every time that the flat nosed face of the spectre approached the urchin administered to it a fillip one bullet however better aimed or more treacherous than the rest finally struck the will o the wisp of a child"
+   },
+   {
+    "utt_id": "7278-104730-0039",
+    "old": "i said that in another part of the capitol it had been threatened that if a northern abolitionist should go to north carolina and utter a principle of the declaration of independence' here a loud cry of order order burst forth in which the speaker yelled the loudest",
+    "new": "i said that in another part of the capitol it had been threatened that if a northern abolitionist should go to north carolina and utter a principle of the declaration of independence here a loud cry of order order burst forth in which the speaker yelled the loudest"
+   },
+   {
+    "utt_id": "7367-86737-0091",
+    "old": "why should an exception be made in her favor i thought that my entreaties' what right have you any more than the rest to ask for an exception is true",
+    "new": "why should an exception be made in her favor i thought that my entreaties what right have you any more than the rest to ask for an exception is true"
+   },
+   {
+    "utt_id": "911-128684-0061",
+    "old": "both rationalism and the usual empiricism claim that they are exclusively the work of the mind' the finite mind or the absolute mind as the case may be",
+    "new": "both rationalism and the usual empiricism claim that they are exclusively the work of the mind the finite mind or the absolute mind as the case may be"
+   }
+  ]
+ },
+ "kspon-100": {
+  "counts": {
+   "segments": 62000,
+   "same": 61995,
+   "now_quarantined": 5
+  },
+  "examples": [
+   {
+    "utt_id": "KsponSpeech_017795",
+    "old": "그래서 게임을 너무 많이 해 가지고 지금 게임만 지금 한 3 삼 주 맨날 맨날 이제 한 거의 열 시간 씩 롤만 하니까 너무 질려",
+    "new": null
+   },
+   {
+    "utt_id": "KsponSpeech_023278",
+    "old": "초 초점 하면 두 배다 이런 것만 이용하면 나오는 거였단 말이야 근데 내가 그게 이십 팔 번이니까 그래도 쪼끔 어려울 거라고 생각하고 풀었는데 너무 빨리 풀리니까 신나가지고 막 구 더하기 삼을 14라고 적어 논 거야 그래서 그거 틀리고 틀렸지",
+    "new": null
+   },
+   {
+    "utt_id": "KsponSpeech_028487",
+    "old": "어 수빈이 동성이 이케 해서 이제 3자 해서 또 청문회 식으로 이케 했나 봐 어이 그니까 이 신명은 뭐 그때 신명이 하 사 사건 터졌던 게 윤상호 선배가 기억나지 그때 나 지금 뭔 얘기했는지도 정확히 기억 안 나는데 어쨌든",
+    "new": null
+   },
+   {
+    "utt_id": "KsponSpeech_039517",
+    "old": "아니야 그걸로 약간 아이 그때는 약간 중 이 중학생이었으니깐 중 이 병이라고 중2병도 걸려있었고 내 성격이 이렇지가 않았잖아 그때는 아직 소심할 때였어 그래서 그 땜에 쫌 약간 서로 뭐야 쟤 이러다가 어 나중에 그냥 친해진 거지 중국이 워낙 쫍으니까 중국에서 너 말대로 미센 먹고 마라탕 먹고 중국 음식 먹으면서 친해진 거지 그냥",
+    "new": null
+   },
+   {
+    "utt_id": "KsponSpeech_050316",
+    "old": "어 아닌가 모르겠다 기억 안 난다 잘 아무튼 그래 유트 좀 비쌌 비쌌던 거 같은데 8천 가지 않을까",
+    "new": null
+   }
+  ]
+ }
+}

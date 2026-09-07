@@ -1,9 +1,37 @@
 <!-- generated: do not edit -->
 # 활동 로그
 
-마지막 생성: 2026-09-06
+마지막 생성: 2026-09-07
 
 `wiki/log/` 의 샤드를 최신순으로 이어붙인 다이제스트다. 직접 편집하지 않는다.
+
+## [2026-09-07] task | asr-tn-v1.0.0 구현·audit·동결
+
+- Changed: `vapasr/data/textnorm.py`, `vapasr/data/kspon.py`, `experiments/tn_audit.py`, `experiments/s1_build_manifest.py`, `experiments/s1_align.py`, `vapasr/uslm/mono_data.py`, `tests/test_textnorm.py`, `tests/golden/asr-tn-v1.0.0.json`, `wiki/decisions/decision-asr-tn-v1-freeze.md`, `wiki/sources/source-asr-tn-v1-audit.md`, `wiki/outputs/output-asr-tn-v1-spec.md`(동결 판정 절), `raw/sources/experiments/2026-09-07-asr-tn-v1-audit/`
+- Reason: Stage 2 데이터 확장 전에 정규화 규약을 동결하라는 지시. spec 대로 구현하고 LibriSpeech 960 h·KsponSpeech 01–05 전체 audit 와 230 h diff 를 수행해 관문 7/8 통과, fingerprint 관문을 정렬기·학습기에 넣었다.
+- Next: Kspon 01–05 review TSV 사용자 검토(관문 6) → librispeech-960·kspon-full manifest 생성(fingerprint) → align-asr-tn-v1/ 정렬·특징 추출 → scaling curve.
+- By: tskim
+
+## [2026-09-07] query | Stage 1 RNN-T 동급 가능성 평가
+
+- Changed: `wiki/sources/source-stage1-mono-run-ab.md`, `wiki/sources/source-stage1-mono-pilot-6000-sentinel-partial.md`, `wiki/outputs/output-stage1-mono-pilot.md`, `wiki/status.md`
+- Reason: Stage 1 개선 run A/B 결과를 근거로 IS-SLM이 RNN-T 동급 정확도와 예측 가능한 방출 타이밍을 동시에 달성할 가능성을 엄격히 평가하고, 단순 epoch 연장보다 데이터·정렬 목표·런타임 개선을 우선하는 관문을 기록했다.
+- Next: B 기반 200/500/1,000/1,900 h scaling curve, full-dev 평가, windowed alignment·latency loss·KO next_weight Pareto sweep, end-to-end tick 측정.
+- By: tskim
+
+## [2026-09-07] query | 영어 대소문자·문장부호 출력 규약
+
+- Changed: `wiki/outputs/output-asr-tn-v1-spec.md`, `wiki/concepts/asr-text-normalization.md`, `wiki/outputs/output-stage1-mono-pilot.md`, `wiki/sources/source-asr-output-style-probe.md`, `wiki/status.md`
+- Reason: 영어 대소문자와 문장부호를 평가에서 제거하는 데 그치지 않고 최종 ASR 출력 능력으로 학습·평가해야 한다는 요구를 TN v1에 반영했다.
+- Next: lexical audit 동결 후 1,930 h alignment를 시작하고, display 평가 subset과 provenance, Qwen exact-match 필터·masked loss·지표를 full-FT 전에 별도로 동결한다.
+- By: tskim
+
+## [2026-09-07] query | asr-tn-v1.0.0 동결 후보 규약
+
+- Changed: `wiki/outputs/output-asr-tn-v1-spec.md`, `wiki/concepts/asr-text-normalization.md`, `wiki/outputs/output-stage1-mono-pilot.md`, `wiki/status.md`
+- Reason: 1,930 h manifest·alignment 생성 전에 LibriSpeech·KsponSpeech의 target/score 규약, 지원·미지원 숫자 패턴, quarantine, golden test, fingerprint와 버전 조건을 고정할 문서 정본이 필요했다.
+- Next: TN v1 구현, 전체 transcript audit, 기존 230 h target/token-ID diff, 목적 표본 검토 후 frozen 판정.
+- By: tskim
 
 ## [2026-09-06] task | Stage 1 mono 파일럿 준비 완료 — overfit 통과(옛·새 규약), 대화 코퍼스 mxc 업로드, 6,000-step 파일럿 시작
 
@@ -16,6 +44,13 @@
   대화 코퍼스(otoSpeech16k 23 GB, AI Hub 71631 wav 54 GB, TurnBench 17 GB)는 rack4 → 맥 T5 → mxc `/soundai/DB/raw/` 로 업로드(rack4→mxc 직접 전송은 정책상 불가, 맥에서는 HF 차단).
 - Next: 6,000-step 파일럿(`s1-mono-pilot`, sentinel 1 k 마다) → `--select` 큰 dev 표본으로 ckpt·bias 선택 → `--final` 보고 세트 전량. 대조군(Nemotron RNN-T `[56,0]`·Qwen 오프라인, eval_other 는 같은 2,687 개) 측정.
   tick p99 단독 측정 + CUDA graph/배치 디코드 검토. mxc 잡파일(`._*` 70 개, `_xfer_test` 768 MB)·rack4 azcopy 정리는 사용자 승인 대기.
+- By: tskim
+
+## [2026-09-06] ingest | Stage 1 mono 6,000-step sentinel 중간 결과
+
+- Changed: `raw/sources/experiments/2026-09-06-stage1-mono-pilot-6000-sentinel-partial.md`, `wiki/sources/source-stage1-mono-pilot-6000-sentinel-partial.md`, `wiki/outputs/output-stage1-mono-pilot.md`, `wiki/status.md`
+- Reason: 파일럿의 EN WER 하락과 정상 방출 타이밍, KO 과소 방출, RNN-T 대비 큰 절대 격차를 기록하고, 6,000 mixed step이 언어별 0.39–0.46 epoch에 불과하며 LR이 먼저 0이 되는 과소학습 조건임을 분리해 해석했다.
+- Next: @6000 나머지 sentinel 완료, 같은 큰 dev에서 ckpt·bias 선택, 교사강제 정확도와 자유실행 S/D/I 진단, 필요 시 KO next-weight sweep, Stage 2 전 13k–16k one-epoch 연장 대조.
 - By: tskim
 
 ## [2026-09-06] ingest | Stage 1 mono overfit 1,500-step 완료

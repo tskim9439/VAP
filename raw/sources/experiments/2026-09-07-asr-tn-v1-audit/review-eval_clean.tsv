@@ -1,0 +1,36 @@
+type	id	raw	target	ok?	note
+numeric_dual	KsponSpeech_E01378	(1, 2주)/(일 이 주) 걸릴 수 있으니까.	일 이 주 걸릴 수 있으니까		
+numeric_dual	KsponSpeech_E02015	스키장 n/ 나 이번에 갔을 때 (19만 원)/(십 구만 원) 줬거든 (2박)/(이 박) (3일)/(삼 일)에 콘도까지 다 해가지고	스키장 나 이번에 갔을 때 십 구만 원 줬거든 이 박 삼 일에 콘도까지 다 해가지고		
+numeric_dual	KsponSpeech_E01891	개인적으로는 좀 더 이렇게 폭신폭신하고 푸슬푸슬한 눈 있는데를 가고 싶은데 b/ 나 역시 마지막으로 탄게 n/ (16년)/(십육 년)전이기 때문에	개인적으로는 좀 더 이렇게 폭신폭신하고 푸슬푸슬한 눈 있는데를 가고 싶은데 나 역시 마지막으로 탄게 십육 년전이기 때문에		
+numeric_dual	KsponSpeech_E01018	(35명)/(서른 다섯 명)?	서른 다섯 명		
+numeric_dual	KsponSpeech_E01605	o/ 아 나 (2개)/(두 개) 똑같은 건 줄 알았어	아 나 두 개 똑같은 건 줄 알았어		
+numeric_dual	KsponSpeech_E01771	그니까 (16학번)/(일육 학번)이었으면 지금 아	그니까 일육 학번이었으면 지금 아		
+numeric_dual	KsponSpeech_E02702	o/ 뭐가 (50만)/(오십만)?	뭐가 오십만		
+numeric_dual	KsponSpeech_E02075	어/ 내가 로마, 베니스, 피렌체, 밀라노 이 순서대로 갔+ 갔어 일단 로마는 (4일)/(사 일) 나머지는 하루+ 하루+ 하루 이렇게 한 (1주일)/(일 주일) 정도 갔다 왔는데.	어 내가 로마 베니스 피렌체 밀라노 이 순서대로 갔 갔어 일단 로마는 사 일 나머지는 하루 하루 하루 이렇게 한 일 주일 정도 갔다 왔는데		
+numeric_dual	KsponSpeech_E02511	한 (3, 4번)/(세 네 번) 쉬고 막/ 내려간단 말이야 힘들어가지고.	한 세 네 번 쉬고 막 내려간단 말이야 힘들어가지고		
+numeric_dual	KsponSpeech_E02349	u/ 지금 b/ 이제 (5년)/(오 년) 돼 간다.	지금 이제 오 년 돼 간다		
+numeric_dual	KsponSpeech_E00796	n/ 심포지엄 (25명)/(스물 다섯 명)인 거 알아?	심포지엄 스물 다섯 명인 거 알아		
+numeric_dual	KsponSpeech_E01540	아아 (9인승)/(구 인승)이랑 (12인승)/(십 이 인승) 있다 그랬나?	아아 구 인승이랑 십 이 인승 있다 그랬나		
+latin_dual	KsponSpeech_E00420	좀 (CC)/(씨씨) 해보고 싶어.	좀 씨씨 해보고 싶어		
+latin_dual	KsponSpeech_E00641	그리고 또 마지막에 (will)/(윌)이 b/ 공부냐 사랑이냐? 둘 중에 n/	그리고 또 마지막에 윌이 공부냐 사랑이냐 둘 중에		
+latin_dual	KsponSpeech_E01695	아니 근데 그 (EPL)/(이피엘) 지금 몇경기 남은거야?	아니 근데 그 이피엘 지금 몇경기 남은거야		
+latin_dual	KsponSpeech_E00954	(GRN)/(지알엔).	지알엔		
+latin_dual	KsponSpeech_E00913	o/ (병조TV)/(병조 티비).	병조 티비		
+latin_dual	KsponSpeech_E00862	그+ 근데 가는 데 시간이 너무 오래 걸려. 그 코엑스랑 뭐 (DDP)/(디디피) 했었잖아.	그 근데 가는 데 시간이 너무 오래 걸려 그 코엑스랑 뭐 디디피 했었잖아		
+latin_dual	KsponSpeech_E00096	아/ 근데 그렇게까지 (SRT)/(에스알티)를 타면서까지	아 근데 그렇게까지 에스알티를 타면서까지		
+latin_dual	KsponSpeech_E00898	o/ 그거 하면 뭐 이제 우승팀이 대충 나오지 않을까 (EPL)/(이피엘).	그거 하면 뭐 이제 우승팀이 대충 나오지 않을까 이피엘		
+standalone_latin	KsponSpeech_E00371	맞어 그래서 완벽한 타인은 그렇게 재밌었는데 극한 직업은 니가 말한 것처럼 좀 억지로 웃기려는 그런 게 많아가지고 b/ 나는 좀 재미없었어 진짜 B급 영화?	맞어 그래서 완벽한 타인은 그렇게 재밌었는데 극한 직업은 니가 말한 것처럼 좀 억지로 웃기려는 그런 게 많아가지고 나는 좀 재미없었어 진짜 B급 영화		
+standalone_latin	KsponSpeech_E00227	아 S자나 이런 게 뭔가 턴을 하는데 있어서 훨씬	아 S자나 이런 게 뭔가 턴을 하는데 있어서 훨씬		
+standalone_latin	KsponSpeech_E00100	분명히 (40번)/(사십 번)까지 나와야 돼 난 (49번)/(삼십 구 번)까지밖에 안 써져 있는 거야. b/ 그래가지고 아/ 이번 시험은 망했다. 그래도 난 A를 노렸는데	분명히 사십 번까지 나와야 돼 난 삼십 구 번까지밖에 안 써져 있는 거야 그래가지고 아 이번 시험은 망했다 그래도 난 A를 노렸는데		
+standalone_latin	KsponSpeech_E02102	딱 인제 어/ TV 드라마 그리고 영화 우리가	딱 인제 어 TV 드라마 그리고 영화 우리가		
+standalone_latin	KsponSpeech_E01149	그거 하고 나오면은 진짜 그거 막/ TV에서 나오는 거처럼 눈물콧물 다 흘려?	그거 하고 나오면은 진짜 그거 막 TV에서 나오는 거처럼 눈물콧물 다 흘려		
+standalone_latin	KsponSpeech_E00866	안 먹을래 b/.	안 먹을래 b		
+standalone_latin	KsponSpeech_E01290	그래서 SUV를 보는 거지 b/ 그래서 뭐 카렌스나 아니면은 저기 랜드로버	그래서 SUV를 보는 거지 그래서 뭐 카렌스나 아니면은 저기 랜드로버		
+standalone_latin	KsponSpeech_E02681	아이/ 내일 털어줬어 l/.	아이 내일 털어줬어 l		
+quarantined	KsponSpeech_E01412	2월 달인데? l/	2월 달인데		
+plain	KsponSpeech_E02203	몇 번 가실꺼죠 한.	몇 번 가실꺼죠 한		
+plain	KsponSpeech_E01764	이해 돼.	이해 돼		
+plain	KsponSpeech_E01140	그때 근데 몇 명 몇 명 봤었지? 너 포함해서?	그때 근데 몇 명 몇 명 봤었지 너 포함해서		
+plain	KsponSpeech_E00921	그래 그니깐.	그래 그니깐		
+plain	KsponSpeech_E02846	l/ 약간 충격을 받았어. 거기에 나는. b/	약간 충격을 받았어 거기에 나는		
+plain	KsponSpeech_E00191	응/ 재밌었어.	응 재밌었어		

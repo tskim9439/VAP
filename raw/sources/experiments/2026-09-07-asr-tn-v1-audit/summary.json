@@ -1,0 +1,2508 @@
+{
+ "version": "asr-tn-v1.0.0",
+ "fingerprint": {
+  "textnorm_version": "asr-tn-v1.0.0",
+  "textnorm_sha256": "62e11231a2c4e409c22a92bbe605389afca63ff96bb0a00d3e3ca9c49c1a093e",
+  "numeric_backend_version": "num2words 0.5.14",
+  "tokenizer_json_sha256": "66915f2a66d1e6688e8672cd3df1c74c23c658689fab9798706d62a4a490f447"
+ },
+ "partitions": {
+  "train-clean-100": {
+   "lang": "English",
+   "nominal_hours": 100.6,
+   "rows": 28539,
+   "quarantined": 0,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 0,
+   "kept": 28539,
+   "quarantine_reasons": {},
+   "len_ratio_mean": 1.0
+  },
+  "train-clean-360": {
+   "lang": "English",
+   "nominal_hours": 363.6,
+   "rows": 104014,
+   "quarantined": 0,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 0,
+   "kept": 104014,
+   "quarantine_reasons": {},
+   "len_ratio_mean": 1.0
+  },
+  "train-other-500": {
+   "lang": "English",
+   "nominal_hours": 496.7,
+   "rows": 148688,
+   "quarantined": 0,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 0,
+   "kept": 148688,
+   "quarantine_reasons": {},
+   "len_ratio_mean": 1.0
+  },
+  "dev-clean": {
+   "lang": "English",
+   "nominal_hours": 5.4,
+   "rows": 2703,
+   "quarantined": 0,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 0,
+   "kept": 2703,
+   "quarantine_reasons": {},
+   "len_ratio_mean": 1.0
+  },
+  "dev-other": {
+   "lang": "English",
+   "nominal_hours": 5.3,
+   "rows": 2864,
+   "quarantined": 0,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 0,
+   "kept": 2864,
+   "quarantine_reasons": {},
+   "len_ratio_mean": 1.0
+  },
+  "test-clean": {
+   "lang": "English",
+   "nominal_hours": 5.4,
+   "rows": 2620,
+   "quarantined": 0,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 0,
+   "kept": 2620,
+   "quarantine_reasons": {},
+   "len_ratio_mean": 1.0
+  },
+  "test-other": {
+   "lang": "English",
+   "nominal_hours": 5.1,
+   "rows": 2939,
+   "quarantined": 0,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 0,
+   "kept": 2939,
+   "quarantine_reasons": {},
+   "len_ratio_mean": 1.0
+  },
+  "KsponSpeech_01": {
+   "lang": "Korean",
+   "nominal_hours": 194,
+   "rows": 124000,
+   "quarantined": 12,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 859,
+   "kept": 123988,
+   "quarantine_reasons": {
+    "charset": 12,
+    "digit": 12
+   },
+   "len_ratio_mean": 0.8051,
+   "dual_notations": {
+    "numeric": 17755,
+    "latin": 234,
+    "plain": 3
+   },
+   "standalone_latin_rows": 1452,
+   "standalone_latin_ratio": 0.0117,
+   "latin_top100": [
+    [
+     "PC",
+     79
+    ],
+    [
+     "TV",
+     68
+    ],
+    [
+     "A",
+     57
+    ],
+    [
+     "B",
+     49
+    ],
+    [
+     "pc",
+     46
+    ],
+    [
+     "b",
+     44
+    ],
+    [
+     "SNS",
+     43
+    ],
+    [
+     "LG",
+     40
+    ],
+    [
+     "C",
+     37
+    ],
+    [
+     "CGV",
+     31
+    ],
+    [
+     "MT",
+     27
+    ],
+    [
+     "PT",
+     25
+    ],
+    [
+     "ASMR",
+     24
+    ],
+    [
+     "a",
+     23
+    ],
+    [
+     "CJ",
+     22
+    ],
+    [
+     "OST",
+     20
+    ],
+    [
+     "PPT",
+     19
+    ],
+    [
+     "c",
+     19
+    ],
+    [
+     "D",
+     19
+    ],
+    [
+     "KTX",
+     18
+    ],
+    [
+     "tv",
+     18
+    ],
+    [
+     "CC",
+     18
+    ],
+    [
+     "OT",
+     17
+    ],
+    [
+     "cgv",
+     17
+    ],
+    [
+     "IMF",
+     16
+    ],
+    [
+     "DC",
+     16
+    ],
+    [
+     "AI",
+     16
+    ],
+    [
+     "F",
+     15
+    ],
+    [
+     "VR",
+     14
+    ],
+    [
+     "KT",
+     14
+    ],
+    [
+     "IT",
+     14
+    ],
+    [
+     "ROTC",
+     13
+    ],
+    [
+     "KFC",
+     13
+    ],
+    [
+     "X",
+     12
+    ],
+    [
+     "SK",
+     12
+    ],
+    [
+     "CCTV",
+     11
+    ],
+    [
+     "lg",
+     11
+    ],
+    [
+     "pt",
+     11
+    ],
+    [
+     "GS",
+     10
+    ],
+    [
+     "KBS",
+     10
+    ],
+    [
+     "SM",
+     10
+    ],
+    [
+     "VIP",
+     10
+    ],
+    [
+     "d",
+     9
+    ],
+    [
+     "LED",
+     9
+    ],
+    [
+     "MD",
+     9
+    ],
+    [
+     "NCS",
+     9
+    ],
+    [
+     "sns",
+     9
+    ],
+    [
+     "XS",
+     9
+    ],
+    [
+     "CG",
+     8
+    ],
+    [
+     "BJ",
+     8
+    ],
+    [
+     "DSLR",
+     7
+    ],
+    [
+     "NCT",
+     7
+    ],
+    [
+     "V",
+     7
+    ],
+    [
+     "EDM",
+     7
+    ],
+    [
+     "I",
+     7
+    ],
+    [
+     "LA",
+     6
+    ],
+    [
+     "MC",
+     6
+    ],
+    [
+     "EBS",
+     6
+    ],
+    [
+     "as",
+     6
+    ],
+    [
+     "n",
+     6
+    ],
+    [
+     "BHC",
+     6
+    ],
+    [
+     "MBC",
+     6
+    ],
+    [
+     "JTBC",
+     6
+    ],
+    [
+     "CD",
+     6
+    ],
+    [
+     "RPG",
+     6
+    ],
+    [
+     "SKT",
+     6
+    ],
+    [
+     "f",
+     6
+    ],
+    [
+     "CT",
+     6
+    ],
+    [
+     "DMC",
+     6
+    ],
+    [
+     "LPG",
+     6
+    ],
+    [
+     "FPS",
+     5
+    ],
+    [
+     "DJ",
+     5
+    ],
+    [
+     "AS",
+     5
+    ],
+    [
+     "N",
+     5
+    ],
+    [
+     "ost",
+     5
+    ],
+    [
+     "SE",
+     5
+    ],
+    [
+     "rt",
+     5
+    ],
+    [
+     "cd",
+     5
+    ],
+    [
+     "DDP",
+     5
+    ],
+    [
+     "FC",
+     5
+    ],
+    [
+     "FA",
+     5
+    ],
+    [
+     "SBS",
+     4
+    ],
+    [
+     "VOD",
+     4
+    ],
+    [
+     "OCN",
+     4
+    ],
+    [
+     "FM",
+     4
+    ],
+    [
+     "ppt",
+     4
+    ],
+    [
+     "HSK",
+     4
+    ],
+    [
+     "LS",
+     4
+    ],
+    [
+     "usb",
+     4
+    ],
+    [
+     "JYP",
+     4
+    ],
+    [
+     "TMI",
+     4
+    ],
+    [
+     "USB",
+     4
+    ],
+    [
+     "TO",
+     4
+    ],
+    [
+     "XR",
+     4
+    ],
+    [
+     "CCM",
+     4
+    ],
+    [
+     "SF",
+     4
+    ],
+    [
+     "LC",
+     4
+    ],
+    [
+     "LH",
+     4
+    ],
+    [
+     "to",
+     4
+    ],
+    [
+     "gs",
+     4
+    ]
+   ]
+  },
+  "KsponSpeech_02": {
+   "lang": "Korean",
+   "nominal_hours": 194,
+   "rows": 124000,
+   "quarantined": 17,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 829,
+   "kept": 123983,
+   "quarantine_reasons": {
+    "charset": 17,
+    "digit": 17
+   },
+   "len_ratio_mean": 0.805,
+   "dual_notations": {
+    "numeric": 16937,
+    "latin": 214,
+    "plain": 2
+   },
+   "standalone_latin_rows": 1364,
+   "standalone_latin_ratio": 0.011,
+   "latin_top100": [
+    [
+     "TV",
+     80
+    ],
+    [
+     "A",
+     63
+    ],
+    [
+     "PC",
+     50
+    ],
+    [
+     "pc",
+     47
+    ],
+    [
+     "B",
+     36
+    ],
+    [
+     "LG",
+     35
+    ],
+    [
+     "C",
+     35
+    ],
+    [
+     "SNS",
+     30
+    ],
+    [
+     "PT",
+     28
+    ],
+    [
+     "OT",
+     28
+    ],
+    [
+     "CGV",
+     22
+    ],
+    [
+     "MT",
+     20
+    ],
+    [
+     "tv",
+     19
+    ],
+    [
+     "KTX",
+     19
+    ],
+    [
+     "b",
+     18
+    ],
+    [
+     "KT",
+     18
+    ],
+    [
+     "AI",
+     18
+    ],
+    [
+     "VR",
+     18
+    ],
+    [
+     "CCTV",
+     16
+    ],
+    [
+     "NCS",
+     16
+    ],
+    [
+     "DC",
+     15
+    ],
+    [
+     "c",
+     15
+    ],
+    [
+     "IT",
+     14
+    ],
+    [
+     "cgv",
+     14
+    ],
+    [
+     "ROTC",
+     14
+    ],
+    [
+     "D",
+     14
+    ],
+    [
+     "ASMR",
+     14
+    ],
+    [
+     "CJ",
+     14
+    ],
+    [
+     "SK",
+     13
+    ],
+    [
+     "KBS",
+     13
+    ],
+    [
+     "GS",
+     12
+    ],
+    [
+     "F",
+     12
+    ],
+    [
+     "PPT",
+     12
+    ],
+    [
+     "YG",
+     11
+    ],
+    [
+     "X",
+     11
+    ],
+    [
+     "VIP",
+     11
+    ],
+    [
+     "JTBC",
+     11
+    ],
+    [
+     "IMF",
+     11
+    ],
+    [
+     "asmr",
+     11
+    ],
+    [
+     "OST",
+     10
+    ],
+    [
+     "a",
+     9
+    ],
+    [
+     "sns",
+     9
+    ],
+    [
+     "CC",
+     9
+    ],
+    [
+     "SKT",
+     9
+    ],
+    [
+     "BJ",
+     9
+    ],
+    [
+     "MD",
+     9
+    ],
+    [
+     "d",
+     8
+    ],
+    [
+     "sk",
+     8
+    ],
+    [
+     "pt",
+     8
+    ],
+    [
+     "LA",
+     8
+    ],
+    [
+     "CD",
+     8
+    ],
+    [
+     "KFC",
+     8
+    ],
+    [
+     "XR",
+     7
+    ],
+    [
+     "DJ",
+     7
+    ],
+    [
+     "EDM",
+     7
+    ],
+    [
+     "PD",
+     7
+    ],
+    [
+     "cctv",
+     7
+    ],
+    [
+     "AS",
+     6
+    ],
+    [
+     "SBS",
+     6
+    ],
+    [
+     "BHC",
+     6
+    ],
+    [
+     "NCT",
+     6
+    ],
+    [
+     "BTS",
+     6
+    ],
+    [
+     "S",
+     6
+    ],
+    [
+     "ok",
+     6
+    ],
+    [
+     "EPL",
+     6
+    ],
+    [
+     "SM",
+     6
+    ],
+    [
+     "CG",
+     5
+    ],
+    [
+     "NC",
+     5
+    ],
+    [
+     "kt",
+     5
+    ],
+    [
+     "lg",
+     5
+    ],
+    [
+     "ATM",
+     5
+    ],
+    [
+     "Youtube",
+     5
+    ],
+    [
+     "EBS",
+     5
+    ],
+    [
+     "RPG",
+     5
+    ],
+    [
+     "ITX",
+     5
+    ],
+    [
+     "ktx",
+     5
+    ],
+    [
+     "XS",
+     5
+    ],
+    [
+     "MSG",
+     5
+    ],
+    [
+     "MBC",
+     5
+    ],
+    [
+     "DNA",
+     5
+    ],
+    [
+     "ost",
+     5
+    ],
+    [
+     "DVD",
+     4
+    ],
+    [
+     "IOT",
+     4
+    ],
+    [
+     "CA",
+     4
+    ],
+    [
+     "BMI",
+     4
+    ],
+    [
+     "xr",
+     4
+    ],
+    [
+     "ppt",
+     4
+    ],
+    [
+     "IMAX",
+     4
+    ],
+    [
+     "e",
+     4
+    ],
+    [
+     "MS",
+     4
+    ],
+    [
+     "vs",
+     4
+    ],
+    [
+     "SF",
+     4
+    ],
+    [
+     "n",
+     4
+    ],
+    [
+     "LC",
+     4
+    ],
+    [
+     "GP",
+     4
+    ],
+    [
+     "FM",
+     4
+    ],
+    [
+     "EU",
+     4
+    ],
+    [
+     "abc",
+     4
+    ],
+    [
+     "PX",
+     4
+    ],
+    [
+     "TO",
+     4
+    ]
+   ]
+  },
+  "KsponSpeech_03": {
+   "lang": "Korean",
+   "nominal_hours": 194,
+   "rows": 124000,
+   "quarantined": 9,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 904,
+   "kept": 123991,
+   "quarantine_reasons": {
+    "charset": 9,
+    "digit": 9
+   },
+   "len_ratio_mean": 0.8039,
+   "dual_notations": {
+    "numeric": 17876,
+    "latin": 209,
+    "plain": 2
+   },
+   "standalone_latin_rows": 1420,
+   "standalone_latin_ratio": 0.0115,
+   "latin_top100": [
+    [
+     "TV",
+     77
+    ],
+    [
+     "PC",
+     74
+    ],
+    [
+     "A",
+     72
+    ],
+    [
+     "B",
+     56
+    ],
+    [
+     "C",
+     43
+    ],
+    [
+     "pc",
+     38
+    ],
+    [
+     "LG",
+     35
+    ],
+    [
+     "PT",
+     32
+    ],
+    [
+     "CGV",
+     31
+    ],
+    [
+     "SNS",
+     31
+    ],
+    [
+     "F",
+     26
+    ],
+    [
+     "MT",
+     24
+    ],
+    [
+     "DC",
+     20
+    ],
+    [
+     "ASMR",
+     20
+    ],
+    [
+     "VR",
+     19
+    ],
+    [
+     "CJ",
+     19
+    ],
+    [
+     "c",
+     19
+    ],
+    [
+     "OT",
+     17
+    ],
+    [
+     "tv",
+     16
+    ],
+    [
+     "b",
+     16
+    ],
+    [
+     "JTBC",
+     16
+    ],
+    [
+     "CCTV",
+     16
+    ],
+    [
+     "AI",
+     15
+    ],
+    [
+     "KTX",
+     14
+    ],
+    [
+     "KT",
+     14
+    ],
+    [
+     "n",
+     13
+    ],
+    [
+     "RPG",
+     13
+    ],
+    [
+     "tvn",
+     13
+    ],
+    [
+     "CC",
+     13
+    ],
+    [
+     "ROTC",
+     13
+    ],
+    [
+     "IMF",
+     13
+    ],
+    [
+     "D",
+     12
+    ],
+    [
+     "CG",
+     12
+    ],
+    [
+     "VIP",
+     12
+    ],
+    [
+     "a",
+     11
+    ],
+    [
+     "EPL",
+     11
+    ],
+    [
+     "EDM",
+     10
+    ],
+    [
+     "SM",
+     10
+    ],
+    [
+     "sk",
+     10
+    ],
+    [
+     "IT",
+     10
+    ],
+    [
+     "LH",
+     10
+    ],
+    [
+     "CD",
+     10
+    ],
+    [
+     "PPT",
+     9
+    ],
+    [
+     "OCN",
+     9
+    ],
+    [
+     "FA",
+     9
+    ],
+    [
+     "CU",
+     9
+    ],
+    [
+     "cgv",
+     9
+    ],
+    [
+     "NCS",
+     9
+    ],
+    [
+     "KFC",
+     9
+    ],
+    [
+     "ppt",
+     9
+    ],
+    [
+     "USB",
+     8
+    ],
+    [
+     "SK",
+     8
+    ],
+    [
+     "ktx",
+     8
+    ],
+    [
+     "NCT",
+     8
+    ],
+    [
+     "AS",
+     8
+    ],
+    [
+     "BJ",
+     8
+    ],
+    [
+     "d",
+     7
+    ],
+    [
+     "DDP",
+     7
+    ],
+    [
+     "CPA",
+     7
+    ],
+    [
+     "SUV",
+     7
+    ],
+    [
+     "asmr",
+     7
+    ],
+    [
+     "MD",
+     6
+    ],
+    [
+     "MBC",
+     6
+    ],
+    [
+     "KBS",
+     6
+    ],
+    [
+     "SE",
+     6
+    ],
+    [
+     "X",
+     6
+    ],
+    [
+     "lg",
+     6
+    ],
+    [
+     "OST",
+     6
+    ],
+    [
+     "s",
+     6
+    ],
+    [
+     "f",
+     6
+    ],
+    [
+     "DJ",
+     6
+    ],
+    [
+     "GS",
+     6
+    ],
+    [
+     "LED",
+     6
+    ],
+    [
+     "NC",
+     6
+    ],
+    [
+     "xr",
+     5
+    ],
+    [
+     "tvN",
+     5
+    ],
+    [
+     "PD",
+     5
+    ],
+    [
+     "sns",
+     5
+    ],
+    [
+     "TVN",
+     5
+    ],
+    [
+     "SKT",
+     5
+    ],
+    [
+     "TMI",
+     5
+    ],
+    [
+     "ATM",
+     5
+    ],
+    [
+     "UFO",
+     5
+    ],
+    [
+     "cj",
+     5
+    ],
+    [
+     "LA",
+     5
+    ],
+    [
+     "University",
+     5
+    ],
+    [
+     "MRI",
+     5
+    ],
+    [
+     "CT",
+     5
+    ],
+    [
+     "S",
+     5
+    ],
+    [
+     "Youtube",
+     5
+    ],
+    [
+     "x",
+     5
+    ],
+    [
+     "kt",
+     5
+    ],
+    [
+     "BMW",
+     4
+    ],
+    [
+     "cctv",
+     4
+    ],
+    [
+     "gs",
+     4
+    ],
+    [
+     "HSK",
+     4
+    ],
+    [
+     "TO",
+     4
+    ],
+    [
+     "SKY",
+     4
+    ],
+    [
+     "Victoria",
+     4
+    ],
+    [
+     "MG",
+     4
+    ]
+   ]
+  },
+  "KsponSpeech_04": {
+   "lang": "Korean",
+   "nominal_hours": 194,
+   "rows": 124000,
+   "quarantined": 15,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 866,
+   "kept": 123985,
+   "quarantine_reasons": {
+    "charset": 15,
+    "digit": 15
+   },
+   "len_ratio_mean": 0.8055,
+   "dual_notations": {
+    "numeric": 17584,
+    "latin": 227,
+    "plain": 1
+   },
+   "standalone_latin_rows": 1459,
+   "standalone_latin_ratio": 0.0118,
+   "latin_top100": [
+    [
+     "PC",
+     88
+    ],
+    [
+     "TV",
+     70
+    ],
+    [
+     "A",
+     57
+    ],
+    [
+     "LG",
+     50
+    ],
+    [
+     "SNS",
+     48
+    ],
+    [
+     "pc",
+     43
+    ],
+    [
+     "B",
+     35
+    ],
+    [
+     "PT",
+     34
+    ],
+    [
+     "c",
+     31
+    ],
+    [
+     "b",
+     27
+    ],
+    [
+     "CGV",
+     25
+    ],
+    [
+     "tv",
+     25
+    ],
+    [
+     "DC",
+     24
+    ],
+    [
+     "C",
+     24
+    ],
+    [
+     "MT",
+     23
+    ],
+    [
+     "KT",
+     20
+    ],
+    [
+     "OT",
+     20
+    ],
+    [
+     "KTX",
+     19
+    ],
+    [
+     "AI",
+     18
+    ],
+    [
+     "a",
+     17
+    ],
+    [
+     "CJ",
+     16
+    ],
+    [
+     "BJ",
+     15
+    ],
+    [
+     "IT",
+     14
+    ],
+    [
+     "PPT",
+     14
+    ],
+    [
+     "CG",
+     13
+    ],
+    [
+     "D",
+     13
+    ],
+    [
+     "MBC",
+     13
+    ],
+    [
+     "KFC",
+     13
+    ],
+    [
+     "VIP",
+     12
+    ],
+    [
+     "RPG",
+     12
+    ],
+    [
+     "KBS",
+     12
+    ],
+    [
+     "X",
+     12
+    ],
+    [
+     "CC",
+     12
+    ],
+    [
+     "SK",
+     12
+    ],
+    [
+     "JTBC",
+     12
+    ],
+    [
+     "LA",
+     11
+    ],
+    [
+     "O",
+     11
+    ],
+    [
+     "GS",
+     11
+    ],
+    [
+     "F",
+     11
+    ],
+    [
+     "OST",
+     10
+    ],
+    [
+     "CD",
+     10
+    ],
+    [
+     "cgv",
+     9
+    ],
+    [
+     "Youtube",
+     9
+    ],
+    [
+     "N",
+     9
+    ],
+    [
+     "EPL",
+     9
+    ],
+    [
+     "TVN",
+     9
+    ],
+    [
+     "EDM",
+     9
+    ],
+    [
+     "ktx",
+     8
+    ],
+    [
+     "VR",
+     8
+    ],
+    [
+     "SM",
+     8
+    ],
+    [
+     "S",
+     8
+    ],
+    [
+     "NCS",
+     8
+    ],
+    [
+     "ASMR",
+     8
+    ],
+    [
+     "SF",
+     8
+    ],
+    [
+     "ROTC",
+     8
+    ],
+    [
+     "FM",
+     7
+    ],
+    [
+     "CPU",
+     7
+    ],
+    [
+     "SBS",
+     7
+    ],
+    [
+     "n",
+     7
+    ],
+    [
+     "pt",
+     7
+    ],
+    [
+     "IMF",
+     7
+    ],
+    [
+     "asmr",
+     7
+    ],
+    [
+     "DDP",
+     6
+    ],
+    [
+     "CCTV",
+     6
+    ],
+    [
+     "T",
+     6
+    ],
+    [
+     "CU",
+     6
+    ],
+    [
+     "NCT",
+     6
+    ],
+    [
+     "mt",
+     6
+    ],
+    [
+     "FC",
+     6
+    ],
+    [
+     "K",
+     6
+    ],
+    [
+     "OPIC",
+     6
+    ],
+    [
+     "yes",
+     5
+    ],
+    [
+     "AR",
+     5
+    ],
+    [
+     "FPS",
+     5
+    ],
+    [
+     "ITX",
+     5
+    ],
+    [
+     "d",
+     5
+    ],
+    [
+     "SKT",
+     5
+    ],
+    [
+     "kt",
+     5
+    ],
+    [
+     "IOT",
+     5
+    ],
+    [
+     "XS",
+     5
+    ],
+    [
+     "ncs",
+     5
+    ],
+    [
+     "DSLR",
+     5
+    ],
+    [
+     "M",
+     5
+    ],
+    [
+     "rpg",
+     5
+    ],
+    [
+     "JYP",
+     5
+    ],
+    [
+     "lg",
+     5
+    ],
+    [
+     "DS",
+     5
+    ],
+    [
+     "cg",
+     4
+    ],
+    [
+     "sm",
+     4
+    ],
+    [
+     "sns",
+     4
+    ],
+    [
+     "ABC",
+     4
+    ],
+    [
+     "UN",
+     4
+    ],
+    [
+     "UCC",
+     4
+    ],
+    [
+     "OMR",
+     4
+    ],
+    [
+     "YG",
+     4
+    ],
+    [
+     "x",
+     4
+    ],
+    [
+     "H",
+     4
+    ],
+    [
+     "E",
+     4
+    ],
+    [
+     "XR",
+     4
+    ],
+    [
+     "tvN",
+     4
+    ]
+   ]
+  },
+  "KsponSpeech_05": {
+   "lang": "Korean",
+   "nominal_hours": 193,
+   "rows": 124000,
+   "quarantined": 15,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 831,
+   "kept": 123985,
+   "quarantine_reasons": {
+    "charset": 15,
+    "digit": 15
+   },
+   "len_ratio_mean": 0.805,
+   "dual_notations": {
+    "numeric": 17464,
+    "latin": 207,
+    "plain": 4
+   },
+   "standalone_latin_rows": 1385,
+   "standalone_latin_ratio": 0.0112,
+   "latin_top100": [
+    [
+     "TV",
+     73
+    ],
+    [
+     "PC",
+     66
+    ],
+    [
+     "pc",
+     51
+    ],
+    [
+     "A",
+     51
+    ],
+    [
+     "B",
+     47
+    ],
+    [
+     "CGV",
+     45
+    ],
+    [
+     "LG",
+     40
+    ],
+    [
+     "C",
+     39
+    ],
+    [
+     "MT",
+     33
+    ],
+    [
+     "SNS",
+     32
+    ],
+    [
+     "PT",
+     30
+    ],
+    [
+     "OT",
+     27
+    ],
+    [
+     "b",
+     24
+    ],
+    [
+     "ASMR",
+     21
+    ],
+    [
+     "SK",
+     21
+    ],
+    [
+     "VR",
+     18
+    ],
+    [
+     "S",
+     17
+    ],
+    [
+     "VIP",
+     16
+    ],
+    [
+     "IMF",
+     16
+    ],
+    [
+     "c",
+     15
+    ],
+    [
+     "tv",
+     15
+    ],
+    [
+     "a",
+     15
+    ],
+    [
+     "CC",
+     15
+    ],
+    [
+     "AI",
+     14
+    ],
+    [
+     "D",
+     14
+    ],
+    [
+     "JTBC",
+     14
+    ],
+    [
+     "KT",
+     14
+    ],
+    [
+     "CCTV",
+     13
+    ],
+    [
+     "IT",
+     13
+    ],
+    [
+     "CJ",
+     13
+    ],
+    [
+     "GS",
+     13
+    ],
+    [
+     "KTX",
+     12
+    ],
+    [
+     "F",
+     11
+    ],
+    [
+     "X",
+     11
+    ],
+    [
+     "MBC",
+     10
+    ],
+    [
+     "KFC",
+     9
+    ],
+    [
+     "OST",
+     9
+    ],
+    [
+     "yg",
+     9
+    ],
+    [
+     "DC",
+     9
+    ],
+    [
+     "RPG",
+     8
+    ],
+    [
+     "BJ",
+     8
+    ],
+    [
+     "LA",
+     8
+    ],
+    [
+     "EPL",
+     8
+    ],
+    [
+     "NCS",
+     8
+    ],
+    [
+     "sns",
+     8
+    ],
+    [
+     "o",
+     8
+    ],
+    [
+     "f",
+     7
+    ],
+    [
+     "ROTC",
+     7
+    ],
+    [
+     "pt",
+     7
+    ],
+    [
+     "KBS",
+     7
+    ],
+    [
+     "CG",
+     7
+    ],
+    [
+     "ot",
+     7
+    ],
+    [
+     "sk",
+     7
+    ],
+    [
+     "kt",
+     7
+    ],
+    [
+     "ktx",
+     7
+    ],
+    [
+     "OCN",
+     6
+    ],
+    [
+     "SM",
+     6
+    ],
+    [
+     "R",
+     6
+    ],
+    [
+     "dc",
+     6
+    ],
+    [
+     "DMC",
+     6
+    ],
+    [
+     "gs",
+     6
+    ],
+    [
+     "PX",
+     6
+    ],
+    [
+     "SF",
+     6
+    ],
+    [
+     "PPT",
+     6
+    ],
+    [
+     "CD",
+     6
+    ],
+    [
+     "H",
+     6
+    ],
+    [
+     "LED",
+     5
+    ],
+    [
+     "CMA",
+     5
+    ],
+    [
+     "SBS",
+     5
+    ],
+    [
+     "EBS",
+     5
+    ],
+    [
+     "IMAX",
+     5
+    ],
+    [
+     "N",
+     5
+    ],
+    [
+     "BHC",
+     5
+    ],
+    [
+     "s",
+     5
+    ],
+    [
+     "asmr",
+     5
+    ],
+    [
+     "YG",
+     5
+    ],
+    [
+     "x",
+     5
+    ],
+    [
+     "cgv",
+     5
+    ],
+    [
+     "K",
+     5
+    ],
+    [
+     "W",
+     5
+    ],
+    [
+     "DJ",
+     5
+    ],
+    [
+     "as",
+     5
+    ],
+    [
+     "EDM",
+     5
+    ],
+    [
+     "P",
+     5
+    ],
+    [
+     "NC",
+     4
+    ],
+    [
+     "V",
+     4
+    ],
+    [
+     "LP",
+     4
+    ],
+    [
+     "G",
+     4
+    ],
+    [
+     "CPU",
+     4
+    ],
+    [
+     "FM",
+     4
+    ],
+    [
+     "BTS",
+     4
+    ],
+    [
+     "FC",
+     4
+    ],
+    [
+     "OS",
+     4
+    ],
+    [
+     "XS",
+     4
+    ],
+    [
+     "TO",
+     4
+    ],
+    [
+     "DDP",
+     4
+    ],
+    [
+     "g",
+     4
+    ],
+    [
+     "SKT",
+     4
+    ],
+    [
+     "k",
+     4
+    ],
+    [
+     "E",
+     4
+    ]
+   ]
+  },
+  "dev": {
+   "lang": "Korean",
+   "nominal_hours": 3.9,
+   "rows": 2545,
+   "quarantined": 0,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 12,
+   "kept": 2545,
+   "quarantine_reasons": {},
+   "len_ratio_mean": 0.7953,
+   "dual_notations": {
+    "numeric": 412,
+    "latin": 4
+   },
+   "standalone_latin_rows": 26,
+   "standalone_latin_ratio": 0.0102,
+   "latin_top100": [
+    [
+     "MMR",
+     2
+    ],
+    [
+     "B",
+     2
+    ],
+    [
+     "EBS",
+     2
+    ],
+    [
+     "PC",
+     2
+    ],
+    [
+     "n",
+     1
+    ],
+    [
+     "A",
+     1
+    ],
+    [
+     "btv",
+     1
+    ],
+    [
+     "DDP",
+     1
+    ],
+    [
+     "X",
+     1
+    ],
+    [
+     "jyp",
+     1
+    ],
+    [
+     "SNS",
+     1
+    ],
+    [
+     "MT",
+     1
+    ],
+    [
+     "ppt",
+     1
+    ],
+    [
+     "b",
+     1
+    ],
+    [
+     "sns",
+     1
+    ],
+    [
+     "SRT",
+     1
+    ],
+    [
+     "sat",
+     1
+    ],
+    [
+     "S",
+     1
+    ],
+    [
+     "K",
+     1
+    ],
+    [
+     "POP",
+     1
+    ],
+    [
+     "pc",
+     1
+    ],
+    [
+     "ict",
+     1
+    ],
+    [
+     "LTE",
+     1
+    ],
+    [
+     "ucla",
+     1
+    ],
+    [
+     "MVP",
+     1
+    ],
+    [
+     "TVN",
+     1
+    ]
+   ]
+  },
+  "eval_clean": {
+   "lang": "Korean",
+   "nominal_hours": 2.6,
+   "rows": 3000,
+   "quarantined": 1,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 33,
+   "kept": 2999,
+   "quarantine_reasons": {
+    "charset": 1,
+    "digit": 1
+   },
+   "len_ratio_mean": 0.8401,
+   "dual_notations": {
+    "numeric": 287,
+    "plain": 293,
+    "latin": 8
+   },
+   "standalone_latin_rows": 18,
+   "standalone_latin_ratio": 0.006,
+   "latin_top100": [
+    [
+     "TV",
+     3
+    ],
+    [
+     "OT",
+     2
+    ],
+    [
+     "SKT",
+     2
+    ],
+    [
+     "b",
+     2
+    ],
+    [
+     "A",
+     1
+    ],
+    [
+     "S",
+     1
+    ],
+    [
+     "B",
+     1
+    ],
+    [
+     "VIP",
+     1
+    ],
+    [
+     "SBS",
+     1
+    ],
+    [
+     "SUV",
+     1
+    ],
+    [
+     "GAP",
+     1
+    ],
+    [
+     "PPT",
+     1
+    ],
+    [
+     "l",
+     1
+    ]
+   ]
+  },
+  "eval_other": {
+   "lang": "Korean",
+   "nominal_hours": 3.4,
+   "rows": 3000,
+   "quarantined": 0,
+   "not_idempotent": 0,
+   "tokenizer_unk": 0,
+   "tokenizer_empty": 0,
+   "target_collisions": 1,
+   "kept": 3000,
+   "quarantine_reasons": {},
+   "len_ratio_mean": 0.8512,
+   "dual_notations": {
+    "plain": 497,
+    "numeric": 625,
+    "latin": 30
+   },
+   "standalone_latin_rows": 15,
+   "standalone_latin_ratio": 0.005,
+   "latin_top100": [
+    [
+     "TV",
+     5
+    ],
+    [
+     "CU",
+     3
+    ],
+    [
+     "PC",
+     2
+    ],
+    [
+     "u",
+     2
+    ],
+    [
+     "B",
+     2
+    ],
+    [
+     "l",
+     1
+    ],
+    [
+     "S",
+     1
+    ],
+    [
+     "SUV",
+     1
+    ],
+    [
+     "KT",
+     1
+    ],
+    [
+     "CG",
+     1
+    ],
+    [
+     "A",
+     1
+    ]
+   ]
+  }
+ },
+ "diff_230h": {
+  "librispeech-100": {
+   "segments": 28539,
+   "same": 28525,
+   "text_changed": 14
+  },
+  "kspon-100": {
+   "segments": 62000,
+   "same": 61995,
+   "now_quarantined": 5
+  }
+ },
+ "seconds": 225
+}
