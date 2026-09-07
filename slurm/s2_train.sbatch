@@ -38,8 +38,8 @@ ADAPTER=$ROOT/uslm/s1-adapter-distill/adapter.pt
 # ── run 설정 (rank 당 배치 EN/KO; 64 rank 면 유효 배치 EN 768 / KO 3072)
 TRAIN=${TRAIN:-librispeech-960,kspon-full}; TRAIN=${TRAIN//:/,}; EPOCHS=${EPOCHS:-15}; FEATURES=${FEATURES:-online}
 EVAL_EVERY=${EVAL_EVERY:-1000}; SAVE_EVERY=${SAVE_EVERY:-500}; BS_EN=${BS_EN:-12}; BS_KO=${BS_KO:-48}; LR=${LR:-4e-5}; LR_ADAPTER=${LR_ADAPTER:-1e-3}; WARMUP=${WARMUP:-200}
-COMMON="--tag $RUN --out-dir $OUT --train $TRAIN --features $FEATURES --epochs $EPOCHS --bs-en $BS_EN --bs-ko $BS_KO --init-adapter $ADAPTER --next-weight 0.3 --next-weight-ko 0.15
-        --eval-every $EVAL_EVERY --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every $SAVE_EVERY --warmup $WARMUP --resume auto"
+# 주의: srun bash -c "…" 안에 들어가므로 COMMON 에 줄바꿈이 있으면 두 번째 줄이 별개 명령이 되어 인자가 잘린다(job 65955: --full-ft·--lr 등 누락 → LoRA 로 실행됨)
+COMMON="--tag $RUN --out-dir $OUT --train $TRAIN --features $FEATURES --epochs $EPOCHS --bs-en $BS_EN --bs-ko $BS_KO --init-adapter $ADAPTER --next-weight 0.3 --next-weight-ko 0.15 --eval-every $EVAL_EVERY --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every $SAVE_EVERY --warmup $WARMUP --resume auto"
 case "$RUN" in
   A*) EXTRA="--lora-r 16 --lr ${LR_LORA:-4e-4} --lr-adapter $LR_ADAPTER" ;;
   *)  EXTRA="--full-ft --lr $LR --lr-adapter $LR_ADAPTER" ;;
@@ -51,12 +51,13 @@ rm -f "$OUT/PREEMPT"
 on_preempt() { echo "[$(date '+%T')] 신호 수신 → PREEMPT 표시, 저장 대기"; touch "$OUT/PREEMPT"; wait "$PID"; echo "requeue $SLURM_JOB_ID"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }
 trap on_preempt USR1 TERM
 
+ARGS="$COMMON $EXTRA"; case "$ARGS" in *$'\n'*) echo "!! 인자에 줄바꿈"; exit 1;; esac
 MASTER=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1); PORT=$((20000 + SLURM_JOB_ID % 10000))
 # rendezvous 주소는 호스트명이 아니라 첫 노드(= 이 배치 스크립트가 도는 노드)의 eth0 IPv4 로 — 호스트명이 IPoIB 로 풀리면 keep-alive/TCPStore 가 막힌다
 MASTER_IP=$(ip -4 -o addr show "${NCCL_SOCKET_IFNAME}" 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n 1); [ -n "$MASTER_IP" ] || MASTER_IP=$MASTER
 echo "[$(date '+%T')] torchrun × $SLURM_NNODES 노드 (rdzv $MASTER=$MASTER_IP:$PORT): $COMMON $EXTRA"
 srun --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 --kill-on-bad-exit=1 \
-  bash -c "torchrun --nnodes=$SLURM_NNODES --nproc_per_node=8 --node_rank=\$SLURM_NODEID --rdzv_backend=c10d --rdzv_endpoint=$MASTER_IP:$PORT --rdzv_id=$SLURM_JOB_ID experiments/s1_train_mono.py $COMMON $EXTRA" &
+  bash -c "torchrun --nnodes=$SLURM_NNODES --nproc_per_node=8 --node_rank=\$SLURM_NODEID --rdzv_backend=c10d --rdzv_endpoint=$MASTER_IP:$PORT --rdzv_id=$SLURM_JOB_ID experiments/s1_train_mono.py $ARGS" &
 PID=$!; wait "$PID"; RC=$?
 if [ "$RC" -eq 0 ] && grep -q '"steps_per_epoch"' "$OUT/results.json" 2>/dev/null && python - "$OUT" <<'PY'
 import json, sys, os, torch
