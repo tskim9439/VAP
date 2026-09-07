@@ -231,7 +231,7 @@ while step < a.steps:
     lab = b["labels"]; n_lab += int((lab != -100).sum()); n_next += int((lab == sp_ids["<NEXT_AUDIO>"]).sum()); n_flush += b["n_flush"]; fr += b["frames"]
     if step % a.log_every == 0:
         log(f"  step {step}/{a.steps} loss {loss.item():.3f} next {acc['loss_next']/a.log_every:.3f} text {acc['loss_text']/a.log_every:.3f} top1 {acc['top1_text']/a.log_every:.3f} "
-            f"NEXT비율 {n_next/max(1,n_lab):.3f} flush {n_flush} L {b['ids'].shape[1]} K {b['feats'].shape[2]} {b['lang'][0][:2]} {fr*world*0.08/3600:.2f}h/{a.log_every}step lr {sched.get_last_lr()[1]:.1e} {time.time()-t0:.0f}s")
+            f"NEXT비율 {n_next/max(1,n_lab):.3f} flush {n_flush} L {b['ids'].shape[1]} K {int(b['K'].max()) if 'K' in b else b['feats'].shape[2]} {b['lang'][0][:2]} {fr*world*0.08/3600:.2f}h/{a.log_every}step lr {sched.get_last_lr()[1]:.1e} {time.time()-t0:.0f}s")
         acc = {}; n_lab = n_next = n_flush = 0; fr = 0
     if step % a.eval_every == 0 or step == a.steps:
         if main:
