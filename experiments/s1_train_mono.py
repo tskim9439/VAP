@@ -30,6 +30,10 @@ ap.add_argument("--tag", default="pilot"); ap.add_argument("--seed", type=int, d
 a = ap.parse_args()
 # ───────────────────────────── 분산 설정 ─────────────────────────────
 rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))
+# Triton/Inductor 컴파일 캐시를 rank 별 로컬 디스크로 — 공유 홈(NFS ~/.triton) 을 64 rank 가 동시에 쓰면 'Text file busy' 로 죽는다(job 65955)
+_cache_root = os.path.join(os.environ.get("VAPASR_LOCAL_CACHE", "/tmp"), f"vapasr-{os.getuid()}-{os.environ.get('SLURM_JOB_ID', 'local')}")
+os.environ.setdefault("TRITON_CACHE_DIR", os.path.join(_cache_root, f"triton-{local}")); os.environ.setdefault("TORCHINDUCTOR_CACHE_DIR", os.path.join(_cache_root, f"inductor-{local}"))
+os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True); os.makedirs(os.environ["TORCHINDUCTOR_CACHE_DIR"], exist_ok=True)
 if world == 1 and "CUDA_VISIBLE_DEVICES" not in os.environ:
     if a.gpu is None:
         q = subprocess.run(["nvidia-smi", "--query-gpu=index,memory.used,memory.total", "--format=csv,noheader,nounits"], capture_output=True, text=True)
