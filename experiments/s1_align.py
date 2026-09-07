@@ -82,7 +82,6 @@ def load_chunk(chunk):
     """스트림 묶음의 발화 오디오를 스레드로 미리 읽는다 → [(row, [utt dict…])]."""
     def one(r):
         us = []
-        if os.path.exists(os.path.join(out, r["id"] + ".jsonl")): return r, us          # 다른 run(SLURM/로그인)이 그사이 끝낸 스트림은 건너뜀
         for u in iter_utterances(r):
             if u["end"] - u["start"] < a.min_dur or not u["text"]: continue
             # 스트림 안에서 두 번째 발화부터는 선행 공백을 붙여 토큰화한다(없으면 'lost'+'i' → 'losti'). 정렬기에도 공백 포함 텍스트를 준다.
@@ -91,9 +90,10 @@ def load_chunk(chunk):
     return list(pool.map(one, chunk))
 
 st = dict(streams=0, utts=0, tokens=0, fail=0, offset_err_ms=[], sec=0.0); T0 = time.time()
-rows = [r for r in rows if not os.path.exists(os.path.join(out, r["id"] + ".jsonl"))]
+_t = time.time(); done_ids = {f[:-6] for f in os.listdir(out) if f.endswith(".jsonl")}   # 존재 확인은 listdir 1 회로 — Blob NFS 에서 파일별 stat 은 30 ms(62만 개면 5 시간)
+rows = [r for r in rows if r["id"] not in done_ids]
 if a.reverse: rows = rows[::-1]                                        # 두 run 이 같은 manifest 를 양끝에서 처리해 중간에서 만나도록
-print(f"  남은 스트림 {len(rows)} (기존 파일 건너뜀{', 역순' if a.reverse else ''})", flush=True)
+print(f"  남은 스트림 {len(rows)} (기존 {len(done_ids)} 건너뜀{', 역순' if a.reverse else ''}, listdir {time.time()-_t:.0f}s)", flush=True)
 pool = ThreadPoolExecutor(a.io_threads); chunks = [rows[i: i + a.chunk] for i in range(0, len(rows), a.chunk)]
 fut = pool.submit(load_chunk, chunks[0]) if chunks else None
 for ci in range(len(chunks)):
