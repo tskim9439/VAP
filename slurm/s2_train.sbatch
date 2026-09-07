@@ -51,9 +51,11 @@ on_preempt() { echo "[$(date '+%T')] 신호 수신 → PREEMPT 표시, 저장 �
 trap on_preempt USR1 TERM
 
 MASTER=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1); PORT=$((20000 + SLURM_JOB_ID % 10000))
-echo "[$(date '+%T')] torchrun × $SLURM_NNODES 노드 (rdzv $MASTER:$PORT): $COMMON $EXTRA"
+# rendezvous 주소는 호스트명이 아니라 첫 노드(= 이 배치 스크립트가 도는 노드)의 eth0 IPv4 로 — 호스트명이 IPoIB 로 풀리면 keep-alive/TCPStore 가 막힌다
+MASTER_IP=$(ip -4 -o addr show "${NCCL_SOCKET_IFNAME}" 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n 1); [ -n "$MASTER_IP" ] || MASTER_IP=$MASTER
+echo "[$(date '+%T')] torchrun × $SLURM_NNODES 노드 (rdzv $MASTER=$MASTER_IP:$PORT): $COMMON $EXTRA"
 srun --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 --kill-on-bad-exit=1 \
-  bash -c "torchrun --nnodes=$SLURM_NNODES --nproc_per_node=8 --node_rank=\$SLURM_NODEID --rdzv_backend=c10d --rdzv_endpoint=$MASTER:$PORT --rdzv_id=$SLURM_JOB_ID experiments/s1_train_mono.py $COMMON $EXTRA" &
+  bash -c "torchrun --nnodes=$SLURM_NNODES --nproc_per_node=8 --node_rank=\$SLURM_NODEID --rdzv_backend=c10d --rdzv_endpoint=$MASTER_IP:$PORT --rdzv_id=$SLURM_JOB_ID experiments/s1_train_mono.py $COMMON $EXTRA" &
 PID=$!; wait "$PID"; RC=$?
 if [ "$RC" -eq 0 ] && grep -q '"steps_per_epoch"' "$OUT/results.json" 2>/dev/null && python - "$OUT" <<'PY'
 import json, sys, os, torch
