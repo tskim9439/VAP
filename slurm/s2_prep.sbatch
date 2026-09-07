@@ -1,7 +1,7 @@
 #!/bin/bash
 # Stage 2 준비: asr-tn-v1.0.0 manifest 의 강제 정렬(align-asr-tn-v1/) + 항목 캐시. 노드 1 × GPU 8 (manifest 마다 8 shard). 특징은 학습 중 온라인(FEATURES=1 이면 캐시도 생성).
 #   제출:  sbatch --export=ALL,MANIFESTS=librispeech-dev,librispeech-test,kspon-dev,kspon-eval,kspon-full,librispeech-960 slurm/s2_prep.sbatch
-#   재개 가능(파일 단위 skip) — 선점되면 requeue 로 이어서. 완료 표식: $ROOT/prep-DONE
+#   재개 가능(파일 단위 skip) — 선점되면 requeue 로 이어서. 완료 표식: $ROOT/prep-DONE-<manifest 목록 hash>
 #SBATCH --job-name=SA_SFT_FullduplexStage5
 #SBATCH --partition=low_p_hpc
 #SBATCH --nodes=1
@@ -13,8 +13,9 @@
 #SBATCH --output=/soundai/Model/VAPASR/logs/%x-%j-prep.out
 set -uo pipefail
 MANIFESTS=${MANIFESTS:?쉼표 구분 manifest 이름}; ENC=${ENC:-nemotron-c0}; FEATURES=${FEATURES:-0}; ROOT=/soundai/Model/VAPASR; mkdir -p $ROOT/logs
+DONE=$ROOT/prep-DONE-$(echo "$MANIFESTS" | md5sum | cut -c1-8)   # manifest 목록별 완료 표식(여러 job 으로 나눠 제출 가능)
 echo "[$(date '+%F %T')] prep job $SLURM_JOB_ID node=$(hostname) restart=${SLURM_RESTART_COUNT:-0} manifests=$MANIFESTS"
-[ -f "$ROOT/prep-DONE" ] && { echo "이미 완료(prep-DONE)"; exit 0; }
+[ -f "$DONE" ] && { echo "이미 완료($DONE)"; exit 0; }
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a; source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
 export OMP_NUM_THREADS=6 TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
 case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*) ;; *) echo "!! conda env 아님"; exit 1;; esac
@@ -49,4 +50,4 @@ for m in ${MANIFESTS//,/ }; do
   fi
   [ "$A" -lt "$ROWS" ] || [ "$D" -lt "$ROWS" ] && { echo "!! $m 미완료 — requeue"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }
 done
-echo "[$(date '+%T')] 항목 캐시 prewarm"; python -u experiments/s2_prewarm_items.py ${MANIFESTS//,/ } && touch $ROOT/prep-DONE && echo "[$(date '+%T')] prep-DONE"
+echo "[$(date '+%T')] 항목 캐시 prewarm"; python -u experiments/s2_prewarm_items.py ${MANIFESTS//,/ } && touch "$DONE" && echo "[$(date '+%T')] prep-DONE → $DONE"
