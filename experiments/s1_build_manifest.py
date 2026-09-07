@@ -54,7 +54,7 @@ def libri_utts(split):
         for line in open(tp):
             uid, txt = line.rstrip("\n").split(" ", 1); text = target_en(txt, "librispeech"); fl = target_flags(text, "English")
             if fl: st["quarantined"] += 1; _quarantine(uid, split, txt, text, fl); continue          # LibriSpeech 에 digit 등이 남으면 추측 변환 없이 제외
-            utts.append(dict(utt_id=uid, speaker=spk, chapter=chap, path=os.path.join(root, spk, chap, uid + ".flac"), text=text))
+            utts.append(dict(utt_id=uid, speaker=spk, chapter=chap, path=os.path.join(root, spk, chap, uid + ".flac"), text=text, raw=txt))
     print(f"    {split}: {len(utts)} 발화, quarantine {st['quarantined']}", flush=True)
     import soundfile as sf
     with ThreadPoolExecutor(a.workers) as ex:
@@ -79,7 +79,7 @@ def libri_streams(utts, subset, split):
             sid = f"ls-{subset}-{spk}-{chap}-{n:05d}"; r = rng_for(sid); t = round(r.uniform(0.3, 1.0), 3); segs = []
             for i, u in enumerate(g):
                 gap = t if i == 0 else round(r.uniform(0.3, 1.5), 3); t = t if i == 0 else t + gap
-                segs.append(dict(utt_id=u["utt_id"], path=u["path"], silence_before_s=gap, offset_s=round(t, 3), dur_s=u["dur_s"], text=u["text"])); t += u["dur_s"]
+                segs.append(dict(utt_id=u["utt_id"], path=u["path"], silence_before_s=gap, offset_s=round(t, 3), dur_s=u["dur_s"], text=u["text"], lexical_text=u["text"], raw_text=u["raw"], display_source="none")); t += u["dur_s"]
             rows.append(dict(id=sid, corpus="librispeech", split=split, subset=subset, mode="stream", lang="English", speaker=spk, chapter=chap,
                              duration_s=round(t + 0.3, 3), n_utts=len(g), segments=segs, silence_after_s=0.3)); n += 1
     return rows
@@ -91,7 +91,7 @@ def utt_rows(utts, corpus, subset, split, lang, prefix, key_speaker="speaker"):
         sid = f"{prefix}-{subset}-utt-{u['utt_id']}"; r = rng_for(sid); lead, trail = round(r.uniform(0.3, 1.0), 3), round(r.uniform(0.3, 1.0), 3)
         rows.append(dict(id=sid, corpus=corpus, split=split, subset=subset, mode="utt", lang=lang, speaker=u.get(key_speaker), chapter=u.get("chapter"),
                          duration_s=round(lead + u["dur_s"] + trail, 3), n_utts=1, silence_after_s=trail,
-                         segments=[dict(utt_id=u["utt_id"], path=u["path"], silence_before_s=lead, offset_s=lead, dur_s=u["dur_s"], text=u["text"])]))
+                         segments=[dict(utt_id=u["utt_id"], path=u["path"], silence_before_s=lead, offset_s=lead, dur_s=u["dur_s"], text=u["text"], lexical_text=u["text"], raw_text=u["raw"], display_source="none")]))
     return rows
 
 # ───────────────────────────── KsponSpeech ─────────────────────────────
@@ -125,7 +125,11 @@ for name in names:
                           utt_hours=round(sum(u["dur_s"] for u in utts) / 3600, 2))
         else:
             utts, st = kspon_utts(src, subset)
-            rs = utt_rows(utts, "kspon", subset, split, "Korean", "ks")   # 파일 = 스트림. 학습도 발화 행이지만 mode 는 stream 으로 표기
+            if subset == "train-all":                                   # KsponSpeech_0X → subset train-0X (id 가 kspon-100 과 호환)
+                rs = []
+                for part in sorted({u["rel"].split("/")[0] for u in utts}):
+                    rs += utt_rows([u for u in utts if u["rel"].split("/")[0] == part], "kspon", "train-" + part[-2:], split, "Korean", "ks")
+            else: rs = utt_rows(utts, "kspon", subset, split, "Korean", "ks")   # 파일 = 스트림. 학습도 발화 행이지만 mode 는 stream 으로 표기
             if split == "train":
                 for r in rs: r["mode"] = "stream"; r["id"] = r["id"].replace("-utt-", "-")
             sub_st = dict(utts=len(utts), utt_hours=round(sum(u["dur_s"] for u in utts) / 3600, 2), **st)
@@ -148,7 +152,8 @@ for name in names:
     fp = fingerprint(os.environ.get("MXC_QWEN_ASR_DIR", os.environ.get("QWEN_ASR_DIR")))
     fp.update(source_transcript_sha256=sha_files(set(SRC_FILES)), manifest_sha256=sha_files([os.path.join(od, "streams.jsonl")]),
               quarantined_ids_sha256=hashlib.sha256("\n".join(sorted(q["id"] for q in QUAR)).encode()).hexdigest(), created_from_git_commit=commit)
+    disp = collections.Counter(seg.get("display_source", "none") for r in rows for seg in r["segments"])
     json.dump(dict(name=name, corpus=corpus, rows=len(rows), seed=a.seed, target_s=a.target_s, textnorm_version=TEXTNORM_VERSION, fingerprint=fp,
-                   quarantined=len(QUAR), subsets=stats), open(os.path.join(od, "stats.json"), "w"), ensure_ascii=False, indent=1)
+                   quarantined=len(QUAR), display_source_counts=dict(disp), text_fields=dict(text="lexical_text 와 동일(하위 호환)", lexical_text="asr-tn-v1.0.0 학습·정렬 타깃", raw_text="원문 보존", display_source="none = display label 없음"), subsets=stats), open(os.path.join(od, "stats.json"), "w"), ensure_ascii=False, indent=1)
     QUAR.clear(); SRC_FILES.clear()
     print(f"  → {od}/streams.jsonl ({len(rows)} 행)")

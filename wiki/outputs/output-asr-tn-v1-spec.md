@@ -424,30 +424,18 @@ feature cache는 오디오가 같으면 항상 재사용할 수 있다.
 
 ## 현재 구현 상태와 남은 확인
 
-2026-09-07 작업 트리에는 `num2words==0.5.14` 설치 고정, import 실패 시 즉시 오류,
-KO standalone Latin 대문자 통일, 잔존 KO digit 학습 제외와 manifest version 필드의
-부분 구현이 들어와 있다. 그러나 다음 차이가 남아 있으므로 frozen으로 판정하지 않는다.
+2026-09-07 구현(`vapasr/data/textnorm.py`, `vapasr/data/kspon.py`, 커밋 `4fbdc82`·`7765734`)으로 lexical 계약의 미확정 항목은 해소됐다.
 
-- 코드의 `TEXTNORM_VERSION`은 `1.0`이지만 fingerprint의 canonical ID는
-  `asr-tn-v1.0.0`으로 통일해야 한다.
-- 현재 소수 변환은 binary float를 사용하므로 `1.10`의 끝 0을 보존하지 못한다.
-- 현재 USD 변환은 `$1`에도 `dollars`를 붙이며, 서수는 1–2자리만 처리한다.
-- 미지원 숫자를 전체 항목 단위로 검출하기 전에 지원 regex가 부분 변환할 수 있다.
-- 코드 주석이 참조하는 `wiki/decisions/decision-textnorm-v1` 페이지는 아직 존재하지 않는다.
-- `num2words==0.5.14` English backend가 이 문서의 American-style golden 출력을
-  그대로 만족하는지 아직 검증하지 않았다.
-- `1984` 같은 네 자리 숫자를 일반 정수와 연도로 분류할 corpus metadata가 현재 없다.
-- KsponSpeech 전체에서 standalone Latin 1.18% 추정치가 유지되는지 확인하지 않았다.
-- 이 문서의 quarantine 정책이 기존 230 h target을 몇 건 바꾸는지 아직 측정하지 않았다.
-- manifest에 `lexical_text`, `display_text`, `display_source`, `display_confidence`가 아직
-  구현되지 않았다.
-- display mode, masked auxiliary loss, sampling ratio와 checkpoint metadata 규약이
-  아직 구현되지 않았다.
-- 영어 display 평가 subset 및 capitalization·punctuation·지연 지표가 아직 없다.
-- Qwen pseudo-label을 lexical exact-match로 검증·채택하는 도구와 audit가 아직 없다.
+- `TEXTNORM_VERSION = "asr-tn-v1.0.0"`, fingerprint 8 필드(lexical) 를 `s1_build_manifest.py` 가 stats.json 에 기록. 정렬기·학습기 fingerprint 관문, 정렬 루트 `align-asr-tn-v1/`.
+- 소수는 문자 단위(`1.10 → one point one zero`), `$1 → one dollar`, 서수 suffix 검증(11th/12th/13th, `11st` 미지원), 지원 문법은 공백 토큰 단위 전체 일치만 변환(부분 변환 없음), num2words 0.5.14 의 `and`·쉼표·하이픈은 canonical 로 후처리해 golden 을 만족(tokenizer-ID snapshot 포함, `tests/test_textnorm.py`).
+- LibriSpeech 는 digit 가 0 이라 연도 분류 metadata 가 필요 없다. 새 코퍼스는 corpus parser 에서 분류하고 근거 없으면 quarantine.
+- KsponSpeech standalone Latin 1.14 %(추정 1.18 % 와 일치), 기존 230 h target 변경은 EN 14 건(단어 끝 `'`)·KO 5 건 quarantine — [[source-asr-tn-v1-audit]].
+- manifest 세그먼트에 `raw_text`, `lexical_text`(= `text`), `display_source`(LibriSpeech·KsponSpeech 모두 `none`) 를 보존한다.
 
-따라서 이 규약은 문서 정본이지만 아직 **frozen 판정 전**이다. 다음 작업은 전체
-transcript audit와 영어 display label audit 도구를 작성해 위 미확정 수치를 채우는 것이다.
+**display 계약은 연기한다(2026-09-07 사용자 결정).** 이번 Stage 2 학습은 `lexical_text` 만 정렬·학습 타깃으로 쓰고 normalized WER 로 평가하며,
+display loss·pseudo-label·display fingerprint 는 넣지 않는다. 대신 base Qwen 과 학습 checkpoint 의 display-retention 을 작은 고정 표본으로만 측정한다.
+display 직접 예측은 lexical 관문(scaling·viol80·deadline recall·지연·decoder p99) 통과 뒤 별도 단계로 추가하며, 같은 alignment·feature cache 를 재사용한다.
+미구현으로 남는 것: `display_text`/`display_confidence` 필드, display mode·masked loss·sampling ratio·checkpoint metadata, display 평가 subset·지표, pseudo-label 채택 도구.
 
 ## 동결 판정 (2026-09-07)
 
