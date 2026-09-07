@@ -130,7 +130,7 @@ def kspon_utts(trn_name, subset):
 def csv_utts(corpus, rel_csv, subset, sample_hours=None):
     """`audio_path|script|sampling_rate|duration|script_tn` → 발화 목록. 텍스트는 script_tn 을 asr-tn 규약으로 다시 정규화(멱등), 빈 것·digit 은 quarantine.
     길이는 CSV 의 duration(파일을 열지 않는다). mnsc 는 PART1(낭독) 만. sample_hours 가 있으면 seed 셔플로 그만큼."""
-    csvp = os.path.join(a.en_open_root, rel_csv); SRC_FILES.append(csvp); st = collections.Counter(); utts = []
+    csvp = os.path.join(a.en_open_root, rel_csv); SRC_FILES.append(csvp); st = collections.Counter(); utts = []; seen = set()
     with open(csvp, encoding="utf-8", errors="replace") as f:
         hdr = f.readline().rstrip("\n").split("|")
         for line in f:
@@ -138,6 +138,8 @@ def csv_utts(corpus, rel_csv, subset, sample_hours=None):
             if len(r) != len(hdr): st["bad_row"] += 1; continue
             if corpus == "mnsc" and "ASR-PART1" not in r["audio_path"]: continue
             uid = os.path.splitext(os.path.basename(r["audio_path"]))[0]; text = target_en(r["script_tn"], corpus); fl = target_flags(text, "English")
+            if uid in seen: st["dup_id"] += 1; continue                       # 같은 wav 가 CSV 에 여러 행으로 나오면 첫 행만(Switchboard 791, MNSC 다수)
+            seen.add(uid)
             if int(r["sampling_rate"]) != 16000: st["not_16k"] += 1; _quarantine(uid, subset, r["script"], text, {"not_16k"}); continue
             if fl: st["quarantined"] += 1; _quarantine(uid, subset, r["script"], text, fl); continue
             utts.append(dict(utt_id=uid, speaker=uid.split("_")[0] if corpus == "switchboard" else None, chapter=None, path=os.path.join(a.en_open_root, r["audio_path"]), text=text, raw=r["script"], dur_s=round(float(r["duration"]), 3))); st["kept"] += 1

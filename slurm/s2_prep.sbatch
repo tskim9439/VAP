@@ -27,7 +27,7 @@ M=${MAN_IN:-$MXC_DATA_MANIFEST_DIR}; F=$MXC_DATA_FEATURE_CACHE_DIR; ALIGN_OUT=${
 export VAPASR_ALIGN_ROOT=$ALIGN_OUT MXC_DATA_MANIFEST_DIR=$M; echo "manifest ← $M | 정렬 → $ALIGN_OUT | conda $MXC_CONDA_DIR"
 PIDS=""; on_preempt() { echo "[$(date '+%T')] 선점 신호 → 워커 종료 후 requeue"; kill $PIDS 2>/dev/null; wait; scontrol requeue "$SLURM_JOB_ID"; exit 0; }; trap on_preempt USR1 TERM
 n_rows() { python - "$1" "$2" <<'PY'
-import json, sys; p, mode = sys.argv[1], sys.argv[2]; print(sum(1 for l in open(p) if mode == "all" or json.loads(l)["mode"] == mode))
+import json, sys; p, mode = sys.argv[1], sys.argv[2]; print(len({json.loads(l)["id"] for l in open(p) if mode == "all" or json.loads(l)["mode"] == mode}))   # 고유 id 수(중복 행 방지)
 PY
 }
 n_done_feat() { python - "$1" <<'PY'
