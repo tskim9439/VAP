@@ -14,7 +14,7 @@ ap.add_argument("--gpu", default=None); ap.add_argument("--min-dur", type=float,
 ap.add_argument("--out-root", default=None, help="출력 루트(기본 $MXC_DATA_MANIFEST_DIR/align-asr-tn-v1 = 규약 ID). 규약이 바뀌면 새 루트로 — 기존 산출물은 지우지 않는다")
 ap.add_argument("--shard", default=None, help="k/n: 병렬 워커 k 가 rows[k::n] 만 처리 (같은 manifest 를 여러 프로세스로)")
 ap.add_argument("--batch", type=int, default=64, help="배치 최대 발화 수"); ap.add_argument("--batch-sec", type=float, default=480.0, help="배치 오디오 합계 상한(초) — padding·메모리 제어")
-ap.add_argument("--chunk", type=int, default=128, help="한 번에 읽어 두는 스트림 수(오디오 prefetch 단위)"); ap.add_argument("--io-threads", type=int, default=16)
+ap.add_argument("--chunk", type=int, default=128, help="한 번에 읽어 두는 스트림 수(오디오 prefetch 단위)"); ap.add_argument("--io-threads", type=int, default=16); ap.add_argument("--reverse", action="store_true", help="스트림을 역순으로(다른 run 과 양끝에서 분담)")
 a = ap.parse_args()
 if "CUDA_VISIBLE_DEVICES" not in os.environ:
     if a.gpu is None:
@@ -82,6 +82,7 @@ def load_chunk(chunk):
     """스트림 묶음의 발화 오디오를 스레드로 미리 읽는다 → [(row, [utt dict…])]."""
     def one(r):
         us = []
+        if os.path.exists(os.path.join(out, r["id"] + ".jsonl")): return r, us          # 다른 run(SLURM/로그인)이 그사이 끝낸 스트림은 건너뜀
         for u in iter_utterances(r):
             if u["end"] - u["start"] < a.min_dur or not u["text"]: continue
             # 스트림 안에서 두 번째 발화부터는 선행 공백을 붙여 토큰화한다(없으면 'lost'+'i' → 'losti'). 정렬기에도 공백 포함 텍스트를 준다.
@@ -90,7 +91,9 @@ def load_chunk(chunk):
     return list(pool.map(one, chunk))
 
 st = dict(streams=0, utts=0, tokens=0, fail=0, offset_err_ms=[], sec=0.0); T0 = time.time()
-rows = [r for r in rows if not os.path.exists(os.path.join(out, r["id"] + ".jsonl"))]; print(f"  남은 스트림 {len(rows)} (기존 파일 건너뜀)", flush=True)
+rows = [r for r in rows if not os.path.exists(os.path.join(out, r["id"] + ".jsonl"))]
+if a.reverse: rows = rows[::-1]                                        # 두 run 이 같은 manifest 를 양끝에서 처리해 중간에서 만나도록
+print(f"  남은 스트림 {len(rows)} (기존 파일 건너뜀{', 역순' if a.reverse else ''})", flush=True)
 pool = ThreadPoolExecutor(a.io_threads); chunks = [rows[i: i + a.chunk] for i in range(0, len(rows), a.chunk)]
 fut = pool.submit(load_chunk, chunks[0]) if chunks else None
 for ci in range(len(chunks)):
@@ -99,6 +102,7 @@ for ci in range(len(chunks)):
     for b in make_batches(allu):
         for u, res in zip(b, run_batch(b)): results[id(u)] = res
     for r, us in loaded:
+        if not us: continue
         outp = os.path.join(out, r["id"] + ".jsonl"); tmpp = outp + f".{os.getpid()}.tmp"
         with open(tmpp, "w", encoding="utf-8") as f:
             for u in us:
