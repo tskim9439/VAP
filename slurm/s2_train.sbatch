@@ -29,7 +29,7 @@ export OMP_NUM_THREADS=8 NCCL_DEBUG=${NCCL_DEBUG:-WARN} TOKENIZERS_PARALLELISM=f
 # 다중 노드 NCCL: 부트스트랩 소켓을 이더넷(eth0)에 고정. 기본값으로 두면 IPoIB(172.16.x.x, ib0–ib7) 주소를 골라 노드 간 "No route to host" 로 죽는다(job 65931).
 # 데이터 경로는 IB verbs(NCCL_IB_HCA 자동). IB 자체가 문제면 NCCL_IB_DISABLE=1 로 이더넷 폴백.
 export NCCL_SOCKET_IFNAME=${NCCL_SOCKET_IFNAME:-eth0} GLOO_SOCKET_IFNAME=${GLOO_SOCKET_IFNAME:-eth0} NCCL_IB_DISABLE=${NCCL_IB_DISABLE:-0}
-export NCCL_IB_TIMEOUT=${NCCL_IB_TIMEOUT:-23} NCCL_IB_RETRY_CNT=${NCCL_IB_RETRY_CNT:-13}   # IB 링크 흔들림(status=12 retry exceeded, job 65963) 에 대한 여유. 반복되면 NCCL_IB_DISABLE=1
+export NCCL_IB_TIMEOUT=${NCCL_IB_TIMEOUT:-23} NCCL_IB_RETRY_CNT=${NCCL_IB_RETRY_CNT:-7} PYTHONFAULTHANDLER=1   # IB 링크 흔들림(status=12 retry exceeded, job 65963) 에 대한 여유. retry_cnt 는 3 비트라 최대 7. 반복되면 NCCL_IB_DISABLE=1
 case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*) ;; *) echo "!! conda env 아님: $(which python)"; exit 1;; esac
 echo "manifest ← $MXC_DATA_MANIFEST_DIR | 정렬 ← $VAPASR_ALIGN_ROOT | conda $MXC_CONDA_DIR"
 
