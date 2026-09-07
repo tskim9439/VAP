@@ -61,7 +61,14 @@ class MonoStreamDataset(Dataset):
             # 항목 캐시: 정렬 jsonl 수만 개를 매 프로세스가 읽으면 Lustre 에서 수십 분 걸린다(8-rank DDP 면 ×8). 한 번 만들어 _items.json.gz 에 저장하고
             # (정렬 파일 수가 같으면) 재사용한다. 모든 mode·subset 을 담고 메모리에서 거른다.
             import gzip
-            n_files = sum(1 for f in os.listdir(adir) if f.endswith(".jsonl")) if os.path.isdir(adir) else 0; cache = os.path.join(adir, "_items-online.json.gz" if online else "_items.json.gz"); allitems = None
+            parts: Dict[str, list] = {}; pdir = os.path.join(adir, "parts")                 # 청크별 part 파일(NFS 친화) — 있으면 우선, 없으면 스트림별 파일
+            if os.path.isdir(pdir):
+                for pf in sorted(os.listdir(pdir)):
+                    if not pf.endswith(".jsonl"): continue
+                    for line in open(os.path.join(pdir, pf), encoding="utf-8"):
+                        try: r = json.loads(line); parts.setdefault(r["id"], r["utts"])
+                        except Exception: pass
+            n_files = (sum(1 for f in os.listdir(adir) if f.endswith(".jsonl")) if os.path.isdir(adir) else 0) + len(parts); cache = os.path.join(adir, "_items-online.json.gz" if online else "_items.json.gz"); allitems = None
             if os.path.exists(cache):
                 try:
                     c = json.load(gzip.open(cache, "rt", encoding="utf-8"))
@@ -69,10 +76,12 @@ class MonoStreamDataset(Dataset):
                 except Exception: allitems = None
             if allitems is None:
                 allitems, dropped, no_align = [], 0, 0
+                legacy = {f[:-6] for f in os.listdir(adir) if f.endswith(".jsonl")} if os.path.isdir(adir) else set()
                 for sid, row in fi.rows.items():
-                    p = os.path.join(adir, sid + ".jsonl")
-                    if not os.path.exists(p): no_align += 1; continue
-                    utts = _read_jsonl(p); bad = [u for u in utts if qc and bad_utterance(u)]
+                    if sid in parts: utts = parts[sid]
+                    elif sid in legacy: utts = _read_jsonl(os.path.join(adir, sid + ".jsonl"))
+                    else: no_align += 1; continue
+                    bad = [u for u in utts if qc and bad_utterance(u)]
                     if bad: dropped += 1; continue                       # 불량 발화(동일 종료시각 뭉침)가 있는 스트림은 통째로 제외
                     toks = sorted(((t["id"], t["end_time"]) for u in utts for t in u["tokens"]), key=lambda x: x[1])
                     allitems.append(dict(name=name, id=sid, K=int(row["frames"]), npy=row.get("npy"), lang=lang_of(name), subset=row.get("subset"), mode=row.get("mode", "stream"), tokens=toks, text=" ".join(u["text"] for u in utts),

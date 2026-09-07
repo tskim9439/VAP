@@ -34,6 +34,15 @@ n_done_feat() { python - "$1" <<'PY'
 import json, sys, os; p = sys.argv[1]; print(len({json.loads(l)["id"] for l in open(p)}) if os.path.exists(p) else 0)
 PY
 }
+n_aligned() { python - "$1" <<'PY'
+import json, sys, os, glob; d = sys.argv[1]; ids = {f[:-6] for f in os.listdir(d) if f.endswith(".jsonl")} if os.path.isdir(d) else set()
+for pf in glob.glob(os.path.join(d, "parts", "*.jsonl")):
+    for l in open(pf, encoding="utf-8"):
+        try: ids.add(json.loads(l)["id"])
+        except Exception: pass
+print(len(ids))
+PY
+}
 WPG=${WPG:-6}                       # GPU 당 워커 수: 정렬기는 CPU(특징 추출) 병목이라 GPU 하나에 여러 워커(GPU 메모리 워커당 ≈5 GB)
 run8() {  # run8 <script> <manifest> [extra…]: 8 GPU × WPG 워커 shard 병렬
   local s=$1 m=$2; shift 2; PIDS=""; local N=$((8 * WPG))
@@ -46,8 +55,8 @@ for m in ${MANIFESTS//,/ }; do
   case $m in librispeech-960) python experiments/s2_seed_cache.py --new $m --old librispeech-100 --encoder $ENC --feat $FEATURES --new-align-root $ALIGN_OUT ;; kspon-full) python experiments/s2_seed_cache.py --new $m --old kspon-100 --encoder $ENC --feat $FEATURES --new-align-root $ALIGN_OUT ;;
               *) python experiments/s2_seed_cache.py --new $m --old $m --encoder $ENC --old-align align2 --feat $FEATURES --new-align-root $ALIGN_OUT ;; esac   # dev/test: 같은 이름, 옛 캐시·정렬은 다른 루트에 그대로
   # 2) 정렬
-  A=$(ls $ALIGN_OUT/$m 2>/dev/null | grep -c '\.jsonl$'); if [ "$A" -lt "$ROWS" ]; then echo "[$(date '+%T')] align $m: $A/$ROWS → $((8 * WPG)) shard"; run8 s1_align.py $m --batch ${BATCH:-128} --batch-sec ${BATCH_SEC:-960} --io-threads 8 --out-root $ALIGN_OUT; fi
-  A=$(ls $ALIGN_OUT/$m | grep -c '\.jsonl$'); echo "[$(date '+%T')] align $m: $A/$ROWS"
+  A=$(n_aligned $ALIGN_OUT/$m); if [ "$A" -lt "$ROWS" ]; then echo "[$(date '+%T')] align $m: $A/$ROWS → $((8 * WPG)) shard"; run8 s1_align.py $m --batch ${BATCH:-128} --batch-sec ${BATCH_SEC:-960} --io-threads 8 --out-root $ALIGN_OUT; fi
+  A=$(n_aligned $ALIGN_OUT/$m); echo "[$(date '+%T')] align $m: $A/$ROWS"
   # 3) 특징 캐시(선택, 기본 off: 학습이 온라인으로 인코딩)
   D=$ROWS
   if [ "$FEATURES" = 1 ]; then

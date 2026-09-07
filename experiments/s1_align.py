@@ -2,7 +2,8 @@
 """Stage 1 정렬 — streams.jsonl 의 발화마다 Qwen3-ForcedAligner 로 BPE 토큰 종료 시각(80 ms 격자)을 만든다 (plans/stage1-mono-pilot.md §3.4-(2)).
 
 python experiments/s1_align.py --manifest librispeech-100 [--mode stream|utt|all] [--limit N] [--ids a,b] [--gpu K]
-출력: $MXC_DATA_MANIFEST_DIR/align/<manifest>/<stream id>.jsonl  — 한 줄 = 발화 {speaker:0, start, end, text, tokens[{id,text,end_time}]} (스트림 절대 시각)
+출력: <align root>/<manifest>/parts/<host>-<pid>-<chunk>.jsonl — 한 줄 = {id: 스트림, utts: [{speaker:0, start, end, text, tokens[{id,text,end_time}]}…]} (스트림 절대 시각)
+      (동결 전 산출물은 스트림별 <stream id>.jsonl — 로더가 둘 다 읽는다)
       + stats.json.  u0_align.py 와 같은 스키마라 u0_align_qc.py 와 interleave 빌더가 그대로 읽는다. 재개 가능(파일 존재 시 건너뜀), 동시 실행 안전(pid tmp).
 모델은 로컬 디렉토리($MXC_ALIGNER_DIR, 토크나이저는 $MXC_QWEN_ASR_DIR)에서 읽는다. 발화 오디오는 원본 파일에서 직접(조립 스트림 아님) 읽고 offset_s 를 더한다.
 """
@@ -91,6 +92,13 @@ def load_chunk(chunk):
 
 st = dict(streams=0, utts=0, tokens=0, fail=0, offset_err_ms=[], sec=0.0); T0 = time.time()
 _t = time.time(); done_ids = {f[:-6] for f in os.listdir(out) if f.endswith(".jsonl")}   # 존재 확인은 listdir 1 회로 — Blob NFS 에서 파일별 stat 은 30 ms(62만 개면 5 시간)
+PARTS = os.path.join(out, "parts"); os.makedirs(PARTS, exist_ok=True)               # 출력은 청크(128 스트림)당 part 파일 1 개 — 스트림별 open/rename 이 NFS 에서 초당 5 개로 병목
+for pf in os.listdir(PARTS):
+    if pf.endswith(".jsonl"):
+        for line in open(os.path.join(PARTS, pf), encoding="utf-8"):
+            try: done_ids.add(json.loads(line)["id"])
+            except Exception: pass
+import socket; PART_TAG = f"{socket.gethostname()}-{os.getpid()}"
 rows = [r for r in rows if r["id"] not in done_ids]
 if a.reverse: rows = rows[::-1]                                        # 두 run 이 같은 manifest 를 양끝에서 처리해 중간에서 만나도록
 print(f"  남은 스트림 {len(rows)} (기존 {len(done_ids)} 건너뜀{', 역순' if a.reverse else ''}, listdir {time.time()-_t:.0f}s)", flush=True)
@@ -101,21 +109,22 @@ for ci in range(len(chunks)):
     allu = [u for _, us in loaded for u in us]; results = {}
     for b in make_batches(allu):
         for u, res in zip(b, run_batch(b)): results[id(u)] = res
-    for r, us in loaded:
-        if not us: continue
-        outp = os.path.join(out, r["id"] + ".jsonl"); tmpp = outp + f".{os.getpid()}.tmp"
-        with open(tmpp, "w", encoding="utf-8") as f:
+    partp = os.path.join(PARTS, f"{PART_TAG}-{ci:06d}.jsonl"); tmpp = partp + ".tmp"
+    with open(tmpp, "w", encoding="utf-8") as f:
+        for r, us in loaded:
+            if not us: continue
+            outl = []
             for u in us:
                 res = results[id(u)]
                 if isinstance(res, Exception): st["fail"] += 1; print(f"  ! {r['id']} {u['utt_id']}: {type(res).__name__}: {str(res)[:80]}", flush=True); continue
                 try: toks = tokens_from_items(res, u["atext"])
                 except Exception as ex: st["fail"] += 1; print(f"  ! {r['id']} {u['utt_id']}: {type(ex).__name__}: {str(ex)[:80]}", flush=True); continue
                 for t in toks: t["end_time"] = round(u["start"] + t["end_time"], 3)      # 스트림 절대 시각
-                f.write(json.dumps(dict(speaker=0, start=u["start"], end=u["end"], text=u["text"], tokens=toks), ensure_ascii=False) + "\n")
+                outl.append(dict(speaker=0, start=u["start"], end=u["end"], text=u["text"], tokens=toks))
                 st["utts"] += 1; st["tokens"] += len(toks)
                 if toks: st["offset_err_ms"].append((u["end"] - toks[-1]["end_time"]) * 1000)
-        if os.path.exists(outp): os.remove(tmpp); continue
-        os.replace(tmpp, outp); st["streams"] += 1
+            f.write(json.dumps(dict(id=r["id"], utts=outl), ensure_ascii=False) + "\n"); st["streams"] += 1
+    os.replace(tmpp, partp)                                                             # 청크당 rename 1 회
     if st["streams"] % 500 < a.chunk: el = time.time() - T0; print(f"  {st['streams']} 스트림 · {st['utts']} 발화 ({st['utts']/max(1,el):.1f}/s) · {st['tokens']} 토큰 · 실패 {st['fail']} · {el:.0f}s", flush=True)
 pool.shutdown()
 st["sec"] = time.time() - T0; v = np.array(st["offset_err_ms"]); st["offset_err_ms"] = dict(n=len(v), median=float(np.median(v)) if len(v) else None, p90=float(np.percentile(v, 90)) if len(v) else None)
