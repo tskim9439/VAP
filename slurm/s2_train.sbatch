@@ -44,6 +44,7 @@ case "$RUN" in
   A*) EXTRA="--lora-r 16 --lr ${LR_LORA:-4e-4} --lr-adapter $LR_ADAPTER" ;;
   *)  EXTRA="--full-ft --lr $LR --lr-adapter $LR_ADAPTER" ;;
 esac
+INIT_CKPT=${INIT_CKPT:-}; [ -n "$INIT_CKPT" ] && { [ -f "$INIT_CKPT" ] || { echo "!! INIT_CKPT 없음: $INIT_CKPT"; exit 1; }; EXTRA="$EXTRA --ckpt $INIT_CKPT"; }   # 이전 run 의 ckpt 로 가중치 초기화(옵티마이저는 새로)
 
 # ── 선점·시간 제한: PREEMPT 파일(공유 FS) → 모든 rank 가 다음 step 경계에서 감지(all_reduce) → rank 0 저장 → 종료 → requeue
 rm -f "$OUT/PREEMPT"
