@@ -4,7 +4,7 @@ python experiments/s2_seed_cache.py --new librispeech-960 --old librispeech-100 
 import os, sys, json, argparse, shutil
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser(); ap.add_argument("--new", required=True); ap.add_argument("--old", required=True); ap.add_argument("--encoder", default="nemotron-c0")
-ap.add_argument("--old-align", default="align2"); ap.add_argument("--new-align", default="align-asr-tn-v1"); ap.add_argument("--feat", default="0", help="1 이면 특징 캐시도 이어받음(기본은 정렬만 — 온라인 특징)"); a = ap.parse_args()
+ap.add_argument("--old-align", default="align2"); ap.add_argument("--new-align", default="align-asr-tn-v1"); ap.add_argument("--feat", default="0", help="1 이면 특징 캐시도 이어받음(기본은 정렬만 — 온라인 특징)"); ap.add_argument("--new-align-root", default=None, help="새 정렬 루트 전체 경로(기본 $MAN/<new-align>)"); a = ap.parse_args()
 MAN = os.environ["MXC_DATA_MANIFEST_DIR"]; FEAT = os.environ["MXC_DATA_FEATURE_CACHE_DIR"]
 def rows(name):
     p = os.path.join(MAN, name, "streams.jsonl"); return {r["id"]: r for r in (json.loads(l) for l in open(p, encoding="utf-8"))} if os.path.exists(p) else {}
@@ -31,7 +31,7 @@ if a.feat == "1":
           link(e["npy"], dst); e["npy"] = dst; e["subset"] = new[i]["subset"]; f.write(json.dumps(e) + "\n"); n += 1
   print(f"  특징 {a.encoder}: {n} 개 이어받음 → {nd}", flush=True)
 # 정렬
-oa, na = os.path.join(MAN, a.old_align, a.old), os.path.join(MAN, a.new_align, a.new); os.makedirs(na, exist_ok=True); m = 0
+oa, na = os.path.join(MAN, a.old_align, a.old), os.path.join(a.new_align_root or os.path.join(MAN, a.new_align), a.new); os.makedirs(na, exist_ok=True); m = 0
 for i in same_text:
     src = os.path.join(oa, i + ".jsonl")
     if os.path.exists(src) and link(src, os.path.join(na, i + ".jsonl")): m += 1

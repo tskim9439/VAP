@@ -16,10 +16,12 @@ MANIFESTS=${MANIFESTS:?쉼표 구분 manifest 이름}; ENC=${ENC:-nemotron-c0}; 
 DONE=$ROOT/prep-DONE-$(echo "$MANIFESTS" | md5sum | cut -c1-8)   # manifest 목록별 완료 표식(여러 job 으로 나눠 제출 가능)
 echo "[$(date '+%F %T')] prep job $SLURM_JOB_ID node=$(hostname) restart=${SLURM_RESTART_COUNT:-0} manifests=$MANIFESTS"
 [ -f "$DONE" ] && { echo "이미 완료($DONE)"; exit 0; }
-cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a; source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
+cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
+MXC_CONDA_DIR=${CONDA_OVERRIDE:-$MXC_CONDA_DIR}; source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
 export OMP_NUM_THREADS=6 TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
 case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*) ;; *) echo "!! conda env 아님"; exit 1;; esac
-M=$MXC_DATA_MANIFEST_DIR; F=$MXC_DATA_FEATURE_CACHE_DIR
+M=${MAN_IN:-$MXC_DATA_MANIFEST_DIR}; F=$MXC_DATA_FEATURE_CACHE_DIR; ALIGN_OUT=${OUT_ROOT:-$M/align-asr-tn-v1}   # MAN_IN: manifest 읽기 루트(Lustre 가능), OUT_ROOT: 정렬 출력 루트(/lustre 에 쓰지 않는다)
+export VAPASR_ALIGN_ROOT=$ALIGN_OUT MXC_DATA_MANIFEST_DIR=$M; echo "manifest ← $M | 정렬 → $ALIGN_OUT | conda $MXC_CONDA_DIR"
 PIDS=""; on_preempt() { echo "[$(date '+%T')] 선점 신호 → 워커 종료 후 requeue"; kill $PIDS 2>/dev/null; wait; scontrol requeue "$SLURM_JOB_ID"; exit 0; }; trap on_preempt USR1 TERM
 n_rows() { python - "$1" "$2" <<'PY'
 import json, sys; p, mode = sys.argv[1], sys.argv[2]; print(sum(1 for l in open(p) if mode == "all" or json.loads(l)["mode"] == mode))
@@ -38,11 +40,11 @@ run8() {  # run8 <script> <manifest> [extra…]: 8 GPU × WPG 워커 shard 병�
 for m in ${MANIFESTS//,/ }; do
   ROWS=$(n_rows $M/$m/streams.jsonl all); echo "[$(date '+%T')] == $m ($ROWS 행)"
   # 1) 이어받기(동결 전 캐시·정렬): 100 h 파일럿과 겹치는 id
-  case $m in librispeech-960) python experiments/s2_seed_cache.py --new $m --old librispeech-100 --encoder $ENC --feat $FEATURES ;; kspon-full) python experiments/s2_seed_cache.py --new $m --old kspon-100 --encoder $ENC --feat $FEATURES ;;
-              *) python experiments/s2_seed_cache.py --new $m --old $m --encoder $ENC --old-align align2 --feat $FEATURES ;; esac   # dev/test: 같은 이름, 옛 캐시·정렬은 다른 루트에 그대로
+  case $m in librispeech-960) python experiments/s2_seed_cache.py --new $m --old librispeech-100 --encoder $ENC --feat $FEATURES --new-align-root $ALIGN_OUT ;; kspon-full) python experiments/s2_seed_cache.py --new $m --old kspon-100 --encoder $ENC --feat $FEATURES --new-align-root $ALIGN_OUT ;;
+              *) python experiments/s2_seed_cache.py --new $m --old $m --encoder $ENC --old-align align2 --feat $FEATURES --new-align-root $ALIGN_OUT ;; esac   # dev/test: 같은 이름, 옛 캐시·정렬은 다른 루트에 그대로
   # 2) 정렬
-  A=$(ls $M/align-asr-tn-v1/$m 2>/dev/null | grep -c '\.jsonl$'); if [ "$A" -lt "$ROWS" ]; then echo "[$(date '+%T')] align $m: $A/$ROWS → 8 shard"; run8 s1_align.py $m --batch 96 --batch-sec 720 --io-threads 8; fi
-  A=$(ls $M/align-asr-tn-v1/$m | grep -c '\.jsonl$'); echo "[$(date '+%T')] align $m: $A/$ROWS"
+  A=$(ls $ALIGN_OUT/$m 2>/dev/null | grep -c '\.jsonl$'); if [ "$A" -lt "$ROWS" ]; then echo "[$(date '+%T')] align $m: $A/$ROWS → $((8 * WPG)) shard"; run8 s1_align.py $m --batch 96 --batch-sec 720 --io-threads 8 --out-root $ALIGN_OUT; fi
+  A=$(ls $ALIGN_OUT/$m | grep -c '\.jsonl$'); echo "[$(date '+%T')] align $m: $A/$ROWS"
   # 3) 특징 캐시(선택, 기본 off: 학습이 온라인으로 인코딩)
   D=$ROWS
   if [ "$FEATURES" = 1 ]; then

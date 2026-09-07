@@ -53,7 +53,7 @@ class MonoStreamDataset(Dataset):
         for name in manifests:
             fi = _Rows(name) if online else FeatureIndex(FEAT, encoder, name); assert abs(fi.frame_hz - 1 / CHUNK_S) < 1e-6, f"{encoder} frame_hz {fi.frame_hz} != 12.5"
             # 정렬 루트: 명시 > align2(선행 공백 규약, 2026-09-05) > align. 서버 산출물은 지우지 않으므로 새 규약은 새 루트에 쌓인다.
-            cands = [align_root] if align_root else [os.path.join(MAN, "align-asr-tn-v1"), os.path.join(MAN, "align2"), os.path.join(MAN, "align")]
+            cands = [align_root] if align_root else ([os.environ["VAPASR_ALIGN_ROOT"]] if os.environ.get("VAPASR_ALIGN_ROOT") else []) + [os.path.join(MAN, "align-asr-tn-v1"), os.path.join(MAN, "align2"), os.path.join(MAN, "align")]
             adir = next((os.path.join(c, name) for c in cands if os.path.isdir(os.path.join(c, name))), os.path.join(cands[-1], name)); self.align_dirs[name] = adir
             # asr-tn-v1.0.0 관문: 정렬 산출물의 textnorm fingerprint 가 없거나(동결 전 align2/align) 코드와 다르면 실패. 재현은 VAPASR_ALLOW_LEGACY_TN=1
             from ..data.textnorm import check_fingerprint
