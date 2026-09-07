@@ -6,13 +6,15 @@ python experiments/s1_align.py --manifest librispeech-100 [--mode stream|utt|all
       + stats.json.  u0_align.py 와 같은 스키마라 u0_align_qc.py 와 interleave 빌더가 그대로 읽는다. 재개 가능(파일 존재 시 건너뜀), 동시 실행 안전(pid tmp).
 모델은 로컬 디렉토리($MXC_ALIGNER_DIR, 토크나이저는 $MXC_QWEN_ASR_DIR)에서 읽는다. 발화 오디오는 원본 파일에서 직접(조립 스트림 아님) 읽고 offset_s 를 더한다.
 """
-import os, sys, json, time, argparse, subprocess, tempfile
+import os, sys, json, time, argparse, subprocess
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser()
 ap.add_argument("--manifest", required=True); ap.add_argument("--mode", default="all"); ap.add_argument("--limit", type=int, default=None); ap.add_argument("--ids", default=None)
 ap.add_argument("--gpu", default=None); ap.add_argument("--min-dur", type=float, default=0.3)
 ap.add_argument("--out-root", default=None, help="출력 루트(기본 $MXC_DATA_MANIFEST_DIR/align-asr-tn-v1 = 규약 ID). 규약이 바뀌면 새 루트로 — 기존 산출물은 지우지 않는다")
 ap.add_argument("--shard", default=None, help="k/n: 병렬 워커 k 가 rows[k::n] 만 처리 (같은 manifest 를 여러 프로세스로)")
+ap.add_argument("--batch", type=int, default=64, help="배치 최대 발화 수"); ap.add_argument("--batch-sec", type=float, default=480.0, help="배치 오디오 합계 상한(초) — padding·메모리 제어")
+ap.add_argument("--chunk", type=int, default=128, help="한 번에 읽어 두는 스트림 수(오디오 prefetch 단위)"); ap.add_argument("--io-threads", type=int, default=16)
 a = ap.parse_args()
 if "CUDA_VISIBLE_DEVICES" not in os.environ:
     if a.gpu is None:
@@ -41,18 +43,16 @@ if a.shard:   # 병렬 워커: k/n → rows[k::n]. 각 워커가 다른 행을 �
 print(f"align ← {mname} ({a.mode}): {len(rows)} 스트림{' shard ' + a.shard if a.shard else ''} → {out}  [GPU {os.environ['CUDA_VISIBLE_DEVICES']}]", flush=True)
 
 aligner = Qwen3ForcedAligner.from_pretrained(ALIGNER, dtype=torch.bfloat16, device_map="cuda"); tok = AutoTokenizer.from_pretrained(QWEN)
-_tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+from concurrent.futures import ThreadPoolExecutor
 
-def align_tokens(audio, text, lang):
+def tokens_from_items(items, text):
     """aligner 항목(단어/문자 시각) → BPE 토큰 종료 시각. offsets 로 문자 구간을 잇는다 (u0_align.py 와 동일 로직)."""
-    sf.write(_tmp, audio, SR); r = aligner.align(audio=_tmp, text=text, language=lang)
-    items = r[0].items if hasattr(r[0], "items") else r
     enc = tok(text, return_offsets_mapping=True, add_special_tokens=False); ids, offs = enc["input_ids"], enc["offset_mapping"]
     spans, cur = [], 0
     for it in items:
-        s = text.find(it.text, cur)
-        if s < 0: s = cur
-        spans.append((s, s + len(it.text), float(it.end_time))); cur = s + len(it.text)
+        s0 = text.find(it.text, cur)
+        if s0 < 0: s0 = cur
+        spans.append((s0, s0 + len(it.text), float(it.end_time))); cur = s0 + len(it.text)
     outp = []
     for tid, (o0, o1) in zip(ids, offs):
         cover = [sp for sp in spans if sp[0] < o1 and sp[1] > o0]
@@ -60,28 +60,59 @@ def align_tokens(audio, text, lang):
         outp.append(dict(id=int(tid), text=text[o0:o1], end_time=t_end))
     return outp
 
-st = dict(streams=0, utts=0, tokens=0, fail=0, offset_err_ms=[], sec=0.0); T0 = time.time(); audio_cache = {}
-for r in rows:
-    outp = os.path.join(out, r["id"] + ".jsonl")
-    if os.path.exists(outp): continue
-    tmpp = outp + f".{os.getpid()}.tmp"
-    with open(tmpp, "w", encoding="utf-8") as f:
+def run_batch(items):
+    """배치 정렬(한 번의 padded forward). 실패하면 이분해서 문제 항목만 격리한다. → 항목별 aligner items 또는 예외."""
+    try:
+        res = aligner.align(audio=[(it["audio"], SR) for it in items], text=[it["atext"] for it in items], language=[it["lang"] for it in items])
+        return [(r.items if hasattr(r, "items") else r) for r in res]
+    except Exception as ex:
+        if len(items) == 1: return [ex]
+        torch.cuda.empty_cache(); h = len(items) // 2; return run_batch(items[:h]) + run_batch(items[h:])
+
+def make_batches(utts):
+    """길이 순 정렬 후 (합계 초 ≤ batch_sec, 개수 ≤ batch) 로 묶는다 — padding 을 줄이고 메모리를 일정하게."""
+    utts = sorted(utts, key=lambda u: u["dur"]); bs, cur, sec = [], [], 0.0
+    for u in utts:
+        if cur and (sec + u["dur"] > a.batch_sec or len(cur) >= a.batch): bs.append(cur); cur, sec = [], 0.0
+        cur.append(u); sec += u["dur"]
+    if cur: bs.append(cur)
+    return bs
+
+def load_chunk(chunk):
+    """스트림 묶음의 발화 오디오를 스레드로 미리 읽는다 → [(row, [utt dict…])]."""
+    def one(r):
+        us = []
         for u in iter_utterances(r):
             if u["end"] - u["start"] < a.min_dur or not u["text"]: continue
-            x = audio_cache.get(u["path"]);
-            if x is None:
-                x = load_utt_audio(u["path"]); audio_cache[u["path"]] = x
-                if len(audio_cache) > 256: audio_cache.clear(); audio_cache[u["path"]] = x
-            # 스트림 안에서 두 번째 발화부터는 선행 공백을 붙여 토큰화한다 — 없으면 이어 붙인 텍스트가 'lost'+'i' → 'losti' 로 붙는다(2026-09-05 overfit 예시).
-            # 텍스트 자체는 기록에 그대로 두고 토큰 id 만 공백 포함 형이 된다. 정렬기에는 공백 포함 텍스트를 준다(offset 은 공백을 첫 토큰에 흡수).
-            try: toks = align_tokens(x, (" " + u["text"]) if u.get("idx", 0) > 0 else u["text"], r["lang"])
-            except Exception as ex: st["fail"] += 1; print(f"  ! {r['id']} {u['utt_id']}: {type(ex).__name__}: {str(ex)[:80]}", flush=True); continue
-            for t in toks: t["end_time"] = round(u["start"] + t["end_time"], 3)      # 스트림 절대 시각
-            f.write(json.dumps(dict(speaker=0, start=u["start"], end=u["end"], text=u["text"], tokens=toks), ensure_ascii=False) + "\n")
-            st["utts"] += 1; st["tokens"] += len(toks)
-            if toks: st["offset_err_ms"].append((u["end"] - toks[-1]["end_time"]) * 1000)
-    if os.path.exists(outp): os.remove(tmpp); continue
-    os.replace(tmpp, outp); st["streams"] += 1
-    if st["streams"] % 200 == 0: print(f"  {st['streams']} 스트림 · {st['utts']} 발화 · {st['tokens']} 토큰 · 실패 {st['fail']} · {time.time()-T0:.0f}s", flush=True)
+            # 스트림 안에서 두 번째 발화부터는 선행 공백을 붙여 토큰화한다(없으면 'lost'+'i' → 'losti'). 정렬기에도 공백 포함 텍스트를 준다.
+            us.append(dict(u, audio=load_utt_audio(u["path"]), dur=u["end"] - u["start"], atext=(" " + u["text"]) if u.get("idx", 0) > 0 else u["text"], lang=r["lang"], sid=r["id"]))
+        return r, us
+    return list(pool.map(one, chunk))
+
+st = dict(streams=0, utts=0, tokens=0, fail=0, offset_err_ms=[], sec=0.0); T0 = time.time()
+rows = [r for r in rows if not os.path.exists(os.path.join(out, r["id"] + ".jsonl"))]; print(f"  남은 스트림 {len(rows)} (기존 파일 건너뜀)", flush=True)
+pool = ThreadPoolExecutor(a.io_threads); chunks = [rows[i: i + a.chunk] for i in range(0, len(rows), a.chunk)]
+fut = pool.submit(load_chunk, chunks[0]) if chunks else None
+for ci in range(len(chunks)):
+    loaded = fut.result(); fut = pool.submit(load_chunk, chunks[ci + 1]) if ci + 1 < len(chunks) else None   # 다음 묶음 오디오를 미리 읽는다
+    allu = [u for _, us in loaded for u in us]; results = {}
+    for b in make_batches(allu):
+        for u, res in zip(b, run_batch(b)): results[id(u)] = res
+    for r, us in loaded:
+        outp = os.path.join(out, r["id"] + ".jsonl"); tmpp = outp + f".{os.getpid()}.tmp"
+        with open(tmpp, "w", encoding="utf-8") as f:
+            for u in us:
+                res = results[id(u)]
+                if isinstance(res, Exception): st["fail"] += 1; print(f"  ! {r['id']} {u['utt_id']}: {type(res).__name__}: {str(res)[:80]}", flush=True); continue
+                try: toks = tokens_from_items(res, u["atext"])
+                except Exception as ex: st["fail"] += 1; print(f"  ! {r['id']} {u['utt_id']}: {type(ex).__name__}: {str(ex)[:80]}", flush=True); continue
+                for t in toks: t["end_time"] = round(u["start"] + t["end_time"], 3)      # 스트림 절대 시각
+                f.write(json.dumps(dict(speaker=0, start=u["start"], end=u["end"], text=u["text"], tokens=toks), ensure_ascii=False) + "\n")
+                st["utts"] += 1; st["tokens"] += len(toks)
+                if toks: st["offset_err_ms"].append((u["end"] - toks[-1]["end_time"]) * 1000)
+        if os.path.exists(outp): os.remove(tmpp); continue
+        os.replace(tmpp, outp); st["streams"] += 1
+    if st["streams"] % 500 < a.chunk: el = time.time() - T0; print(f"  {st['streams']} 스트림 · {st['utts']} 발화 ({st['utts']/max(1,el):.1f}/s) · {st['tokens']} 토큰 · 실패 {st['fail']} · {el:.0f}s", flush=True)
+pool.shutdown()
 st["sec"] = time.time() - T0; v = np.array(st["offset_err_ms"]); st["offset_err_ms"] = dict(n=len(v), median=float(np.median(v)) if len(v) else None, p90=float(np.percentile(v, 90)) if len(v) else None)
 json.dump(st, open(os.path.join(out, f"stats-{a.mode}.json"), "w"), indent=1, ensure_ascii=False); print(json.dumps(st, ensure_ascii=False))

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Stage 2 준비: asr-tn-v1.0.0 manifest 의 강제 정렬(align-asr-tn-v1/) + 항목 캐시. 노드 1 × GPU 8 (manifest 마다 8 shard). 특징은 학습 중 온라인(FEATURES=1 이면 캐시도 생성).
-#   제출:  sbatch --export=ALL,MANIFESTS=librispeech-dev,librispeech-test,kspon-dev,kspon-eval,kspon-full,librispeech-960 slurm/s2_prep.sbatch
+#   제출:  sbatch --export=ALL,MANIFESTS=librispeech-dev,librispeech-test,kspon-dev,kspon-eval,kspon-full,librispeech-960 slurm/s2_prep.sbatch   (WPG=3: GPU 당 워커 수)
 #   재개 가능(파일 단위 skip) — 선점되면 requeue 로 이어서. 완료 표식: $ROOT/prep-DONE-<manifest 목록 hash>
 #SBATCH --job-name=SA_SFT_FullduplexStage5
 #SBATCH --partition=low_p_hpc
@@ -29,9 +29,10 @@ n_done_feat() { python - "$1" <<'PY'
 import json, sys, os; p = sys.argv[1]; print(len({json.loads(l)["id"] for l in open(p)}) if os.path.exists(p) else 0)
 PY
 }
-run8() {  # run8 <script> <manifest> [extra…]: 8 GPU shard 병렬
-  local s=$1 m=$2; shift 2; PIDS=""
-  for k in 0 1 2 3 4 5 6 7; do CUDA_VISIBLE_DEVICES=$k python -u experiments/$s --manifest $m --mode all --shard $k/8 "$@" > $ROOT/logs/prep-$s-$m-$k.log 2>&1 & PIDS="$PIDS $!"; done
+WPG=${WPG:-3}                       # GPU 당 워커 수: 정렬기는 CPU(특징 추출) 병목이라 GPU 하나에 여러 워커(GPU 메모리 워커당 ≈5 GB)
+run8() {  # run8 <script> <manifest> [extra…]: 8 GPU × WPG 워커 shard 병렬
+  local s=$1 m=$2; shift 2; PIDS=""; local N=$((8 * WPG))
+  for k in $(seq 0 $((N - 1))); do CUDA_VISIBLE_DEVICES=$((k % 8)) OMP_NUM_THREADS=2 python -u experiments/$s --manifest $m --mode all --shard $k/$N "$@" > $ROOT/logs/prep-$s-$m-$k.log 2>&1 & PIDS="$PIDS $!"; done
   wait $PIDS
 }
 for m in ${MANIFESTS//,/ }; do
@@ -40,7 +41,7 @@ for m in ${MANIFESTS//,/ }; do
   case $m in librispeech-960) python experiments/s2_seed_cache.py --new $m --old librispeech-100 --encoder $ENC --feat $FEATURES ;; kspon-full) python experiments/s2_seed_cache.py --new $m --old kspon-100 --encoder $ENC --feat $FEATURES ;;
               *) python experiments/s2_seed_cache.py --new $m --old $m --encoder $ENC --old-align align2 --feat $FEATURES ;; esac   # dev/test: 같은 이름, 옛 캐시·정렬은 다른 루트에 그대로
   # 2) 정렬
-  A=$(ls $M/align-asr-tn-v1/$m 2>/dev/null | grep -c '\.jsonl$'); if [ "$A" -lt "$ROWS" ]; then echo "[$(date '+%T')] align $m: $A/$ROWS → 8 shard"; run8 s1_align.py $m; fi
+  A=$(ls $M/align-asr-tn-v1/$m 2>/dev/null | grep -c '\.jsonl$'); if [ "$A" -lt "$ROWS" ]; then echo "[$(date '+%T')] align $m: $A/$ROWS → 8 shard"; run8 s1_align.py $m --batch 96 --batch-sec 720 --io-threads 8; fi
   A=$(ls $M/align-asr-tn-v1/$m | grep -c '\.jsonl$'); echo "[$(date '+%T')] align $m: $A/$ROWS"
   # 3) 특징 캐시(선택, 기본 off: 학습이 온라인으로 인코딩)
   D=$ROWS
