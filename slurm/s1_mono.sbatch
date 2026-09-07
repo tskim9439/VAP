@@ -2,6 +2,7 @@
 # Stage 1 mono 스트리밍 ASR — run A(LoRA) / run B(thinker full FT), 노드 1 × GPU 8 (H200 140 GB), 선점 시 자동 재개.
 #   제출:  sbatch --export=ALL,RUN=A slurm/s1_mono.sbatch
 #          sbatch --export=ALL,RUN=B slurm/s1_mono.sbatch
+#          sbatch --export=ALL,RUN=C,TRAIN=librispeech-960,kspon-full,EPOCHS=15 slurm/s1_mono.sbatch   # Stage 2 (온라인 특징)
 #   산출물: /soundai/Model/VAPASR/s1-<RUN>/  (ckpt-last.pt 재개용 · ckpt-<step>.pt · results.json · eval/ · DONE)
 #   로그:   /soundai/Model/VAPASR/logs/SA_SFT_FullduplexStage5-<jobid>.out
 #SBATCH --job-name=SA_SFT_FullduplexStage5
@@ -46,12 +47,14 @@ fi
 echo "adapter: $ADAPTER"
 
 # ── 2. run 별 설정 (유효 배치 = 8 GPU × 언어별 bs: EN 96 스트림 / KO 384 발화 → lr 은 단일 GPU 대비 약 2 배)
-COMMON="--tag $RUN --out-dir $OUT --epochs 15 --bs-en 12 --bs-ko 48 --init-adapter $ADAPTER --next-weight 0.3 --next-weight-ko 0.15
+TRAIN=${TRAIN:-librispeech-100,kspon-100}; EPOCHS=${EPOCHS:-15}; FEATURES=${FEATURES:-online}
+COMMON="--tag $RUN --out-dir $OUT --train $TRAIN --features $FEATURES --epochs $EPOCHS --bs-en 12 --bs-ko 48 --init-adapter $ADAPTER --next-weight 0.3 --next-weight-ko 0.15
         --eval-every 1000 --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every 300 --warmup 200 --resume auto"
 case "$RUN" in
   A) EXTRA="--lora-r 16 --lr 4e-4 --lr-adapter 1e-3" ;;
   B) EXTRA="--full-ft --lr 4e-5 --lr-adapter 1e-3" ;;
-  *) echo "RUN 은 A 또는 B"; exit 1 ;;
+  C*) EXTRA="--full-ft --lr 4e-5 --lr-adapter 1e-3" ;;                        # Stage 2: B 조건 + 1,930 h (TRAIN=librispeech-960,kspon-full), 온라인 특징
+  *) echo "RUN 은 A / B / C*"; exit 1 ;;
 esac
 
 # ── 3. 선점 신호(USR1, 종료 180 s 전): PREEMPT 파일 → 학습기가 다음 step 경계에서 ckpt-last 저장 후 종료 → requeue

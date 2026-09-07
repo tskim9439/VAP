@@ -19,7 +19,7 @@ ap.add_argument("--bs-en", type=int, default=2); ap.add_argument("--bs-ko", type
 ap.add_argument("--lr", type=float, default=2e-4, help="LoRA lr (full FT 면 thinker lr, 권장 2e-5~5e-5)"); ap.add_argument("--lr-adapter", type=float, default=5e-4); ap.add_argument("--warmup", type=int, default=300); ap.add_argument("--wd", type=float, default=0.01)
 ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--M", type=int, default=4); ap.add_argument("--next-weight", type=float, default=0.3); ap.add_argument("--lora-r", type=int, default=16)
 ap.add_argument("--next-weight-ko", type=float, default=None, help="KO 배치의 <NEXT_AUDIO> 가중치(기본 --next-weight). KO 과소 방출 대응")
-ap.add_argument("--full-ft", action="store_true", help="thinker 0.6B 전체 학습(LoRA 없음)"); ap.add_argument("--no-grad-ckpt", action="store_true", help="thinker gradient checkpointing 끄기(기본 켬: 최장 KO 배치 48×~1k 토큰이 140 GB 를 넘김)"); ap.add_argument("--init-adapter", default=None, help="s1_distill_adapter.py 의 adapter.pt 로 adapter 초기화(증류 init)")
+ap.add_argument("--full-ft", action="store_true", help="thinker 0.6B 전체 학습(LoRA 없음)"); ap.add_argument("--features", default="online", help="online: 학습 중 오디오→Nemotron(기본) | cache: 특징 캐시(index.jsonl)"); ap.add_argument("--train-encoder", action="store_true", help="Nemotron encoder 도 학습(동결 해제)"); ap.add_argument("--lr-encoder", type=float, default=1e-5); ap.add_argument("--no-grad-ckpt", action="store_true", help="thinker gradient checkpointing 끄기(기본 켬: 최장 KO 배치 48×~1k 토큰이 140 GB 를 넘김)"); ap.add_argument("--init-adapter", default=None, help="s1_distill_adapter.py 의 adapter.pt 로 adapter 초기화(증류 init)")
 ap.add_argument("--eval-every", type=int, default=1000); ap.add_argument("--eval-bias", default="0"); ap.add_argument("--eval-delay", type=int, default=2)
 ap.add_argument("--sentinel-stream", type=int, default=20); ap.add_argument("--sentinel-utt", type=int, default=200)
 ap.add_argument("--select", default=None); ap.add_argument("--select-stream", type=int, default=200); ap.add_argument("--select-utt", type=int, default=1000)
@@ -63,11 +63,11 @@ TEST = [("test-clean/stream", "librispeech-test", "test-clean", "stream"), ("tes
         ("test-other/stream", "librispeech-test", "test-other", "stream"), ("test-other/utt", "librispeech-test", "test-other", "utt"),
         ("eval_clean", "kspon-eval", "eval_clean", "utt"), ("eval_other-partial[E03314-E06000,n=2687]", "kspon-eval", "eval_other", "utt")]
 def make_sets(spec, cap_stream, cap_utt, seed=1):
-    return {lab: MonoStreamDataset([m], tok, mode=mode, subsets=[sub], delays=(a.eval_delay,), max_per_chunk=a.M, seed=seed, max_items=(cap_stream if mode == "stream" else cap_utt))
+    return {lab: MonoStreamDataset([m], tok, mode=mode, subsets=[sub], delays=(a.eval_delay,), max_per_chunk=a.M, seed=seed, max_items=(cap_stream if mode == "stream" else cap_utt), online=a.features == "online")
             for lab, m, sub, mode in spec}
 training = not (a.eval_only or a.final or a.select)
 if world > 1 and not main: barrier()            # rank 0 이 정렬 항목 캐시(_items.json.gz)를 먼저 만들고, 나머지는 그것을 읽는다 (Lustre 소파일 7.5만 개 ×8 회피)
-train_ds = {m: MonoStreamDataset([m], tok, mode="stream", delays=delays, max_per_chunk=a.M, seed=a.seed) for m in a.train.split(",")} if training else {}
+train_ds = {m: MonoStreamDataset([m], tok, mode="stream", delays=delays, max_per_chunk=a.M, seed=a.seed, online=a.features == "online") for m in a.train.split(",")} if training else {}
 if a.overfit:   # 같은 표본으로 학습·디코드. 표적 사례(KO 숫자·라틴 이중표기 / EN 발화 경계)를 절반 이상 포함시키고 ID·커버리지를 출력. 타깃 보존 assert.
     import re
     from vapasr.data.kspon import read_trn, DUAL
@@ -93,7 +93,11 @@ if world > 1 and main: barrier()                # 캐시 생성 완료 → 다�
 sp_ids = (next(iter(dev_sets.values())) if dev_sets else next(iter(train_ds.values()))).sp_ids
 log("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align})" for k, v in train_ds.items()) + " | dev " + ", ".join(f"{k}:{len(v)}" for k, v in dev_sets.items()) + f" | world {world}")
 
-model = MonoInterleavedASR(thinker, tok, Adapter(), sp_ids, lora_r=a.lora_r, full_ft=a.full_ft).to(dev); model.adapter.float()
+encoder = None
+if a.features == "online":
+    from vapasr.features.online import NemotronOnline
+    encoder = NemotronOnline().set_trainable(a.train_encoder); log(f"온라인 인코더 Nemotron [56,0] ({'학습' if a.train_encoder else '동결'})")
+model = MonoInterleavedASR(thinker, tok, Adapter(), sp_ids, lora_r=a.lora_r, full_ft=a.full_ft, encoder=encoder).to(dev); model.adapter.float()
 if not a.no_grad_ckpt: model._lm().gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})   # 활성화 메모리 ≈5.9 MB/token → 수 배 절감, 연산 +30 %
 if a.init_adapter:
     st0 = torch.load(a.init_adapter, map_location="cpu"); model.adapter.load_state_dict(st0["adapter"]); log(f"adapter 증류 init ← {a.init_adapter} (val cos {st0.get('hist', [{}])[-1].get('cos', float('nan')):.3f})")
@@ -175,8 +179,10 @@ def cycle(m):
 its = [cycle(m) for m in loaders]
 emb_w = model._embed().weight   # 임베딩: LoRA 모드는 특수 토큰 행만 grad(마스크). weight decay 는 전 행(tied lm_head)에 걸리므로 wd=0 그룹
 groups = [{"params": [p for n, p in model.named_parameters() if p.requires_grad and n.startswith("adapter")], "lr": a.lr_adapter, "weight_decay": a.wd},
-          {"params": [p for n, p in model.named_parameters() if p.requires_grad and not n.startswith("adapter") and p is not emb_w], "lr": a.lr, "weight_decay": a.wd},
-          {"params": [emb_w], "lr": a.lr, "weight_decay": 0.0}]
+          {"params": [p for n, p in model.named_parameters() if p.requires_grad and not n.startswith(("adapter", "encoder")) and p is not emb_w], "lr": a.lr, "weight_decay": a.wd},
+          {"params": [emb_w], "lr": a.lr, "weight_decay": 0.0},
+          {"params": [p for n, p in model.named_parameters() if p.requires_grad and n.startswith("encoder")], "lr": a.lr_encoder, "weight_decay": a.wd}]   # --train-encoder 일 때만 비어 있지 않음
+groups = [g for g in groups if g["params"]]
 assert sum(len(g["params"]) for g in groups) == sum(1 for p in model.parameters() if p.requires_grad)
 opt = torch.optim.AdamW(groups)
 sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1, s / max(1, a.warmup)) * 0.5 * (1 + math.cos(math.pi * min(1, s / max(1, a.steps)))))
@@ -218,7 +224,8 @@ while step < a.steps:
     b = next(its[step % len(its)])
     nw = a.next_weight_ko if (a.next_weight_ko is not None and b["lang"][0] == "Korean") else a.next_weight
     with torch.autocast("cuda", dtype=torch.bfloat16):
-        loss, parts = ddp(b["feats"].to(dev), b["ids"].to(dev), b["is_audio"].to(dev), b["chunk_of"].to(dev), b["labels"].to(dev), b["mask"].to(dev), next_weight=nw)
+        x = dict(wav_len=b["wav_len"].to(dev), K=b["K"].to(dev)) if "wav" in b else {}
+        loss, parts = ddp((b["wav"] if "wav" in b else b["feats"]).to(dev), b["ids"].to(dev), b["is_audio"].to(dev), b["chunk_of"].to(dev), b["labels"].to(dev), b["mask"].to(dev), next_weight=nw, **x)
     loss.backward(); torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0); opt.step(); sched.step(); opt.zero_grad(set_to_none=True); step += 1
     for k, v in parts.items(): acc[k] = acc.get(k, 0) + v
     lab = b["labels"]; n_lab += int((lab != -100).sum()); n_next += int((lab == sp_ids["<NEXT_AUDIO>"]).sum()); n_flush += b["n_flush"]; fr += b["frames"]

@@ -4,16 +4,17 @@
 전부 random init (plans/stage1-mono-pilot.md §5): 기존 U0.5 파라미터를 읽지 않는다.
 """
 import math
-from typing import Dict, List
+from typing import Dict, List, Optional
 import torch, torch.nn as nn, torch.nn.functional as F
 from .model import Adapter
 
 class MonoInterleavedASR(nn.Module):
     def __init__(self, thinker, tokenizer, adapter: Adapter, sp_ids: Dict[str, int], lora_r: int = 16, lora_alpha: int = 32,
-                 lora_targets=("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"), full_ft: bool = False):
-        """full_ft=True: thinker 0.6B 전체를 학습(LoRA 없음, fp32 master + autocast bf16). 임베딩은 전 행 학습(grad mask 없음)."""
+                 lora_targets=("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"), full_ft: bool = False, encoder: Optional[nn.Module] = None):
+        """full_ft=True: thinker 0.6B 전체를 학습(LoRA 없음, fp32 master + autocast bf16). 임베딩은 전 행 학습(grad mask 없음).
+        encoder: 온라인 특징 인코더(NemotronOnline). 주면 forward/stream_decode 가 wav 를 받아 특징을 직접 만든다(동결/학습은 encoder.set_trainable)."""
         super().__init__()
-        self.tok = tokenizer; self.adapter = adapter; self.sp_ids = dict(sp_ids); self.full_ft = full_ft
+        self.tok = tokenizer; self.adapter = adapter; self.sp_ids = dict(sp_ids); self.full_ft = full_ft; self.encoder = encoder
         if full_ft:
             thinker = thinker.float()
             for p in thinker.parameters(): p.requires_grad_(True)
@@ -46,14 +47,17 @@ class MonoInterleavedASR(nn.Module):
 
     def chunk_embed(self, feats):                       # (B,1,K,Din) → (B,K,D)
         return self.adapter(feats[:, 0].float())
+    def encode(self, wav, wav_len, K):                  # (B,L) wav → (B,1,Kmax,Din) — 온라인 인코더
+        assert self.encoder is not None, "encoder 없음(캐시 모드)"; return self.encoder(wav, wav_len, K)[:, None]
 
     def build(self, feats, ids, is_audio, chunk_of):
         emb = self._embed(); E = emb(ids); ce = self.chunk_embed(feats).to(E.dtype); D = E.shape[-1]
         g = torch.gather(ce, 1, chunk_of.clamp(min=0)[..., None].expand(-1, -1, D))
         return torch.where(is_audio[..., None], g, E)
 
-    def forward(self, feats, ids, is_audio, chunk_of, labels, mask, next_weight: float = 1.0):
-        """next_weight < 1: <NEXT_AUDIO>(= RNN-T blank) 위치 CE 를 낮춰 라벨 불균형(70–85 %)을 완화."""
+    def forward(self, feats, ids, is_audio, chunk_of, labels, mask, next_weight: float = 1.0, wav_len=None, K=None):
+        """next_weight < 1: <NEXT_AUDIO>(= RNN-T blank) 위치 CE 를 낮춰 라벨 불균형(70–85 %)을 완화. wav_len 이 있으면 feats 는 wav (B,L) 이고 encoder 로 특징을 만든다."""
+        if wav_len is not None: feats = self.encode(feats, wav_len, K)
         # lm_head 는 라벨 위치에서만 계산한다. 전 위치 (B,L,152k) fp32 logits 는 KO bs 48 에서 >100 GB 라 140 GB GPU 에서도 OOM (job 65258).
         lm = self._lm(); h = lm.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of), attention_mask=mask).last_hidden_state
         tgt = labels[:, 1:]; sel = tgt != -100; t = tgt[sel]                                       # (N,)
@@ -75,6 +79,9 @@ class MonoInterleavedASR(nn.Module):
         라운드마다 최대 M 토큰, 토큰 없이 <NEXT_AUDIO> 가 나오면 종료. flush 토큰의 chunk 번호는 K + 라운드. KV cache 로 위치당 forward 1 회."""
         import time
         from transformers import DynamicCache
+        if feats.dim() == 1:                            # wav (T,) → 온라인 인코더([56,0] 인과라 전체 인코딩 = 스트리밍 출력)
+            K = torch.tensor([int(round(feats.shape[0] / 16000 * 12.5))], device=feats.device)
+            feats = self.encode(feats[None], torch.tensor([feats.shape[0]], device=feats.device), K)[0]
         emb = self._embed(); dev = feats.device; cache = DynamicCache(); ce = self.chunk_embed(feats[None])[0].to(emb.weight.dtype)   # (K,D)
         def step(e):
             out = self.thinker(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=cache, use_cache=True); return out.logits[0, -1].float()
@@ -99,13 +106,15 @@ class MonoInterleavedASR(nn.Module):
 
     def trainable_state(self):
         W = self._embed().weight.detach().cpu()
+        enc = {"encoder": {k: v.detach().cpu() for k, v in self.encoder.enc.state_dict().items()}} if (self.encoder is not None and getattr(self.encoder, "trainable", False)) else {}
         if self.full_ft:   # thinker 전체(bf16 로 저장, 0.6B ≈ 1.2 GB)
-            return dict(adapter=self.adapter.state_dict(), thinker={k: v.detach().to(torch.bfloat16).cpu() for k, v in self.thinker.state_dict().items()}, sp_ids=self.sp_ids, mono=True, full_ft=True)
+            return dict(adapter=self.adapter.state_dict(), thinker={k: v.detach().to(torch.bfloat16).cpu() for k, v in self.thinker.state_dict().items()}, sp_ids=self.sp_ids, mono=True, full_ft=True, **enc)
         return dict(adapter=self.adapter.state_dict(), lora={k: v for k, v in self.thinker.state_dict().items() if "lora" in k},
                     special_rows={int(r): W[r].clone() for r in self.special_rows}, sp_ids=self.sp_ids, mono=True)
 
     def load_trainable_state(self, st):
         self.adapter.load_state_dict(st["adapter"])
+        if st.get("encoder") and self.encoder is not None: self.encoder.enc.load_state_dict(st["encoder"])
         if st.get("thinker"): self.thinker.load_state_dict({k: v.to(next(self.thinker.parameters()).dtype) for k, v in st["thinker"].items()}, strict=False); return
         if st.get("lora"): self.thinker.load_state_dict(st["lora"], strict=False)
         with torch.no_grad():
