@@ -1,6 +1,8 @@
 #!/bin/bash
 # Stage 2 학습 — 다중 노드(기본 8 노드 × 8 GPU = 64 rank) DDP, thinker full FT + 온라인 Nemotron 특징, 1,930 h. 선점·시간 제한 시 저장 후 requeue.
-#   제출:  sbatch --dependency=afterany:65787 --export=ALL,RUN=C,TRAIN=librispeech-960:kspon-full,EPOCHS=15,EVAL_EVERY=1000,SAVE_EVERY=500 slurm/s2_train.sbatch
+#   제출:  sbatch --export=ALL,RUN=C,TRAIN=librispeech-960:kspon-full,EPOCHS=30,EVAL_EVERY=1000,SAVE_EVERY=500,LR=1e-4,WARMUP=500 slurm/s2_train.sbatch
+#          이어서 다른 run 을 체인할 때는 --dependency=afterok:<jobid> (afterany 는 선행 run 이 실패해도 시작한다) + INIT_CKPT=…/s1-<RUN>/ckpt-last.pt
+#          NCCL 초기화에서 SIGSEGV 가 잦은 노드는 --exclude=slurmmxch200v5-hpc-52 처럼 뺀다(66007: 4 회 중 3 회 hpc-52)
 #          (TRAIN 은 콜론 구분. LR/WARMUP/BS_EN/BS_KO 로 조정: 64 GPU 면 유효 배치가 8 GPU 의 8 배(EN 768 / KO 3072)라 LR 상향을 검토)
 #   산출물: /soundai/Model/VAPASR/s1-<RUN>/  (ckpt-last.pt 재개용 · ckpt-<step>.pt · results.json · eval/ · DONE)
 #   로그:   /soundai/users/tskim/VAPKT/logs/train/SA_SFT_FullDuplexStage5-<jobid>.out|.err
@@ -46,6 +48,8 @@ case "$RUN" in
   *)  EXTRA="--full-ft --lr $LR --lr-adapter $LR_ADAPTER" ;;
 esac
 INIT_CKPT=${INIT_CKPT:-}; [ -n "$INIT_CKPT" ] && { [ -f "$INIT_CKPT" ] || { echo "!! INIT_CKPT 없음: $INIT_CKPT"; exit 1; }; EXTRA="$EXTRA --ckpt $INIT_CKPT"; }   # 이전 run 의 ckpt 로 가중치 초기화(옵티마이저는 새로)
+# 선행 run 이 끝나지 않았는데(DONE 없음) afterany 로 시작되면 중간 ckpt 로 학습해 버린다(66009 가 C 의 step-500 ckpt 로 시작). INIT_REQUIRE_DONE=0 이면 무시
+[ -n "$INIT_CKPT" ] && [ "${INIT_REQUIRE_DONE:-1}" = 1 ] && [ ! -f "$(dirname "$INIT_CKPT")/DONE" ] && { echo "!! INIT_CKPT 의 run 이 미완료(DONE 없음): $(dirname "$INIT_CKPT") — 선행 학습을 끝낸 뒤 다시 제출 (INIT_REQUIRE_DONE=0 으로 강제 가능)"; exit 1; }
 
 # ── 선점·시간 제한: PREEMPT 파일(공유 FS) → 모든 rank 가 다음 step 경계에서 감지(all_reduce) → rank 0 저장 → 종료 → requeue
 rm -f "$OUT/PREEMPT"

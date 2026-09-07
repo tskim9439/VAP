@@ -43,12 +43,16 @@ import numpy as np, torch, torch.nn as nn, jiwer
 if world > 1:
     import torch.distributed as dist; from datetime import timedelta; import faulthandler; faulthandler.enable()   # SIGSEGV 시 파이썬 스택을 stderr 에 (job 66007: NCCL init 직후 rank 가 segfault, 흔적 없음)
     if int(os.environ.get("NCCL_IB_RETRY_CNT", "7")) > 7: os.environ["NCCL_IB_RETRY_CNT"] = "7"     # IB QP retry_cnt 는 3 비트(0–7). 초과값은 드라이버에서 잘리거나 실패한다
+    os.environ.setdefault("TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC", "3600")   # NCCL watchdog 심장박동 감시(기본 8 분): 긴 대기 중 프로세스를 죽이지 않도록
     torch.cuda.set_device(local); dist.init_process_group("nccl", timeout=timedelta(hours=3), device_id=torch.device("cuda", local))   # 다중 노드: set_device 를 먼저, device_id 명시(global rank 로 추측하면 hang 가능)   # rank 0 의 sentinel 평가(수십 분) 동안 다른 rank 가 barrier 에서 기다린다 — 기본 10 분이면 죽는다
 dev = f"cuda:{local}" if world > 1 else "cuda"; main = rank == 0
+# 대기용 CPU(gloo) 그룹: rank 0 의 sentinel 평가(5–10 분) 동안 63 rank 가 NCCL barrier 에 걸려 있으면 IB 에 미완료 작업이 남아 "retry exceeded"(65963·65965) 나
+# 전 rank 의 조용한 종료(66007 restart 2) 로 죽었다. 긴 대기는 이더넷(gloo) 으로 하고 NCCL 은 학습 step 의 all-reduce 에만 쓴다.
+gloo_pg = dist.new_group(backend="gloo", timeout=timedelta(hours=3)) if world > 1 else None
 def log(*s):
     if main: print(*s, flush=True)
 def barrier():
-    if world > 1: dist.barrier()
+    if world > 1: dist.barrier(group=gloo_pg)
 from vapasr.data.textnorm import score_en, score_ko, TEXTNORM_VERSION
 from vapasr.uslm.mono_data import MonoStreamDataset, BucketBatchSampler, collate_streams, CHUNK_S
 from vapasr.uslm.mono_model import MonoInterleavedASR
@@ -225,7 +229,7 @@ def save_last():
 def should_stop():
     f = stop["flag"] or os.path.exists(os.path.join(out, "PREEMPT"))
     if world > 1:
-        t = torch.tensor([1 if f else 0], device=dev); dist.all_reduce(t); f = bool(t.item())
+        t = torch.tensor([1 if f else 0]); dist.all_reduce(t, group=gloo_pg); f = bool(t.item())   # CPU 텐서 · gloo (NCCL 에 대기 작업을 남기지 않는다)
     return f
 t0 = time.time(); acc = {}; model.train(); n_lab = n_next = n_flush = 0; fr = 0
 while step < a.steps:
