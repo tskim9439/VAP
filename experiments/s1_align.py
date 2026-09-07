@@ -35,7 +35,10 @@ from vapasr.data.textnorm import check_fingerprint, TEXTNORM_ID_SHORT
 _mst = json.load(open(os.path.join(mdir, "stats.json"))) if os.path.exists(os.path.join(mdir, "stats.json")) else {}
 check_fingerprint(_mst.get("fingerprint"), f"align {mname}")                       # asr-tn-v1.0.0: manifest fingerprint 없거나 코드와 다르면 시작 전 실패
 out = os.path.join(a.out_root or os.path.join(MAN, f"align-{TEXTNORM_ID_SHORT}"), mname); os.makedirs(out, exist_ok=True)
-if _mst.get("fingerprint"): json.dump(_mst["fingerprint"], open(os.path.join(out, "fingerprint.json"), "w"), indent=1)
+if _mst.get("fingerprint"):                        # 원자적 교체: 직접 덮어쓰면 그 순간 읽는 학습 rank 가 빈 파일을 본다(66009: requeue 반복하던 prep 65774 가 덮어써 JSONDecodeError)
+    _fp = os.path.join(out, "fingerprint.json"); _tmp = f"{_fp}.{os.getpid()}.tmp"; json.dump(_mst["fingerprint"], open(_tmp, "w"), indent=1)
+    try: os.replace(_tmp, _fp)
+    except OSError: json.dump(_mst["fingerprint"], open(_fp, "w"), indent=1); os.remove(_tmp)
 rows = read_streams(mdir, mode=None if a.mode == "all" else a.mode)
 if a.ids: keep = set(a.ids.split(",")); rows = [r for r in rows if r["id"] in keep]
 rows = rows[: a.limit] if a.limit else rows
