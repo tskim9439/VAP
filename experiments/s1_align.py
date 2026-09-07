@@ -86,11 +86,16 @@ def load_chunk(chunk):
         for u in iter_utterances(r):
             if u["end"] - u["start"] < a.min_dur or not u["text"]: continue
             # 스트림 안에서 두 번째 발화부터는 선행 공백을 붙여 토큰화한다(없으면 'lost'+'i' → 'losti'). 정렬기에도 공백 포함 텍스트를 준다.
-            us.append(dict(u, audio=load_utt_audio(u["path"]), dur=u["end"] - u["start"], atext=(" " + u["text"]) if u.get("idx", 0) > 0 else u["text"], lang=r["lang"], sid=r["id"]))
+            try: audio = load_utt_audio(u["path"])
+            except Exception as ex:                       # 오디오 누락·손상(예: NIKL 2023 의 빠진 pcm) → 발화만 건너뛰고 워커는 계속
+                st["audio_missing"] += 1
+                if st["audio_missing"] <= 20: print(f"  ! 오디오 읽기 실패 {u['path']}: {type(ex).__name__}", flush=True)
+                continue
+            us.append(dict(u, audio=audio, dur=u["end"] - u["start"], atext=(" " + u["text"]) if u.get("idx", 0) > 0 else u["text"], lang=r["lang"], sid=r["id"]))
         return r, us
     return list(pool.map(one, chunk))
 
-st = dict(streams=0, utts=0, tokens=0, fail=0, offset_err_ms=[], sec=0.0); T0 = time.time()
+st = dict(streams=0, utts=0, tokens=0, fail=0, audio_missing=0, offset_err_ms=[], sec=0.0); T0 = time.time()
 _t = time.time(); done_ids = {f[:-6] for f in os.listdir(out) if f.endswith(".jsonl")}   # 존재 확인은 listdir 1 회로 — Blob NFS 에서 파일별 stat 은 30 ms(62만 개면 5 시간)
 PARTS = os.path.join(out, "parts"); os.makedirs(PARTS, exist_ok=True)               # 출력은 청크(128 스트림)당 part 파일 1 개 — 스트림별 open/rename 이 NFS 에서 초당 5 개로 병목
 for pf in os.listdir(PARTS):
