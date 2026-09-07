@@ -11,7 +11,9 @@ def rows(name):
 def link(src, dst):
     if os.path.exists(dst): return False
     try: os.link(src, dst)
-    except OSError: shutil.copy2(src, dst)
+    except OSError:
+        try: shutil.copy2(src, dst)                      # 다른 FS → 복사. 그사이 다른 run 이 만든 파일(권한 등)이면 건너뜀
+        except OSError: return os.path.exists(dst)
     return True
 new, old = rows(a.new), rows(a.old); assert new, f"새 manifest 없음: {a.new}"
 same_audio = [i for i in new if i in old and [s["path"] for s in new[i]["segments"]] == [s["path"] for s in old[i]["segments"]]
