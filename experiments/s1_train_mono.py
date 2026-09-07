@@ -170,7 +170,8 @@ if a.final:
     json.dump(final, open(os.path.join(out, "eval", "final.json"), "w"), indent=1, ensure_ascii=False); print("final →", os.path.join(out, "eval", "final.json")); sys.exit(0)
 
 # ───────────────────────────── 학습 ─────────────────────────────
-def bs_of(name): return a.bs_ko if name.startswith("kspon") else a.bs_en
+from vapasr.uslm.mono_data import lang_of
+def bs_of(name): return a.bs_ko if lang_of(name) == "Korean" else a.bs_en      # 언어로 판단(kspon 뿐 아니라 nikl 도 KO 배치)
 samplers = {m: BucketBatchSampler(ds, min(bs_of(m), len(ds)), seed=a.seed, drop_last=not a.overfit, rank=rank, world=world) for m, ds in train_ds.items()}
 loaders = {m: torch.utils.data.DataLoader(ds, batch_sampler=samplers[m], num_workers=4, collate_fn=collate_streams, persistent_workers=False) for m, ds in train_ds.items()}
 steps_per_epoch = sum(len(s) for s in samplers.values())
