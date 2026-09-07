@@ -4,7 +4,7 @@
     + 정렬 align/<manifest>/<id>.jsonl(experiments/s1_align.py, speaker=0)
 시퀀스 (화자 태그 없음):
   [prefix … <DELAY_d>] [AUDIO_0] tok… <NEXT_AUDIO> … [AUDIO_K-1] tok… <NEXT_AUDIO>
-  flush 라운드: <EMPTY_AUDIO> tok… <NEXT_AUDIO>  ×(ceil(n_flush/M) + 1)   ← 마지막 라운드는 빈 라운드(= "남은 것 없음" 학습)
+  flush 라운드: <EMPTY_AUDIO> tok… <NEXT_AUDIO>  ×(ceil(n_flush/M) + 1; M=0 이면 1 + 1)   ← 마지막 라운드는 빈 라운드(= "남은 것 없음" 학습)
   <EMPTY_AUDIO> 는 오디오 자리 대신 들어가는 **입력** 토큰(손실 없음). δ 때문에 스트림 끝을 넘긴 토큰은 여기서 방출된다.
 chunk k = 특징 프레임 k (12.5 Hz = 80 ms). 스트림 길이가 제각각이라 길이 버킷 배치를 쓴다.
 """
@@ -32,7 +32,7 @@ def build_mono_sequence(chunks, K: int, prefix: List[int], audio_pad: int, sp: S
             ids += emits; is_input += [False] * len(emits); chunk_of += [-1] * len(emits)
         else:
             flush += [t for t in emits if t != sp.empty_audio]
-    rounds = [flush[i: i + M] for i in range(0, len(flush), M)] + [[]]
+    step = M if M else max(1, len(flush)); rounds = [flush[i: i + step] for i in range(0, len(flush), step)] + [[]]   # M=0: flush 토큰 전부 한 라운드
     for r in rounds:
         ids.append(sp.empty_audio); is_input.append(True); chunk_of.append(-1)
         ids += r + [sp.next_audio]; is_input += [False] * (len(r) + 1); chunk_of += [-1] * (len(r) + 1)
@@ -40,7 +40,7 @@ def build_mono_sequence(chunks, K: int, prefix: List[int], audio_pad: int, sp: S
 
 class MonoStreamDataset(Dataset):
     def __init__(self, manifests: List[str], tok, encoder: str = "nemotron-c0", mode: str = "stream", subsets: Optional[List[str]] = None,
-                 delays=(2, 3, 4, 6), max_per_chunk: int = 4, max_items: Optional[int] = None, seed: int = 0, qc: bool = True, align_root: Optional[str] = None, online: bool = True):
+                 delays=(2, 3, 4, 6), max_per_chunk: int = 0, max_items: Optional[int] = None, seed: int = 0, qc: bool = True, align_root: Optional[str] = None, online: bool = True):
         """online=True(기본): 특징 캐시 없이 manifest 의 오디오를 조립해 돌려준다(K = round(duration·12.5)). False: 특징 캐시(index.jsonl) 경로."""
         self.tok = tok; self.sp_ids = add_specials(tok); self.sp = specials_of(self.sp_ids); self.delays = tuple(delays); self.M = max_per_chunk; self.online = online
         self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>"); self._pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]

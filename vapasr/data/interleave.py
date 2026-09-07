@@ -4,7 +4,7 @@
 출력: chunk 단위 [(chunk_idx, [emissions...])], emissions = 특수/텍스트 토큰 id 리스트. 시퀀스 규약:
   chunk k:  <AUDIO_k>  [ <SPK_x> 토큰(화자 바뀔 때) tok tok ... ]  <NEXT_AUDIO>
   토큰은 (end_time + δ) 가 속한 chunk 에 배치. chunk 내 정렬은 종료 시각 순, 동시면 A 우선.
-  M 초과분은 다음 chunk 로 이월(overflow) — 이월 수·추가 지연을 통계로 남긴다.
+  max_per_chunk(M) 를 주면 초과분은 다음 chunk 로 이월(overflow) — 기본 0 = 제한 없음(2026-09-07, 사용자 결정). 이월 수·추가 지연은 통계로 남긴다.
 특수 토큰 id 는 호출자가 준다 (U1 에서 tokenizer 에 추가).
 """
 from dataclasses import dataclass, field
@@ -21,7 +21,7 @@ class InterleaveStats:
     per_chunk_hist: Dict[int, int] = field(default_factory=dict)
 
 def build_interleaved(streams: List[List[Tuple[int, float]]], duration_s: float, sp: Specials, chunk_s: float = 0.08,
-                      delay_frames: int = 2, max_per_chunk: int = 4, add_spk_tags: bool = True):
+                      delay_frames: int = 2, max_per_chunk: int = 0, add_spk_tags: bool = True):
     """streams[s] = [(token_id, end_time_s), ...] 시간순. → (chunk_emissions, stats)"""
     n_chunks = int(math.ceil(duration_s / chunk_s)); buckets: List[List[Tuple[float, int, int]]] = [[] for _ in range(n_chunks + 1)]
     for s, toks in enumerate(streams):
@@ -32,7 +32,7 @@ def build_interleaved(streams: List[List[Tuple[int, float]]], duration_s: float,
         pending = sorted(backlog + buckets[k], key=lambda x: (x[0], x[1])); backlog = []
         emit, n_txt = [], 0
         for item in pending:
-            if n_txt >= max_per_chunk: backlog.append(item); continue
+            if max_per_chunk and n_txt >= max_per_chunk: backlog.append(item); continue      # max_per_chunk 0/None = 청크당 토큰 수 제한 없음(2026-09-07)
             t_end, s, tid = item
             if add_spk_tags and s != last_spk: emit.append(sp.spk[s]); last_spk = s
             emit.append(tid); n_txt += 1; st.tokens += 1

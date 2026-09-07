@@ -73,10 +73,10 @@ class MonoInterleavedASR(nn.Module):
         return loss, parts
 
     @torch.inference_mode()
-    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 4, next_bias: float = 0.0, max_flush_rounds: int = 8):
+    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 0, next_bias: float = 0.0, max_flush_rounds: int = 8, runaway_cap: int = 64):
         """feats (1,K,Din) → ([(chunk k, token id)], forced_next 횟수, tick_ms 목록, flush 라운드 수).
         chunk k 의 방출 시각 = (k+1)·80 ms. 스트림 끝에서는 <EMPTY_AUDIO> 를 입력해 flush 라운드를 돌린다(학습 규약과 동일):
-        라운드마다 최대 M 토큰, 토큰 없이 <NEXT_AUDIO> 가 나오면 종료. flush 토큰의 chunk 번호는 K + 라운드. KV cache 로 위치당 forward 1 회."""
+        라운드마다 <NEXT_AUDIO> 까지(M 제한 없음, runaway_cap 은 폭주 방지), 토큰 없이 <NEXT_AUDIO> 가 나오면 종료. flush 토큰의 chunk 번호는 K + 라운드. KV cache 로 위치당 forward 1 회."""
         import time
         from transformers import DynamicCache
         if feats.dim() == 1:                            # wav (T,) → 온라인 인코더([56,0] 인과라 전체 인코딩 = 스트리밍 출력)
@@ -92,7 +92,7 @@ class MonoInterleavedASR(nn.Module):
             while True:
                 logits[self.blocked] = float("-inf"); logits[self.next_audio] -= next_bias
                 tid = int(logits.argmax())
-                if tid == self.next_audio or n >= max_per_chunk:
+                if tid == self.next_audio or n >= (max_per_chunk or runaway_cap):          # max_per_chunk 0 = 제한 없음(폭주 방지 cap 만)
                     forced += int(tid != self.next_audio); step(e_next); return n
                 out.append((k, tid)); n += 1; logits = step(emb.weight[tid])
         K = ce.shape[0]

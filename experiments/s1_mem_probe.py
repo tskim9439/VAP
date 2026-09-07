@@ -4,7 +4,7 @@ python experiments/s1_mem_probe.py --bs-en 12 --bs-ko 48 [--full-ft] [--no-grad-
 import os, sys, argparse, time, torch, torch.nn as nn
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser(); ap.add_argument("--bs-en", type=int, default=12); ap.add_argument("--bs-ko", type=int, default=48); ap.add_argument("--full-ft", action="store_true")
-ap.add_argument("--lora-r", type=int, default=16); ap.add_argument("--no-grad-ckpt", action="store_true"); ap.add_argument("--M", type=int, default=4); ap.add_argument("--gpu", type=int, default=0)
+ap.add_argument("--lora-r", type=int, default=16); ap.add_argument("--no-grad-ckpt", action="store_true"); ap.add_argument("--M", type=int, default=0, help="청크당 텍스트 토큰 상한(0 = 제한 없음, 기본)"); ap.add_argument("--gpu", type=int, default=0)
 ap.add_argument("--manifests", default="librispeech-100,kspon-100"); ap.add_argument("--features", default="online"); ap.add_argument("--train-encoder", action="store_true"); a = ap.parse_args()
 dev = torch.device(f"cuda:{a.gpu}"); torch.backends.cuda.matmul.allow_tf32 = True
 from vapasr.uslm.mono_data import MonoStreamDataset, collate_streams

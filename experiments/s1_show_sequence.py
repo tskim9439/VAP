@@ -22,29 +22,35 @@ def render(tok, name, mode, delay, pick, show_ms=None):
             e = ref[ref_i][1] if ref_i < len(ref) and ref[ref_i][0] == t else None; ref_i += 1 if e is not None else 0
             slot["tokens"].append((tok.decode([t]), e))
     prefix = tok.decode([t for t, inp, k in zip(ids, is_input, chunk_of) if inp and k < 0 and t != sp.empty_audio]).replace("\n", "⏎")
-    print(f"\n### {name} · {it['id']} · {it['duration_s']} s · K={K} 청크(80 ms) · δ={delay}({delay*80} ms) · M={ds.M} · 텍스트 토큰 {len(ref)} · 시퀀스 길이 {len(ids)}")
+    print(f"\n### {name} · {it['id']} · {it['duration_s']} s · K={K} 청크(80 ms) · δ={delay}({delay*80} ms) · 청크당 토큰 상한 {'없음' if not ds.M else ds.M} · 텍스트 토큰 {len(ref)} · 시퀀스 길이 {len(ids)}")
     print(f"lexical_text: `{it['text']}`")
     print(f"\nprefix(입력만, 라벨 없음): `{prefix}`\n")
-    print("| 청크 k | 시간창 (ms) | 입력 | 라벨(모델 출력) | 정렬 근거: 토큰 종료 시각 (ms) | 방출 지연 (ms) |\n|---:|---|---|---|---|---|")
+    # 디코더 전용 LM 이므로 각 위치의 입력 토큰이 다음 토큰을 예측한다: 오디오 자리 → 첫 텍스트, 텍스트 → 다음 텍스트, 마지막 텍스트 → <NEXT>,
+    # <NEXT> 위치의 예측은 다음 오디오 자리(런타임이 넣는 입력)라 손실 없음. 학습은 teacher forcing(정답 텍스트가 다음 입력), 추론은 모델 출력이 다음 입력.
+    print("| 청크 k | 시간창 (ms) | 위치별 `입력 → 예측(라벨)` | 정렬 근거: 토큰 종료 시각 (ms) | 방출 지연 (ms) |\n|---:|---|---|---|---|")
     rows = []; empty_run = []
+    def pairs(first_in, pieces):
+        joined = "".join(pieces).strip(); n = len(pieces)           # 한글 byte-level BPE 조각은 단독 decode 가 깨지므로 '단어⟨i/n⟩' 로 표시
+        show = [(f"{joined}⟨{i+1}/{n}⟩" if ("\ufffd" in p or n > 1 and not p.strip()) else (p.strip() or "␣")) for i, p in enumerate(pieces)]
+        seq = [first_in] + [f"`{x}`" for x in show]; tg = seq[1:] + ["`<NEXT>`"]
+        return " · ".join(f"{a}→{b}" for a, b in zip(seq, tg)) + " · `<NEXT>`→(다음 오디오, 손실 없음)"
     def flush_empty():
         if empty_run:
             a, b = empty_run[0], empty_run[-1]; n = b - a + 1
-            rows.append(f"| {a}–{b} | {a*80}–{(b+1)*80} | `[AUDIO_{a}]`{' … `[AUDIO_%d]`' % b if n > 1 else ''} | `<NEXT>` × {n} (무방출) | – | – |"); empty_run.clear()
+            rows.append(f"| {a}–{b} | {a*80}–{(b+1)*80} | `[AUDIO_k]`→`<NEXT>` × {n} (무방출) | – | – |"); empty_run.clear()
     for k in range(K):
         s = per.get(k, dict(tokens=[], next=False)); win = f"{k*80}–{(k+1)*80}"
         if show_ms is not None and k * 80 >= show_ms and k < K - 3: continue
         if not s["tokens"]: empty_run.append(k); continue
         flush_empty()
-        pieces = [tx for tx, _ in s["tokens"]]; joined = "".join(pieces).strip()
-        toks = f"`{joined}`" + (f" ({len(pieces)} 조각)" if len(pieces) > 1 else "") + (" `<NEXT>`" if s["next"] else "")
+        pieces = [tx for tx, _ in s["tokens"]]
         ev = ", ".join(f"{int(e*1000)}" if e is not None else "?" for _, e in s["tokens"])
         lat = ", ".join(f"+{int((k+1)*80 - e*1000)}" if e is not None else "?" for _, e in s["tokens"])
-        rows.append(f"| {k} | {win} | `[AUDIO_{k}]` | {toks} | {ev} | {lat} |")
+        rows.append(f"| {k} | {win} | {pairs(f'`[AUDIO_{k}]`', pieces)} | {ev} | {lat} |")
     flush_empty()
     for j, fr in enumerate(flush_rounds):
-        pieces = [tx for tx, _ in fr["tokens"]]; toks = (f"`{''.join(pieces).strip()}` " if pieces else "") + "`<NEXT>`"
-        rows.append(f"| flush {j} | 스트림 끝 이후 | `<EMPTY_AUDIO>` | {toks} | {'이월 토큰' if pieces else '남은 것 없음 → 종료'} | – |")
+        pieces = [tx for tx, _ in fr["tokens"]]
+        rows.append(f"| flush {j} | 스트림 끝 이후 | {pairs('`<EMPTY_AUDIO>`', pieces)} | {'이월 토큰' if pieces else '남은 것 없음 → 종료'} | – |")
     print("\n".join(rows))
 
 if __name__ == "__main__":
