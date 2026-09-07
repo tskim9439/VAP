@@ -17,7 +17,9 @@ def read_streams(manifest_dir: str, mode: Optional[str] = None, subset: Optional
     return rows
 
 def load_utt_audio(path: str) -> np.ndarray:
-    """flac/wav(헤더 있음) 은 soundfile, .pcm 은 raw 리더. → float32 (T,) @16 kHz"""
+    """flac/wav(헤더 있음) 은 soundfile, .pcm 은 raw 리더, "a.tar::member" 는 압축 해제 없이 인덱스로 읽기. → float32 (T,) @16 kHz"""
+    if "::" in path:
+        from .archive import load_audio_from_archive; return load_audio_from_archive(path)
     if path.endswith(".pcm"): return read_pcm(path)[0]
     import soundfile as sf
     x, sr = sf.read(path, dtype="float32", always_2d=True); x = x[:, 0]

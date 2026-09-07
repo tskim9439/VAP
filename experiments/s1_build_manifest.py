@@ -25,6 +25,9 @@ ap.add_argument("--libri-root", default=os.environ.get("MXC_LIBRISPEECH_DIR", os
 ap.add_argument("--out", default=os.environ.get("MXC_DATA_MANIFEST_DIR", os.environ.get("DATA_MANIFEST_DIR", "/tmp")))
 ap.add_argument("--only", default=None, help="쉼표 구분 manifest 이름"); ap.add_argument("--workers", type=int, default=128)
 ap.add_argument("--kspon-folders", default="1-62", help="KsponSpeech_01 하위 폴더 범위(파일럿 0001~0062)")
+ap.add_argument("--en-open-root", default=os.environ.get("MXC_EN_OPEN_DIR", "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/EN/TRAIN/OPEN"), help="Switchboard·MNSC CSV/wav 루트")
+ap.add_argument("--nikl-root", default=os.environ.get("MXC_NIKL_DIR", "/soundai/DB/raw/nikl")); ap.add_argument("--nikl-years", default="2021,2022,2023,2024,2025")
+ap.add_argument("--sample-hours", type=float, default=None, help="이름이 *-<N> 인 manifest 는 N h 표본(seed 결정적). 명시하면 그 값")
 ap.add_argument("--target-s", type=float, default=25.0); ap.add_argument("--min-s", type=float, default=20.0); ap.add_argument("--max-s", type=float, default=30.0)
 ap.add_argument("--seed", type=int, default=0)
 a = ap.parse_args(); assert a.kspon_root and a.libri_root, ".env 의 MXC_KSPONSPEECH_DIR / MXC_LIBRISPEECH_DIR 필요"
@@ -36,6 +39,10 @@ MANIFESTS = {  # name: (corpus, [(split_dir, subset)])
     "kspon-100":        ("kspon", [("train.trn", "train-01")]),
     "librispeech-960":  ("librispeech", [("train-clean-100", "train-clean-100"), ("train-clean-360", "train-clean-360"), ("train-other-500", "train-other-500")]),
     "kspon-full":       ("kspon", [("train.trn", "train-all")]),           # KsponSpeech_01–05 전체(≈970 h)
+    # ── asr-tn-v1.1.0 확장(2026-09-07): 발화 = 스트림. *-1000 은 1,000 h 표본(seed 결정적)
+    "swbd-train":       ("switchboard", [("switchboard/switchboard_train_tn.csv", "train")]),                          # 230 h, 16 kHz 전화 대화
+    "mnsc-1000":        ("mnsc", [("Multitask-National-Speech-Corpus-v1/Multitask-National-Speech-Corpus-v1_train_tn.csv", "part1")]),   # PART1 낭독 3,338 h 중 1,000 h
+    "nikl-1000":        ("nikl", [("years", "train")]),                                                                # NIKL 2021–2025 일상대화 중 1,000 h(대화 단위 표본)
     "kspon-dev":        ("kspon", [("dev.trn", "dev")]),
     "kspon-eval":       ("kspon", [("eval_clean.trn", "eval_clean"), ("eval_other.trn", "eval_other")]),
 }
@@ -119,6 +126,58 @@ def kspon_utts(trn_name, subset):
         for u, (d, odd) in zip(out, ex.map(lambda u: pcm_duration(u["path"]), out)): u["dur_s"] = round(d, 3); st["odd_byte"] += int(odd)
     return out, st
 
+# ───────────────────────────── EN open CSV (Switchboard · MNSC) ─────────────────────────────
+def csv_utts(corpus, rel_csv, subset, sample_hours=None):
+    """`audio_path|script|sampling_rate|duration|script_tn` → 발화 목록. 텍스트는 script_tn 을 asr-tn 규약으로 다시 정규화(멱등), 빈 것·digit 은 quarantine.
+    길이는 CSV 의 duration(파일을 열지 않는다). mnsc 는 PART1(낭독) 만. sample_hours 가 있으면 seed 셔플로 그만큼."""
+    csvp = os.path.join(a.en_open_root, rel_csv); SRC_FILES.append(csvp); st = collections.Counter(); utts = []
+    with open(csvp, encoding="utf-8", errors="replace") as f:
+        hdr = f.readline().rstrip("\n").split("|")
+        for line in f:
+            r = dict(zip(hdr, line.rstrip("\n").split("|")))
+            if len(r) != len(hdr): st["bad_row"] += 1; continue
+            if corpus == "mnsc" and "ASR-PART1" not in r["audio_path"]: continue
+            uid = os.path.splitext(os.path.basename(r["audio_path"]))[0]; text = target_en(r["script_tn"], corpus); fl = target_flags(text, "English")
+            if int(r["sampling_rate"]) != 16000: st["not_16k"] += 1; _quarantine(uid, subset, r["script"], text, {"not_16k"}); continue
+            if fl: st["quarantined"] += 1; _quarantine(uid, subset, r["script"], text, fl); continue
+            utts.append(dict(utt_id=uid, speaker=uid.split("_")[0] if corpus == "switchboard" else None, chapter=None, path=os.path.join(a.en_open_root, r["audio_path"]), text=text, raw=r["script"], dur_s=round(float(r["duration"]), 3))); st["kept"] += 1
+    if sample_hours:
+        random.Random(a.seed).shuffle(utts); acc, keep = 0.0, []
+        for u in utts:
+            if acc >= sample_hours * 3600: break
+            keep.append(u); acc += u["dur_s"]
+        st["sampled_from"] = len(utts); utts = keep
+    print(f"    {corpus}/{subset}: {len(utts)} 발화 {sum(u['dur_s'] for u in utts)/3600:.1f} h · " + " · ".join(f"{k}={v}" for k, v in st.items()), flush=True)
+    return utts, st
+
+# ───────────────────────────── NIKL 일상대화 ─────────────────────────────
+def nikl_utts(subset, sample_hours=None):
+    """연도별 JSON 을 훑어 발화(= PCM 파일 하나)를 모은다. original_form → asr-tn nikl 파서. 발화겹침·익명화·불명확·시각 이상은 quarantine. 표본은 대화 단위."""
+    from vapasr.data.nikl import index_year, read_dialogue, pcm_path
+    st = collections.Counter(); by_dlg = collections.defaultdict(list); jsons = []
+    for y in a.nikl_years.split(","):
+        idx = index_year(a.nikl_root, y, cache_dir=os.path.join(a.out, "_index"))
+        for k, jp in idx.items():
+            if not k.startswith("json:"): continue
+            jsons.append(jp)
+            for u in read_dialogue(jp):
+                st["utts"] += 1; p = pcm_path(idx, u["id"])
+                if p is None: st["no_pcm_dir"] += 1; continue
+                text = target_ko(u["raw"], "nikl"); fl = set(target_flags(text, "Korean", u["raw"], "nikl"))
+                if "발화겹침" in u["note"]: fl.add("overlap")
+                dur = (u["end"] - u["start"]) if isinstance(u["start"], (int, float)) and isinstance(u["end"], (int, float)) else None
+                if dur is None or not (0.1 <= dur <= 60): fl.add("bad_time")
+                for k2 in fl: st[f"flag_{k2}"] += 1
+                if fl: st["quarantined"] += 1; _quarantine(u["id"], f"{subset}-{y}", u["raw"], text, fl); continue
+                by_dlg[u["dialogue"]].append(dict(utt_id=u["id"], speaker=u["speaker"], chapter=u["dialogue"], path=p, text=text, raw=u["raw"], dur_s=round(dur, 3), year=y))
+    dlgs = sorted(by_dlg); random.Random(a.seed).shuffle(dlgs); utts = []; acc = 0.0
+    for d in dlgs:
+        if sample_hours and acc >= sample_hours * 3600: break
+        utts += by_dlg[d]; acc += sum(u["dur_s"] for u in by_dlg[d])
+    st["dialogues_total"] = len(dlgs); st["dialogues_kept"] = len({u["chapter"] for u in utts}); SRC_FILES.extend(sorted(jsons)[:2000])   # fingerprint: 원문 JSON 2,000 개까지
+    print(f"    nikl/{subset}: {len(utts)} 발화 {acc/3600:.1f} h · " + " · ".join(f"{k}={v}" for k, v in st.items()), flush=True)
+    return utts, st
+
 # ───────────────────────────── 실행 ─────────────────────────────
 for name in names:
     corpus, parts = MANIFESTS[name]; od = os.path.join(a.out, name); os.makedirs(od, exist_ok=True); rows, stats = [], {}
@@ -130,6 +189,14 @@ for name in names:
             if split != "train": rs += utt_rows(utts, "librispeech", subset, split, "English", "ls")
             sub_st = dict(utts=len(utts), speakers=len({u["speaker"] for u in utts}), chapters=len({(u["speaker"], u["chapter"]) for u in utts}),
                           utt_hours=round(sum(u["dur_s"] for u in utts) / 3600, 2))
+        elif corpus in ("switchboard", "mnsc", "nikl"):
+            hours = a.sample_hours if a.sample_hours else (float(name.split("-")[-1]) if name.split("-")[-1].isdigit() else None)
+            utts, st = (nikl_utts(subset, hours) if corpus == "nikl" else csv_utts(corpus, src, subset, hours))
+            pre = {"switchboard": "swbd", "mnsc": "mnsc", "nikl": "nikl"}[corpus]; lang = "Korean" if corpus == "nikl" else "English"
+            rs = utt_rows(utts, corpus, subset, split, lang, pre)
+            if split == "train":
+                for r in rs: r["mode"] = "stream"; r["id"] = r["id"].replace("-utt-", "-")       # 발화 = 스트림(kspon 과 동일 규약)
+            sub_st = dict(utts=len(utts), utt_hours=round(sum(u["dur_s"] for u in utts) / 3600, 2), **st)
         else:
             utts, st = kspon_utts(src, subset)
             if subset == "train-all":                                   # KsponSpeech_0X → subset train-0X (id 가 kspon-100 과 호환)

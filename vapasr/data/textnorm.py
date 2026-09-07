@@ -15,6 +15,7 @@ target_* 는 문자열만 돌려주고, quarantine 판정은 target_flags() 로 
 import re, os, hashlib, unicodedata
 from typing import Optional, Set, Dict, Tuple
 from .kspon import normalize_kspon_v1
+from .nikl import normalize_nikl
 try:
     from num2words import num2words
     from importlib.metadata import version as _pkg_version
@@ -22,10 +23,10 @@ try:
 except Exception as e:                                                   # 의존성 없으면 즉시 실패(동결 관문 1)
     raise ImportError("asr-tn-v1.0.0 은 num2words==0.5.14 가 필요합니다: pip install num2words==0.5.14") from e
 
-TEXTNORM_VERSION = "asr-tn-v1.0.0"
+TEXTNORM_VERSION = "asr-tn-v1.1.0"        # v1.1.0(2026-09-07): 새 코퍼스 파서 nikl·switchboard·mnsc 추가. 기존 코퍼스 타깃은 v1.0.0 과 동일
 TEXTNORM_ID_SHORT = "asr-tn-v1"                                          # 정렬 경로 등에 쓰는 major 식별자
 NUMERIC_BACKEND_PINNED = "0.5.14"
-NUMERIC_CORPORA_EN: Set[str] = set()                                    # v1.0.0: 숫자 표기를 허용한 EN 학습 코퍼스 없음(LibriSpeech 는 quarantine)
+NUMERIC_CORPORA_EN: Set[str] = set()                                    # v1.1.0: 숫자 표기를 허용한 EN 학습 코퍼스 없음(LibriSpeech·Switchboard·MNSC 모두 digit 0, 남으면 quarantine)
 
 _TAG = re.compile(r"<[^>\s]{1,20}>")                                     # <en-US>, <ko-KR>, 특수 토큰
 _WS = re.compile(r"\s+")
@@ -87,9 +88,10 @@ def score_en(t: str) -> str:
 # ───────────────────────── KO ─────────────────────────
 _KO_PUNCT = re.compile(r"[^\w\s]")
 _KO_ALLOWED = re.compile(r"^[가-힣ᄀ-ᇿ㄰-㆏A-Za-z ]*$")
+KO_PARSERS = {"kspon": lambda r: normalize_kspon_v1(r), "nikl": lambda r: normalize_nikl(r)}   # corpus → (텍스트, malformed 사유)
 def target_ko(raw: str, corpus: str = "kspon") -> str:
-    """KO 학습 타깃. kspon: 이중표기 선택 + 표지 제거. 그 외(aihub 등): 태그·구두점 제거만. 독립 Latin 은 원형 유지."""
-    t = normalize_kspon_v1(raw)[0] if corpus == "kspon" else raw
+    """KO 학습 타깃. kspon: 이중표기 선택 + 표지 제거. nikl: original_form 표지 제거(익명화·불명확은 quarantine). 그 외(aihub 등): 태그·구두점 제거만. 독립 Latin 은 원형 유지."""
+    t = KO_PARSERS[corpus](raw)[0] if corpus in KO_PARSERS else raw
     return _WS.sub(" ", _KO_PUNCT.sub(" ", _clean(t))).strip()
 def score_ko(t: str, spaces: bool) -> str:
     """CER-official(spaces=True, 원문 공백 포함) / CER-nospace(spaces=False). 숫자·Latin 을 한글로 추측 변환하지 않는다."""
@@ -103,7 +105,8 @@ def target(t: str, lang: str, corpus: Optional[str] = None) -> str:
 def target_flags(t: str, lang: str, raw: Optional[str] = None, corpus: Optional[str] = None) -> Set[str]:
     """quarantine 사유 집합(비어 있으면 학습 가능). empty · digit · charset(허용 문자 밖) · control · malformed_dual(kspon) · not_idempotent."""
     f: Set[str] = set()
-    if lang == "Korean" and raw is not None and (corpus or "kspon") == "kspon" and normalize_kspon_v1(raw)[1]: f.add("malformed_dual")
+    if lang == "Korean" and raw is not None and (corpus or "kspon") in KO_PARSERS:
+        for reason in KO_PARSERS[corpus or "kspon"](raw)[1]: f.add({"empty_side": "malformed_dual", "unpaired_paren": "malformed_dual"}.get(reason, reason))
     if not t: f.add("empty"); return f
     if any(unicodedata.category(c) == "Cc" for c in t): f.add("control")
     if re.search(r"\d", t): f.add("digit")

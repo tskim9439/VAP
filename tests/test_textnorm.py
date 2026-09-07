@@ -19,8 +19,16 @@ KO_TARGET = [("(100명)/(백 명)", "백 명"), ("(0.1프로)/(영 점 일 프�
              ("<ko-KR> 안녕하세요.", "안녕하세요")]
 KO_QUARANTINE = [("100명이 왔어", {"digit"}), ("(3주)/(3 주)", {"digit"}), ("(안녕)/(", {"malformed_dual"}), ("()/(이십)", {"malformed_dual"}), ("", {"empty"}), ("b/ o/", {"empty"}), ("안녕_하세요", {"charset"})]
 
+NIKL = [("어~ 창업에 대해서", "어 창업에 대해서"), ("아이 사실은 -그- 그랬으면 좋겠다.", "아이 사실은 그 그랬으면 좋겠다"), ("너 엔씨티 나왔다고 {laughing} 따라서 춤추고", "너 엔씨티 나왔다고 따라서 춤추고"),
+        ("언니야 나는 한 이 주 딱 지금 이 주 됐는데", "언니야 나는 한 이 주 딱 지금 이 주 됐는데"), ("우리 사회에 미치는 영향에 대해서 어떻게 생각해?", "우리 사회에 미치는 영향에 대해서 어떻게 생각해")]
+NIKL_QUARANTINE = [("&name1&이랑?", {"anon"}), ("가격이 약간 (()) 두 시간밖에", {"unintelligible"}), ("들려 드리지 않은 곡 ((일이)) 있는 거야", {"unintelligible"}), ("{laughing}", {"empty"})]
+def test_nikl():
+    for raw, exp in NIKL: assert target_ko(raw, "nikl") == exp, (raw, target_ko(raw, "nikl"), exp); assert target_flags(target_ko(raw, "nikl"), "Korean", raw, "nikl") == set(), raw
+    for raw, exp in NIKL_QUARANTINE: t = target_ko(raw, "nikl"); f = target_flags(t, "Korean", raw, "nikl"); assert exp <= f, (raw, t, f)
+    for _, exp in NIKL: assert target_ko(exp, "nikl") == exp                                   # 멱등
+    assert target_ko("(100명)/(백 명)", "kspon") == "백 명" and target_en("DON'T STOP!", "switchboard") == "don't stop"   # 기존 코퍼스 불변
 def test_version():
-    assert TEXTNORM_VERSION == "asr-tn-v1.0.0"; assert NUMERIC_BACKEND_VERSION == NUMERIC_BACKEND_PINNED, NUMERIC_BACKEND_VERSION
+    assert TEXTNORM_VERSION == "asr-tn-v1.1.0"; assert NUMERIC_BACKEND_VERSION == NUMERIC_BACKEND_PINNED, NUMERIC_BACKEND_VERSION
     fp = fingerprint(); assert fp["textnorm_version"] == TEXTNORM_VERSION and len(fp["textnorm_sha256"]) == 64
 def test_en_target():
     for raw, exp in EN_TARGET: assert target_en(raw) == exp, (raw, target_en(raw), exp)
