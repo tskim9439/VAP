@@ -1,6 +1,7 @@
 #!/bin/bash
 # Stage 2 준비: asr-tn-v1.0.0 manifest 의 강제 정렬(align-asr-tn-v1/) + 항목 캐시. 노드 1 × GPU 8 (manifest 마다 8 shard). 특징은 학습 중 온라인(FEATURES=1 이면 캐시도 생성).
-#   제출:  sbatch --export=ALL,MANIFESTS=librispeech-dev,librispeech-test,kspon-dev,kspon-eval,kspon-full,librispeech-960 slurm/s2_prep.sbatch   (WPG=4: GPU 당 워커 수, BATCH=128 BATCH_SEC=960 배치 크기)
+#   제출:  sbatch --export=ALL,MANIFESTS=librispeech-dev:librispeech-test:kspon-dev:kspon-eval:kspon-full:librispeech-960 slurm/s2_prep.sbatch
+#          (manifest 구분자는 콜론 — --export 의 쉼표와 충돌. WPG=4: GPU 당 워커 수, BATCH=128 BATCH_SEC=960)
 #   재개 가능(파일 단위 skip) — 선점되면 requeue 로 이어서. 완료 표식: $ROOT/prep-DONE-<manifest 목록 hash>
 #SBATCH --job-name=SA_SFT_FullduplexStage5
 #SBATCH --partition=low_p_hpc
@@ -12,7 +13,7 @@
 #SBATCH --open-mode=append
 #SBATCH --output=/soundai/Model/VAPASR/logs/%x-%j-prep.out
 set -uo pipefail
-MANIFESTS=${MANIFESTS:?쉼표 구분 manifest 이름}; ENC=${ENC:-nemotron-c0}; FEATURES=${FEATURES:-0}; ROOT=/soundai/Model/VAPASR; mkdir -p $ROOT/logs
+MANIFESTS=${MANIFESTS:?manifest 이름 목록 — sbatch --export 는 쉼표를 구분자로 먹으므로 콜론(:)으로 구분}; MANIFESTS=${MANIFESTS//:/,}; ENC=${ENC:-nemotron-c0}; FEATURES=${FEATURES:-0}; ROOT=/soundai/Model/VAPASR; mkdir -p $ROOT/logs
 DONE=$ROOT/prep-DONE-$(echo "$MANIFESTS" | md5sum | cut -c1-8)   # manifest 목록별 완료 표식(여러 job 으로 나눠 제출 가능)
 echo "[$(date '+%F %T')] prep job $SLURM_JOB_ID node=$(hostname) restart=${SLURM_RESTART_COUNT:-0} manifests=$MANIFESTS"
 [ -f "$DONE" ] && { echo "이미 완료($DONE)"; exit 0; }
