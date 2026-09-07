@@ -112,8 +112,7 @@ for ci in range(len(chunks)):
     partp = os.path.join(PARTS, f"{PART_TAG}-{ci:06d}.jsonl"); tmpp = partp + ".tmp"
     with open(tmpp, "w", encoding="utf-8") as f:
         for r, us in loaded:
-            if not us: continue
-            outl = []
+            outl = []                                   # 정렬할 발화가 없는 스트림(min_dur 미만·빈 텍스트)도 빈 레코드로 기록해 '완료' 로 센다(아니면 영원히 미완료 → requeue 반복)
             for u in us:
                 res = results[id(u)]
                 if isinstance(res, Exception): st["fail"] += 1; print(f"  ! {r['id']} {u['utt_id']}: {type(res).__name__}: {str(res)[:80]}", flush=True); continue

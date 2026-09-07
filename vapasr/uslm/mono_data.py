@@ -81,6 +81,7 @@ class MonoStreamDataset(Dataset):
                     if sid in parts: utts = parts[sid]
                     elif sid in legacy: utts = _read_jsonl(os.path.join(adir, sid + ".jsonl"))
                     else: no_align += 1; continue
+                    if not utts: dropped += 1; continue                     # 정렬할 발화가 없던 스트림(빈 레코드)
                     bad = [u for u in utts if qc and bad_utterance(u)]
                     if bad: dropped += 1; continue                       # 불량 발화(동일 종료시각 뭉침)가 있는 스트림은 통째로 제외
                     toks = sorted(((t["id"], t["end_time"]) for u in utts for t in u["tokens"]), key=lambda x: x[1])
