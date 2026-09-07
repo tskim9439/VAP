@@ -53,8 +53,9 @@ echo "adapter: $ADAPTER"
 
 # ── 2. run 별 설정 (유효 배치 = 8 GPU × 언어별 bs: EN 96 스트림 / KO 384 발화 → lr 은 단일 GPU 대비 약 2 배)
 TRAIN=${TRAIN:-librispeech-100,kspon-100}; TRAIN=${TRAIN//:/,}; EPOCHS=${EPOCHS:-15}; FEATURES=${FEATURES:-online}
+EVAL_EVERY=${EVAL_EVERY:-1000}; SAVE_EVERY=${SAVE_EVERY:-300}   # 1,930 h(≈44k step) 은 EVAL_EVERY=2000 SAVE_EVERY=500 권장(full-FT ckpt 6.3 GB 저장 ≈1 min)
 COMMON="--tag $RUN --out-dir $OUT --train $TRAIN --features $FEATURES --epochs $EPOCHS --bs-en 12 --bs-ko 48 --init-adapter $ADAPTER --next-weight 0.3 --next-weight-ko 0.15
-        --eval-every 1000 --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every 300 --warmup 200 --resume auto"
+        --eval-every $EVAL_EVERY --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every $SAVE_EVERY --warmup 200 --resume auto"
 case "$RUN" in
   A) EXTRA="--lora-r 16 --lr 4e-4 --lr-adapter 1e-3" ;;
   B) EXTRA="--full-ft --lr 4e-5 --lr-adapter 1e-3" ;;
