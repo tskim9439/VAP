@@ -15,8 +15,7 @@
 #SBATCH --output=/soundai/Model/VAPASR/logs/prep/%x-%j.out
 #SBATCH --error=/soundai/Model/VAPASR/logs/prep/%x-%j.err
 set -uo pipefail
-WLOG=$ROOT/logs/prep/$SLURM_JOB_ID; mkdir -p "$WLOG"   # 워커(shard) 로그는 job 별 하위 폴더
-MANIFESTS=${MANIFESTS:?manifest 이름 목록 — sbatch --export 는 쉼표를 구분자로 먹으므로 콜론(:)으로 구분}; MANIFESTS=${MANIFESTS//:/,}; ENC=${ENC:-nemotron-c0}; FEATURES=${FEATURES:-0}; ROOT=/soundai/Model/VAPASR; mkdir -p $ROOT/logs/prep
+MANIFESTS=${MANIFESTS:?manifest 이름 목록 — sbatch --export 는 쉼표를 구분자로 먹으므로 콜론(:)으로 구분}; MANIFESTS=${MANIFESTS//:/,}; ENC=${ENC:-nemotron-c0}; FEATURES=${FEATURES:-0}; ROOT=/soundai/Model/VAPASR; WLOG=$ROOT/logs/prep/$SLURM_JOB_ID; mkdir -p "$WLOG"   # 워커(shard) 로그는 job 별 하위 폴더
 DONE=$ROOT/prep-DONE-$(echo "$MANIFESTS" | md5sum | cut -c1-8)   # manifest 목록별 완료 표식(여러 job 으로 나눠 제출 가능)
 echo "[$(date '+%F %T')] prep job $SLURM_JOB_ID node=$(hostname) restart=${SLURM_RESTART_COUNT:-0} manifests=$MANIFESTS"
 [ -f "$DONE" ] && { echo "이미 완료($DONE)"; exit 0; }
