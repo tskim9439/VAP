@@ -15,6 +15,7 @@ import os, sys, json, glob, random, argparse, collections
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from vapasr.data.streams import flac_duration
 from vapasr.data.kspon import read_trn, resolve_path, pcm_duration
 from vapasr.data.textnorm import target_en, target_ko, target_flags, TEXTNORM_VERSION, fingerprint   # asr-tn-v1.0.0: 모든 타깃은 여기서, quarantine·fingerprint 기록
 
@@ -22,7 +23,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--kspon-root", default=os.environ.get("MXC_KSPONSPEECH_DIR", os.environ.get("KSPONSPEECH_DIR")))
 ap.add_argument("--libri-root", default=os.environ.get("MXC_LIBRISPEECH_DIR", os.environ.get("LIBRISPEECH_DIR")))
 ap.add_argument("--out", default=os.environ.get("MXC_DATA_MANIFEST_DIR", os.environ.get("DATA_MANIFEST_DIR", "/tmp")))
-ap.add_argument("--only", default=None, help="쉼표 구분 manifest 이름"); ap.add_argument("--workers", type=int, default=16)
+ap.add_argument("--only", default=None, help="쉼표 구분 manifest 이름"); ap.add_argument("--workers", type=int, default=128)
 ap.add_argument("--kspon-folders", default="1-62", help="KsponSpeech_01 하위 폴더 범위(파일럿 0001~0062)")
 ap.add_argument("--target-s", type=float, default=25.0); ap.add_argument("--min-s", type=float, default=20.0); ap.add_argument("--max-s", type=float, default=30.0)
 ap.add_argument("--seed", type=int, default=0)
@@ -56,9 +57,15 @@ def libri_utts(split):
             if fl: st["quarantined"] += 1; _quarantine(uid, split, txt, text, fl); continue          # LibriSpeech 에 digit 등이 남으면 추측 변환 없이 제외
             utts.append(dict(utt_id=uid, speaker=spk, chapter=chap, path=os.path.join(root, spk, chap, uid + ".flac"), text=text, raw=txt))
     print(f"    {split}: {len(utts)} 발화, quarantine {st['quarantined']}", flush=True)
-    import soundfile as sf
+    # 길이: FLAC 헤더 42 바이트만 읽는다(sf.info 대비 수십 배). split 별 캐시(_dur-cache)로 재실행은 즉시.
+    cdir = os.path.join(a.out, "_dur-cache"); os.makedirs(cdir, exist_ok=True); cp = os.path.join(cdir, f"librispeech-{split}.json")
+    cache = json.load(open(cp)) if os.path.exists(cp) else {}
+    todo = [u for u in utts if u["utt_id"] not in cache]
     with ThreadPoolExecutor(a.workers) as ex:
-        for u, d in zip(utts, ex.map(lambda u: sf.info(u["path"]).duration, utts)): u["dur_s"] = round(float(d), 3)
+        for u, d in zip(todo, ex.map(lambda u: flac_duration(u["path"]), todo)): cache[u["utt_id"]] = round(float(d), 3)
+    if todo: json.dump(cache, open(cp + f".tmp{os.getpid()}", "w")); os.replace(cp + f".tmp{os.getpid()}", cp)
+    for u in utts: u["dur_s"] = cache[u["utt_id"]]
+    print(f"    {split}: 길이 {len(todo)} 개 읽음 (캐시 {len(utts) - len(todo)})", flush=True)
     return utts
 
 def libri_streams(utts, subset, split):

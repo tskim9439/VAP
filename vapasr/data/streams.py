@@ -25,6 +25,17 @@ def load_utt_audio(path: str) -> np.ndarray:
         import soxr; x = soxr.resample(x, sr, SR)
     return x
 
+def flac_duration(path: str) -> float:
+    """FLAC STREAMINFO 헤더(처음 42 바이트)만 읽어 길이(초)를 구한다 — sf.info 보다 수십 배 빠르다(NFS 에서 파일당 1 회 작은 read).
+    헤더가 예상과 다르면 soundfile 로 폴백."""
+    with open(path, "rb") as f: d = f.read(42)
+    if len(d) == 42 and d[:4] == b"fLaC" and (d[4] & 0x7F) == 0:               # 첫 메타데이터 블록 = STREAMINFO
+        info = d[8:42]; sr = (info[10] << 12) | (info[11] << 4) | (info[12] >> 4)
+        total = ((info[13] & 0x0F) << 32) | (info[14] << 24) | (info[15] << 16) | (info[16] << 8) | info[17]
+        if sr > 0 and total > 0: return total / sr
+    import soundfile as sf
+    return float(sf.info(path).duration)
+
 def _rng(seed_key: str) -> np.random.RandomState:
     return np.random.RandomState(int(hashlib.md5(seed_key.encode()).hexdigest()[:8], 16))
 
