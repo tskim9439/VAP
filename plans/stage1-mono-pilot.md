@@ -261,6 +261,9 @@ Nemotron 3.5 FastConformer [56,0]  frozen, 캐시 특징 (1024-d, 12.5 Hz)
   **판정: B(full FT) 채택.** 세 세트 모두 B 가 앞서고, sentinel 추세에서 A 는 2k 이후 정체(LoRA 용량 한계), B 는 4,470 까지 계속 하락(학습 top-1 0.98 이지만 dev 반등 없음 → 아직 under-trained). KO 방출 붕괴는 사라짐(tok/chunk 0.288 vs 참조 0.273, 파일럿은 참조의 절반) — 대신 KO viol80 5 % 의 조기 방출 경향. 타이밍: p50 +170–240 ms, viol80 EN < 0.3 %. tick p99 100–147 ms 로 실시간성 관문은 여전히 미통과(로그인 노드 경합 상태 측정). 인식 관문(추세 하락)은 통과, RNN-T 대비 격차는 여전히 3–4 배.
   산출물: `/soundai/Model/VAPASR/s1-{A,B}/` (ckpt-{1000..4470}.pt, results.json, eval/), 로컬 `raw/sources/experiments/2026-09-07-s1-runAB/`.
   다음: (1) B 를 더 길게(epoch 30+, lr 유지) 또는 데이터 추가(서베이의 EN 코퍼스·NIKL) — 정체 지점을 먼저 본다, (2) KO 조기 방출: next_weight_ko 0.15 → 0.2 비교, (3) `--final` 은 디코더 배치화(ragged KV) 후 — 현재 속도로 보고 세트 전량은 30 h+.
+- 2026-09-07 **Stage 2 준비**: (1) `asr-tn-v1.0.0` 동결 → 1,930 h manifest(`librispeech-960` 126,513 스트림 1,033 h · `kspon-full` 619,932 발화 965 h, fingerprint 포함). KsponSpeech `+`(반복 표기, 발화 13.4 %)는 기호만 지우고 어절 유지로 확정(Qwen·Nemotron 실측: 온전한 반복은 내고 조각은 버림 — 규칙이 갈리므로 정렬 충실도·공개 레시피 호환을 택함).
+  (2) **특징 캐시 → 온라인 인코딩**(`vapasr/features/online.py`, 인코더 동결·`--train-encoder` 로 해제 가능): 실제 배치 8 step 통과(≈1 s/step, 2 GPU), 최장 배치 메모리 LoRA 16.9/50.8 GB, full-FT 19.1/54.9 GB(EN/KO). **인코더까지 학습하면 EN 48 GB, KO bs 48 은 OOM** → 그때는 KO bs 24 또는 인코더 checkpointing 필요.
+  (3) 정렬기 배치화(`s1_align.py`: 배열 리스트 배치 forward·길이 버킷·prefetch·이분 폴백, dev 에서 옛 정렬과 토큰 시각 차이 평균 ≤1.2 ms) + `slurm/s2_prep.sbatch`(GPU 당 3 워커, 파일 단위 재개). (4) Lustre 산출물을 `/soundai/users/tskim/VAPKT-data` 로 이전(Lustre 는 읽기만).
 
 **실패 시 — 한 번에 하나만 바꾼다** (의심 순서):
 
