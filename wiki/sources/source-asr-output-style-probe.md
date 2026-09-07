@@ -2,7 +2,7 @@
 type: source
 status: active
 created: 2026-09-05
-updated: 2026-09-05
+updated: 2026-09-07
 summary: Qwen3-ASR·Nemotron 실측에서 영어 숫자는 단어, 한국어 숫자는 한글 읽기로 일치함을 확인한 12개 표본 조사
 raw_path: raw/sources/experiments/2026-09-05-asr-output-style-probe.md
 observed: 2026-09-05
@@ -22,7 +22,7 @@ Stage 1 학습 타깃의 숫자 표기를 정하기 위해 Qwen3-ASR과 Nemotron
 
 ## 핵심 관찰
 
-| 항목 | Qwen3-ASR | Nemotron RNN-T `[56,0]` | 합의된 학습 타깃 |
+| 항목 | Qwen3-ASR | Nemotron RNN-T `[56,0]` | 당시 lexical 타깃 |
 |---|---|---|---|
 | 영어 숫자 | `ten`, `three hundred dollars`처럼 단어 | 동일 | 단어형 |
 | 영어 아포스트로피 | `don't`, `I've`처럼 단어 내부 유지 | 동일 | 유지 |
@@ -34,6 +34,14 @@ Stage 1 학습 타깃의 숫자 표기를 정하기 위해 Qwen3-ASR과 Nemotron
 그 출력과 맞았다. 반면 대소문자·구두점은 모델 출력과 타깃을 의도적으로 다르게
 두었다. LibriSpeech 대규모 전사에 없는 표기를 합성해 넣지 않고, 평가 때 참조와
 가설 양쪽에서 제거한다.
+
+## 후속 정책 변경
+
+2026-09-07 사용자 요구에 따라 영어 대소문자·문장부호를 최종 출력의 필수 능력으로
+채택했다. 위 표의 소문자·무구두점은 폐기된 것이 아니라 정렬과 RNN-T 비교를 위한
+`lexical_text` 규약으로 남는다. 사용자 표시는 provenance가 있는 `display_text`로
+분리하며, LibriSpeech label에 없는 표기를 임의로 gold화하지 않는다. 세부 계약은
+[[output-asr-tn-v1-spec]]을 따른다.
 
 ## 이 볼트에 준 영향
 
@@ -61,4 +69,3 @@ Stage 1 학습 타깃의 숫자 표기를 정하기 위해 Qwen3-ASR과 Nemotron
 
 - 원본: `raw/sources/experiments/2026-09-05-asr-output-style-probe.md`
 - 관련 구현: `vapasr/data/textnorm.py`, 커밋 `4980486`
-

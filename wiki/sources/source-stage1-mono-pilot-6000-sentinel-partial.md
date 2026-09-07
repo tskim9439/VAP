@@ -1,8 +1,8 @@
 ---
 type: source
-status: active
+status: superseded
 created: 2026-09-06
-updated: 2026-09-06
+updated: 2026-09-07
 summary: Stage 1 mono 6,000-step sentinel에서 EN WER은 22–29%까지 하락했지만 KO 과소 방출과 큰 RNN-T 격차가 남은 중간 결과
 raw_path: raw/sources/experiments/2026-09-06-stage1-mono-pilot-6000-sentinel-partial.md
 observed: 2026-09-06
@@ -11,6 +11,10 @@ raw_authors:
 ---
 
 # Stage 1 mono 6,000-step sentinel 중간 결과
+
+> 이 문서는 2026-09-06 당시의 중간 관측을 보존한다. 이후 완료된 원인 진단과
+> 개선 run A/B 결과는 [[source-stage1-mono-run-ab]] 및 [[output-stage1-mono-pilot]]이
+> 대체한다.
 
 ## 무엇인가
 
@@ -66,19 +70,17 @@ KO `next_weight` sweep은 합리적인 후보지만 5–11%p 정도의 bias 개�
 교사강제 정확도도 낮으면 학습량·adapter mapping이 우선이고, 교사강제는 높지만
 deletion이 많으면 방출 calibration·노출 편향이 우선이다.
 
-## 다음 판단
+## 당시 제안한 다음 판단과 후속 상태
 
-- 진행 중인 @6000 sentinel 완료값을 보존한다.
-- ckpt 4000/5000/6000을 동일한 큰 dev 표본에서 비교해 sentinel 표본 잡음을 제거한다.
-- 선택은 현재 파일럿 안의 best일 뿐 수렴 checkpoint라는 뜻은 아니다.
-- Stage 2는 고정 step이 아니라 언어별 본 audio hours 또는 effective epoch 기준으로
-  스케줄을 잡고, LR이 최소 한 pass 전에 0이 되지 않게 한다.
-- 1,900 h로 바로 확장하기 전에 현재 200 h에서 1 epoch 부근인 total 13k–16k까지의
-  짧은 연장 곡선은 optimization 부족과 구조 한계를 싸게 구분하는 대조가 된다.
+- @6000 완료값을 보존하고 더 큰 dev 표본에서 checkpoint를 비교하라는 제안은 이후
+  원인 진단과 run A/B에서 수행했다.
+- 당시에는 1 epoch 미만 노출을 근거로 동일 데이터 연장을 우선 후보로 보았지만,
+  run A/B는 유효 노출 14–16 pass에서 EN 정체를 보였다. 따라서 현재 우선순위는
+  동일 데이터 장기 반복이 아니라 Stage 2 데이터 확장과 정렬·방출 목표 개선이다.
+- 최신 판정과 관문은 [[output-stage1-mono-pilot]]을 따른다.
 
 ## 출처
 
 - 원본: `raw/sources/experiments/2026-09-06-stage1-mono-pilot-6000-sentinel-partial.md`
 - 대조군: `raw/sources/experiments/2026-09-06-s1-baselines/baselines-all.json`
 - 학습 코드: `experiments/s1_train_mono.py`
-

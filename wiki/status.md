@@ -2,13 +2,13 @@
 type: status
 status: active
 created: 2026-09-03
-updated: 2026-09-06
+updated: 2026-09-07
 summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 ---
 
 # 상태
 
-마지막 갱신: 2026-09-06
+마지막 갱신: 2026-09-07
 
 ## 볼트 상태
 
@@ -28,31 +28,41 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
   단어, KO 숫자는 한글 읽기로 출력. `vapasr/data/textnorm.py`로 타깃·채점 규약을
   통합하고 KsponSpeech 숫자 이중표기는 발음형을 선택한다. → [[source-asr-output-style-probe]],
   [[asr-text-normalization]]
+- **`asr-tn-v1.0.0` 동결 후보 규약 작성** — Stage 2 LibriSpeech·KsponSpeech 범위의
+  EN/KO target·score, 영어 lexical/display 이중 view, 지원·미지원 숫자 문법,
+  quarantine, golden test, manifest fingerprint와 버전 정책을 명문화했다. 영어
+  대소문자·문장부호는 최종 출력 필수 능력이며 provenance가 있는 label로만 학습한다.
+  일부 구현은 들어왔지만 golden 준수와 전체 transcript/display audit 전에는 frozen이
+  아니다. → [[output-asr-tn-v1-spec]]
 - **Stage 1 mono overfit 기능 관문 통과** — @900부터 EN·KO WER/CER 0,
   `viol80=0`, 방출률=참조율이며 @1500까지 유지. 경합 전 decoder-only tick p99는
   151–186 ms로 실시간성 관문은 별도 미통과. → [[output-stage1-mono-pilot]]
-- **Stage 1 mono 6,000-step 학습 완료, 마지막 sentinel 진행 중** — @5000 EN은
-  dev-clean 22.1% / dev-other 28.9%, KO bias-0 CER 65.9%·방출률은 참조의 51%다.
-  언어별 노출이 0.39–0.46 epoch뿐이고 LR이 0으로 끝나 과소학습 영향이 크지만,
-  RNN-T 대비 절대 격차도 커서 Stage 2 전에 원인 분해가 필요하다.
-  → [[source-stage1-mono-pilot-6000-sentinel-partial]]
-- 위키 페이지 수와 파생 파일은 이 ingest 브랜치의 병합 전 절차에서 다시 생성·집계한다.
+- **Stage 1 mono 개선 run A/B 완료 — B(full FT) 채택.** B는 A LoRA r16보다
+  dev-clean/dev-other/kspon-dev 오류를 상대 20.3%/22.0%/7.6% 줄였다. KO 과소 방출은
+  해소됐지만 `viol80=4.85%`, tick p99 105–145 ms와 RNN-T 대비 2.2–3.8배 오류가 남았다.
+  EN은 @4000 이후 정체해 같은 데이터의 30 epoch 반복보다 Stage 2 데이터 확장과
+  windowed alignment·latency loss가 우선이다. → [[source-stage1-mono-run-ab]],
+  [[output-stage1-mono-pilot]]
+- 위키 페이지 수와 파생 파일은 현재 작업 브랜치의 병합 전 절차에서 다시 생성·집계한다.
 
 ## 다음 액션
 
-- **파일럿 선택·진단** — @6000 sentinel 완료 후 ckpt 4000/5000/6000을 같은 큰 dev
-  표본에서 비교한다. 선택 checkpoint의 교사강제 top-1/top-5와 자유실행 S/D/I로
-  과소학습·노출 편향·방출 calibration을 분해한 뒤 KO next-weight sweep 여부를 정한다.
-  → [[output-stage1-mono-pilot]]
-- **Stage 2 전에 1-epoch 연장 대조** — 현재 200 h에서 total 13k–16k까지 곡선을
-  확인한다. Stage 2의 LR schedule은 고정 step이 아니라 언어별 본 시간·effective epoch에
-  맞춰 정의한다. → [[output-stage1-mono-pilot]]
+- **Stage 2 scaling curve** — B(full FT)를 초기값으로 200/500/1,000/1,900 h에서
+  full-dev를 평가한다. 500 h에서 RNN-T 오류비 2배 이하, 1,000–1,900 h에서 1.5배
+  이하로 줄지 않으면 hard-δ 목표를 재설계한다. → [[output-stage1-mono-pilot]]
+- **정렬·방출 목표 ablation** — 단일 forced-alignment 시점 대신 허용 window/soft
+  target, latency loss, streaming+offline 공동 학습을 비교하고 KO next_weight는
+  0.15/0.175/0.2/0.25 Pareto sweep으로 본다. → [[output-stage1-mono-pilot]]
 - **decoder tick 최적화** — 현재 수치는 encoder·adapter·flush를 제외한 하한이며 한 chunk가
   최대 `M+2` thinker forward를 호출한다. `<NEXT_AUDIO>`와 다음 audio를 한 2-token forward로
   합친 뒤 end-to-end service time을 다시 잰다. → [[output-stage1-mono-pilot]]
-- **영어 숫자 정규화 재현성 선행 수정** — `num2words`를 환경 의존성에 고정하고,
-  미설치 시 조용히 숫자를 통과시키지 않도록 해야 한다. 연도·통화 소수·서수 표본도
-  새 DB 투입 전에 검증한다. → [[asr-text-normalization]]
+- **TN v1 구현·audit·동결** — [[output-asr-tn-v1-spec|`asr-tn-v1.0.0`]]에 맞춰
+  숫자 변환을 결정적으로 만들고 golden/tokenizer-ID test, LibriSpeech 960 h와
+  KsponSpeech_01–05 transcript audit, 기존 230 h diff, manifest fingerprint를 완료한다.
+  영어는 lexical/display 이중 view로 저장하고, 출처 있는 대소문자·문장부호 label,
+  loss mask, Qwen pseudo-label lexical exact-match와 display 평가 subset까지 검증한다.
+  lexical 관문 전에는 1,930 h 정렬을 시작하지 않고, display 관문 전에는 full-FT를
+  시작하지 않는다. display만 바뀌면 lexical alignment는 재사용한다.
 
 ### 연구 (Phase 0 — 나머지 전부를 막고 있음)
 
@@ -79,10 +89,11 @@ summary: 현재 유지보수 상태, 다음 액션, 린트 로테이션 담당
 | 한국어 turn 단서 근거 부재 | 논문 서술 | [[question-korean-turn-cue-literature]] |
 | SpokenWOZ 채널 구조 불명 | 영어 데이터 규모 | [[question-spokenwoz-channel-structure]] |
 | **`/data4` 97% 사용, 575G 여유** | 체크포인트 저장 공간 | [[decision-compute-environment]] |
-| `num2words` 미고정·silent fallback | 환경별 영어 학습 타깃 불일치 | [[asr-text-normalization]] |
-| 영어 숫자의 문맥별 읽기 미검증 | 연도·통화·소수·전화번호 전사 왜곡 가능 | [[asr-text-normalization]] |
-| mono decoder tick p99 151–186 ms | 80 ms 실시간 deadline 미충족 | [[output-stage1-mono-pilot]] |
-| Stage 1 EN WER 22–29%, KO CER 약 61–66% | 1 epoch 미만 과소학습과 adapter/방출 병목이 혼재 | [[source-stage1-mono-pilot-6000-sentinel-partial]] |
+| TN v1은 규약·부분 구현만 있고 lexical audit·영어 display label 검증 전 | lexical 동결 전에는 1,930 h alignment 불가, display 동결 전에는 full-FT 불가 | [[output-asr-tn-v1-spec]] |
+| 영어 미지원 숫자의 문맥별 읽기 | 연도·전화·분수·단위 등을 부분 변환하면 라벨 왜곡 | [[output-asr-tn-v1-spec]] |
+| B mono decoder tick p99 105–145 ms | 80 ms 실시간 deadline 미충족 | [[output-stage1-mono-pilot]] |
+| B full FT도 RNN-T 대비 오류 2.2–3.8배 | 데이터 규모와 단일시점 정렬 목표의 일반화 한계를 분리해야 함 | [[source-stage1-mono-run-ab]] |
+| KO `viol80=4.85%`, 지연 p99 797 ms | 과소 방출 해소와 맞바꾼 조기 방출 꼬리 | [[source-stage1-mono-run-ab]] |
 
 ## 스키마 이슈 (유지보수 PR 필요)
 
