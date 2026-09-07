@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser()
 ap.add_argument("--manifest", required=True); ap.add_argument("--mode", default="all"); ap.add_argument("--limit", type=int, default=None); ap.add_argument("--ids", default=None)
 ap.add_argument("--gpu", default=None); ap.add_argument("--min-dur", type=float, default=0.3)
-ap.add_argument("--out-root", default=None, help="출력 루트(기본 $MXC_DATA_MANIFEST_DIR/align). 규약이 바뀌면 align2 처럼 새 루트로 — 기존 산출물은 지우지 않는다")
+ap.add_argument("--out-root", default=None, help="출력 루트(기본 $MXC_DATA_MANIFEST_DIR/align-asr-tn-v1 = 규약 ID). 규약이 바뀌면 새 루트로 — 기존 산출물은 지우지 않는다")
 ap.add_argument("--shard", default=None, help="k/n: 병렬 워커 k 가 rows[k::n] 만 처리 (같은 manifest 를 여러 프로세스로)")
 a = ap.parse_args()
 if "CUDA_VISIBLE_DEVICES" not in os.environ:
@@ -28,7 +28,11 @@ from vapasr.data.kspon import SR
 MAN = os.environ.get("MXC_DATA_MANIFEST_DIR", os.environ.get("DATA_MANIFEST_DIR", "/tmp"))
 ALIGNER = os.environ.get("MXC_ALIGNER_DIR", "Qwen/Qwen3-ForcedAligner-0.6B"); QWEN = os.environ.get("MXC_QWEN_ASR_DIR", "Qwen/Qwen3-ASR-0.6B")
 mdir = a.manifest if os.path.isdir(a.manifest) else os.path.join(MAN, a.manifest); mname = os.path.basename(mdir.rstrip("/"))
-out = os.path.join(a.out_root or os.path.join(MAN, "align"), mname); os.makedirs(out, exist_ok=True)
+from vapasr.data.textnorm import check_fingerprint, TEXTNORM_ID_SHORT
+_mst = json.load(open(os.path.join(mdir, "stats.json"))) if os.path.exists(os.path.join(mdir, "stats.json")) else {}
+check_fingerprint(_mst.get("fingerprint"), f"align {mname}")                       # asr-tn-v1.0.0: manifest fingerprint 없거나 코드와 다르면 시작 전 실패
+out = os.path.join(a.out_root or os.path.join(MAN, f"align-{TEXTNORM_ID_SHORT}"), mname); os.makedirs(out, exist_ok=True)
+if _mst.get("fingerprint"): json.dump(_mst["fingerprint"], open(os.path.join(out, "fingerprint.json"), "w"), indent=1)
 rows = read_streams(mdir, mode=None if a.mode == "all" else a.mode)
 if a.ids: keep = set(a.ids.split(",")); rows = [r for r in rows if r["id"] in keep]
 rows = rows[: a.limit] if a.limit else rows

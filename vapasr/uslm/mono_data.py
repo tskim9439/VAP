@@ -45,8 +45,11 @@ class MonoStreamDataset(Dataset):
         for name in manifests:
             fi = FeatureIndex(FEAT, encoder, name); assert abs(fi.frame_hz - 1 / CHUNK_S) < 1e-6, f"{encoder} frame_hz {fi.frame_hz} != 12.5"
             # 정렬 루트: 명시 > align2(선행 공백 규약, 2026-09-05) > align. 서버 산출물은 지우지 않으므로 새 규약은 새 루트에 쌓인다.
-            cands = [align_root] if align_root else [os.path.join(MAN, "align2"), os.path.join(MAN, "align")]
+            cands = [align_root] if align_root else [os.path.join(MAN, "align-asr-tn-v1"), os.path.join(MAN, "align2"), os.path.join(MAN, "align")]
             adir = next((os.path.join(c, name) for c in cands if os.path.isdir(os.path.join(c, name))), os.path.join(cands[-1], name)); self.align_dirs[name] = adir
+            # asr-tn-v1.0.0 관문: 정렬 산출물의 textnorm fingerprint 가 없거나(동결 전 align2/align) 코드와 다르면 실패. 재현은 VAPASR_ALLOW_LEGACY_TN=1
+            from ..data.textnorm import check_fingerprint
+            fpp = os.path.join(adir, "fingerprint.json"); check_fingerprint(json.load(open(fpp)) if os.path.exists(fpp) else None, f"dataset {name} ← {adir}")
             # 항목 캐시: 정렬 jsonl 수만 개를 매 프로세스가 읽으면 Lustre 에서 수십 분 걸린다(8-rank DDP 면 ×8). 한 번 만들어 _items.json.gz 에 저장하고
             # (정렬 파일 수가 같으면) 재사용한다. 모든 mode·subset 을 담고 메모리에서 거른다.
             import gzip

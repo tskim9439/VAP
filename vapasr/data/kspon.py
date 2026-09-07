@@ -14,6 +14,19 @@ NOISE = re.compile(r"(?<!\S)[blonu]/(?!\S)")               # 단독 표지
 FILLER = re.compile(r"(\S+?)/(?=\s|$)")                     # 아/ 그/ → 단어 유지
 PUNCT = re.compile(r"(?<!\d)[.,](?!\d)|(?<=\d)[.,](?!\d)|(?<!\d)[.,](?=\d)|[?!]")   # 숫자 사이의 . , (0.1, 1,000) 는 남긴다
 
+def normalize_kspon_v1(raw: str) -> Tuple[str, List[str]]:
+    """asr-tn-v1.0.0: (정규화 문자열, malformed 사유 목록). 쌍마다 철자형에 digit·Latin 이 있으면 발음형, 아니면 철자형.
+    malformed = 빈 철자/발음형, DUAL 치환 뒤 남는 괄호(중첩·미닫힘·홑괄호). 사유가 있으면 호출자가 quarantine 한다."""
+    bad: List[str] = []
+    def pick(m):
+        a, b = m.group(1).strip(), m.group(2).strip()
+        if not a or not b: bad.append("empty_side")
+        return b if re.search(r"[0-9A-Za-z]", a) else a
+    s = DUAL.sub(pick, raw)
+    if "(" in s or ")" in s: bad.append("unpaired_paren")
+    s = NOISE.sub(" ", s); s = PUNCT.sub("", s); s = FILLER.sub(r"\1", s); s = s.replace("+", "").replace("*", "")
+    return re.sub(r"\s+", " ", s).strip(), bad
+
 def normalize_kspon(raw: str, form: str = "auto") -> str:
     """form: auto(기본) — 숫자·라틴을 포함한 이중표기는 발음형, 나머지는 철자형 → 한글 전용(Qwen3-ASR·Nemotron 출력 규약과 동일, 2026-09-05 실측)
              spelling — 항상 왼쪽 철자형 | pron — 항상 오른쪽 발음형."""

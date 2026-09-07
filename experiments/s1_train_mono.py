@@ -44,7 +44,7 @@ def log(*s):
     if main: print(*s, flush=True)
 def barrier():
     if world > 1: dist.barrier()
-from vapasr.data.textnorm import score_en, score_ko
+from vapasr.data.textnorm import score_en, score_ko, TEXTNORM_VERSION
 from vapasr.uslm.mono_data import MonoStreamDataset, BucketBatchSampler, collate_streams, CHUNK_S
 from vapasr.uslm.mono_model import MonoInterleavedASR
 from vapasr.uslm.model import Adapter
@@ -233,7 +233,7 @@ while step < a.steps:
             json.dump(r, open(os.path.join(out, "eval", f"{'overfit' if a.overfit else 'sentinel'}-{step}.json"), "w"), indent=1, ensure_ascii=False)
             torch.save(dict(**model.trainable_state(), step=step, args=vars(a)), os.path.join(out, f"ckpt-{step}.pt"))
             if best_score is None or score < best_score: best_score, best_bias = score, float(np.median([v["best_bias"] for v in r.values()]))
-            json.dump(dict(args=vars(a), hist=hist, sentinel_best_score=best_score, best_bias=best_bias, trainable_m=n_tr / 1e6, train_streams={k: len(v) for k, v in train_ds.items()}, steps_per_epoch=steps_per_epoch, world=world,
+            json.dump(dict(args=vars(a), textnorm_version=TEXTNORM_VERSION, hist=hist, sentinel_best_score=best_score, best_bias=best_bias, trainable_m=n_tr / 1e6, train_streams={k: len(v) for k, v in train_ds.items()}, steps_per_epoch=steps_per_epoch, world=world,
                            note="sentinel 은 추세 관찰용(작은 고정 표본). ckpt 선택은 --select 로 큰 표본에서."), open(os.path.join(out, "results.json"), "w"), indent=1, ensure_ascii=False)
         barrier()
     if step % a.save_every == 0 or step == a.steps: save_last(); barrier()

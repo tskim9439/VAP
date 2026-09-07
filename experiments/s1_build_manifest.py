@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from vapasr.data.kspon import read_trn, resolve_path, pcm_duration
-from vapasr.data.textnorm import target_en, target_ko          # 모든 코퍼스의 타깃 텍스트는 여기서 한 규약으로
+from vapasr.data.textnorm import target_en, target_ko, target_flags, TEXTNORM_VERSION, fingerprint   # asr-tn-v1.0.0: 모든 타깃은 여기서, quarantine·fingerprint 기록
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--kspon-root", default=os.environ.get("MXC_KSPONSPEECH_DIR", os.environ.get("KSPONSPEECH_DIR")))
@@ -33,6 +33,8 @@ MANIFESTS = {  # name: (corpus, [(split_dir, subset)])
     "librispeech-dev":  ("librispeech", [("dev-clean", "dev-clean"), ("dev-other", "dev-other")]),
     "librispeech-test": ("librispeech", [("test-clean", "test-clean"), ("test-other", "test-other")]),
     "kspon-100":        ("kspon", [("train.trn", "train-01")]),
+    "librispeech-960":  ("librispeech", [("train-clean-100", "train-clean-100"), ("train-clean-360", "train-clean-360"), ("train-other-500", "train-other-500")]),
+    "kspon-full":       ("kspon", [("train.trn", "train-all")]),           # KsponSpeech_01–05 전체(≈970 h)
     "kspon-dev":        ("kspon", [("dev.trn", "dev")]),
     "kspon-eval":       ("kspon", [("eval_clean.trn", "eval_clean"), ("eval_other.trn", "eval_other")]),
 }
@@ -41,13 +43,19 @@ def rng_for(sid): return random.Random(f"{a.seed}:{sid}")   # 스트림 id 로 �
 def pct(xs): xs = np.array(xs); return {p: round(float(np.percentile(xs, p)), 2) for p in (5, 50, 95)} if len(xs) else {}
 
 # ───────────────────────────── LibriSpeech ─────────────────────────────
+QUAR = []                     # quarantine 행: 학습 manifest 에서 제외하되 ID·원문·사유를 보존(asr-tn-v1.0.0)
+SRC_FILES = []                # source_transcript_sha256 용
+def _quarantine(uid, subset, raw, text, reasons): QUAR.append(dict(id=uid, subset=subset, raw=raw, target=text, reasons=sorted(reasons)))
+
 def libri_utts(split):
-    root = os.path.join(a.libri_root, split); utts = []
+    root = os.path.join(a.libri_root, split); utts = []; st = collections.Counter()
     for tp in sorted(glob.glob(os.path.join(root, "*", "*", "*.trans.txt"))):
-        spk, chap = tp.split(os.sep)[-3:-1]
+        spk, chap = tp.split(os.sep)[-3:-1]; SRC_FILES.append(tp)
         for line in open(tp):
-            uid, txt = line.rstrip("\n").split(" ", 1)
-            utts.append(dict(utt_id=uid, speaker=spk, chapter=chap, path=os.path.join(root, spk, chap, uid + ".flac"), text=target_en(txt)))
+            uid, txt = line.rstrip("\n").split(" ", 1); text = target_en(txt, "librispeech"); fl = target_flags(text, "English")
+            if fl: st["quarantined"] += 1; _quarantine(uid, split, txt, text, fl); continue          # LibriSpeech 에 digit 등이 남으면 추측 변환 없이 제외
+            utts.append(dict(utt_id=uid, speaker=spk, chapter=chap, path=os.path.join(root, spk, chap, uid + ".flac"), text=text))
+    print(f"    {split}: {len(utts)} 발화, quarantine {st['quarantined']}", flush=True)
     import soundfile as sf
     with ThreadPoolExecutor(a.workers) as ex:
         for u, d in zip(utts, ex.map(lambda u: sf.info(u["path"]).duration, utts)): u["dur_s"] = round(float(d), 3)
@@ -88,16 +96,18 @@ def utt_rows(utts, corpus, subset, split, lang, prefix, key_speaker="speaker"):
 
 # ───────────────────────────── KsponSpeech ─────────────────────────────
 def kspon_utts(trn_name, subset):
-    lo, hi = (int(x) for x in a.kspon_folders.split("-")); rows = read_trn(os.path.join(a.kspon_root, trn_name)); out, st = [], collections.Counter()
+    lo, hi = (int(x) for x in a.kspon_folders.split("-")); tp = os.path.join(a.kspon_root, trn_name); SRC_FILES.append(tp); rows = read_trn(tp); out, st = [], collections.Counter()
     for rel, raw in rows:
         if subset == "train-01":
             parts = rel.split("/")
             if parts[0] != "KsponSpeech_01" or not (lo <= int(parts[1].split("_")[1]) <= hi): continue
         p = resolve_path(a.kspon_root, rel)
         if p is None: st["missing"] += 1; continue
-        txt = target_ko(raw, "kspon")
+        uid = os.path.splitext(os.path.basename(rel))[0]; txt = target_ko(raw, "kspon"); fl = target_flags(txt, "Korean", raw, "kspon")
+        for k in fl: st[f"flag_{k}"] += 1
+        if fl and subset.startswith("train"): st["quarantined"] += 1; _quarantine(uid, subset, raw, txt, fl); continue   # 학습만 제외. dev/eval 은 공개 세트 그대로(사유는 통계로)
         if not txt: st["empty_text"] += 1; continue
-        out.append(dict(utt_id=os.path.splitext(os.path.basename(rel))[0], rel=rel, path=p, raw=raw, text=txt, speaker=None, chapter=None)); st["kept"] += 1
+        out.append(dict(utt_id=uid, rel=rel, path=p, raw=raw, text=txt, speaker=None, chapter=None)); st["kept"] += 1
     with ThreadPoolExecutor(a.workers) as ex:
         for u, (d, odd) in zip(out, ex.map(lambda u: pcm_duration(u["path"]), out)): u["dur_s"] = round(d, 3); st["odd_byte"] += int(odd)
     return out, st
@@ -107,7 +117,7 @@ for name in names:
     corpus, parts = MANIFESTS[name]; od = os.path.join(a.out, name); os.makedirs(od, exist_ok=True); rows, stats = [], {}
     print(f"\n=== {name} ===", flush=True)
     for src, subset in parts:
-        split = "train" if name.endswith("-100") else ("dev" if "dev" in name else "test")
+        split = "dev" if "dev" in name else ("test" if ("test" in name or "eval" in name) else "train")
         if corpus == "librispeech":
             utts = libri_utts(src); rs = libri_streams(utts, subset, split)
             if split != "train": rs += utt_rows(utts, "librispeech", subset, split, "English", "ls")
@@ -126,5 +136,19 @@ for name in names:
         print(f"  {subset:16s} " + " · ".join(f"{k}={v}" for k, v in sub_st.items() if not isinstance(v, dict)) + f" · 길이 p50 {sub_st['stream_len_pct'].get(50)} s", flush=True)
     with open(os.path.join(od, "streams.jsonl"), "w", encoding="utf-8") as f:
         for r in rows: f.write(json.dumps(r, ensure_ascii=False) + "\n")
-    json.dump(dict(name=name, corpus=corpus, rows=len(rows), seed=a.seed, target_s=a.target_s, subsets=stats), open(os.path.join(od, "stats.json"), "w"), ensure_ascii=False, indent=1)
+    import hashlib, subprocess
+    def sha_files(fs):
+        h = hashlib.sha256()
+        for f in sorted(fs): h.update(open(f, "rb").read())
+        return h.hexdigest()
+    with open(os.path.join(od, "quarantine.jsonl"), "w", encoding="utf-8") as f:
+        for q in QUAR: f.write(json.dumps(q, ensure_ascii=False) + "\n")
+    try: commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))).decode().strip()
+    except Exception: commit = None
+    fp = fingerprint(os.environ.get("MXC_QWEN_ASR_DIR", os.environ.get("QWEN_ASR_DIR")))
+    fp.update(source_transcript_sha256=sha_files(set(SRC_FILES)), manifest_sha256=sha_files([os.path.join(od, "streams.jsonl")]),
+              quarantined_ids_sha256=hashlib.sha256("\n".join(sorted(q["id"] for q in QUAR)).encode()).hexdigest(), created_from_git_commit=commit)
+    json.dump(dict(name=name, corpus=corpus, rows=len(rows), seed=a.seed, target_s=a.target_s, textnorm_version=TEXTNORM_VERSION, fingerprint=fp,
+                   quarantined=len(QUAR), subsets=stats), open(os.path.join(od, "stats.json"), "w"), ensure_ascii=False, indent=1)
+    QUAR.clear(); SRC_FILES.clear()
     print(f"  → {od}/streams.jsonl ({len(rows)} 행)")
