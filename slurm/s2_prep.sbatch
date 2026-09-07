@@ -35,12 +35,13 @@ import json, sys, os; p = sys.argv[1]; print(len({json.loads(l)["id"] for l in o
 PY
 }
 n_aligned() { python - "$1" <<'PY'
-import json, sys, os, glob; d = sys.argv[1]; ids = {f[:-6] for f in os.listdir(d) if f.endswith(".jsonl")} if os.path.isdir(d) else set()
-for pf in glob.glob(os.path.join(d, "parts", "*.jsonl")):
-    for l in open(pf, encoding="utf-8"):
+import json, sys, os; d = sys.argv[1]; ids = {f[:-6] for f in os.listdir(d) if f.endswith(".jsonl")} if os.path.isdir(d) else set(); pd = os.path.join(d, "parts")
+for pf in (sorted(os.listdir(pd)) if os.path.isdir(pd) else []):                      # glob 대신 listdir(정렬기와 동일 경로)
+    if not pf.endswith(".jsonl"): continue
+    for l in open(os.path.join(pd, pf), encoding="utf-8"):
         try: ids.add(json.loads(l)["id"])
         except Exception: pass
-print(len(ids))
+print(len(ids), file=sys.stdout)
 PY
 }
 WPG=${WPG:-6}                       # GPU 당 워커 수: 정렬기는 CPU(특징 추출) 병목이라 GPU 하나에 여러 워커(GPU 메모리 워커당 ≈5 GB)
