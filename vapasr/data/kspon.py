@@ -19,8 +19,8 @@ def normalize_kspon_v1(raw: str) -> Tuple[str, List[str]]:
     malformed = 빈 철자/발음형, DUAL 치환 뒤 남는 괄호(중첩·미닫힘·홑괄호). 사유가 있으면 호출자가 quarantine 한다."""
     bad: List[str] = []
     def pick(m):
-        a, b = m.group(1).strip(), m.group(2).strip()
-        if not a or not b: bad.append("empty_side")
+        a, b = m.group(1), m.group(2)                      # 괄호 안 공백도 원문 띄어쓰기의 일부라 strip 하지 않는다("(2월)/(이 월 )달에" → "이 월 달에")
+        if not a.strip() or not b.strip(): bad.append("empty_side")
         return b if re.search(r"[0-9A-Za-z]", a) else a
     s = DUAL.sub(pick, raw)
     if "(" in s or ")" in s: bad.append("unpaired_paren")
