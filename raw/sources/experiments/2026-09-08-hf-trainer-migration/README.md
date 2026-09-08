@@ -23,3 +23,8 @@
 - 컨테이너 기본 python(/usr/local, transformers 5.4) 로는 qwen_asr 가 import 되지 않는다(`check_model_inputs()` 시그니처). `scripts/activate-env.sh` 가 mxc 프로필에서 MXC_CONDA_DIR 를 활성화하도록 수정.
 - Trainer 의 `eval_dataset` 에 dict 를 주면 셋마다 evaluate 를 호출하므로 자리표시자 하나만 넘기고 dev 셋은 트레이너 속성으로 보관.
 - Trainer 기본 콜백(PrinterCallback 등)이 뒤에 붙으므로 선점 콜백은 객체 참조로 들고 있어야 한다.
+
+## 4. 다중 노드 평가 행 — 원인과 수정 (16:20)
+- 스택 덤프(66260 .err, `pkill -USR2 -f s3_train_hf.py`): 8 rank 모두 `_eval_set → stream_decode → encode → NemotronOnline.forward → conformer_encoder.update_max_seq_length` (프레임 빈도: trainer.py 237, nemo 24, modeling_vapasr 16, stream_decode 8, _eval_set 8).
+- NeMo 3.1 `update_max_seq_length`: `if self.sync_max_audio_length and torch.distributed.is_initialized(): all_reduce(MAX)` → rank 별 호출 수 불일치 시 교착.
+- 수정 `online.py`: `enc.sync_max_audio_length = False`. 검증: 2 rank, sentinel 3/3/5(불균등) 분산 평가.

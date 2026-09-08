@@ -29,6 +29,14 @@ related:
 | 재개 60 → 90 | checkpoint-60 자동 감지, 손실 연속(2.61 → 2.44), final/·DONE 생성 |
 | 선점 | 재개 중 PREEMPT 파일 → 다음 step 경계(107)에서 저장 후 종료 코드 0, checkpoint-107 생성 |
 
+## 추가 (2026-09-08 16:20) — 다중 노드 평가 행의 원인 확정
+SIGUSR2 스택 덤프(job 66260, hpc-101 의 8 rank)로 확인: 모든 rank 가 `_eval_set → stream_decode → encode → NemotronOnline.forward → nemo …/conformer_encoder.py update_max_seq_length` 에서 대기.
+NeMo ConformerEncoder 는 forward 마다 `sync_max_audio_length=True` 이면 기본 NCCL 그룹에 `all_reduce(MAX)` 를 날린다. 학습은 모든 rank 가 step 마다 인코더를 한 번씩 불러 맞지만,
+평가는 rank 별 스트림 수가 달라 collective 호출 수가 어긋나 교착한다(GPU 100 % 스핀). 단일 노드 스모크는 표본을 rank 수로 나눠떨어지게 준 덕에 통과했다.
+같은 원인이 rank 0 단독 평가(66066)·NCCL barrier 시절의 IB 오류·조용한 종료(65963·65965·66007)까지 설명한다. 디코드 폭주·gather 장치 가설은 틀렸다(기록 보존).
+수정: `vapasr/features/online.py` 에서 `enc.sync_max_audio_length = False`(커밋 48d6790). 회귀 검사: 2 rank 불균등 표본(3/3/5) 분산 평가.
+부수 수정: 재개 시 `trainer_state.json` 의 eval_steps 가 복원되므로 평가를 끄려면 `eval_strategy="no"`(6865dbd); 오프라인 평가 루프 `experiments/s3_eval_loop.sh`.
+
 ## 남은 것
 - 8-노드 SLURM 에서 `slurm/s3_train_hf.sbatch` 실전 검증(66103 C2 가 끝난 뒤 또는 별도 노드).
 - `--select`/`--final` 평가 경로는 아직 s1_train_mono.py 에 남아 있다(HF 모델을 `from_pretrained` 로 읽는 평가 스크립트로 이관 예정).
