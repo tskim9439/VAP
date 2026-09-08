@@ -68,6 +68,7 @@ class VapAsrTrainer(Trainer):
         self._parts["n_labels"] = self._parts.get("n_labels", 0) + int(out.n_labels); self._n_parts += 1
         return (out.loss, out) if return_outputs else out.loss
     def log(self, logs: dict, start_time=None):
+        if self.args.process_index != 0: self._parts = {}; self._n_parts = 0; return       # PrinterCallback 은 노드별 local rank 0 이 찍어 다중 노드에서 줄이 중복된다 → rank 0 만
         if self._n_parts and "loss" in logs:
             for k in ("loss_next", "loss_text", "top1_text"): logs[k] = round(self._parts[k] / self._n_parts, 4)
             logs["labels_per_step"] = round(self._parts["n_labels"] / self._n_parts); self._parts = {}; self._n_parts = 0
