@@ -8,3 +8,18 @@
 """
 from .configuration_vapasr import VapAsrConfig
 from .modeling_vapasr import VapAsrForStreamingASR, VapAsrOutput
+
+# AutoConfig/AutoModel 에 등록 → from_pretrained(dir) 를 Auto 클래스로도 쓸 수 있다
+from transformers import AutoConfig, AutoModel
+AutoConfig.register("vapasr", VapAsrConfig); AutoModel.register(VapAsrConfig, VapAsrForStreamingASR)
+
+def load_tokenizer(path: str):
+    """HF 산출물 디렉토리의 tokenizer. checkpoint-N 에 tokenizer 파일이 없으면 config 의 thinker_name_or_path(Qwen 디렉토리)에서 읽고 특수 토큰을 다시 붙인다."""
+    import os, json
+    from transformers import AutoTokenizer
+    from ..uslm.interleave_data import add_specials
+    cfg = json.load(open(os.path.join(path, "config.json")))
+    src = path if os.path.exists(os.path.join(path, "tokenizer_config.json")) else cfg.get("thinker_name_or_path", "Qwen/Qwen3-ASR-0.6B")
+    tok = AutoTokenizer.from_pretrained(src); sp = add_specials(tok)
+    assert sp == cfg.get("sp_ids", sp), f"tokenizer 특수 토큰 id 가 config 와 다름: {sp} vs {cfg.get('sp_ids')}"
+    return tok

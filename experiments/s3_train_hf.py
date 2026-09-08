@@ -43,7 +43,7 @@ def barrier():
 torch.manual_seed(a.seed + rank); random.seed(a.seed + rank); torch.backends.cuda.matmul.allow_tf32 = True
 out = a.out_dir; os.makedirs(os.path.join(out, "eval"), exist_ok=True) if main else None
 
-from vapasr.hf import VapAsrForStreamingASR
+from vapasr.hf import VapAsrForStreamingASR, load_tokenizer
 from vapasr.hf.trainer import VapAsrTrainer, PreemptCallback
 from vapasr.uslm.mono_data import MonoStreamDataset
 from vapasr.data.textnorm import TEXTNORM_VERSION
@@ -56,7 +56,7 @@ t0 = time.time()
 if os.path.isfile(init):                                                          # 기존 ckpt-last.pt
     model, tok = VapAsrForStreamingASR.from_legacy(init, QWEN, next_weight=a.next_weight, next_weight_ko=a.next_weight_ko, delays=[int(x) for x in a.delays.split(",")]); src = f"legacy {init}"
 elif os.path.exists(os.path.join(init, "config.json")) and json.load(open(os.path.join(init, "config.json"))).get("model_type") == "vapasr":
-    model = VapAsrForStreamingASR.from_pretrained(init); tok = AutoTokenizer.from_pretrained(init); src = f"hf {init}"
+    model = VapAsrForStreamingASR.from_pretrained(init); tok = load_tokenizer(init); src = f"hf {init}"
 else:
     model, tok = VapAsrForStreamingASR.from_qwen(init, next_weight=a.next_weight, next_weight_ko=a.next_weight_ko, delays=[int(x) for x in a.delays.split(",")]); src = f"qwen {init}"
     if a.init_adapter: st0 = torch.load(a.init_adapter, map_location="cpu"); model.adapter.load_state_dict(st0["adapter"]); src += f" + adapter {a.init_adapter}"
@@ -93,7 +93,7 @@ targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradien
 preempt_cb = PreemptCallback(out, gloo_pg)
 trainer = VapAsrTrainer(model=model, args=targs, train_sets=train_sets, dev_sets=dev_sets, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, lr_encoder=a.lr_encoder,
                         eval_delay=a.eval_delay, eval_biases=[float(x) for x in a.eval_bias.split(",")], max_per_chunk=a.M, gloo_pg=gloo_pg, num_workers=a.num_workers,
-                        callbacks=[preempt_cb])
+                        callbacks=[preempt_cb], processing_class=tok)                    # checkpoint-N 에 tokenizer 도 저장
 if a.eval_only:                                                                # 오프라인 평가: --init <checkpoint-N 디렉토리> → out-dir/eval/offline-N.json
     import re; mstep = re.search(r"checkpoint-(\d+)", init or ""); trainer.state.global_step = int(mstep.group(1)) if mstep else 0
     r = trainer.evaluate(metric_key_prefix="offline"); log(json.dumps(r, ensure_ascii=False)); sys.exit(0)
