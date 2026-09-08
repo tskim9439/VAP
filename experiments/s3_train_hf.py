@@ -96,7 +96,13 @@ trainer = VapAsrTrainer(model=model, args=targs, train_sets=train_sets, dev_sets
                         callbacks=[preempt_cb], processing_class=tok)                    # checkpoint-N 에 tokenizer 도 저장
 if a.eval_only:                                                                # 오프라인 평가: --init <checkpoint-N 디렉토리> → out-dir/eval/offline-N.json
     import re; mstep = re.search(r"checkpoint-(\d+)", init or ""); trainer.state.global_step = int(mstep.group(1)) if mstep else 0
-    r = trainer.evaluate(metric_key_prefix="offline"); log(json.dumps(r, ensure_ascii=False)); sys.exit(0)
+    r = trainer.evaluate(metric_key_prefix="offline"); log(json.dumps(r, ensure_ascii=False))
+    if mstep:                                                                   # TensorBoard 에도 기록(학습 곡선과 같은 step 축)
+        try:
+            from torch.utils.tensorboard import SummaryWriter
+            w = SummaryWriter(os.path.join(out, "tb")); [w.add_scalar(k, v, int(mstep.group(1))) for k, v in r.items() if isinstance(v, (int, float))]; w.close()
+        except Exception as e: log(f"tensorboard 기록 실패: {e}")
+    sys.exit(0)
 last = None
 if a.resume == "auto": last = get_last_checkpoint(out) if os.path.isdir(out) else None
 elif a.resume != "none": last = a.resume
