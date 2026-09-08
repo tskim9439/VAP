@@ -77,8 +77,9 @@ class VapAsrTrainer(Trainer):
             if not hasattr(self, "_t_first"): self._t_first, self._s_first = now, st.global_step
             done = st.global_step - self._s_first; rate = (now - self._t_first) / done if done > 0 else None
             eta = (st.max_steps - st.global_step) * rate if rate else None
-            logs["progress"] = f"step {st.global_step}/{st.max_steps} ({100 * st.global_step / max(1, st.max_steps):.1f} %)" + (f" · {rate:.2f} s/step · ETA {eta / 3600:.1f} h" if eta is not None else "")
-            logs["lr_thinker"] = f"{self.optimizer.param_groups[1]['lr']:.2e}" if self.optimizer is not None and len(self.optimizer.param_groups) > 1 else None   # 첫 그룹(learning_rate) 은 adapter
+            logs["step"] = st.global_step; logs["pct"] = round(100 * st.global_step / max(1, st.max_steps), 2)                # TensorBoard 는 숫자만 받으므로 진행률·ETA 도 숫자로
+            if rate: logs["s_per_step"] = round(rate, 3); logs["eta_h"] = round(eta / 3600, 2)
+            if self.optimizer is not None and len(self.optimizer.param_groups) > 1: logs["lr_thinker"] = float(self.optimizer.param_groups[1]["lr"])   # 첫 그룹(learning_rate) 은 adapter
         return super().log(logs, start_time) if start_time is not None else super().log(logs)
 
     # ── 옵티마이저 그룹 (adapter lr↑, 임베딩 wd 0, encoder 별도 lr)

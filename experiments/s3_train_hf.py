@@ -5,7 +5,7 @@
   DDP :  torchrun --nproc_per_node=8 experiments/s3_train_hf.py --train librispeech-960,kspon-full --epochs 30 --out-dir /soundai/Model/VAPASR/hf-C ...
 초기화(--init): Qwen3-ASR 디렉토리(새 모델, 기본 $MXC_QWEN_ASR_DIR) | HF 산출물 디렉토리(config.json model_type=vapasr) | 기존 ckpt-last.pt(full FT, from_legacy)
 재개: out-dir 의 checkpoint-<step>/ 가 있으면 자동(Trainer resume: 모델·옵티마이저·스케줄러·RNG·step). 선점: PREEMPT 파일 또는 SIGUSR1/SIGTERM → 저장 후 종료.
-완료: out-dir/DONE + out-dir/final/ (HF 형식 save_pretrained + tokenizer)."""
+완료: out-dir/DONE + out-dir/final/ (HF 형식 save_pretrained + tokenizer). TensorBoard: out-dir/tb/ (tensorboard --logdir /soundai/Model/VAPASR/hf-<RUN>/tb)"""
 import os, sys, json, math, time, argparse, random
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -87,7 +87,7 @@ log("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align}
 targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradient_accumulation_steps=1, num_train_epochs=a.epochs if a.epochs > 0 else 1, max_steps=a.max_steps if a.max_steps > 0 else -1,
                           learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, bf16=True,
                           logging_strategy="steps", logging_steps=a.log_every, logging_first_step=True, eval_strategy="steps", eval_steps=a.eval_every, save_strategy="steps", save_steps=a.save_every,
-                          save_total_limit=a.save_total_limit, save_safetensors=True, save_on_each_node=False, seed=a.seed, data_seed=a.seed, report_to="none", remove_unused_columns=False,
+                          save_total_limit=a.save_total_limit, save_safetensors=True, save_on_each_node=False, seed=a.seed, data_seed=a.seed, report_to=["tensorboard"], logging_dir=os.path.join(out, "tb"), remove_unused_columns=False,
                           disable_tqdm=True, ignore_data_skip=True, ddp_find_unused_parameters=False, ddp_broadcast_buffers=False, ddp_timeout=10800, dataloader_num_workers=a.num_workers,
                           label_names=["labels"], log_level="warning" if main else "error")
 preempt_cb = PreemptCallback(out, gloo_pg)
