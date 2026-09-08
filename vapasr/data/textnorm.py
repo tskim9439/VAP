@@ -148,4 +148,4 @@ def check_fingerprint(fp: Optional[Dict[str, str]], where: str, allow_legacy_env
         # minor/patch 차이: 버전 정책상 기존 코퍼스 타깃은 불변(골든·230 h diff 로 검증) → 경고만. 엄격 검사는 VAPASR_STRICT_TN=1
         msg = f"{where}: textnorm 산출물 {fp.get('textnorm_version')} vs 코드 {mine['textnorm_version']} (같은 major, 기존 코퍼스 타깃 불변)"
         if os.environ.get("VAPASR_STRICT_TN") == "1": raise RuntimeError(msg)
-        print("  " + msg, flush=True)
+        if os.environ.get("RANK", "0") == "0": print("  " + msg, flush=True)   # DDP 에선 rank 0 만(모든 rank 가 dev 표본을 만들면서 같은 경고를 16–64 번 찍던 문제)
