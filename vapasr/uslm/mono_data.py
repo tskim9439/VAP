@@ -19,7 +19,7 @@ from ..probe.data import FeatureIndex
 from .interleave_data import add_specials, specials_of, bad_utterance, _read_jsonl, CHUNK_S
 
 MAN = os.environ.get("MXC_DATA_MANIFEST_DIR", os.environ.get("DATA_MANIFEST_DIR", "/tmp")); FEAT = os.environ.get("MXC_DATA_FEATURE_CACHE_DIR", os.environ.get("DATA_FEATURE_CACHE_DIR", "/tmp"))
-LANG_OF = {"librispeech": "English", "ls": "English", "kspon": "Korean", "ks": "Korean", "swbd": "English", "mnsc": "English", "nikl": "Korean"}
+LANG_OF = {"librispeech": "English", "ls": "English", "kspon": "Korean", "ks": "Korean", "swbd": "English", "mnsc": "English", "nikl": "Korean", "vp": "English", "voxpopuli": "English", "yd": "English", "yodas": "English"}
 def lang_of(name: str) -> str: return LANG_OF[name.split("-")[0]]
 
 def build_mono_sequence(chunks, K: int, prefix: List[int], audio_pad: int, sp: Specials, M: int):

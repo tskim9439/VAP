@@ -28,6 +28,9 @@ ap.add_argument("--kspon-folders", default="1-62", help="KsponSpeech_01 하위 �
 ap.add_argument("--en-open-root", default=os.environ.get("MXC_EN_OPEN_DIR", "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/EN/TRAIN/OPEN"), help="Switchboard·MNSC CSV/wav 루트")
 ap.add_argument("--nikl-root", default=os.environ.get("MXC_NIKL_DIR", "/soundai/DB/raw/nikl")); ap.add_argument("--nikl-years", default="2021,2022,2023,2024,2025")
 ap.add_argument("--sample-hours", type=float, default=None, help="이름이 *-<N> 인 manifest 는 N h 표본(seed 결정적). 명시하면 그 값")
+ap.add_argument("--labels-dir", default=os.environ.get("MXC_LABELS_DIR", "/soundai/users/tskim/VAPKT-data/data/labels"), help="외부에서 받은 라벨(voxpopuli/asr_en.tsv, yodas/granary_yodas_en129.jsonl)")
+ap.add_argument("--vp-audio-dir", default=os.environ.get("MXC_VOXPOPULI_TAR_DIR", "/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli"), help="VoxPopuli 비압축 tar(train_part_k.tar) 디렉토리")
+ap.add_argument("--yodas-root", default=os.environ.get("MXC_YODAS_DIR", os.path.join(os.environ.get("MXC_EN_OPEN_DIR", "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/EN/TRAIN/OPEN"), "yodas-granary")))
 ap.add_argument("--target-s", type=float, default=25.0); ap.add_argument("--min-s", type=float, default=20.0); ap.add_argument("--max-s", type=float, default=30.0)
 ap.add_argument("--seed", type=int, default=0)
 a = ap.parse_args(); assert a.kspon_root and a.libri_root, ".env 의 MXC_KSPONSPEECH_DIR / MXC_LIBRISPEECH_DIR 필요"
@@ -43,6 +46,9 @@ MANIFESTS = {  # name: (corpus, [(split_dir, subset)])
     "swbd-train":       ("switchboard", [("switchboard/switchboard_train_tn.csv", "train")]),                          # 230 h, 16 kHz 전화 대화
     "mnsc-1000":        ("mnsc", [("Multitask-National-Speech-Corpus-v1/Multitask-National-Speech-Corpus-v1_train_tn.csv", "part1")]),   # PART1 낭독 3,338 h 중 1,000 h
     "nikl-1000":        ("nikl", [("years", "train")]),                                                                # NIKL 2021–2025 일상대화 중 1,000 h(대화 단위 표본)
+    # ── asr-tn-v1.2.0 확장(2026-09-08): VoxPopuli EN 536 h(공식 annotation, tar::member 읽기) · YODAS-Granary en129(의사 라벨, 영상 단위 표본)
+    "voxpopuli-train":  ("voxpopuli", [("voxpopuli/asr_en.tsv", "train")]),
+    "yodas-en129":      ("yodas", [("yodas/granary_yodas_en129.jsonl", "en129")]),
     "kspon-dev":        ("kspon", [("dev.trn", "dev")]),
     "kspon-eval":       ("kspon", [("eval_clean.trn", "eval_clean"), ("eval_other.trn", "eval_other")]),
 }
@@ -180,6 +186,48 @@ def nikl_utts(subset, sample_hours=None):
     print(f"    nikl/{subset}: {len(utts)} 발화 {acc/3600:.1f} h · " + " · ".join(f"{k}={v}" for k, v in st.items()), flush=True)
     return utts, st
 
+# ───────────────────────────── VoxPopuli (tar::member) · YODAS-Granary ─────────────────────────────
+def voxpopuli_utts(rel_tsv, subset, sample_hours=None):
+    """공식 annotation → 발화 목록. 오디오는 재포장 tar 의 멤버(열지 않고 인덱스로 위치만 확인). 길이는 annotation 의 end−start."""
+    from vapasr.data.voxpopuli import read_annotations, member_map
+    tsv = os.path.join(a.labels_dir, rel_tsv); SRC_FILES.append(tsv); mm = member_map(a.vp_audio_dir); st = collections.Counter(); utts = []
+    for r in read_annotations(tsv, splits=(subset,)):
+        st["rows"] += 1; p = mm.get(r["utt_id"])
+        if p is None: st["no_audio"] += 1; continue
+        text = target_en(r["normed"], "voxpopuli"); fl = target_flags(text, "English")
+        if not r["normed"].strip(): fl = set(fl) | {"empty"}
+        if fl: st["quarantined"] += 1; _quarantine(r["utt_id"], subset, r["raw"] or r["normed"], text, fl); continue
+        if not (0.3 <= r["dur_s"] <= 60): st["bad_dur"] += 1; continue
+        utts.append(dict(utt_id=r["utt_id"], speaker=r["speaker"], chapter=r["session"], path=p, text=text, raw=r["raw"] or r["normed"], dur_s=r["dur_s"])); st["kept"] += 1
+    if sample_hours:
+        random.Random(a.seed).shuffle(utts); acc, keep = 0.0, []
+        for u in utts:
+            if acc >= sample_hours * 3600: break
+            keep.append(u); acc += u["dur_s"]
+        st["sampled_from"] = len(utts); utts = keep
+    print(f"    voxpopuli/{subset}: {len(utts)} 발화 {sum(u['dur_s'] for u in utts)/3600:.1f} h · " + " · ".join(f"{k}={v}" for k, v in st.items()), flush=True)
+    return utts, st
+
+def yodas_utts(rel_jsonl, subset, sample_hours=None):
+    """Granary 의사 라벨 → 발화 목록(숫자 단어화 포함). 오디오 존재는 listdir 로 확인. 표본은 영상 단위."""
+    from vapasr.data.yodas import read_labels, wav_path
+    jp = os.path.join(a.labels_dir, rel_jsonl); SRC_FILES.append(jp); st = collections.Counter(); by_video = collections.defaultdict(list)
+    have = set(os.listdir(os.path.join(a.yodas_root, subset, "asr_only")))
+    for r in read_labels(jp):
+        st["rows"] += 1
+        if r["utt_id"] + ".wav" not in have: st["no_audio"] += 1; continue
+        text = target_en(r["raw"], "yodas"); fl = target_flags(text, "English")
+        if fl: st["quarantined"] += 1; _quarantine(r["utt_id"], subset, r["raw"], text, fl); continue
+        if not (0.3 <= r["dur_s"] <= 60): st["bad_dur"] += 1; continue
+        by_video[r["video"]].append(dict(utt_id=r["utt_id"], speaker=None, chapter=r["video"], path=wav_path(a.yodas_root, r["utt_id"]), text=text, raw=r["raw"], dur_s=r["dur_s"])); st["kept"] += 1
+    vids = sorted(by_video); random.Random(a.seed).shuffle(vids); utts = []; acc = 0.0
+    for v in vids:
+        if sample_hours and acc >= sample_hours * 3600: break
+        utts += by_video[v]; acc += sum(u["dur_s"] for u in by_video[v])
+    st["videos_total"] = len(vids); st["videos_kept"] = len({u["chapter"] for u in utts})
+    print(f"    yodas/{subset}: {len(utts)} 발화 {acc/3600:.1f} h · " + " · ".join(f"{k}={v}" for k, v in st.items()), flush=True)
+    return utts, st
+
 # ───────────────────────────── 실행 ─────────────────────────────
 for name in names:
     corpus, parts = MANIFESTS[name]; od = os.path.join(a.out, name); os.makedirs(od, exist_ok=True); rows, stats = [], {}
@@ -191,10 +239,10 @@ for name in names:
             if split != "train": rs += utt_rows(utts, "librispeech", subset, split, "English", "ls")
             sub_st = dict(utts=len(utts), speakers=len({u["speaker"] for u in utts}), chapters=len({(u["speaker"], u["chapter"]) for u in utts}),
                           utt_hours=round(sum(u["dur_s"] for u in utts) / 3600, 2))
-        elif corpus in ("switchboard", "mnsc", "nikl"):
+        elif corpus in ("switchboard", "mnsc", "nikl", "voxpopuli", "yodas"):
             hours = a.sample_hours if a.sample_hours else (float(name.split("-")[-1]) if name.split("-")[-1].isdigit() else None)
-            utts, st = (nikl_utts(subset, hours) if corpus == "nikl" else csv_utts(corpus, src, subset, hours))
-            pre = {"switchboard": "swbd", "mnsc": "mnsc", "nikl": "nikl"}[corpus]; lang = "Korean" if corpus == "nikl" else "English"
+            utts, st = (nikl_utts(subset, hours) if corpus == "nikl" else voxpopuli_utts(src, subset, hours) if corpus == "voxpopuli" else yodas_utts(src, subset, hours) if corpus == "yodas" else csv_utts(corpus, src, subset, hours))
+            pre = {"switchboard": "swbd", "mnsc": "mnsc", "nikl": "nikl", "voxpopuli": "vp", "yodas": "yd"}[corpus]; lang = "Korean" if corpus == "nikl" else "English"
             rs = utt_rows(utts, corpus, subset, split, lang, pre)
             if split == "train":
                 for r in rs: r["mode"] = "stream"; r["id"] = r["id"].replace("-utt-", "-")       # 발화 = 스트림(kspon 과 동일 규약)

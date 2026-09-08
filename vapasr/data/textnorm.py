@@ -23,10 +23,10 @@ try:
 except Exception as e:                                                   # 의존성 없으면 즉시 실패(동결 관문 1)
     raise ImportError("asr-tn-v1.0.0 은 num2words==0.5.14 가 필요합니다: pip install num2words==0.5.14") from e
 
-TEXTNORM_VERSION = "asr-tn-v1.1.0"        # v1.1.0(2026-09-07): 새 코퍼스 파서 nikl·switchboard·mnsc 추가. 기존 코퍼스 타깃은 v1.0.0 과 동일
+TEXTNORM_VERSION = "asr-tn-v1.2.0"        # v1.2.0(2026-09-08): voxpopuli·yodas 파서 추가, yodas 는 숫자 단어화 허용. 기존 코퍼스 타깃은 v1.0.0 과 동일
 TEXTNORM_ID_SHORT = "asr-tn-v1"                                          # 정렬 경로 등에 쓰는 major 식별자
 NUMERIC_BACKEND_PINNED = "0.5.14"
-NUMERIC_CORPORA_EN: Set[str] = set()                                    # v1.1.0: 숫자 표기를 허용한 EN 학습 코퍼스 없음(LibriSpeech·Switchboard·MNSC 모두 digit 0, 남으면 quarantine)
+NUMERIC_CORPORA_EN: Set[str] = {"yodas"}                               # v1.2.0: yodas(의사 라벨, 숫자 표기 흔함)만 num2words 변환. LibriSpeech·Switchboard·MNSC·VoxPopuli 는 digit 이 남으면 quarantine
 
 _TAG = re.compile(r"<[^>\s]{1,20}>")                                     # <en-US>, <ko-KR>, 특수 토큰
 _WS = re.compile(r"\s+")

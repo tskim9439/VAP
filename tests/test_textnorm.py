@@ -27,8 +27,14 @@ def test_nikl():
     for raw, exp in NIKL_QUARANTINE: t = target_ko(raw, "nikl"); f = target_flags(t, "Korean", raw, "nikl"); assert exp <= f, (raw, t, f)
     for _, exp in NIKL: assert target_ko(exp, "nikl") == exp                                   # 멱등
     assert target_ko("(100명)/(백 명)", "kspon") == "백 명" and target_en("DON'T STOP!", "switchboard") == "don't stop"   # 기존 코퍼스 불변
+def test_voxpopuli_yodas():
+    assert target_en("this could be done by looking more specifically into the suggested fallback clause in article twenty one", "voxpopuli") == "this could be done by looking more specifically into the suggested fallback clause in article twenty one"
+    assert "digit" in target_flags(target_en("24 hours", "voxpopuli"), "English")                      # voxpopuli 는 숫자 변환 없음 → quarantine
+    assert target_en("Which sites have you been using, and how did it assist your search?", "yodas") == "which sites have you been using and how did it assist your search"
+    assert target_en("say five, seven years ago. It's 24 hours!", "yodas") == "say five seven years ago it's twenty four hours"   # yodas 는 숫자 단어화
+    assert target_en("DON'T STOP!", "switchboard") == "don't stop" and target_ko("(100명)/(백 명)", "kspon") == "백 명"      # 기존 코퍼스 불변
 def test_version():
-    assert TEXTNORM_VERSION == "asr-tn-v1.1.0"; assert NUMERIC_BACKEND_VERSION == NUMERIC_BACKEND_PINNED, NUMERIC_BACKEND_VERSION
+    assert TEXTNORM_VERSION == "asr-tn-v1.2.0"; assert NUMERIC_BACKEND_VERSION == NUMERIC_BACKEND_PINNED, NUMERIC_BACKEND_VERSION
     fp = fingerprint(); assert fp["textnorm_version"] == TEXTNORM_VERSION and len(fp["textnorm_sha256"]) == 64
 def test_en_target():
     for raw, exp in EN_TARGET: assert target_en(raw) == exp, (raw, target_en(raw), exp)
