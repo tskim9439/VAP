@@ -1,5 +1,5 @@
 #!/bin/bash
-# Stage 2 준비: asr-tn-v1.0.0 manifest 의 강제 정렬(align-asr-tn-v1/) + 항목 캐시. 노드 1 × GPU 8 (manifest 마다 8 shard). 특징은 학습 중 온라인(FEATURES=1 이면 캐시도 생성).
+# Stage 2 준비: asr-tn-v1 manifest 의 강제 정렬(align-asr-tn-v1/) + 데이터 카드 + 항목 캐시. 기본 노드 1 × GPU 8 × WPG 워커; sbatch --nodes=N 이면 N 노드에 shard 를 겹침 없이 분배.
 #   제출:  sbatch --export=ALL,MANIFESTS=librispeech-dev:librispeech-test:kspon-dev:kspon-eval:kspon-full:librispeech-960 slurm/s2_prep.sbatch
 #          (manifest 구분자는 콜론 — --export 의 쉼표와 충돌. WPG=6: GPU 당 워커 수, BATCH=128 BATCH_SEC=960)
 #   로그:   /soundai/users/tskim/VAPKT/logs/prep/<job>-<id>.out|.err, 워커별 logs/prep/<id>/align-<manifest>-<k>.log
@@ -45,9 +45,13 @@ print(len(ids), file=sys.stdout)
 PY
 }
 WPG=${WPG:-6}                       # GPU 당 워커 수: 정렬기는 CPU(특징 추출) 병목이라 GPU 하나에 여러 워커(GPU 메모리 워커당 ≈5 GB)
-run8() {  # run8 <script> <manifest> [extra…]: 8 GPU × WPG 워커 shard 병렬
-  local s=$1 m=$2; shift 2; PIDS=""; local N=$((8 * WPG))
-  for k in $(seq 0 $((N - 1))); do CUDA_VISIBLE_DEVICES=$((k % 8)) OMP_NUM_THREADS=2 python -u experiments/$s --manifest $m --mode all --shard $k/$N "$@" > $WLOG/${s%.py}-$m-$k.log 2>&1 & PIDS="$PIDS $!"; done
+run8() {  # run8 <script> <manifest> [extra…]: 노드마다 8 GPU × WPG 워커, 노드가 여러 개면(sbatch --nodes=N) shard 를 노드 순서로 이어 붙여 겹침 없이 나눈다
+  local s=$1 m=$2; shift 2; PIDS=""; local NPN=$((8 * WPG)); local NN=${SLURM_NNODES:-1}; local N=$((NPN * NN))
+  if [ "$NN" -gt 1 ]; then
+    srun --nodes="$NN" --ntasks="$NN" --ntasks-per-node=1 --kill-on-bad-exit=0 bash -c "P=''; for k in \$(seq 0 $((NPN - 1))); do g=\$((SLURM_NODEID * $NPN + k)); CUDA_VISIBLE_DEVICES=\$((k % 8)) OMP_NUM_THREADS=2 python -u experiments/$s --manifest $m --mode all --shard \$g/$N $* > $WLOG/${s%.py}-$m-\$g.log 2>&1 & P=\"\$P \$!\"; done; wait \$P" & PIDS=$!
+  else
+    for k in $(seq 0 $((N - 1))); do CUDA_VISIBLE_DEVICES=$((k % 8)) OMP_NUM_THREADS=2 python -u experiments/$s --manifest $m --mode all --shard $k/$N "$@" > $WLOG/${s%.py}-$m-$k.log 2>&1 & PIDS="$PIDS $!"; done
+  fi
   wait $PIDS
 }
 for m in ${MANIFESTS//,/ }; do
@@ -56,7 +60,7 @@ for m in ${MANIFESTS//,/ }; do
   case $m in librispeech-960) python experiments/s2_seed_cache.py --new $m --old librispeech-100 --encoder $ENC --feat $FEATURES --new-align-root $ALIGN_OUT ;; kspon-full) python experiments/s2_seed_cache.py --new $m --old kspon-100 --encoder $ENC --feat $FEATURES --new-align-root $ALIGN_OUT ;;
               *) python experiments/s2_seed_cache.py --new $m --old $m --encoder $ENC --old-align align2 --feat $FEATURES --new-align-root $ALIGN_OUT ;; esac   # dev/test: 같은 이름, 옛 캐시·정렬은 다른 루트에 그대로
   # 2) 정렬
-  A=$(n_aligned $ALIGN_OUT/$m); if [ "$A" -lt "$ROWS" ]; then echo "[$(date '+%T')] align $m: $A/$ROWS → $((8 * WPG)) shard"; run8 s1_align.py $m --batch ${BATCH:-128} --batch-sec ${BATCH_SEC:-960} --io-threads 8 --out-root $ALIGN_OUT; fi
+  A=$(n_aligned $ALIGN_OUT/$m); if [ "$A" -lt "$ROWS" ]; then echo "[$(date '+%T')] align $m: $A/$ROWS → $((8 * WPG * ${SLURM_NNODES:-1})) shard (${SLURM_NNODES:-1} 노드)"; run8 s1_align.py $m --batch ${BATCH:-128} --batch-sec ${BATCH_SEC:-960} --io-threads 8 --out-root $ALIGN_OUT; fi
   A=$(n_aligned $ALIGN_OUT/$m); echo "[$(date '+%T')] align $m: $A/$ROWS"
   # 3) 특징 캐시(선택, 기본 off: 학습이 온라인으로 인코딩)
   D=$ROWS
