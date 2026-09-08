@@ -94,8 +94,9 @@ preempt_cb = PreemptCallback(out, gloo_pg)
 trainer = VapAsrTrainer(model=model, args=targs, train_sets=train_sets, dev_sets=dev_sets, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, lr_encoder=a.lr_encoder,
                         eval_delay=a.eval_delay, eval_biases=[float(x) for x in a.eval_bias.split(",")], max_per_chunk=a.M, gloo_pg=gloo_pg, num_workers=a.num_workers,
                         callbacks=[preempt_cb])
-if a.eval_only:
-    r = trainer.evaluate(); log(json.dumps(r, ensure_ascii=False)); sys.exit(0)
+if a.eval_only:                                                                # 오프라인 평가: --init <checkpoint-N 디렉토리> → out-dir/eval/offline-N.json
+    import re; mstep = re.search(r"checkpoint-(\d+)", init or ""); trainer.state.global_step = int(mstep.group(1)) if mstep else 0
+    r = trainer.evaluate(metric_key_prefix="offline"); log(json.dumps(r, ensure_ascii=False)); sys.exit(0)
 last = None
 if a.resume == "auto": last = get_last_checkpoint(out) if os.path.isdir(out) else None
 elif a.resume != "none": last = a.resume
