@@ -18,6 +18,7 @@ ap.add_argument("--init", default=None, help="Qwen3-ASR 디렉토리 | HF 산출
 ap.add_argument("--train-encoder", action="store_true"); ap.add_argument("--no-grad-ckpt", action="store_true"); ap.add_argument("--liger", action="store_true"); ap.add_argument("--no-liger", action="store_true")
 ap.add_argument("--eval-every", type=int, default=2000); ap.add_argument("--save-every", type=int, default=500); ap.add_argument("--eval-bias", default="0"); ap.add_argument("--eval-delay", type=int, default=2)
 ap.add_argument("--sentinel-stream", type=int, default=10); ap.add_argument("--sentinel-utt", type=int, default=100); ap.add_argument("--eval-only", action="store_true")
+ap.add_argument("--eval-tag", default="offline", help="--eval-only 결과 이름 eval/<tag>-<step>.json (예: select)"); ap.add_argument("--eval-seed", type=int, default=1, help="dev 표본 추출 seed (sentinel 1, select 7)")
 ap.add_argument("--out-dir", required=True); ap.add_argument("--resume", default="auto", help="auto | none | <checkpoint dir>"); ap.add_argument("--save-total-limit", type=int, default=2)
 ap.add_argument("--seed", type=int, default=0); ap.add_argument("--log-every", type=int, default=50); ap.add_argument("--num-workers", type=int, default=4); ap.add_argument("--gpu", default=None)
 a = ap.parse_args()
@@ -79,7 +80,7 @@ def make_sets(spec, cap_stream, cap_utt, seed=1):
     return {lab: MonoStreamDataset([m], tok, mode=mode, subsets=[sub], delays=(a.eval_delay,), max_per_chunk=a.M, seed=seed, max_items=(cap_stream if mode == "stream" else cap_utt), online=True) for lab, m, sub, mode in spec}
 if world > 1 and not main: barrier()
 train_sets = {m: MonoStreamDataset([m], tok, mode="stream", delays=delays, max_per_chunk=a.M, seed=a.seed, online=True) for m in manifests} if not a.eval_only else {}
-dev_sets = make_sets(DEV, a.sentinel_stream, a.sentinel_utt)
+dev_sets = make_sets(DEV, a.sentinel_stream, a.sentinel_utt, seed=a.eval_seed)
 if world > 1 and main: barrier()
 log("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align})" for k, v in train_sets.items()) + " | dev " + ", ".join(f"{k}:{len(v)}" for k, v in dev_sets.items()) + f" | world {world}")
 
@@ -96,7 +97,7 @@ trainer = VapAsrTrainer(model=model, args=targs, train_sets=train_sets, dev_sets
                         callbacks=[preempt_cb], processing_class=tok)                    # checkpoint-N 에 tokenizer 도 저장
 if a.eval_only:                                                                # 오프라인 평가: --init <checkpoint-N 디렉토리> → out-dir/eval/offline-N.json
     import re; mstep = re.search(r"checkpoint-(\d+)", init or ""); trainer.state.global_step = int(mstep.group(1)) if mstep else 0
-    r = trainer.evaluate(metric_key_prefix="offline"); log(json.dumps(r, ensure_ascii=False))
+    r = trainer.evaluate(metric_key_prefix=a.eval_tag); log(json.dumps(r, ensure_ascii=False))
     if mstep:                                                                   # TensorBoard 에도 기록(학습 곡선과 같은 step 축)
         try:
             from torch.utils.tensorboard import SummaryWriter
