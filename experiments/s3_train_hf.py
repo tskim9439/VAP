@@ -90,9 +90,10 @@ targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradien
                           save_total_limit=a.save_total_limit, save_safetensors=True, save_on_each_node=False, seed=a.seed, data_seed=a.seed, report_to="none", remove_unused_columns=False,
                           disable_tqdm=True, ignore_data_skip=True, ddp_find_unused_parameters=False, ddp_broadcast_buffers=False, ddp_timeout=10800, dataloader_num_workers=a.num_workers,
                           label_names=["labels"], log_level="warning" if main else "error")
+preempt_cb = PreemptCallback(out, gloo_pg)
 trainer = VapAsrTrainer(model=model, args=targs, train_sets=train_sets, dev_sets=dev_sets, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, lr_encoder=a.lr_encoder,
                         eval_delay=a.eval_delay, eval_biases=[float(x) for x in a.eval_bias.split(",")], max_per_chunk=a.M, gloo_pg=gloo_pg, num_workers=a.num_workers,
-                        callbacks=[PreemptCallback(out, gloo_pg)])
+                        callbacks=[preempt_cb])
 if a.eval_only:
     r = trainer.evaluate(); log(json.dumps(r, ensure_ascii=False)); sys.exit(0)
 last = None
@@ -105,7 +106,7 @@ if main:
 if os.path.exists(os.path.join(out, "PREEMPT")) and main: os.remove(os.path.join(out, "PREEMPT"))
 barrier()
 res = trainer.train(resume_from_checkpoint=last)
-st = trainer.state; preempted = trainer.callback_handler.callbacks[-1].fired if trainer.callback_handler.callbacks else False
+st = trainer.state; preempted = preempt_cb.fired
 done = st.global_step >= st.max_steps and not preempted
 log(f"train 종료: step {st.global_step}/{st.max_steps} {'완료' if done else '(선점/중단 → 재시작 시 이어서)'} · {res.metrics}")
 if done:

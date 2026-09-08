@@ -1,0 +1,40 @@
+{
+  "adapter_d_in": 1024,
+  "adapter_d_out": 1024,
+  "adapter_hidden": 2048,
+  "architectures": [
+    "VapAsrForStreamingASR"
+  ],
+  "audio_pad_id": 151676,
+  "blocked_ids": [
+    151644,
+    151645,
+    151669,
+    151670,
+    151676,
+    151704,
+    151706,
+    151707,
+    151708,
+    151709,
+    151710,
+    151711,
+    151712,
+    151713,
+    151714,
+    151715,
+    151716
+  ],
+  "chunk_s": 0.08,
+  "delays": [
+    2,
+    3,
+    4,
+    6
+  ],
+  "dtype": "float32",
+  "encoder_left_context": 56,
+  "encoder_name": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+  "encoder_right_context": 0,
+  "encoder_trainable": false,
+  "encoder_type": "nemotron",
