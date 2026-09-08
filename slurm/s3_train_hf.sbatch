@@ -1,0 +1,66 @@
+#!/bin/bash
+# Stage 2/3 학습(HF Trainer 판, experiments/s3_train_hf.py) — 다중 노드 DDP, thinker full FT + 온라인 Nemotron + Liger. 선점·시간 제한 시 저장 후 requeue(Trainer checkpoint-<step>/ 재개).
+#   제출:  sbatch --export=ALL,RUN=C,TRAIN=librispeech-960:kspon-full,EPOCHS=30,EVAL_EVERY=1000,SAVE_EVERY=500,LR=1e-4,WARMUP=500 slurm/s2_train.sbatch
+#          이어서 다른 run 을 체인할 때는 --dependency=afterok:<jobid> (afterany 는 선행 run 이 실패해도 시작한다) + INIT_CKPT=…/s1-<RUN>/ckpt-last.pt
+#          NCCL 초기화에서 SIGSEGV 가 잦은 노드는 --exclude=slurmmxch200v5-hpc-52 처럼 뺀다(66007: 4 회 중 3 회 hpc-52)
+#          (TRAIN 은 콜론 구분. LR/WARMUP/BS_EN/BS_KO 로 조정: 64 GPU 면 유효 배치가 8 GPU 의 8 배(EN 768 / KO 3072)라 LR 상향을 검토)
+#   산출물: /soundai/Model/VAPASR/hf-<RUN>/  (checkpoint-<step>/ 재개용 · final/ HF 모델 · eval/ · run.json · results.json · DONE)
+#   로그:   /soundai/users/tskim/VAPKT/logs/train/SA_SFT_FullDuplexStage5-<jobid>.out|.err
+#SBATCH --job-name=SA_SFT_FullDuplexStage5
+#SBATCH --partition=apex
+#SBATCH --nodes=8
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:8
+#SBATCH --cpus-per-task=64
+#SBATCH --requeue
+#SBATCH --open-mode=append
+#SBATCH --signal=B:USR1@180
+#SBATCH --output=/soundai/users/tskim/VAPKT/logs/train/%x-%j.out
+#SBATCH --error=/soundai/users/tskim/VAPKT/logs/train/%x-%j.err
+set -uo pipefail
+RUN=${RUN:-C}
+ROOT=/soundai/Model/VAPASR; OUT=$ROOT/hf-$RUN; mkdir -p "$OUT" /soundai/users/tskim/VAPKT/logs/train
+echo "[$(date '+%F %T')] job $SLURM_JOB_ID RUN=$RUN nodes=$SLURM_NNODES ($SLURM_JOB_NODELIST) restart=${SLURM_RESTART_COUNT:-0}"
+[ -f "$OUT/DONE" ] && { echo "이미 완료(DONE) — 종료"; exit 0; }
+
+cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
+MXC_CONDA_DIR=${CONDA_OVERRIDE:-$MXC_CONDA_DIR}; source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
+export MXC_CKPT_EXP_DIR=$ROOT
+export MXC_DATA_MANIFEST_DIR=${MAN_IN:-$MXC_DATA_MANIFEST_DIR} VAPASR_ALIGN_ROOT=${ALIGN_ROOT:-${MAN_IN:-$MXC_DATA_MANIFEST_DIR}/align-asr-tn-v1}
+export OMP_NUM_THREADS=8 NCCL_DEBUG=${NCCL_DEBUG:-WARN} TOKENIZERS_PARALLELISM=false PYTORCH_ALLOC_CONF=expandable_segments:True
+# 다중 노드 NCCL: 부트스트랩 소켓을 이더넷(eth0)에 고정. 기본값으로 두면 IPoIB(172.16.x.x, ib0–ib7) 주소를 골라 노드 간 "No route to host" 로 죽는다(job 65931).
+# 데이터 경로는 IB verbs(NCCL_IB_HCA 자동). IB 자체가 문제면 NCCL_IB_DISABLE=1 로 이더넷 폴백.
+export NCCL_SOCKET_IFNAME=${NCCL_SOCKET_IFNAME:-eth0} GLOO_SOCKET_IFNAME=${GLOO_SOCKET_IFNAME:-eth0} NCCL_IB_DISABLE=${NCCL_IB_DISABLE:-0}
+export NCCL_IB_TIMEOUT=${NCCL_IB_TIMEOUT:-23} NCCL_IB_RETRY_CNT=${NCCL_IB_RETRY_CNT:-7} PYTHONFAULTHANDLER=1   # IB 링크 흔들림(status=12 retry exceeded, job 65963) 에 대한 여유. retry_cnt 는 3 비트라 최대 7. 반복되면 NCCL_IB_DISABLE=1
+case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*) ;; *) echo "!! conda env 아님: $(which python)"; exit 1;; esac
+echo "manifest ← $MXC_DATA_MANIFEST_DIR | 정렬 ← $VAPASR_ALIGN_ROOT | conda $MXC_CONDA_DIR"
+
+
+# ── run 설정 (rank 당 배치 EN/KO; 64 rank 면 유효 배치 EN 768 / KO 3072)
+TRAIN=${TRAIN:-librispeech-960,kspon-full}; TRAIN=${TRAIN//:/,}; EPOCHS=${EPOCHS:-15}; FEATURES=${FEATURES:-online}
+EVAL_EVERY=${EVAL_EVERY:-1000}; SAVE_EVERY=${SAVE_EVERY:-500}; BS_EN=${BS_EN:-12}; BS_KO=${BS_KO:-48}; LR=${LR:-4e-5}; LR_ADAPTER=${LR_ADAPTER:-1e-3}; WARMUP=${WARMUP:-200}
+# 주의: srun bash -c "…" 안에 들어가므로 COMMON 에 줄바꿈이 있으면 두 번째 줄이 별개 명령이 되어 인자가 잘린다(job 65955: --full-ft·--lr 등 누락 → LoRA 로 실행됨)
+COMMON="--out-dir $OUT --train $TRAIN --epochs $EPOCHS --bs-en $BS_EN --bs-ko $BS_KO --next-weight 0.3 --next-weight-ko 0.15 --eval-every $EVAL_EVERY --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every $SAVE_EVERY --warmup $WARMUP --lr $LR --lr-adapter $LR_ADAPTER --resume auto ${INIT:+--init $INIT} ${INIT_ADAPTER:+--init-adapter $INIT_ADAPTER} ${TRAIN_ENCODER:+--train-encoder} ${EXTRA_ARGS:-}"
+EXTRA=""
+INIT=${INIT:-}; INIT_ADAPTER=${INIT_ADAPTER:-$ROOT/uslm/s1-adapter-distill/adapter.pt}   # INIT 없음 = Qwen3-ASR 에서 새 모델(+증류 adapter). INIT=HF 디렉토리|ckpt-last.pt 면 그 가중치로 시작
+[ -n "$INIT" ] && [ ! -e "$INIT" ] && { echo "!! INIT 없음: $INIT"; exit 1; }
+# 선행 run 이 끝나지 않았는데(DONE 없음) afterany 로 시작되면 중간 ckpt 로 학습해 버린다. INIT_REQUIRE_DONE=0 이면 무시
+[ -n "$INIT" ] && [ "${INIT_REQUIRE_DONE:-1}" = 1 ] && [ ! -f "$(dirname "$INIT")/DONE" ] && [ ! -f "$INIT/../DONE" ] && { echo "!! INIT 의 run 이 미완료(DONE 없음): $INIT — INIT_REQUIRE_DONE=0 으로 강제 가능"; exit 1; }
+
+# ── 선점·시간 제한: PREEMPT 파일(공유 FS) → 모든 rank 가 다음 step 경계에서 감지(all_reduce) → rank 0 저장 → 종료 → requeue
+rm -f "$OUT/PREEMPT"
+on_preempt() { echo "[$(date '+%T')] 신호 수신 → PREEMPT 표시, 저장 대기"; touch "$OUT/PREEMPT"; wait "$PID"; echo "requeue $SLURM_JOB_ID"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }
+trap on_preempt USR1 TERM
+
+ARGS="$COMMON $EXTRA"; case "$ARGS" in *$'\n'*) echo "!! 인자에 줄바꿈"; exit 1;; esac
+MASTER=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1); PORT=$((20000 + SLURM_JOB_ID % 10000))
+# rendezvous 주소는 호스트명이 아니라 첫 노드(= 이 배치 스크립트가 도는 노드)의 eth0 IPv4 로 — 호스트명이 IPoIB 로 풀리면 keep-alive/TCPStore 가 막힌다
+MASTER_IP=$(ip -4 -o addr show "${NCCL_SOCKET_IFNAME}" 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n 1); [ -n "$MASTER_IP" ] || MASTER_IP=$MASTER
+echo "[$(date '+%T')] torchrun × $SLURM_NNODES 노드 (rdzv $MASTER=$MASTER_IP:$PORT): $COMMON $EXTRA"
+srun --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 --kill-on-bad-exit=1 \
+  bash -c "torchrun --nnodes=$SLURM_NNODES --nproc_per_node=8 --node_rank=\$SLURM_NODEID --rdzv_backend=c10d --rdzv_endpoint=$MASTER_IP:$PORT --rdzv_id=$SLURM_JOB_ID experiments/s3_train_hf.py $ARGS" &
+PID=$!; wait "$PID"; RC=$?
+if [ "$RC" -eq 0 ] && [ -f "$OUT/DONE" ]; then echo "[$(date '+%T')] 학습 완료 → DONE"
+elif [ "$RC" -eq 0 ]; then echo "[$(date '+%T')] 미완료 종료(선점 저장 등) → requeue"; scontrol requeue "$SLURM_JOB_ID"
+elif [ "${SLURM_RESTART_COUNT:-0}" -lt "${MAX_RESTART:-3}" ]; then echo "[$(date '+%T')] 학습 실패 rc=$RC → 인프라 오류 가능성, requeue (restart ${SLURM_RESTART_COUNT:-0}/${MAX_RESTART:-3}, ckpt-last 에서 재개)"; scontrol requeue "$SLURM_JOB_ID"
+else echo "[$(date '+%T')] 학습 실패 rc=$RC (restart 한도 초과)"; exit "$RC"; fi
