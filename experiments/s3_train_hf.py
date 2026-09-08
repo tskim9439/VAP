@@ -34,7 +34,7 @@ if world > 1:
     if int(os.environ.get("NCCL_IB_RETRY_CNT", "7")) > 7: os.environ["NCCL_IB_RETRY_CNT"] = "7"
     os.environ.setdefault("TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC", "3600")
     torch.cuda.set_device(local); dist.init_process_group("nccl", timeout=timedelta(hours=3), device_id=torch.device("cuda", local))
-    gloo_pg = dist.new_group(backend="gloo", timeout=timedelta(hours=3))          # 긴 대기(평가 gather·선점 합의) 는 이더넷 gloo 로
+    gloo_pg = dist.new_group(backend="gloo", timeout=timedelta(hours=1))   # 평가 gather·선점 합의가 1 h 를 넘으면 행(hang)으로 보고 실패 → requeue          # 긴 대기(평가 gather·선점 합의) 는 이더넷 gloo 로
 main = rank == 0
 def log(*s):
     if main: print(*s, flush=True)

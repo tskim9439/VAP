@@ -48,7 +48,7 @@ if world > 1:
 dev = f"cuda:{local}" if world > 1 else "cuda"; main = rank == 0
 # 대기용 CPU(gloo) 그룹: rank 0 의 sentinel 평가(5–10 분) 동안 63 rank 가 NCCL barrier 에 걸려 있으면 IB 에 미완료 작업이 남아 "retry exceeded"(65963·65965) 나
 # 전 rank 의 조용한 종료(66007 restart 2) 로 죽었다. 긴 대기는 이더넷(gloo) 으로 하고 NCCL 은 학습 step 의 all-reduce 에만 쓴다.
-gloo_pg = dist.new_group(backend="gloo", timeout=timedelta(hours=3)) if world > 1 else None
+gloo_pg = dist.new_group(backend="gloo", timeout=timedelta(hours=1))   # 평가 gather·선점 합의가 1 h 를 넘으면 행(hang)으로 보고 실패 → requeue if world > 1 else None
 def log(*s):
     if main: print(*s, flush=True)
 def barrier():
@@ -124,6 +124,16 @@ def latency_stats(hyp, ref):
             for di in range(i2 - i1): lat.append((hyp[i1 + di][0] + 1) * CHUNK_S - ref[j1 + di][1])
     return lat
 def pct(x, p): return float(np.percentile(x, p)) if len(x) else None
+
+def gather_objects_cpu(obj, group, world: int):
+    """all_gather_object 의 CPU 고정판: 객체를 pickle → uint8 CPU 텐서로 gloo all_gather. (기본 all_gather_object 는 device_id 가 묶인 그룹에서 CUDA 텐서를 쓸 수 있어
+    다중 노드 gloo 에서 위험) """
+    import pickle
+    data = torch.frombuffer(bytearray(pickle.dumps(obj)), dtype=torch.uint8).clone(); size = torch.tensor([data.numel()], dtype=torch.long)
+    sizes = [torch.zeros(1, dtype=torch.long) for _ in range(world)]; dist.all_gather(sizes, size, group=group)
+    mx = int(max(int(s.item()) for s in sizes)); buf = torch.zeros(mx, dtype=torch.uint8); buf[: data.numel()] = data
+    out = [torch.zeros(mx, dtype=torch.uint8) for _ in range(world)]; dist.all_gather(out, buf, group=group)
+    return [pickle.loads(o[: int(s.item())].numpy().tobytes()) for o, s in zip(out, sizes)]
 @torch.no_grad()
 def eval_set(ds, bias, delay):
     """분산이면 스트림 i 를 rank == i % world 가 디코드하고 gloo all_gather 로 합친다(rank 0 혼자 13 분 → 수십 초). 모든 rank 가 함께 호출해야 한다."""
@@ -134,7 +144,7 @@ def eval_set(ds, bias, delay):
         ticks += list(tk); rounds.append(rd); forced += fc; chunks += it["K"]; n_tok += len(emitted); n_ref += len(ref); backlog.append(st.max_backlog)
         R.append(tok.decode([t for t, _ in ref])); H.append(tok.decode([t for _, t in emitted])); lat += latency_stats(emitted, ref)
     if world > 1:
-        parts = [None] * world; dist.all_gather_object(parts, dict(R=R, H=H, lat=lat, forced=forced, chunks=chunks, n_tok=n_tok, n_ref=n_ref, backlog=backlog, ticks=ticks, rounds=rounds), group=gloo_pg)
+        parts = gather_objects_cpu(dict(R=R, H=H, lat=lat, forced=forced, chunks=chunks, n_tok=n_tok, n_ref=n_ref, backlog=backlog, ticks=ticks, rounds=rounds), gloo_pg, world)
         R = sum((q["R"] for q in parts), []); H = sum((q["H"] for q in parts), []); lat = sum((q["lat"] for q in parts), []); backlog = sum((q["backlog"] for q in parts), [])
         ticks = sum((q["ticks"] for q in parts), []); rounds = sum((q["rounds"] for q in parts), []); forced = sum(q["forced"] for q in parts); chunks = sum(q["chunks"] for q in parts)
         n_tok = sum(q["n_tok"] for q in parts); n_ref = sum(q["n_ref"] for q in parts)

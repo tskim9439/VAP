@@ -10,6 +10,16 @@ from ..uslm.mono_data import lang_of, CHUNK_S
 from ..data.textnorm import score_en, score_ko
 
 def pct(x, p): return float(np.percentile(x, p)) if len(x) else None
+
+def gather_objects_cpu(obj, group, world: int):
+    """all_gather_object 의 CPU 고정판: 객체를 pickle → uint8 CPU 텐서로 gloo all_gather. (기본 all_gather_object 는 device_id 가 묶인 그룹에서 CUDA 텐서를 쓸 수 있어
+    다중 노드 gloo 에서 위험) """
+    import pickle
+    data = torch.frombuffer(bytearray(pickle.dumps(obj)), dtype=torch.uint8).clone(); size = torch.tensor([data.numel()], dtype=torch.long)
+    sizes = [torch.zeros(1, dtype=torch.long) for _ in range(world)]; dist.all_gather(sizes, size, group=group)
+    mx = int(max(int(s.item()) for s in sizes)); buf = torch.zeros(mx, dtype=torch.uint8); buf[: data.numel()] = data
+    out = [torch.zeros(mx, dtype=torch.uint8) for _ in range(world)]; dist.all_gather(out, buf, group=group)
+    return [pickle.loads(o[: int(s.item())].numpy().tobytes()) for o, s in zip(out, sizes)]
 def latency_stats(hyp, ref):
     h_ids = [t for _, t in hyp]; r_ids = [t for t, _ in ref]; lat = []
     for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, h_ids, r_ids, autojunk=False).get_opcodes():
@@ -87,7 +97,7 @@ class VapAsrTrainer(Trainer):
             ticks += list(tk); rounds.append(rd); forced += fc; chunks += it["K"]; n_tok += len(emitted); n_ref += len(ref); backlog.append(st.max_backlog)
             R.append(self.tok.decode([t for t, _ in ref])); H.append(self.tok.decode([t for _, t in emitted])); lat += latency_stats(emitted, ref)
         if world > 1:
-            parts = [None] * world; dist.all_gather_object(parts, dict(R=R, H=H, lat=lat, forced=forced, chunks=chunks, n_tok=n_tok, n_ref=n_ref, backlog=backlog, ticks=ticks, rounds=rounds), group=self.gloo_pg)
+            parts = gather_objects_cpu(dict(R=R, H=H, lat=lat, forced=forced, chunks=chunks, n_tok=n_tok, n_ref=n_ref, backlog=backlog, ticks=ticks, rounds=rounds), self.gloo_pg, world)
             R = sum((q["R"] for q in parts), []); H = sum((q["H"] for q in parts), []); lat = sum((q["lat"] for q in parts), []); backlog = sum((q["backlog"] for q in parts), [])
             ticks = sum((q["ticks"] for q in parts), []); rounds = sum((q["rounds"] for q in parts), []); forced = sum(q["forced"] for q in parts); chunks = sum(q["chunks"] for q in parts)
             n_tok = sum(q["n_tok"] for q in parts); n_ref = sum(q["n_ref"] for q in parts)
