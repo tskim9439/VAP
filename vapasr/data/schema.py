@@ -72,15 +72,20 @@ def build_dataset_card(manifest_dir: str, sample: Optional[int] = None, extra: O
     """streams.jsonl 을 훑어 dataset.json 내용과 검증 오류(최대 20 건)를 만든다. stats.json 이 있으면 fingerprint·textnorm 을 가져온다."""
     p = os.path.join(manifest_dir, "streams.jsonl"); st = json.load(open(os.path.join(manifest_dir, "stats.json"))) if os.path.exists(os.path.join(manifest_dir, "stats.json")) else {}
     n = 0; hours = 0.0; subsets: Dict[str, int] = {}; modes: Dict[str, int] = {}; langs: Dict[str, int] = {}; corpora: Dict[str, int] = {}; splits: Dict[str, int] = {}; errs: List[str] = []; n_seg = 0
+    ids = set(); dup_ids = 0
     for line in open(p, encoding="utf-8"):
         r = json.loads(line); n += 1
+        if r.get("id") in ids:                                                       # id 중복(mnsc-1000 초기 빌드: 676,864 행 중 고유 77,095) — 로더는 마지막 행, 정렬기는 첫 행을 써서 텍스트–정렬 불일치를 낳는다
+            dup_ids += 1
+            if len(errs) < 20: errs.append(f"{r.get('id')}: duplicate id")
+        ids.add(r.get("id"))
         if sample is None or n <= sample:
             for msg in validate_row(r):
                 if len(errs) < 20: errs.append(f"{r.get('id')}: {msg}")
         hours += float(r.get("duration_s", 0)) / 3600; n_seg += len(r.get("segments", []))
         for d, k in ((subsets, "subset"), (modes, "mode"), (langs, "lang"), (corpora, "corpus"), (splits, "split")): d[r.get(k)] = d.get(r.get(k), 0) + 1
     nq = sum(1 for _ in open(os.path.join(manifest_dir, "quarantine.jsonl"), encoding="utf-8")) if os.path.exists(os.path.join(manifest_dir, "quarantine.jsonl")) else None
-    card = dict(schema_version=DS_SCHEMA, name=os.path.basename(os.path.normpath(manifest_dir)), corpus=(list(corpora)[0] if len(corpora) == 1 else sorted(corpora)), splits=splits, rows=n, segments=n_seg, hours=round(hours, 2),
+    card = dict(schema_version=DS_SCHEMA, name=os.path.basename(os.path.normpath(manifest_dir)), corpus=(list(corpora)[0] if len(corpora) == 1 else sorted(corpora)), splits=splits, rows=n, unique_ids=len(ids), duplicate_ids=dup_ids, segments=n_seg, hours=round(hours, 2),
                 subsets=subsets, modes=modes, langs=langs, textnorm_version=st.get("textnorm_version"), fingerprint=st.get("fingerprint"), quarantined=nq if nq is not None else st.get("quarantined"),
                 text_fields=dict(lexical_text="학습·정렬 타깃(asr-tn 규약)", raw_text="원문(있으면)", text="lexical_text 와 동일(하위 호환)", display_source="display 텍스트 출처(none|raw|…)"),
                 time_base="stream (segments[].offset_s 는 스트림 시작 기준, silence_before_s 는 삽입 무음)", audio=dict(sample_rate=16000, channels=1, path_forms=["file path", "archive.tar::member"]),
