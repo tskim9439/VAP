@@ -1,0 +1,24 @@
+[bg:dscards] start Tue Sep  8 04:03:17 PM CST 2026
+schema → vapasr/data/schemas/vapasr-ds-1.0.row.json
+schema → vapasr/data/schemas/vapasr-align-1.0.record.json
+[kspon-100] rows 62000 · 118.68 h · subsets 1 · modes {'stream': 62000} · textnorm None · 오류 20 (1s)
+[kspon-dev] rows 2545 · 4.86 h · subsets 1 · modes {'utt': 2545} · textnorm asr-tn-v1.0.0 · 오류 0 (0s)
+   align/align-asr-tn-v1: streams 0 (empty 0, dup lines 0) · utts 0 · tokens 0 · parts 0 · 오류 0 (0s)
+[kspon-eval] rows 5687 · 8.11 h · subsets 2 · modes {'utt': 5687} · textnorm asr-tn-v1.0.0 · 오류 0 (0s)
+   align/align-asr-tn-v1: streams 0 (empty 0, dup lines 0) · utts 0 · tokens 0 · parts 0 · 오류 0 (0s)
+[kspon-full] rows 619932 · 1188.82 h · subsets 5 · modes {'stream': 619932} · textnorm asr-tn-v1.0.0 · 오류 0 (19s)
+   align/align-asr-tn-v1: streams 594316 (empty 0, dup lines 266112) · utts 860428 · tokens 19801372 · parts 6734 · 오류 0 (113s)
+[librispeech-100] rows 13182 · 107.91 h · subsets 1 · modes {'stream': 13182} · textnorm None · 오류 20 (0s)
+[librispeech-960] rows 126513 · 1033.06 h · subsets 3 · modes {'stream': 126513} · textnorm asr-tn-v1.0.0 · 오류 0 (2s)
+   align/align-asr-tn-v1: streams 124229 (empty 0, dup lines 0) · utts 276005 · tokens 10131278 · parts 975 · 오류 0 (26s)
+[librispeech-dev] rows 7037 · 24.45 h · subsets 2 · modes {'stream': 1470, 'utt': 5567} · textnorm asr-tn-v1.0.0 · 오류 0 (0s)
+   align/align-asr-tn-v1: streams 0 (empty 0, dup lines 0) · utts 0 · tokens 0 · parts 0 · 오류 0 (0s)
+[librispeech-test] rows 7042 · 24.91 h · subsets 2 · modes {'stream': 1483, 'utt': 5559} · textnorm asr-tn-v1.0.0 · 오류 0 (0s)
+   align/align-asr-tn-v1: streams 0 (empty 0, dup lines 0) · utts 0 · tokens 0 · parts 0 · 오류 0 (0s)
+[mnsc-1000] rows 676864 · 1244.3 h · subsets 1 · modes {'stream': 676864} · textnorm asr-tn-v1.1.0 · 오류 0 (6s)
+   align/align-asr-tn-v1: streams 0 (empty 0, dup lines 0) · utts 0 · tokens 0 · parts 0 · 오류 0 (0s)
+[nikl-1000] rows 1249471 · 1451.32 h · subsets 1 · modes {'stream': 1249471} · textnorm asr-tn-v1.1.0 · 오류 0 (14s)
+   align/align-asr-tn-v1: streams 1249471 (empty 2256, dup lines 1053631) · utts 2300846 · tokens 31243976 · parts 18054 · 오류 0 (470s)
+[swbd-train] rows 179427 · 290.03 h · subsets 1 · modes {'stream': 179427} · textnorm asr-tn-v1.1.0 · 오류 0 (2s)
+   align/align-asr-tn-v1: streams 179463 (empty 1, dup lines 791) · utts 180253 · tokens 2413871 · parts 1441 · 오류 0 (81s)
+[bg:dscards] EXIT=0 Tue Sep  8 04:16:13 PM CST 2026

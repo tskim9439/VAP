@@ -104,7 +104,20 @@ def build_align_card(align_dir: str, manifest_name: Optional[str] = None, sample
             if sample is None or n <= sample:
                 for msg in validate_align_record(r):
                     if len(errs) < 20: errs.append(f"{r.get('id')}: {msg}")
-    legacy = sum(1 for x in os.listdir(align_dir) if x.endswith(".jsonl")) if os.path.isdir(align_dir) else 0
+    legacy = 0                                                                     # 레거시: 스트림별 <id>.jsonl (한 줄 = 발화 1 개) — dev/eval 정렬이 이 형식
+    for x in (sorted(os.listdir(align_dir)) if os.path.isdir(align_dir) else []):
+        if not x.endswith(".jsonl"): continue
+        legacy += 1; sid = x[:-6]
+        try: utts = [json.loads(l) for l in open(os.path.join(align_dir, x), encoding="utf-8") if l.strip()]
+        except Exception: errs.append(f"{x}: JSON 깨짐") if len(errs) < 20 else None; continue
+        n += 1
+        if sid in ids: dup += 1
+        ids.add(sid)
+        if not utts: n_empty += 1
+        nu += len(utts); nt += sum(len(u.get("tokens", [])) for u in utts)
+        if sample is None or n <= sample:
+            for msg in validate_align_record(dict(id=sid, utts=utts)):
+                if len(errs) < 20: errs.append(f"{sid}: {msg}")
     card = dict(schema_version=ALIGN_SCHEMA, manifest=manifest_name or os.path.basename(os.path.normpath(align_dir)), align_root=os.path.basename(os.path.dirname(os.path.normpath(align_dir))),
                 textnorm_version=(fp or {}).get("textnorm_version"), fingerprint=fp, tokenizer=dict(json_sha256=(fp or {}).get("tokenizer_json_sha256")),
                 aligner=aligner or dict(model="Qwen/Qwen3-ForcedAligner-0.6B", note="token end_time 만 사용(초, 스트림 기준)"),

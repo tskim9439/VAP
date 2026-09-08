@@ -1,0 +1,127 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "vapasr-ds-1.0/row",
+ "type": "object",
+ "required": [
+  "id",
+  "corpus",
+  "split",
+  "subset",
+  "mode",
+  "lang",
+  "duration_s",
+  "segments"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "corpus": {
+   "type": "string"
+  },
+  "split": {
+   "enum": [
+    "train",
+    "dev",
+    "test",
+    "eval"
+   ]
+  },
+  "subset": {
+   "type": "string"
+  },
+  "mode": {
+   "enum": [
+    "stream",
+    "utt"
+   ]
+  },
+  "lang": {
+   "enum": [
+    "English",
+    "Korean"
+   ]
+  },
+  "speaker": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "chapter": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "duration_s": {
+   "type": "number",
+   "exclusiveMinimum": 0
+  },
+  "n_utts": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "silence_after_s": {
+   "type": "number",
+   "minimum": 0
+  },
+  "segments": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "utt_id",
+     "path",
+     "offset_s",
+     "dur_s",
+     "silence_before_s",
+     "lexical_text"
+    ],
+    "properties": {
+     "utt_id": {
+      "type": "string"
+     },
+     "path": {
+      "type": "string",
+      "description": "파일 경로 또는 archive.tar::member"
+     },
+     "offset_s": {
+      "type": "number",
+      "minimum": 0
+     },
+     "dur_s": {
+      "type": "number",
+      "exclusiveMinimum": 0
+     },
+     "silence_before_s": {
+      "type": "number",
+      "minimum": 0
+     },
+     "text": {
+      "type": "string"
+     },
+     "lexical_text": {
+      "type": "string"
+     },
+     "raw_text": {
+      "type": "string"
+     },
+     "display_source": {
+      "type": "string"
+     },
+     "speaker": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   }
+  },
+  "meta": {
+   "type": "object"
+  }
+ }
+}

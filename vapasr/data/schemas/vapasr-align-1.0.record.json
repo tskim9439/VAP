@@ -1,0 +1,61 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "vapasr-align-1.0/record",
+ "type": "object",
+ "required": [
+  "id",
+  "utts"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "utts": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "text",
+     "tokens"
+    ],
+    "properties": {
+     "speaker": {
+      "type": "integer"
+     },
+     "start": {
+      "type": "number"
+     },
+     "end": {
+      "type": "number"
+     },
+     "text": {
+      "type": "string"
+     },
+     "tokens": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "id",
+        "end_time"
+       ],
+       "properties": {
+        "id": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "text": {
+         "type": "string"
+        },
+        "end_time": {
+         "type": "number",
+         "minimum": 0
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}
