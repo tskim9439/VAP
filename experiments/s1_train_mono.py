@@ -97,7 +97,7 @@ if a.overfit:   # 같은 표본으로 학습·디코드. 표적 사례(KO 숫자
         assert all(ds.check_targets(i, 2) for i in range(len(ds))), f"{m}: 시퀀스 라벨이 참조 토큰열과 다름 (flush/이월 규약 오류)"
     dev_sets = {f"overfit/{m}": ds for m, ds in train_ds.items()}; log(f"overfit: 타깃 보존 OK, " + ", ".join(f"{m}:{len(ds)}" for m, ds in train_ds.items()))
 else:
-    dev_sets = make_sets(DEV, a.sentinel_stream, a.sentinel_utt) if main or not training else {}
+    dev_sets = make_sets(DEV, a.sentinel_stream, a.sentinel_utt) if (main or not training or world > 1) else {}   # 분산 평가: 모든 rank 가 같은 표본을 들고 자기 몫만 디코드
 if world > 1 and main: barrier()                # 캐시 생성 완료 → 다른 rank 진행
 sp_ids = (next(iter(dev_sets.values())) if dev_sets else next(iter(train_ds.values()))).sp_ids
 log("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align})" for k, v in train_ds.items()) + " | dev " + ", ".join(f"{k}:{len(v)}" for k, v in dev_sets.items()) + f" | world {world}")
@@ -126,12 +126,18 @@ def latency_stats(hyp, ref):
 def pct(x, p): return float(np.percentile(x, p)) if len(x) else None
 @torch.no_grad()
 def eval_set(ds, bias, delay):
+    """분산이면 스트림 i 를 rank == i % world 가 디코드하고 gloo all_gather 로 합친다(rank 0 혼자 13 분 → 수십 초). 모든 rank 가 함께 호출해야 한다."""
     lang = ds.items[0]["lang"] if ds.items else "English"; R, H, lat, forced, chunks, n_tok, n_ref, backlog, ticks, rounds = [], [], [], 0, 0, 0, 0, [], [], []
-    for i in range(len(ds)):
+    for i in range(rank if world > 1 else 0, len(ds), world if world > 1 else 1):
         f, ref, _, st, it = ds.stream(i, delay)
         with torch.autocast("cuda", dtype=torch.bfloat16): emitted, fc, tk, rd = model.stream_decode(torch.from_numpy(f).to(dev), ds.prefix(lang, delay), a.M, next_bias=bias)
-        ticks += tk; rounds.append(rd); forced += fc; chunks += it["K"]; n_tok += len(emitted); n_ref += len(ref); backlog.append(st.max_backlog)
+        ticks += list(tk); rounds.append(rd); forced += fc; chunks += it["K"]; n_tok += len(emitted); n_ref += len(ref); backlog.append(st.max_backlog)
         R.append(tok.decode([t for t, _ in ref])); H.append(tok.decode([t for _, t in emitted])); lat += latency_stats(emitted, ref)
+    if world > 1:
+        parts = [None] * world; dist.all_gather_object(parts, dict(R=R, H=H, lat=lat, forced=forced, chunks=chunks, n_tok=n_tok, n_ref=n_ref, backlog=backlog, ticks=ticks, rounds=rounds), group=gloo_pg)
+        R = sum((q["R"] for q in parts), []); H = sum((q["H"] for q in parts), []); lat = sum((q["lat"] for q in parts), []); backlog = sum((q["backlog"] for q in parts), [])
+        ticks = sum((q["ticks"] for q in parts), []); rounds = sum((q["rounds"] for q in parts), []); forced = sum(q["forced"] for q in parts); chunks = sum(q["chunks"] for q in parts)
+        n_tok = sum(q["n_tok"] for q in parts); n_ref = sum(q["n_ref"] for q in parts)
     lat = np.array(lat); ticks = np.array(ticks); m = int(len(lat))
     r = dict(bias=bias, delay=delay, n=len(ds), matched=m, latency_available=m > 0, lat_p50=pct(lat, 50), lat_p90=pct(lat, 90), lat_p99=pct(lat, 99),
              viol=(float((lat < 0).mean()) if m else None), viol_80ms=(float((lat < -0.08).mean()) if m else None), tok_per_chunk=n_tok / max(1, chunks), ref_per_chunk=n_ref / max(1, chunks),
@@ -149,7 +155,7 @@ def evaluate(sets, biases, delay, label):
         runs = {b: eval_set(ds, b, delay) for b in biases}; best_b = min(runs, key=lambda b: runs[b]["err"]); b0 = runs.get(0.0, runs[min(runs)])
         res[name] = dict(bias0=b0, best=runs[best_b], best_bias=best_b)
         v80 = "n/a" if b0["viol_80ms"] is None else f"{b0['viol_80ms']:.4f}"; p50 = "n/a" if b0["lat_p50"] is None else f"{b0['lat_p50']*1000:.0f}ms"
-        print(f"  [{label}] {name}: bias0 err {b0['err']:.3f} tok/chunk {b0['tok_per_chunk']:.3f} (ref {b0['ref_per_chunk']:.3f}) matched {b0['matched']} viol80 {v80} p50 {p50} tick p99 {b0['tick_ms_p99']:.1f}ms | best bias {best_b} err {runs[best_b]['err']:.3f}", flush=True)
+        log(f"  [{label}] {name}: bias0 err {b0['err']:.3f} tok/chunk {b0['tok_per_chunk']:.3f} (ref {b0['ref_per_chunk']:.3f}) matched {b0['matched']} viol80 {v80} p50 {p50} tick p99 {b0['tick_ms_p99']:.1f}ms | best bias {best_b} err {runs[best_b]['err']:.3f}", flush=True)
     if a.lora_r > 0 and not a.full_ft: model.thinker.unmerge_adapter()
     model.train(); torch.cuda.empty_cache(); return res
 biases = [float(x) for x in a.eval_bias.split(",")]
@@ -246,8 +252,9 @@ while step < a.steps:
             f"NEXT비율 {n_next/max(1,n_lab):.3f} flush {n_flush} L {b['ids'].shape[1]} K {int(b['K'].max()) if 'K' in b else b['feats'].shape[2]} {b['lang'][0][:2]} {fr*world*0.08/3600:.2f}h/{a.log_every}step lr {sched.get_last_lr()[1]:.1e} {time.time()-t0:.0f}s")
         acc = {}; n_lab = n_next = n_flush = 0; fr = 0
     if step % a.eval_every == 0 or step == a.steps:
+        r = evaluate(dev_sets, biases, a.eval_delay, ("overfit" if a.overfit else "sentinel") + f"@{step}")   # 모든 rank 가 참여(분산 디코드), 아래 기록은 rank 0
         if main:
-            r = evaluate(dev_sets, biases, a.eval_delay, ("overfit" if a.overfit else "sentinel") + f"@{step}"); score = float(np.mean([v["best"]["err"] for v in r.values()]))
+            score = float(np.mean([v["best"]["err"] for v in r.values()]))
             hist.append(dict(step=step, score=score, **{k: dict(bias0_err=v["bias0"]["err"], best_err=v["best"]["err"], best_bias=v["best_bias"], tok_per_chunk=v["bias0"]["tok_per_chunk"], matched=v["bias0"]["matched"]) for k, v in r.items()}))
             json.dump(r, open(os.path.join(out, "eval", f"{'overfit' if a.overfit else 'sentinel'}-{step}.json"), "w"), indent=1, ensure_ascii=False)
             torch.save(dict(**model.trainable_state(), step=step, args=vars(a)), os.path.join(out, f"ckpt-{step}.pt"))
