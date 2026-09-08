@@ -41,7 +41,7 @@ if world == 1 and "CUDA_VISIBLE_DEVICES" not in os.environ:
     os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import numpy as np, torch, torch.nn as nn, jiwer
 if world > 1:
-    import torch.distributed as dist; from datetime import timedelta; import faulthandler; faulthandler.enable()   # SIGSEGV 시 파이썬 스택을 stderr 에 (job 66007: NCCL init 직후 rank 가 segfault, 흔적 없음)
+    import torch.distributed as dist; from datetime import timedelta; import faulthandler; faulthandler.enable(); faulthandler.register(signal.SIGUSR2, all_threads=True, chain=False)   # kill -USR2 <pid> → 전 스레드 스택 덤프(행 진단)   # SIGSEGV 시 파이썬 스택을 stderr 에 (job 66007: NCCL init 직후 rank 가 segfault, 흔적 없음)
     if int(os.environ.get("NCCL_IB_RETRY_CNT", "7")) > 7: os.environ["NCCL_IB_RETRY_CNT"] = "7"     # IB QP retry_cnt 는 3 비트(0–7). 초과값은 드라이버에서 잘리거나 실패한다
     os.environ.setdefault("TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC", "3600")   # NCCL watchdog 심장박동 감시(기본 8 분): 긴 대기 중 프로세스를 죽이지 않도록
     torch.cuda.set_device(local); dist.init_process_group("nccl", timeout=timedelta(hours=3), device_id=torch.device("cuda", local))   # 다중 노드: set_device 를 먼저, device_id 명시(global rank 로 추측하면 hang 가능)   # rank 0 의 sentinel 평가(수십 분) 동안 다른 rank 가 barrier 에서 기다린다 — 기본 10 분이면 죽는다

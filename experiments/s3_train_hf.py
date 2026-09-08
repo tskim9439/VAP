@@ -30,7 +30,7 @@ if world == 1 and a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import torch, torch.distributed as dist
 gloo_pg = None
 if world > 1:
-    from datetime import timedelta; import faulthandler; faulthandler.enable()
+    from datetime import timedelta; import faulthandler, signal as _sig; faulthandler.enable(); faulthandler.register(_sig.SIGUSR2, all_threads=True, chain=False)   # kill -USR2 <pid> → 전 스레드 파이썬 스택을 stderr 로(행 진단)
     if int(os.environ.get("NCCL_IB_RETRY_CNT", "7")) > 7: os.environ["NCCL_IB_RETRY_CNT"] = "7"
     os.environ.setdefault("TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC", "3600")
     torch.cuda.set_device(local); dist.init_process_group("nccl", timeout=timedelta(hours=3), device_id=torch.device("cuda", local))
