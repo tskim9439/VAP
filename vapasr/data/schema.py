@@ -156,8 +156,11 @@ def check_cards(manifest_dir: str, align_dir: Optional[str], where: str, tokeniz
 def tokenizer_sha256(tok) -> Optional[str]:
     """tokenizer.json 의 sha256(정렬 fingerprint 의 tokenizer_json_sha256 과 같은 정의)."""
     try:
-        p = getattr(tok, "vocab_file", None) or os.path.join(getattr(tok, "name_or_path", ""), "tokenizer.json")
-        if not os.path.exists(p): p = os.path.join(tok.name_or_path, "tokenizer.json")
+        base = getattr(tok, "name_or_path", "") or ""
+        cfg = os.path.join(base, "config.json")                                    # HF run 디렉토리(final/·checkpoint-N/)의 tokenizer 는 재직렬화되어 바이트가 다르다 → 원본 Qwen 디렉토리 기준
+        if os.path.exists(cfg):
+            c = json.load(open(cfg)); base = c.get("thinker_name_or_path", base) if c.get("model_type") == "vapasr" else base
+        p = os.path.join(base, "tokenizer.json")
         return hashlib.sha256(open(p, "rb").read()).hexdigest() if os.path.exists(p) else None
     except Exception: return None
 

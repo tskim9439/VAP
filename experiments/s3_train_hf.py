@@ -104,8 +104,16 @@ if a.eval_only:                                                                #
             w = SummaryWriter(os.path.join(out, "tb")); [w.add_scalar(k, v, int(mstep.group(1))) for k, v in r.items() if isinstance(v, (int, float))]; w.close()
         except Exception as e: log(f"tensorboard 기록 실패: {e}")
     sys.exit(0)
+def last_complete_checkpoint(d):
+    """checkpoint-N 중 trainer_state.json·model.safetensors 가 모두 있는(저장이 끝난) 가장 큰 N. 선점이 저장 도중 끊으면 trainer_state.json 없는 디렉토리가 남는다(66523 checkpoint-3000)."""
+    import re
+    cands = []
+    for x in os.listdir(d) if os.path.isdir(d) else []:
+        m = re.fullmatch(r"checkpoint-(\d+)", x)
+        if m and all(os.path.exists(os.path.join(d, x, f)) for f in ("trainer_state.json", "model.safetensors")): cands.append((int(m.group(1)), os.path.join(d, x)))
+    return max(cands)[1] if cands else None
 last = None
-if a.resume == "auto": last = get_last_checkpoint(out) if os.path.isdir(out) else None
+if a.resume == "auto": last = last_complete_checkpoint(out)
 elif a.resume != "none": last = a.resume
 if main:
     tdl = trainer.get_train_dataloader(); log(f"rank 당 배치/epoch: " + ", ".join(f"{m}:{len(s)}" for m, s in tdl.samplers.items()) + f" → steps/epoch {len(tdl)} · 유효 배치 EN {a.bs_en*world} / KO {a.bs_ko*world}" + (f" · 재개 ← {last}" if last else ""))
