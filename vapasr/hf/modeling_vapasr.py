@@ -89,8 +89,9 @@ class VapAsrForStreamingASR(PreTrainedModel):
 
     # ── 스트리밍 디코드 (mono_model.stream_decode 와 동일)
     @torch.inference_mode()
-    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 0, next_bias: float = 0.0, max_flush_rounds: Optional[int] = None, runaway_cap: Optional[int] = None):
-        """feats (K,Din) 또는 wav (T,) → ([(chunk k, token id)], forced_next 횟수, tick_ms 목록, flush 라운드 수)."""
+    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 0, next_bias: float = 0.0, max_flush_rounds: Optional[int] = None, runaway_cap: Optional[int] = None, max_total_per_chunk: float = 6.0):
+        """feats (K,Din) 또는 wav (T,) → ([(chunk k, token id)], forced_next 횟수, tick_ms 목록, flush 라운드 수).
+        폭주 방지: 청크당 runaway_cap(config, 기본 8) 토큰 · 스트림 전체 max_total_per_chunk×K 토큰(부분 학습 모델의 free-running 디코드가 수만 step 으로 늘어지던 문제)."""
         from transformers import DynamicCache
         max_flush_rounds = self.config.max_flush_rounds if max_flush_rounds is None else max_flush_rounds; runaway_cap = self.config.runaway_cap if runaway_cap is None else runaway_cap
         if feats.dim() == 1:
@@ -100,16 +101,15 @@ class VapAsrForStreamingASR(PreTrainedModel):
         def step(e):
             out = self.thinker(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=cache, use_cache=True); return out.logits[0, -1].float()
         step(emb(torch.tensor(prefix_ids, device=dev))); e_next = emb.weight[self.next_audio]; e_empty = emb.weight[self.empty_audio]
-        out, forced, ticks = [], 0, []
+        out, forced, ticks = [], 0, []; K = ce.shape[0]; max_total = int(max_total_per_chunk * K) + 64; cap = min(max_per_chunk, runaway_cap) if max_per_chunk else runaway_cap
         def emit_round(k, logits):
             nonlocal forced; n = 0
             while True:
                 logits[self.blocked] = float("-inf"); logits[self.next_audio] -= next_bias
                 tid = int(logits.argmax())
-                if tid == self.next_audio or n >= (max_per_chunk or runaway_cap):
+                if tid == self.next_audio or n >= cap or len(out) >= max_total:
                     forced += int(tid != self.next_audio); step(e_next); return n
                 out.append((k, tid)); n += 1; logits = step(emb.weight[tid])
-        K = ce.shape[0]
         for k in range(K):
             t = time.time(); emit_round(k, step(ce[k])); torch.cuda.synchronize(); ticks.append((time.time() - t) * 1000)
         rounds = 0

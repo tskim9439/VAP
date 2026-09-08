@@ -152,10 +152,10 @@ def evaluate(sets, biases, delay, label):
     if a.lora_r > 0 and not a.full_ft: model.thinker.merge_adapter()
     res = {}
     for name, ds in sets.items():
-        runs = {b: eval_set(ds, b, delay) for b in biases}; best_b = min(runs, key=lambda b: runs[b]["err"]); b0 = runs.get(0.0, runs[min(runs)])
+        t_set = time.time(); runs = {b: eval_set(ds, b, delay) for b in biases}; best_b = min(runs, key=lambda b: runs[b]["err"]); b0 = runs.get(0.0, runs[min(runs)]); b0["sec"] = round(time.time() - t_set, 1)
         res[name] = dict(bias0=b0, best=runs[best_b], best_bias=best_b)
         v80 = "n/a" if b0["viol_80ms"] is None else f"{b0['viol_80ms']:.4f}"; p50 = "n/a" if b0["lat_p50"] is None else f"{b0['lat_p50']*1000:.0f}ms"
-        log(f"  [{label}] {name}: bias0 err {b0['err']:.3f} tok/chunk {b0['tok_per_chunk']:.3f} (ref {b0['ref_per_chunk']:.3f}) matched {b0['matched']} viol80 {v80} p50 {p50} tick p99 {b0['tick_ms_p99']:.1f}ms | best bias {best_b} err {runs[best_b]['err']:.3f}", flush=True)
+        log(f"  [{label}] {name}: bias0 err {b0['err']:.3f} tok/chunk {b0['tok_per_chunk']:.3f} (ref {b0['ref_per_chunk']:.3f}) matched {b0['matched']} viol80 {v80} p50 {p50} tick p99 {b0['tick_ms_p99']:.1f}ms {b0['sec']:.0f}s | best bias {best_b} err {runs[best_b]['err']:.3f}", flush=True)
     if a.lora_r > 0 and not a.full_ft: model.thinker.unmerge_adapter()
     model.train(); torch.cuda.empty_cache(); return res
 biases = [float(x) for x in a.eval_bias.split(",")]

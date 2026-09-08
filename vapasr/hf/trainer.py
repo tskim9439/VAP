@@ -105,7 +105,7 @@ class VapAsrTrainer(Trainer):
         t0 = time.time(); sets = eval_dataset if isinstance(eval_dataset, dict) else self.dev_sets; res = {}
         was_training = self.model.training
         for name, ds in sets.items():
-            runs = {b: self._eval_set(ds, b, self.eval_delay) for b in self.eval_biases}; best_b = min(runs, key=lambda b: runs[b]["err"]); b0 = runs.get(0.0, runs[min(runs)])
+            t_set = time.time(); runs = {b: self._eval_set(ds, b, self.eval_delay) for b in self.eval_biases}; best_b = min(runs, key=lambda b: runs[b]["err"]); b0 = runs.get(0.0, runs[min(runs)]); b0["sec"] = round(time.time() - t_set, 1)
             res[name] = dict(bias0=b0, best=runs[best_b], best_bias=best_b)
         if was_training: self.model.train()
         torch.cuda.empty_cache()
@@ -114,7 +114,7 @@ class VapAsrTrainer(Trainer):
         for name, v in res.items():
             b0 = v["bias0"]; metrics[f"{metric_key_prefix}_{name}_err"] = round(b0["err"], 4); metrics[f"{metric_key_prefix}_{name}_tok_per_chunk"] = round(b0["tok_per_chunk"], 3)
             if b0["viol_80ms"] is not None: metrics[f"{metric_key_prefix}_{name}_viol80"] = round(b0["viol_80ms"], 4); metrics[f"{metric_key_prefix}_{name}_lat_p50_ms"] = round(b0["lat_p50"] * 1000)
-            metrics[f"{metric_key_prefix}_{name}_tick_p99_ms"] = round(b0["tick_ms_p99"], 1)
+            metrics[f"{metric_key_prefix}_{name}_tick_p99_ms"] = round(b0["tick_ms_p99"], 1); metrics[f"{metric_key_prefix}_{name}_sec"] = b0["sec"]
         if self.args.process_index == 0:
             step = self.state.global_step; self.eval_hist.append(dict(step=step, score=score, **{k: dict(bias0_err=v["bias0"]["err"], best_err=v["best"]["err"], best_bias=v["best_bias"]) for k, v in res.items()}))
             os.makedirs(os.path.join(self.args.output_dir, "eval"), exist_ok=True)

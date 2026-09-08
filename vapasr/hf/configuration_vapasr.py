@@ -14,7 +14,7 @@ class VapAsrConfig(PretrainedConfig):
                  encoder_type: str = "nemotron", encoder_name: str = "nvidia/nemotron-3.5-asr-streaming-0.6b", encoder_left_context: int = 56, encoder_right_context: int = 0,
                  encoder_trainable: bool = False, sp_ids: Optional[Dict[str, int]] = None, special_tokens: Optional[List[str]] = None,
                  chunk_s: float = 0.08, frame_hz: float = 12.5, delays: List[int] = (2, 3, 4, 6), next_weight: float = 0.3, next_weight_ko: float = 0.15,
-                 full_ft: bool = True, lora_r: int = 0, runaway_cap: int = 64, max_flush_rounds: int = 8, blocked_ids: Optional[List[int]] = None, audio_pad_id: Optional[int] = None,
+                 full_ft: bool = True, lora_r: int = 0, runaway_cap: int = 8, max_flush_rounds: int = 8, blocked_ids: Optional[List[int]] = None, audio_pad_id: Optional[int] = None,
                  prefix_ids: Optional[List[int]] = None, **kw):
         self.thinker = thinker or {}; self.thinker_name_or_path = thinker_name_or_path
         self.adapter_d_in, self.adapter_d_out, self.adapter_hidden = adapter_d_in, adapter_d_out, adapter_hidden

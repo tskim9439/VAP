@@ -73,10 +73,12 @@ class MonoInterleavedASR(nn.Module):
         return loss, parts
 
     @torch.inference_mode()
-    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 0, next_bias: float = 0.0, max_flush_rounds: int = 8, runaway_cap: int = 64):
+    def stream_decode(self, feats, prefix_ids: List[int], max_per_chunk: int = 0, next_bias: float = 0.0, max_flush_rounds: int = 8, runaway_cap: int = 8, max_total_per_chunk: float = 6.0):
         """feats (1,K,Din) → ([(chunk k, token id)], forced_next 횟수, tick_ms 목록, flush 라운드 수).
         chunk k 의 방출 시각 = (k+1)·80 ms. 스트림 끝에서는 <EMPTY_AUDIO> 를 입력해 flush 라운드를 돌린다(학습 규약과 동일):
-        라운드마다 <NEXT_AUDIO> 까지(M 제한 없음, runaway_cap 은 폭주 방지), 토큰 없이 <NEXT_AUDIO> 가 나오면 종료. flush 토큰의 chunk 번호는 K + 라운드. KV cache 로 위치당 forward 1 회."""
+        라운드마다 <NEXT_AUDIO> 까지(M 제한 없음, runaway_cap 은 폭주 방지), 토큰 없이 <NEXT_AUDIO> 가 나오면 종료. flush 토큰의 chunk 번호는 K + 라운드. KV cache 로 위치당 forward 1 회.
+        폭주 방지: 청크당 runaway_cap(기본 8) 토큰, 스트림 전체 max_total_per_chunk×K 토큰을 넘으면 그 뒤 청크는 <NEXT_AUDIO> 만 강제(부분 학습 모델의 free-running 디코드가
+        청크당 64 토큰 × 수백 청크 = 수만 step 으로 수십 분–수 시간 걸리던 문제, job 66066·66103)."""
         import time
         from transformers import DynamicCache
         if feats.dim() == 1:                            # wav (T,) → 온라인 인코더([56,0] 인과라 전체 인코딩 = 스트리밍 출력)
@@ -86,16 +88,15 @@ class MonoInterleavedASR(nn.Module):
         def step(e):
             out = self.thinker(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=cache, use_cache=True); return out.logits[0, -1].float()
         step(emb(torch.tensor(prefix_ids, device=dev))); e_next = emb.weight[self.next_audio]; e_empty = emb.weight[self.sp_ids["<EMPTY_AUDIO>"]]
-        out, forced, ticks = [], 0, []
+        out, forced, ticks = [], 0, []; K = ce.shape[0]; max_total = int(max_total_per_chunk * K) + 64; cap = min(max_per_chunk, runaway_cap) if max_per_chunk else runaway_cap
         def emit_round(k, logits):
             nonlocal forced; n = 0
             while True:
                 logits[self.blocked] = float("-inf"); logits[self.next_audio] -= next_bias
                 tid = int(logits.argmax())
-                if tid == self.next_audio or n >= (max_per_chunk or runaway_cap):          # max_per_chunk 0 = 제한 없음(폭주 방지 cap 만)
+                if tid == self.next_audio or n >= cap or len(out) >= max_total:            # 청크당 cap · 스트림 전체 max_total 을 넘으면 <NEXT_AUDIO> 강제
                     forced += int(tid != self.next_audio); step(e_next); return n
                 out.append((k, tid)); n += 1; logits = step(emb.weight[tid])
-        K = ce.shape[0]
         for k in range(K):
             t = time.time(); emit_round(k, step(ce[k])); torch.cuda.synchronize(); ticks.append((time.time() - t) * 1000)
         rounds = 0
