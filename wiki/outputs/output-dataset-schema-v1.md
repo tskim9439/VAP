@@ -65,7 +65,20 @@ sources:
 
 ## 5. 이관 결과 (2026-09-08)
 
-`experiments/ds_cards.py --all` 로 기존 manifest 전부에 카드를 생성했다(행 수정 없음). 결과 요약은 `raw/sources/experiments/2026-09-08-hf-trainer-migration/ds-cards.log` 참고.
+`experiments/ds_cards.py --all` 로 기존 manifest 전부에 카드를 생성했다(행 수정 없음, 전 행·전 레코드 검증). 로그: `raw/sources/experiments/2026-09-08-hf-trainer-migration/ds-cards.log`.
+
+| manifest | 행 | 시간 | 행 오류 | 정렬 고유 스트림 / 빈 / 중복 줄 | 정렬 오류 |
+|---|---|---|---|---|---|
+| librispeech-960 | 126,513 | 1,033 h | 0 | 126,513 / 0 / 13,169 | 0 |
+| kspon-full | 619,932 | 1,189 h | 0 | 619,932 / 40 / 302,491 | 0 |
+| swbd-train | 179,427 | 290 h | 0 | 179,463 / 1 / 791 | 0 |
+| nikl-1000 | 1,249,471 | 1,451 h | 0 | 1,249,471 / 2,256 / 1,053,631 | 0 |
+| mnsc-1000 | 676,864 | 1,244 h | 0 | 정렬 없음(CSV 결함으로 제외) | – |
+| librispeech-dev / test | 7,037 / 7,042 | 24.5 / 24.9 h | 0 | 7,037 / 7,042 (레거시 파일) | 0 |
+| kspon-dev / eval | 2,545 / 5,687 | 4.9 / 8.1 h | 0 | 2,545 / 5,687 (레거시 파일) | 0 |
+| librispeech-100, kspon-100 (동결 전 파일럿) | 13,182 / 62,000 | 108 / 119 h | `lexical_text` 없음(예상) | – | – |
+
+정렬 "중복 줄" 은 정렬 job 재시작·양방향 워커가 같은 스트림을 다시 쓴 흔적이다. 로더는 첫 레코드만 쓰므로 학습에 영향은 없고 디스크만 낭비한다(정리 스크립트는 사용자 승인 후).
 주의: `align-asr-tn-v1/kspon-full/stats-all.json` 은 requeue 루프 prep(65774)이 0 으로 덮어썼다. 카드는 parts 를 직접 세므로 영향 없다.
 
 ## 6. 확장 지점

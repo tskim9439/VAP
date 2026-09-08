@@ -22,3 +22,17 @@ schema → vapasr/data/schemas/vapasr-align-1.0.record.json
 [swbd-train] rows 179427 · 290.03 h · subsets 1 · modes {'stream': 179427} · textnorm asr-tn-v1.1.0 · 오류 0 (2s)
    align/align-asr-tn-v1: streams 179463 (empty 1, dup lines 791) · utts 180253 · tokens 2413871 · parts 1441 · 오류 0 (81s)
 [bg:dscards] EXIT=0 Tue Sep  8 04:16:13 PM CST 2026
+[bg:dscards2] start Tue Sep  8 04:16:43 PM CST 2026
+[librispeech-dev] rows 7037 · 24.45 h · subsets 2 · modes {'stream': 1470, 'utt': 5567} · textnorm asr-tn-v1.0.0 · 오류 0 (0s)
+   align/align-asr-tn-v1: streams 7037 (empty 0, dup lines 0) · utts 11134 · tokens 232330 · parts 0 · 오류 0 (347s)
+[librispeech-test] rows 7042 · 24.91 h · subsets 2 · modes {'stream': 1483, 'utt': 5559} · textnorm asr-tn-v1.0.0 · 오류 0 (0s)
+   align/align-asr-tn-v1: streams 7042 (empty 0, dup lines 0) · utts 11118 · tokens 231492 · parts 0 · 오류 0 (280s)
+[kspon-dev] rows 2545 · 4.86 h · subsets 1 · modes {'utt': 2545} · textnorm asr-tn-v1.0.0 · 오류 0 (0s)
+   align/align-asr-tn-v1: streams 2545 (empty 0, dup lines 0) · utts 2545 · tokens 58410 · parts 0 · 오류 0 (116s)
+[kspon-eval] rows 5687 · 8.11 h · subsets 2 · modes {'utt': 5687} · textnorm asr-tn-v1.0.0 · 오류 0 (0s)
+   align/align-asr-tn-v1: streams 5687 (empty 1, dup lines 0) · utts 5686 · tokens 102288 · parts 0 · 오류 0 (210s)
+[librispeech-960] rows 126513 · 1033.06 h · subsets 3 · modes {'stream': 126513} · textnorm asr-tn-v1.0.0 · 오류 0 (2s)
+   align/align-asr-tn-v1: streams 126513 (empty 0, dup lines 13169) · utts 309751 · tokens 11403091 · parts 975 · 오류 0 (593s)
+[kspon-full] rows 619932 · 1188.82 h · subsets 5 · modes {'stream': 619932} · textnorm asr-tn-v1.0.0 · 오류 0 (7s)
+   align/align-asr-tn-v1: streams 619932 (empty 40, dup lines 302491) · utts 922383 · tokens 21224113 · parts 6734 · 오류 0 (2314s)
+[bg:dscards2] EXIT=0 Tue Sep  8 05:21:29 PM CST 2026
