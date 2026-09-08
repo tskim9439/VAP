@@ -86,7 +86,7 @@ log("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align}
 # ── Trainer
 targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradient_accumulation_steps=1, num_train_epochs=a.epochs if a.epochs > 0 else 1, max_steps=a.max_steps if a.max_steps > 0 else -1,
                           learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, bf16=True,
-                          logging_strategy="steps", logging_steps=a.log_every, logging_first_step=True, eval_strategy="steps", eval_steps=a.eval_every, save_strategy="steps", save_steps=a.save_every,
+                          logging_strategy="steps", logging_steps=a.log_every, logging_first_step=True, eval_strategy=("no" if a.eval_every >= 10**6 else "steps"), eval_steps=a.eval_every, save_strategy="steps", save_steps=a.save_every,   # 재개 시 checkpoint 의 eval_steps 가 복원되므로 끄려면 strategy 자체를 no 로
                           save_total_limit=a.save_total_limit, save_safetensors=True, save_on_each_node=False, seed=a.seed, data_seed=a.seed, report_to=["tensorboard"], logging_dir=os.path.join(out, "tb"), remove_unused_columns=False,
                           disable_tqdm=True, ignore_data_skip=True, ddp_find_unused_parameters=False, ddp_broadcast_buffers=False, ddp_timeout=10800, dataloader_num_workers=a.num_workers,
                           label_names=["labels"], log_level="warning" if main else "error")
