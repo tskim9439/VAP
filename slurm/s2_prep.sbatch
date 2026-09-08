@@ -66,4 +66,5 @@ for m in ${MANIFESTS//,/ }; do
   fi
   [ "$A" -lt "$ROWS" ] || [ "$D" -lt "$ROWS" ] && { echo "!! $m 미완료 — requeue"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }
 done
+echo "[$(date '+%T')] 데이터 카드(dataset.json / align.json, 스키마 v1) 생성·검증"; python -u experiments/ds_cards.py --manifests "$MANIFESTS" --align-root "$(basename "$ALIGN_OUT")" || echo "!! 카드 생성 실패(학습에는 경고만)"
 echo "[$(date '+%T')] 항목 캐시 prewarm"; python -u experiments/s2_prewarm_items.py ${MANIFESTS//,/ } && touch "$DONE" && echo "[$(date '+%T')] prep-DONE → $DONE"

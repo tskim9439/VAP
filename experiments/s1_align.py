@@ -16,6 +16,7 @@ ap.add_argument("--out-root", default=None, help="출력 루트(기본 $MXC_DATA
 ap.add_argument("--shard", default=None, help="k/n: 병렬 워커 k 가 rows[k::n] 만 처리 (같은 manifest 를 여러 프로세스로)")
 ap.add_argument("--batch", type=int, default=64, help="배치 최대 발화 수"); ap.add_argument("--batch-sec", type=float, default=480.0, help="배치 오디오 합계 상한(초) — padding·메모리 제어")
 ap.add_argument("--chunk", type=int, default=128, help="한 번에 읽어 두는 스트림 수(오디오 prefetch 단위)"); ap.add_argument("--io-threads", type=int, default=16); ap.add_argument("--reverse", action="store_true", help="스트림을 역순으로(다른 run 과 양끝에서 분담)")
+ap.add_argument("--card", action="store_true", help="끝에 align.json(데이터 카드) 생성 — 후처리 1 회만")
 a = ap.parse_args()
 if "CUDA_VISIBLE_DEVICES" not in os.environ:
     if a.gpu is None:
@@ -136,3 +137,6 @@ for ci in range(len(chunks)):
 pool.shutdown()
 st["sec"] = time.time() - T0; v = np.array(st["offset_err_ms"]); st["offset_err_ms"] = dict(n=len(v), median=float(np.median(v)) if len(v) else None, p90=float(np.percentile(v, 90)) if len(v) else None)
 json.dump(st, open(os.path.join(out, f"stats-{a.mode}.json"), "w"), indent=1, ensure_ascii=False); print(json.dumps(st, ensure_ascii=False))
+if getattr(a, "card", False):                                                     # 정렬 카드(align.json, 스키마 v1) — parts 전체를 훑으므로 마지막 워커/후처리에서만(--card)
+    from vapasr.data.schema import build_align_card, write_card, ALIGN_CARD
+    _c, _e = build_align_card(out, manifest_name=a.manifest); write_card(out, _c, ALIGN_CARD); print(f"  → {out}/{ALIGN_CARD}: {_c['records']} · 검증 오류 {len(_e)}" + "".join("\n     ! " + x for x in _e[:5]))

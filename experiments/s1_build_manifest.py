@@ -233,3 +233,5 @@ for name in names:
                    quarantined=len(QUAR), display_source_counts=dict(disp), text_fields=dict(text="lexical_text 와 동일(하위 호환)", lexical_text="asr-tn-v1.0.0 학습·정렬 타깃", raw_text="원문 보존", display_source="none = display label 없음"), subsets=stats), open(os.path.join(od, "stats.json"), "w"), ensure_ascii=False, indent=1)
     QUAR.clear(); SRC_FILES.clear()
     print(f"  → {od}/streams.jsonl ({len(rows)} 행)")
+    from vapasr.data.schema import build_dataset_card, write_card, CARD                 # 데이터 카드(스키마 v1) — 행 검증 포함
+    _card, _errs = build_dataset_card(od); write_card(od, _card, CARD); print(f"  → {od}/{CARD} (schema {_card['schema_version']}, 검증 오류 {len(_errs)})" + ("".join("\n     ! " + e for e in _errs[:5])))

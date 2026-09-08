@@ -67,6 +67,8 @@ class MonoStreamDataset(Dataset):
             # asr-tn-v1.0.0 관문: 정렬 산출물의 textnorm fingerprint 가 없거나(동결 전 align2/align) 코드와 다르면 실패. 재현은 VAPASR_ALLOW_LEGACY_TN=1
             from ..data.textnorm import check_fingerprint
             fpp = os.path.join(adir, "fingerprint.json"); check_fingerprint(_load_json_retry(fpp) if os.path.exists(fpp) else None, f"dataset {name} ← {adir}")
+            from ..data.schema import check_cards, tokenizer_sha256                 # 데이터 카드(dataset.json / align.json) 관문: major·tokenizer 불일치는 VAPASR_STRICT_SCHEMA=1 이면 실패, 아니면 경고
+            check_cards(os.path.join(MAN, name), adir, f"dataset {name}", tokenizer_json_sha=tokenizer_sha256(tok))
             # 항목 캐시: 정렬 jsonl 수만 개를 매 프로세스가 읽으면 Lustre 에서 수십 분 걸린다(8-rank DDP 면 ×8). 한 번 만들어 _items.json.gz 에 저장하고
             # (정렬 파일 수가 같으면) 재사용한다. 모든 mode·subset 을 담고 메모리에서 거른다.
             import gzip
