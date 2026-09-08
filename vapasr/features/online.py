@@ -20,9 +20,11 @@ class NemotronOnline(nn.Module):
         # 학습에서는 모든 rank 가 step 마다 한 번씩 불러 맞지만, 평가(rank 별 스트림 수가 다름)나 rank 0 단독 호출에서는 collective 가 어긋나 교착·NCCL 오류가 난다
         # (job 65963·65965·66066·66103·66201·66227·66260 의 평가 행, 2026-09-08 스택 덤프로 확인). 로컬 길이만 보고 버퍼를 키우도록 바꾼다.
         enc = self.enc
-        def _update_max_seq_length_local(seq_length: int, device=None):
-            if seq_length > enc.max_audio_length: enc.set_max_audio_length(seq_length)
-        enc.update_max_seq_length = _update_max_seq_length_local
+        if hasattr(enc, "sync_max_audio_length"): enc.sync_max_audio_length = False           # NeMo 3.x 공식 스위치
+        else:                                                                                 # 구버전: 로컬 판정으로 대체
+            def _update_max_seq_length_local(seq_length: int, device=None):
+                if seq_length > enc.max_audio_length: enc.set_max_audio_length(seq_length)
+            enc.update_max_seq_length = _update_max_seq_length_local
     def set_trainable(self, flag: bool):
         self.trainable = flag
         for p in self.enc.parameters(): p.requires_grad_(flag)
