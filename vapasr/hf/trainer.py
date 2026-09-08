@@ -71,6 +71,13 @@ class VapAsrTrainer(Trainer):
         if self._n_parts and "loss" in logs:
             for k in ("loss_next", "loss_text", "top1_text"): logs[k] = round(self._parts[k] / self._n_parts, 4)
             logs["labels_per_step"] = round(self._parts["n_labels"] / self._n_parts); self._parts = {}; self._n_parts = 0
+            # 진행률·ETA: 이 프로세스가 실제로 돈 step 수와 경과 시간으로 추정(재개 직후는 표본이 적어 부정확)
+            st = self.state; now = time.time()
+            if not hasattr(self, "_t_first"): self._t_first, self._s_first = now, st.global_step
+            done = st.global_step - self._s_first; rate = (now - self._t_first) / done if done > 0 else None
+            eta = (st.max_steps - st.global_step) * rate if rate else None
+            logs["progress"] = f"step {st.global_step}/{st.max_steps} ({100 * st.global_step / max(1, st.max_steps):.1f} %)" + (f" · {rate:.2f} s/step · ETA {eta / 3600:.1f} h" if eta is not None else "")
+            logs["lr_thinker"] = f"{self.optimizer.param_groups[1]['lr']:.2e}" if self.optimizer is not None and len(self.optimizer.param_groups) > 1 else None   # 첫 그룹(learning_rate) 은 adapter
         return super().log(logs, start_time) if start_time is not None else super().log(logs)
 
     # ── 옵티마이저 그룹 (adapter lr↑, 임베딩 wd 0, encoder 별도 lr)
