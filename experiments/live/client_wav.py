@@ -11,14 +11,16 @@ wav = load_audio(a.wav); pcm = (np.clip(wav, -1, 1) * 32767).astype("<i2")
 async def main():
     import aiohttp
     async with aiohttp.ClientSession() as s, s.ws_connect(a.url, max_msg_size=0) as ws:
-        await ws.send_str(json.dumps(dict(type="start", lang=a.lang, delay=a.delay))); t0 = time.time(); last = ""
+        await ws.send_str(json.dumps(dict(type="start", lang=a.lang, delay=a.delay))); t0 = time.time(); last = ""; ticks = []
         async def reader():
             nonlocal last
             async for m in ws:
                 d = json.loads(m.data)
                 if d["type"] == "chunk":
-                    if d["text"] != last: print(f"[{time.time()-t0:6.2f}s k={d['k']:4d} {d['tick_ms']:5.1f}ms] {d['text']}", flush=True); last = d["text"]
-                elif d["type"] == "final": print(f"FINAL ({d['audio_s']}s 오디오 / {d['wall_s']}s 실시간): {d['text']}", flush=True); return
+                    ticks.append((d["tick_ms"], d.get("enc_ms", 0), d.get("dec_ms", 0)))
+                    if d["text"] != last: print(f"[{time.time()-t0:6.2f}s k={d['k']:4d} {d['tick_ms']:5.1f}ms enc {d.get('enc_ms',0):.0f} dec {d.get('dec_ms',0):.0f}] {d['text']}", flush=True); last = d["text"]
+                elif d["type"] == "final":
+                    import statistics; print(f"FINAL ({d['audio_s']}s 오디오 / {d['wall_s']}s 실시간): {d['text']}"); print(f"tick p50 {statistics.median(t[0] for t in ticks):.0f} ms (enc {statistics.median(t[1] for t in ticks):.0f} / dec {statistics.median(t[2] for t in ticks):.0f}) max {max(t[0] for t in ticks):.0f} ms", flush=True); return
                 elif d["type"] == "error": print("ERROR", d["message"]); return
         r = asyncio.create_task(reader())
         for i in range(0, len(pcm), 1280):

@@ -15,7 +15,7 @@ import numpy as np, torch
 CHUNK_S = 0.08
 
 # ───────────────────────────── 로드 ─────────────────────────────
-def load_model(path: str, device: str = "cuda", encoder_path: Optional[str] = None, liger: bool = False, qwen_dir: Optional[str] = None):
+def load_model(path: str, device: str = "cuda", encoder_path: Optional[str] = None, liger: bool = False, qwen_dir: Optional[str] = None, dtype: Optional[torch.dtype] = None):
     """HF 디렉토리(final/ 또는 checkpoint-N/) 또는 기존 ckpt-last.pt → (model.eval() on device, tokenizer)."""
     from . import VapAsrForStreamingASR, load_tokenizer
     qwen_dir = qwen_dir or os.environ.get("MXC_QWEN_ASR_DIR", "Qwen/Qwen3-ASR-0.6B")
@@ -26,7 +26,9 @@ def load_model(path: str, device: str = "cuda", encoder_path: Optional[str] = No
         model = VapAsrForStreamingASR.from_pretrained(stage_dir(path), encoder_path=stage_dir(enc_src) if enc_src else None); tok = load_tokenizer(path)
     if liger:
         from .liger import apply_liger_to_thinker; apply_liger_to_thinker(model)
-    return model.to(device).eval(), tok
+    model = model.to(device).eval()
+    if dtype is not None: model.thinker.to(dtype)                                 # 실시간 디코드(adapter 는 작아서 fp32 유지: chunk_embed 가 fp32 입력): fp32 가중치 + autocast 는 토큰마다 캐스팅해 느리다(H200 에서 thinker step ~25 ms → bf16 가중치 ~10 ms). 인코더는 fp32 유지
+    return model, tok
 
 def load_audio(path: str, sr: int = 16000) -> np.ndarray:
     """flac/wav/mp3… → float32 mono @16 kHz. .pcm 은 16 kHz 16-bit raw 로 간주(KsponSpeech/NIKL)."""

@@ -54,6 +54,7 @@ class StreamingEncoder:
 @dataclass
 class LiveEvent:
     k: int; ids: List[int]; forced: bool; tick_ms: float; text: str          # text = 지금까지의 전사(후처리)
+    enc_ms: float = 0.0; dec_ms: float = 0.0                                  # 청크 처리 시간 분해(인코더 프레임 / thinker 디코드)
 
 class LiveSession:
     """model(VapAsrForStreamingASR, 인코더 부착·eval) + tok. feed(pcm) → 청크마다 LiveEvent. delay 기본 4(사용자 지정 가능)."""
@@ -65,14 +66,17 @@ class LiveSession:
         self.dev = next(model.parameters()).device; self.emb = model.get_input_embeddings(); self.cache = DynamicCache()
         self.enc = StreamingEncoder(model.encoder); self.ids: List[int] = []; self.k = 0; self.done = False
         self.e_next = self.emb.weight[model.next_audio]; self.e_empty = self.emb.weight[model.empty_audio]
-        with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
+        self.autocast = self.emb.weight.dtype == torch.float32                 # 가중치가 bf16 이면 autocast 불필요
+        self.block_add = torch.zeros(self.emb.weight.shape[0], device=self.dev); self.block_add[model.blocked] = float("-inf")   # 금지 토큰 마스크(팬시 인덱싱 대신 덧셈: 토큰당 수 ms 절약)
+        self.block_add[model.next_audio] -= next_bias
+        with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
             self._step(self.emb(torch.tensor(prefix_ids(model, tok, lang, delay), device=self.dev)))
     def _step(self, e):
         out = self.model.thinker(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=self.cache, use_cache=True); return out.logits[0, -1].float()
     def _emit_round(self, logits):
         ids, forced = [], False
         while True:
-            logits[self.model.blocked] = float("-inf"); logits[self.model.next_audio] -= self.next_bias; tid = int(logits.argmax())
+            tid = int((logits + self.block_add).argmax())
             if tid == self.model.next_audio or len(ids) >= self.cap:
                 forced = tid != self.model.next_audio; self._step(self.e_next); return ids, forced
             ids.append(tid); logits = self._step(self.emb.weight[tid])
@@ -82,19 +86,21 @@ class LiveSession:
     def feed(self, pcm: np.ndarray) -> List[LiveEvent]:
         """마이크 PCM(float32 16 kHz, 길이 자유)을 넣고 새로 처리된 청크의 이벤트를 돌려준다."""
         if self.done: return []
-        frames = self.enc.feed(pcm); events = []
-        with torch.autocast("cuda", dtype=torch.bfloat16):
+        t0 = time.time(); frames = self.enc.feed(pcm)
+        if self.dev.type == "cuda": torch.cuda.synchronize()
+        enc_ms = (time.time() - t0) * 1000 / max(1, len(frames)); events = []
+        with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
             for fr in frames:
                 t = time.time(); ce = self.model.chunk_embed(fr[None, None, None])[0, 0].to(self.emb.weight.dtype)   # (1,1,1,Din) → (D,)
                 ids, forced = self._emit_round(self._step(ce)); self.ids += ids
                 if self.dev.type == "cuda": torch.cuda.synchronize()
-                events.append(LiveEvent(self.k, ids, forced, (time.time() - t) * 1000, self.text())); self.k += 1
+                dec_ms = (time.time() - t) * 1000; events.append(LiveEvent(self.k, ids, forced, enc_ms + dec_ms, self.text(), enc_ms, dec_ms)); self.k += 1
         return events
     @torch.inference_mode()
     def finish(self) -> List[LiveEvent]:
         """남은 오디오 프레임을 확정하고 <EMPTY_AUDIO> flush 라운드로 미방출 토큰을 뽑는다."""
         events = []
-        with torch.autocast("cuda", dtype=torch.bfloat16):
+        with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
             for fr in self.enc.feed(np.zeros(0, np.float32), final=True):
                 t = time.time(); ce = self.model.chunk_embed(fr[None, None, None])[0, 0].to(self.emb.weight.dtype); ids, forced = self._emit_round(self._step(ce)); self.ids += ids
                 events.append(LiveEvent(self.k, ids, forced, (time.time() - t) * 1000, self.text())); self.k += 1
