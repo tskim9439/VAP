@@ -68,7 +68,13 @@ class NemotronOnline(nn.Module):
     def set_trainable(self, flag: bool):
         self.trainable = flag
         for p in self.enc.parameters(): p.requires_grad_(flag)
-        self.enc.train(flag); return self
+        self.enc.train(flag)
+        # NeMo 의 fused Triton 서브샘플링(dw_striding) 커널은 backward 에서 autotune 벤치마크를 돌리다 메모리가 빠듯하면 "Triton Error [CUDA]: out of memory" 로 죽는다(2026-09-09 실측).
+        # 인코더를 학습할 때는 순수 PyTorch 경로로 돌린다(fuse_triton=False). 동결·추론은 그대로.
+        conv = getattr(getattr(self.enc, "pre_encode", None), "conv", None)
+        if flag and conv is not None and getattr(conv, "fuse_triton", False):
+            conv.fuse_triton = False; print("nemotron encoder 학습: 서브샘플링 Triton 커널 끔(fuse_triton=False)", flush=True)
+        return self
     def train(self, mode: bool = True):                    # 동결 중에는 dropout 등이 켜지지 않도록 eval 유지
         super().train(mode); self.enc.train(mode and self.trainable); return self
     def forward(self, wav: torch.Tensor, wav_len: torch.Tensor, K: torch.Tensor) -> torch.Tensor:
