@@ -32,22 +32,34 @@ def normalize_71631(raw: str) -> Tuple[str, List[str]]:
     if re.search(r"[ㄱ-ㅎㅏ-ㅣ]", s): bad.append("jamo")
     return re.sub(r"\s+", " ", s).strip(), bad
 
-def iter_71631(label_root: str, audio_root: str, subsets: Tuple[str, ...] = ("TL_01.실내",), audio_subsets: Tuple[str, ...] = ("TS_01.실내_5", "VS_02.실외"), vad_hop_ms: float = 20.0) -> Iterator[dict]:
-    """JSON 마다 wav 를 찾고(없으면 건너뜀) 화자→채널을 판정해 발화 dict 를 낸다: conv, utt_id, speaker(0/1), channel, start, end, raw, emotion."""
+def _conv_71631(job: Tuple[str, str, str, float]) -> List[dict]:
+    """워커: 대화 하나(stereo wav + JSON) → 발화 dict 목록. 오디오는 채널 VAD(화자↔채널 판정)에만 쓰고 버린다."""
     from .corpora import load_aihub
+    stem, wav, jp, hop = job
+    try: conv = load_aihub(wav, jp, load_audio=True, vad_hop_ms=hop)
+    except Exception as e: return [dict(conv=stem, wav=wav, error=f"{type(e).__name__}: {e}")]
+    return [dict(conv=stem, wav=wav, utt_id=f"{stem}_{i + 1:06d}", speaker=u.speaker, channel=u.speaker, start=float(u.start), end=float(u.end), raw=u.text, dur_wav=conv.duration,
+                 swapped=bool(conv.meta.get("speaker_channel_swapped")), domain=conv.meta.get("domain")) for i, u in enumerate(conv.utterances)]
+
+def iter_71631(label_root: str, audio_root: str, subsets: Tuple[str, ...] = ("TL_01.실내",), audio_subsets: Tuple[str, ...] = ("TS_01.실내_5", "VS_02.실외"), vad_hop_ms: float = 20.0, workers: int = 1) -> Iterator[dict]:
+    """JSON 마다 wav 를 찾고(없으면 건너뜀) 화자→채널을 판정해 발화 dict 를 낸다: conv, utt_id, speaker(0/1), channel, start, end, raw, emotion.
+    대화 wav 전체를 읽어 에너지 VAD 를 돌리므로(대화당 수 초) workers>1 이면 프로세스 풀로 병렬 처리(순서 유지). 읽기 실패한 대화는 error 키 하나짜리 dict."""
     wavs: Dict[str, str] = {}
     for sub in audio_subsets:
         for d in _find_dirs(audio_root, sub):
             for p in glob.glob(os.path.join(d, "*.wav")): wavs[os.path.splitext(os.path.basename(p))[0]] = p
+    jobs = []
     for sub in subsets:
         jps = [jp for d in _find_dirs(label_root, sub, depth=1) for jp in glob.glob(os.path.join(d, "**", "*.json"), recursive=True)]
         for jp in sorted(jps):
             stem = os.path.splitext(os.path.basename(jp))[0]; wav = wavs.get(stem)
-            if wav is None: continue
-            conv = load_aihub(wav, jp, load_audio=True, vad_hop_ms=vad_hop_ms)     # 채널 VAD 로 화자↔채널 판정
-            for i, u in enumerate(conv.utterances):
-                yield dict(conv=stem, wav=wav, utt_id=f"{stem}_{i + 1:06d}", speaker=u.speaker, channel=u.speaker, start=float(u.start), end=float(u.end), raw=u.text, dur_wav=conv.duration,
-                           swapped=bool(conv.meta.get("speaker_channel_swapped")), domain=conv.meta.get("domain"))
+            if wav is not None: jobs.append((stem, wav, jp, vad_hop_ms))
+    if workers <= 1:
+        for j in jobs: yield from _conv_71631(j)
+        return
+    import multiprocessing as mp
+    with mp.get_context("fork").Pool(workers) as pool:
+        for out in pool.imap(_conv_71631, jobs, chunksize=2): yield from out
 
 # ───────────────────────────── 031/033 방송 ─────────────────────────────
 _BC_FILLER = re.compile(r"(?<=\S)/(?=\s|$|[.,?!])")           # '아/ 저희' — 간투사 표지(KsponSpeech 관습). 단어는 발화됐으므로 '/' 만 뗀다

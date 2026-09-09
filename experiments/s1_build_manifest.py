@@ -239,8 +239,10 @@ def aihub71631_utts(label_sub, subset, sample_hours=None):
     """대화 wav(stereo) 의 화자 채널에서 발화를 잘라 세그먼트로: path 는 "<wav>#ch<채널>", offset 은 대화 안의 StartTime. 익명화(#@이름#) 발화는 quarantine."""
     from vapasr.data.aihub import iter_71631
     st = collections.Counter(); utts = []; convs = set(); swapped = 0
-    for u in iter_71631(a.aihub71631_labels, os.path.join(a.aihub_root, "71631_audio"), subsets=(label_sub,)):
+    for u in iter_71631(a.aihub71631_labels, os.path.join(a.aihub_root, "71631_audio"), subsets=(label_sub,), workers=min(a.workers, 64)):
+        if "error" in u: st["read_error"] += 1; print(f"    !! {u['conv']}: {u['error']}", flush=True); continue
         st["rows"] += 1; convs.add(u["conv"]); swapped += int(u["swapped"] and u["utt_id"].endswith("000001"))
+        if len(convs) % 500 == 0 and u["utt_id"].endswith("000001"): print(f"    … aihub71631/{subset}: {len(convs)} 대화 {st['rows']} 행", flush=True)
         text = target_ko(u["raw"], "aihub71631"); fl = set(target_flags(text, "Korean", u["raw"], "aihub71631")); dur = u["end"] - u["start"]
         if not (0.3 <= dur <= 60): fl.add("bad_time")
         if fl: st["quarantined"] += 1; _quarantine(u["utt_id"], subset, u["raw"], text, fl); continue
