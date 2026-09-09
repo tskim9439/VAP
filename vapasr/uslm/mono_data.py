@@ -61,7 +61,8 @@ class MonoStreamDataset(Dataset):
         class _Rows:                                        # online: manifest 행이 특징 index 역할(id → frames·subset·mode·segments)
             def __init__(self, name):
                 self.rows = {r["id"]: dict(frames=frames_for(r["duration_s"]), subset=r["subset"], mode=r["mode"], duration_s=r["duration_s"],
-                                           segments=[dict(path=s["path"], offset_s=s["offset_s"], silence_before_s=s["silence_before_s"], dur_s=s["dur_s"]) for s in r["segments"]])
+                                           segments=[dict(path=s["path"], offset_s=s["offset_s"], silence_before_s=s["silence_before_s"], dur_s=s["dur_s"],
+                                                          **({"src_offset_s": s["src_offset_s"]} if s.get("src_offset_s") is not None else {})) for s in r["segments"]])   # src_offset_s(긴 원본 안 위치) 를 빠뜨리면 71631 발화가 대화 첫머리 오디오로 조립된다(D2 까지의 버그, 2026-09-10)
                              for r in read_streams(os.path.join(MAN, name))}; self.frame_hz = 1 / CHUNK_S
         for name in manifests:
             fi = _Rows(name) if online else FeatureIndex(FEAT, encoder, name); assert abs(fi.frame_hz - 1 / CHUNK_S) < 1e-6, f"{encoder} frame_hz {fi.frame_hz} != 12.5"
@@ -83,7 +84,7 @@ class MonoStreamDataset(Dataset):
                     for line in open(os.path.join(pdir, pf), encoding="utf-8"):
                         try: r = json.loads(line); parts.setdefault(r["id"], r["utts"])
                         except Exception: pass
-            n_files = (sum(1 for f in os.listdir(adir) if f.endswith(".jsonl")) if os.path.isdir(adir) else 0) + len(parts); cache = os.path.join(adir, "_items-online.json.gz" if online else "_items.json.gz"); allitems = None
+            n_files = (sum(1 for f in os.listdir(adir) if f.endswith(".jsonl")) if os.path.isdir(adir) else 0) + len(parts); cache = os.path.join(adir, "_items-online-v2.json.gz" if online else "_items.json.gz"); allitems = None
             if os.path.exists(cache):
                 try:
                     c = json.load(gzip.open(cache, "rt", encoding="utf-8"))
