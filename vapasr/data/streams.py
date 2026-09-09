@@ -27,8 +27,10 @@ def load_utt_audio(path: str, offset_s: Optional[float] = None, dur_s: Optional[
     import soundfile as sf
     if offset_s is not None:
         with sf.SoundFile(path) as f:
-            sr = f.samplerate; f.seek(int(round(offset_s * sr)))
-            x = f.read(frames=-1 if dur_s is None else int(round(dur_s * sr)), dtype="float32", always_2d=True)
+            sr = f.samplerate; start = int(round(offset_s * sr)); want = -1 if dur_s is None else int(round(dur_s * sr))
+            if start >= f.frames or (want >= 0 and f.frames - start < int(0.1 * sr)):     # 라벨이 파일 끝을 넘음(71631 마지막 발화·잘린 wav)
+                raise ValueError(f"segment beyond audio: offset {offset_s}s ≥ file {f.frames / sr:.2f}s ({path})")
+            f.seek(start); x = f.read(frames=want if want < 0 else min(want, f.frames - start), dtype="float32", always_2d=True)   # 끝을 넘는 구간은 파일 끝까지만
     else:
         x, sr = sf.read(path, dtype="float32", always_2d=True)
     x = x[:, min(ch, x.shape[1] - 1)]

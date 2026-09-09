@@ -20,7 +20,10 @@ def load_model(path: str, device: str = "cuda", encoder_path: Optional[str] = No
     from . import VapAsrForStreamingASR, load_tokenizer
     qwen_dir = qwen_dir or os.environ.get("MXC_QWEN_ASR_DIR", "Qwen/Qwen3-ASR-0.6B")
     if os.path.isfile(path): model, tok = VapAsrForStreamingASR.from_legacy(path, qwen_dir, encoder_path=encoder_path)
-    else: model = VapAsrForStreamingASR.from_pretrained(path, encoder_path=encoder_path); tok = load_tokenizer(path)
+    else:
+        from .stage import stage_dir                     # NFS 위 체크포인트·.nemo 는 로컬 tmpfs 로 먼저 복사(VAPASR_STAGE_DIR="" 이면 끔)
+        enc_src = encoder_path or os.environ.get("MXC_NEMOTRON_DIR", os.environ.get("NEMOTRON_DIR", ""))
+        model = VapAsrForStreamingASR.from_pretrained(stage_dir(path), encoder_path=stage_dir(enc_src) if enc_src else None); tok = load_tokenizer(path)
     if liger:
         from .liger import apply_liger_to_thinker; apply_liger_to_thinker(model)
     return model.to(device).eval(), tok

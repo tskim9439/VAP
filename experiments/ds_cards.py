@@ -18,7 +18,9 @@ for m in names:
     d = os.path.join(MAN, m); t = time.time(); card, errs = build_dataset_card(d, sample=a.sample)
     print(f"[{m}] rows {card['rows']} · {card['hours']} h · subsets {len(card['subsets'])} · modes {card['modes']} · textnorm {card['textnorm_version']} · 오류 {len(errs)} ({time.time()-t:.0f}s)", flush=True)
     for e in errs[:5]: print("   !", e)
-    if not a.dry: write_card(d, card, CARD)
+    if not a.dry:
+        try: write_card(d, card, CARD)
+        except OSError as e: print(f"   !! dataset.json 기록 실패({e}) — 계속 진행(정렬 카드는 별도 디렉토리)", flush=True)    # 컨테이너(root)가 만든 디렉토리에 SLURM 사용자가 못 쓰는 경우(67077)
     ad = os.path.join(MAN, a.align_root, m)
     if os.path.isdir(ad):
         t = time.time(); acard, aerrs = build_align_card(ad, manifest_name=m, sample=a.sample); rec = acard["records"]
