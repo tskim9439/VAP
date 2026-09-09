@@ -9,12 +9,13 @@ import os, sys, json, time, argparse, asyncio, threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import numpy as np, torch
 ap = argparse.ArgumentParser(); ap.add_argument("--model", default=os.environ.get("VAPASR_LIVE_MODEL", "/soundai/Model/VAPASR/hf-C2/final")); ap.add_argument("--port", type=int, default=8765)
-ap.add_argument("--host", default="0.0.0.0"); ap.add_argument("--device", default="cuda"); ap.add_argument("--default-delay", type=int, default=4); ap.add_argument("--sync", action="store_true", help="GPU 작업을 이벤트 루프 스레드에서 직접(스레드 풀 없이)"); ap.add_argument("--fp32", action="store_true", help="thinker 를 fp32 로(기본 bf16: 디코드 2 배 빠름)"); a = ap.parse_args()
+ap.add_argument("--host", default="0.0.0.0"); ap.add_argument("--device", default="cuda"); ap.add_argument("--default-delay", type=int, default=4); ap.add_argument("--sync", action="store_true", help="GPU 작업을 이벤트 루프 스레드에서 직접(스레드 풀 없이)"); ap.add_argument("--fp32", action="store_true", help="thinker 를 fp32 로(기본 bf16: 디코드 2 배 빠름)"); ap.add_argument("--dtype", default="", help="thinker dtype: bf16|fp16|fp32 (기본 cuda=bf16, mps=fp16)"); a = ap.parse_args()
 from aiohttp import web, WSMsgType             # uvicorn 은 websockets/wsproto 가 없으면 WS 업그레이드에 404 를 준다(env 에 미설치) → aiohttp 자체 WS 서버 사용
 from vapasr.hf.infer import load_model
 from vapasr.hf.live import LiveSession, SR
 
-t0 = time.time(); model, tok = load_model(a.model, device=a.device, dtype=None if a.fp32 else torch.bfloat16); print(f"model ready ({time.time()-t0:.0f}s, thinker {'fp32' if a.fp32 else 'bf16'})", flush=True)
+DT = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": None}[a.dtype or ("fp32" if a.fp32 else ("fp16" if a.device == "mps" else "bf16"))]
+t0 = time.time(); model, tok = load_model(a.model, device=a.device, dtype=DT); print(f"model ready ({time.time()-t0:.0f}s, device {a.device}, thinker {DT or 'fp32'})", flush=True)
 lock = threading.Lock()                       # GPU 는 세션 하나씩(동시 접속은 순서대로)
 _w = LiveSession(model, tok, lang="Korean", delay=a.default_delay); _w.feed(np.zeros(SR, np.float32)); _w.finish(); del _w; print("warmup done", flush=True)   # 첫 세션의 커널 컴파일·autotune(14 s) 을 미리
 async def gpu(loop, fn, *args):

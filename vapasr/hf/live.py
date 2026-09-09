@@ -10,6 +10,9 @@ from typing import List, Optional, Dict, Any
 import numpy as np, torch
 
 SR, CHUNK_S, HOP = 16000, 0.08, 160          # mel hop 10 ms, 청크 = 8 mel 프레임 = 1 인코더 프레임
+def _sync(dev):
+    if dev.type == "cuda": torch.cuda.synchronize()
+    elif dev.type == "mps": torch.mps.synchronize()
 MEL_TAIL = 256                                # STFT center 패딩(n_fft/2): 프레임 t 는 t·HOP+256 샘플까지 있어야 확정
 
 class StreamingEncoder:
@@ -66,7 +69,7 @@ class LiveSession:
         self.dev = next(model.parameters()).device; self.emb = model.get_input_embeddings(); self.cache = DynamicCache()
         self.enc = StreamingEncoder(model.encoder); self.ids: List[int] = []; self.k = 0; self.done = False
         self.e_next = self.emb.weight[model.next_audio]; self.e_empty = self.emb.weight[model.empty_audio]
-        self.autocast = self.emb.weight.dtype == torch.float32                 # 가중치가 bf16 이면 autocast 불필요
+        self.autocast = self.emb.weight.dtype == torch.float32 and self.dev.type == "cuda"   # 가중치가 bf16/fp16 이거나 MPS 면 autocast 없이
         self.block_add = torch.zeros(self.emb.weight.shape[0], device=self.dev); self.block_add[model.blocked] = float("-inf")   # 금지 토큰 마스크(팬시 인덱싱 대신 덧셈: 토큰당 수 ms 절약)
         self.block_add[model.next_audio] -= next_bias
         with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
@@ -87,13 +90,13 @@ class LiveSession:
         """마이크 PCM(float32 16 kHz, 길이 자유)을 넣고 새로 처리된 청크의 이벤트를 돌려준다."""
         if self.done: return []
         t0 = time.time(); frames = self.enc.feed(pcm)
-        if self.dev.type == "cuda": torch.cuda.synchronize()
+        _sync(self.dev)
         enc_ms = (time.time() - t0) * 1000 / max(1, len(frames)); events = []
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
             for fr in frames:
                 t = time.time(); ce = self.model.chunk_embed(fr[None, None, None])[0, 0].to(self.emb.weight.dtype)   # (1,1,1,Din) → (D,)
                 ids, forced = self._emit_round(self._step(ce)); self.ids += ids
-                if self.dev.type == "cuda": torch.cuda.synchronize()
+                _sync(self.dev)
                 dec_ms = (time.time() - t) * 1000; events.append(LiveEvent(self.k, ids, forced, enc_ms + dec_ms, self.text(), enc_ms, dec_ms)); self.k += 1
         return events
     @torch.inference_mode()

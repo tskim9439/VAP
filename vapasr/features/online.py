@@ -17,10 +17,8 @@ def _encoder_cache_path(nemo_path: str) -> Optional[str]:
     except OSError: return None
     st = os.stat(nemo_path); return os.path.join(root, f"nemotron-encoder-{st.st_size}-{int(st.st_mtime)}.pt")
 
-def _load_encoder_cache(nemo_path: str):
-    """restore_from(.nemo) 은 2.4 GB tar 를 풀고 디코더·joint 까지 만들어 로컬 디스크에서도 60 s 가 걸린다(2026-09-09). 캐시가 있으면 인코더·전처리기만 config 로 만들어 state_dict 를 얹는다(수 초)."""
-    cp = _encoder_cache_path(nemo_path)
-    if not cp or not os.path.exists(cp): return None
+def _load_encoder_cache_file(cp: str):
+    """캐시 파일 경로를 직접 주고 (pre, enc) 를 만든다. 실패하면 None."""
     try:
         import torch
         from omegaconf import OmegaConf
@@ -30,6 +28,12 @@ def _load_encoder_cache(nemo_path: str):
         pre.load_state_dict(d["pre_state"]); enc.load_state_dict(d["enc_state"]); return pre, enc.float()
     except Exception as e:
         print(f"nemotron encoder 캐시 무시({type(e).__name__}: {e}) → restore_from", flush=True); return None
+
+def _load_encoder_cache(nemo_path: str):
+    """restore_from(.nemo) 은 2.4 GB tar 를 풀고 디코더·joint 까지 만들어 로컬 디스크에서도 60 s 가 걸린다(2026-09-09). 캐시가 있으면 인코더·전처리기만 config 로 만들어 state_dict 를 얹는다(수 초)."""
+    cp = _encoder_cache_path(nemo_path)
+    if not cp or not os.path.exists(cp): return None
+    return _load_encoder_cache_file(cp)
 
 def _save_encoder_cache(nemo_path: str, m) -> None:
     cp = _encoder_cache_path(nemo_path)
@@ -47,7 +51,9 @@ class NemotronOnline(nn.Module):
     def __init__(self, right_context: int = 0, path: Optional[str] = None):
         super().__init__()
         local = sorted(glob.glob(os.path.join(path or os.environ.get("MXC_NEMOTRON_DIR", os.environ.get("NEMOTRON_DIR", "")), "*.nemo")))
-        cached = _load_encoder_cache(local[0]) if local else None
+        direct = os.environ.get("VAPASR_ENCODER_CACHE", "")                                   # .nemo 없이 인코더 캐시(.pt)만 있는 곳(로컬 Mac 등)
+        cached = _load_encoder_cache(local[0]) if local else (_load_encoder_cache_file(direct) if direct and os.path.exists(direct) else None)
+        if not local and cached is None: raise FileNotFoundError(f".nemo 도 인코더 캐시(VAPASR_ENCODER_CACHE={direct!r})도 없음")
         if cached is not None: self.pre, self.enc = cached
         else:
             import nemo.collections.asr as nemo_asr
