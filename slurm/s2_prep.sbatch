@@ -25,7 +25,7 @@ MXC_CONDA_DIR=${CONDA_OVERRIDE:-$MXC_CONDA_DIR}; source "$MXC_CONDA_DIR/etc/prof
 export VAPASR_LOCAL_ENV=${LOCAL_ENV-/tmp/sa_tskim/vapasr-env}
 if [ -n "$VAPASR_LOCAL_ENV" ]; then
   t0=$(date +%s); srun --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 bash scripts/stage-env-local.sh 2>&1 | grep -vE "^cp: .*File exists" | sed "s/^/  [stage] /"
-  if [ -x "$VAPASR_LOCAL_ENV/bin/python" ]; then export PATH="$VAPASR_LOCAL_ENV/bin:$PATH" CONDA_PREFIX="$VAPASR_LOCAL_ENV" TMPDIR="$(dirname "$VAPASR_LOCAL_ENV")/tmp"; mkdir -p "$TMPDIR"; echo "[$(date '+%T')] 로컬 env 사용 $VAPASR_LOCAL_ENV ($(( $(date +%s) - t0 )) s)"
+  if [ -x "$VAPASR_LOCAL_ENV/bin/python" ]; then export PATH="$VAPASR_LOCAL_ENV/bin:$PATH" CONDA_PREFIX="$VAPASR_LOCAL_ENV" TMPDIR="$(dirname "$VAPASR_LOCAL_ENV")/tmp" VAPASR_STAGE_DIR="$(dirname "$VAPASR_LOCAL_ENV")/vapasr-stage"; mkdir -p "$TMPDIR" "$VAPASR_STAGE_DIR"; echo "[$(date '+%T')] 로컬 env 사용 $VAPASR_LOCAL_ENV ($(( $(date +%s) - t0 )) s)"
   else echo "!! 로컬 env 준비 실패 → NFS env 로 진행"; VAPASR_LOCAL_ENV=""; fi
 fi
 export OMP_NUM_THREADS=6 TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
