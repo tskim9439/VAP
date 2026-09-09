@@ -25,6 +25,13 @@ echo "[$(date '+%F %T')] job $SLURM_JOB_ID RUN=$RUN nodes=$SLURM_NNODES ($SLURM_
 
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
 MXC_CONDA_DIR=${CONDA_OVERRIDE:-$MXC_CONDA_DIR}; source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
+# conda env 를 노드 로컬 디스크로(NFS import 지연 회피: 프로세스 시작→학습까지 16–25 분이 대부분 import). 노드마다 병렬, 이미 있으면 몇 초. LOCAL_ENV= 로 끄기
+export VAPASR_LOCAL_ENV=${LOCAL_ENV-/tmp/sa_tskim/vapasr-env}
+if [ -n "$VAPASR_LOCAL_ENV" ]; then
+  t0=$(date +%s); srun --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 bash scripts/stage-env-local.sh 2>&1 | grep -vE "^cp: .*File exists" | sed "s/^/  [stage] /"
+  if [ -x "$VAPASR_LOCAL_ENV/bin/python" ]; then export PATH="$VAPASR_LOCAL_ENV/bin:$PATH" CONDA_PREFIX="$VAPASR_LOCAL_ENV" TMPDIR="$(dirname "$VAPASR_LOCAL_ENV")/tmp"; mkdir -p "$TMPDIR"; echo "[$(date '+%T')] 로컬 env 사용 $VAPASR_LOCAL_ENV ($(( $(date +%s) - t0 )) s)"
+  else echo "!! 로컬 env 준비 실패 → NFS env 로 진행"; VAPASR_LOCAL_ENV=""; fi
+fi
 export MXC_CKPT_EXP_DIR=$ROOT
 export MXC_DATA_MANIFEST_DIR=${MAN_IN:-$MXC_DATA_MANIFEST_DIR} VAPASR_ALIGN_ROOT=${ALIGN_ROOT:-${MAN_IN:-$MXC_DATA_MANIFEST_DIR}/align-asr-tn-v1}
 export OMP_NUM_THREADS=8 NCCL_DEBUG=${NCCL_DEBUG:-WARN} TOKENIZERS_PARALLELISM=false PYTORCH_ALLOC_CONF=expandable_segments:True
@@ -32,7 +39,7 @@ export OMP_NUM_THREADS=8 NCCL_DEBUG=${NCCL_DEBUG:-WARN} TOKENIZERS_PARALLELISM=f
 # 데이터 경로는 IB verbs(NCCL_IB_HCA 자동). IB 자체가 문제면 NCCL_IB_DISABLE=1 로 이더넷 폴백.
 export NCCL_SOCKET_IFNAME=${NCCL_SOCKET_IFNAME:-eth0} GLOO_SOCKET_IFNAME=${GLOO_SOCKET_IFNAME:-eth0} NCCL_IB_DISABLE=${NCCL_IB_DISABLE:-0}
 export NCCL_IB_TIMEOUT=${NCCL_IB_TIMEOUT:-23} NCCL_IB_RETRY_CNT=${NCCL_IB_RETRY_CNT:-7} PYTHONFAULTHANDLER=1   # IB 링크 흔들림(status=12 retry exceeded, job 65963) 에 대한 여유. retry_cnt 는 3 비트라 최대 7. 반복되면 NCCL_IB_DISABLE=1
-case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*) ;; *) echo "!! conda env 아님: $(which python)"; exit 1;; esac
+case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*|"${VAPASR_LOCAL_ENV:-/nonexistent}"/*) ;; *) echo "!! conda env 아님: $(which python)"; exit 1;; esac
 echo "manifest ← $MXC_DATA_MANIFEST_DIR | 정렬 ← $VAPASR_ALIGN_ROOT | conda $MXC_CONDA_DIR"
 
 

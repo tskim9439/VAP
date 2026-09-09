@@ -21,8 +21,15 @@ echo "[$(date '+%F %T')] prep job $SLURM_JOB_ID node=$(hostname) restart=${SLURM
 [ -f "$DONE" ] && { echo "이미 완료($DONE)"; exit 0; }
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
 MXC_CONDA_DIR=${CONDA_OVERRIDE:-$MXC_CONDA_DIR}; source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
+# conda env 를 노드 로컬 디스크로(NFS import 지연 회피). 노드마다 병렬, 이미 있으면 몇 초. LOCAL_ENV= 로 끄기
+export VAPASR_LOCAL_ENV=${LOCAL_ENV-/tmp/sa_tskim/vapasr-env}
+if [ -n "$VAPASR_LOCAL_ENV" ]; then
+  t0=$(date +%s); srun --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 bash scripts/stage-env-local.sh 2>&1 | grep -vE "^cp: .*File exists" | sed "s/^/  [stage] /"
+  if [ -x "$VAPASR_LOCAL_ENV/bin/python" ]; then export PATH="$VAPASR_LOCAL_ENV/bin:$PATH" CONDA_PREFIX="$VAPASR_LOCAL_ENV" TMPDIR="$(dirname "$VAPASR_LOCAL_ENV")/tmp"; mkdir -p "$TMPDIR"; echo "[$(date '+%T')] 로컬 env 사용 $VAPASR_LOCAL_ENV ($(( $(date +%s) - t0 )) s)"
+  else echo "!! 로컬 env 준비 실패 → NFS env 로 진행"; VAPASR_LOCAL_ENV=""; fi
+fi
 export OMP_NUM_THREADS=6 TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
-case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*) ;; *) echo "!! conda env 아님"; exit 1;; esac
+case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*|"${VAPASR_LOCAL_ENV:-/nonexistent}"/*) ;; *) echo "!! conda env 아님"; exit 1;; esac
 M=${MAN_IN:-$MXC_DATA_MANIFEST_DIR}; F=$MXC_DATA_FEATURE_CACHE_DIR; ALIGN_OUT=${OUT_ROOT:-$M/align-asr-tn-v1}   # MAN_IN: manifest 읽기 루트(Lustre 가능), OUT_ROOT: 정렬 출력 루트(/lustre 에 쓰지 않는다)
 export VAPASR_ALIGN_ROOT=$ALIGN_OUT MXC_DATA_MANIFEST_DIR=$M; echo "manifest ← $M | 정렬 → $ALIGN_OUT | conda $MXC_CONDA_DIR"
 PIDS=""; on_preempt() { echo "[$(date '+%T')] 선점 신호 → 워커 종료 후 requeue"; kill $PIDS 2>/dev/null; wait; scontrol requeue "$SLURM_JOB_ID"; exit 0; }; trap on_preempt USR1 TERM
