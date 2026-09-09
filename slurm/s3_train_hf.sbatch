@@ -52,7 +52,7 @@ INIT=${INIT:-}; INIT_ADAPTER=${INIT_ADAPTER:-$ROOT/uslm/s1-adapter-distill/adapt
 # 선행 run 이 끝나지 않았는데(DONE 없음) afterany 로 시작되면 중간 ckpt 로 학습해 버린다. INIT_REQUIRE_DONE=0 이면 무시
 [ -n "$INIT" ] && [ "${INIT_REQUIRE_DONE:-1}" = 1 ] && [ ! -f "$(dirname "$INIT")/DONE" ] && [ ! -f "$INIT/../DONE" ] && { echo "!! INIT 의 run 이 미완료(DONE 없음): $INIT — INIT_REQUIRE_DONE=0 으로 강제 가능"; exit 1; }
 # 주의: srun bash -c "…" 안에 들어가므로 COMMON 에 줄바꿈이 있으면 두 번째 줄이 별개 명령이 되어 인자가 잘린다(job 65955: --full-ft·--lr 등 누락 → LoRA 로 실행됨)
-COMMON="--out-dir $OUT --train $TRAIN --epochs $EPOCHS --bs-en $BS_EN --bs-ko $BS_KO --next-weight 0.3 --next-weight-ko 0.15 --eval-every $EVAL_EVERY --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every $SAVE_EVERY --warmup $WARMUP --lr $LR --lr-adapter $LR_ADAPTER --resume auto ${INIT:+--init $INIT} ${INIT_ADAPTER:+--init-adapter $INIT_ADAPTER} ${TRAIN_ENCODER:+--train-encoder} ${EXTRA_ARGS:-}"
+COMMON="--out-dir $OUT --train $TRAIN --epochs $EPOCHS --bs-en $BS_EN --bs-ko $BS_KO --next-weight 0.3 --next-weight-ko 0.15 --eval-every $EVAL_EVERY --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every $SAVE_EVERY --warmup $WARMUP --lr $LR --lr-adapter $LR_ADAPTER --resume auto ${INIT:+--init $INIT} ${INIT_ADAPTER:+--init-adapter $INIT_ADAPTER} ${TRAIN_ENCODER:+--train-encoder} ${LR_ENCODER:+--lr-encoder $LR_ENCODER} ${DEV_EXTRA:+--dev-extra $DEV_EXTRA} ${EXTRA_ARGS:-}"
 # ── 선점·시간 제한: PREEMPT 파일(공유 FS) → 모든 rank 가 다음 step 경계에서 감지(all_reduce) → rank 0 저장 → 종료 → requeue
 rm -f "$OUT/PREEMPT"
 on_preempt() { echo "[$(date '+%T')] 신호 수신 → PREEMPT 표시, 저장 대기"; touch "$OUT/PREEMPT"; wait "$PID"; echo "requeue $SLURM_JOB_ID"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }
