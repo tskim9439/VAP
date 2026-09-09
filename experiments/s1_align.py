@@ -26,7 +26,7 @@ if "CUDA_VISIBLE_DEVICES" not in os.environ:
 import numpy as np, torch, soundfile as sf
 from qwen_asr import Qwen3ForcedAligner
 from transformers import AutoTokenizer
-from vapasr.data.streams import read_streams, load_utt_audio, iter_utterances
+from vapasr.data.streams import read_streams, load_seg_audio, iter_utterances
 from vapasr.data.kspon import SR
 
 MAN = os.environ.get("MXC_DATA_MANIFEST_DIR", os.environ.get("DATA_MANIFEST_DIR", "/tmp"))
@@ -90,7 +90,7 @@ def load_chunk(chunk):
         for u in iter_utterances(r):
             if u["end"] - u["start"] < a.min_dur or not u["text"]: continue
             # 스트림 안에서 두 번째 발화부터는 선행 공백을 붙여 토큰화한다(없으면 'lost'+'i' → 'losti'). 정렬기에도 공백 포함 텍스트를 준다.
-            try: audio = load_utt_audio(u["path"])
+            try: audio = load_seg_audio(u)                # src_offset_s 가 있으면(71631 대화 wav) 그 발화 구간만 읽는다
             except Exception as ex:                       # 오디오 누락·손상(예: NIKL 2023 의 빠진 pcm) → 발화만 건너뛰고 워커는 계속
                 st["audio_missing"] += 1
                 if st["audio_missing"] <= 20: print(f"  ! 오디오 읽기 실패 {u['path']}: {type(ex).__name__}", flush=True)
