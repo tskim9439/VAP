@@ -3,7 +3,7 @@ type: output
 status: active
 created: 2026-09-10
 updated: 2026-09-10
-summary: 확장 DB(EN 2.2 k h + KO 3.4 k h, 8 코퍼스) run D2 최종 모델의 WER/CER·타이밍 평가 — C2 와 같은 select 표본으로 비교, 71631-dev(자유대화) 추가. 71631 오디오 조립 버그(src_offset_s 누락)로 D2 는 오염된 run 이며 D3 로 재실행
+summary: 확장 DB(EN 2.2 k h + KO 3.4 k h, 8 코퍼스) run D2 최종 모델의 WER/CER·타이밍 평가 — C2 와 같은 select 표본으로 비교(δ=2 에서 C2 보다 나쁨, δ=4 EN 동급), 71631-dev(자유대화) 추가. 71631 오디오 조립 버그(src_offset_s 누락)로 D2 는 오염된 run 이며 D3 로 재실행
 sources:
   - [[output-stage2-c2-final-eval]]
   - [[output-dataset-schema-v1]]
@@ -59,9 +59,19 @@ ah71-dev 는 aihub71631-dev(VS_02 실외 자유대화, 화자 채널·`src_offse
 - D2 의 KO 방출 지연 p50 은 C2 보다 40 ms 짧고 viol80 은 kspon-dev 0.051 · ah71-dev 0.085 로 높다(C2 kspon-dev 0.024). 결함 데이터의 흔적.
 - δ=4 에서는 EN 이 C2 와 비슷하고(0.062/0.125 vs 0.056/0.122), KO 는 kspon-dev 가 여전히 뒤지지만(0.169 vs 0.156) ah71-dev 는 D2 가 조금 낫다(0.378 vs 0.406). 즉 결함 데이터로도 자유대화 도메인 자체는 약간 배웠고, 지연을 길게 주면 그 이득이 드러난다.
 
-## 4. 타이밍 스윕 (D2 final, sentinel 10/10/100, seed 7)
+## 4. 타이밍 스윕 (D2 final, sentinel 10/10/100 + ah71-dev 100, seed 7)
 
-(측정 중 — δ ∈ {2,3,4}, δ=2 에서 next_bias ∈ {1,2})
+| δ · bias | dev-clean WER · viol80 · 지연 p50/p90/p99 | dev-other WER · viol80 · 지연 | kspon-dev CER · viol80 · 지연 | ah71-dev CER · viol80 · 지연 |
+|---|---|---|---|---|
+| 2 · 0 | 0.104 · 0.0012 · 208/266/319 ms | 0.186 · 0.0061 · 220/283/372 | 0.299 · 0.062 · 156/252/550 | 0.550 · 0.091 · 152/281/702 |
+| 3 · 0 | 0.077 · 0.0000 · 277/326/371 | 0.106 · 0.0014 · 283/363/424 | 0.200 · 0.025 · 255/336/567 | 0.421 · 0.033 · 240/330/930 |
+| 4 · 0 | **0.052** · 0.0000 · 363/406/451 | 0.123 · 0.0029 · 370/440/509 | **0.163** · 0.010 · 333/406/627 | **0.408** · 0.023 · 308/397/726 |
+| 2 · 1 | 0.148 · 0.0012 · 168/240/302 | 0.242 · 0.0047 · 190/269/347 | 0.388 · 0.090 · 139/229/521 | 0.801 · 0.151 · 127/250/878 |
+| 2 · 2 | 0.160 · 0.0000 · 164/238/274 | 0.395 · 0.0142 · 158/237/399 | 0.720 · 0.138 · 124/219/434 | 1.273 · 0.248 · 85/235/1930 |
+
+- δ 조건은 C2 와 같은 방식으로 작동한다: δ 를 2 → 4 로 올리면 지연 p50 이 +150 ms 늘고 오류는 절반으로 준다(C2 보고서 §5 의 0.103 → 0.056 과 같은 기울기). next_bias 는 C2 때와 마찬가지로 해롭다(지연 −40 ms 에 오류 급증).
+- 한국어(kspon-dev·ah71-dev)의 viol80 이 δ=2 에서 0.06–0.09 로 C2(0.024)보다 크다 — 결함 데이터가 남긴 조기 방출 습관. δ=3 이상에서는 사라진다.
+- tick p99 는 100–106 ms(80 ms 청크 예산 초과)로 C2 와 같다. 실시간 데모(`experiments/live/`)에서 실측한 청크당 처리 92–110 ms 와 일치.
 
 ## 5. 판정
 
@@ -72,5 +82,5 @@ ah71-dev 는 aihub71631-dev(VS_02 실외 자유대화, 화자 채널·`src_offse
 ## 6. 재현
 
 - 학습: `sbatch --partition=hpc --nodes=4 --requeue --exclude=slurmmxch200v5-hpc-52 --export=ALL,RUN=D2,INIT=/soundai/Model/VAPASR/hf-C2/final,TRAIN=librispeech-960:swbd-train:voxpopuli-train:yodas-en129:kspon-full:nikl-1000:aihub71631-train:aihub-bc-train,EPOCHS=10,BS_EN=24,BS_KO=96,EVAL_EVERY=2000,SAVE_EVERY=500 slurm/s3_train_hf.sbatch`
-- 평가: `experiments/s3_d2_eval.sh`(GPUS=0,1,3,4, 컨테이너 sa_tskim_fd) → `hf-D2/eval/select-*.json`, `select-d4-0.json`, `sweep-*`, `hf-C2/eval/selectx-d{2,4}-0.json`.
+- 평가: `experiments/s3_d2_eval.sh`(GPUS=0,1,3,4, 컨테이너 sa_tskim_fd, 총 2.8 h) → `hf-D2/eval/select-*.json`, `select-d4-0.json`, `sweep-*`, `hf-C2/eval/selectx-d{2,4}-0.json`. 사본: `raw/sources/experiments/2026-09-10-hf-D2-final-eval/`.
 - 코퍼스 정합 프로브: `experiments/probe_corpus_sanity.py`, `probe_ko_mismatch.py`, `probe_bc_fillers.py`, `probe_align_coverage.py`.
