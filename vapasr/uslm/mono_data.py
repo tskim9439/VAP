@@ -19,8 +19,12 @@ from ..probe.data import FeatureIndex
 from .interleave_data import add_specials, specials_of, bad_utterance, _read_jsonl, CHUNK_S
 
 MAN = os.environ.get("MXC_DATA_MANIFEST_DIR", os.environ.get("DATA_MANIFEST_DIR", "/tmp")); FEAT = os.environ.get("MXC_DATA_FEATURE_CACHE_DIR", os.environ.get("DATA_FEATURE_CACHE_DIR", "/tmp"))
-LANG_OF = {"librispeech": "English", "ls": "English", "kspon": "Korean", "ks": "Korean", "swbd": "English", "mnsc": "English", "nikl": "Korean", "vp": "English", "voxpopuli": "English", "yd": "English", "yodas": "English", "ah71": "Korean", "aihub71631": "Korean", "ahbc": "Korean", "aihubbc": "Korean"}
-def lang_of(name: str) -> str: return LANG_OF[name.split("-")[0]]
+LANG_OF = {"librispeech": "English", "ls": "English", "kspon": "Korean", "ks": "Korean", "swbd": "English", "mnsc": "English", "nikl": "Korean", "vp": "English", "voxpopuli": "English", "yd": "English", "yodas": "English", "ah71": "Korean", "aihub71631": "Korean", "ahbc": "Korean", "aihubbc": "Korean", "aihub": "Korean"}
+def lang_of(name: str) -> str:
+    """manifest 이름(또는 id 접두어) → 언어. 이름에 '-' 가 든 코퍼스(aihub-bc-train)도 맞도록 가장 긴 접두어로 판정한다(67126: 'aihub' KeyError)."""
+    for k in sorted(LANG_OF, key=len, reverse=True):
+        if name == k or name.startswith(k + "-"): return LANG_OF[k]
+    raise KeyError(f"언어를 모르는 manifest 이름: {name!r} — vapasr/uslm/mono_data.py LANG_OF 에 추가")
 
 def build_mono_sequence(chunks, K: int, prefix: List[int], audio_pad: int, sp: Specials, M: int):
     """build_interleaved 출력 → (ids, is_input, chunk_of, n_flush_rounds).
