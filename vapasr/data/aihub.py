@@ -50,13 +50,14 @@ def iter_71631(label_root: str, audio_root: str, subsets: Tuple[str, ...] = ("TL
                            swapped=bool(conv.meta.get("speaker_channel_swapped")), domain=conv.meta.get("domain"))
 
 # ───────────────────────────── 031/033 방송 ─────────────────────────────
+_BC_FILLER = re.compile(r"(?<=\S)/(?=\s|$|[.,?!])")           # '아/ 저희' — 간투사 표지(KsponSpeech 관습). 단어는 발화됐으므로 '/' 만 뗀다
 _BC_MARK = re.compile(r"[\$#&\*%~/()]")
 def normalize_bc(pron: str) -> Tuple[str, List[str]]:
-    """발음전사 → (텍스트, 사유). 표지가 남아 있으면 quarantine."""
-    bad = []
-    if _BC_MARK.search(pron): bad.append("markup")
-    if re.search(r"[0-9]", pron): bad.append("digit")
-    s = re.sub(r"\s+", " ", pron).strip()
+    """발음전사 → (텍스트, 사유). 간투사 '/' 는 제거, 그 밖의 표지($ # & * % ~ / 괄호)가 남아 있으면 quarantine(markup)."""
+    bad = []; s = _BC_FILLER.sub("", pron)
+    if _BC_MARK.search(s): bad.append("markup")
+    if re.search(r"[0-9]", s): bad.append("digit")
+    s = re.sub(r"\s+", " ", s).strip()
     return s, bad
 
 def bc_index(roots: List[str], split: str = "Training") -> Tuple[Dict[str, Tuple[str, str, int]], Dict[str, str]]:

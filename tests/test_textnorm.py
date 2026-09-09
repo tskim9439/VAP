@@ -38,6 +38,7 @@ def test_aihub():
     assert target_ko("그럴 경우 같은 경우는 처벌 대상이 된다고 하더라고", "aihub71631") == "그럴 경우 같은 경우는 처벌 대상이 된다고 하더라고"
     assert target_ko("얼음과 물이 같이 있다는 것은 몇 도란 뜻일까요? 그건 영 도라는 뜻이에요.", "aihubbc") == "얼음과 물이 같이 있다는 것은 몇 도란 뜻일까요 그건 영 도라는 뜻이에요"
     assert "markup" in target_flags(target_ko("(백)/(100)도씨에 끓잖아요", "aihubbc"), "Korean", "(백)/(100)도씨에 끓잖아요", "aihubbc")
+    assert target_ko("아/ 저희 집에는요, 아버지랑 어머니랑 친 형, 친 누나가 있습니다.", "aihubbc") == "아 저희 집에는요 아버지랑 어머니랑 친 형 친 누나가 있습니다" and target_flags(target_ko("아/ 저희 집", "aihubbc"), "Korean", "아/ 저희 집", "aihubbc") == set()
 def test_version():
     assert TEXTNORM_VERSION == "asr-tn-v1.3.0"; assert NUMERIC_BACKEND_VERSION == NUMERIC_BACKEND_PINNED, NUMERIC_BACKEND_VERSION
     fp = fingerprint(); assert fp["textnorm_version"] == TEXTNORM_VERSION and len(fp["textnorm_sha256"]) == 64
