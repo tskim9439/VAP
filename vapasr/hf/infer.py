@@ -95,12 +95,16 @@ def iter_stream(model, tok, wav: np.ndarray, lang: str = "English", delay: int =
     """청크마다 Chunk 를 yield. 노트북에서 `for c in iter_stream(...): print(...)` 로 한 청크씩 볼 수 있다. 규약은 stream_decode 와 동일."""
     from transformers import DynamicCache
     dev = next(model.parameters()).device; cap = model.config.runaway_cap if runaway_cap is None else runaway_cap
+    def sync():
+        if dev.type == "cuda": torch.cuda.synchronize()
+        elif dev.type == "mps": torch.mps.synchronize()
+    use_ac = dev.type == "cuda" and model.get_input_embeddings().weight.dtype == torch.float32      # bf16/fp16 가중치·MPS/CPU 는 autocast 없이
     w = torch.from_numpy(np.asarray(wav, dtype=np.float32)).to(dev); K = int(round(w.shape[0] / 16000 / CHUNK_S))
     feats = model.encode(w[None], torch.tensor([w.shape[0]], device=dev), torch.tensor([K], device=dev))[0]
     emb = model.get_input_embeddings(); cache = DynamicCache(); ce = model.chunk_embed(feats[None])[0].to(emb.weight.dtype)
     def step(e):
         out = model.thinker(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=cache, use_cache=True); return out.logits[0, -1].float()
-    with torch.autocast("cuda", dtype=torch.bfloat16):
+    with torch.autocast("cuda", dtype=torch.bfloat16, enabled=use_ac):
         step(emb(torch.tensor(prefix_ids(model, tok, lang, delay), device=dev)))
         e_next = emb.weight[model.next_audio]; e_empty = emb.weight[model.empty_audio]; total = 0; max_total = int(max_total_per_chunk * K) + 64
         def emit_round(logits):
@@ -111,10 +115,10 @@ def iter_stream(model, tok, wav: np.ndarray, lang: str = "English", delay: int =
                     forced = tid != model.next_audio; step(e_next); return ids, forced
                 ids.append(tid); total += 1; logits = step(emb.weight[tid])
         for k in range(K):
-            t = time.time(); ids, forced = emit_round(step(ce[k])); torch.cuda.synchronize()
+            t = time.time(); ids, forced = emit_round(step(ce[k])); sync()
             yield Chunk(k, k * CHUNK_S, (k + 1) * CHUNK_S, ids, tok.convert_ids_to_tokens(ids), forced, (time.time() - t) * 1000)
         for r in range(max_flush_rounds):
-            t = time.time(); ids, forced = emit_round(step(e_empty)); torch.cuda.synchronize()
+            t = time.time(); ids, forced = emit_round(step(e_empty)); sync()
             yield Chunk(K + r, K * CHUNK_S, K * CHUNK_S, ids, tok.convert_ids_to_tokens(ids), forced, (time.time() - t) * 1000)
             if not ids: break
 
