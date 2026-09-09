@@ -45,7 +45,7 @@ def iter_71631(label_root: str, audio_root: str, subsets: Tuple[str, ...] = ("TL
             stem = os.path.splitext(os.path.basename(jp))[0]; wav = wavs.get(stem)
             if wav is None: continue
             conv = load_aihub(wav, jp, load_audio=True, vad_hop_ms=vad_hop_ms)     # 채널 VAD 로 화자↔채널 판정
-            for i, u in enumerate(conv.utts):
+            for i, u in enumerate(conv.utterances):
                 yield dict(conv=stem, wav=wav, utt_id=f"{stem}_{i + 1:06d}", speaker=u.speaker, channel=u.speaker, start=float(u.start), end=float(u.end), raw=u.text, dur_wav=conv.duration,
                            swapped=bool(conv.meta.get("speaker_channel_swapped")), domain=conv.meta.get("domain"))
 
