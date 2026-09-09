@@ -16,6 +16,7 @@ import re, os, hashlib, unicodedata
 from typing import Optional, Set, Dict, Tuple
 from .kspon import normalize_kspon_v1
 from .nikl import normalize_nikl
+from .aihub import normalize_71631, normalize_bc
 try:
     from num2words import num2words
     from importlib.metadata import version as _pkg_version
@@ -23,7 +24,7 @@ try:
 except Exception as e:                                                   # 의존성 없으면 즉시 실패(동결 관문 1)
     raise ImportError("asr-tn-v1.0.0 은 num2words==0.5.14 가 필요합니다: pip install num2words==0.5.14") from e
 
-TEXTNORM_VERSION = "asr-tn-v1.2.0"        # v1.2.0(2026-09-08): voxpopuli·yodas 파서 추가, yodas 는 숫자 단어화 허용. 기존 코퍼스 타깃은 v1.0.0 과 동일
+TEXTNORM_VERSION = "asr-tn-v1.3.0"        # v1.3.0(2026-09-09): AI Hub 71631(자유대화)·031/033 방송(aihubbc) KO 파서 추가. 기존 코퍼스 타깃은 v1.0.0 과 동일
 TEXTNORM_ID_SHORT = "asr-tn-v1"                                          # 정렬 경로 등에 쓰는 major 식별자
 NUMERIC_BACKEND_PINNED = "0.5.14"
 NUMERIC_CORPORA_EN: Set[str] = {"yodas"}                               # v1.2.0: yodas(의사 라벨, 숫자 표기 흔함)만 num2words 변환. LibriSpeech·Switchboard·MNSC·VoxPopuli 는 digit 이 남으면 quarantine
@@ -88,7 +89,7 @@ def score_en(t: str) -> str:
 # ───────────────────────── KO ─────────────────────────
 _KO_PUNCT = re.compile(r"[^\w\s]")
 _KO_ALLOWED = re.compile(r"^[가-힣ᄀ-ᇿ㄰-㆏A-Za-z ]*$")
-KO_PARSERS = {"kspon": lambda r: normalize_kspon_v1(r), "nikl": lambda r: normalize_nikl(r)}   # corpus → (텍스트, malformed 사유)
+KO_PARSERS = {"kspon": lambda r: normalize_kspon_v1(r), "nikl": lambda r: normalize_nikl(r), "aihub71631": lambda r: normalize_71631(r), "aihubbc": lambda r: normalize_bc(r)}   # corpus → (텍스트, malformed 사유)
 def target_ko(raw: str, corpus: str = "kspon") -> str:
     """KO 학습 타깃. kspon: 이중표기 선택 + 표지 제거. nikl: original_form 표지 제거(익명화·불명확은 quarantine). 그 외(aihub 등): 태그·구두점 제거만. 독립 Latin 은 원형 유지."""
     t = KO_PARSERS[corpus](raw)[0] if corpus in KO_PARSERS else raw

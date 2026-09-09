@@ -30,6 +30,7 @@ ap.add_argument("--nikl-root", default=os.environ.get("MXC_NIKL_DIR", "/soundai/
 ap.add_argument("--sample-hours", type=float, default=None, help="이름이 *-<N> 인 manifest 는 N h 표본(seed 결정적). 명시하면 그 값")
 ap.add_argument("--labels-dir", default=os.environ.get("MXC_LABELS_DIR", "/soundai/users/tskim/VAPKT-data/data/labels"), help="외부에서 받은 라벨(voxpopuli/asr_en.tsv, yodas/granary_yodas_en129.jsonl)")
 ap.add_argument("--vp-audio-dir", default=os.environ.get("MXC_VOXPOPULI_TAR_DIR", "/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli"), help="VoxPopuli 비압축 tar(train_part_k.tar) 디렉토리")
+ap.add_argument("--aihub-root", default=os.environ.get("MXC_AIHUB_DIR", "/soundai/DB/raw/aihub")); ap.add_argument("--aihub71631-labels", default=os.environ.get("MXC_AIHUB71631_LABELS", "/soundai/users/tskim/VAPKT-data/data/labels/aihub71631"))
 ap.add_argument("--yodas-root", default=os.environ.get("MXC_YODAS_DIR", os.path.join(os.environ.get("MXC_EN_OPEN_DIR", "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/EN/TRAIN/OPEN"), "yodas-granary")))
 ap.add_argument("--target-s", type=float, default=25.0); ap.add_argument("--min-s", type=float, default=20.0); ap.add_argument("--max-s", type=float, default=30.0)
 ap.add_argument("--seed", type=int, default=0)
@@ -49,6 +50,10 @@ MANIFESTS = {  # name: (corpus, [(split_dir, subset)])
     # ── asr-tn-v1.2.0 확장(2026-09-08): VoxPopuli EN 536 h(공식 annotation, tar::member 읽기) · YODAS-Granary en129(의사 라벨, 영상 단위 표본)
     "voxpopuli-train":  ("voxpopuli", [("voxpopuli/asr_en.tsv", "train")]),
     "yodas-en129":      ("yodas", [("yodas/granary_yodas_en129.jsonl", "en129")]),
+    # ── asr-tn-v1.3.0 확장(2026-09-09): AI Hub 71631 자유대화(stereo 채널 = 화자, 서버 보유 TS_01.실내_5·VS_02.실외) · 031/033 방송 한국어 원음(zip 멤버, 언어쌍 간 stem 중복 제거)
+    "aihub71631-train": ("aihub71631", [("TL_01.실내", "train")]),
+    "aihub71631-dev":   ("aihub71631", [("VL_02.실외", "dev")]),
+    "aihub-bc-train":   ("aihubbc", [("Training", "train")]),
     "kspon-dev":        ("kspon", [("dev.trn", "dev")]),
     "kspon-eval":       ("kspon", [("eval_clean.trn", "eval_clean"), ("eval_other.trn", "eval_other")]),
 }
@@ -111,7 +116,8 @@ def utt_rows(utts, corpus, subset, split, lang, prefix, key_speaker="speaker"):
         sid = f"{prefix}-{subset}-utt-{u['utt_id']}"; r = rng_for(sid); lead, trail = round(r.uniform(0.3, 1.0), 3), round(r.uniform(0.3, 1.0), 3)
         rows.append(dict(id=sid, corpus=corpus, split=split, subset=subset, mode="utt", lang=lang, speaker=u.get(key_speaker), chapter=u.get("chapter"),
                          duration_s=round(lead + u["dur_s"] + trail, 3), n_utts=1, silence_after_s=trail,
-                         segments=[dict(utt_id=u["utt_id"], path=u["path"], silence_before_s=lead, offset_s=lead, dur_s=u["dur_s"], text=u["text"], lexical_text=u["text"], raw_text=u["raw"], display_source="none")]))
+                         segments=[dict(utt_id=u["utt_id"], path=u["path"], silence_before_s=lead, offset_s=lead, dur_s=u["dur_s"], text=u["text"], lexical_text=u["text"], raw_text=u["raw"], display_source="none",
+                                        **({"src_offset_s": u["src_offset_s"]} if u.get("src_offset_s") is not None else {}))]))   # src_offset_s: 원본(긴 대화 wav) 안의 시작 위치
     return rows
 
 # ───────────────────────────── KsponSpeech ─────────────────────────────
@@ -228,6 +234,47 @@ def yodas_utts(rel_jsonl, subset, sample_hours=None):
     print(f"    yodas/{subset}: {len(utts)} 발화 {acc/3600:.1f} h · " + " · ".join(f"{k}={v}" for k, v in st.items()), flush=True)
     return utts, st
 
+# ───────────────────────────── AI Hub 71631 · 031/033 ─────────────────────────────
+def aihub71631_utts(label_sub, subset, sample_hours=None):
+    """대화 wav(stereo) 의 화자 채널에서 발화를 잘라 세그먼트로: path 는 "<wav>#ch<채널>", offset 은 대화 안의 StartTime. 익명화(#@이름#) 발화는 quarantine."""
+    from vapasr.data.aihub import iter_71631
+    st = collections.Counter(); utts = []; convs = set(); swapped = 0
+    for u in iter_71631(a.aihub71631_labels, os.path.join(a.aihub_root, "71631_audio"), subsets=(label_sub,)):
+        st["rows"] += 1; convs.add(u["conv"]); swapped += int(u["swapped"] and u["utt_id"].endswith("000001"))
+        text = target_ko(u["raw"], "aihub71631"); fl = set(target_flags(text, "Korean", u["raw"], "aihub71631")); dur = u["end"] - u["start"]
+        if not (0.3 <= dur <= 60): fl.add("bad_time")
+        if fl: st["quarantined"] += 1; _quarantine(u["utt_id"], subset, u["raw"], text, fl); continue
+        utts.append(dict(utt_id=u["utt_id"], speaker=f"{u['conv']}:{u['speaker']}", chapter=u["conv"], path=f"{u['wav']}#ch{u['channel']}", src_offset_s=round(u["start"], 3), text=text, raw=u["raw"], dur_s=round(dur, 3))); st["kept"] += 1
+    st["conversations"] = len(convs); st["channel_swapped_convs"] = swapped
+    if sample_hours:
+        random.Random(a.seed).shuffle(utts); acc, keep = 0.0, []
+        for u in utts:
+            if acc >= sample_hours * 3600: break
+            keep.append(u); acc += u["dur_s"]
+        utts = keep
+    print(f"    aihub71631/{subset}: {len(utts)} 발화 {sum(u['dur_s'] for u in utts)/3600:.1f} h · " + " · ".join(f"{k}={v}" for k, v in st.items()), flush=True)
+    return utts, st
+
+def aihubbc_utts(split, subset, sample_hours=None):
+    """031+033 한국어 원음(zip 멤버) — stem 중복 제거, 발음전사 타깃, 철자전사 원문."""
+    from vapasr.data.aihub import iter_bc
+    roots = sorted(glob.glob(os.path.join(a.aihub_root, "031*"))) + sorted(glob.glob(os.path.join(a.aihub_root, "033*"))); st = collections.Counter(); utts = []
+    for u in iter_bc(roots, split):
+        st["rows"] += 1; st[f"genre_{u['genre']}"] += 1
+        text = target_ko(u["pron"], "aihubbc"); fl = set(target_flags(text, "Korean", u["pron"], "aihubbc"))
+        if not u["pron"].strip(): fl.add("empty")
+        if not (0.3 <= u["dur_s"] <= 60): fl.add("bad_dur")
+        if fl: st["quarantined"] += 1; _quarantine(u["utt_id"], subset, u["pron"] or u["spell"], text, fl); continue
+        utts.append(dict(utt_id=u["utt_id"], speaker=None, chapter=u["genre"], path=f"{u['zip']}::{u['member']}", text=text, raw=u["spell"], dur_s=u["dur_s"])); st["kept"] += 1
+    if sample_hours:
+        random.Random(a.seed).shuffle(utts); acc, keep = 0.0, []
+        for u in utts:
+            if acc >= sample_hours * 3600: break
+            keep.append(u); acc += u["dur_s"]
+        utts = keep
+    print(f"    aihubbc/{subset}: {len(utts)} 발화 {sum(u['dur_s'] for u in utts)/3600:.1f} h · " + " · ".join(f"{k}={v}" for k, v in st.items()), flush=True)
+    return utts, st
+
 # ───────────────────────────── 실행 ─────────────────────────────
 for name in names:
     corpus, parts = MANIFESTS[name]; od = os.path.join(a.out, name); os.makedirs(od, exist_ok=True); rows, stats = [], {}
@@ -239,10 +286,11 @@ for name in names:
             if split != "train": rs += utt_rows(utts, "librispeech", subset, split, "English", "ls")
             sub_st = dict(utts=len(utts), speakers=len({u["speaker"] for u in utts}), chapters=len({(u["speaker"], u["chapter"]) for u in utts}),
                           utt_hours=round(sum(u["dur_s"] for u in utts) / 3600, 2))
-        elif corpus in ("switchboard", "mnsc", "nikl", "voxpopuli", "yodas"):
+        elif corpus in ("switchboard", "mnsc", "nikl", "voxpopuli", "yodas", "aihub71631", "aihubbc"):
             hours = a.sample_hours if a.sample_hours else (float(name.split("-")[-1]) if name.split("-")[-1].isdigit() else None)
-            utts, st = (nikl_utts(subset, hours) if corpus == "nikl" else voxpopuli_utts(src, subset, hours) if corpus == "voxpopuli" else yodas_utts(src, subset, hours) if corpus == "yodas" else csv_utts(corpus, src, subset, hours))
-            pre = {"switchboard": "swbd", "mnsc": "mnsc", "nikl": "nikl", "voxpopuli": "vp", "yodas": "yd"}[corpus]; lang = "Korean" if corpus == "nikl" else "English"
+            utts, st = (nikl_utts(subset, hours) if corpus == "nikl" else voxpopuli_utts(src, subset, hours) if corpus == "voxpopuli" else yodas_utts(src, subset, hours) if corpus == "yodas"
+                        else aihub71631_utts(src, subset, hours) if corpus == "aihub71631" else aihubbc_utts(src, subset, hours) if corpus == "aihubbc" else csv_utts(corpus, src, subset, hours))
+            pre = {"switchboard": "swbd", "mnsc": "mnsc", "nikl": "nikl", "voxpopuli": "vp", "yodas": "yd", "aihub71631": "ah71", "aihubbc": "ahbc"}[corpus]; lang = "Korean" if corpus in ("nikl", "aihub71631", "aihubbc") else "English"
             rs = utt_rows(utts, corpus, subset, split, lang, pre)
             if split == "train":
                 for r in rs: r["mode"] = "stream"; r["id"] = r["id"].replace("-utt-", "-")       # 발화 = 스트림(kspon 과 동일 규약)

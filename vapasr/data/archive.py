@@ -1,5 +1,5 @@
 """압축(tar) 안의 오디오를 풀지 않고 읽기 — tar 멤버 오프셋 인덱스(2026-09-07, 사용자 지시).
-경로 표기: "<archive.tar[.gz]>::<member/path.wav>". gzip tar 는 무작위 접근이 불가하므로 인덱스만 만들고(순차 1 회) 읽기는 비압축 tar 만 지원한다;
+경로 표기: "<archive.tar[.gz]|archive.zip>::<member/path.wav>". zip 은 zipfile 로 멤버만 읽는다(AI Hub 031/033). gzip tar 는 무작위 접근이 불가하므로 인덱스만 만들고(순차 1 회) 읽기는 비압축 tar 만 지원한다;
 gzip 이면 최초 1 회 `tar_index` 가 경고하고, 학습 전에 비압축 tar 로 재포장(`tar -xOf a.tar.gz | tar -cf a.tar`)하거나 세그먼트 캐시를 권한다.
 인덱스는 <archive>.index.json 옆에 저장(쓰기 불가 디렉토리면 $MXC_DATA_ROOT/archive-index/ 아래)."""
 import os, io, json, tarfile, hashlib
@@ -28,7 +28,13 @@ def tar_index(archive: str) -> Dict[str, Tuple[int, int]]:
     return idx
 
 _IDX: Dict[str, Dict[str, Tuple[int, int]]] = {}
+_ZIP: Dict[str, "zipfile.ZipFile"] = {}
 def read_member(archive: str, member: str) -> bytes:
+    if archive.endswith(".zip"):                        # zip: 중앙 디렉토리로 멤버만 읽는다(풀지 않음). 프로세스당 핸들 캐시
+        import zipfile
+        if archive not in _ZIP: _ZIP[archive] = zipfile.ZipFile(archive)
+        try: return _ZIP[archive].read(member)
+        except KeyError: return _ZIP[archive].read("/" + member)   # AI Hub zip 은 멤버 이름이 "/" 로 시작
     if archive not in _IDX: _IDX[archive] = tar_index(archive)
     off, size = _IDX[archive][member]
     with open(archive, "rb") as f: f.seek(off); return f.read(size)

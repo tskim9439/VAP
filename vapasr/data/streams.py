@@ -17,12 +17,14 @@ def read_streams(manifest_dir: str, mode: Optional[str] = None, subset: Optional
     return rows
 
 def load_utt_audio(path: str) -> np.ndarray:
-    """flac/wav(헤더 있음) 은 soundfile, .pcm 은 raw 리더, "a.tar::member" 는 압축 해제 없이 인덱스로 읽기. → float32 (T,) @16 kHz"""
+    """flac/wav(헤더 있음) 은 soundfile, .pcm 은 raw 리더, "a.tar::member"/"a.zip::member" 는 압축 해제 없이 읽기. 접미사 "#chN" 은 다채널 wav 의 채널 N(AI Hub 71631 stereo). → float32 (T,) @16 kHz"""
+    ch = 0
+    if "#ch" in path: path, c = path.rsplit("#ch", 1); ch = int(c)
     if "::" in path:
         from .archive import load_audio_from_archive; return load_audio_from_archive(path)
     if path.endswith(".pcm"): return read_pcm(path)[0]
     import soundfile as sf
-    x, sr = sf.read(path, dtype="float32", always_2d=True); x = x[:, 0]
+    x, sr = sf.read(path, dtype="float32", always_2d=True); x = x[:, min(ch, x.shape[1] - 1)]
     if sr != SR:
         import soxr; x = soxr.resample(x, sr, SR)
     return x

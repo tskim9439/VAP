@@ -33,8 +33,13 @@ def test_voxpopuli_yodas():
     assert target_en("Which sites have you been using, and how did it assist your search?", "yodas") == "which sites have you been using and how did it assist your search"
     assert target_en("say five, seven years ago. It's 24 hours!", "yodas") == "say five seven years ago it's twenty four hours"   # yodas 는 숫자 단어화
     assert target_en("DON'T STOP!", "switchboard") == "don't stop" and target_ko("(100명)/(백 명)", "kspon") == "백 명"      # 기존 코퍼스 불변
+def test_aihub():
+    assert target_ko("한번 잘 한번 #@이름# 보고 싶다 이거야", "aihub71631") == "한번 잘 한번 보고 싶다 이거야" and "anon" in target_flags(target_ko("#@이름# 왔어", "aihub71631"), "Korean", "#@이름# 왔어", "aihub71631")
+    assert target_ko("그럴 경우 같은 경우는 처벌 대상이 된다고 하더라고", "aihub71631") == "그럴 경우 같은 경우는 처벌 대상이 된다고 하더라고"
+    assert target_ko("얼음과 물이 같이 있다는 것은 몇 도란 뜻일까요? 그건 영 도라는 뜻이에요.", "aihubbc") == "얼음과 물이 같이 있다는 것은 몇 도란 뜻일까요 그건 영 도라는 뜻이에요"
+    assert "markup" in target_flags(target_ko("(백)/(100)도씨에 끓잖아요", "aihubbc"), "Korean", "(백)/(100)도씨에 끓잖아요", "aihubbc")
 def test_version():
-    assert TEXTNORM_VERSION == "asr-tn-v1.2.0"; assert NUMERIC_BACKEND_VERSION == NUMERIC_BACKEND_PINNED, NUMERIC_BACKEND_VERSION
+    assert TEXTNORM_VERSION == "asr-tn-v1.3.0"; assert NUMERIC_BACKEND_VERSION == NUMERIC_BACKEND_PINNED, NUMERIC_BACKEND_VERSION
     fp = fingerprint(); assert fp["textnorm_version"] == TEXTNORM_VERSION and len(fp["textnorm_sha256"]) == 64
 def test_en_target():
     for raw, exp in EN_TARGET: assert target_en(raw) == exp, (raw, target_en(raw), exp)
