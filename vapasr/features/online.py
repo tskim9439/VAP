@@ -81,8 +81,11 @@ class NemotronOnline(nn.Module):
         """wav (B, L) float32, wav_len (B,) 샘플 수, K (B,) 목표 프레임 수 → (B, max K, D) float32. 인코더는 fp32 로 돈다(autocast 밖)."""
         with torch.autocast("cuda", enabled=False):
             with torch.no_grad(): f, fl = self.pre(input_signal=wav.float(), length=wav_len)
+        # 동결 인코더는 fp32(C2 이후 특징과 완전 동일). 학습할 때는 bf16 autocast — fp32 는 활성화 메모리가 2 배라 KO 배치 48 이 H200 에서 OOM(2026-09-09 실측: bs24 87 GB)
+        with torch.autocast("cuda", enabled=bool(self.trainable), dtype=torch.bfloat16):
             ctx = torch.no_grad() if not self.trainable else torch.enable_grad()
             with ctx: h, hl = self.enc(audio_signal=f, length=fl)              # (B, D, T')
+        h = h.float()
         h = h.transpose(1, 2); Km = int(K.max()); out = h.new_zeros(h.shape[0], Km, h.shape[2])
         for i in range(h.shape[0]):
             k, t = int(K[i]), int(hl[i]); n = min(k, t); out[i, :n] = h[i, :n]
