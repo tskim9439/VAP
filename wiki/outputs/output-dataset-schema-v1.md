@@ -83,6 +83,22 @@ sources:
 **id 중복 검사 추가(2026-09-09)**: 초기 mnsc-1000 manifest 는 676,864 행 중 고유 id 가 77,095 개(CSV 가 같은 wav 를 약 30 번 반복)였는데 v1 검증기가 이를 놓쳤다. 검증기에 id 중복 항목을 넣고 카드에 `unique_ids/duplicate_ids` 를 기록하며, manifest 를 중복 제거로 재빌드했다(74,215 발화 108 h). 정렬 "중복 줄" 은 정렬 job 재시작·양방향 워커가 같은 스트림을 다시 쓴 흔적이다. 로더는 첫 레코드만 쓰므로 학습에 영향은 없고 디스크만 낭비한다(정리 스크립트는 사용자 승인 후).
 주의: `align-asr-tn-v1/kspon-full/stats-all.json` 은 requeue 루프 prep(65774)이 0 으로 덮어썼다. 카드는 parts 를 직접 세므로 영향 없다.
 
+## 5b. 신규 manifest (2026-09-09, asr-tn-v1.2.0 / v1.3.0)
+
+빌드 직후 `dataset.json` 카드가 자동 생성·검증된다(오류 0). 정렬(`slurm/s2_prep.sbatch`)은 아직 제출 전.
+
+| manifest | 발화 | 발화 시간 / 스트림 시간 | quarantine | 비고 |
+|---|---|---|---|---|
+| voxpopuli-train | 177,422 | 520.5 h | – | EN, `train_part_k.tar::member`(36 tar) |
+| yodas-en129 | 133,853 | 333.8 h | – | EN Granary-YODAS, num2words 숫자 정규화 |
+| aihub-bc-train | 448,867 | 578.2 h / 740.2 h | 3,132 | KO 031+033 방송 원음(zip 멤버, stem 중복 제거). 첫 빌드(385,647 / 473 h)는 간투사 표지 `/` 를 quarantine 했던 것 → `/` 만 떼도록 고쳐 재빌드 |
+| aihub71631-train / dev | 231,647 / 66,365 | 159.4 h / 44.4 h(스트림 243 / 68 h) | 6,884 / 2,087 | KO 자유대화 stereo, 화자=채널(에너지 VAD 로 채널 판정), `path#chN` + `src_offset_s`. 라벨 8,306 대화 중 서버 보유 wav 는 TS_01.실내_5 757 · VS_02.실외 186 |
+
+aihub71631 quarantine 은 대부분 0.3 s 미만 맞장구(`bad_time` 4,062: '네', '예')와 익명화 `#@이름#`(`anon` 2,542)이다. 채널이 라벨과 뒤바뀐 대화 train 26 / dev 3(에너지 VAD 겹침으로 판정해 바로잡음). 단일 스레드 빌드가 45 분간 무출력이라 리더를 프로세스 풀로 병렬화(757 대화 11 분).
+
+aihub-bc-train 장르 분포(발화): 예능오락 120,279 · 연예공연 94,500 · 교양 77,867 · 인터뷰 62,140 · 다큐 61,311 · 영화드라마 35,902. 길이 p50 5.4 s.
+제외: MNSC(오디오 부재, §5), AI Hub 98(원천 m4a zip 15 GB 만 있고 라벨 없음), NIKL 추가분(오디오 없음).
+
 ## 6. 확장 지점
 
 - 2-화자/VAP: 같은 id 에 `vap/<version>/` 층을 추가(턴·끼어들기 시각). segments 에 `speaker` 는 이미 있다.
