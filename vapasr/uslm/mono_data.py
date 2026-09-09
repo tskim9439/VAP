@@ -140,7 +140,13 @@ class MonoStreamDataset(Dataset):
         return got == [t for t, _ in it["tokens"]]
 
     def __getitem__(self, i):
-        delay = random.choice(self.delays); f, ids, is_input, chunk_of, st, it, n_rounds, n_flush = self.sequence(i, delay)
+        delay = random.choice(self.delays)
+        try: f, ids, is_input, chunk_of, st, it, n_rounds, n_flush = self.sequence(i, delay)
+        except (ValueError, OSError, RuntimeError) as e:                       # 오디오 조립 실패(라벨이 파일 끝을 넘는 71631 발화 등, E1 67645 rank 27) → 이웃 항목으로 대체하고 학습은 계속
+            self._audio_fail = getattr(self, "_audio_fail", 0) + 1
+            if self._audio_fail <= 5: print(f"  ! 항목 {self.items[i]['id']} 오디오 조립 실패({type(e).__name__}: {str(e)[:120]}) → 이웃 항목으로 대체 (누적 {self._audio_fail})", flush=True)
+            return self[(i + 1) % len(self.items)]
+
         lab = [(-100 if inp else t) for t, inp in zip(ids, is_input)]
         return dict(**({"wav": torch.from_numpy(f)} if self.online else {"feats": torch.from_numpy(f)}), ids=torch.tensor(ids), is_audio=torch.tensor([c >= 0 for c in chunk_of]), chunk_of=torch.tensor(chunk_of), labels=torch.tensor(lab),
                     lang=it["lang"], delay=delay, name=it["name"], id=it["id"], n_text=st.tokens, overflow=st.overflow_tokens, n_flush=n_flush, K=it["K"], rounds=n_rounds)
