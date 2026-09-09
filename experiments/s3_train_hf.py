@@ -19,6 +19,7 @@ ap.add_argument("--train-encoder", action="store_true"); ap.add_argument("--no-g
 ap.add_argument("--eval-every", type=int, default=2000); ap.add_argument("--save-every", type=int, default=500); ap.add_argument("--eval-bias", default="0"); ap.add_argument("--eval-delay", type=int, default=2)
 ap.add_argument("--sentinel-stream", type=int, default=10); ap.add_argument("--sentinel-utt", type=int, default=100); ap.add_argument("--eval-only", action="store_true")
 ap.add_argument("--eval-tag", default="offline", help="--eval-only 결과 이름 eval/<tag>-<step>.json (예: select)"); ap.add_argument("--eval-seed", type=int, default=1, help="dev 표본 추출 seed (sentinel 1, select 7)")
+ap.add_argument("--dev-extra", default="", help="추가 dev 셋 '라벨=manifest:subset:mode' 쉼표 구분 (예: ah71-dev=aihub71631-dev:dev:utt) — 새 도메인 평가용, 기본 3 셋 뒤에 붙는다")
 ap.add_argument("--out-dir", required=True); ap.add_argument("--resume", default="auto", help="auto | none | <checkpoint dir>"); ap.add_argument("--save-total-limit", type=int, default=2)
 ap.add_argument("--seed", type=int, default=0); ap.add_argument("--log-every", type=int, default=50); ap.add_argument("--num-workers", type=int, default=4); ap.add_argument("--gpu", default=None)
 a = ap.parse_args()
@@ -76,6 +77,8 @@ log(f"model ← {src} ({time.time()-t0:.0f}s) · trainable {n_tr/1e6:.1f}M · en
 # ── 데이터 (rank 0 이 항목 캐시를 먼저 만들고 나머지가 읽는다)
 delays = tuple(int(x) for x in a.delays.split(",")); manifests = a.train.replace(":", ",").split(",")
 DEV = [("dev-clean", "librispeech-dev", "dev-clean", "stream"), ("dev-other", "librispeech-dev", "dev-other", "stream"), ("kspon-dev", "kspon-dev", "dev", "utt")]
+for spec in [x for x in a.dev_extra.split(",") if x]:
+    lab, rest = spec.split("="); m_, sub_, mode_ = rest.split(":"); DEV.append((lab, m_, sub_, mode_))
 def make_sets(spec, cap_stream, cap_utt, seed=1):
     return {lab: MonoStreamDataset([m], tok, mode=mode, subsets=[sub], delays=(a.eval_delay,), max_per_chunk=a.M, seed=seed, max_items=(cap_stream if mode == "stream" else cap_utt), online=True) for lab, m, sub, mode in spec}
 if world > 1 and not main: barrier()

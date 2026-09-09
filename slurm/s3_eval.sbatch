@@ -28,5 +28,5 @@ fi
 export MXC_DATA_MANIFEST_DIR=${MAN_IN:-$MXC_DATA_MANIFEST_DIR} VAPASR_ALIGN_ROOT=${ALIGN_ROOT:-${MAN_IN:-$MXC_DATA_MANIFEST_DIR}/align-asr-tn-v1}
 export OMP_NUM_THREADS=8 TOKENIZERS_PARALLELISM=false NCCL_SOCKET_IFNAME=eth0 GLOO_SOCKET_IFNAME=eth0 PYTHONFAULTHANDLER=1
 case "$(which python)" in "$MXC_CONDA_DIR"/envs/vapasr/*|"${VAPASR_LOCAL_ENV:-/nonexistent}"/*) ;; *) echo "!! conda env 아님"; exit 1;; esac
-torchrun --nproc_per_node=8 --master_port=$((20000 + SLURM_JOB_ID % 10000)) experiments/s3_train_hf.py --eval-only --init "$CKPT" --out-dir "$OUT" --sentinel-stream "$STREAMS" --sentinel-utt "$UTTS" --eval-seed "$SEED" --eval-tag "$TAG" --eval-delay "$DELAY" --eval-bias "$BIAS" --num-workers 0
+torchrun --nproc_per_node=8 --master_port=$((20000 + SLURM_JOB_ID % 10000)) experiments/s3_train_hf.py --eval-only ${DEV_EXTRA:+--dev-extra $DEV_EXTRA} --init "$CKPT" --out-dir "$OUT" --sentinel-stream "$STREAMS" --sentinel-utt "$UTTS" --eval-seed "$SEED" --eval-tag "$TAG" --eval-delay "$DELAY" --eval-bias "$BIAS" --num-workers 0
 RC=$?; echo "[$(date '+%T')] eval rc=$RC"; [ "$RC" -eq 0 ] || { [ "${SLURM_RESTART_COUNT:-0}" -lt 3 ] && scontrol requeue "$SLURM_JOB_ID"; }; exit $RC
