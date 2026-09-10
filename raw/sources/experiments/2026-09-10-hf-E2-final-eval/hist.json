@@ -1,0 +1,48 @@
+{
+ "hist": [
+  {
+   "step": 0,
+   "score": 0.1564689407434514,
+   "dev-clean": {
+    "bias0_err": 0.07626564543246778,
+    "best_err": 0.07626564543246778,
+    "best_bias": 0.0
+   },
+   "dev-other": {
+    "bias0_err": 0.14145089806391417,
+    "best_err": 0.14145089806391417,
+    "best_bias": 0.0
+   },
+   "kspon-dev": {
+    "bias0_err": 0.17140252241300713,
+    "best_err": 0.17140252241300713,
+    "best_bias": 0.0
+   },
+   "test-clean": {
+    "bias0_err": 0.08226196688647469,
+    "best_err": 0.08226196688647469,
+    "best_bias": 0.0
+   },
+   "test-other": {
+    "bias0_err": 0.13912881086885476,
+    "best_err": 0.13912881086885476,
+    "best_bias": 0.0
+   },
+   "kspon-eval-clean": {
+    "bias0_err": 0.15840402969247083,
+    "best_err": 0.15840402969247083,
+    "best_bias": 0.0
+   },
+   "kspon-eval-other": {
+    "bias0_err": 0.18376516890783864,
+    "best_err": 0.18376516890783864,
+    "best_bias": 0.0
+   },
+   "ah71-dev": {
+    "bias0_err": 0.2990724836825833,
+    "best_err": 0.2990724836825833,
+    "best_bias": 0.0
+   }
+  }
+ ]
+}

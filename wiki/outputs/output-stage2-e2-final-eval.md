@@ -70,9 +70,21 @@ sources:
 - next_bias 는 여전히 해롭다(지연 −35 ms 에 KO 오류 급증). E2 에서도 조기 방출 유도는 쓰지 않는다.
 - tick p99 112–127 ms 로 C2(94–106 ms)보다 조금 길다. 인코더 가중치가 달라졌을 뿐 구조는 같으므로 로그인 노드 GPU 공유(다른 작업 100 % 점유) 영향으로 본다. 실시간 여유는 디코더 최적화 과제로 남긴다.
 
-## 5. test 최종 수치 (test-clean · test-other · kspon-eval clean/other 전체, ah71-dev 1,000 발화)
+## 5. test 최종 수치 (표본 프로토콜 s300/u1000, seed 7)
 
-(측정 중 — E2 final 과 C2 final, δ=2/4. `experiments/s3_test_eval.sh`. 이 절부터 dev 가 아닌 test 로 보고한다.)
+dev 는 학습 중 sentinel·checkpoint 선정에 썼으므로 최종 수치는 test 로 낸다. 전체 test 는 모델·δ 당 오디오 ≈17 h(스트리밍 디코드는 실시간 속도로 순차)라 공유 로그인 노드에서 6–8 h/run 이 걸려, **seed 7 고정 표본**(LibriSpeech test-clean/test-other 각 300 스트림, KsponSpeech eval_clean/eval_other 각 1,000 발화, 71631-dev 1,000 발화)으로 보고한다. 전체 셋은 `slurm/s3_eval_suite.sbatch` 로 재현 가능. 같은 표본으로 dev 도 함께 재서 dev/test 차이를 본다.
+
+| 모델 · δ | test-clean WER | test-other WER | kspon eval_clean CER | kspon eval_other CER | ah71-dev CER | (dev-clean / dev-other / kspon-dev, 같은 표본) |
+|---|---|---|---|---|---|---|
+| C2 final · δ=2 | 0.104 · 208 ms | 0.191 · 220 | 0.274 · 202 | 0.293 · 199 | 0.470 · 204 | 0.107 / 0.195 / 0.258 |
+| **E2 final · δ=2** | **0.082** · 199 | **0.139** · 202 | **0.158** · 167 | **0.184** · 163 | **0.299** · 163 | 0.076 / 0.141 / 0.171 |
+| C2 final · δ=4 | (측정 중) | | | | | |
+| E2 final · δ=4 | (측정 중) | | | | | |
+
+(각 칸: 오류율 · 방출 지연 p50 ms. viol80: EN 0.2–0.3 %, KO 3–5 %.)
+
+- test 는 dev 와 같은 그림이다: E2 가 C2 대비 test-clean −21 %, test-other −27 %, kspon eval_clean −42 %, eval_other −37 %(상대), 자유대화 −36 %. dev 와 test 의 차이는 EN ±0.01, KO 0.01–0.02 로 dev 기반 선택의 낙관 편향은 크지 않다.
+- KsponSpeech eval_other(0.184)가 eval_clean(0.158)보다 어렵고, 방송·대화 도메인 추가에도 자유대화(0.299)는 여전히 가장 어렵다.
 
 ## 6. 판정과 다음
 
