@@ -2,7 +2,7 @@
 type: output
 status: active
 created: 2026-09-10
-updated: 2026-09-10
+updated: 2026-09-11
 summary: Phase 1(2026-09-03 → 09-10) 종합 보고 — 80 ms 인터리브 스트리밍 ASR(Nemotron 인코더 → adapter → Qwen3-ASR thinker)의 개념·모델 구조·시퀀스 규약·학습 데이터(EN 2.2 k h + KO 3.4 k h)·구현(HF Trainer, 스키마, 인프라)·실험 계보(파일럿 → C2 → D/D2/D4 → E2)와 결과(E2 select δ=2 0.076/0.139/0.167/0.292), 실시간 데모(MLX)까지
 sources:
   - [[output-interleaved-streaming-slm-architecture]]
@@ -21,6 +21,8 @@ sources:
 ---
 
 # Phase 1 종합 보고: 인터리브 스트리밍 ASR (2026-09-03 → 09-10)
+
+후속 실행 제안: [[output-phase2-streaming-asr-diarization-plan]] — 최대 2화자 mono 입력의 화자별 전사·겹침 처리·의미 기반 turn-taking. 본문의 Phase 1 가능성 판정과 기존 PLAN의 엄격 관문 충족 여부를 구분하여 이월한다.
 
 ## 0. 한 줄 요약
 
@@ -130,7 +132,7 @@ flush   <EMPTY_AUDIO> tok… <NEXT_AUDIO>      (δ 때문에 끝을 넘긴 토�
 1. test 셋 보고: δ=2 표본 test(s300/u1000) 반영 완료(E2 0.082 / 0.139 / 0.158 / 0.184, dev 와 ±0.02 이내). δ=4 와 전체 셋(SLURM)은 추가 예정.
 2. δ=2(160 ms) 정확도: dev-other 0.139 는 RNN-T 오프라인 0.082 와 격차. `<NEXT_AUDIO>` 가중 상향·추가 epoch(E3)·increased context 검토.
 3. 인코더 실시간성(MLX 포팅) 과 서버 GPU 에서의 tick p99.
-4. Phase 2: 혼합 mono 대화(3-1 전사 → 3-2 `<SPK_A/B>` → 3-3 overlap), VAP·hazard 헤드([[turn-taking-objectives]]), TurnBench 평가([[turn-taking-evaluation-protocol]]). SoulX-Duplug 의 상태 토큰 5 종·LLM 라벨링 파이프라인 참고.
+4. Phase 2: 혼합 mono 대화(3-1 전사 → 3-2 `<SPK_A/B>` → 3-3 overlap), VAP·hazard 헤드([[turn-taking-objectives]]), TurnBench 평가([[turn-taking-evaluation-protocol]]). SoulX-Duplug 의 상태 토큰 5 종·LLM 라벨링 파이프라인 참고. → 계획: [[output-phase2-streaming-asr-diarization-plan]](정본), 실행 요약 [[output-phase2-plan]].
 
 ## 8. 산출물 위치
 - 모델: `/soundai/Model/VAPASR/hf-{C2,D2,E2}/final`, 로컬 `~/Desktop/VAPKT-models/hf-E2-final{,-thinker-mlx}`.

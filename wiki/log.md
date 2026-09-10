@@ -1,9 +1,107 @@
 <!-- generated: do not edit -->
 # 활동 로그
 
-마지막 생성: 2026-09-07
+마지막 생성: 2026-09-11
 
 `wiki/log/` 의 샤드를 최신순으로 이어붙인 다이제스트다. 직접 편집하지 않는다.
+
+## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
+
+- Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크
+- Reason: 사용자가 요청한 mono 최대 2화자, 겹침 화자별 전사, 의미 기반 turn-taking 목표를 E2 기반 구조·데이터·학습·평가·실행 순서로 구체화했다. 기존 엄격 관문 미달과 신규 제안 관문을 구분했다.
+- Next: Q0 고정 평가 pack·대화 스키마·합산 mixer·serializer 및 작은 overfit 구현. 현재 문서는 계획이며 학습 job은 제출하지 않았다.
+- By: tskim
+
+## [2026-09-11] query | Phase 2 실행 요약 — 일정·데이터 보유 현황·결정 사항
+
+- Changed: `wiki/outputs/output-phase2-plan.md` 생성(정본 [[output-phase2-streaming-asr-diarization-plan]] 의 보조 페이지), `output-phase1-report.md` §7 이월 항목에 두 링크
+- Reason: 사용자의 Phase 2 계획 요청에 두 세션이 동시에 계획을 썼다. 설계·관문은 정본으로 일원화하고, 이 페이지에는 정본이 "실측 전" 으로 남긴 서버 가용량(71631 248 h·otoSpeech 104.9 h·TurnBench dev 보유, CANDOR 없음)·달력 일정(Q0–Q4, 09-15 → 11-14)·혼합 비율·학습 비용·사용자 결정 4 건만 둔다
+- Next: 사용자 결정(EN 대화 코퍼스, 71631 추가 반입, 단일 모델·항상 태그, turn 출력 형식) → Q0 착수. Switchboard/CallHome 시간축 복원 가능 여부 확인
+- By: tskim
+
+## [2026-09-10] query | Stage 2 run E2(인코더 해동) 최종 평가 보고서
+
+- Changed: `wiki/outputs/output-stage2-e2-final-eval.md` 신규(§4 스윕·§5 test 는 측정 중)
+- Reason: 인코더 해동 + LR 2e-5 로 8 코퍼스를 학습한 E2 가 C2 를 모든 셋에서 앞섬(select δ=2 0.076/0.139/0.167/0.292). 기준 모델 교체
+- Next: 스윕·test 수치 채움, E3(추가 epoch)·NEXT_AUDIO 가중 실험, 디코더 최적화
+- By: tskim
+
+## [2026-09-10] query | Stage 2 run D2 최종 평가 보고서
+
+- Changed: `wiki/outputs/output-stage2-d2-final-eval.md` 신규(§4 스윕·C2 δ4 는 측정 중), `vapasr/uslm/mono_data.py` 결함 수정 기록
+- Reason: 확장 DB run D2 의 최종 성능을 C2 와 같은 표본으로 비교. 평가 중 71631 오디오 조립 버그(src_offset_s 누락)를 발견해 D2 를 오염 run 으로 판정
+- Next: D3(수정 로더) 학습 → 같은 보고서 형식으로 비교, E1 인코더 해동은 D3 위에서
+- By: tskim
+
+## [2026-09-10] query | Phase 1 종합 보고서
+
+- Changed: `wiki/outputs/output-phase1-report.md` 신규
+- Reason: 사용자 요청 — 지금까지의 실험·구현·데이터·모델 구조·개념을 Phase 1 로 묶어 정리(파일럿 → C2 → D/D2/D4 → E2, 실시간 데모·MLX 포함)
+- Next: test 수치 반영(E2 보고서 §5 와 동기화), Phase 2(turn-taking 헤드) 계획 페이지
+- By: tskim
+
+## [2026-09-09] task | mxc 모델 로드 지연 해결 — 로컬 디스크 컨테이너·노드 스테이징·인코더 캐시
+
+- Changed: `wiki/sources/source-mxc-model-load-latency.md`, `scripts/stage-env-local.sh`, `scripts/activate-env.sh`, `vapasr/hf/stage.py`, `vapasr/features/online.py`(인코더 캐시), `slurm/s3_train_hf.sbatch`·`s2_prep.sbatch`·`s3_eval.sbatch`, `.env`(sa_tskim_fd)
+- Reason: NFS 위 conda env 때문에 추론 로드 16 분·학습 시작 25 분. 로컬 디스크로 옮겨 17 초.
+- Next: 67293(D2) requeue 에서 노드 스테이징 동작 확인(`[stage]`·`로컬 env 사용` 로그)
+- By: tskim
+
+## [2026-09-09] task | 한국어 DB 확장 — AI Hub 71631 자유대화 · 031/033 방송 manifest
+
+- Changed: `vapasr/data/aihub.py`(71631 stereo 리더 병렬화·NFC 디렉토리 매칭, 031/033 간투사 `/` 제거), `vapasr/data/textnorm.py` v1.3.0, `experiments/s1_build_manifest.py`(aihub71631-train/dev, aihub-bc-train), `wiki/outputs/output-dataset-schema-v1.md` §5b
+- Reason: NIKL 추가 오디오가 없어 71631 → 031/033 → 98 순으로 한국어 데이터를 늘리기로 함. 결과 aihub71631-train 231,647 발화 159 h · dev 66,365 발화 44 h · aihub-bc-train 448,867 발화 578 h. 98 은 라벨 파일이 서버에 없어 보류.
+- Next: `slurm/s2_prep.sbatch` 로 세 manifest 정렬(2 노드) → D2 TRAIN 에 추가. 98 라벨 확보 여부 확인.
+- By: tskim
+
+## [2026-09-09] query | run C2 최종 모델 WER/CER·타이밍 평가 보고서
+
+- Changed: `wiki/outputs/output-stage2-c2-final-eval.md`, `raw/sources/experiments/2026-09-08-hf-C2-final-eval/`
+- Reason: 사용자 요청 — 1,930 h full FT 최종 모델의 정확도와 방출 타이밍 평가. select 표본으로 checkpoint 선정(final), δ·next_bias 스윕으로 지연–정확도 트레이드오프, RNN-T 대조군·파일럿과 비교. δ=4 에서 dev-clean 0.056 / dev-other 0.122 / kspon-dev 0.156(대조군 0.044 / 0.082 / 0.202).
+- Next: 전체 dev 수치(§4, slurm/s3_eval.sbatch), 디코더 tick 최적화, D run(66523) 결과와 비교.
+- By: tskim
+
+## [2026-09-09] query | SoulX-Duplug(arXiv 2603.14877) 와 우리 설계 비교
+
+- Changed: `wiki/sources/source-soulx-duplug.md` 신규
+- Reason: 사용자가 유사 논문으로 지목. interleaved 청크 streaming ASR + 상태 토큰 구조가 우리와 같은 계열이며, 작은 청크 스트리밍 ASR 의 어려움을 동일하게 보고하고 외부 ASR teacher-forcing 으로 우회
+- Next: VAP 층 설계 시 상태 토큰 5 종·토큰별 손실 가중·LLM 라벨링 파이프라인 참고
+- By: tskim
+
+## [2026-09-08] task | 모델·학습 코드 HF 전환 (vapasr.hf + VapAsrTrainer) 구현·검증
+
+- Changed: `vapasr/hf/{configuration_vapasr,modeling_vapasr,liger,data,trainer}.py`, `experiments/s3_train_hf.py`, `experiments/hf_parity.py`, `slurm/s3_train_hf.sbatch`, `scripts/activate-env.sh`, `wiki/sources/source-hf-trainer-migration.md`, `raw/sources/experiments/2026-09-08-hf-trainer-migration/`
+- Reason: [[output-huggingface-training-framework-choice]] 의 권장(HF-native 모델 + Trainer, Liger 는 동등성 확인 후) 을 구현. 기존 ckpt 와 수치 패리티(손실·디코드 동일), Liger +24 % 처리량, 2-GPU 스모크에서 학습·분산 평가·저장·재개·선점 동작 확인.
+- Next: 8-노드 SLURM 실전 run(hf-C3), select/final 평가 스크립트 HF 이관, DeepSpeed/FSDP 는 인코더 해동 시 검토.
+- By: tskim
+
+## [2026-09-08] task | 데이터 스키마 v1 (manifest·정렬 카드, 검증기, 로더 관문)
+
+- Changed: `vapasr/data/schema.py`, `experiments/ds_cards.py`, `vapasr/uslm/mono_data.py`(카드 관문), `experiments/s1_build_manifest.py`(dataset.json), `experiments/s1_align.py --card`, `slurm/s2_prep.sbatch`, `wiki/outputs/output-dataset-schema-v1.md`
+- Reason: 코퍼스·단계가 늘면서 manifest/정렬/캐시 계약이 코드에 흩어져 있어 스키마를 못 박고 카드(dataset.json/align.json)로 재현성·검증을 관리. 기존 행은 수정하지 않음.
+- Next: 전 산출물 카드 생성 결과 확인, VAPASR_STRICT_SCHEMA 기본화 시점 결정, parquet 캐시.
+- By: tskim
+
+## [2026-09-08] query | 현행 모델 구조와 시퀀스 규약 보고서
+
+- Changed: `wiki/outputs/output-vapasr-model-and-sequence.md`
+- Reason: 사용자 요청 — 현재 VAP-ASR 모델(인코더·adapter·thinker·특수 토큰)과 80 ms 청크 인터리브 시퀀스·라벨·손실·디코드·학습 설정을 코드 기준으로 한 곳에 정리. 인코더/thinker 설정은 서버의 .nemo·config.json, 스트림 통계는 정렬 캐시, 예시는 s1_show_sequence 출력으로 확인.
+- Next: 인코더 해동·디코드 속도 개선 시 §2·§6 갱신.
+- By: tskim
+
+## [2026-09-08] query | VAPASR Hugging Face 전환과 학습 프레임워크 선택
+
+- Changed: `wiki/outputs/output-huggingface-training-framework-choice.md`
+- Reason: 현재 VAPASR의 custom bilingual batching, weighted sparse CE, streaming sentinel, SLURM 선점 재개를 보존하면서 Hugging Face 친화적으로 전환할 주 경로를 비교했다. HF-native core와 Trainer/Accelerate를 채택 후보로 두고 DeepSpeed·Liger는 독립 검증 옵션, MS-SWIFT는 추후 편의 계층, NeMo/Megatron 전체 전환은 대규모 확장 전까지 보류했다.
+- Next: 진행 중인 1,930 h run을 변경 없이 완료한 뒤 HF config/model/processor와 checkpoint round-trip 회귀 시험부터 구현한다.
+- By: tskim
+
+## [2026-09-08] query | HF Trainer 마이그레이션 구현 검토
+
+- Changed: `wiki/outputs/output-huggingface-training-framework-choice.md`
+- Reason: [[source-hf-trainer-migration]]과 실제 구현을 대조해 legacy 패리티·Liger·2-GPU 분산 학습 검증을 통과로 판정하고, 8-node 실행 전 adapter 인자 누락과 정확한 data resume·recipe override·평가 이력·부분 checkpoint 위험을 기록했다.
+- Next: `slurm/s3_train_hf.sbatch`의 초기화 변수 순서를 먼저 수정하고, 무중단/재개 parameter hash 시험과 8-node 짧은 smoke를 수행한다.
+- By: tskim
 
 ## [2026-09-07] task | asr-tn-v1.0.0 구현·audit·동결
 
@@ -12,11 +110,25 @@
 - Next: Kspon 01–05 review TSV 사용자 검토(관문 6) → librispeech-960·kspon-full manifest 생성(fingerprint) → align-asr-tn-v1/ 정렬·특징 추출 → scaling curve.
 - By: tskim
 
+## [2026-09-07] query | Streaming SpeechLLM 및 저지연 ASR 관련 연구 비교
+
+- Changed: `wiki/sources/source-streaming-speech-llm-related-work.md`, `wiki/sources/source-muse-voice-transcribe.md`, `wiki/outputs/output-interleaved-streaming-slm-architecture.md`, `wiki/outputs/output-stage1-mono-pilot.md`
+- Reason: Samsung Intermixed SpeechLLM, Speech ReaLLM, MoChA decoder-only streaming ASR, Moshi, Muse, Ar-RNN-T, transducer MinLT를 방출 정책·정렬·지연·공개성·VAPASR 적용 순서로 비교하기 위해 작성했다.
+- Next: 1,930 h Stage 2A scaling 결과 뒤 windowed target과 expected-latency loss의 우선순위를 판정한다.
+- By: tskim
+
 ## [2026-09-07] query | Stage 1 RNN-T 동급 가능성 평가
 
 - Changed: `wiki/sources/source-stage1-mono-run-ab.md`, `wiki/sources/source-stage1-mono-pilot-6000-sentinel-partial.md`, `wiki/outputs/output-stage1-mono-pilot.md`, `wiki/status.md`
 - Reason: Stage 1 개선 run A/B 결과를 근거로 IS-SLM이 RNN-T 동급 정확도와 예측 가능한 방출 타이밍을 동시에 달성할 가능성을 엄격히 평가하고, 단순 epoch 연장보다 데이터·정렬 목표·런타임 개선을 우선하는 관문을 기록했다.
 - Next: B 기반 200/500/1,000/1,900 h scaling curve, full-dev 평가, windowed alignment·latency loss·KO next_weight Pareto sweep, end-to-end tick 측정.
+- By: tskim
+
+## [2026-09-07] query | Stage 1 ASR 데이터 확장 추천 리스트
+
+- Changed: `wiki/outputs/output-stage1-asr-data-expansion-priority.md`, `wiki/status.md`
+- Reason: 1,930 h 30 epoch 학습과 병행해 준비할 EN·KO 코퍼스를 준비도, 전사 품질, 도메인 상보성, 중복, 라이선스와 평가 오염 위험으로 우선순위화했다.
+- Next: Pack X1(NIKL 400–500 h, Switchboard, otoSpeech, AMI IHM)의 corpus parser·split·QC manifest를 만든다.
 - By: tskim
 
 ## [2026-09-07] query | 영어 대소문자·문장부호 출력 규약
@@ -31,6 +143,13 @@
 - Changed: `wiki/outputs/output-asr-tn-v1-spec.md`, `wiki/concepts/asr-text-normalization.md`, `wiki/outputs/output-stage1-mono-pilot.md`, `wiki/status.md`
 - Reason: 1,930 h manifest·alignment 생성 전에 LibriSpeech·KsponSpeech의 target/score 규약, 지원·미지원 숫자 패턴, quarantine, golden test, fingerprint와 버전 조건을 고정할 문서 정본이 필요했다.
 - Next: TN v1 구현, 전체 transcript audit, 기존 230 h target/token-ID diff, 목적 표본 검토 후 frozen 판정.
+- By: tskim
+
+## [2026-09-07] ingest | mxc `/soundai/DB` 음성 데이터셋 서베이
+
+- Changed: `raw/sources/mxc-soundai-DB-survey.md`, `raw/sources/SLM원천데이터.md`, `wiki/sources/source-mxc-soundai-dataset-survey.md`, `wiki/sources/source-conversation-corpora.md`, `wiki/status.md`
+- Reason: `raw/inbox/`의 서버 DB 조사표와 SLM-SPEECH ID 목록을 연구 자료로 분류하고, 서버 실측과 공식 규모·포맷·사용 목적의 차이를 보존한 source note로 합성했다.
+- Next: NIKL PCM·시간·TN 표본과 MNSC 중복·PART 구성을 감사한다.
 - By: tskim
 
 ## [2026-09-06] task | Stage 1 mono 파일럿 준비 완료 — overfit 통과(옛·새 규약), 대화 코퍼스 mxc 업로드, 6,000-step 파일럿 시작
