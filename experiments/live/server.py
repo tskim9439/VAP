@@ -30,25 +30,28 @@ async def index(req): return web.Response(text=HTML.replace("__DEFAULT_DELAY__",
 
 async def ws_handler(req):
     sock = web.WebSocketResponse(max_msg_size=0, heartbeat=20); await sock.prepare(req); sess = None; loop = asyncio.get_event_loop(); n_samples = 0; t_start = None
+    peer = req.remote; last_rms = 0.0; n_chunks = 0
     def ev_json(e, kind="chunk"):
-        return json.dumps(dict(type=kind, k=e.k, t=round(e.k * 0.08, 2), tokens=tok.convert_ids_to_tokens(e.ids), text=e.text, tick_ms=round(e.tick_ms, 1), enc_ms=round(e.enc_ms, 1), dec_ms=round(e.dec_ms, 1), forced=e.forced), ensure_ascii=False)
+        return json.dumps(dict(type=kind, k=e.k, t=round(e.k * 0.08, 2), tokens=tok.convert_ids_to_tokens(e.ids), text=e.text, tick_ms=round(e.tick_ms, 1), enc_ms=round(e.enc_ms, 1), dec_ms=round(e.dec_ms, 1), forced=e.forced, rms=round(last_rms, 4)), ensure_ascii=False)
     try:
         async for msg in sock:
             if msg.type == WSMsgType.BINARY:
                 if sess is None: continue
-                pcm = np.frombuffer(msg.data, dtype="<i2").astype(np.float32) / 32768.0; n_samples += len(pcm)
+                pcm = np.frombuffer(msg.data, dtype="<i2").astype(np.float32) / 32768.0; n_samples += len(pcm); last_rms = float(np.sqrt(np.mean(pcm ** 2))) if len(pcm) else 0.0
                 events = await gpu(loop, sess.feed, pcm)
-                for e in events: await sock.send_str(ev_json(e))
+                for e in events:
+                    await sock.send_str(ev_json(e)); n_chunks += 1
+                    if n_chunks % 25 == 0: print(f"[{peer}] chunk {n_chunks} · audio {n_samples/SR:.1f}s · rms {last_rms:.4f} · tick {e.tick_ms:.0f} ms · text {len(e.text)}자: {e.text[-40:]}", flush=True)
             elif msg.type == WSMsgType.TEXT:
                 m = json.loads(msg.data)
                 if m.get("type") == "start":
                     lang = m.get("lang", "Korean"); delay = int(m.get("delay", a.default_delay)); nb = float(m.get("next_bias", 0.0))
                     sess = await gpu(loop, lambda: LiveSession(model, tok, lang=lang, delay=delay, next_bias=nb))
-                    n_samples = 0; t_start = time.time(); await sock.send_str(json.dumps(dict(type="started", lang=lang, delay=delay, next_bias=nb)))
+                    n_samples = 0; n_chunks = 0; t_start = time.time(); await sock.send_str(json.dumps(dict(type="started", lang=lang, delay=delay, next_bias=nb))); print(f"[{peer}] session start lang={lang} δ={delay} bias={nb}", flush=True)
                 elif m.get("type") == "stop" and sess is not None:
                     events = await gpu(loop, sess.finish)
                     for e in events[:-1]: await sock.send_str(ev_json(e))
-                    await sock.send_str(json.dumps(dict(type="final", text=sess.text(), k=sess.k, audio_s=round(n_samples / SR, 2), wall_s=round(time.time() - t_start, 2) if t_start else None), ensure_ascii=False)); sess = None
+                    await sock.send_str(json.dumps(dict(type="final", text=sess.text(), k=sess.k, audio_s=round(n_samples / SR, 2), wall_s=round(time.time() - t_start, 2) if t_start else None), ensure_ascii=False)); print(f"[{peer}] session end · audio {n_samples/SR:.1f}s · chunks {n_chunks} · text: {sess.text()[:80]}", flush=True); sess = None
             elif msg.type in (WSMsgType.ERROR, WSMsgType.CLOSE): break
     except Exception as e:
         try: await sock.send_str(json.dumps(dict(type="error", message=f"{type(e).__name__}: {e}")))
