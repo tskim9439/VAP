@@ -9,7 +9,9 @@ import os, sys, json, time, argparse, asyncio, threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import numpy as np, torch
 ap = argparse.ArgumentParser(); ap.add_argument("--model", default=os.environ.get("VAPASR_LIVE_MODEL", "/soundai/Model/VAPASR/hf-C2/final")); ap.add_argument("--port", type=int, default=8765)
-ap.add_argument("--host", default="0.0.0.0"); ap.add_argument("--device", default="cuda"); ap.add_argument("--default-delay", type=int, default=4); ap.add_argument("--sync", action="store_true", help="GPU 작업을 이벤트 루프 스레드에서 직접(스레드 풀 없이)"); ap.add_argument("--fp32", action="store_true", help="thinker 를 fp32 로(기본 bf16: 디코드 2 배 빠름)"); ap.add_argument("--dtype", default="", help="thinker dtype: bf16|fp16|fp32 (기본 cuda=bf16, mps=fp16)"); a = ap.parse_args()
+ap.add_argument("--host", default="0.0.0.0"); ap.add_argument("--device", default="cuda"); ap.add_argument("--default-delay", type=int, default=4); ap.add_argument("--sync", action="store_true", help="GPU 작업을 이벤트 루프 스레드에서 직접(스레드 풀 없이)"); ap.add_argument("--fp32", action="store_true", help="thinker 를 fp32 로(기본 bf16: 디코드 2 배 빠름)"); ap.add_argument("--dtype", default="", help="thinker dtype: bf16|fp16|fp32 (기본 cuda=bf16, mps=fp16)")
+ap.add_argument("--tls", action="store_true", help="자체 서명 인증서로 HTTPS/WSS — 다른 컴퓨터에서 접속할 때 필요(브라우저는 localhost 가 아니면 HTTPS 에서만 마이크(getUserMedia)를 허용)")
+ap.add_argument("--cert-dir", default=os.path.expanduser("~/.vapkt-live-cert")); a = ap.parse_args()
 from aiohttp import web, WSMsgType             # uvicorn 은 websockets/wsproto 가 없으면 WS 업그레이드에 404 를 준다(env 에 미설치) → aiohttp 자체 WS 서버 사용
 from vapasr.hf.infer import load_model
 from vapasr.hf.live import LiveSession, SR
@@ -55,4 +57,17 @@ async def ws_handler(req):
     return sock
 
 app = web.Application(); app.add_routes([web.get("/", index), web.get("/ws", ws_handler)])
-if __name__ == "__main__": print(f"serving http://{a.host}:{a.port}", flush=True); web.run_app(app, host=a.host, port=a.port, print=None)
+def _ssl_context():
+    """~/.vapkt-live-cert/{cert,key}.pem 이 없으면 openssl 로 자체 서명 인증서를 만든다(브라우저에서 경고를 한 번 수락)."""
+    import ssl, subprocess, socket
+    os.makedirs(a.cert_dir, exist_ok=True); crt, key = os.path.join(a.cert_dir, "cert.pem"), os.path.join(a.cert_dir, "key.pem")
+    if not (os.path.exists(crt) and os.path.exists(key)):
+        host = socket.gethostname()
+        subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "3650", "-keyout", key, "-out", crt, "-subj", f"/CN={host}",
+                        "-addext", f"subjectAltName=DNS:{host},DNS:localhost,IP:127.0.0.1"], check=True, capture_output=True); print(f"자체 서명 인증서 생성 → {crt}", flush=True)
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); ctx.load_cert_chain(crt, key); return ctx
+
+if __name__ == "__main__":
+    ctx = _ssl_context() if a.tls else None
+    print(f"serving {'https' if ctx else 'http'}://{a.host}:{a.port}" + ("  (다른 컴퓨터: https://<이 컴퓨터 IP>:%d, 인증서 경고는 '계속' 으로)" % a.port if ctx else "  (마이크는 localhost 접속에서만 열린다; 다른 컴퓨터는 --tls)"), flush=True)
+    web.run_app(app, host=a.host, port=a.port, print=None, ssl_context=ctx)
