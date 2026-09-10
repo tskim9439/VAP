@@ -11,15 +11,21 @@ import numpy as np, torch
 ap = argparse.ArgumentParser(); ap.add_argument("--model", default=os.environ.get("VAPASR_LIVE_MODEL", "/soundai/Model/VAPASR/hf-C2/final")); ap.add_argument("--port", type=int, default=8765)
 ap.add_argument("--host", default="0.0.0.0"); ap.add_argument("--device", default="cuda"); ap.add_argument("--default-delay", type=int, default=4); ap.add_argument("--sync", action="store_true", help="GPU 작업을 이벤트 루프 스레드에서 직접(스레드 풀 없이)"); ap.add_argument("--fp32", action="store_true", help="thinker 를 fp32 로(기본 bf16: 디코드 2 배 빠름)"); ap.add_argument("--dtype", default="", help="thinker dtype: bf16|fp16|fp32 (기본 cuda=bf16, mps=fp16)")
 ap.add_argument("--tls", action="store_true", help="자체 서명 인증서로 HTTPS/WSS — 다른 컴퓨터에서 접속할 때 필요(브라우저는 localhost 가 아니면 HTTPS 에서만 마이크(getUserMedia)를 허용)")
-ap.add_argument("--cert-dir", default=os.path.expanduser("~/.vapkt-live-cert")); a = ap.parse_args()
+ap.add_argument("--cert-dir", default=os.path.expanduser("~/.vapkt-live-cert"))
+ap.add_argument("--mlx", default=os.environ.get("VAPASR_MLX_THINKER", ""), help="mlx-lm 으로 변환한 thinker 디렉토리(export_thinker_mlx.py). 주면 디코드 루프를 MLX 로(Apple silicon, 디코더 30 → 16 ms/청크). 'auto' 면 <model>-thinker-mlx 가 있을 때 사용"); a = ap.parse_args()
 from aiohttp import web, WSMsgType             # uvicorn 은 websockets/wsproto 가 없으면 WS 업그레이드에 404 를 준다(env 에 미설치) → aiohttp 자체 WS 서버 사용
 from vapasr.hf.infer import load_model
 from vapasr.hf.live import LiveSession, SR
 
 DT = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": None}[a.dtype or ("fp32" if a.fp32 else ("fp16" if a.device == "mps" else "bf16"))]
-t0 = time.time(); model, tok = load_model(a.model, device=a.device, dtype=DT); print(f"model ready ({time.time()-t0:.0f}s, device {a.device}, thinker {DT or 'fp32'})", flush=True)
+t0 = time.time(); model, tok = load_model(a.model, device=a.device, dtype=DT)
+MLX = None
+mlx_path = a.mlx if a.mlx not in ("", "auto") else (a.model.rstrip("/") + "-thinker-mlx" if a.mlx == "auto" and os.path.isdir(a.model.rstrip("/") + "-thinker-mlx") else "")
+if mlx_path:
+    from vapasr.hf.live_mlx import MlxThinker; MLX = MlxThinker(mlx_path)
+print(f"model ready ({time.time()-t0:.0f}s, device {a.device}, thinker {('MLX ' + mlx_path) if MLX else (DT or 'fp32')})", flush=True)
 lock = threading.Lock()                       # GPU 는 세션 하나씩(동시 접속은 순서대로)
-_w = LiveSession(model, tok, lang="Korean", delay=a.default_delay); _w.feed(np.zeros(SR, np.float32)); _w.finish(); del _w; print("warmup done", flush=True)   # 첫 세션의 커널 컴파일·autotune(14 s) 을 미리
+_w = LiveSession(model, tok, lang="Korean", delay=a.default_delay, mlx_thinker=MLX); _w.feed(np.zeros(SR, np.float32)); _w.finish(); del _w; print("warmup done", flush=True)   # 첫 세션의 커널 컴파일·autotune(14 s) 을 미리
 async def gpu(loop, fn, *args):
     if a.sync: return fn(*args)
     with lock: return await loop.run_in_executor(None, fn, *args)
@@ -46,7 +52,7 @@ async def ws_handler(req):
                 m = json.loads(msg.data)
                 if m.get("type") == "start":
                     lang = m.get("lang", "Korean"); delay = int(m.get("delay", a.default_delay)); nb = float(m.get("next_bias", 0.0))
-                    sess = await gpu(loop, lambda: LiveSession(model, tok, lang=lang, delay=delay, next_bias=nb))
+                    sess = await gpu(loop, lambda: LiveSession(model, tok, lang=lang, delay=delay, next_bias=nb, mlx_thinker=MLX))
                     n_samples = 0; n_chunks = 0; t_start = time.time(); await sock.send_str(json.dumps(dict(type="started", lang=lang, delay=delay, next_bias=nb))); print(f"[{peer}] session start lang={lang} δ={delay} bias={nb}", flush=True)
                 elif m.get("type") == "stop" and sess is not None:
                     events = await gpu(loop, sess.finish)

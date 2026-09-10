@@ -63,33 +63,53 @@ class LiveEvent:
 
 class LiveSession:
     """model(VapAsrForStreamingASR, 인코더 부착·eval) + tok. feed(pcm) → 청크마다 LiveEvent. delay 기본 4(사용자 지정 가능)."""
-    def __init__(self, model, tok, lang: str = "Korean", delay: int = 4, next_bias: float = 0.0, runaway_cap: Optional[int] = None, max_flush_rounds: int = 8):
+    def __init__(self, model, tok, lang: str = "Korean", delay: int = 4, next_bias: float = 0.0, runaway_cap: Optional[int] = None, max_flush_rounds: int = 8, mlx_thinker=None):
+        """mlx_thinker(live_mlx.MlxThinker)를 주면 디코드 루프(thinker forward·토큰 임베딩·argmax)를 MLX 로 돌린다. 인코더·adapter 는 torch(MPS/CUDA) 그대로."""
         from transformers import DynamicCache
         from .infer import prefix_ids
         self.model, self.tok, self.lang, self.delay, self.next_bias = model, tok, lang, delay, next_bias
         self.cap = model.config.runaway_cap if runaway_cap is None else runaway_cap; self.max_flush = max_flush_rounds
         self.dev = next(model.parameters()).device; self.emb = model.get_input_embeddings(); self.cache = DynamicCache()
-        self.enc = StreamingEncoder(model.encoder); self.ids: List[int] = []; self.k = 0; self.done = False
+        self.enc = StreamingEncoder(model.encoder); self.ids: List[int] = []; self.k = 0; self.done = False; self.mlx = mlx_thinker
+        pre = prefix_ids(model, tok, lang, delay)
+        if self.mlx is not None:
+            import mlx.core as mx
+            self.mlx.reset(); self._mx = mx; self.e_next = self.mlx.embed_id(model.next_audio); self.e_empty = self.mlx.embed_id(model.empty_audio)
+            blocked = model.blocked.detach().cpu().tolist() if torch.is_tensor(model.blocked) else list(model.blocked)
+            ba = np.zeros(self.mlx.emb_w.shape[0], np.float32); ba[blocked] = -np.inf; ba[model.next_audio] -= next_bias; self.block_add = mx.array(ba)
+            self.autocast = False; self._step(self.mlx.embed_ids(pre)); return
         self.e_next = self.emb.weight[model.next_audio]; self.e_empty = self.emb.weight[model.empty_audio]
         self.autocast = self.emb.weight.dtype == torch.float32 and self.dev.type == "cuda"   # 가중치가 bf16/fp16 이거나 MPS 면 autocast 없이
         self.block_add = torch.zeros(self.emb.weight.shape[0], device=self.dev); self.block_add[model.blocked] = float("-inf")   # 금지 토큰 마스크(팬시 인덱싱 대신 덧셈: 토큰당 수 ms 절약)
         self.block_add[model.next_audio] -= next_bias
         with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
-            self._step(self.emb(torch.tensor(prefix_ids(model, tok, lang, delay), device=self.dev)))
+            self._step(self.emb(torch.tensor(pre, device=self.dev)))
     def _step(self, e):
+        if self.mlx is not None: return self.mlx.step(e)
         out = self.model.thinker(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=self.cache, use_cache=True); return out.logits[0, -1].float()
+    def _argmax(self, logits) -> int:
+        if self.mlx is not None: return int(self._mx.argmax(logits + self.block_add).item())
+        return int((logits + self.block_add).argmax())
+    def _tok_embed(self, tid: int):
+        return self.mlx.embed_id(tid) if self.mlx is not None else self.emb.weight[tid]
+    def _chunk_embed(self, fr):
+        """인코더 프레임(torch, (D_in,)) → adapter(torch) → thinker 입력 임베딩(torch 또는 mx)"""
+        ce = self.model.chunk_embed(fr[None, None, None])[0, 0]
+        if self.mlx is not None: return self._mx.array(ce.detach().to("cpu", torch.float32).numpy())
+        return ce.to(self.emb.weight.dtype)
     def _emit_round(self, logits):
         """텍스트 토큰을 <NEXT_AUDIO> 가 나올 때까지 뽑는다. 마지막 <NEXT_AUDIO> 입력은 바로 넣지 않고 보류(self._pending)했다가 다음 청크 임베딩과 한 번의 forward 로 합친다
         — KV cache 가 보는 시퀀스는 동일하고 thinker 호출이 청크당 1 회 준다(M4 MPS 디코더 53 → ~35 ms)."""
         ids, forced = [], False
         while True:
-            tid = int((logits + self.block_add).argmax())
+            tid = self._argmax(logits)
             if tid == self.model.next_audio or len(ids) >= self.cap:
                 forced = tid != self.model.next_audio; self._pending = True; return ids, forced
-            ids.append(tid); logits = self._step(self.emb.weight[tid])
+            ids.append(tid); logits = self._step(self._tok_embed(tid))
     def _step_chunk(self, e):
         """보류된 <NEXT_AUDIO> 임베딩이 있으면 [e_next, e] 두 위치를 한 번에 넣고 마지막 위치 logits 를 돌려준다."""
-        if getattr(self, "_pending", False): self._pending = False; return self._step(torch.stack([self.e_next, e]))
+        if getattr(self, "_pending", False):
+            self._pending = False; return self._step(self._mx.stack([self.e_next, e]) if self.mlx is not None else torch.stack([self.e_next, e]))
         return self._step(e)
     def text(self) -> str:
         import re; return re.sub(r"\s+", " ", self.tok.decode(self.ids, skip_special_tokens=True)).strip()
@@ -102,7 +122,7 @@ class LiveSession:
         enc_ms = (time.time() - t0) * 1000 / max(1, len(frames)); events = []
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
             for fr in frames:
-                t = time.time(); ce = self.model.chunk_embed(fr[None, None, None])[0, 0].to(self.emb.weight.dtype)   # (1,1,1,Din) → (D,)
+                t = time.time(); ce = self._chunk_embed(fr)
                 ids, forced = self._emit_round(self._step_chunk(ce)); self.ids += ids
                 _sync(self.dev)
                 dec_ms = (time.time() - t) * 1000; events.append(LiveEvent(self.k, ids, forced, enc_ms + dec_ms, self.text(), enc_ms, dec_ms)); self.k += 1
@@ -113,7 +133,7 @@ class LiveSession:
         events = []
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
             for fr in self.enc.feed(np.zeros(0, np.float32), final=True):
-                t = time.time(); ce = self.model.chunk_embed(fr[None, None, None])[0, 0].to(self.emb.weight.dtype); ids, forced = self._emit_round(self._step_chunk(ce)); self.ids += ids
+                t = time.time(); ce = self._chunk_embed(fr); ids, forced = self._emit_round(self._step_chunk(ce)); self.ids += ids
                 events.append(LiveEvent(self.k, ids, forced, (time.time() - t) * 1000, self.text())); self.k += 1
             for r in range(self.max_flush):
                 t = time.time(); ids, forced = self._emit_round(self._step_chunk(self.e_empty)); self.ids += ids
