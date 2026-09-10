@@ -13,8 +13,10 @@
  <label>언어 <select id="lang"><option value="Korean">Korean</option><option value="English">English</option></select></label>
  <label>δ(지연) <select id="delay"><option>2</option><option>3</option><option>4</option><option>6</option></select></label>
  <label>next_bias <input id="bias" type="number" step="0.5" value="0" style="width:60px"></label>
+ <label>입력 장치 <select id="mic"><option value="">기본</option></select></label>
  <button id="btn">🎤 시작</button> <span id="state" class="pill">대기</span>
 </div>
+<div id="micinfo" style="font:12px ui-monospace,Menlo,monospace;color:#777"></div>
 <div class="row">
  <label>오디오 파일 시뮬레이션 <input id="file" type="file" accept="audio/*,.wav,.flac,.mp3,.m4a,.ogg"></label>
  <label>속도 <select id="speed"><option value="1">실시간(1×)</option><option value="2">2×</option><option value="0">최대</option></select></label>
@@ -39,21 +41,27 @@ async function start(){
   else if(m.type==='started'){$('state').textContent=`인식 중 (${m.lang}, δ=${m.delay})`;}
   else if(m.type==='error'){$('state').textContent='오류: '+m.message; stop();}};
  ws.send(JSON.stringify({type:'start',lang:$('lang').value,delay:+$('delay').value,next_bias:+$('bias').value}));
- stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:false,autoGainControl:true}});
- ctx=new AudioContext({sampleRate:16000});           // 브라우저가 16 kHz 를 지원하면 그대로, 아니면 워크릿에서 리샘플
+ const dev=$('mic').value; stream=await navigator.mediaDevices.getUserMedia({audio:{deviceId:dev?{exact:dev}:undefined,channelCount:1,echoCancellation:true,noiseSuppression:false,autoGainControl:true}});
+ const tr=stream.getAudioTracks()[0]; const st=tr.getSettings(); $('micinfo').textContent=`장치: ${tr.label||'?'} · muted=${tr.muted} · enabled=${tr.enabled} · ${st.sampleRate||'?'} Hz · ${st.channelCount||'?'}ch`;
+ tr.onmute=()=>{$('micinfo').textContent+=' · [muted: OS/브라우저 마이크 권한 또는 다른 앱 점유]';}; await listMics();
+ ctx=new AudioContext();                              // 장치 기본 샘플레이트(보통 44.1/48 kHz) 그대로 열고 워크릿에서 16 kHz 로 리샘플(강제 16 kHz 는 일부 Chrome 에서 무음)
+ if(ctx.state!=='running') await ctx.resume();
  await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([`
   class P extends AudioWorkletProcessor{constructor(){super();this.buf=[];this.n=0;this.acc=0;}
    process(inp){const ch=inp[0]&&inp[0][0]; if(!ch) return true; const ratio=sampleRate/16000; // 정수/비정수 리샘플(선형)
+    this.n=(this.n||0)+ch.length; let pk=0; for(let i=0;i<ch.length;i++){const a=Math.abs(ch[i]); if(a>pk) pk=a;} this.pk=Math.max(this.pk||0,pk); if(this.n>=sampleRate){this.port.postMessage({level:this.pk,rate:sampleRate}); this.n=0; this.pk=0;}
     for(let i=0;i<ch.length;i++){this.acc+=1; if(this.acc>=ratio){this.acc-=ratio; this.buf.push(ch[i]);}}
     while(this.buf.length>=1280){const f=this.buf.splice(0,1280); const o=new Int16Array(1280); for(let i=0;i<1280;i++){const v=Math.max(-1,Math.min(1,f[i])); o[i]=v<0?v*32768:v*32767;} this.port.postMessage(o.buffer,[o.buffer]);}
     return true;}}
   registerProcessor('pcm16',P);`],{type:'application/javascript'})));
- node=new AudioWorkletNode(ctx,'pcm16'); node.port.onmessage=e=>{if(ws&&ws.readyState===1){ws.send(e.data); audioSent+=1280; if(audioSent%16000===0) stats();}};
+ node=new AudioWorkletNode(ctx,'pcm16'); node.port.onmessage=e=>{if(e.data&&e.data.level!==undefined){$('micinfo').textContent=$('micinfo').textContent.replace(/ · 브라우저 입력 피크.*$/,'')+` · 브라우저 입력 피크 ${e.data.level.toFixed(3)} @${e.data.rate}Hz${e.data.level<0.001?' (무음 — OS 마이크 권한/장치 확인)':''}`; return;} if(ws&&ws.readyState===1){ws.send(e.data); audioSent+=1280; if(audioSent%16000===0) stats();}};
  ctx.createMediaStreamSource(stream).connect(node); node.connect(ctx.destination);
  running=true; prevText=''; $('text').textContent=''; $('log').textContent=''; nChunks=0; ticks=[]; audioSent=0; t0=performance.now(); $('btn').textContent='■ 정지'; $('btn').classList.add('on');
 }
 function stop(){running=false; if(node){node.disconnect();node=null;} if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} if(ctx){ctx.close();ctx=null;}
  if(ws&&ws.readyState===1){ws.send(JSON.stringify({type:'stop'}));} $('btn').textContent='🎤 시작'; $('btn').classList.remove('on');}
+async function listMics(){try{const ds=await navigator.mediaDevices.enumerateDevices(); const sel=$('mic'); const cur=sel.value; sel.innerHTML='<option value="">기본</option>'+ds.filter(d=>d.kind==='audioinput').map(d=>`<option value="${d.deviceId}">${d.label||('마이크 '+d.deviceId.slice(0,6))}</option>`).join(''); sel.value=cur;}catch(e){}}
+listMics();
 $('btn').onclick=()=>running?stop():start().catch(e=>{$('state').textContent='마이크/연결 실패: '+e; stop();});
 // ── 오디오 파일을 80 ms 단위로 실시간 속도로 흘려 넣는 시뮬레이션(마이크 대신 같은 프로토콜)
 let fileRun=false;
