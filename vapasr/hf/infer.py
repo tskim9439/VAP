@@ -27,6 +27,7 @@ def load_model(path: str, device: str = "cuda", encoder_path: Optional[str] = No
     if liger:
         from .liger import apply_liger_to_thinker; apply_liger_to_thinker(model)
     model = model.to(device).eval()
+    if model.encoder is not None: model.encoder.set_trainable(False)               # 추론: 학습된 인코더(E2 등)라도 동결·eval·fp32 경로로(autocast 는 cuda 학습 전용)
     if dtype is not None: model.thinker.to(dtype)                                 # 실시간 디코드(adapter 는 작아서 fp32 유지: chunk_embed 가 fp32 입력): fp32 가중치 + autocast 는 토큰마다 캐스팅해 느리다(H200 에서 thinker step ~25 ms → bf16 가중치 ~10 ms). 인코더는 fp32 유지
     return model, tok
 
