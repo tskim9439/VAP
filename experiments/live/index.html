@@ -15,6 +15,11 @@
  <label>next_bias <input id="bias" type="number" step="0.5" value="0" style="width:60px"></label>
  <button id="btn">🎤 시작</button> <span id="state" class="pill">대기</span>
 </div>
+<div class="row">
+ <label>오디오 파일 시뮬레이션 <input id="file" type="file" accept="audio/*,.wav,.flac,.mp3,.m4a,.ogg"></label>
+ <label>속도 <select id="speed"><option value="1">실시간(1×)</option><option value="2">2×</option><option value="0">최대</option></select></label>
+ <button id="fbtn">▶ 파일 전송</button> <span id="fstate" class="pill"></span>
+</div>
 <div id="text"></div>
 <div id="stats"></div>
 <details><summary>청크 로그</summary><div id="log"></div></details>
@@ -50,4 +55,25 @@ async function start(){
 function stop(){running=false; if(node){node.disconnect();node=null;} if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} if(ctx){ctx.close();ctx=null;}
  if(ws&&ws.readyState===1){ws.send(JSON.stringify({type:'stop'}));} $('btn').textContent='🎤 시작'; $('btn').classList.remove('on');}
 $('btn').onclick=()=>running?stop():start().catch(e=>{$('state').textContent='마이크/연결 실패: '+e; stop();});
+// ── 오디오 파일을 80 ms 단위로 실시간 속도로 흘려 넣는 시뮬레이션(마이크 대신 같은 프로토콜)
+let fileRun=false;
+async function connectWS(){ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws'); ws.binaryType='arraybuffer';
+ await new Promise((res,rej)=>{ws.onopen=res; ws.onerror=rej;}); wsState='연결됨'; ws.onclose=()=>{wsState='끊김'; stats();};
+ ws.onmessage=ev=>{const m=JSON.parse(ev.data);
+  if(m.type==='chunk'){nChunks++; ticks.push(m.tick_ms); lastRms=m.rms||0; if(m.tokens.length||m.forced){$('log').textContent+=`k=${m.k} t=${m.t}s ${m.tick_ms}ms ${m.forced?'[forced] ':''}${JSON.stringify(m.tokens)}\n`; $('log').scrollTop=1e9;} setText(m.text); stats();}
+  else if(m.type==='final'){setText(m.text); $('state').textContent=`완료 · 오디오 ${m.audio_s}s / 실시간 ${m.wall_s}s`; $('fstate').textContent='완료'; fileRun=false; $('fbtn').textContent='▶ 파일 전송';}
+  else if(m.type==='started'){$('state').textContent=`인식 중 (${m.lang}, δ=${m.delay})`;}
+  else if(m.type==='error'){$('state').textContent='오류: '+m.message; fileRun=false;}};
+ ws.send(JSON.stringify({type:'start',lang:$('lang').value,delay:+$('delay').value,next_bias:+$('bias').value}));}
+async function decodeFile(f){const buf=await f.arrayBuffer(); const tmp=new AudioContext(); const dec=await tmp.decodeAudioData(buf); await tmp.close();
+ const n=Math.ceil(dec.duration*16000); const off=new OfflineAudioContext(1,n,16000); const src=off.createBufferSource(); src.buffer=dec; src.connect(off.destination); src.start(); const out=await off.startRendering(); return out.getChannelData(0);}
+async function sendFile(){const f=$('file').files[0]; if(!f){$('fstate').textContent='파일을 고르세요'; return;}
+ const speed=+$('speed').value; $('fstate').textContent='디코딩…'; const pcm=await decodeFile(f); $('fstate').textContent=`${(pcm.length/16000).toFixed(1)} s 전송 중`;
+ prevText=''; $('text').textContent=''; $('log').textContent=''; nChunks=0; ticks=[]; audioSent=0; t0=performance.now(); await connectWS(); fileRun=true; $('fbtn').textContent='■ 중단';
+ const startT=performance.now(); let i=0;
+ while(fileRun && i<pcm.length){const seg=pcm.subarray(i,i+1280); const o=new Int16Array(1280); for(let j=0;j<seg.length;j++){const v=Math.max(-1,Math.min(1,seg[j])); o[j]=v<0?v*32768:v*32767;}
+  ws.send(o.buffer); audioSent+=1280; i+=1280; if(audioSent%16000===0) stats();
+  if(speed>0){const due=startT+(i/16000)*1000/speed; const wait=due-performance.now(); if(wait>0) await new Promise(r=>setTimeout(r,wait));}}
+ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'stop'}));}
+$('fbtn').onclick=()=>{if(fileRun){fileRun=false; $('fbtn').textContent='▶ 파일 전송';} else sendFile().catch(e=>{$('fstate').textContent='실패: '+e; fileRun=false;});};
 </script></body></html>
