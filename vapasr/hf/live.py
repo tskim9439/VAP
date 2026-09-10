@@ -32,7 +32,9 @@ class StreamingEncoder:
     def feed(self, pcm: np.ndarray, final: bool = False) -> List[torch.Tensor]:
         """pcm float32 @16 kHz 를 붙이고 새로 확정된 인코더 프레임 목록을 돌려준다. final=True 면 끝 반사 패딩까지 써서 남은 프레임을 모두 낸다."""
         if len(pcm): self.wav = torch.cat([self.wav, torch.as_tensor(np.asarray(pcm, dtype=np.float32), device=self.dev)])
-        n = self.wav.shape[0]; total = n // HOP + 1                                        # 오프라인 mel 프레임 수(center=True)
+        n = self.wav.shape[0]
+        if n < 400: return []                                                             # 한 프레임(25 ms)도 안 되는 오디오(정지 직후 등) → preemphasis 가 빈 텐서로 죽는다
+        total = n // HOP + 1                                                              # 오프라인 mel 프레임 수(center=True)
         avail = total if final else max(0, (n - MEL_TAIL) // HOP + 1)                    # 확정 프레임 수
         cs0, cs = self.cfg.chunk_size if isinstance(self.cfg.chunk_size, list) else (self.cfg.chunk_size,) * 2
         pc = self.cfg.pre_encode_cache_size[1] if isinstance(self.cfg.pre_encode_cache_size, list) else self.cfg.pre_encode_cache_size
