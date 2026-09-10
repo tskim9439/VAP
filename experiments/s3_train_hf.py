@@ -77,10 +77,12 @@ log(f"model ← {src} ({time.time()-t0:.0f}s) · trainable {n_tr/1e6:.1f}M · en
 # ── 데이터 (rank 0 이 항목 캐시를 먼저 만들고 나머지가 읽는다)
 delays = tuple(int(x) for x in a.delays.split(",")); manifests = a.train.replace(":", ",").split(",")
 DEV = [("dev-clean", "librispeech-dev", "dev-clean", "stream"), ("dev-other", "librispeech-dev", "dev-other", "stream"), ("kspon-dev", "kspon-dev", "dev", "utt")]
-for spec in [x for x in a.dev_extra.split(",") if x]:
-    lab, rest = spec.split("="); m_, sub_, mode_ = rest.split(":"); DEV.append((lab, m_, sub_, mode_))
+DEV_CAP = {}
+for spec in [x for x in a.dev_extra.split(",") if x]:                            # '라벨=manifest:subset:mode[:최대 항목 수]'
+    lab, rest = spec.split("="); parts_ = rest.split(":"); m_, sub_, mode_ = parts_[:3]; DEV.append((lab, m_, sub_, mode_))
+    if len(parts_) > 3: DEV_CAP[lab] = int(parts_[3])
 def make_sets(spec, cap_stream, cap_utt, seed=1):
-    return {lab: MonoStreamDataset([m], tok, mode=mode, subsets=[sub], delays=(a.eval_delay,), max_per_chunk=a.M, seed=seed, max_items=(cap_stream if mode == "stream" else cap_utt), online=True) for lab, m, sub, mode in spec}
+    return {lab: MonoStreamDataset([m], tok, mode=mode, subsets=[sub], delays=(a.eval_delay,), max_per_chunk=a.M, seed=seed, max_items=min(DEV_CAP.get(lab, 10**9), cap_stream if mode == "stream" else cap_utt), online=True) for lab, m, sub, mode in spec}
 if world > 1 and not main: barrier()
 train_sets = {m: MonoStreamDataset([m], tok, mode="stream", delays=delays, max_per_chunk=a.M, seed=a.seed, online=True) for m in manifests} if not a.eval_only else {}
 dev_sets = make_sets(DEV, a.sentinel_stream, a.sentinel_utt, seed=a.eval_seed)
