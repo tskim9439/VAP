@@ -2,6 +2,7 @@
 # 평가 묶음(1 노드 8 GPU): <RUN> 의 select(14000·final, δ2/δ4, 71631-dev 포함) + C2 재평가 + 타이밍 스윕(experiments/s3_d2_eval.sh) 뒤에
 #   test 평가(experiments/s3_test_eval.sh: test-clean·test-other·kspon-eval 전체 + 71631-dev 1,000, δ2/4) 를 <RUN>/final 과 C2/final 에 대해 실행.
 #   제출:  sbatch --partition=hpc --export=ALL,RUN=E2 slurm/s3_eval_suite.sbatch      (로그인 노드 GPU 가 다른 작업으로 찼을 때 대안)
+#          표본 test 만: sbatch --partition=hpc --export=ALL,RUN=E2,SKIP_D2EVAL=1,CAP_STREAM=300,CAP_UTT=1000 slurm/s3_eval_suite.sbatch   (8 GPU 로 모델당 ≈50 분)
 #   결과:  /soundai/Model/VAPASR/hf-<RUN>/eval/{select-*,select-d4-*,sweep-*,test-d*}.json, hf-C2/eval/{selectx-*,test-d*}.json
 #SBATCH --job-name=SA_SFT_FullDuplexStage5-eval
 #SBATCH --partition=hpc
@@ -25,6 +26,7 @@ if [ -n "$VAPASR_LOCAL_ENV" ]; then bash scripts/stage-env-local.sh 2>&1 | grep 
 export MXC_CKPT_EXP_DIR=$ROOT MXC_DATA_MANIFEST_DIR=${MAN_IN:-$MXC_DATA_MANIFEST_DIR} VAPASR_ALIGN_ROOT=${ALIGN_ROOT:-${MAN_IN:-$MXC_DATA_MANIFEST_DIR}/align-asr-tn-v1}
 export OMP_NUM_THREADS=8 TOKENIZERS_PARALLELISM=false PYTORCH_ALLOC_CONF=expandable_segments:True GPUS=0,1,2,3,4,5,6,7 R
 echo "manifest ← $MXC_DATA_MANIFEST_DIR | python $(which python)"
-bash experiments/s3_d2_eval.sh
-[ "${SKIP_TEST:-0}" = 1 ] || { bash experiments/s3_test_eval.sh "$R/final"; [ -f "$ROOT/hf-C2/eval/test-d4-0.json" ] || bash experiments/s3_test_eval.sh "$ROOT/hf-C2/final"; }
+[ "${SKIP_D2EVAL:-0}" = 1 ] || bash experiments/s3_d2_eval.sh                       # select·δ4·스윕(이미 있으면 건너뜀)
+# test: CAP_STREAM/CAP_UTT 를 --export 로 주면 표본 test(태그 test-s<N>u<M>), 없으면 전체(모델·δ 당 ≈17 h 오디오 → 8 GPU 로 ≈3 h)
+[ "${SKIP_TEST:-0}" = 1 ] || { bash experiments/s3_test_eval.sh "$R/final"; bash experiments/s3_test_eval.sh "$ROOT/hf-C2/final"; }
 echo "[$(date '+%F %T')] eval suite done"
