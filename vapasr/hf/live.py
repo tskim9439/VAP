@@ -79,12 +79,18 @@ class LiveSession:
     def _step(self, e):
         out = self.model.thinker(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=self.cache, use_cache=True); return out.logits[0, -1].float()
     def _emit_round(self, logits):
+        """텍스트 토큰을 <NEXT_AUDIO> 가 나올 때까지 뽑는다. 마지막 <NEXT_AUDIO> 입력은 바로 넣지 않고 보류(self._pending)했다가 다음 청크 임베딩과 한 번의 forward 로 합친다
+        — KV cache 가 보는 시퀀스는 동일하고 thinker 호출이 청크당 1 회 준다(M4 MPS 디코더 53 → ~35 ms)."""
         ids, forced = [], False
         while True:
             tid = int((logits + self.block_add).argmax())
             if tid == self.model.next_audio or len(ids) >= self.cap:
-                forced = tid != self.model.next_audio; self._step(self.e_next); return ids, forced
+                forced = tid != self.model.next_audio; self._pending = True; return ids, forced
             ids.append(tid); logits = self._step(self.emb.weight[tid])
+    def _step_chunk(self, e):
+        """보류된 <NEXT_AUDIO> 임베딩이 있으면 [e_next, e] 두 위치를 한 번에 넣고 마지막 위치 logits 를 돌려준다."""
+        if getattr(self, "_pending", False): self._pending = False; return self._step(torch.stack([self.e_next, e]))
+        return self._step(e)
     def text(self) -> str:
         import re; return re.sub(r"\s+", " ", self.tok.decode(self.ids, skip_special_tokens=True)).strip()
     @torch.inference_mode()
@@ -97,7 +103,7 @@ class LiveSession:
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
             for fr in frames:
                 t = time.time(); ce = self.model.chunk_embed(fr[None, None, None])[0, 0].to(self.emb.weight.dtype)   # (1,1,1,Din) → (D,)
-                ids, forced = self._emit_round(self._step(ce)); self.ids += ids
+                ids, forced = self._emit_round(self._step_chunk(ce)); self.ids += ids
                 _sync(self.dev)
                 dec_ms = (time.time() - t) * 1000; events.append(LiveEvent(self.k, ids, forced, enc_ms + dec_ms, self.text(), enc_ms, dec_ms)); self.k += 1
         return events
@@ -107,10 +113,10 @@ class LiveSession:
         events = []
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.autocast):
             for fr in self.enc.feed(np.zeros(0, np.float32), final=True):
-                t = time.time(); ce = self.model.chunk_embed(fr[None, None, None])[0, 0].to(self.emb.weight.dtype); ids, forced = self._emit_round(self._step(ce)); self.ids += ids
+                t = time.time(); ce = self.model.chunk_embed(fr[None, None, None])[0, 0].to(self.emb.weight.dtype); ids, forced = self._emit_round(self._step_chunk(ce)); self.ids += ids
                 events.append(LiveEvent(self.k, ids, forced, (time.time() - t) * 1000, self.text())); self.k += 1
             for r in range(self.max_flush):
-                t = time.time(); ids, forced = self._emit_round(self._step(self.e_empty)); self.ids += ids
+                t = time.time(); ids, forced = self._emit_round(self._step_chunk(self.e_empty)); self.ids += ids
                 events.append(LiveEvent(self.k + r, ids, forced, (time.time() - t) * 1000, self.text()))
                 if not ids: break
         self.done = True; return events
