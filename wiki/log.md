@@ -12,6 +12,13 @@
 - Next: 사용자 검토 후 정본 §4.4·§5.3 반영 여부 결정
 - By: tskim
 
+## [2026-09-11] query | 제안서 개정 — 토큰 종류를 의미 라벨로, LLM 시드 → 증류 → 전량 → 사람 검증
+
+- Changed: `output-phase2-turn-token-proposal.md` §3b·§3c 신설, 요약·반영 지점·불확실성 갱신
+- Reason: 사용자 검토 — 라벨이 음향(타이밍)에만 의존하고 TurnBench 에 과도하게 맞춰졌다는 지적. 위치는 VAD, 종류는 의미(완결/미완결/맞장구)로 분리하고, 텍스트만으로 사후 문맥을 보는 LLM 시드 10 만 → 증류 분류기 → 전량 1 천만 경계 → 사람 κ ≥ 0.7 검증의 저비용 경로를 제안. 완결성 정확도·응답 기회 P/R 을 주 지표로, TurnBench 는 EN 외부 검증
+- Next: 사용자 검토 → L1 프롬프트·층화 표본 설계
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
 
 - Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크
