@@ -27,6 +27,23 @@ sources:
 | 5 | **Phase 1 단일 화자 데이터** | Phase 1 manifest 8 종 | EN 2.2 k h + KO 3.4 k h(≈5.6 k h) | E2 와 같은 TN·split | 단일 화자 ASR **replay**(모든 Q), turn 손실 마스크 | 노출(당연) | Phase 1 train split 그대로, dev/test 는 가드레일 평가에 |
 | 6 | **합성 겹침 원료** | LibriSpeech train, KsponSpeech train, NIKL(발화 단위) | 1,033 / 1,189 / ≈3,800 h | 단일 화자 발화 | 서로 다른 화자 혼합(overlap·음량차 제어, Q2) — 정본 §5.1 조건 7 종 | 노출(train split) | **train split 원료만** 사용(정본 규칙) |
 
+
+## 1b. 학습에 쓰는 총 시간 (대화 경과시간 기준, 평가 전용 제외)
+
+| 구분 | 자원 | 시간 | 비고 |
+|---|---|---|---|
+| **자연 2 화자 대화(확정)** | 71631 TS_01.실내_5 | 196.6 h | KO, E2 노출 |
+| | otoSpeech train | ≈ 90–95 h | 104.9 h 중 dev·untouched test(대화 단위 ≈ 10 %)를 뺀 값. 정확한 split 은 Q0 |
+| | **소계** | **≈ 290 h** | KO 2 : EN 1 |
+| 자연 2 화자 대화(조건부) | Switchboard 복원 | + ≈ 230 h | 파일명 시각 규약 검증 통과 시(train split) |
+| | CANDOR | + 최대 850 h | 확보 시 |
+| 합성 2 화자(생성) | LibriSpeech·Kspon·NIKL train 원료 | 설계값 | 정본 §7.1: 대화 배치 안 합성 비율은 "최대 약 절반부터". 자연 290 h 와 같은 규모(≈ 300 h)를 출발점으로 두면 대화 합계 ≈ 600 h |
+| 단일 화자 replay(풀) | Phase 1 8 코퍼스 | 5,555 h(EN 2,178 + KO 3,377) | 전량을 쓰지 않고 배치의 30 %(오디오 초 기준)로 섞음. 71631 159 h 는 위 196.6 h 와 같은 오디오의 발화 crop |
+
+- 한 epoch 의 노출량(정본 §7.1 의 대화 70 % : replay 30 %): 자연 290 h + 합성 ≈ 300 h = 대화 ≈ 590 h → replay ≈ 250 h → **≈ 840 h / epoch**. Phase 1 (5,555 h/epoch) 의 15 % 수준이라 Q1/Q2 run 은 E2 처리량(1.02 s/step, 32 GPU) 기준 epoch 당 1 시간 이내다.
+- Switchboard 가 들어오면 자연 대화 ≈ 520 h, epoch ≈ 1.2 k h.
+- **평가 전용(학습 제외)**: 71631 VS_02 51.7 h, otoSpeech dev/test ≈ 10–15 h, TurnBench dev 7.3 h, Phase 1 dev/test.
+
 ## 2. 1 차 관문 이후 확장 후보 (정본 §5.1 "Switchboard/CANDOR 등")
 
 | 자원 | 실측 | 판정 |
