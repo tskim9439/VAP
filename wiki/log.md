@@ -96,6 +96,13 @@
 - Next: Q0 확인 항목 5 건, 사용자 결정(71631 추가 반입, CANDOR)
 - By: tskim
 
+## [2026-09-11] query | 영어 회의 코퍼스 후보 추가 (AMI·ICSI·CHiME-6·NOTSOFAR-1·DiPCo)
+
+- Changed: `output-phase2-data-inventory.md` §2b
+- Reason: 사용자 요청. 모두 3 명 이상 회의라 2 명 활동 창 선택(A) 또는 헤드셋 2 채널 합산(B) 방식으로만 쓰고 turn 손실은 마스크. AMI 는 서버에 발화 단위 사본 있음
+- Next: Q0 에서 라이선스 원문·시각 정보 확인, AMI 원본 회의 파일 확보 검토
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 비판 검토와 계획 v1.1 개정
 
 - Changed: `output-phase2-streaming-asr-diarization-plan`, `output-phase2-plan`, `output-phase2-critique-response`, 비판글 답변 링크, 동시 추가된 `output-phase2-final-plan`의 개정 정본 우선 적용 안내

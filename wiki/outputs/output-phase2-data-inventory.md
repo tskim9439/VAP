@@ -3,7 +3,7 @@ type: output
 status: active
 created: 2026-09-11
 updated: 2026-09-11
-summary: Phase 2(정본 계획 §5.1) 사용 데이터 목록 — mxc 실측(2026-09-11) 기준. 자연 대화 KO 71631 stereo 248 h(E2 노출 196.6 h + dev 51.7 h)·EN otoSpeech 104.9 h(미노출, 화자 ID 있음), 평가 전용 TurnBench dev, 합성 원료 LibriSpeech·Kspon·NIKL, replay Phase 1 5.6 k h, 확장 후보 Switchboard(파일명 시각으로 복원 가능)·CallHome(시각 없음)·CANDOR(미확보)
+summary: Phase 2(정본 계획 §5.1) 사용 데이터 목록 — mxc 실측(2026-09-11) 기준. 자연 대화 KO 71631 stereo 248 h(E2 노출 196.6 h + dev 51.7 h)·EN otoSpeech 104.9 h(미노출, 화자 ID 있음), 평가 전용 TurnBench dev, 합성 원료 LibriSpeech·Kspon·NIKL, replay Phase 1 5.6 k h, 확장 후보 Switchboard(파일명 시각으로 복원 가능)·CallHome(시각 없음)·CANDOR(미확보)·영어 회의 코퍼스 AMI/ICSI/CHiME-6/NOTSOFAR-1/DiPCo(3 명 이상, 2 명 활동 창 선택으로 활용)
 sources:
   - '[[output-phase2-streaming-asr-diarization-plan]]'
   - '[[source-conversation-corpora]]'
@@ -53,6 +53,23 @@ sources:
 | CANDOR | 서버에 없음 | 확보 시 사용(사용자 결정 2026-09-11). 신청·로컬 경유 업로드 필요 → [[task-secure-english-corpora]] |
 | AI Hub 71631 미반입분 | 라벨만 있음: TL_01.실내 8,306(오디오 757), TL_02.실외 1,493, VL_01.실내 1,038 | **untouched KO test** 를 만들려면 미반입 대화에서 20–30 개를 새로 반입해야 한다(PC 브라우저 경유). 사용자 결정 대기 |
 | NIKL 준자연 대화 | 발화 단위 PCM + 시각·화자 ID, 겹침 발화는 quarantine | 발화를 시각대로 배치하면 겹침 없는 대화가 된다. 정본 범위 밖이므로 Q1 결과 후 검토 |
+
+
+### 2b. 영어 회의 코퍼스 (사용자 추가 후보, 2026-09-11)
+
+모두 **참가자 3 명 이상**의 회의·파티 녹음이라 Phase 2 의 "최대 2 화자" 와 그대로 맞지 않는다. 쓸 수 있는 방식은 두 가지다: (A) 화자 라벨(diarization)로 **2 명만 활동하는 20–40 s 창**을 골라 mono(원거리 마이크 또는 헤드셋 2 채널 합산)를 학습 창으로 쓴다 — 실제 겹침·원거리 잡음이 있는 자연 데이터가 된다. (B) 헤드셋(IHM) 채널 2 개를 합산해 2 화자 혼합을 만든다 — 다른 참가자가 말하는 구간은 무음이 되어 turn 타이밍이 부자연스러우므로 **전사·activity 학습에만** 쓰고 turn 손실은 마스크한다. 시간·라이선스는 사용자 제공값과 기억에 의존하므로 Q0 에서 원문을 확인한다.
+
+| 코퍼스 | 규모(대략) | 화자 수 | 채널 | 라이선스·확보 | 서버 | 활용 |
+|---|---|---|---|---|---|---|
+| AMI | ~100 h | 회의당 4 | IHM(헤드셋) + SDM/MDM(원거리) | CC BY 4.0, 공개 | **있음** `english_16kHz/ami`(발화 단위 wav ihm/sdm + CSV·JSONL `spk_id, meeting_id, microphone`; 시각은 원본 어노테이션 필요) | (A)(B) 모두 가능. 서버 사본은 발화 단위라 원본 회의 파일·단어 시각을 추가 확보해야 시간축 복원 |
+| ICSI | ~72 h | 3–10 | 헤드셋 + 테이블 마이크 | LDC(LDC2004S02) 배포, 연구용 계약 | 없음 | (A)(B). 화자 수가 많아 2 명 창 비율이 낮을 수 있음 |
+| CHiME-6 | ~50 h | 4 | 참가자 binaural + 6 개 Kinect 어레이 | CHiME 계약(연구용 무료) | 없음 | (A) 원거리 mono 로 잡음·잔향 강건성. 전사 라벨은 있으나 정렬 품질 낮음(대화 파티) |
+| NOTSOFAR-1 | ~24 h | 4–8 | 다중 어레이 + 헤드셋 | CC BY 4.0(확인 필요), 공개 | 없음 | (A). 회의 도메인 원거리 |
+| DiPCo | ~5 h | 4 | 헤드셋 + 어레이 | CDLA-Permissive(확인 필요), 공개 | 없음 | (A) 소량, 평가·검증용 |
+
+- 우선순위: **AMI**(서버에 있고 라이선스 자유) → NOTSOFAR-1·DiPCo(공개 다운로드, 로컬 경유 업로드) → CHiME-6(계약) → ICSI(LDC 비용).
+- 기대 규모: (A) 방식으로 2 명 활동 창만 고르면 원 시간의 20–40 % 가 남는다고 가정해 AMI 20–40 h, 전체 합쳐 50–100 h 수준. 자연 2 화자 대화(290 h)를 대체하지는 못하고 **원거리·겹침 강건성 보강**으로 본다.
+- 주의: 회의 발화는 dyadic 대화와 turn 역학이 다르다(다자 발언권 경쟁). turn 헤드 학습에는 넣지 않거나 별도 도메인 태그로 구분한다.
 
 ## 3. 누출 감사 요약 (정본 §5.2)
 - 71631 TS_01.실내_5 757 대화는 E2 학습에 노출됐고 VS_02 는 E2 dev 였다. 따라서 **서버에 있는 71631 로는 untouched KO test 를 만들 수 없다**. KO 최종 보고는 VS_02(dev) 로 하되 "E2 dev 재사용" 을 명시하거나, 미반입 대화를 새로 들여온다.
