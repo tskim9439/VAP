@@ -40,6 +40,13 @@
 - Next: Q0 파일럿 300 지점 × 3 명 설계
 - By: tskim
 
+## [2026-09-11] decision | Phase 2 turn 토큰은 <ONSET>+<EOT> 만, <HOLD>/<BC>·의미 라벨링은 Stage 3 이월
+
+- Changed: `output-phase2-turn-token-proposal.md` §1(채택 범위)·§1b(이월) 신설, §3b–§3f 를 [Stage 3 이월] 표시; `wiki/questions/question-turn-token-label-reliability.md` 생성
+- Reason: 사용자 판단 — <HOLD>·<BC> 는 신뢰성 높은 데이터를 만들 수 있을지 불확실. Phase 2 는 타이밍 라벨로 전량 자동 생성 가능한 두 토큰만 쓰고, 추론 정체는 타임아웃·hazard 승격 정책으로 처리
+- Next: Stage 3 착수 전 κ 파일럿으로 재검토
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
 
 - Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크
