@@ -33,6 +33,13 @@
 - Next: Q0 에서 멈춤 분포·등급별 κ·분당 토큰 수 측정 후 τ 확정
 - By: tskim
 
+## [2026-09-11] query | 제안서 개정 — <HOLD> 위치를 침묵 0.5 s 로, 문장 분리 불필요, 한국어 구어체 신뢰도 파일럿
+
+- Changed: `output-phase2-turn-token-proposal.md` §3f 신설(τ_hold 0.5 s 앵커, 사람 발화 분절을 prior 로, 한국어 어미 유형별 대응, Q0 κ 파일럿과 축소 사다리), §2 표·§3e 밀도 항목 갱신
+- Reason: 사용자 질문 — 문장마다 HOLD 인가, 문장 분리는 어떻게, 한국어 구어체에서 신뢰성 있는 라벨이 가능한가
+- Next: Q0 파일럿 300 지점 × 3 명 설계
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
 
 - Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크
