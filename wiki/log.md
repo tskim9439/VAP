@@ -19,6 +19,13 @@
 - Next: 사용자 결정(EN 대화 코퍼스, 71631 추가 반입, 단일 모델·항상 태그, turn 출력 형식) → Q0 착수. Switchboard/CallHome 시간축 복원 가능 여부 확인
 - By: tskim
 
+## [2026-09-11] query | Phase 2 정본 계획 비판과 대안
+
+- Changed: `wiki/outputs/output-phase2-plan-critique.md` 생성, `output-phase2-plan.md` 에 링크
+- Reason: 사용자가 정본 계획의 비판과 더 나은 해법 분석을 요청. 코드 주장 3 건 검증(모두 사실), 제안 9 건(채택 권고 5: 청크 내 화자별 그룹 직렬화, 텍스트 전용 완결성 사전학습+LLM 약라벨, ASR 강화 병렬 트랙, E2 레시피 초기값, MVP 경로; 조건부 4: 화자 슬롯 메모리, 슬롯 조건 오디오 토큰 2 개, 자연형 overlap 합성, turn 헤드 δ=2)
+- Next: 사용자가 채택할 제안을 고르면 정본 계획에 반영
+- By: tskim
+
 ## [2026-09-10] query | Stage 2 run E2(인코더 해동) 최종 평가 보고서
 
 - Changed: `wiki/outputs/output-stage2-e2-final-eval.md` 신규(§4 스윕·§5 test 는 측정 중)
