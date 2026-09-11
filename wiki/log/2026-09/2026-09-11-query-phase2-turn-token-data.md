@@ -11,3 +11,10 @@
 - Reason: 사용자 검토 — 라벨이 음향(타이밍)에만 의존하고 TurnBench 에 과도하게 맞춰졌다는 지적. 위치는 VAD, 종류는 의미(완결/미완결/맞장구)로 분리하고, 텍스트만으로 사후 문맥을 보는 LLM 시드 10 만 → 증류 분류기 → 전량 1 천만 경계 → 사람 κ ≥ 0.7 검증의 저비용 경로를 제안. 완결성 정확도·응답 기회 P/R 을 주 지표로, TurnBench 는 EN 외부 검증
 - Next: 사용자 검토 → L1 프롬프트·층화 표본 설계
 - By: tskim
+
+## [2026-09-11] query | 제안서 개정 — <HOLD> 를 기한 있는 잠정 판단으로, 승격·정책 계층 추가
+
+- Changed: `output-phase2-turn-token-proposal.md` §3d 신설(정의 변경, 포기된 발화로 승격 학습, 추론 정책 계층 reason∈{semantic,hazard,timeout}, 정체율·끊김률 지표, 대안 A/B/C)
+- Reason: 사용자 지적 — <HOLD> 오예측 후 후속 발화가 없으면 정체. HOLD 를 없애도 "EOT 없는 침묵" 으로 같은 문제가 남으므로, HOLD 를 잠정으로 두고 τ_max·hazard 기반 승격을 학습·추론 양쪽에 둠
+- Next: Q0 에서 포기된 발화 빈도·gap 분포 측정, τ_max 후보 1.5/2.0/3.0 s
+- By: tskim

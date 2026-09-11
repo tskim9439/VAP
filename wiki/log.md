@@ -19,6 +19,13 @@
 - Next: 사용자 검토 → L1 프롬프트·층화 표본 설계
 - By: tskim
 
+## [2026-09-11] query | 제안서 개정 — <HOLD> 를 기한 있는 잠정 판단으로, 승격·정책 계층 추가
+
+- Changed: `output-phase2-turn-token-proposal.md` §3d 신설(정의 변경, 포기된 발화로 승격 학습, 추론 정책 계층 reason∈{semantic,hazard,timeout}, 정체율·끊김률 지표, 대안 A/B/C)
+- Reason: 사용자 지적 — <HOLD> 오예측 후 후속 발화가 없으면 정체. HOLD 를 없애도 "EOT 없는 침묵" 으로 같은 문제가 남으므로, HOLD 를 잠정으로 두고 τ_max·hazard 기반 승격을 학습·추론 양쪽에 둠
+- Next: Q0 에서 포기된 발화 빈도·gap 분포 측정, τ_max 후보 1.5/2.0/3.0 s
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
 
 - Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크
