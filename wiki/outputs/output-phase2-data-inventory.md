@@ -84,7 +84,7 @@ sources:
 5. 사용자 결정: 71631 추가 반입(untouched KO test), CANDOR 신청.
 
 
-## 5. 확보된 DB 추가 조사 (2026-09-11, 사용자 지정 경로 5 곳)
+## 5. 확보된 DB 추가 조사 (2026-09-11, 사용자 지정 경로 5 곳) — 정식 보고: [[output-phase2-db-survey]]
 
 조사 경로: `/soundai/DB/raw/aihub`, `…/databricks_build_managed/…/raw`, `…/asr_db/english_16kHz`, `…/asr_db/korean_16kHz/NIA23`, `…/asr_db/korean_16kHz/NIA24`. 읽기 전용, phishing 관련 폴더 제외. 원본 로그는 `raw/sources/experiments/2026-09-11-phase2-data-inventory/`.
 
