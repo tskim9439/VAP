@@ -1,6 +1,6 @@
 ---
 type: output
-status: active
+status: superseded
 created: 2026-09-11
 updated: 2026-09-11
 summary: Phase 2 정본 계획 비판 — 코드 주장 3 건 검증(사실), 강점, 개선 제안 9 건(청크 내 화자별 그룹 직렬화·텍스트 전용 완결성 사전학습·화자 슬롯 메모리·슬롯 조건 오디오 토큰·ASR 강화 트랙·자연형 overlap 합성·E2 레시피 초기값·turn 헤드 δ=2·MVP 축소 경로)
@@ -16,6 +16,8 @@ sources:
 ---
 
 # Phase 2 정본 계획 비판과 대안
+
+> **2026-09-11 폐기**: 사용자 결정으로 [[output-phase2-streaming-asr-diarization-plan]] 만 따른다. 이 문서는 기록용이며 계획으로 쓰지 않는다.
 
 검토 답변 및 반영 결과(2026-09-11): [[output-phase2-critique-response]]. 정본은 v1.1로 개정되었으며 아래 비판은 개정 전 계획에 대한 원래 논점으로 보존한다.
 

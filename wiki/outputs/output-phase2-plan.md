@@ -1,6 +1,6 @@
 ---
 type: output
-status: active
+status: superseded
 created: 2026-09-11
 updated: 2026-09-11
 summary: Phase 2 v1.2 실행 요약 — 화자별 start/end 필수 생성·블록/라벨 계약·9주 일정·ASR/의미 트랙·실측 예산
@@ -15,6 +15,8 @@ sources:
 ---
 
 # Phase 2 실행 요약: 일정 · 데이터 보유 현황 · 결정 사항
+
+> **2026-09-11 폐기**: 사용자 결정으로 [[output-phase2-streaming-asr-diarization-plan]] 만 따른다. 이 문서는 기록용이며 계획으로 쓰지 않는다.
 
 ## 질문
 Phase 2 정본 계획 [[output-phase2-streaming-asr-diarization-plan]](구조·계약·관문·평가 규약)을 **언제, 어떤 데이터로, 얼마의 비용으로** 실행하며, 착수 전에 사용자가 무엇을 정해야 하는가. 이 페이지는 정본 계획을 대체하지 않는다. 같은 날 두 세션이 계획을 따로 썼고, 설계·관문은 정본 계획으로 일원화하고 여기에는 그 문서가 "실측 전" 으로 남긴 항목(서버 가용량, 일정, 비용)과 결정 요청만 둔다.

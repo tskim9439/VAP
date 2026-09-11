@@ -1,0 +1,78 @@
+## 71631_audio leaf dirs
+/soundai/DB/raw/aihub/71631_audio/Training/01.원천데이터/TS_01.실내_5 wav=757 bytes=45287335154 hours_stereo16k=196.6
+/soundai/DB/raw/aihub/71631_audio/Validation/01.원천데이터/VS_02.실외 wav=186 bytes=11910233656 hours_stereo16k=51.7
+## 71631 label counts
+TL_01.실내 json=8306
+TL_02.실외 json=1493
+VL_01.실내 json=1038
+VL_02.실외 json=186
+## turnbench
+LICENSE
+README.md
+REVISION.txt
+data
+LICENSE
+README.md
+data
+3
+## switchboard
+TEST
+TRAIN
+VALIDATION
+switchboard_test.csv
+switchboard_test_tn.csv
+switchboard_train.csv
+switchboard_train_tn.csv
+switchboard_validation.csv
+switchboard_validation_tn.csv
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/EN/TRAIN/OPEN/switchboard/switchboard_test_tn.csv
+audio_path|script|sampling_rate|duration|script_tn
+switchboard/TEST/sw03322A_18271375_191563125.wav|uhhuh if it is gonna cost that much i will do with what i already have right or some of the styles are kind of weird too so|16000|8.87075|uhhuh if it is gonna cost that much i will do with what i already have right or some of the styles are kind of we
+## callhome
+callhome_tn.csv
+eng
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/EN/TRAIN/OPEN/callhome/callhome_tn.csv
+audio_path|script|sampling_rate|duration|script_tn
+callhome/eng/chunked/0638/0638_0000_A.wav|Right .|8000|0.23|Right
+call=0638
+0638_0000_A.wav
+0638_0001_B.wav
+0638_0002_B.wav
+0638_0003_B.wav
+393
+## candor
+none
+## oto metadata
+{
+  "task_id": "1",
+  "speaker_1_actor_id": "a37b04648738ef66da7c2b282d32992b",
+  "speaker_2_actor_id": "dad1b079e23d5fd07402cb35a8262a8b",
+  "conversation_type": "Argumentative/Deliberative",
+  "speaker_1_actor_gender": "male",
+  "speaker_2_actor_gender": "male"
+}
+
+1
+00:00:01,300 --> 00:00:02,700
+[Normal Turn] And you know, oh, oh, well.
+
+2
+00:00:03,800 --> 00:00:04,600
+[Normal Turn] Hey, how's it going?
+
+
+[exited with code 0]
+## otoSpeech16k
+dirs=420
+/soundai/DB/raw/otoSpeech16k/1/
+metadata.json
+speaker_1_annotation_a.srt
+speaker_1_audio.wav
+speaker_2_annotation_a.srt
+speaker_2_audio.wav
+wav_bytes=24178349504 hours_mono16k=209.88
+## turnbench
+dev
+test
+17G
+## 71631_audio

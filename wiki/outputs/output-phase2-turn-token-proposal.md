@@ -1,6 +1,6 @@
 ---
 type: output
-status: active
+status: superseded
 created: 2026-09-11
 updated: 2026-09-11
 summary: Phase 2 turn 토큰 제안서 — **채택: <ONSET>+<EOT> 타이밍 라벨만(2026-09-11)**, <HOLD>/<BC>·의미 라벨링은 Stage 3 이월. 원안: 교차 직렬화 위에 <ONSET>/<EOT>/<HOLD>/<BC> 를 화자 태그에 귀속시켜 시퀀스에 넣는 규약과 사례 7 종, 데이터 파이프라인(위치는 VAD, 종류는 의미), 의미 라벨은 사후 문맥 LLM 시드 10 만 → 증류 분류기 → 전량 1 천만 경계 → 사람 κ 검증으로 저비용 구축, 완결성 정확도를 주 지표로 하고 TurnBench 는 외부 검증. 검토용
@@ -15,6 +15,8 @@ sources:
 ---
 
 # Phase 2 제안서: 시퀀스 안 turn 토큰과 데이터 생성 파이프라인
+
+> **2026-09-11 폐기**: 사용자 결정으로 [[output-phase2-streaming-asr-diarization-plan]] 만 따른다. 이 문서는 기록용이며 계획으로 쓰지 않는다.
 
 ## 질문
 정본 계획([[output-phase2-streaming-asr-diarization-plan]])은 turn-taking 을 병렬 헤드로만 낸다. Muse 처럼 각 화자의 turn 이벤트를 시퀀스 안 토큰으로도 내려면 (1) 규약을 어떻게 정하고 무음·단일 화자 같은 사례에서 시퀀스가 어떻게 생기며, (2) 그 학습 데이터를 어떻게 만드는가. 이 문서는 정본에 반영하기 전의 검토용 제안이다.
