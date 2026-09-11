@@ -1,0 +1,13 @@
+## adult (71631) label hours by subset
+  TL_01.실내: dialogs=8306 hours=2025.5 utts=2409729
+  TL_02.실외: dialogs=1493 hours=344.2 utts=426781
+  VL_01.실내: dialogs=1038 hours=342.9 utts=412850
+  VL_02.실외: dialogs=186 hours=52.6 utts=68452
+  TOTAL hours=2765.3
+## youth (71632) label hours by subset
+  TOTAL hours=0.0
+skip TL_01.실내 TS_01.실내
+skip TL_02.실외 TS_02.실외
+DONE
+
+[exited with code 0]

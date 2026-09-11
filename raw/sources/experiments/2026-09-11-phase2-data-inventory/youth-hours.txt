@@ -1,0 +1,14 @@
+## aihub/71632 tree (depth 3)
+   . dirs= 1 files= 0 []
+   134-2.감정이_태깅된_자유대화_(청소년) dirs= 1 files= 0 []
+   134-2.감정이_태깅된_자유대화_(청소년)/01-1.정식개방데이터 dirs= 2 files= 0 []
+   134-2.감정이_태깅된_자유대화_(청소년)/01-1.정식개방데이터/Training dirs= 1 files= 0 []
+   134-2.감정이_태깅된_자유대화_(청소년)/01-1.정식개방데이터/Validation dirs= 1 files= 0 []
+## zips [('/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth/Json/TL_01.실내.zip', 95431593), ('/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth/Json/TL_02.실외.zip', 18692231), ('/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth/Json/VL_01.실내.zip', 11942670), ('/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth/Json/VL_02.실외.zip', 2350249), ('/soundai/DB/raw/aihub/71632/134-2.감정이_태깅된_자유대화_(청소년)/01-1.정식개방데이터/Training/02.라벨링데이터/TL_01.실내.zip', 95431593), ('/soundai/DB/raw/aihub/71632/134-2.감정이_태깅된_자유대화_(청소년)/01-1.정식개방데이터/Training/02.라벨링데이터/TL_02.실외.zip', 18692231), ('/soundai/DB/raw/aihub/71632/134-2.감정이_태깅된_자유대화_(청소년)/01-1.정식개방데이터/Validation/02.라벨링데이터/VL_01.실내.zip', 11942670), ('/soundai/DB/raw/aihub/71632/134-2.감정이_태깅된_자유대화_(청소년)/01-1.정식개방데이터/Validation/02.라벨링데이터/VL_02.실외.zip', 2350249)]
+## crops TS_01.실내: files=1755051 stems=7821
+## crops TS_02.실외: files=417170 stems=1649
+## youth TL_01.실내: dialogs=7828 hours=2021.7 utts=2423148 | crops: stems_with_audio=7821/7828 files=1755051 file/utt=0.72
+## youth TL_02.실외: dialogs=1649 hours=399.9 utts=477664 | crops: stems_with_audio=1649/1649 files=417170 file/utt=0.87
+## youth VL_01.실내: dialogs=923 hours=252.8 utts=305479
+## youth VL_02.실외: dialogs=188 hours=48.7 utts=60375
+DONE
