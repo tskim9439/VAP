@@ -1,0 +1,26 @@
+## TS_01.실내
+dir_files=1081267
+dir_stems=8270
+list_stems=8285
+complete_stems=38 partial_stems=8232
+missing_stems=15
+## TS_02.실외
+dir_files=380760
+dir_stems=1492
+list_stems=1492
+complete_stems=1492 partial_stems=0
+missing_stems=0
+## 134-2 dirs
+TS_01.실내 entries=1755051 stems=7821
+TS_02.실외 entries=417170 stems=1649
+Json
+Training
+wav_list
+TL_01.실내
+TL_01.실내.zip
+TL_02.실외
+TL_02.실외.zip
+VL_01.실내.zip
+VL_02.실외.zip
+json TL_01 n=0 TL_02 n=0
+SURVEY7_DONE

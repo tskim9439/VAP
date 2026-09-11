@@ -1,0 +1,133 @@
+########## /soundai/DB/raw/aihub
+total  3907
+drwxrwxrwx 0 .
+drwxrwxr-x 0 ..
+drwxrwxrwx 0 데이터
+drwxrwxrwx 0 데이터
+drwxr-x--- 0 데이터
+drwxrwxrwx 0 100
+drwxrwxrwx 0 107
+drwxrwxrwx 0 108
+drwxrwxrwx 0 109
+drwxrwxrwx 0 112
+drwxrwxrwx 0 115
+drwxrwxrwx 0 130
+drwxrwxrwx 0 131
+drwxrwxrwx 0 132
+drwxrwxrwx 0 463
+drwxrwxrwx 0 464
+drwxrwxrwx 0 470
+drwxrwxrwx 0 484
+drwxrwxrwx 0 485
+drwxrwxrwx 0 540
+drwxrwxrwx 0 568
+drwxrwxrwx 0 571
+drwxrwxrwx 0 71260
+drwxrwxrwx 0 71349
+drwxrwxrwx 0 71405
+drwxrwxrwx 0 71417
+drwxrwxrwx 0 71481
+drwxrwxrwx 0 71487
+drwxr-x--- 0 71502
+drwxr-x--- 0 71556
+drwxr-x--- 0 71557
+drwxr-x--- 0 71592
+drwxrwxrwx 0 71610
+drwxr-x--- 0 71627
+drwxr-x--- 0 71631
+drwxrwxr-x 0 71631_audio
+drwxr-x--- 0 71632
+drwxr-x--- 0 87
+drwxr-x--- 0 94
+drwxr-x--- 0 95
+drwxr-x--- 0 98
+-rw-r----- 4000227 민원(콜센터)_질의응답_금융보험_사고_및_보상_문의_Training.zip
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/raw
+total  4079010
+drwxr-x--- 0 .
+drwxr-x--- 0 ..
+-rw-r----- 56433059 132.list
+drwxr-x--- 0 132.연령대별_특징적_발화(은어·속어_등)_음성_데이터
+drwxr-x--- 0 SD-QA
+drwxr-x--- 0 VoiceAssistant-400K
+drwxr-x--- 0 VoiceAssistant-400K-update
+drwxr-x--- 0 commonvoice_21.0
+-rw-r----- 1162 downsample.sh
+-rw-r----- 4120471054 epoch-17.pt
+drwxr-x--- 0 gigaspeech
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/english_16kHz
+total  1224191
+drwxr-x--- 0 .
+drwxr-x--- 0 ..
+drwxr-x--- 0 ami
+drwxr-x--- 0 commonvoice_21.0
+-rw-r----- 181 copy.sh
+-rw-r----- 20170234 cv.list
+-rw-r----- 312 downsample.sh
+drwxr-x--- 0 fleurs
+drwxr-x--- 0 mls_english
+-rw-r----- 643 mls_english_etc.lst
+-rw-r----- 616697369 mls_english_flac.lst
+-rw-r----- 56168583 mls_english_flac.lst_aa
+-rw-r----- 55669636 mls_english_flac.lst_ab
+-rw-r----- 55988314 mls_english_flac.lst_ac
+-rw-r----- 56009664 mls_english_flac.lst_ad
+-rw-r----- 56174644 mls_english_flac.lst_ae
+-rw-r----- 56325376 mls_english_flac.lst_af
+-rw-r----- 56249832 mls_english_flac.lst_ag
+-rw-r----- 56205940 mls_english_flac.lst_ah
+-rw-r----- 55971058 mls_english_flac.lst_ai
+-rw-r----- 55981664 mls_english_flac.lst_aj
+-rw-r----- 55952658 mls_english_flac.lst_ak
+-rw-r----- 180 parallel_downsample.sh
+drwxr-x--- 0 peoples_speech
+drwxr-x--- 0 voxpopuli
+drwxr-x--- 0 yodas-granary
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23
+total  0
+drwxr-x--- 0 .
+drwxr-x--- 0 ..
+drwxr-x--- 0 002_Meeting
+drwxr-x--- 0 008_VariousPlaceNoise
+drwxr-x--- 0 011_child_re
+drwxr-x--- 0 158_Recitation
+drwxr-x--- 0 186_WelfareCallCenter
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24
+total  0
+drwxr-x--- 0 .
+drwxr-x--- 0 ..
+drwxr-x--- 0 128_ExpertInterview
+drwxr-x--- 0 129_JobInterview
+drwxr-x--- 0 130_Address
+drwxr-x--- 0 133_SpeakingStyle
+drwxr-x--- 0 133_SpeakingStyle.old
+drwxr-x--- 0 134-1_Emotion_Conv_Adult
+drwxr-x--- 0 134-1_Emotion_Conv_Adult_old
+drwxr-x--- 0 134-1_Emotion_Conv_Adult_old2
+drwxr-x--- 0 134-1_Emotion_Conv_Adult_old3
+drwxr-x--- 0 134-2_Emotion_Conv_Youth
+drwxr-x--- 0 134-2_Emotion_Conv_Youth_old
+drwxr-x--- 0 134-2_Emotion_Conv_Youth_old2
+drwxr-x--- 0 135_NoiseCommand
+drwxr-x--- 0 136-1-NV_ExtremeNoise
+drwxr-x--- 0 136-1-VN_ExtremeNoise
+########## korean_16kHz root
+KT_GBOX_GG_all_20230729_20230729
+KT_GBOX_GG_all_20231021_20231021_2
+KT_GBOX_silver_kids_20240722_20240811
+KT_GBOX_silver_kids_20240722_20240811_2nd
+KT_GBOX_silver_kids_20240906_20240926
+KT_GBOX_soundbar_20230701_20230725
+NIA23
+NIA24
+NIA_FIRST
+fleurs
+nia24_raw
+nia24_raw2
+########## asr_db root
+RequestDB
+english_16kHz
+english_8kHz
+korean_16kHz
+korean_8kHz
+SURVEY1_DONE

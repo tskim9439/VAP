@@ -1,0 +1,74 @@
+## 134-1 stem 2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057
+wav files for stem: 0
+min=1
+max=374
+  1: size=38764 sec=1.21
+  2: size=43244 sec=1.35
+label json: /soundai/users/tskim/VAPKT-data/data/labels/aihub71631/TL_01.실내/2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057.json
+top keys: ['Wav', 'File', 'Noise', 'Speaker1', 'Speaker2', 'Conversation', 'ConversationInfo']
+n_utts: 374
+{'Text': '음식을 잘 표현해야 돼요', 'TextNo': '000001', 'EndTime': '3.50', 'SpeakerNo': 'Speaker1', 'StartTime': '2.29', 'VerifyEmotionLevel': '보통', 'SpeakerEmotionLevel': '보통', 'VerifyEmotionObject': '1', 'VerifyEmotionTarget': '기쁨'}
+{'Text': '좀 돼요 후회', 'TextNo': '000002', 'EndTime': '4.33', 'SpeakerNo': 'Speaker2', 'StartTime': '2.98', 'VerifyEmotionLevel': '약함', 'SpeakerEmotionLevel': '약함', 'VerifyEmotionObject': '2', 'VerifyEmotionTarget': '놀라움'}
+{'Text': '조심한 뭐랄지', 'TextNo': '000003', 'EndTime': '5.57', 'SpeakerNo': 'Speaker2', 'StartTime': '5.04', 'VerifyEmotionLevel': '약함', 'SpeakerEmotionLevel': '약함', 'VerifyEmotionObject': '2', 'VerifyEmotionTarget': '놀라움'}
+## 134-1 NIA24 Json copy
+n=0
+## 134-1 transcription sample
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-1_Emotion_Conv_Adult/Transcription/Training/134_1-16k-trans_kor
+head: cannot open '/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-1_Emotion_Conv_Adult/Transcription/Training/134_1-16k-trans_kor//soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-1_Emotion_Conv_Adult/Transcription/Training/134_1-16k-trans_kor' for reading: Not a directory
+## 002_Meeting
+Broadcast
+Internet
+Radio
+head: error reading '/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/002_Meeting/Training/Jsons/Broadcast': Is a directory
+
+meetings(wav stems)=4 wavs=4
+## NIA24/129_JobInterview
+json: 
+
+wav: ckmk_a_bm_f_e_101795.wav ch=1 sr=16000 size=2748204
+## NIA24/128_ExpertInterview
+json: 
+
+wav: .azDownload-3c0cb196-1b75-8c49-6f5b-4bc6a3a0446d-BSAA220001_000406.wav ch=1 sr=16000 size=561964
+## NIA23/186_WelfareCallCenter
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Training
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Training/Jsons
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Training/Jsons/Hospital
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Training/Jsons/Mentality
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Training/Jsons/Mobility
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Training/Wavs
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Training/Wavs/Hospital
+json: /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Training/Jsons/Hospital/.azDownload-9c813b12-41d6-3244-46e8-7d2c257b3224-HOS11000312242A015.json
+{
+  "inputText": [
+    {
+      "orgtext": "그렇지요."
+    }
+  ],
+  "dialogs": [
+    {
+      "audioPath": "Y:\\03.원천데이터\\01.대학병원\\01.진료안내\\01.검사\\HOS0003122\\HOS11000312242A015.wav"
+    }
+  ],
+  "info": [
+    {
+      "metadata": {
+        "title": "복지분야 콜상담 음성데이터",
+        "category1": "대학병원",
+        "category2": "진료안내",
+        "category3": "검사",
+        "speaker_type": "상담사",
+        "speaker_id": "SPK080",
+        "speaker_age": "40대",
+        "speaker_sex": "여",
+        "sptime_all": "2.747",
+        "sptime_start": "0.905",
+        "sptime_end": "1.792",
+        "rec_device": "스마트폰",
+        "rec_place": "집"
+      }
+    }
+  ]
+}
+SURVEY5_DONE

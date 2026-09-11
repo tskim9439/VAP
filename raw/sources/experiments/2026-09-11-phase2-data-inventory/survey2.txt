@@ -1,0 +1,296 @@
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-1_Emotion_Conv_Adult
+Json
+Json/TL_01.실내
+Json/TL_01.실내.zip
+Json/TL_02.실외
+Json/TL_02.실외.zip
+Json/VL_01.실내.zip
+Json/VL_02.실외.zip
+Training
+Training/TS_01.실내
+Training/TS_02.실외
+Transcription
+Transcription/Training
+Transcription/Validaiton
+  counts under /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-1_Emotion_Conv_Adult (maxdepth 4):
+      1 /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/ko
+   9799 json
+  22929 wav
+      4 zip
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth
+Json
+Json/TL_01.실내
+Json/TL_01.실내.zip
+Json/TL_02.실외
+Json/TL_02.실외.zip
+Json/VL_01.실내.zip
+Json/VL_02.실외.zip
+Training
+Training/TS_01.실내
+Training/TS_02.실외
+  counts under /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth (maxdepth 4):
+      1 /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_d
+   9477 json
+  22745 wav
+      4 zip
+  hdr 1_0928G1A1_0930G1A1_T1_1D04T0160C000125_003178_1.wav: ch=1 sr=16000 size=50604
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/128_ExpertInterview
+Training
+Training/TS_01_HistoryArchaeology
+Training/TS_02_LanguageLiterature
+Training/TS_03_EconomicsBusiness
+Training/TS_04_SocialWelfareWomen
+Training/TS_05_Education
+Training/TS_06_NaturalSciences
+Training/TS_07_Biology
+Training/TS_08_Environment
+Training/TS_09_InformationCommunication
+Training/TS_10_ComputerScience
+Training/TS_11_PreventiveMedicineOccupationalMedicine
+Training/TS_12_HealthMedicalOthers
+Training/TS_13_CultureArtsSports
+Training/TS_14_AgricultureForestryFisheries
+Training/TS_15_Physics
+Transcription
+Transcription/Training
+Transcription/Validation
+Validation
+Validation/VS_01_HistoryArchaeology
+Validation/VS_02_LanguageLiterature
+Validation/VS_03_EconomicsBusiness
+Validation/VS_04_SocialWelfareWomen
+Validation/VS_05_Education
+Validation/VS_06_NaturalSciences
+Validation/VS_07_Biology
+Validation/VS_08_Environment
+Validation/VS_09_InformationCommunication
+Validation/VS_10_ComputerScience
+Validation/VS_11_PreventiveMedicineOccupationalMedicine
+Validation/VS_12_HealthMedicalOthers
+Validation/VS_13_CultureArtsSports
+Validation/VS_14_AgricultureForestryFisheries
+Validation/VS_15_Physics
+  counts under /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/128_ExpertInterview (maxdepth 4):
+      1 /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc79
+  38124 wav
+  hdr .azDownload-3c0cb196-1b75-8c49-6f5b-4bc6a3a0446d-BSAA220001_000406.wav: ch=1 sr=16000 size=561964
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/129_JobInterview
+Training
+Training/TS_01.Management_Female_Experienced
+Training/TS_01.Management_Female_New
+Training/TS_01.Management_Male_Experienced
+Training/TS_01.Management_Male_New
+Training/TS_02.SalesMarketing_Female_Experienced
+Training/TS_02.SalesMarketing_Female_New
+Training/TS_02.SalesMarketing_Male_Experienced
+Training/TS_02.SalesMarketing_Male_New
+Training/TS_03.PublicService_Female_Experienced
+Training/TS_03.PublicService_Female_New
+Training/TS_03.PublicService_Male_Experienced
+Training/TS_03.PublicService_Male_New
+Training/TS_04.RND_Female_Experienced
+Training/TS_04.RND_Female_New
+Training/TS_04.RND_Male_Experienced
+Training/TS_04.RND_Male_New
+Training/TS_05.ICT_Female_Experienced
+Training/TS_05.ICT_Female_New
+Training/TS_05.ICT_Male_Experienced
+Training/TS_05.ICT_Male_New
+Training/TS_06.Design_Female_Experienced
+Training/TS_06.Design_Female_New
+Training/TS_06.Design_Male_Experienced
+Training/TS_06.Design_Male_New
+Training/TS_07.ProductionManufacturing_Female_Experienced
+Training/TS_07.ProductionManufacturing_Female_New
+Training/TS_07.ProductionManufacturing_Male_Experienced
+Training/TS_07.ProductionManufacturing_Male_New
+Transcription
+Transcription/Training
+Transcription/Validaiton
+Validation
+Validation/VS_01.Management_Female_Experienced
+Validation/VS_01.Management_Female_New
+Validation/VS_01.Management_Male_Experienced
+Validation/VS_01.Management_Male_New
+Validation/VS_02.SalesMarketing_Female_Experienced
+Validation/VS_02.SalesMarketing_Female_New
+Validation/VS_02.SalesMarketing_Male_Experienced
+  counts under /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/129_JobInterview (maxdepth 4):
+      1 /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/129_JobIn
+  56958 wav
+  hdr ckmk_a_bm_f_e_101795.wav: ch=1 sr=16000 size=2748204
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/133_SpeakingStyle
+Json
+Json/TL_구연체_001
+Json/TL_구연체_001.zip
+Json/TL_구연체_005
+Json/TL_구연체_005.zip
+Json/TL_구연체_017
+Json/TL_구연체_017.zip
+Json/TL_구연체_021
+Json/TL_구연체_021.zip
+Json/TL_구연체_022
+Json/TL_구연체_022.zip
+Json/TL_구연체_023
+Json/TL_구연체_023.zip
+Json/TL_구연체_024
+Json/TL_구연체_024.zip
+Json/TL_구연체_029
+Json/TL_구연체_029.zip
+Json/TL_구연체_030
+Json/TL_구연체_030.zip
+Json/TL_구연체_032
+Json/TL_구연체_032.zip
+Json/TL_구연체_033
+Json/TL_구연체_033.zip
+Json/TL_구연체_039
+Json/TL_구연체_039.zip
+Json/TL_구연체_040
+Json/TL_구연체_040.zip
+Json/TL_구연체_041
+Json/TL_구연체_041.zip
+Json/TL_구연체_042
+Json/TL_구연체_042.zip
+Json/TL_구연체_046
+Json/TL_구연체_046.zip
+Json/TL_구연체_048
+Json/TL_구연체_048.zip
+Json/TL_구연체_052
+Json/TL_구연체_052.zip
+Json/TL_구연체_056
+Json/TL_구연체_056.zip
+Json/TL_구연체_060
+  counts under /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/133_SpeakingStyle (maxdepth 4):
+      1 /soundai/databr
+  11875 json
+ 192249 wav
+    706 zip
+  hdr A-A1-C-001-0101.wav: ch=1 sr=16000 size=181802
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/002_Meeting
+Training
+Training/Jsons
+Training/wav
+  counts under /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/002_Meeting (maxdepth 4):
+      1 /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA2
+   7983 json
+  36706 wav
+  hdr DGBAA21000001_1.wav: ch=1 sr=16000 size=242060
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter
+Training
+Training/Jsons
+Training/Wavs
+Validation
+Validation/Jsons
+Validation/Wavs
+  counts under /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter (maxdepth 4):
+      1 /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Traini
+  30661 json
+     10 txt
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/nia24_raw
+128.전문분야_심층인터뷰_데이터
+133.감성_및_발화_스타일_동시_고려_음성합성_데이터
+135.명령어_인식을_위한_소음_환경_데이터
+136-1.극한_소음_음성_인식_데이터
+139-1.중.노년층_한국어방언데이터_강원도_경상도
+144.한국인의_주제적응형_영어말하기_평가데이터
+254.어린이_음성맥락_인식률_향상을_위한_방송_음성_및_자연어_처리_학습용_데이터
+293.생활환경소음_AI학습용_데이터_및_민원_관리_서비스_구축_사업
+list
+list1
+list_no_exist
+logs.jys
+test1
+unzip.out
+unzip.sh
+unzip_folder_sjy.sh
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/nia24_raw2
+135-S
+136-1-NV
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA_FIRST
+NIA_2
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_8kHz
+132.연령대별_특징적_발화(은어·속어_등)_음성_데이터
+Drama_voicein_240115
+E2E40000
+E2E_EvalSet
+KT_Drama
+NIA23
+NIA24
+W2V
+Youtube_Punctuation
+Youtube_Punctuation2
+callcenter.data
+commonvoice_21.0
+juso_data_240612
+voicebot
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/english_8kHz
+callhome
+commonvoice_21.0
+mls_english
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/RequestDB
+16k_eval_set
+20240708
+240518
+240528
+240614
+240708_drama
+240719_jung
+240719_voicepishing
+240920_sjy
+241105_punc_738h
+callcenter_debug
+sdy
+test_data_8k
+test_voiced
+testset
+train_100k
+voice_pishing_total
+voicepishing
+wrong_db
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/raw/132.연령대별_특징적_발화(은어·속어_등)_음성_데이터
+Training
+Training/TS_대화_10대_SNS
+Training/TS_대화_10대_가족
+Training/TS_대화_10대_게임
+Training/TS_대화_10대_경제
+Training/TS_대화_10대_교육
+Training/TS_대화_10대_군대
+Training/TS_대화_10대_여가
+Training/TS_대화_10대_연애결혼
+Training/TS_대화_10대_음식
+Training/TS_대화_10대_일상
+Training/TS_대화_10대_주거
+Training/TS_대화_10대_직장
+Training/TS_대화_20대_SNS
+Training/TS_대화_20대_가족
+Training/TS_대화_20대_게임
+Training/TS_대화_20대_경제
+Training/TS_대화_20대_교육
+Training/TS_대화_20대_군대
+Training/TS_대화_20대_여가
+Training/TS_대화_20대_연애결혼
+Training/TS_대화_20대_음식
+Training/TS_대화_20대_일상
+Training/TS_대화_20대_주거
+Training/TS_대화_20대_직장
+Training/TS_대화_30대_SNS
+Training/TS_대화_30대_가족
+Training/TS_대화_30대_게임
+Training/TS_대화_30대_경제
+Training/TS_대화_30대_교육
+Training/TS_대화_30대_군대
+Training/TS_대화_30대_여가
+Training/TS_대화_30대_연애결혼
+Training/TS_대화_30대_음식
+Training/TS_대화_30대_일상
+Training/TS_대화_30대_주거
+Training/TS_대화_30대_직장
+Training/TS_대화_40대_SNS
+Training/TS_대화_40대_가족
+Training/TS_대화_40대_게임
+########## /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/raw/SD-QA
+eng
+kor
+wav_eng.zip
+wav_kor.zip
+SURVEY2_DONE

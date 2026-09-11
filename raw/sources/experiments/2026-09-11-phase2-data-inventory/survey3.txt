@@ -1,0 +1,108 @@
+########## /soundai/DB/raw/aihub/100
+012.상담_음성_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/107
+002.자유대화(노인남여)
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/108
+003.자유대화(소아남여,_유아_등_혼합)
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/109
+001.자유대화(일반남여)
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/112
+008.차량_내_대화_및_명령어_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/115
+009.한국어_강의_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/130
+009.한국인대화음성
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/131
+004.한국인_외래어_발화
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/132
+010.회의_음성_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/463
+001.방송_콘텐츠_대화체_음성인식_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/464
+002.주요_영역별_회의_음성인식_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/470
+186.복지_분야_콜센터_상담데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/484
+159.숫자가_포함된_패턴_발화_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/485
+158.문학작품_낭송,_낭독_음성_데이터(시,_소설,_희곡,_시나리오)
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/540
+011.한국어_아동_음성_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/568
+008.소음_환경_음성인식_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/571
+007.저음질_전화망_음성인식_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71260
+005.한영_혼합_인식_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71349
+133.감성_및_발화_스타일_동시_고려_음성합성_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71405
+135.명령어_인식을_위한_소음_환경_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71417
+136-1.극한_소음_음성_인식_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71481
+128.전문분야_심층인터뷰_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71487
+154.의료, 법률 전문 서적 말뭉치
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71502
+254.어린이_음성맥락_인식률_향상을_위한_방송_음성_및_자연어_처리_학습용_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71556
+130.주소_음성_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71557
+138.뉴스_대본_및_앵커_음성_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71592
+129.채용면접_인터뷰_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71610
+README.md
+TS_multiple_choice.json
+TS_span_extraction.json
+TS_span_extraction_how.json
+TS_tableqa.json
+TS_text_entailment.json
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71627
+137.한국어_대학_강의_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/71632
+134-2.감정이_태깅된_자유대화_(청소년)
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/87
+011.고객_응대_데이터
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/94
+006.명령어_데이터(노인남여-정형‧비정형_포함)
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/95
+007.명령어_데이터(소아남여,유아-정형‧비정형_포함)
+  FILES(≤2000 sampled): 
+########## /soundai/DB/raw/aihub/98
+022.민원(콜센터)_질의-응답_데이터
+  FILES(≤2000 sampled): 
+SURVEY3_DONE

@@ -1,0 +1,87 @@
+## raw/132 대화
+132_400K_info
+Training
+297
+-- /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/raw/132.연령대별_특징적_발화(은어·속어_등)_음성_데이터/Training/TS_대화_20대_일상: entries=64725
+10_14_40055005_220920_0009_11_4005.wav
+10_14_40055005_220920_0009_13_4005.wav
+10_14_40055005_220920_0009_9_4005.wav
+10_14_40055005_220920_0010_11_4005.wav
+10_14_40055005_220920_0010_15_4005.wav
+  wav: 10_14_40055005_220920_0009_11_4005.wav ch=1 sr=44100 size=1106954
+  json: 
+
+  wav count (maxdepth 3): 40106
+## 186_WelfareCallCenter deeper
+Hospital
+Mentality
+Mobility
+  Wavs entries=3
+HOS11000312231B001_000001.wav
+HOS11000312231B002_000001.wav
+HOS11000312231B003_000001.wav
+  wav: .azDownload-ba594f00-12e9-444a-40d8-b35540a079e5-HOS11000319552B039_000001.wav ch=1 sr=16000 size=164756
+  json: /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA23/186_WelfareCallCenter/Training/Jsons/Hospital/.azDownload-9c813b12-41d6-3244-46e8-7d2c257b3224-HOS11000312242A015.json
+{
+  "inputText": [
+    {
+      "orgtext": "그렇지요."
+    }
+  ],
+  "dialogs": [
+    {
+      "audioPath": "Y:\\03.원천데이터\\01.대학병원\\01.진료안내\\01.검사\\HOS0003122\\HOS11000312242A015.wav"
+    }
+  ],
+  "info": [
+    {
+      "metadata": {
+        "title": "복지분야 콜상담 음성데이터",
+        "category1": "대학병원",
+        "category2": "진료안내",
+        "category3": "검사",
+        "speaker_type": "상담사",
+        "speaker_id": "SPK080",
+        "speaker_age": "40대",
+        "speaker_sex": "여",
+        "sptime_all": "2.747",
+        "sptime_start": "0.905",
+        "sptime_end": "1.792",
+        "rec_device": "스마트폰",
+        "rec_place": "집"
+      }
+    }
+  ]
+}
+## korean_8kHz callcenter.data / voicebot
+-- /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_8kHz/callcenter.data
+AI_Assist_1200h
+AI_assist
+KT_114
+KT_VoiceBot_AM_Data
+lina_cs
+lotte-capital
+nh.20210806
+pcm.pool
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_8kHz/callcenter.data/AI_assist/AI_Assist_20190723_pcm_all_partial/A152874100064_20190723133124178_0620716333_1.pcm_0.wav
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_8kHz/callcenter.data/AI_assist/AI_Assist_20190723_pcm_all_partial/A152874100064_20190723133124178_0620716333_1.pcm_1.wav
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_8kHz/callcenter.data/AI_assist/AI_Assist_20190723_pcm_all_partial/A152874100064_20190723133124178_0620716333_1.pcm_10.wav
+  wav: A152874100064_20190723133124178_0620716333_1.pcm_0.wav ch=1 sr=8000 size=40044
+-- /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_8kHz/voicebot
+KT_Voicebot_tving_pcm.partial_only_tving
+KT_Voicebot_tving_pcm.partial_only_tving_Reference.txt
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_8kHz/voicebot/KT_Voicebot_tving_pcm.partial_only_tving/A12154808100132_20241107144514139_1112240862_69_005_0.pcm_002.wav
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_8kHz/voicebot/KT_Voicebot_tving_pcm.partial_only_tving/A12154808102382_20241107145205211_0259262199_629_005_0.pcm_001.wav
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_8kHz/voicebot/KT_Voicebot_tving_pcm.partial_only_tving/A1215480810526_20241107091038808_0206274902_363_005_0.pcm_002.wav
+  wav: A12154808100132_20241107144514139_1112240862_69_005_0.pcm_002.wav ch=1 sr=8000 size=45164
+## nia24_raw 139-1 방언
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/nia24_raw/139-1.중.노년층_한국어방언데이터_강원도_경상도
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/nia24_raw/139-1.중.노년층_한국어방언데이터_강원도_경상도/01-1.정식개방데이터
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/nia24_raw/139-1.중.노년층_한국어방언데이터_강원도_경상도/01-1.정식개방데이터/Training
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/nia24_raw/139-1.중.노년층_한국어방언데이터_강원도_경상도/01-1.정식개방데이터/Validation
+## NIA_FIRST
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA_FIRST
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA_FIRST/NIA_2
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA_FIRST/NIA_2/2020-02-001
+/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA_FIRST/NIA_2/2020-02-002
+SURVEY6_DONE

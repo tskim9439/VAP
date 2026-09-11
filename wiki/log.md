@@ -110,6 +110,13 @@
 - Next: 사용자 확인 후 정본 계획 개정, K(슬롯 상한) 결정
 - By: tskim
 
+## [2026-09-11] query | 확보 DB 추가 조사 — NIA24 134-1/134-2 발화 조각이 화자 채널 기원임을 검증
+
+- Changed: `output-phase2-data-inventory.md` §5(추가 조사·정렬 등급·우선순위), 조사 로그·스크립트를 `raw/sources/experiments/2026-09-11-phase2-data-inventory/` 에 보관
+- Reason: 사용자 요청(5 경로 탐색)과 "정렬은 화자별 독립 채널이 필요" 지적. 상호상관 검증으로 NIA24 조각이 한 채널과 r=1.000·다른 채널과 ≈0(겹침 포함)임을 확인 → 조각 단위 정렬과 2 채널 복원 가능. 실외 1,492 대화 완전(≈360 h), 실내는 발화 ~45 % 무작위 결손, 청소년은 미검증. 콜센터·CallHome·사내 8 kHz 는 시간축 없음
+- Next: Q0 에서 134-2 완전성 검증, 002_Meeting JSON 구조, Switchboard 복원 검증
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 비판 검토와 계획 v1.1 개정
 
 - Changed: `output-phase2-streaming-asr-diarization-plan`, `output-phase2-plan`, `output-phase2-critique-response`, 비판글 답변 링크, 동시 추가된 `output-phase2-final-plan`의 개정 정본 우선 적용 안내

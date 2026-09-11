@@ -1,0 +1,130 @@
+########## 134-1_Emotion_Conv_Adult
+-- Training/TS_01.실내: entries=0
+   ↳ : entries=1081267
+2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057_1.wav
+2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057_101.wav
+2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057_102.wav
+2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057_104.wav
+2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057_105.wav
+2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057_106.wav
+-- Training/TS_02.실외: entries=380760
+2_2532G2A5_2566G2A5_T2_2D08T0372C000348_010818_1.wav
+2_2532G2A5_2566G2A5_T2_2D08T0372C000348_010818_10.wav
+2_2532G2A5_2566G2A5_T2_2D08T0372C000348_010818_100.wav
+2_2532G2A5_2566G2A5_T2_2D08T0372C000348_010818_101.wav
+-- Validation: (없음)
+-- Transcription/Training: entries=6
+134_1-16k-trans_kor
+134_1-16k-trans_kor_nomark
+134_1-16k-trans_kor_num
+134_1-16k-trans_kor_num_eng
+-- Json/TL_01.실내: (없음)
+-- wav count/bytes (maxdepth 6, timeout 600):
+  n=94209 bytes=6544246792 hours_mono16k=56.8
+-- suffix patterns (sample 3000):
+     17 _1
+      9 _10
+     13 _100
+      6 _101
+     11 _102
+-- largest of sample:
+  hdr 2_1320G2A5_1321G2A5_T1_2D03T0112C000280_004801_167.wav: ch=1 sr=16000 size=481004
+-- json sample /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-1_Emotion_Conv_Adult/Json/TL_01.실내/2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057.json
+{
+    "Wav": {
+        "EncodingLaw": "SignedIntegerPCM",
+        "NumberOfBit": "16",
+        "SamplingRate": "48000",
+        "NumberOfChannel": "2"
+    },
+    "File": {
+        "FileName": "2_1312G1A4_1243G2A3_T1_2D09T0399C000374_005057",
+        "FileLength": "663.55",
+        "EndOfSpeech": "660.92",
+        "SpeechLength": "658.63",
+        "BeginOfSpeech": "2.29"
+    },
+    "Noise": {
+        "Speaker1SNR": "+26dB",
+        "Speaker2SNR": "+36dB",
+        "Speaker1NoiseType": "가정 및 사무실",
+        "Speaker2NoiseType": "가정 및 사무실",
+        "Speaker1NoiseCategory": "실내",
+        "Speaker2NoiseCategory": "실내"
+    },
+    "Speaker1": {
+        "ID": "1312",
+        "Age": "40대",
+        "Mask": "미착용",
+        "Gender": "남성",
+        "Condition": "정상",
+        "RecDevice": "스마트폰",
+        "Residence": "대전/세종/충청/강원",
+  
+-- transcription sample /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-1_Emotion_Conv_Adult/Transcription/134_1-16k-trans_kor
+/stt/DB/16kHz/NIA24/134-1_Emotion_Conv_Adult/Training/TS_02.실외/2_3584G2A4_3591G2A4_T2_2D10T0460C000415_015891_1.wav 여보세요
+/stt/DB/16kHz/NIA24/134-1_Emotion_Conv_Adult/Training/TS_02.실외/2_3584G2A4_3591G2A4_T2_2D10T0460C000415_015891_2.wav 내야
+/stt/DB/16kHz/NIA24/134-1_Emotion_Conv_Adult/Training/TS_02.실외/2_3584G2A4_3591G2A4_T2_2D10T0460C000415_015891_3.wav 안녕
+/stt/DB/16kHz
+########## 134-2_Emotion_Conv_Youth
+-- Training/TS_01.실내: entries=0
+   ↳ : entries=1755051
+1_0928G1A1_0930G1A1_T1_1D04T0160C000125_003178_1.wav
+1_0928G1A1_0930G1A1_T1_1D04T0160C000125_003178_100.wav
+1_0928G1A1_0930G1A1_T1_1D04T0160C000125_003178_101.wav
+1_0928G1A1_0930G1A1_T1_1D04T0160C000125_003178_102.wav
+1_0928G1A1_0930G1A1_T1_1D04T0160C000125_003178_103.wav
+1_0928G1A1_0930G1A1_T1_1D04T0160C000125_003178_104.wav
+-- Training/TS_02.실외: entries=417170
+1_1020G1A1_1006G1A1_T2_1D10T0416C000259_003539_1.wav
+1_1020G1A1_1006G1A1_T2_1D10T0416C000259_003539_10.wav
+1_1020G1A1_1006G1A1_T2_1D10T0416C000259_003539_100.wav
+1_1020G1A1_1006G1A1_T2_1D10T0416C000259_003539_101.wav
+-- Validation: (없음)
+-- Transcription/Training: (없음)
+-- Json/TL_01.실내: (없음)
+-- wav count/bytes (maxdepth 6, timeout 600):
+  n=67923 bytes=3895116390 hours_mono16k=33.8
+-- suffix patterns (sample 3000):
+     17 _1
+     14 _10
+     13 _100
+     10 _101
+      8 _102
+-- largest of sample:
+  hdr 1_1006G1A1_1020G1A1_T1_1D10T0413C000230_003555_71.wav: ch=1 sr=16000 size=481324
+-- json sample /soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth/Json/TL_01.실내/1_0928G1A1_0930G1A1_T1_1D04T0160C000125_003178.json
+{
+    "Wav": {
+        "EncodingLaw": "SignedIntegerPCM",
+        "NumberOfBit": "16",
+        "SamplingRate": "48000",
+        "NumberOfChannel": "2"
+    },
+    "File": {
+        "FileName": "1_0928G1A1_0930G1A1_T1_1D04T0160C000125_003178",
+        "FileLength": "355.32",
+        "EndOfSpeech": "343.14",
+        "SpeechLength": "338.74",
+        "BeginOfSpeech": "4.40"
+    },
+    "Noise": {
+        "Speaker1SNR": "+19dB",
+        "Speaker2SNR": "+7dB",
+        "Speaker1NoiseType": "가정 및 사무실",
+        "Speaker2NoiseType": "가정 및 사무실",
+        "Speaker1NoiseCategory": "실내",
+        "Speaker2NoiseCategory": "실내"
+    },
+    "Speaker1": {
+        "ID": "0928",
+        "Age": "10대",
+        "Mask": "착용",
+        "Gender": "남성",
+        "Condition": "정상",
+        "RecDevice": "스마트폰",
+        "Residence": "서울/인천/경기",
+        "Occu
+-- transcription sample 
+
+SURVEY4_DONE
