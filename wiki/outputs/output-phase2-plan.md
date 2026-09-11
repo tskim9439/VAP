@@ -68,7 +68,7 @@ Phase 2 정본 계획 [[output-phase2-streaming-asr-diarization-plan]](구조·�
 3. **단일 모델·항상 태그**: 단일 화자 입력에서도 `<SPK_A>` 를 방출하는 한 모델(데모는 태그 숨김)을 권장. 무태그 모드 토큰을 두면 데이터가 갈린다.
 4. **turn 출력 형식**: 오디오 클럭 병렬 헤드(activity·VAP·hazard) 기본, SoulX-Duplug 식 상태 토큰은 Q3 ablation. 정본 계획과 같은 권장.
 
-비판과 대안 제안: [[output-phase2-plan-critique]].
+비판과 대안 제안: [[output-phase2-plan-critique]]. 최종 계획안: [[output-phase2-final-plan]].
 
 ## 불확실성
 - 두 세션이 같은 요청으로 계획을 동시에 작성했다. 설계 충돌 지점은 두 곳이며 여기서 정본 쪽을 따랐다: (a) Q1 인코더 동결 시작(정본) vs 처음부터 해동(이 세션 초안) → 정본 + Q2 해동 ablation, (b) 청크당 토큰 상한 8→12 고정(초안) vs 밀도 실측 후 결정(정본) → 정본.

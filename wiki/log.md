@@ -26,6 +26,13 @@
 - Next: 사용자가 채택할 제안을 고르면 정본 계획에 반영
 - By: tskim
 
+## [2026-09-11] query | Phase 2 최종 계획안(권고)
+
+- Changed: `wiki/outputs/output-phase2-final-plan.md` 생성, 비판·실행 요약 페이지에 링크
+- Reason: 사용자가 비판을 반영한 단일 최종 계획안을 요청. 정본 계획의 계약·관문·평가 규율 + 비판의 제안(청크 내 화자별 그룹 직렬화, 텍스트 전용 완결성 사전학습·LLM 약라벨, 슬롯 메모리, 슬롯 조건 오디오 토큰 대안, ASR 강화 트랙 A, 자연형 overlap 합성, E2 레시피, turn 헤드 δ=2, MVP) + 실행 요약의 일정·데이터를 한 문서로
+- Next: 사용자 결정 5 건(§13) → Q0 착수(09-15)
+- By: tskim
+
 ## [2026-09-10] query | Stage 2 run E2(인코더 해동) 최종 평가 보고서
 
 - Changed: `wiki/outputs/output-stage2-e2-final-eval.md` 신규(§4 스윕·§5 test 는 측정 중)
