@@ -53,7 +53,7 @@ Phase 1 의 E2(Nemotron 스트리밍 인코더 → adapter → Qwen3-ASR thinker
 
 ## 3. 모델 구조
 
-```text
+```
 16 kHz mono ──▶ Nemotron 3.5 streaming 0.6B 인코더 [56,0] (해동, LR 1e-5) ──▶ 80 ms × 1024
             ──▶ adapter (E2) ──▶ a_k
             ──▶ [옵션 P3] 화자 슬롯 메모리 m_A, m_B (인코더 특징 EMA, activity 헤드가 단독 활동으로 본 청크에서만 갱신)
@@ -81,7 +81,8 @@ Phase 1 의 E2(Nemotron 스트리밍 인코더 → adapter → Qwen3-ASR thinker
 Muse 는 `|speech_onset|`·`|speech_endpoint|` 를 시퀀스 안 special token 으로 내고([[source-muse-voice-transcribe]]) 화자는 별도 태그였다. 우리는 **이벤트 토큰이 항상 화자 블록 안에** 있으므로 "누구의" onset/EOT 인지가 블록 머리 태그로 정해진다. INTERRUPT 는 토큰이 아니다 — "상대 활동 중 `<ONSET>` + 상대가 곧 `<EOT>`" 로 이벤트 층에서 유도한다(§7.1).
 
 ### 4.2 블록 문법
-```text
+
+```
 chunk   := [AUDIO_k] block_A? block_B? <NEXT_AUDIO>
 block_X := (<SPK_X>)? <ONSET>? text* end?            end := <EOT> | <HOLD> | <BC>
 ```
@@ -102,46 +103,84 @@ block_X := (<SPK_X>)? <ONSET>? text* end?            end := <EOT> | <HOLD> | <BC
 - 휴리스틱 라벨은 TurnBench dev gold 로 정확도를 검증한 뒤 쓴다(정확도 <0.8 인 유형은 손실 가중 0).
 
 ### 4.4 사례별 블록 구성
-(δ=2, 한 줄이 한 청크. `·` 는 방출 없음)
-```text
-[사례 1] 스트림 시작 · 무음
-  [AUDIO_0] <NEXT_AUDIO>
-  [AUDIO_1] <NEXT_AUDIO>                        ← 아무 블록 없음. 손실은 <NEXT_AUDIO> 에만(가중 0.3/0.15)
 
-[사례 2] 단일 화자 A 만 말함 (Phase 1 replay 도 동일)
-  [AUDIO_5] <SPK_A> <ONSET> <NEXT_AUDIO>        ← onset 2.4 s → k=30+2… (예시 번호) 첫 블록이라 태그
-  [AUDIO_8] 안녕 <NEXT_AUDIO>                   ← 같은 화자 → 태그 생략
-  [AUDIO_9] 하세요 <NEXT_AUDIO>
-  [AUDIO_12] <HOLD> <NEXT_AUDIO>                ← 0.3 s 멈춤, 곧 이어 말함
-  [AUDIO_16] <ONSET> <NEXT_AUDIO>               ← 같은 화자 재개(태그 생략)
-  [AUDIO_20] 저는 <NEXT_AUDIO>
-  …
-  [AUDIO_40] 입니다 <EOT> <NEXT_AUDIO>          ← turn 종료(3 s 침묵 또는 B 시작)
-  [AUDIO_41] <NEXT_AUDIO>                       ← 다시 무음
+아래는 δ=2 기준이며 한 줄이 한 청크다. `#` 줄은 설명이다.
 
-[사례 3] 화자 교대 (A 끝 → 0.4 s gap → B 시작)
-  [AUDIO_40] 입니다 <EOT> <NEXT_AUDIO>
-  [AUDIO_47] <SPK_B> <ONSET> <NEXT_AUDIO>       ← 화자 바뀜 → 태그
-  [AUDIO_50] 네 <NEXT_AUDIO>                    ← B 계속, 태그 생략
+**사례 1 — 스트림 시작, 무음**
 
-[사례 4] A 발화 중 B 맞장구 (overlap)
-  [AUDIO_60] 그래서 <SPK_B> <ONSET> <NEXT_AUDIO>          ← A 블록(태그 생략) → B 블록(태그)
-  [AUDIO_62] <SPK_A> 제가 <SPK_B> 응 <BC> <NEXT_AUDIO>     ← 직전 블록이 B 였으므로 A 에 태그, B 는 맞장구 종료
-  [AUDIO_63] <SPK_A> 말씀드린 <NEXT_AUDIO>                 ← 직전 블록 B → A 태그. 이후 A 만 있으면 생략
-  [AUDIO_64] 건 <NEXT_AUDIO>
+```
+[AUDIO_0] <NEXT_AUDIO>
+[AUDIO_1] <NEXT_AUDIO>
+# 블록 없음. 손실은 <NEXT_AUDIO> 에만 (가중 EN 0.3 / KO 0.15)
+```
 
-[사례 5] B 가 끼어들어 A 가 멈춤 (interruption)
-  [AUDIO_70] 그런데 <SPK_B> <ONSET> <NEXT_AUDIO>
-  [AUDIO_72] <SPK_A> 제 <SPK_B> 잠깐만요 <NEXT_AUDIO>
-  [AUDIO_74] <SPK_A> <EOT> <SPK_B> 그건 <NEXT_AUDIO>        ← A 는 방해당해 floor 상실 → EOT. INTERRUPT 는 이벤트 층에서 유도
-  [AUDIO_75] 아니에요 <NEXT_AUDIO>                          ← 직전 블록 B → 생략
+**사례 2 — 단일 화자 A 만 말함 (Phase 1 replay 도 동일)**
 
-[사례 6] 동시 시작
-  [AUDIO_80] <SPK_A> <ONSET> <SPK_B> <ONSET> <NEXT_AUDIO>   ← A→B 순서. A/B 배정: 먼저 식별된 화자(스트림 첫 onset 이 같으면 50 Hz VAD 가 이른 쪽, 동률이면 라벨 permutation 무작위·일관)
+```
+[AUDIO_5]  <SPK_A> <ONSET> <NEXT_AUDIO>
+# 첫 블록이라 태그. onset 은 +160 ms 고정 지연
+[AUDIO_8]  안녕 <NEXT_AUDIO>
+# 같은 화자 → 태그 생략. 텍스트는 단어 종료 + δ
+[AUDIO_9]  하세요 <NEXT_AUDIO>
+[AUDIO_12] <HOLD> <NEXT_AUDIO>
+# 0.3 s 멈춤, 곧 이어 말함 → turn 유지
+[AUDIO_16] <ONSET> <NEXT_AUDIO>
+# 같은 화자 재개 → 태그 생략
+[AUDIO_20] 저는 <NEXT_AUDIO>
+[AUDIO_40] 입니다 <EOT> <NEXT_AUDIO>
+# turn 종료 (3 s 침묵 또는 B 가 시작)
+[AUDIO_41] <NEXT_AUDIO>
+# 다시 무음
+```
 
-[사례 7] 스트림 끝 (flush)
-  <EMPTY_AUDIO> 입니다 <EOT> <NEXT_AUDIO>                  ← δ 때문에 넘긴 토큰·이벤트
-  <EMPTY_AUDIO> <NEXT_AUDIO>                               ← 빈 라운드
+**사례 3 — 화자 교대 (A 끝 → 0.4 s gap → B 시작)**
+
+```
+[AUDIO_40] 입니다 <EOT> <NEXT_AUDIO>
+[AUDIO_47] <SPK_B> <ONSET> <NEXT_AUDIO>
+# 화자 바뀜 → 태그
+[AUDIO_50] 네 <NEXT_AUDIO>
+# B 계속 → 태그 생략
+```
+
+**사례 4 — A 발화 중 B 맞장구 (overlap)**
+
+```
+[AUDIO_60] 그래서 <SPK_B> <ONSET> <NEXT_AUDIO>
+# A 블록(태그 생략) 다음 B 블록(태그)
+[AUDIO_62] <SPK_A> 제가 <SPK_B> 응 <BC> <NEXT_AUDIO>
+# 직전 블록이 B 였으므로 A 에 태그. B 는 맞장구로 종료
+[AUDIO_63] <SPK_A> 말씀드린 <NEXT_AUDIO>
+# 직전 블록 B → A 태그. 이후 A 만 이어지면 생략
+[AUDIO_64] 건 <NEXT_AUDIO>
+```
+
+**사례 5 — B 가 끼어들어 A 가 멈춤 (interruption)**
+
+```
+[AUDIO_70] 그런데 <SPK_B> <ONSET> <NEXT_AUDIO>
+[AUDIO_72] <SPK_A> 제 <SPK_B> 잠깐만요 <NEXT_AUDIO>
+[AUDIO_74] <SPK_A> <EOT> <SPK_B> 그건 <NEXT_AUDIO>
+# A 는 방해당해 floor 를 잃음 → EOT. INTERRUPT 는 이벤트 층에서 유도
+[AUDIO_75] 아니에요 <NEXT_AUDIO>
+# 직전 블록 B → 생략
+```
+
+**사례 6 — 동시 시작**
+
+```
+[AUDIO_80] <SPK_A> <ONSET> <SPK_B> <ONSET> <NEXT_AUDIO>
+# A → B 순서. A/B 배정은 먼저 식별된 화자.
+# 스트림 첫 onset 이 같으면 50 Hz VAD 가 이른 쪽, 동률이면 라벨 permutation 무작위(일관)
+```
+
+**사례 7 — 스트림 끝 (flush)**
+
+```
+<EMPTY_AUDIO> 입니다 <EOT> <NEXT_AUDIO>
+# δ 때문에 넘긴 토큰·이벤트
+<EMPTY_AUDIO> <NEXT_AUDIO>
+# 빈 라운드
 ```
 
 ### 4.5 학습 규칙
@@ -220,6 +259,7 @@ block_X := (<SPK_X>)? <ONSET>? text* end?            end := <EOT> | <HOLD> | <BC
 - **사람 검증**: EN/KO 각 500–1,000 경계를 이중 검토(≥20 %)해 LLM 라벨 agreement·confusion 을 보고. 평가용 subset(같은 침묵 길이의 완결/미완결 쌍, 질문/진술, 한국어 연결어미/종결어미, 맞장구 뒤 계속 발화)도 여기서 만든다.
 
 ### 7.3 손실
+
 ```
 L = L_text + w_tag·L_tag + w_evt·L_turn-token(<ONSET>/<EOT>/<HOLD>/<BC>) + w_next·L_next + λ_act·L_activity + λ_vap·L_VAP + λ_haz·L_hazard
 ```
