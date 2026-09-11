@@ -11,3 +11,10 @@
 - Reason: 사용자 요청. 모두 3 명 이상 회의라 2 명 활동 창 선택(A) 또는 헤드셋 2 채널 합산(B) 방식으로만 쓰고 turn 손실은 마스크. AMI 는 서버에 발화 단위 사본 있음
 - Next: Q0 에서 라이선스 원문·시각 정보 확인, AMI 원본 회의 파일 확보 검토
 - By: tskim
+
+## [2026-09-11] decision | "최대 2 화자" 제약 제거
+
+- Changed: `wiki/decisions/decision-multi-speaker-scope.md` 생성, `output-phase2-data-inventory.md` §2b 를 다화자 전량 사용으로 수정
+- Reason: 사용자 결정. 회의 코퍼스를 자연 다화자 데이터로 쓰고 슬롯·헤드·평가를 K 화자로 일반화. 정본 계획 §1·§3·§4·§6·§8 개정 필요 항목을 결정 페이지에 표로 정리
+- Next: 사용자 확인 후 정본 계획 개정, K(슬롯 상한) 결정
+- By: tskim

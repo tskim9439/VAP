@@ -103,6 +103,13 @@
 - Next: Q0 에서 라이선스 원문·시각 정보 확인, AMI 원본 회의 파일 확보 검토
 - By: tskim
 
+## [2026-09-11] decision | "최대 2 화자" 제약 제거
+
+- Changed: `wiki/decisions/decision-multi-speaker-scope.md` 생성, `output-phase2-data-inventory.md` §2b 를 다화자 전량 사용으로 수정
+- Reason: 사용자 결정. 회의 코퍼스를 자연 다화자 데이터로 쓰고 슬롯·헤드·평가를 K 화자로 일반화. 정본 계획 §1·§3·§4·§6·§8 개정 필요 항목을 결정 페이지에 표로 정리
+- Next: 사용자 확인 후 정본 계획 개정, K(슬롯 상한) 결정
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 비판 검토와 계획 v1.1 개정
 
 - Changed: `output-phase2-streaming-asr-diarization-plan`, `output-phase2-plan`, `output-phase2-critique-response`, 비판글 답변 링크, 동시 추가된 `output-phase2-final-plan`의 개정 정본 우선 적용 안내
