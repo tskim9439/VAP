@@ -106,7 +106,7 @@ sources:
 ### 5.2 그 밖의 확보 DB
 | 자원 | 위치 | 실측 | 판정 |
 |---|---|---|---|
-| NIA23 002_Meeting(회의) | `NIA23/002_Meeting/Training/{Jsons,wav}/{Broadcast,Internet,Radio}` | JSON 7,983, wav 36,706(발화 단위 mono, `DGBAA21000001_1.wav`) | **다화자 KO 후보**(2 화자 제한 제거로 유효). 방송·인터넷·라디오 회의 녹음. 화자·시각은 JSON 확인 중 |
+| NIA23 002_Meeting(회의) | `NIA23/002_Meeting/Training/{Jsons,wav}/{Broadcast,Internet,Radio,Recording}` | JSON 7,983 회의(예: 화자 5 명, 역할 사회자/토론자), `utterance[{start,end,speaker_id,speaker_role,form,original_form}]` 이 **연속 구간**(0–7.56, 7.56–15.98 …)으로 전체를 덮음; wav 는 발화 단위 mono 16 k 로 혼합 녹음에서 그 시각대로 잘림(Broadcast 만 558,881 파일). NIKL 과 같은 라벨 형식 | **다화자 KO 자연 데이터, B 등급**: 조각을 시각대로 이으면 회의 전체 혼합 오디오가 복원되고 화자·시각 라벨이 있다. 겹침은 조각 안에 섞여 있어 정렬은 혼합 파형 위에서(품질 플래그). 규모는 발화 시각 합산으로 Q0 집계(Broadcast 만 수백 h 추정) |
 | NIA24 129_JobInterview | `NIA24/129_JobInterview` | wav 56,958(mono 16 k, 86 s 단위), JSON 5 단계 안에 없음 | 2 자 인터뷰 후보. 라벨 위치 확인 중 |
 | NIA24 128_ExpertInterview | 분야 15 종 Training/Validation + Transcription | 발화 단위 mono 16 k(≈17 s), JSON 없음 | 2 자 인터뷰 후보. 시간축 여부 확인 중 |
 | NIA23 186_WelfareCallCenter | `NIA23/186_WelfareCallCenter/Training/{Jsons,Wavs}/{Hospital,Mentality,Mobility}` | JSON 30,661; 발화 단위 mono 16 k(`HOS…A015.wav`, 화자 유형 상담사/고객, `sptime_start/end` 는 파일 내 상대 시각) | **통화 단위 시간축 없음** → 대화 복원 불가. 단일 화자 replay·텍스트 순서로만 |
@@ -133,7 +133,7 @@ sources:
 1. **NIA24 134-1 실외 1,492 대화(완전) ≈ 360 h** — A 등급, 즉시 복원 가능. 현재 248 h 에 더해 KO 자연 대화 ≈ 600 h.
 2. **NIA24 134-1 실내 부분 대화 ≈ 7,500 개(발화의 ~45 % 만 존재, 화자·길이·감정에 무관한 무작위 결손)** — 결손 발화 구간을 마스크하면 전사·activity 학습에 사용. 마스크 비율이 절반이라 turn 라벨은 구멍 없는 구간에서만.
 3. **NIA24 134-2 청소년(실내 7,821·실외 1,649 대화)** — 라벨(`/soundai/DB/raw/aihub/71632`)과 대조해 완전성 확인 후 1·2 와 같은 방식. 완전하면 최대 수천 h.
-4. Switchboard 복원(EN 230 h), AMI(§2b), NIA23 002_Meeting(KO 다화자, JSON 확인 후).
+4. **NIA23 002_Meeting(KO 다화자 회의, B 등급)** — 화자·시각 라벨 완비, 혼합 mono 전체 복원 가능, 규모 큼(Broadcast 55.9 만 발화). 다화자 전사·diarization 학습의 주 KO 자원 후보. Switchboard 복원(EN 230 h), AMI(§2b).
 5. CANDOR(확보 시), ICSI·CHiME-6·NOTSOFAR-1·DiPCo(§2b).
 - 제외: AI Hub 번호 폴더(라벨만), 186 복지 콜센터·CallHome·사내 8 kHz 콜센터(시간축 없음/개인정보), raw/132(메타 확인 전).
 
