@@ -35,5 +35,9 @@ sources:
 6. [ ] 각 코퍼스 업로드 후 서버에서 `ls`·용량 검증, 로컬 삭제
 7. [ ] 데이터 목록 §6.2 갱신(서버 위치·시간)
 
+## 릴레이 자동화
+`scripts/corpus-relay.sh run`(맥에서 nohup 백그라운드, 로그 `~/Downloads/vapkt-corpora/relay.log`): DiPCo·AMI 다운로드 완료 대기 → rsync 업로드 → 바이트 합계 검증 → **로컬만** 삭제 → ICSI 다운로드·업로드 → CHiME-6 소형 파일 → CHiME-6 train(97 GB, 로컬 디스크 초과)은 10 GB 범위 조각으로 받기→올리기→지우기를 반복한 뒤 서버에서 `cat` 으로 합침(`_parts_*` 보존). 서버 목적지 `/soundai/users/tskim/VAPKT-data/data/corpora/{dipco,ami,icsi,chime6}`.
+
 ## 진행 기록
+- 2026-09-11: 릴레이 오케스트레이터 시작(DiPCo·AMI 다운로드 중). NOTSOFAR-1 은 HF 토큰 대기.
 - 2026-09-11: 생성. 라이선스·용량·속도 확인, DiPCo 시작. azcopy SAS URL 이 `.env.local` 에 없어 rsync 업로드 예정 — SAS 를 받으면 azcopy 로 전환.
