@@ -33,6 +33,20 @@
 - Next: 사용자 결정 5 건(§13) → Q0 착수(09-15)
 - By: tskim
 
+## [2026-09-11] query | 최종 계획안 §4 확장 — 사례별 블록 구성과 Muse 식 turn 토큰
+
+- Changed: `output-phase2-final-plan.md` §4 전면 개정(토큰 6 종, 블록 문법, 시각 규칙, 무음·단일 화자·교대·맞장구·끼어들기·동시 시작·flush 사례, 학습 규칙, 디코드 상태 기계), §3·§5·§7·§9·§11 정합
+- Reason: 사용자 지적 — 무음·단일 화자 등 사례별 블록 구성과 학습 방법이 부족하고, 화자별 `<end_of_turn>` 류 turn 라벨(Muse 처럼)이 필요
+- Next: serializer 단위 테스트를 §4.4 사례로 작성(Q0)
+- By: tskim
+
+## [2026-09-11] query | Phase 2 비판 검토와 계획 v1.1 개정
+
+- Changed: `output-phase2-streaming-asr-diarization-plan`, `output-phase2-plan`, `output-phase2-critique-response`, 비판글 답변 링크, 동시 추가된 `output-phase2-final-plan`의 개정 정본 우선 적용 안내
+- Reason: 사용자 요청으로 비판 P1–P9를 코드·1차 자료와 비교하고 채택·조건부 수정·반론을 기록했다. ASR 강화와 의미 학습 트랙을 추가하고 직렬화·slot memory·recipe·MVP를 구체화했다.
+- Next: Q0 데이터·저장 parity·serializer 검증, S 라벨 pilot과 A 기준선. 이번 작업은 문서 개정이며 코드 구현·학습 제출은 하지 않았다.
+- By: tskim
+
 ## [2026-09-10] query | Stage 2 run E2(인코더 해동) 최종 평가 보고서
 
 - Changed: `wiki/outputs/output-stage2-e2-final-eval.md` 신규(§4 스윕·§5 test 는 측정 중)

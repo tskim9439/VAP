@@ -1,9 +1,9 @@
 ---
 type: output
-status: active
+status: superseded
 created: 2026-09-11
 updated: 2026-09-11
-summary: Phase 2 최종 계획안(권고) — E2 위에 청크 내 화자별 그룹 직렬화(<SPK_A/B>)·activity/VAP/hazard 병렬 헤드·화자 슬롯 메모리를 얹어 mono 2 화자 전사·overlap 화자별 전사·의미 기반 turn 예측을 Q0–Q4(09-15 → 11-14) + ASR 강화 트랙 A 로 개발. 데이터·라벨·손실·관문·평가·구현·리스크·결정 사항을 한 문서에
+summary: Phase 2 통합 초안 — P1–P9 검토 전 통합 기록이며 실행 규약·예산은 개정 정본 v1.1과 검토 답변을 우선 적용
 sources:
   - [[output-phase2-streaming-asr-diarization-plan]]
   - [[output-phase2-plan-critique]]
@@ -17,15 +17,18 @@ sources:
   - [[source-turnbench]]
   - [[source-conversation-corpora]]
   - [[source-soulx-duplug]]
+  - [[source-muse-voice-transcribe]]
   - [[output-stage2-e2-final-eval]]
 ---
 
 # Phase 2 최종 계획안: mono 2 화자 스트리밍 ASR · Diarization · Turn-Taking
 
-이 문서는 정본 계획([[output-phase2-streaming-asr-diarization-plan]])의 계약·관문·평가 규율을 그대로 잇고, 비판([[output-phase2-plan-critique]])에서 권고한 제안과 실행 요약([[output-phase2-plan]])의 일정·데이터를 합친 **단일 실행 문서**다. 이 문서만 읽고 착수할 수 있게 썼다. 수치 관문은 Q0 에서 기준선을 재고 동결하기 전까지 제안값이다.
+이 문서는 정본 계획([[output-phase2-streaming-asr-diarization-plan]])의 계약·관문과 비판([[output-phase2-plan-critique]])의 권고, 실행 요약([[output-phase2-plan]])을 합친 **비판 검토 전 통합 기록**이다. 작성 이후 P1–P9의 조건과 계산을 재검토했다. **실행 시 개정 정본 v1.1과 [[output-phase2-critique-response]]의 정정을 우선 적용한다.** 수치 관문은 Q0에서 기준선을 재고 동결하기 전까지 제안값이다.
+
+2026-09-11 후속 정정: 그룹화는 G0/G1 비교 후보이며 시간순과 동등하지 않다. 의미 완결성을 실제 발화 종료로 자동 정답화하지 않는다. R-E2/R-low 제한 비교, 예측 기반 slot memory 검증, Q1 이전 A* 승격 또는 Q1/Q2 재학습, train 후보 약 301.5h 상한을 적용한다. 아래 ‘KV 2배’, 단계별 1–3시간, 자연 train 248h, test 표본으로 승격하는 문구는 채택하지 않는다. 모델 선택은 dev, test는 고정 보고용이다. 상세 구현·문맥 예산·완료 범위는 개정 정본을 따른다. 이 안내는 동시에 추가된 통합 초안을 보존하면서 잘못된 실행 규칙의 사용을 막기 위한 것이다.
 
 ## 0. 한 줄 요약
-Phase 1 의 E2(Nemotron 스트리밍 인코더 → adapter → Qwen3-ASR thinker, 80 ms 인터리브)를 바꾸지 않고, **(1) 청크마다 화자별 블록으로 묶은 `<SPK_A/B>` 태그 전사**, **(2) `[AUDIO_k]` 위치 hidden state 위 activity·VAP·hazard 병렬 헤드**, **(3) 인과적 화자 슬롯 메모리**를 더해, 마이크 하나의 혼합 음성에서 두 화자의 전사·겹침·미래 turn 을 한 모델이 낸다. 9 주(2026-09-15 → 11-14) 동안 Q0 데이터 계약 → Q1 태그 전사 → Q2 overlap → Q3 turn 헤드·의미 검증 → Q4 장문·실시간 순으로 진행하고, 실시간 ASR 강화는 병렬 트랙 A 로 돌린다. **MVP 는 Q1 + Q2**(화자 구분·overlap 검출·화자별 전사)이며, "의미 기반 turn 예측" 은 Q3 의 대조군 실험이 통과할 때만 주장한다.
+Phase 1 의 E2(Nemotron 스트리밍 인코더 → adapter → Qwen3-ASR thinker, 80 ms 인터리브)를 바꾸지 않고, **(1) 청크마다 화자별 블록으로 묶은 `<SPK_A/B>` 태그 전사와 블록 안 turn 토큰(`<ONSET>`/`<EOT>`/`<HOLD>`/`<BC>`, Muse 의 onset/endpoint 토큰에 해당)**, **(2) `[AUDIO_k]` 위치 hidden state 위 activity·VAP·hazard 병렬 헤드**, **(3) 인과적 화자 슬롯 메모리**를 더해, 마이크 하나의 혼합 음성에서 두 화자의 전사·겹침·미래 turn 을 한 모델이 낸다. 9 주(2026-09-15 → 11-14) 동안 Q0 데이터 계약 → Q1 태그 전사 → Q2 overlap → Q3 turn 헤드·의미 검증 → Q4 장문·실시간 순으로 진행하고, 실시간 ASR 강화는 병렬 트랙 A 로 돌린다. **MVP 는 Q1 + Q2**(화자 구분·overlap 검출·화자별 전사)이며, "의미 기반 turn 예측" 은 Q3 의 대조군 실험이 통과할 때만 주장한다.
 
 ## 1. 목표 · 범위 · 비목표
 
@@ -56,29 +59,120 @@ Phase 1 의 E2(Nemotron 스트리밍 인코더 → adapter → Qwen3-ASR thinker
             ──▶ [옵션 P3] 화자 슬롯 메모리 m_A, m_B (인코더 특징 EMA, activity 헤드가 단독 활동으로 본 청크에서만 갱신)
                 z_k = RMSNorm(a_k + g_k ⊙ W[m_A; m_B]),  g_k zero-init gate
             ──▶ Qwen3-ASR thinker (E2, LR 2e-5)  시퀀스: prefix · [AUDIO_k] <SPK_A> tok… <SPK_B> tok… <NEXT_AUDIO> · …
-                 ├─ lm_head: 텍스트·태그·<NEXT_AUDIO>
+                 ├─ lm_head: 텍스트·화자 태그·turn 토큰(<ONSET>/<EOT>/<HOLD>/<BC>)·<NEXT_AUDIO>
                  └─ h_audio[k] ──▶ MLP(1024→512) ──▶ activity 2 sigmoid │ VAP 256 softmax │ hazard 6 구간 × 2 화자
 ```
-- 새 파라미터: `<SPK_A>`, `<SPK_B>` 임베딩·lm_head 행 2 개(`<asr_text>` 임베딩 평균으로 초기화), 헤드 MLP ≈ 0.8 M, 슬롯 메모리 게이트 ≈ 0.1 M.
+- 새 파라미터: 특수 토큰 6 개(`<SPK_A>` `<SPK_B>` `<ONSET>` `<EOT>` `<HOLD>` `<BC>`, §4.1) 임베딩·lm_head 행(`<asr_text>` 임베딩 평균으로 초기화), 헤드 MLP ≈ 0.8 M, 슬롯 메모리 게이트 ≈ 0.1 M.
 - 억제 목록(`vapasr/hf/modeling_vapasr.py:154`)에서 `<SPK_A/B>` 를 빼고, `save_pretrained` 는 학습 여부와 무관하게 인코더를 항상 저장하며 출처 해시를 config 에 기록한다(동결 E2 를 저장하면 원본 `.nemo` 로 바뀌는 결함 방지).
 - 실패 대비 구조(Q2 관문 미달 시): **슬롯 조건 오디오 토큰 2 개** — 슬롯 메모리를 query 로 인코더 프레임에 cross-attention pooling 해 `[AUDIO_k^A][AUDIO_k^B]` 를 만든다(오디오 토큰 25 Hz, KV 2 배). multi-output decoder 는 그다음이다.
 
-## 4. 시퀀스 규약
+## 4. 시퀀스 규약 — 블록 구성 · turn 토큰 · 학습 · 디코딩
 
+### 4.1 토큰 집합
+| 토큰 | 뜻 | 위치 | 손실 가중 |
+|---|---|---|---|
+| `<SPK_A>` `<SPK_B>` | 뒤따르는 토큰의 화자(블록 머리) | 블록 시작 | 1.5 |
+| `<ONSET>` | 그 화자가 말을 **시작했다**(VAD onset) | 블록 안, 텍스트 앞 | 1.0 |
+| `<EOT>` | 그 화자의 **turn 이 끝났다**(floor 를 넘김) — Muse 의 `\|speech_endpoint\|` 에 해당 | 블록 끝 | 2.0 |
+| `<HOLD>` | 말을 멈췄지만 **turn 을 쥐고 있다**(같은 화자가 이어 말함) | 블록 끝 | 2.0 |
+| `<BC>` | 이 블록은 **맞장구**(상대 발화 중 짧게, floor 를 가져가지 않음) | 블록 끝 | 2.0 |
+| `<NEXT_AUDIO>` `<EMPTY_AUDIO>` `<DELAY_δ>` | Phase 1 과 동일 | — | 0.3 / 0.15(EN/KO) |
+
+Muse 는 `|speech_onset|`·`|speech_endpoint|` 를 시퀀스 안 special token 으로 내고([[source-muse-voice-transcribe]]) 화자는 별도 태그였다. 우리는 **이벤트 토큰이 항상 화자 블록 안에** 있으므로 "누구의" onset/EOT 인지가 블록 머리 태그로 정해진다. INTERRUPT 는 토큰이 아니다 — "상대 활동 중 `<ONSET>` + 상대가 곧 `<EOT>`" 로 이벤트 층에서 유도한다(§7.1).
+
+### 4.2 블록 문법
 ```text
-prefix   <|im_start|>system⏎<|im_end|>⏎<|im_start|>assistant⏎language {English|Korean}<asr_text><DELAY_δ>
-chunk k  [AUDIO_k] (<SPK_A> tokA…)? (<SPK_B> tokB…)? <NEXT_AUDIO>
-flush    <EMPTY_AUDIO> (<SPK_A> …)? (<SPK_B> …)? <NEXT_AUDIO>   × (남은 토큰 / cap) + 빈 라운드 1
+chunk   := [AUDIO_k] block_A? block_B? <NEXT_AUDIO>
+block_X := (<SPK_X>)? <ONSET>? text* end?            end := <EOT> | <HOLD> | <BC>
 ```
-- **청크 배정**은 E2 와 같다: 토큰 종료 시각(깨끗한 채널에서 강제 정렬) → `k = ⌊t_end/80 ms⌋ + δ`, δ∈{2,3,4,6} 학습, 추론 선택.
-- **청크 내 순서는 화자별 블록**(A 블록 → B 블록). 청크 안의 순서는 시간 정보가 없으므로(청크 인덱스가 시간) 종료 시각 순 교차보다 태그가 적고 BPE 조각이 갈라지지 않는다. 블록 안은 원 발화 순서.
-- **태그 생략 규칙**: 청크의 첫 블록이 직전 방출 토큰과 같은 화자면 태그 생략. 두 번째 블록은 항상 태그. 내용 없는 태그(`<SPK_A><SPK_B>`)는 문법에서 금지(학습 시퀀스에 나오지 않고 디코드에서 억제).
-- **화자 정체성**: 먼저 식별된 화자 = A. 학습은 crop 마다 관측 prefix 안 첫 화자로 재매핑하고, 전사 태그·activity·VAP·hazard 라벨이 **같은 permutation** 을 쓴다. 채널 순서·gain 무작위화로 지름길(큰 목소리 = A 등)을 막는다. PIT 는 쓰지 않는다.
-- **청크당 생성 상한**: E2 의 8 을 유지하되 Q1 에서 구조 토큰·lexical 토큰 밀도 p99·강제 NEXT 비율·삭제율을 재고 필요 시 12 로 올린다.
-- **손실 가중**: 텍스트 1.0, `<NEXT_AUDIO>` EN 0.3 / KO 0.15(E2), 태그 1.5(초기값, sweep).
+- 한 청크에 화자당 블록 최대 1 개, 순서는 **A → B 고정**.
+- `<SPK_X>` 는 **직전에 방출된 블록의 화자와 다를 때만** 낸다. 첫 블록은 항상 태그. 빈 블록(태그만) 금지.
+- `<ONSET>` 은 텍스트보다 먼저 나올 수 있다(텍스트는 δ 뒤에 오지만 onset 은 δ_on=2 로 고정 지연). 같은 청크에 `<ONSET>` 과 텍스트가 함께 있으면 `<ONSET>` 이 앞.
+- `end` 는 VAD 세그먼트(≥0.2 s 침묵으로 구분) 하나당 정확히 하나. 청크 배정은 텍스트와 같은 δ: `k_end = ⌊t_off/80 ms⌋ + δ`. 마지막 단어 토큰(`⌊t_end/80⌋+δ`, t_end ≤ t_off) 뒤에 온다.
+
+### 4.3 시각 규칙과 라벨 출처
+| 토큰 | 청크 | 라벨 출처 | 미래 정보 |
+|---|---|---|---|
+| 텍스트 | `⌊t_end/80⌋ + δ` | 깨끗한 채널 강제 정렬 | 없음(δ 지연) |
+| `<ONSET>` | `⌊t_on/80⌋ + 2`(160 ms 고정) | 채널 VAD@50 Hz onset(직전 침묵 ≥0.2 s) | 없음 |
+| `<EOT>` / `<HOLD>` | `⌊t_off/80⌋ + δ` | `derive_events`(`vapasr/data/targets.py`): SHIFT·terminal overlap·3 s 무발화 → `<EOT>`, 같은 화자 재개 → `<HOLD>` | **있다**(최대 3 s) — 모델이 예측해야 하는 것이 의도. Muse endpoint 와 같음 |
+| `<BC>` | `⌊t_off/80⌋ + δ` | BACKCHANNEL(상대 발화 중 시작, ≤1 s, 상대 계속) | 있다(≤1 s) |
+- `<EOT>`/`<HOLD>`/`<BC>` 는 **위원회 예측**이다: 방출 시각(offset + 160–320 ms)에 아직 상대가 시작하지 않았어도 "끝났다/쥐고 있다" 를 의미(문맥·운율)로 판단한다. 이것이 사용자 목표 3 이 시퀀스 안에서 실현되는 자리이고, 병렬 헤드(VAP·hazard)는 그보다 **앞선** 연속 확률(−600 ms … 0)을 준다. 둘은 역할이 다르며 둘 다 TurnBench 규약으로 채점한다(§10).
+- 3 s 안에 아무도 말하지 않으면 `<EOT>`(turn 이 침묵으로 끝남). 종료 시점에 상대가 이미 말하는 중이면(방해당함) `<EOT>`(terminal overlap 은 SHIFT 로 이미 처리, 방해당한 경우도 floor 를 잃었으므로 EOT). 맞장구 종료는 `<BC>`.
+- 휴리스틱 라벨은 TurnBench dev gold 로 정확도를 검증한 뒤 쓴다(정확도 <0.8 인 유형은 손실 가중 0).
+
+### 4.4 사례별 블록 구성
+(δ=2, 한 줄이 한 청크. `·` 는 방출 없음)
+```text
+[사례 1] 스트림 시작 · 무음
+  [AUDIO_0] <NEXT_AUDIO>
+  [AUDIO_1] <NEXT_AUDIO>                        ← 아무 블록 없음. 손실은 <NEXT_AUDIO> 에만(가중 0.3/0.15)
+
+[사례 2] 단일 화자 A 만 말함 (Phase 1 replay 도 동일)
+  [AUDIO_5] <SPK_A> <ONSET> <NEXT_AUDIO>        ← onset 2.4 s → k=30+2… (예시 번호) 첫 블록이라 태그
+  [AUDIO_8] 안녕 <NEXT_AUDIO>                   ← 같은 화자 → 태그 생략
+  [AUDIO_9] 하세요 <NEXT_AUDIO>
+  [AUDIO_12] <HOLD> <NEXT_AUDIO>                ← 0.3 s 멈춤, 곧 이어 말함
+  [AUDIO_16] <ONSET> <NEXT_AUDIO>               ← 같은 화자 재개(태그 생략)
+  [AUDIO_20] 저는 <NEXT_AUDIO>
+  …
+  [AUDIO_40] 입니다 <EOT> <NEXT_AUDIO>          ← turn 종료(3 s 침묵 또는 B 시작)
+  [AUDIO_41] <NEXT_AUDIO>                       ← 다시 무음
+
+[사례 3] 화자 교대 (A 끝 → 0.4 s gap → B 시작)
+  [AUDIO_40] 입니다 <EOT> <NEXT_AUDIO>
+  [AUDIO_47] <SPK_B> <ONSET> <NEXT_AUDIO>       ← 화자 바뀜 → 태그
+  [AUDIO_50] 네 <NEXT_AUDIO>                    ← B 계속, 태그 생략
+
+[사례 4] A 발화 중 B 맞장구 (overlap)
+  [AUDIO_60] 그래서 <SPK_B> <ONSET> <NEXT_AUDIO>          ← A 블록(태그 생략) → B 블록(태그)
+  [AUDIO_62] <SPK_A> 제가 <SPK_B> 응 <BC> <NEXT_AUDIO>     ← 직전 블록이 B 였으므로 A 에 태그, B 는 맞장구 종료
+  [AUDIO_63] <SPK_A> 말씀드린 <NEXT_AUDIO>                 ← 직전 블록 B → A 태그. 이후 A 만 있으면 생략
+  [AUDIO_64] 건 <NEXT_AUDIO>
+
+[사례 5] B 가 끼어들어 A 가 멈춤 (interruption)
+  [AUDIO_70] 그런데 <SPK_B> <ONSET> <NEXT_AUDIO>
+  [AUDIO_72] <SPK_A> 제 <SPK_B> 잠깐만요 <NEXT_AUDIO>
+  [AUDIO_74] <SPK_A> <EOT> <SPK_B> 그건 <NEXT_AUDIO>        ← A 는 방해당해 floor 상실 → EOT. INTERRUPT 는 이벤트 층에서 유도
+  [AUDIO_75] 아니에요 <NEXT_AUDIO>                          ← 직전 블록 B → 생략
+
+[사례 6] 동시 시작
+  [AUDIO_80] <SPK_A> <ONSET> <SPK_B> <ONSET> <NEXT_AUDIO>   ← A→B 순서. A/B 배정: 먼저 식별된 화자(스트림 첫 onset 이 같으면 50 Hz VAD 가 이른 쪽, 동률이면 라벨 permutation 무작위·일관)
+
+[사례 7] 스트림 끝 (flush)
+  <EMPTY_AUDIO> 입니다 <EOT> <NEXT_AUDIO>                  ← δ 때문에 넘긴 토큰·이벤트
+  <EMPTY_AUDIO> <NEXT_AUDIO>                               ← 빈 라운드
+```
+
+### 4.5 학습 규칙
+- **손실 위치**: 텍스트·태그·이벤트·`<NEXT_AUDIO>` 전부(§4.1 가중). `[AUDIO_k]`·`<EMPTY_AUDIO>`·prefix 는 입력.
+- **무음 청크**: 시퀀스의 75–85 % 가 `<NEXT_AUDIO>` 뿐이다. Phase 1 과 같이 가중 0.3/0.15 로 균형을 맞추고, activity 헤드는 이 청크들에서 `00` 을 학습한다(헤드 손실은 가중 없이 모든 청크).
+- **단일 화자 데이터(replay 30 %)**: 같은 문법. `<SPK_A>` 한 번, VAD 로 `<ONSET>`/`<HOLD>`/`<EOT>` 유도(스트림 안 발화 사이 pause ≥0.2 s 이고 이어지면 `<HOLD>`, 스트림 끝은 `<EOT>`). 이 데이터는 "혼자 말할 때 B 를 지어내지 않기" 와 완결/미완결(`<EOT>` vs `<HOLD>`)의 의미 단서를 가르친다.
+- **합성 대화**: 텍스트·태그·`<ONSET>` 은 정상 손실. `<EOT>`/`<HOLD>`/`<BC>` 는 시퀀스에 넣되 **손실 가중 0**(타이밍이 가짜). 헤드의 VAP·hazard 도 마스크.
+- **태그 오염(Q1 후반)**: 학습 시퀀스의 태그 5 % 를 뒤집고 이후 라벨은 원래대로 두어 오류 회복을 가르친다. `<EOT>`↔`<HOLD>` 도 3 % 교란.
+- **이벤트 균형**: `<EOT>`·`<HOLD>`·`<BC>` 는 텍스트 토큰의 1 % 미만이라 가중 2.0 + 이벤트 단위 평가. class 별 recall 을 sentinel 에 넣는다.
+- **텍스트 전용 사전학습(§7.2)** 은 같은 문법의 텍스트 시퀀스(오디오 자리 마스킹)로 `<EOT>`/`<HOLD>` 를 먼저 배운다.
+
+### 4.6 디코딩(상태 기계, logit 마스크)
+상태: `cur`(직전 블록 화자), `active[A|B]`(모델 자신의 `<ONSET>`/end 토큰으로 갱신), `seen[A|B]`(이 청크에서 낸 블록).
+| 상태 | 허용 토큰 |
+|---|---|
+| 청크 시작 | `<SPK_A>`, `<SPK_B>`, (cur 의) `<ONSET>`/텍스트/end, `<NEXT_AUDIO>` |
+| 블록 X 안, X 비활동 | `<ONSET>`, 텍스트(δ 지연 토큰 허용), `<SPK_Y>`(Y>X), `<NEXT_AUDIO>` |
+| 블록 X 안, X 활동 | 텍스트, `<EOT>`/`<HOLD>`/`<BC>`, `<SPK_Y>`(Y>X), `<NEXT_AUDIO>` |
+| end 방출 직후 | `<SPK_Y>`(Y>X), `<NEXT_AUDIO>` |
+| B 블록 뒤 | `<NEXT_AUDIO>` 만(A 블록 재진입 금지) |
+- 청크당 상한: 구조 토큰 4 + lexical 8(Q1 에서 밀도 p99 로 재조정). 상한 도달 시 `<NEXT_AUDIO>` 강제, 남은 토큰은 다음 청크로 이월(Phase 1 과 같음).
+- 이벤트 시각 = 청크 k 의 오디오를 모두 들은 시각(`(k+1)·80 ms`) + 디코드 시간. TurnBench 제출 시 이 값을 쓴다.
+- 데모: 화자 레인 2 개, `<ONSET>` 에서 레인 활성, `<EOT>` 에서 문장 확정 표시, `<BC>` 는 작은 말풍선. 헤드의 P(EOT) 막대는 별도.
+
+### 4.7 왜 이 설계인가
+- 청크 안 순서를 시간 순 교차가 아니라 화자 블록으로 고정하면 태그 ≤2/청크, BPE 조각 교차 없음, 상태 기계가 단순하다. 시간은 청크 인덱스가 준다.
+- 이벤트를 블록 안 토큰으로 두면 Muse 처럼 LLM 이 **문맥으로** endpoint 를 판단하고, 헤드는 그보다 이른 연속 예측을 맡는다. 둘의 불일치(헤드는 EOT 확률 높음, 토큰은 `<HOLD>`)는 진단 신호로 기록한다.
+- INTERRUPT 를 토큰으로 두지 않는 이유: 정의가 미래(상대가 멈추는가)에 걸려 있고 `<ONSET>` + 상대 `<EOT>` 로 재구성되므로 어휘를 늘릴 이유가 없다.
 
 ## 5. 출력 계약(API)
-- 전사 이벤트: `speaker(A|B), text, chunk_k, audio_seen_until, emitted_at`. 화자별 누적 버퍼로 Unicode·공백 복원. 청크 시각(80 ms) 외의 단어 시각은 추정값으로 표시하거나 내지 않는다.
+- 전사 이벤트: `speaker(A|B), text, chunk_k, audio_seen_until, emitted_at`. turn 토큰 이벤트: `speaker, type(onset|eot|hold|bc), chunk_k, audio_seen_until, emitted_at`(§4.3 의 위원회 예측, TurnBench 제출의 1 차 EOT 소스). 화자별 누적 버퍼로 Unicode·공백 복원. 청크 시각(80 ms) 외의 단어 시각은 추정값으로 표시하거나 내지 않는다.
 - 활동·turn 이벤트(80 ms 마다): `activity[2], vap_probs[256], onset_hazard[2][6], p_eot, p_interrupt`. `p_eot`/`p_interrupt` 는 VAP 의 `p_now/p_future`(원 VAP 계산) 와 hazard 에서 유도하고 임계값은 dev 에서 고른다.
 - 이벤트 시각 = 그 판단에 쓴 오디오를 모두 들은 시각(TurnBench 규약). 서비스 지연은 wall-clock 으로 별도.
 
@@ -127,10 +221,10 @@ flush    <EMPTY_AUDIO> (<SPK_A> …)? (<SPK_B> …)? <NEXT_AUDIO>   × (남은 �
 
 ### 7.3 손실
 ```
-L = L_text + w_tag·L_tag + w_next·L_next + λ_act·L_activity + λ_vap·L_VAP + λ_haz·L_hazard (+ λ_evt·L_event)
+L = L_text + w_tag·L_tag + w_evt·L_turn-token(<ONSET>/<EOT>/<HOLD>/<BC>) + w_next·L_next + λ_act·L_activity + λ_vap·L_VAP + λ_haz·L_hazard
 ```
 - 손실별로 유효 토큰/프레임 수로 정규화, 언어별 기록. λ 는 헤드만 학습 단계에서 고정 1.0 으로 시작하고 joint 단계에서 uncertainty weighting(Kendall)으로 자동 균형. 가드레일: 단일 화자 WER/CER 회귀 ≤ 5 % 상대.
-- 도입 순서: Q1 텍스트+태그+NEXT+activity → Q2 동일 → Q3 VAP → hazard → event.
+- 도입 순서: Q1 텍스트+태그+`<ONSET>`+NEXT+activity(`<EOT>`/`<HOLD>`/`<BC>` 는 가중 0.5 로 시작) → Q2 동일 → Q3 turn 토큰 가중 2.0 + VAP → hazard.
 - **free-running history 단계**(Q3 후반): 같은 체크포인트로 생성한 전사 이력 위에서 헤드를 추가 학습. gold history 결과는 oracle 상한으로만 보고.
 
 ## 8. 학습 레시피
@@ -149,9 +243,9 @@ L = L_text + w_tag·L_tag + w_next·L_next + λ_act·L_activity + λ_vap·L_VAP 
 | 단계 | 기간 | 내용 | 진입/통과 관문(제안, Q0 후 동결) |
 |---|---|---|---|
 | **Q0 데이터 계약·기준선** | 09-15 → 09-19 | mixer·serializer·라벨 v2·QC pack(EN/KO 각 50 창, 로더 경유 청취), 고정 평가 ID, E2 δ=2/4 기준선, 인코더 저장 provenance 수정, 텍스트 전용 사전학습, 32 창 overfit, 인과성(prefix 절단·미래 교체) 검사 | 누락·덮어쓰기·화자 누출 0, 미래 정보 누출 0, serializer 왕복 무손실, 평가 재현 |
-| **Q1 비중첩 2 화자 전사** | 09-22 → 10-03 | 자연 대화 + replay, 태그·activity 헤드, 슬롯 메모리 옵션 구현(켜기는 비교), 인코더 해동 vs 동결 대조 | ASR 가드레일 ≤5 %, 비중첩 DER ≤10 %, 토큰 귀속 오류 ≤5 %, 채널 교환 대칭, tick p99 < 80 ms |
+| **Q1 비중첩 2 화자 전사** | 09-22 → 10-03 | 자연 대화 + replay, 태그·activity 헤드, 슬롯 메모리 옵션 구현(켜기는 비교), 인코더 해동 vs 동결 대조 | ASR 가드레일 ≤5 %, 비중첩 DER ≤10 %, 토큰 귀속 오류 ≤5 %, `<ONSET>` recall ≥0.9 @ FPR ≤0.1, 채널 교환 대칭, tick p99 < 80 ms |
 | **Q2 overlap 전사** | 10-06 → 10-17 | 자연 overlap + 자연형 합성, cap 재측정, 캐스케이드(diarization+E2)·clean-channel oracle 대조 | Q1 모델 대비 overlap cp 오류 ≥20 % 상대 감소, 화자 소실 ≤5 %, overlap 프레임 F1 ≥0.7, 가드레일 유지. 미달 시 슬롯 조건 오디오 토큰(§3) |
-| **Q3 turn 헤드·의미 검증** | 10-20 → 11-07 | 헤드만(자연 대화) → joint → free-running; VAP → hazard → event; 대조군 4 종(§10); 기본 δ=2, δ=4 비교; H2(encoder-only probe) | 같은 FPR(≤0.10)에서 audio-only 대비 EOT/INT recall +3 %p 또는 p50 −80 ms(paired bootstrap 95 % CI, seed 2), 가드레일 유지. 참고 목표 TurnBench dev EOT recall ≥0.80 @ FPR ≤0.055(mono 입력) |
+| **Q3 turn 헤드·의미 검증** | 10-20 → 11-07 | 헤드만(자연 대화) → joint → free-running; VAP → hazard → event; 대조군 4 종(§10); 기본 δ=2, δ=4 비교; H2(encoder-only probe) | `<EOT>` 토큰과 헤드 각각 TurnBench 규약 채점; 같은 FPR(≤0.10)에서 audio-only 대비 EOT/INT recall +3 %p 또는 p50 −80 ms(paired bootstrap 95 % CI, seed 2), 가드레일 유지. 참고 목표 TurnBench dev EOT recall ≥0.80 @ FPR ≤0.055(mono 입력) |
 | **Q4 장문·실시간·보고** | 11-10 → 11-14 | 60–120 s carry, 10–60 분 자유실행, bounded KV + 슬롯 메모리, 데모 2 레인 + P(EOT), Phase 2 보고서 | RTF <1, 1 시간 backlog 비발산, ID switch ≤1 회/10 분, viol80 ≤1 %, 방출 p99 ≤1 s |
 | **트랙 A ASR 강화(병렬)** | 09-22 → 10-17 | E2 기준 별도 run: `<NEXT_AUDIO>` 가중·δ 분포(δ=2 정확도), 대화체 재가중, 잔향·잡음 증강, 디코더 static KV·CUDA graph, MLX 인코더 | Phase 1 test 표본에서 E2 대비 개선·회귀 없음. **Q3 시작 전 한 번만** Phase 2 초기값으로 승격(Q0 pack 재평가) |
 
@@ -175,7 +269,8 @@ L = L_text + w_tag·L_tag + w_next·L_next + λ_act·L_activity + λ_vap·L_VAP 
 | 작업 | 위치 | 검증 |
 |---|---|---|
 | mixer·스키마 v2·QC | 신규 `vapasr/data/dialogue.py`, `experiments/p2_build_dialogue.py` | 합산·offset·채널·split·task_mask, 청취 |
-| 화자별 블록 serializer | 신규 `vapasr/data/dialogue_interleave.py` | 두 전사로 완전 복원, 태그 생략·flush·cap, 왕복 테스트 |
+| 화자별 블록 serializer + turn 토큰 | 신규 `vapasr/data/dialogue_interleave.py` | 두 전사·이벤트로 완전 복원, 태그 생략·`<ONSET>`/end 배치·flush·cap, §4.4 사례 7 종 단위 테스트 |
+| 디코드 상태 기계(logit 마스크) | `vapasr/hf/modeling_vapasr.py`, `live.py`, `live_mlx.py` | §4.6 허용 표, 상한, 이벤트 시각 |
 | 라벨 v2(activity/VAP/hazard/event @80 ms) | `vapasr/data/targets.py` 버전 분기 | 50 Hz 참조 경계, censoring, permutation 일치 |
 | 텍스트 전용 사전학습 | 신규 `experiments/p2_text_pretrain.py` | 경계 수·agreement 보고 |
 | 모델: 태그 억제 해제, 헤드, 슬롯 메모리, 인코더 항상 저장 | `vapasr/hf/modeling_vapasr.py`, `configuration_vapasr.py` | save/load logits·헤드·인코더 parity, deferred `<NEXT_AUDIO>` 묶음에서 마지막 오디오 위치 hidden 수집 |
