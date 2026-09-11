@@ -2,10 +2,10 @@
 type: source
 status: stable
 created: 2026-09-03
-updated: 2026-09-07
+updated: 2026-09-11
 summary: Meta Muse Voice Transcribe — 80ms soft token 기반 streaming ASR+diarization+endpointing 통합 모델, closed weights
 url: https://research.meta.ai/blog/introducing-muse-voice-transcribe
-observed: 2026-09-03
+observed: 2026-09-11
 ---
 
 # Muse Voice Transcribe (Meta Superintelligence Labs)
@@ -50,3 +50,7 @@ Muse 는 **"무엇을 듣고 있으며 언제 끝났는가"** 를 푼다. 이 �
 
 논문·기술 소개 사이의 구조, 지연 지표, 재현성 비교는
 [[source-streaming-speech-llm-related-work]]에 정리한다.
+
+## 2026-09-11 확인: Phase 2 이벤트 토큰 적용
+
+[공식 글](https://research.meta.ai/blog/introducing-muse-voice-transcribe)의 diarization 표기는 `<|start_of_turn|>`와 후행 speaker tag, endpointing 표기는 `<|speech_onset|>`와 `<|speech_endpoint|>`다. 정확히 `<end_of_turn>`이라는 이름이나 우리 2화자 결합 문법을 공개한 것은 아니다. 우리 화자별 `<SPK_s><end_of_turn>`은 이 공동 생성 원칙을 참고한 별도 계약이다. 또한 Muse는 EMPTY 이후 NEXT 없이 잔여 전사를 내지만 E2의 bounded flush는 다르다. 상세 적용·학습 라벨은 [[output-phase2-block-and-turn-label-spec]]을 따른다.

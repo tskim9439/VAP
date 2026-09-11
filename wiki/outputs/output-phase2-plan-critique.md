@@ -17,6 +17,8 @@ sources:
 
 # Phase 2 정본 계획 비판과 대안
 
+검토 답변 및 반영 결과(2026-09-11): [[output-phase2-critique-response]]. 정본은 v1.1로 개정되었으며 아래 비판은 개정 전 계획에 대한 원래 논점으로 보존한다.
+
 ## 질문
 [[output-phase2-streaming-asr-diarization-plan]] 은 그대로 실행해도 되는가. 어디가 약하고, 더 나은 해법이 있는가.
 

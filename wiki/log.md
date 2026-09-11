@@ -5,11 +5,11 @@
 
 `wiki/log/` 의 샤드를 최신순으로 이어붙인 다이제스트다. 직접 편집하지 않는다.
 
-## [2026-09-11] query | 정본 계획에 turn 토큰·시퀀스 사례(§4.4)와 데이터 생성 파이프라인(§5.3) 추가
+## [2026-09-11] query | turn 토큰·시퀀스 사례·데이터 생성 파이프라인을 별도 제안서로
 
-- Changed: `output-phase2-streaming-asr-diarization-plan.md` §4.4·§5.3 신설(교차 직렬화 유지), `output-phase2-final-plan.md` superseded 표시
-- Reason: 사용자가 정본 계획을 기본으로 택하고 청크 내 화자 교차 직렬화를 선호, turn 토큰 제안은 채택하되 "데이터를 어떻게 만드나" 를 물음. VAD 세그먼트 → 채널별 정렬 → derive_events 확장(방해당한 종료 = EOT 추가) → 슬롯 → 혼합 → 직렬화 → QC 의 전자동 파이프라인과 데이터 종류별 손실 규칙(NIKL 준자연 대화를 KO turn 토큰 원천으로)을 정리
-- Next: Q0 에서 derive_events 세그먼트 확장·TurnBench gold 정의 대조·serializer 왕복 테스트 구현
+- Changed: `wiki/outputs/output-phase2-turn-token-proposal.md` 생성. 정본 `output-phase2-streaming-asr-diarization-plan.md` 는 직전 커밋의 §4.4·§5.3 삽입을 되돌려 원상 복구. `output-phase2-final-plan.md` 는 superseded 유지, 링크 수정
+- Reason: 사용자가 정본 계획을 기본으로 택하고 교차 직렬화를 선호했으며, turn 토큰 제안은 "정본에 바로 적용하지 말고 별도 보고서로" 요청. 제안서에 규약·사례 7 종·전자동 데이터 파이프라인(VAD → 채널별 정렬 → derive_events 확장 → 슬롯 → 혼합 → 직렬화 → QC)·데이터 종류별 손실 규칙·정본 반영 시 변경 지점을 정리
+- Next: 사용자 검토 후 정본 §4.4·§5.3 반영 여부 결정
 - By: tskim
 
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획

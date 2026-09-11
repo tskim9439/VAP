@@ -23,7 +23,7 @@ sources:
 
 # Phase 2 최종 계획안: mono 2 화자 스트리밍 ASR · Diarization · Turn-Taking
 
-> **2026-09-11 상태**: 사용자 판단으로 [[output-phase2-streaming-asr-diarization-plan]] 을 기본 계획으로 채택했다. turn 토큰·시퀀스 사례·데이터 생성 파이프라인은 그 문서 §4.4·§5.3 으로 옮겼고(청크 내 직렬화는 정본의 종료 시각 순 교차를 따른다), 이 문서는 일정·데이터 실측·ablation 후보 메뉴로만 참고한다.
+> **2026-09-11 상태**: 사용자 판단으로 [[output-phase2-streaming-asr-diarization-plan]] 을 기본 계획으로 채택했다. turn 토큰·시퀀스 사례·데이터 생성 파이프라인은 별도 제안서 [[output-phase2-turn-token-proposal]] 로 옮겼고(청크 내 직렬화는 정본의 종료 시각 순 교차를 따른다), 이 문서는 일정·데이터 실측·ablation 후보 메뉴로만 참고한다.
 
 이 문서는 정본 계획([[output-phase2-streaming-asr-diarization-plan]])의 계약·관문과 비판([[output-phase2-plan-critique]])의 권고, 실행 요약([[output-phase2-plan]])을 합친 **비판 검토 전 통합 기록**이다. 작성 이후 P1–P9의 조건과 계산을 재검토했다. **실행 시 개정 정본 v1.1과 [[output-phase2-critique-response]]의 정정을 우선 적용한다.** 수치 관문은 Q0에서 기준선을 재고 동결하기 전까지 제안값이다.
 
