@@ -71,7 +71,7 @@ v1.2 추가 작업: Q0에 event token registry·18개 fixture·turn 라벨 생�
 
 ## 4. 사용자 결정 요청
 
-1. **영어 자연 대화**: otoSpeech 를 학습에 쓰는 것으로 확정할지(라이선스 원문 재확인 포함), CANDOR(CC BY-NC) 확보를 진행할지.
+1. **영어 자연 대화** — **결정(2026-09-11)**: otoSpeech 를 학습에 쓴다(비상업 연구 범위, 라이선스 원문은 Q0 에서 재확인). CANDOR 는 확보 가능하면 쓴다(CC BY-NC) → [[task-secure-english-corpora]] 진행.
 2. **71631 추가 반입**: 현재 248 h. TL_01.실내 라벨 8,306 대화 중 미반입분에서 100–200 h 를 PC 브라우저 경유로 더 가져올지. untouched KO test 용 20–30 대화는 별도로 반입 권장.
 3. **단일 모델·항상 태그**: 단일 화자 입력에서도 `<SPK_A>` 를 방출하는 한 모델(데모는 태그 숨김)을 권장. 무태그 모드 토큰을 두면 데이터가 갈린다.
 4. **turn 출력 형식 — 사용자 요구 반영**: 화자별 start/end 토큰을 전사와 함께 생성하고 activity·VAP head를 병행한다. pause/NEXT/EOF를 EOT와 구분하며 세부 규약은 [[output-phase2-block-and-turn-label-spec]]을 따른다. 필수 start/end를 ablation으로 미루지 않는다.

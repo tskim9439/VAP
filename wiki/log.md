@@ -47,6 +47,13 @@
 - Next: Stage 3 착수 전 κ 파일럿으로 재검토
 - By: tskim
 
+## [2026-09-11] decision | otoSpeech 학습 사용·CANDOR 는 확보 시 사용; <ONSET> 지연은 δ_on∈{0,1,2} sweep
+
+- Changed: `output-phase2-plan.md` 결정 1 확정, `task-secure-english-corpora.md` 진행 기록, `output-phase2-turn-token-proposal.md` §1c(δ_on 근거·결정 방식)
+- Reason: 사용자 결정(EN 코퍼스)과 질문(왜 +160 ms 고정인가). 즉시 방출은 증거 0–80 ms 라 false onset 위험, 빠른 감지는 activity 헤드가 맡으므로 토큰은 Q1 에서 precision/recall·지연으로 δ_on 을 고른다
+- Next: Q1 sweep 설계에 δ_on 포함
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
 
 - Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크

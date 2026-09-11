@@ -39,3 +39,10 @@
 - Reason: 사용자 판단 — <HOLD>·<BC> 는 신뢰성 높은 데이터를 만들 수 있을지 불확실. Phase 2 는 타이밍 라벨로 전량 자동 생성 가능한 두 토큰만 쓰고, 추론 정체는 타임아웃·hazard 승격 정책으로 처리
 - Next: Stage 3 착수 전 κ 파일럿으로 재검토
 - By: tskim
+
+## [2026-09-11] decision | otoSpeech 학습 사용·CANDOR 는 확보 시 사용; <ONSET> 지연은 δ_on∈{0,1,2} sweep
+
+- Changed: `output-phase2-plan.md` 결정 1 확정, `task-secure-english-corpora.md` 진행 기록, `output-phase2-turn-token-proposal.md` §1c(δ_on 근거·결정 방식)
+- Reason: 사용자 결정(EN 코퍼스)과 질문(왜 +160 ms 고정인가). 즉시 방출은 증거 0–80 ms 라 false onset 위험, 빠른 감지는 activity 헤드가 맡으므로 토큰은 Q1 에서 precision/recall·지연으로 δ_on 을 고른다
+- Next: Q1 sweep 설계에 δ_on 포함
+- By: tskim

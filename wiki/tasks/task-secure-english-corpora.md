@@ -5,7 +5,7 @@ owner: tskim
 due: 2026-09-17
 priority: p1
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-11
 summary: otoSpeech·CANDOR 라이선스 동의 및 확보, SpokenWOZ 채널 구조 확인
 sources:
   - [[output-streaming-vap-research-plan]]
@@ -31,3 +31,4 @@ otoSpeech 104h + CANDOR 850h 로 약 950시간이면 SpokenWOZ 없이 시작 가
 ## 진행 기록
 
 - 2026-09-03: 생성.
+- 2026-09-11: otoSpeech 는 mxc 에 반입됨(`/soundai/DB/raw/otoSpeech16k`, 104.9 h). 사용자 결정 — otoSpeech 학습 사용, CANDOR 는 확보 가능하면 사용. 남은 것: CANDOR 신청·다운로드(로컬 경유 업로드), 라이선스 원문 재확인.
