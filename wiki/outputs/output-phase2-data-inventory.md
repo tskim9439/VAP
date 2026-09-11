@@ -14,6 +14,8 @@ sources:
 
 # Phase 2 사용 데이터 목록 (mxc 실측 2026-09-11)
 
+> 확정안(언어별·중복 제거): [[output-phase2-training-db]]. 이 페이지는 조사 과정의 목록이다.
+
 정본 계획 [[output-phase2-streaming-asr-diarization-plan]] §5.1 의 표를 서버 실측으로 채운 것이다. 원본 측정 로그: `raw/sources/experiments/2026-09-11-phase2-data-inventory/mxc-inventory.txt`. 시간은 파일 크기 환산(16 kHz·16-bit PCM)이며 무음 포함 대화 경과시간이다. 정본 §5.1 의 원칙대로 두 채널 시간을 더하지 않았다(otoSpeech 화자별 wav 합계 209.9 h → 대화 104.9 h).
 
 ## 1. 이번 단계에 쓰는 데이터
