@@ -36,6 +36,7 @@ RNN-T 없이 **80 ms 오디오 청크와 텍스트 토큰을 하나의 causal LL
 | **E2(5.6 k h, 인코더 해동)** δ=2 / δ=4 | **0.076 / 0.049** | **0.139 / 0.103** | **0.167 / 0.128** | **0.292 / 0.234** |
 | E2 · **test**(표본 s300/u1000) δ=2 | test-clean **0.082** | test-other **0.139** | kspon eval_clean/other **0.158 / 0.184** | 0.299 |
 | C2 · test(표본) δ=2 | 0.104 | 0.191 | 0.274 / 0.293 | 0.470 |
+| E2 · test(표본) δ=4 | **0.054** | **0.107** | **0.125 / 0.136** | 0.246 |
 
 ## 1. 문제와 개념
 
@@ -129,7 +130,7 @@ flush   <EMPTY_AUDIO> tok… <NEXT_AUDIO>      (δ 때문에 끝을 넘긴 토�
 **판정**: 인터리브 스트리밍 ASR 은 (1) 학습 가능하고, (2) 데이터·인코더 적응으로 RNN-T 수준에 접근하며(δ=4 dev-clean 0.049 vs 0.044, kspon-dev 0.128 vs 0.202), (3) 지연을 토큰 하나로 제어할 수 있고, (4) 소비자 하드웨어에서 실시간으로 돈다. 모델이 텍스트를 내는 방식이 "언제 말이 끝났는가" 를 이미 암묵적으로 배우므로, Phase 2 의 turn 예측 헤드가 얹힐 표현으로 충분하다.
 
 **미결·이월**
-1. test 셋 보고: δ=2 표본 test(s300/u1000) 반영 완료(E2 0.082 / 0.139 / 0.158 / 0.184, dev 와 ±0.02 이내). δ=4 와 전체 셋(SLURM)은 추가 예정.
+1. test 셋 보고: δ=2 표본 test(s300/u1000) 반영 완료(E2 0.082 / 0.139 / 0.158 / 0.184, dev 와 ±0.02 이내). E2 δ=4 표본 test 반영 완료(0.054 / 0.107 / 0.125 / 0.136). C2 δ=4 는 측정 중, 전체 셋(SLURM)은 추가 예정.
 2. δ=2(160 ms) 정확도: dev-other 0.139 는 RNN-T 오프라인 0.082 와 격차. `<NEXT_AUDIO>` 가중 상향·추가 epoch(E3)·increased context 검토.
 3. 인코더 실시간성(MLX 포팅) 과 서버 GPU 에서의 tick p99.
 4. Phase 2: 혼합 mono 대화(3-1 전사 → 3-2 `<SPK_A/B>` → 3-3 overlap), VAP·hazard 헤드([[turn-taking-objectives]]), TurnBench 평가([[turn-taking-evaluation-protocol]]). SoulX-Duplug 의 상태 토큰 5 종·LLM 라벨링 파이프라인 참고. → 계획: [[output-phase2-streaming-asr-diarization-plan]](정본), 실행 요약 [[output-phase2-plan]].
