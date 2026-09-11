@@ -1,0 +1,9 @@
+186 sample 900 [(('상담사', '스마트폰', '집'), 469), (('고객', '스마트폰', '집'), 431)]
+example ('HOS11000312231B001.json', [{'audioPath': 'Y:\\03.원천데이터\\01.대학병원\\01.진료안내\\01.검사\\HOS0003122\\HOS11000312231B001.wav'}], {'title': '복지분야 콜상담 음성데이터', 'category1': '대학병원', 'category2': '진료안내', 'category3': '검사', 'speaker_type': '고객', 'speaker_id': 'SPK011', 'speaker_age': '30대', 'speaker_sex': '남', 'sptime_all': '5.197', 'sptime_start': '0.976', 'sptime_end': '4.268', 'rec_device': '스마트폰', 'rec_place': '집'})
+prefix groups (first 10 chars): 2 [('HOS1100032', 1252), ('HOS1100031', 748)]
+suffix A/B pattern: [('.', 2000)]
+Traceback (most recent call last):
+  File "<stdin>", line 19, in <module>
+NotADirectoryError: [Errno 20] Not a directory: '/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/raw/132.연령대별_특징적_발화(은어·속어_등)_음성_데이터/132_400K_info'
+
+[exited with code 0]

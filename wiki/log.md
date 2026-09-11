@@ -61,6 +61,13 @@
 - Next: Q0 — 134-1 실외 복원 manifest, stem 대조표, 134-2 검증, Switchboard 시각 검증
 - By: tskim
 
+## [2026-09-11] query | 선별 기준을 A 등급(화자별 채널/채널 기원 조각)만으로 변경, 시각 라벨 불요
+
+- Changed: `output-phase2-training-db.md` §6(A 등급 KO/EN 표·합계), 186 복지 콜센터(화자별 스마트폰 녹음 확인)·raw/132(화자쌍·발화 화자별 파일 확인) 편입, 회의·인터뷰 제외
+- Reason: 사용자 — 시각은 Qwen ForcedAligner 로 다시 뽑으므로 시각 라벨 불요, A 등급만 고려. 시간축 없는 조각은 준자연 스트림으로 쓰되 turn 손실 마스크
+- Next: Q0 — 134-2 채널 기원 검증, Switchboard 복원, 186·132 준자연 스트림 생성기
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
 
 - Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크
