@@ -117,11 +117,11 @@ sources:
 | TurnBench dev | `/soundai/DB/raw/turnbench/dev` | dual-channel | 완전 | 38 | 7.3 h | **평가 전용** |
 | Switchboard 사본 | `…/EN/TRAIN/OPEN/switchboard` | 2 채널 전화의 화자별 발화 파일, 파일명에 시각 | 완전(복원) | — | 230 h | 자연 대화·turn (시각 규약 검증 후) |
 | CallHome 사본 | `…/EN/TRAIN/OPEN/callhome` | 2 채널 전화의 화자별 발화 파일, 시각 없음 | 준자연 | 176 | 19.9 h(8 kHz) | 준자연 2 자 통화 |
-| AMI | `…/english_16kHz/ami`(발화 단위 ihm) | 헤드셋 채널 | 완전(원본 확보 시) | — | ~100 h | 다화자·turn |
+| AMI | `…/english_16kHz/ami`(발화 단위 ihm) → **원본 확보 결정(2026-09-11)** [[task-secure-meeting-corpora]] | 헤드셋 채널 | 완전 | 171 회의 | ~100 h | 다화자·turn |
 | CANDOR | 없음 | 화자별 채널 | 완전 | 1,656 | ≤850 h | 확보 시 |
 | Fisher English(LDC) | 없음 | 2 채널 전화 | 완전 | — | ≈2,000 h | 확보 시 최대 EN 자원 |
-| ICSI · NOTSOFAR-1 · DiPCo | 없음 | 참가자별 헤드셋 | 완전 | — | ~72 / 24 / 5 h | 확보 시 다화자 |
-| CHiME-6 | 없음 | 착용 마이크(타 화자 누설 큼) | 경계선 | — | ~50 h | 누설 수준 확인 후 |
+| ICSI · NOTSOFAR-1 · DiPCo | 없음 → **확보 결정(2026-09-11)** [[task-secure-meeting-corpora]] | 참가자별 헤드셋/근접 마이크(NOTSOFAR 도 논문 확인) | 완전 | 75 / 237 / 10 | ~72 / 24 / 5 h | 다화자 |
+| CHiME-6 | 없음 → **확보 결정(2026-09-11)**, OpenSLR 150 CC BY-SA 4.0 | 착용 binaural 마이크(누설 큼) | 경계선 | 20 세션 | ~50 h | 누설 수준 확인 후 |
 | SpokenWOZ | 없음(HF 공개, CC BY-NC 4.0) | **두 트랙**(사용자/상담원 각 트랙), 전화 통화, **8 kHz**, 단어 시각 있음 — 논문 원문 확인 | 완전 | 5,700 | 249 h | A 등급이지만 **겹침을 규칙으로 억제**(상담원의 끼어들기·맞장구 금지)해 overlap·backchannel 학습에는 부적합. task-oriented 도메인. 전사·화자 태그·turn 교대(비겹침)용 |
 | AliMeeting(Mandarin) | 없음(OpenSLR 119, CC BY-SA 4.0, 직접 다운로드) | 참가자별 **헤드셋 near-field** + 8 ch 어레이 | 완전 | 240 회의, 2–4 명 | 118.75 h(near-field train 104.75 h) | 헤드셋 채널은 A. **언어 범위 밖(중국어)** → 전사 학습 불가, activity·VAP·hazard 헤드와 화자 슬롯 학습에만 보조 사용 가능 |
 | AISHELL-4(Mandarin) | 없음(OpenSLR 111, CC BY-SA 4.0, 직접 다운로드) | 8 ch 어레이만, 화자별 근접 채널 없음 | — | 211 회의, 4–8 명 | 120 h | **B 등급 + 언어 범위 밖** → 제외 |
