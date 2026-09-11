@@ -55,6 +55,13 @@ case "${1:-}" in
     finish ami "$LOCAL/ami" "$REMOTE/ami"
     # 3) ICSI: 받기 → 업로드
     (cd "$LOCAL/icsi" && ./download.sh > run.log 2>&1); finish icsi "$LOCAL/icsi" "$REMOTE/icsi"
+    # 3b) NOTSOFAR-1 (HF microsoft/NOTSOFAR, CC BY 4.0, 근접 마이크 포함): 최신 버전 3 서브셋을 하나씩 받기→업로드→삭제 (각 15–49 GB)
+    export REQUESTS_CA_BUNDLE=$CA SSL_CERT_FILE=$CA CURL_CA_BUNDLE=$CA; set -a; source "$HOME/Desktop/VAPKT/.env.local"; set +a
+    for sub in benchmark-datasets/dev_set/240825.1_dev1 benchmark-datasets/train_set/240825.1_train benchmark-datasets/eval_set/240825.1_eval_full_with_GT; do
+      name=$(basename "$sub"); mkdir -p "$LOCAL/notsofar-$name"
+      /Users/taesookim/anaconda3/envs/vapasr-local/bin/python "$HOME/Desktop/VAPKT/scripts/notsofar_download.py" "$sub" "$LOCAL/notsofar-$name" >> "$LOG" 2>&1
+      finish "notsofar-$name" "$LOCAL/notsofar-$name" "$REMOTE/notsofar/$name"
+    done
     # 4) CHiME-6 (OpenSLR 150, CC BY-SA 4.0): 작은 것은 통째로, train(97 GB)은 chunk 릴레이
     mkdir -p "$LOCAL/chime6"; B=https://www.openslr.org/resources/150
     for f in LICENSE.txt CHiME6_transcriptions.tar.gz CHiME6_floorplans.tar.gz CHiME6_dev.tar.gz CHiME6_eval.tar.gz; do curl -sS -L --cacert $CA -C - -o "$LOCAL/chime6/$f" "$B/$f" || log "!! $f 실패"; done
