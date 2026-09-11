@@ -68,6 +68,13 @@
 - Next: Q0 — 134-2 채널 기원 검증, Switchboard 복원, 186·132 준자연 스트림 생성기
 - By: tskim
 
+## [2026-09-11] query | SpokenWOZ·AliMeeting·AISHELL-4 검토, Fisher 라이선스
+
+- Changed: `output-phase2-training-db.md` §6.2 에 세 코퍼스 행 추가, `question-spokenwoz-channel-structure` resolved
+- Reason: 사용자 질문. SpokenWOZ 는 두 트랙·8 kHz·단어 시각(논문 원문)이지만 겹침을 규칙으로 억제; AliMeeting 은 헤드셋 채널(A)이나 중국어; AISHELL-4 는 어레이만(B)+중국어 → 제외. Fisher 는 LDC 유료(비회원 요금 로그인 필요)
+- Next: 회사·협력 기관의 LDC 회원 여부 확인
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
 
 - Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크

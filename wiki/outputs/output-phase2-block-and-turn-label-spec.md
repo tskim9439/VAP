@@ -1,9 +1,9 @@
 ---
 type: output
-status: active
+status: superseded
 created: 2026-09-11
 updated: 2026-09-11
-summary: Phase 2 블록·라벨 규약 — 무음·단독·겹침·지연 전사·화자별 start/end_of_turn, 상태 전이·정답 생성·학습·평가
+summary: 이전 2화자 contribution start/end 블록 명세; 현재 K슬롯·ONSET/EOT 규약은 Phase 2 정본 §4.4·§6.3으로 대체
 sources:
   - '[[output-phase2-streaming-asr-diarization-plan]]'
   - '[[source-muse-voice-transcribe]]'
@@ -13,6 +13,8 @@ sources:
 ---
 
 # Phase 2 블록 구성과 화자별 Turn 토큰 라벨 규약
+
+> **2026-09-11 대체됨:** 최신 사용자 결정과 정본 개정에 따라 현재 구현 기준은 [[output-phase2-streaming-asr-diarization-plan]] §4.4·§5.3·§6이다. 아래 2화자 contribution 문법·의미 라벨·EOT hard-final은 이전 검토안으로 보존하며 현재 학습 규약으로 사용하지 않는다.
 
 2026-09-11 사용자 추가 요구 반영. 정본 계획 v1.2의 상세 계약이다. **설계 명세이며 실제 코퍼스 라벨 생성·모델 구현·학습 완료를 뜻하지 않는다.** 아래 예시가 라벨 생성기·serializer·decoder 회귀 테스트의 기준이 된다.
 

@@ -38,3 +38,8 @@ diarization 을 먼저 돌려야 하고, diarization 오류가 VAP target 에 �
 
 미해결. 우선순위는 낮다 — 영어 데이터는 otoSpeech + CANDOR 만으로도 약 950시간이라
 SpokenWOZ 없이 시작할 수 있다. → [[task-secure-english-corpora]]
+
+
+## 답 (2026-09-11)
+논문 원문(arXiv 2305.13040 §Data Collection) 확인: "Our audio files are two-track. One track represents the voice of the user and the other represents the voice of the agent. … the sample rate of our audio files is 8000Hz. … each word is recorded in the text annotation corresponding to the word context, start time and end time. To avoid the problem of overlapping utterances, we follow the rules below during the collection: (i) prohibit the agent from using the backchannel to interrupt the user …"
+→ 화자별 트랙(A 등급), 8 kHz, 단어 시각 있음, **겹침 억제 수집**. Phase 2 판정은 [[output-phase2-training-db]] §6.2.

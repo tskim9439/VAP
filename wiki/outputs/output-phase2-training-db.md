@@ -122,6 +122,9 @@ sources:
 | Fisher English(LDC) | 없음 | 2 채널 전화 | 완전 | — | ≈2,000 h | 확보 시 최대 EN 자원 |
 | ICSI · NOTSOFAR-1 · DiPCo | 없음 | 참가자별 헤드셋 | 완전 | — | ~72 / 24 / 5 h | 확보 시 다화자 |
 | CHiME-6 | 없음 | 착용 마이크(타 화자 누설 큼) | 경계선 | — | ~50 h | 누설 수준 확인 후 |
+| SpokenWOZ | 없음(HF 공개, CC BY-NC 4.0) | **두 트랙**(사용자/상담원 각 트랙), 전화 통화, **8 kHz**, 단어 시각 있음 — 논문 원문 확인 | 완전 | 5,700 | 249 h | A 등급이지만 **겹침을 규칙으로 억제**(상담원의 끼어들기·맞장구 금지)해 overlap·backchannel 학습에는 부적합. task-oriented 도메인. 전사·화자 태그·turn 교대(비겹침)용 |
+| AliMeeting(Mandarin) | 없음(OpenSLR 119, CC BY-SA 4.0, 직접 다운로드) | 참가자별 **헤드셋 near-field** + 8 ch 어레이 | 완전 | 240 회의, 2–4 명 | 118.75 h(near-field train 104.75 h) | 헤드셋 채널은 A. **언어 범위 밖(중국어)** → 전사 학습 불가, activity·VAP·hazard 헤드와 화자 슬롯 학습에만 보조 사용 가능 |
+| AISHELL-4(Mandarin) | 없음(OpenSLR 111, CC BY-SA 4.0, 직접 다운로드) | 8 ch 어레이만, 화자별 근접 채널 없음 | — | 211 회의, 4–8 명 | 120 h | **B 등급 + 언어 범위 밖** → 제외 |
 | 제외 | 원거리 어레이 혼합 녹음 전부 | | | | | |
 
 ### 6.3 합계 (학습 가능 A 등급)
@@ -129,7 +132,8 @@ sources:
 | 언어 | 완전(확정) | 부분(결손 마스크) | 준자연(시각 없음) | 확보 시 |
 |---|---|---|---|---|
 | KO | 성인 원본 실내 196.6 + 성인 조각 실외 344.2 = **540.8 h** (dev 51.7 별도) | 성인 실내 ≈1,830 h(45 %), 청소년 ≈2,420 h(72–87 %, 검증 후) | 186 콜센터, 132 대화 | AI Hub 원천 stereo 추가 반입 |
-| EN | otoSpeech ≈90 + Switchboard 230(검증 후) = **≈320 h** | — | CallHome 19.9 h | AMI ~100, CANDOR ≤850, Fisher ≈2,000, ICSI·NOTSOFAR·DiPCo |
+| EN | otoSpeech ≈90 + Switchboard 230(검증 후) = **≈320 h** | — | CallHome 19.9 h | AMI ~100, CANDOR ≤850, Fisher ≈2,000(LDC 유료), SpokenWOZ 249(겹침 억제, 8 kHz), ICSI·NOTSOFAR·DiPCo |
+| (Mandarin, 헤드 보조용) | — | — | — | AliMeeting near-field 104.75 h(A, 언어 범위 밖) |
 
 - 오디오 없음(학습 불가): 성인 실내 검증 342.9 h, 청소년 검증 301.5 h.
 - 조각 기반 대화는 완전한 셋이라도 발화 사이 무음의 원음이 없다(무음으로 채움). 발화 구간과 겹침은 채널별로 온전하다.
