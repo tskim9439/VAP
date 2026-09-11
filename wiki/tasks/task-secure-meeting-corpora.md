@@ -15,7 +15,7 @@ sources:
 # 영어 회의 코퍼스 확보 (AMI · ICSI · NOTSOFAR-1 · DiPCo · CHiME-6)
 
 ## 배경
-2026-09-11 사용자 결정: 다화자 자연 데이터로 다섯 코퍼스를 확보한다. 모두 화자별 근접(헤드셋/착용) 채널이 있어 A 등급([[output-phase2-training-db]] §6). 규칙: **서버에서 직접 받지 않고 로컬(맥)에 내려받아 올린다**. 로컬 여유 54 GB 라 "받기 → 올리기 → 지우기" 순환. 업로드는 `scripts/sync-mxc.sh bigpush`(azcopy SAS 미설정 → rsync 폴백, **실측 4 MB/s** → 190 GB ≈ 13 h). 서버 목적지 `/soundai/users/tskim/VAPKT-data/data/corpora/<이름>/`.
+2026-09-11 사용자 결정: 다화자 자연 데이터로 다섯 코퍼스를 확보한다. 모두 화자별 근접(헤드셋/착용) 채널이 있어 A 등급([[output-phase2-training-db]] §6). 규칙: **서버에서 직접 받지 않고 로컬(맥)에 내려받아 올린다**. 로컬 여유 54 GB 라 "받기 → 올리기 → 지우기" 순환. 업로드는 `scripts/sync-mxc.sh bigpush`(azcopy SAS 미설정 → rsync 폴백, **실측 4 MB/s** → 190 GB ≈ 13 h). 서버 목적지 `/soundai/DB/raw/<이름>/`.
 
 ## 코퍼스별 사실 (2026-09-11 확인)
 | 코퍼스 | 배포·라이선스 | 받을 것 | 용량 | 속도(맥, 실측) | 사용자 조치 |
@@ -36,7 +36,7 @@ sources:
 7. [ ] 데이터 목록 §6.2 갱신(서버 위치·시간)
 
 ## 릴레이 자동화
-`scripts/corpus-relay.sh run`(맥에서 nohup 백그라운드, 로그 `~/Downloads/vapkt-corpora/relay.log`): DiPCo·AMI 다운로드 완료 대기 → rsync 업로드 → 바이트 합계 검증 → **로컬만** 삭제 → ICSI 다운로드·업로드 → CHiME-6 소형 파일 → CHiME-6 train(97 GB, 로컬 디스크 초과)은 10 GB 범위 조각으로 받기→올리기→지우기를 반복한 뒤 서버에서 `cat` 으로 합침(`_parts_*` 보존). 서버 목적지 `/soundai/users/tskim/VAPKT-data/data/corpora/{dipco,ami,icsi,chime6}`.
+`scripts/corpus-relay.sh run`(맥에서 nohup 백그라운드, 로그 `~/Downloads/vapkt-corpora/relay.log`): DiPCo·AMI 다운로드 완료 대기 → rsync 업로드 → 바이트 합계 검증 → **로컬만** 삭제 → ICSI 다운로드·업로드 → CHiME-6 소형 파일 → CHiME-6 train(97 GB, 로컬 디스크 초과)은 10 GB 범위 조각으로 받기→올리기→지우기를 반복한 뒤 서버에서 `cat` 으로 합침(`_parts_*` 보존). 서버 목적지 `/soundai/DB/raw/{dipco,ami,icsi,chime6,notsofar}`(사용자 지정 2026-09-11).
 
 ## 진행 기록
 - 2026-09-11: 릴레이 오케스트레이터 시작(DiPCo·AMI 다운로드 중). NOTSOFAR-1 은 HF 토큰 대기.

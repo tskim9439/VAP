@@ -4,7 +4,7 @@
 #   scripts/corpus-relay.sh run         # 전체 순서 실행(백그라운드 권장):  DiPCo·AMI 완료 대기→업로드 → ICSI 받기→업로드 → CHiME-6 (chunk 릴레이)
 #   scripts/corpus-relay.sh upload <로컬 dir> <서버 dir>   # 한 코퍼스만 업로드+검증(삭제 없음)
 set -uo pipefail
-LOCAL=~/Downloads/vapkt-corpora; REMOTE=/soundai/users/tskim/VAPKT-data/data/corpora; SSH="ssh -o ConnectTimeout=20 -o ServerAliveInterval=30 -p 3206 mxc"
+LOCAL=~/Downloads/vapkt-corpora; REMOTE=/soundai/DB/raw; SSH="ssh -o ConnectTimeout=20 -o ServerAliveInterval=30 -p 3206 mxc"
 CA=~/.vapkt-ca-bundle.pem; LOG=$LOCAL/relay.log
 log(){ echo "[$(date '+%F %T')] $*" | tee -a "$LOG"; }
 ssh_retry(){ local i; for i in 1 2 3 4 5 6; do $SSH "$@" && return 0; log "ssh 실패, 60 s 후 재시도 ($i)"; sleep 60; done; return 1; }
