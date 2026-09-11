@@ -18,3 +18,10 @@
 - Reason: 사용자 지적 — <HOLD> 오예측 후 후속 발화가 없으면 정체. HOLD 를 없애도 "EOT 없는 침묵" 으로 같은 문제가 남으므로, HOLD 를 잠정으로 두고 τ_max·hazard 기반 승격을 학습·추론 양쪽에 둠
 - Next: Q0 에서 포기된 발화 빈도·gap 분포 측정, τ_max 후보 1.5/2.0/3.0 s
 - By: tskim
+
+## [2026-09-11] query | 제안서 개정 — <HOLD>/<EOT> 결정표(문장 완결 vs 기여 완결 × 멈춤 길이)
+
+- Changed: `output-phase2-turn-token-proposal.md` §3e 신설(τ_cand 0.25 s 후보, LLM 등급 INCOMPLETE / COMPLETE-CONTINUING / COMPLETE-FINAL / BC / AMBIGUOUS, τ_offer 1.0 s·τ_max 2.0 s 결정표, 여러 문장·단어 공백·긴 생각 멈춤 사례), §3b.2 표 갱신
+- Reason: 사용자 질문 — 2–3 문장 연속 발화와 단어 사이 공백에서 <HOLD> 를 어떻게 구분하나
+- Next: Q0 에서 멈춤 분포·등급별 κ·분당 토큰 수 측정 후 τ 확정
+- By: tskim

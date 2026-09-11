@@ -26,6 +26,13 @@
 - Next: Q0 에서 포기된 발화 빈도·gap 분포 측정, τ_max 후보 1.5/2.0/3.0 s
 - By: tskim
 
+## [2026-09-11] query | 제안서 개정 — <HOLD>/<EOT> 결정표(문장 완결 vs 기여 완결 × 멈춤 길이)
+
+- Changed: `output-phase2-turn-token-proposal.md` §3e 신설(τ_cand 0.25 s 후보, LLM 등급 INCOMPLETE / COMPLETE-CONTINUING / COMPLETE-FINAL / BC / AMBIGUOUS, τ_offer 1.0 s·τ_max 2.0 s 결정표, 여러 문장·단어 공백·긴 생각 멈춤 사례), §3b.2 표 갱신
+- Reason: 사용자 질문 — 2–3 문장 연속 발화와 단어 사이 공백에서 <HOLD> 를 어떻게 구분하나
+- Next: Q0 에서 멈춤 분포·등급별 κ·분당 토큰 수 측정 후 τ 확정
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
 
 - Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크
