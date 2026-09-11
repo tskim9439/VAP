@@ -5,6 +5,13 @@
 
 `wiki/log/` 의 샤드를 최신순으로 이어붙인 다이제스트다. 직접 편집하지 않는다.
 
+## [2026-09-11] query | 정본 계획에 turn 토큰·시퀀스 사례(§4.4)와 데이터 생성 파이프라인(§5.3) 추가
+
+- Changed: `output-phase2-streaming-asr-diarization-plan.md` §4.4·§5.3 신설(교차 직렬화 유지), `output-phase2-final-plan.md` superseded 표시
+- Reason: 사용자가 정본 계획을 기본으로 택하고 청크 내 화자 교차 직렬화를 선호, turn 토큰 제안은 채택하되 "데이터를 어떻게 만드나" 를 물음. VAD 세그먼트 → 채널별 정렬 → derive_events 확장(방해당한 종료 = EOT 추가) → 슬롯 → 혼합 → 직렬화 → QC 의 전자동 파이프라인과 데이터 종류별 손실 규칙(NIKL 준자연 대화를 KO turn 토큰 원천으로)을 정리
+- Next: Q0 에서 derive_events 세그먼트 확장·TurnBench gold 정의 대조·serializer 왕복 테스트 구현
+- By: tskim
+
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
 
 - Changed: `wiki/outputs/output-phase2-streaming-asr-diarization-plan.md`, `wiki/outputs/output-phase1-report.md`의 후속 계획 링크
@@ -45,6 +52,13 @@
 - Changed: `output-phase2-streaming-asr-diarization-plan`, `output-phase2-plan`, `output-phase2-critique-response`, 비판글 답변 링크, 동시 추가된 `output-phase2-final-plan`의 개정 정본 우선 적용 안내
 - Reason: 사용자 요청으로 비판 P1–P9를 코드·1차 자료와 비교하고 채택·조건부 수정·반론을 기록했다. ASR 강화와 의미 학습 트랙을 추가하고 직렬화·slot memory·recipe·MVP를 구체화했다.
 - Next: Q0 데이터·저장 parity·serializer 검증, S 라벨 pilot과 A 기준선. 이번 작업은 문서 개정이며 코드 구현·학습 제출은 하지 않았다.
+- By: tskim
+
+## [2026-09-11] query | Phase 2 무음·단독·겹침 블록 및 화자별 start/end 토큰 명세
+
+- Changed: `output-phase2-block-and-turn-label-spec`, `output-phase2-streaming-asr-diarization-plan` v1.2, `output-phase2-plan`, `source-muse-voice-transcribe`
+- Reason: 사용자 요청에 따라 18가지 블록 사례, 화자별 독립 OPEN/CLOSED 상태, start/end 공동 생성, 실제 label 생성·관측 시각·loss·EOF·부분 감독 계약을 구체화했다. Muse 공식 token 표기와 우리 확장을 구분했다.
+- Next: Q0 라벨 생성기·serializer·상태 parser 및 fixture 구현, 신뢰도 높은 자연 turn 창 검수. 이번 작업은 계획·명세이며 코퍼스 전체 라벨 생성이나 모델 학습을 수행하지 않았다.
 - By: tskim
 
 ## [2026-09-10] query | Stage 2 run E2(인코더 해동) 최종 평가 보고서

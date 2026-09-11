@@ -23,6 +23,8 @@ sources:
 
 # Phase 2 최종 계획안: mono 2 화자 스트리밍 ASR · Diarization · Turn-Taking
 
+> **2026-09-11 상태**: 사용자 판단으로 [[output-phase2-streaming-asr-diarization-plan]] 을 기본 계획으로 채택했다. turn 토큰·시퀀스 사례·데이터 생성 파이프라인은 그 문서 §4.4·§5.3 으로 옮겼고(청크 내 직렬화는 정본의 종료 시각 순 교차를 따른다), 이 문서는 일정·데이터 실측·ablation 후보 메뉴로만 참고한다.
+
 이 문서는 정본 계획([[output-phase2-streaming-asr-diarization-plan]])의 계약·관문과 비판([[output-phase2-plan-critique]])의 권고, 실행 요약([[output-phase2-plan]])을 합친 **비판 검토 전 통합 기록**이다. 작성 이후 P1–P9의 조건과 계산을 재검토했다. **실행 시 개정 정본 v1.1과 [[output-phase2-critique-response]]의 정정을 우선 적용한다.** 수치 관문은 Q0에서 기준선을 재고 동결하기 전까지 제안값이다.
 
 2026-09-11 후속 정정: 그룹화는 G0/G1 비교 후보이며 시간순과 동등하지 않다. 의미 완결성을 실제 발화 종료로 자동 정답화하지 않는다. R-E2/R-low 제한 비교, 예측 기반 slot memory 검증, Q1 이전 A* 승격 또는 Q1/Q2 재학습, train 후보 약 301.5h 상한을 적용한다. 아래 ‘KV 2배’, 단계별 1–3시간, 자연 train 248h, test 표본으로 승격하는 문구는 채택하지 않는다. 모델 선택은 dev, test는 고정 보고용이다. 상세 구현·문맥 예산·완료 범위는 개정 정본을 따른다. 이 안내는 동시에 추가된 통합 초안을 보존하면서 잘못된 실행 규칙의 사용을 막기 위한 것이다.
