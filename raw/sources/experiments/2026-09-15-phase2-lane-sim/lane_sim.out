@@ -1,0 +1,64 @@
+== AMI: meetings 171  N/meeting {3: 5, 4: 163, 5: 3}
+  simultaneous among speech frames: {1: '79.4%', 2: '16.7%', 3: '3.3%', 4: '0.6%', 5: '0.0%'}
+  lanes needed (eager free, max concurrent open): {3: 11, 4: 155, 5: 5}
+  episodes/min mean 15.7  total eps 92286
+  R=4 eager exhausted 8 (0.01%)  lazy exhausted 6  lazy reassign 155 (0.17%)  reassign within 3.0s of prev close 12
+== ICSI: meetings 75  N/meeting {3: 1, 4: 3, 5: 14, 6: 21, 7: 18, 8: 10, 9: 7, 10: 1}
+  simultaneous among speech frames: {1: '81.2%', 2: '14.7%', 3: '2.6%', 4: '0.8%', 5: '0.4%', 6: '0.2%', 7: '0.2%', 8: '0.0%', 9: '0.0%'}
+  lanes needed (eager free, max concurrent open): {3: 1, 4: 13, 5: 16, 6: 18, 7: 16, 8: 6, 9: 2, 10: 3}
+  episodes/min mean 24.2  total eps 103024
+  R=4 eager exhausted 1888 (1.83%)  lazy exhausted 1815  lazy reassign 11218 (10.89%)  reassign within 3.0s of prev close 3310
+== ICSI_R6: meetings 75  N/meeting {3: 1, 4: 3, 5: 14, 6: 21, 7: 18, 8: 10, 9: 7, 10: 1}
+  simultaneous among speech frames: {1: '81.2%', 2: '14.7%', 3: '2.6%', 4: '0.8%', 5: '0.4%', 6: '0.2%', 7: '0.2%', 8: '0.0%', 9: '0.0%'}
+  lanes needed (eager free, max concurrent open): {3: 1, 4: 13, 5: 16, 6: 18, 7: 16, 8: 6, 9: 2, 10: 3}
+  episodes/min mean 24.2  total eps 103024
+  R=6 eager exhausted 248 (0.24%)  lazy exhausted 231  lazy reassign 2483 (2.41%)  reassign within 3.0s of prev close 456
+== ICSI_R8: meetings 75  N/meeting {3: 1, 4: 3, 5: 14, 6: 21, 7: 18, 8: 10, 9: 7, 10: 1}
+  simultaneous among speech frames: {1: '81.2%', 2: '14.7%', 3: '2.6%', 4: '0.8%', 5: '0.4%', 6: '0.2%', 7: '0.2%', 8: '0.0%', 9: '0.0%'}
+  lanes needed (eager free, max concurrent open): {3: 1, 4: 13, 5: 16, 6: 18, 7: 16, 8: 6, 9: 2, 10: 3}
+  episodes/min mean 24.2  total eps 103024
+  R=8 eager exhausted 27 (0.03%)  lazy exhausted 18  lazy reassign 196 (0.19%)  reassign within 3.0s of prev close 20
+== NOTSOFAR: meetings 237  N/meeting {3: 16, 4: 75, 5: 70, 6: 47, 7: 21, 8: 8}
+  simultaneous among speech frames: {1: '66.0%', 2: '24.9%', 3: '7.3%', 4: '1.5%', 5: '0.2%', 6: '0.0%', 7: '0.0%'}
+  lanes needed (eager free, max concurrent open): {2: 2, 3: 23, 4: 81, 5: 79, 6: 41, 7: 9, 8: 2}
+  episodes/min mean 32.3  total eps 47210
+  R=4 eager exhausted 1055 (2.23%)  lazy exhausted 894  lazy reassign 8391 (17.77%)  reassign within 3.0s of prev close 3738
+== NOTSOFAR_R6: meetings 237  N/meeting {3: 16, 4: 75, 5: 70, 6: 47, 7: 21, 8: 8}
+  simultaneous among speech frames: {1: '66.0%', 2: '24.9%', 3: '7.3%', 4: '1.5%', 5: '0.2%', 6: '0.0%', 7: '0.0%'}
+  lanes needed (eager free, max concurrent open): {2: 2, 3: 23, 4: 81, 5: 79, 6: 41, 7: 9, 8: 2}
+  episodes/min mean 32.3  total eps 47210
+  R=6 eager exhausted 19 (0.04%)  lazy exhausted 15  lazy reassign 1067 (2.26%)  reassign within 3.0s of prev close 180
+## durations (sum of per-meeting max end, hours) and speech hours (sum of merged segments)
+== AMI: meetings 171  N/meeting {3: 5, 4: 163, 5: 3}
+  simultaneous among speech frames: {1: '79.4%', 2: '16.7%', 3: '3.3%', 4: '0.6%', 5: '0.0%'}
+  lanes needed (eager free, max concurrent open): {3: 11, 4: 155, 5: 5}
+  episodes/min mean 15.7  total eps 92286
+  R=4 eager exhausted 8 (0.01%)  lazy exhausted 6  lazy reassign 155 (0.17%)  reassign within 3.0s of prev close 12
+== ICSI: meetings 75  N/meeting {3: 1, 4: 3, 5: 14, 6: 21, 7: 18, 8: 10, 9: 7, 10: 1}
+  simultaneous among speech frames: {1: '81.2%', 2: '14.7%', 3: '2.6%', 4: '0.8%', 5: '0.4%', 6: '0.2%', 7: '0.2%', 8: '0.0%', 9: '0.0%'}
+  lanes needed (eager free, max concurrent open): {3: 1, 4: 13, 5: 16, 6: 18, 7: 16, 8: 6, 9: 2, 10: 3}
+  episodes/min mean 24.2  total eps 103024
+  R=4 eager exhausted 1888 (1.83%)  lazy exhausted 1815  lazy reassign 11218 (10.89%)  reassign within 3.0s of prev close 3310
+== ICSI_R6: meetings 75  N/meeting {3: 1, 4: 3, 5: 14, 6: 21, 7: 18, 8: 10, 9: 7, 10: 1}
+  simultaneous among speech frames: {1: '81.2%', 2: '14.7%', 3: '2.6%', 4: '0.8%', 5: '0.4%', 6: '0.2%', 7: '0.2%', 8: '0.0%', 9: '0.0%'}
+  lanes needed (eager free, max concurrent open): {3: 1, 4: 13, 5: 16, 6: 18, 7: 16, 8: 6, 9: 2, 10: 3}
+  episodes/min mean 24.2  total eps 103024
+  R=6 eager exhausted 248 (0.24%)  lazy exhausted 231  lazy reassign 2483 (2.41%)  reassign within 3.0s of prev close 456
+== ICSI_R8: meetings 75  N/meeting {3: 1, 4: 3, 5: 14, 6: 21, 7: 18, 8: 10, 9: 7, 10: 1}
+  simultaneous among speech frames: {1: '81.2%', 2: '14.7%', 3: '2.6%', 4: '0.8%', 5: '0.4%', 6: '0.2%', 7: '0.2%', 8: '0.0%', 9: '0.0%'}
+  lanes needed (eager free, max concurrent open): {3: 1, 4: 13, 5: 16, 6: 18, 7: 16, 8: 6, 9: 2, 10: 3}
+  episodes/min mean 24.2  total eps 103024
+  R=8 eager exhausted 27 (0.03%)  lazy exhausted 18  lazy reassign 196 (0.19%)  reassign within 3.0s of prev close 20
+== NOTSOFAR: meetings 237  N/meeting {3: 16, 4: 75, 5: 70, 6: 47, 7: 21, 8: 8}
+  simultaneous among speech frames: {1: '66.0%', 2: '24.9%', 3: '7.3%', 4: '1.5%', 5: '0.2%', 6: '0.0%', 7: '0.0%'}
+  lanes needed (eager free, max concurrent open): {2: 2, 3: 23, 4: 81, 5: 79, 6: 41, 7: 9, 8: 2}
+  episodes/min mean 32.3  total eps 47210
+  R=4 eager exhausted 1055 (2.23%)  lazy exhausted 894  lazy reassign 8391 (17.77%)  reassign within 3.0s of prev close 3738
+== NOTSOFAR_R6: meetings 237  N/meeting {3: 16, 4: 75, 5: 70, 6: 47, 7: 21, 8: 8}
+  simultaneous among speech frames: {1: '66.0%', 2: '24.9%', 3: '7.3%', 4: '1.5%', 5: '0.2%', 6: '0.0%', 7: '0.0%'}
+  lanes needed (eager free, max concurrent open): {2: 2, 3: 23, 4: 81, 5: 79, 6: 41, 7: 9, 8: 2}
+  episodes/min mean 32.3  total eps 47210
+  R=6 eager exhausted 19 (0.04%)  lazy exhausted 15  lazy reassign 1067 (2.26%)  reassign within 3.0s of prev close 180
+AMI: meetings 171  duration 98.1 h  per-speaker speech 104.4 h
+ICSI: meetings 75  duration 71.6 h  per-speaker speech 76.8 h
+NOTSOFAR: meetings 237  duration 24.2 h  per-speaker speech 32.6 h
