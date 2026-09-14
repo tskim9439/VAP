@@ -10,7 +10,6 @@
 
 | 상태 | 우선순위 | 마감 | 태스크 |
 |------|----------|------|--------|
-| **doing** | **p0** | 2026-09-19 | [[task-secure-meeting-corpora]] — 영어 회의·파티 코퍼스 5 종(AMI·ICSI·NOTSOFAR-1·DiPCo·CHiME-6) 확보 — 로컬 다운로드 → mxc 업로드 순환, 라이선스·용량·절차·진행 상태 |
 | **doing** | **p0** | 2026-10-16 | [[task-uslm-u1-interleaved-asr]] — USLM U1 — Nemotron frozen + Qwen3-0.6B LoRA interleaved ASR(텍스트 스트림만), WER 상대 열화 ≤10% 관문 |
 | **doing** | **p0** | 2026-10-22 | [[task-stage1-encoder-probing]] — frozen encoder 비교 실험 — CPC/WavLM/FastConformer/AuT/DualTurn + random floor, 교란 통제 |
 | open | **p0** | 2026-11-27 | [[task-uslm-u3-multitask]] — USLM U3 — audio-clock 헤드(VAP/τ/VAD)+이벤트 토큰 멀티태스크, 50Hz 사이드 브랜치 하이브리드 ablation, encoder-only probe와 비교(H2) |

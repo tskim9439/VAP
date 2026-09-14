@@ -5,6 +5,27 @@
 
 `wiki/log/` 의 샤드를 최신순으로 이어붙인 다이제스트다. 직접 편집하지 않는다.
 
+## [2026-09-14] query | 고정 화자 ID와 A/B 교대 표식 비교
+
+- Changed: [[output-phase2-speaker-representation-comparison]] 신규 분석 보고서.
+- Reason: 최대 화자 수·뒤쪽 슬롯 학습 희소성·3중 겹침을 고려한 표현 선택 질문. 세션 N·동시 S·전사 채널 R을 구분하고 t-SOT/t-vector/Streaming Sortformer 원문과 대조했다.
+- Next: 현행 K baseline의 실제 Dataset 검증과 N/S별 병목 분리. 동적 speaker memory는 미채택 제안이며 정본·registry·결정·코드는 변경하지 않았다.
+- By: tskim
+
+## [2026-09-14] query | 실제 AMI 시퀀스 재구성 및 표시
+
+- Changed: [[output-phase2-sequence-replay]], [[output-phase2-eot-review-framework]] 실행 예시 링크, `experiments/p2_replay_sequence.py`, `raw/sources/experiments/2026-09-14-phase2-sequence-replay/` 신규 산출물.
+- Reason: 실제 데이터 시퀀스를 만들어 보여 달라는 요청. 이전 로컬 원본 경로는 없으므로 보존된 38.4초 PCM·단어/이벤트 기록을 재직렬화해 480블록 ID·화자별 전사 복원을 검증했다. 자동 EOT 5개는 미검수로 유지했다.
+- Next: 독립 청취·누락 감사와 라벨 승인. 새 녹음 표본·모델 추론·검수 완료 결과로 해석하지 않는다.
+- By: tskim
+
+## [2026-09-14] query | 시퀀스 8개 비판 검증 및 정본 개정
+
+- Changed: [[output-phase2-streaming-asr-diarization-plan]], [[output-phase2-eot-review-framework]], [[output-phase2-sequence-critique-response]], probe/replay 실험 문서와 코드의 역사적 역할 표시, superseded 블록 명세의 테스트 기준 표현 수정.
+- Reason: 사용자 비판에 따라 Q1 C-mode·A/B ID 재사용·TN/registry와 공용 Dataset/16사례 테스트·KO 1대화 QA를 우선하고 QC를 TurnBench dev+AMI 200경계로 축소했다. 실제 tokenizer/embedding 헤더·TN 표본을 읽어 판단 근거를 확인했다.
+- Next: 정본 순서대로 실제 구현. C의 3초 지연·coverage, dev 튜닝 오염, HF config 미확인, head/KO 파이프라인 미구현을 완료 주장과 구분한다. 관련 변경만 로컬 커밋하고 원 음성·무관한 dirty 변경은 제외한다.
+- By: tskim
+
 ## [2026-09-13] query | AMI 실제 데이터의 Phase 2 블록 시퀀스 생성
 
 - Changed: [[output-phase2-real-sequence-probe]], `experiments/p2_sequence_probe.py`, `raw/sources/experiments/2026-09-13-phase2-sequence-probe/` 신규 산출물; [[output-phase2-streaming-asr-diarization-plan]] §9에 검증 사례 링크 추가.
