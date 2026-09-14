@@ -1,9 +1,23 @@
 <!-- generated: do not edit -->
 # 활동 로그
 
-마지막 생성: 2026-09-11
+마지막 생성: 2026-09-14
 
 `wiki/log/` 의 샤드를 최신순으로 이어붙인 다이제스트다. 직접 편집하지 않는다.
+
+## [2026-09-13] query | AMI 실제 데이터의 Phase 2 블록 시퀀스 생성
+
+- Changed: [[output-phase2-real-sequence-probe]], `experiments/p2_sequence_probe.py`, `raw/sources/experiments/2026-09-13-phase2-sequence-probe/` 신규 산출물; [[output-phase2-streaming-asr-diarization-plan]] §9에 검증 사례 링크 추가.
+- Reason: 사용자 요청으로 AMI 4화자 38.4초를 480개 80ms 블록으로 직렬화하고 mono crop·실제 BPE ID·학습 라벨·블록 표를 생성했다. 전사 복원 검증과 자동 EOT의 marketing…expert 재개 오류 후보를 기록했다.
+- Next: VAD/정렬 비교, 재개·짧은 겹침 EOT 검수, TN·특수 토큰·encoder 연결. 실제 모델 학습·추론 결과와 혼동하지 않는다.
+- By: tskim
+
+## [2026-09-13] query | Phase 2 자동 EOT 검수 프레임워크 설계
+
+- Changed: [[output-phase2-eot-review-framework]] 신규; [[output-phase2-real-sequence-probe]]의 확정 오답으로 읽힐 수 있는 표현 보완; [[output-phase2-streaming-asr-diarization-plan]] Q0 검수 설계 링크 추가.
+- Reason: 자동 EOT 추가 검수를 수행 가능한 프레임워크로 설계해 달라는 요청. 파일 기반 CLI·청취 팩·독립 판정·누락 감사·잠금 평가·릴리스·event-complete 학습 계약을 정의했다.
+- Next: F0–F1 구현 후 AMI 20개로 사람 검수 저장/재가져오기 루프 확인. 본 작업은 설계이며 검수 프로그램·사람 판정·학습 실행은 하지 않았다.
+- By: tskim
 
 ## [2026-09-11] task | 영어 회의 코퍼스 5 종 확보 시작
 
@@ -80,6 +94,13 @@
 - Changed: `output-phase2-training-db.md` §6.2 에 세 코퍼스 행 추가, `question-spokenwoz-channel-structure` resolved
 - Reason: 사용자 질문. SpokenWOZ 는 두 트랙·8 kHz·단어 시각(논문 원문)이지만 겹침을 규칙으로 억제; AliMeeting 은 헤드셋 채널(A)이나 중국어; AISHELL-4 는 어레이만(B)+중국어 → 제외. Fisher 는 LDC 유료(비회원 요금 로그인 필요)
 - Next: 회사·협력 기관의 LDC 회원 여부 확인
+- By: tskim
+
+## [2026-09-11] query | Phase 2 학습 DB 보고서 단순화
+
+- Changed: [[output-phase2-training-db]] — 이전 선정안과 A등급 선별 v2를 통합하고 우선 준비·확장·replay/평가·필수 규칙·실행 순서로 재구성.
+- Reason: 사용자 요청에 따라 중복 표와 낡은 결론을 제거. 344.2 h의 라벨 합계와 보유 대화 수 차이, 검증 전 Switchboard, 부분 조각의 파일 보유 비율을 실제 학습량과 구분했다. 원본 대화 수와 TurnBench dev 역할도 정정.
+- Next: 원본/조각/replay ID 대조와 split을 먼저 고정하고 우선 데이터 manifest를 집계. 정본 §5의 이전 B등급 후보·360 h 추정은 최신 선정 기준으로 후속 동기화 필요.
 - By: tskim
 
 ## [2026-09-11] query | Phase 2 최대 2화자 스트리밍 ASR·화자 구분·turn-taking 개발 계획
