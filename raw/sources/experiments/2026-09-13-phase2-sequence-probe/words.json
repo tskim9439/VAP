@@ -1,0 +1,1028 @@
+[
+  {
+    "agent": "B",
+    "start": 895680,
+    "end": 904480,
+    "raw": "Um",
+    "word_id": "ES2002a.B.words5",
+    "normalized": "um",
+    "ids": [
+      4443
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 904480,
+    "end": 907040,
+    "raw": "well",
+    "word_id": "ES2002a.B.words6",
+    "normalized": "well",
+    "ids": [
+      1632
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 907040,
+    "end": 909440,
+    "raw": "this",
+    "word_id": "ES2002a.B.words7",
+    "normalized": "this",
+    "ids": [
+      419
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 909440,
+    "end": 911360,
+    "raw": "is",
+    "word_id": "ES2002a.B.words8",
+    "normalized": "is",
+    "ids": [
+      374
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 911360,
+    "end": 912800,
+    "raw": "the",
+    "word_id": "ES2002a.B.words9",
+    "normalized": "the",
+    "ids": [
+      279
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 912800,
+    "end": 919840,
+    "raw": "kick-off",
+    "word_id": "ES2002a.B.words10",
+    "normalized": "kick off",
+    "ids": [
+      10323,
+      1007
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 919840,
+    "end": 925600,
+    "raw": "meeting",
+    "word_id": "ES2002a.B.words11",
+    "normalized": "meeting",
+    "ids": [
+      6438
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 925600,
+    "end": 928160,
+    "raw": "for",
+    "word_id": "ES2002a.B.words12",
+    "normalized": "for",
+    "ids": [
+      369
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 928160,
+    "end": 936640,
+    "raw": "our",
+    "word_id": "ES2002a.B.words13",
+    "normalized": "our",
+    "ids": [
+      1039
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 936640,
+    "end": 939040,
+    "raw": "our",
+    "word_id": "ES2002a.B.words14",
+    "normalized": "our",
+    "ids": [
+      1039
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 939040,
+    "end": 965600,
+    "raw": "project",
+    "word_id": "ES2002a.B.words15",
+    "normalized": "project",
+    "ids": [
+      2390
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 965600,
+    "end": 995040,
+    "raw": "Um",
+    "word_id": "ES2002a.B.words17",
+    "normalized": "um",
+    "ids": [
+      4443
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 995040,
+    "end": 1003520,
+    "raw": "and",
+    "word_id": "ES2002a.B.words19",
+    "normalized": "and",
+    "ids": [
+      323
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1003520,
+    "end": 1026560,
+    "raw": "um",
+    "word_id": "ES2002a.B.words20",
+    "normalized": "um",
+    "ids": [
+      4443
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1026560,
+    "end": 1029600,
+    "raw": "this",
+    "word_id": "ES2002a.B.words21",
+    "normalized": "this",
+    "ids": [
+      419
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1029600,
+    "end": 1031360,
+    "raw": "is",
+    "word_id": "ES2002a.B.words22",
+    "normalized": "is",
+    "ids": [
+      374
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1031360,
+    "end": 1036800,
+    "raw": "just",
+    "word_id": "ES2002a.B.words23",
+    "normalized": "just",
+    "ids": [
+      1101
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1036800,
+    "end": 1039360,
+    "raw": "what",
+    "word_id": "ES2002a.B.words24",
+    "normalized": "what",
+    "ids": [
+      1128
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1039360,
+    "end": 1040960,
+    "raw": "we're",
+    "word_id": "ES2002a.B.words25",
+    "normalized": "we're",
+    "ids": [
+      582,
+      2299
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1040960,
+    "end": 1043360,
+    "raw": "gonna",
+    "word_id": "ES2002a.B.words26",
+    "normalized": "gonna",
+    "ids": [
+      16519
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1043360,
+    "end": 1044800,
+    "raw": "be",
+    "word_id": "ES2002a.B.words27",
+    "normalized": "be",
+    "ids": [
+      387
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1044800,
+    "end": 1048960,
+    "raw": "doing",
+    "word_id": "ES2002a.B.words28",
+    "normalized": "doing",
+    "ids": [
+      3730
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1048960,
+    "end": 1050400,
+    "raw": "over",
+    "word_id": "ES2002a.B.words29",
+    "normalized": "over",
+    "ids": [
+      916
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1050400,
+    "end": 1051680,
+    "raw": "the",
+    "word_id": "ES2002a.B.words30",
+    "normalized": "the",
+    "ids": [
+      279
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1051680,
+    "end": 1055520,
+    "raw": "next",
+    "word_id": "ES2002a.B.words31",
+    "normalized": "next",
+    "ids": [
+      1790
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1055520,
+    "end": 1059040,
+    "raw": "twenty",
+    "word_id": "ES2002a.B.words32",
+    "normalized": "twenty",
+    "ids": [
+      17073
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1059040,
+    "end": 1062720,
+    "raw": "five",
+    "word_id": "ES2002a.B.words33",
+    "normalized": "five",
+    "ids": [
+      4236
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1062720,
+    "end": 1080800,
+    "raw": "minutes",
+    "word_id": "ES2002a.B.words34",
+    "normalized": "minutes",
+    "ids": [
+      4420
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1075360,
+    "end": 1079200,
+    "raw": "Mm-hmm",
+    "word_id": "ES2002a.D.words0",
+    "normalized": "mm hmm",
+    "ids": [
+      9465,
+      87501
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1080800,
+    "end": 1096960,
+    "raw": "Um",
+    "word_id": "ES2002a.B.words36",
+    "normalized": "um",
+    "ids": [
+      4443
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1096960,
+    "end": 1106400,
+    "raw": "so",
+    "word_id": "ES2002a.B.words37",
+    "normalized": "so",
+    "ids": [
+      773
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1106400,
+    "end": 1112160,
+    "raw": "first",
+    "word_id": "ES2002a.B.words38",
+    "normalized": "first",
+    "ids": [
+      1156
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1112160,
+    "end": 1113280,
+    "raw": "of",
+    "word_id": "ES2002a.B.words39",
+    "normalized": "of",
+    "ids": [
+      315
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1113280,
+    "end": 1117600,
+    "raw": "all",
+    "word_id": "ES2002a.B.words40",
+    "normalized": "all",
+    "ids": [
+      678
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1117600,
+    "end": 1120320,
+    "raw": "just",
+    "word_id": "ES2002a.B.words42",
+    "normalized": "just",
+    "ids": [
+      1101
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1120320,
+    "end": 1121760,
+    "raw": "to",
+    "word_id": "ES2002a.B.words43",
+    "normalized": "to",
+    "ids": [
+      311
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1121760,
+    "end": 1125760,
+    "raw": "kind",
+    "word_id": "ES2002a.B.words44",
+    "normalized": "kind",
+    "ids": [
+      3093
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1125760,
+    "end": 1136640,
+    "raw": "of",
+    "word_id": "ES2002a.B.words45",
+    "normalized": "of",
+    "ids": [
+      315
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1136640,
+    "end": 1139840,
+    "raw": "make",
+    "word_id": "ES2002a.B.words46",
+    "normalized": "make",
+    "ids": [
+      1281
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1139840,
+    "end": 1143680,
+    "raw": "sure",
+    "word_id": "ES2002a.B.words47",
+    "normalized": "sure",
+    "ids": [
+      2704
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1143680,
+    "end": 1145440,
+    "raw": "that",
+    "word_id": "ES2002a.B.words48",
+    "normalized": "that",
+    "ids": [
+      429
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1145440,
+    "end": 1146880,
+    "raw": "we",
+    "word_id": "ES2002a.B.words49",
+    "normalized": "we",
+    "ids": [
+      582
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1146880,
+    "end": 1149760,
+    "raw": "all",
+    "word_id": "ES2002a.B.words50",
+    "normalized": "all",
+    "ids": [
+      678
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1149760,
+    "end": 1151520,
+    "raw": "know",
+    "word_id": "ES2002a.B.words51",
+    "normalized": "know",
+    "ids": [
+      1414
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1151520,
+    "end": 1155360,
+    "raw": "each",
+    "word_id": "ES2002a.B.words52",
+    "normalized": "each",
+    "ids": [
+      1817
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1155360,
+    "end": 1164640,
+    "raw": "other",
+    "word_id": "ES2002a.B.words53",
+    "normalized": "other",
+    "ids": [
+      1008
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1164640,
+    "end": 1168480,
+    "raw": "I'm",
+    "word_id": "ES2002a.B.words55",
+    "normalized": "i'm",
+    "ids": [
+      600,
+      2776
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1168480,
+    "end": 1172480,
+    "raw": "Laura",
+    "word_id": "ES2002a.B.words56",
+    "normalized": "laura",
+    "ids": [
+      1187,
+      5690
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1172480,
+    "end": 1176000,
+    "raw": "and",
+    "word_id": "ES2002a.B.words57",
+    "normalized": "and",
+    "ids": [
+      323
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1176000,
+    "end": 1177760,
+    "raw": "I'm",
+    "word_id": "ES2002a.B.words58",
+    "normalized": "i'm",
+    "ids": [
+      600,
+      2776
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1177760,
+    "end": 1179040,
+    "raw": "the",
+    "word_id": "ES2002a.B.words59",
+    "normalized": "the",
+    "ids": [
+      279
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1179040,
+    "end": 1185280,
+    "raw": "project",
+    "word_id": "ES2002a.B.words60",
+    "normalized": "project",
+    "ids": [
+      2390
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1185280,
+    "end": 1190720,
+    "raw": "manager",
+    "word_id": "ES2002a.B.words61",
+    "normalized": "manager",
+    "ids": [
+      6645
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1190720,
+    "end": 1198560,
+    "raw": "Do",
+    "word_id": "ES2002a.B.words64",
+    "normalized": "do",
+    "ids": [
+      653
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1198240,
+    "end": 1203840,
+    "raw": "Great",
+    "word_id": "ES2002a.D.words2",
+    "normalized": "great",
+    "ids": [
+      2244
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1198560,
+    "end": 1217600,
+    "raw": "you",
+    "word_id": "ES2002a.B.words65",
+    "normalized": "you",
+    "ids": [
+      498
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1217600,
+    "end": 1219680,
+    "raw": "want",
+    "word_id": "ES2002a.B.words66",
+    "normalized": "want",
+    "ids": [
+      1366
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1219680,
+    "end": 1221600,
+    "raw": "to",
+    "word_id": "ES2002a.B.words67",
+    "normalized": "to",
+    "ids": [
+      311
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1221600,
+    "end": 1228160,
+    "raw": "introduce",
+    "word_id": "ES2002a.B.words68",
+    "normalized": "introduce",
+    "ids": [
+      19131
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1228160,
+    "end": 1233280,
+    "raw": "yourself",
+    "word_id": "ES2002a.B.words69",
+    "normalized": "yourself",
+    "ids": [
+      6133
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1233280,
+    "end": 1236640,
+    "raw": "again",
+    "word_id": "ES2002a.B.words70",
+    "normalized": "again",
+    "ids": [
+      1549
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1239040,
+    "end": 1243840,
+    "raw": "Hi",
+    "word_id": "ES2002a.A.words0",
+    "normalized": "hi",
+    "ids": [
+      15588
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1243840,
+    "end": 1250560,
+    "raw": "I'm",
+    "word_id": "ES2002a.A.words2",
+    "normalized": "i'm",
+    "ids": [
+      600,
+      2776
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1250560,
+    "end": 1257600,
+    "raw": "David",
+    "word_id": "ES2002a.A.words3",
+    "normalized": "david",
+    "ids": [
+      53946
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1257600,
+    "end": 1261600,
+    "raw": "and",
+    "word_id": "ES2002a.A.words4",
+    "normalized": "and",
+    "ids": [
+      323
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1261600,
+    "end": 1266560,
+    "raw": "I'm",
+    "word_id": "ES2002a.A.words5",
+    "normalized": "i'm",
+    "ids": [
+      600,
+      2776
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1266560,
+    "end": 1272480,
+    "raw": "supposed",
+    "word_id": "ES2002a.A.words6",
+    "normalized": "supposed",
+    "ids": [
+      9966
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1272480,
+    "end": 1273600,
+    "raw": "to",
+    "word_id": "ES2002a.A.words7",
+    "normalized": "to",
+    "ids": [
+      311
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1273600,
+    "end": 1275840,
+    "raw": "be",
+    "word_id": "ES2002a.A.words8",
+    "normalized": "be",
+    "ids": [
+      387
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1275840,
+    "end": 1277280,
+    "raw": "an",
+    "word_id": "ES2002a.A.words9",
+    "normalized": "an",
+    "ids": [
+      458
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1277280,
+    "end": 1283360,
+    "raw": "industrial",
+    "word_id": "ES2002a.A.words10",
+    "normalized": "industrial",
+    "ids": [
+      12785
+    ]
+  },
+  {
+    "agent": "A",
+    "start": 1283360,
+    "end": 1293920,
+    "raw": "designer",
+    "word_id": "ES2002a.A.words11",
+    "normalized": "designer",
+    "ids": [
+      14692
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1292960,
+    "end": 1300160,
+    "raw": "Okay",
+    "word_id": "ES2002a.B.words72",
+    "normalized": "okay",
+    "ids": [
+      16910
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1313280,
+    "end": 1316000,
+    "raw": "And",
+    "word_id": "ES2002a.D.words4",
+    "normalized": "and",
+    "ids": [
+      323
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1316000,
+    "end": 1318880,
+    "raw": "I'm",
+    "word_id": "ES2002a.D.words5",
+    "normalized": "i'm",
+    "ids": [
+      600,
+      2776
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1318880,
+    "end": 1325920,
+    "raw": "Andrew",
+    "word_id": "ES2002a.D.words6",
+    "normalized": "andrew",
+    "ids": [
+      323,
+      4266
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1325920,
+    "end": 1328320,
+    "raw": "and",
+    "word_id": "ES2002a.D.words7",
+    "normalized": "and",
+    "ids": [
+      323
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1328320,
+    "end": 1333600,
+    "raw": "I'm",
+    "word_id": "ES2002a.D.words8",
+    "normalized": "i'm",
+    "ids": [
+      600,
+      2776
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1333600,
+    "end": 1340320,
+    "raw": "uh",
+    "word_id": "ES2002a.D.words9",
+    "normalized": "uh",
+    "ids": [
+      43744
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1340320,
+    "end": 1342080,
+    "raw": "our",
+    "word_id": "ES2002a.D.words10",
+    "normalized": "our",
+    "ids": [
+      1039
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1342080,
+    "end": 1351360,
+    "raw": "marketing",
+    "word_id": "ES2002a.D.words11",
+    "normalized": "marketing",
+    "ids": [
+      8493
+    ]
+  },
+  {
+    "agent": "C",
+    "start": 1375840,
+    "end": 1394720,
+    "raw": "Um",
+    "word_id": "ES2002a.C.words0",
+    "normalized": "um",
+    "ids": [
+      4443
+    ]
+  },
+  {
+    "agent": "D",
+    "start": 1377120,
+    "end": 1384000,
+    "raw": "expert",
+    "word_id": "ES2002a.D.words12",
+    "normalized": "expert",
+    "ids": [
+      6203
+    ]
+  },
+  {
+    "agent": "C",
+    "start": 1394720,
+    "end": 1397760,
+    "raw": "I'm",
+    "word_id": "ES2002a.C.words1",
+    "normalized": "i'm",
+    "ids": [
+      600,
+      2776
+    ]
+  },
+  {
+    "agent": "C",
+    "start": 1397760,
+    "end": 1402560,
+    "raw": "Craig",
+    "word_id": "ES2002a.C.words2",
+    "normalized": "craig",
+    "ids": [
+      45041,
+      343
+    ]
+  },
+  {
+    "agent": "C",
+    "start": 1402560,
+    "end": 1404320,
+    "raw": "and",
+    "word_id": "ES2002a.C.words3",
+    "normalized": "and",
+    "ids": [
+      323
+    ]
+  },
+  {
+    "agent": "C",
+    "start": 1404320,
+    "end": 1407200,
+    "raw": "I'm",
+    "word_id": "ES2002a.C.words4",
+    "normalized": "i'm",
+    "ids": [
+      600,
+      2776
+    ]
+  },
+  {
+    "agent": "C",
+    "start": 1407200,
+    "end": 1410880,
+    "raw": "User",
+    "word_id": "ES2002a.C.words5",
+    "normalized": "user",
+    "ids": [
+      1196
+    ]
+  },
+  {
+    "agent": "C",
+    "start": 1410880,
+    "end": 1419360,
+    "raw": "Interface",
+    "word_id": "ES2002a.C.words6",
+    "normalized": "interface",
+    "ids": [
+      3749
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1428800,
+    "end": 1440160,
+    "raw": "Great",
+    "word_id": "ES2002a.B.words74",
+    "normalized": "great",
+    "ids": [
+      2244
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1440160,
+    "end": 1479680,
+    "raw": "Okay",
+    "word_id": "ES2002a.B.words76",
+    "normalized": "okay",
+    "ids": [
+      16910
+    ]
+  },
+  {
+    "agent": "B",
+    "start": 1479680,
+    "end": 1484640,
+    "raw": "Um",
+    "word_id": "ES2002a.B.words79",
+    "normalized": "um",
+    "ids": [
+      4443
+    ]
+  }
+]

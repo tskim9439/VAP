@@ -1,0 +1,79 @@
+{
+  "source": "/Users/taesookim/Desktop/VAPKT/raw/sources/experiments/2026-09-13-phase2-sequence-probe",
+  "audio": "/Users/taesookim/Desktop/VAPKT/raw/sources/experiments/2026-09-13-phase2-sequence-probe/mono-crop.wav",
+  "source_sha256": {
+    "summary.json": "88752c923d065ceb05f5caa13dbfca124f1414384f057e9f4048b1e3ecc72f6d",
+    "blocks.json": "bd6bbcc70c8c67021fdd267179bf00b9aa965b2211a2d284bd35c8bf660517fc",
+    "words.json": "85930d4a1700e603bc8aaa4a9987b66e8d6b2b511d043dabf4dbc6b516d5ea59",
+    "mono-crop.wav": "c15786acbe356c4205815e5f338ded859aced77d5973ffced598472f537d26fa"
+  },
+  "crop_pcm_sha256": "c2b4ee65b0cc13ce404a67e32deeeec3ad6572e0a730955bb303325de441960e",
+  "start_s": 54.4,
+  "end_s": 92.8,
+  "block_count": 480,
+  "position_count": 1101,
+  "token_counts": {
+    "audio": 480,
+    "next": 480,
+    "speaker": 23,
+    "onset": 9,
+    "text": 104,
+    "eot": 5
+  },
+  "next_only": 376,
+  "activity_proxy_counts": {
+    "0": 27,
+    "1": 415,
+    "2": 38
+  },
+  "eot_candidates": 5,
+  "reviewed_eot": 0,
+  "event_complete": false,
+  "approved_for_joint_training": false,
+  "model_inference": false,
+  "encoder_features": false,
+  "registry_status": "provisional",
+  "tn_parity": "not_verified",
+  "pending_records": [
+    {
+      "kind": "text",
+      "agent": "B",
+      "slot": 1,
+      "ref_sample": 1479680,
+      "ref_s": 92.48,
+      "chunk": 480,
+      "text": " okay",
+      "ids": [
+        16910
+      ],
+      "reason": "ES2002a.B.words76",
+      "label_observed_until_s": null,
+      "ordinal": 90
+    },
+    {
+      "kind": "text",
+      "agent": "B",
+      "slot": 1,
+      "ref_sample": 1484640,
+      "ref_s": 92.79,
+      "chunk": 483,
+      "text": " um",
+      "ids": [
+        4443
+      ],
+      "reason": "ES2002a.B.words79",
+      "label_observed_until_s": null,
+      "ordinal": 91
+    }
+  ],
+  "checks": [
+    "real_PCM_length",
+    "tokenizer_hash",
+    "word_retokenization",
+    "all_block_ID_round_trip",
+    "speaker_transcript_round_trip",
+    "explicit_event_selector",
+    "one_NEXT_per_block"
+  ],
+  "note": "Diagnostic weak-target sequence only. No human review or new EOT derivation."
+}

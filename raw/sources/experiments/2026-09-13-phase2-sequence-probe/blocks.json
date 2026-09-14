@@ -1,0 +1,10461 @@
+[
+  {
+    "chunk": 0,
+    "start_s": 54.4,
+    "end_s": 54.48,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0006460562581196427,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 1,
+    "start_s": 54.48,
+    "end_s": 54.56,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0004623602144420147,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 2,
+    "start_s": 54.56,
+    "end_s": 54.64,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.000114015543658752,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 3,
+    "start_s": 54.64,
+    "end_s": 54.72,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00011295184231130406,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 4,
+    "start_s": 54.72,
+    "end_s": 54.8,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001325101184193045,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 5,
+    "start_s": 54.8,
+    "end_s": 54.88,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 6.362373096635565e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 6,
+    "start_s": 54.88,
+    "end_s": 54.96,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.274134986801073e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 7,
+    "start_s": 54.96,
+    "end_s": 55.04,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00018275259935762733,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 8,
+    "start_s": 55.04,
+    "end_s": 55.12,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00019098646589554846,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 9,
+    "start_s": 55.12,
+    "end_s": 55.2,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00012449505447875708,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 10,
+    "start_s": 55.2,
+    "end_s": 55.28,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00015952822286635637,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 11,
+    "start_s": 55.28,
+    "end_s": 55.36,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00015445872850250453,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 12,
+    "start_s": 55.36,
+    "end_s": 55.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00015920549049042165,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 13,
+    "start_s": 55.44,
+    "end_s": 55.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0003382924187462777,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 14,
+    "start_s": 55.52,
+    "end_s": 55.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00013918108015786856,
+    "output": "<SPK_1> <ONSET> <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      151721,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "onset",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 886640,
+        "ref_s": 55.415,
+        "chunk": 14,
+        "text": "<ONSET>",
+        "ids": [
+          151721
+        ],
+        "reason": "annotation_segment_start",
+        "label_observed_until_s": 55.415,
+        "ordinal": 92
+      }
+    ]
+  },
+  {
+    "chunk": 15,
+    "start_s": 55.6,
+    "end_s": 55.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001241286809090525,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 16,
+    "start_s": 55.68,
+    "end_s": 55.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0004437409806996584,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 17,
+    "start_s": 55.76,
+    "end_s": 55.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 9.562291234033182e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 18,
+    "start_s": 55.84,
+    "end_s": 55.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00012681771477218717,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 19,
+    "start_s": 55.92,
+    "end_s": 56.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00032008811831474304,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 20,
+    "start_s": 56.0,
+    "end_s": 56.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00505461310967803,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 21,
+    "start_s": 56.08,
+    "end_s": 56.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.005700299050658941,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 22,
+    "start_s": 56.16,
+    "end_s": 56.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.004939913749694824,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 23,
+    "start_s": 56.24,
+    "end_s": 56.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00465624313801527,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 24,
+    "start_s": 56.32,
+    "end_s": 56.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.003499131416901946,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 25,
+    "start_s": 56.4,
+    "end_s": 56.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002634861506521702,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 26,
+    "start_s": 56.48,
+    "end_s": 56.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0005223475745879114,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 27,
+    "start_s": 56.56,
+    "end_s": 56.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0045267073437571526,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 28,
+    "start_s": 56.64,
+    "end_s": 56.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.006236859131604433,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 29,
+    "start_s": 56.72,
+    "end_s": 56.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.005191101226955652,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 30,
+    "start_s": 56.8,
+    "end_s": 56.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0020116264931857586,
+    "output": " um <NEXT_AUDIO>",
+    "ids": [
+      4443,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 904480,
+        "ref_s": 56.53,
+        "chunk": 30,
+        "text": " um",
+        "ids": [
+          4443
+        ],
+        "reason": "ES2002a.B.words5",
+        "label_observed_until_s": null,
+        "ordinal": 0
+      }
+    ]
+  },
+  {
+    "chunk": 31,
+    "start_s": 56.88,
+    "end_s": 56.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0010541881201788783,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 32,
+    "start_s": 56.96,
+    "end_s": 57.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0027903784066438675,
+    "output": " well <NEXT_AUDIO>",
+    "ids": [
+      1632,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 907040,
+        "ref_s": 56.69,
+        "chunk": 32,
+        "text": " well",
+        "ids": [
+          1632
+        ],
+        "reason": "ES2002a.B.words6",
+        "label_observed_until_s": null,
+        "ordinal": 1
+      }
+    ]
+  },
+  {
+    "chunk": 33,
+    "start_s": 57.04,
+    "end_s": 57.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0036905258893966675,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 34,
+    "start_s": 57.12,
+    "end_s": 57.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.009859610348939896,
+    "output": " this <NEXT_AUDIO>",
+    "ids": [
+      419,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 909440,
+        "ref_s": 56.84,
+        "chunk": 34,
+        "text": " this",
+        "ids": [
+          419
+        ],
+        "reason": "ES2002a.B.words7",
+        "label_observed_until_s": null,
+        "ordinal": 2
+      }
+    ]
+  },
+  {
+    "chunk": 35,
+    "start_s": 57.2,
+    "end_s": 57.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0008532532956451178,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 36,
+    "start_s": 57.28,
+    "end_s": 57.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0033801028039306402,
+    "output": " is <NEXT_AUDIO>",
+    "ids": [
+      374,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 911360,
+        "ref_s": 56.96,
+        "chunk": 36,
+        "text": " is",
+        "ids": [
+          374
+        ],
+        "reason": "ES2002a.B.words8",
+        "label_observed_until_s": null,
+        "ordinal": 3
+      }
+    ]
+  },
+  {
+    "chunk": 37,
+    "start_s": 57.36,
+    "end_s": 57.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026047849096357822,
+    "output": " the <NEXT_AUDIO>",
+    "ids": [
+      279,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 912800,
+        "ref_s": 57.05,
+        "chunk": 37,
+        "text": " the",
+        "ids": [
+          279
+        ],
+        "reason": "ES2002a.B.words9",
+        "label_observed_until_s": null,
+        "ordinal": 4
+      }
+    ]
+  },
+  {
+    "chunk": 38,
+    "start_s": 57.44,
+    "end_s": 57.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00025074207223951817,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 39,
+    "start_s": 57.52,
+    "end_s": 57.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026500835083425045,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 40,
+    "start_s": 57.6,
+    "end_s": 57.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016447522211819887,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 41,
+    "start_s": 57.68,
+    "end_s": 57.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002831214340403676,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 42,
+    "start_s": 57.76,
+    "end_s": 57.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0025587882846593857,
+    "output": " kick off <NEXT_AUDIO>",
+    "ids": [
+      10323,
+      1007,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 919840,
+        "ref_s": 57.49,
+        "chunk": 42,
+        "text": " kick off",
+        "ids": [
+          10323,
+          1007
+        ],
+        "reason": "ES2002a.B.words10",
+        "label_observed_until_s": null,
+        "ordinal": 5
+      }
+    ]
+  },
+  {
+    "chunk": 43,
+    "start_s": 57.84,
+    "end_s": 57.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00035228839260526,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 44,
+    "start_s": 57.92,
+    "end_s": 58.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0021414561197161674,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 45,
+    "start_s": 58.0,
+    "end_s": 58.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0025016996078193188,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 46,
+    "start_s": 58.08,
+    "end_s": 58.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002451336709782481,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 47,
+    "start_s": 58.16,
+    "end_s": 58.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0023328925017267466,
+    "output": " meeting <NEXT_AUDIO>",
+    "ids": [
+      6438,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 925600,
+        "ref_s": 57.85,
+        "chunk": 47,
+        "text": " meeting",
+        "ids": [
+          6438
+        ],
+        "reason": "ES2002a.B.words11",
+        "label_observed_until_s": null,
+        "ordinal": 6
+      }
+    ]
+  },
+  {
+    "chunk": 48,
+    "start_s": 58.24,
+    "end_s": 58.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016960006905719638,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 49,
+    "start_s": 58.32,
+    "end_s": 58.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00016691398923285306,
+    "output": " for <NEXT_AUDIO>",
+    "ids": [
+      369,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 928160,
+        "ref_s": 58.01,
+        "chunk": 49,
+        "text": " for",
+        "ids": [
+          369
+        ],
+        "reason": "ES2002a.B.words12",
+        "label_observed_until_s": null,
+        "ordinal": 7
+      }
+    ]
+  },
+  {
+    "chunk": 50,
+    "start_s": 58.4,
+    "end_s": 58.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00011236796854063869,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 51,
+    "start_s": 58.48,
+    "end_s": 58.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00011407037527533248,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 52,
+    "start_s": 58.56,
+    "end_s": 58.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001572167151607573,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 53,
+    "start_s": 58.64,
+    "end_s": 58.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0020403137896209955,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 54,
+    "start_s": 58.72,
+    "end_s": 58.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0006993641727603972,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 55,
+    "start_s": 58.8,
+    "end_s": 58.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0027880987618118525,
+    "output": " our <NEXT_AUDIO>",
+    "ids": [
+      1039,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 936640,
+        "ref_s": 58.54,
+        "chunk": 55,
+        "text": " our",
+        "ids": [
+          1039
+        ],
+        "reason": "ES2002a.B.words13",
+        "label_observed_until_s": null,
+        "ordinal": 8
+      }
+    ]
+  },
+  {
+    "chunk": 56,
+    "start_s": 58.88,
+    "end_s": 58.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0025767539627850056,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 57,
+    "start_s": 58.96,
+    "end_s": 59.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0008231193642131984,
+    "output": " our <NEXT_AUDIO>",
+    "ids": [
+      1039,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 939040,
+        "ref_s": 58.69,
+        "chunk": 57,
+        "text": " our",
+        "ids": [
+          1039
+        ],
+        "reason": "ES2002a.B.words14",
+        "label_observed_until_s": null,
+        "ordinal": 9
+      }
+    ]
+  },
+  {
+    "chunk": 58,
+    "start_s": 59.04,
+    "end_s": 59.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026098350062966347,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 59,
+    "start_s": 59.12,
+    "end_s": 59.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0017692906549200416,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 60,
+    "start_s": 59.2,
+    "end_s": 59.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.000771912164054811,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 61,
+    "start_s": 59.28,
+    "end_s": 59.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001818125747377053,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 62,
+    "start_s": 59.36,
+    "end_s": 59.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0005203470354899764,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 63,
+    "start_s": 59.44,
+    "end_s": 59.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00014846291742287576,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 64,
+    "start_s": 59.52,
+    "end_s": 59.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001148888622992672,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 65,
+    "start_s": 59.6,
+    "end_s": 59.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00014360970817506313,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 66,
+    "start_s": 59.68,
+    "end_s": 59.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00012057174171786755,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 67,
+    "start_s": 59.76,
+    "end_s": 59.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.59504473535344e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 68,
+    "start_s": 59.84,
+    "end_s": 59.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00015058137068990618,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 69,
+    "start_s": 59.92,
+    "end_s": 60.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.005452537443488836,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 70,
+    "start_s": 60.0,
+    "end_s": 60.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.008134250529110432,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 71,
+    "start_s": 60.08,
+    "end_s": 60.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.007117545232176781,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 72,
+    "start_s": 60.16,
+    "end_s": 60.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.010162651538848877,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 73,
+    "start_s": 60.24,
+    "end_s": 60.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.008289920166134834,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 74,
+    "start_s": 60.32,
+    "end_s": 60.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.009619238786399364,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 75,
+    "start_s": 60.4,
+    "end_s": 60.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.009524955414235592,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 76,
+    "start_s": 60.48,
+    "end_s": 60.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.005633883643895388,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 77,
+    "start_s": 60.56,
+    "end_s": 60.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0007204790599644184,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 78,
+    "start_s": 60.64,
+    "end_s": 60.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00015680317301303148,
+    "output": " project <NEXT_AUDIO>",
+    "ids": [
+      2390,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 965600,
+        "ref_s": 60.35,
+        "chunk": 78,
+        "text": " project",
+        "ids": [
+          2390
+        ],
+        "reason": "ES2002a.B.words15",
+        "label_observed_until_s": null,
+        "ordinal": 10
+      }
+    ]
+  },
+  {
+    "chunk": 79,
+    "start_s": 60.72,
+    "end_s": 60.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00010994421609211713,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 80,
+    "start_s": 60.8,
+    "end_s": 60.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00011338822514517233,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 81,
+    "start_s": 60.88,
+    "end_s": 60.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 8.968469046521932e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 82,
+    "start_s": 60.96,
+    "end_s": 61.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00013063980441074818,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 83,
+    "start_s": 61.04,
+    "end_s": 61.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00010469328844919801,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 84,
+    "start_s": 61.12,
+    "end_s": 61.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 8.547603647457436e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 85,
+    "start_s": 61.2,
+    "end_s": 61.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 6.565581861650571e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 86,
+    "start_s": 61.28,
+    "end_s": 61.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.061763608362526e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 87,
+    "start_s": 61.36,
+    "end_s": 61.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 4.1600320400903e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 88,
+    "start_s": 61.44,
+    "end_s": 61.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00015712490130681545,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 89,
+    "start_s": 61.52,
+    "end_s": 61.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00035239607677794993,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 90,
+    "start_s": 61.6,
+    "end_s": 61.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00044808536767959595,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 91,
+    "start_s": 61.68,
+    "end_s": 61.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00034109564148820937,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 92,
+    "start_s": 61.76,
+    "end_s": 61.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00026952411280944943,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 93,
+    "start_s": 61.84,
+    "end_s": 61.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00029077715589664876,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 94,
+    "start_s": 61.92,
+    "end_s": 62.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001478468911955133,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 95,
+    "start_s": 62.0,
+    "end_s": 62.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 9.146079537458718e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 96,
+    "start_s": 62.08,
+    "end_s": 62.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00010142876271856949,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 97,
+    "start_s": 62.16,
+    "end_s": 62.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 9.252435120288283e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 98,
+    "start_s": 62.24,
+    "end_s": 62.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.004565147683024406,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 99,
+    "start_s": 62.32,
+    "end_s": 62.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.004929397255182266,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 100,
+    "start_s": 62.4,
+    "end_s": 62.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0038222854491323233,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 101,
+    "start_s": 62.48,
+    "end_s": 62.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0030701812356710434,
+    "output": " um <NEXT_AUDIO>",
+    "ids": [
+      4443,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 995040,
+        "ref_s": 62.19,
+        "chunk": 101,
+        "text": " um",
+        "ids": [
+          4443
+        ],
+        "reason": "ES2002a.B.words17",
+        "label_observed_until_s": null,
+        "ordinal": 11
+      }
+    ]
+  },
+  {
+    "chunk": 102,
+    "start_s": 62.56,
+    "end_s": 62.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00278193736448884,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 103,
+    "start_s": 62.64,
+    "end_s": 62.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016941679641604424,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 104,
+    "start_s": 62.72,
+    "end_s": 62.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00525563582777977,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 105,
+    "start_s": 62.8,
+    "end_s": 62.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.005123069975525141,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 106,
+    "start_s": 62.88,
+    "end_s": 62.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00486340094357729,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 107,
+    "start_s": 62.96,
+    "end_s": 63.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.003830652218312025,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 108,
+    "start_s": 63.04,
+    "end_s": 63.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002719009295105934,
+    "output": " and <NEXT_AUDIO>",
+    "ids": [
+      323,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1003520,
+        "ref_s": 62.72,
+        "chunk": 108,
+        "text": " and",
+        "ids": [
+          323
+        ],
+        "reason": "ES2002a.B.words19",
+        "label_observed_until_s": null,
+        "ordinal": 12
+      }
+    ]
+  },
+  {
+    "chunk": 109,
+    "start_s": 63.12,
+    "end_s": 63.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002245991723611951,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 110,
+    "start_s": 63.2,
+    "end_s": 63.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002165532438084483,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 111,
+    "start_s": 63.28,
+    "end_s": 63.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016333246603608131,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 112,
+    "start_s": 63.36,
+    "end_s": 63.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0004673686344176531,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 113,
+    "start_s": 63.44,
+    "end_s": 63.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.458410254912451e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 114,
+    "start_s": 63.52,
+    "end_s": 63.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 4.666479799197987e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 115,
+    "start_s": 63.6,
+    "end_s": 63.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 3.4090357075911015e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 116,
+    "start_s": 63.68,
+    "end_s": 63.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 6.304393173195422e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 117,
+    "start_s": 63.76,
+    "end_s": 63.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 6.798567483201623e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 118,
+    "start_s": 63.84,
+    "end_s": 63.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 6.236475746845827e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 119,
+    "start_s": 63.92,
+    "end_s": 64.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 3.843969898298383e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 120,
+    "start_s": 64.0,
+    "end_s": 64.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 4.3245214328635484e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 121,
+    "start_s": 64.08,
+    "end_s": 64.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 3.8347312511177734e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 122,
+    "start_s": 64.16,
+    "end_s": 64.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0007617793744429946,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 123,
+    "start_s": 64.24,
+    "end_s": 64.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0037218115758150816,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 124,
+    "start_s": 64.32,
+    "end_s": 64.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0018699057400226593,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 125,
+    "start_s": 64.4,
+    "end_s": 64.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002351153874769807,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 126,
+    "start_s": 64.48,
+    "end_s": 64.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0032594401855021715,
+    "output": " um <NEXT_AUDIO>",
+    "ids": [
+      4443,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1026560,
+        "ref_s": 64.16,
+        "chunk": 126,
+        "text": " um",
+        "ids": [
+          4443
+        ],
+        "reason": "ES2002a.B.words20",
+        "label_observed_until_s": null,
+        "ordinal": 13
+      }
+    ]
+  },
+  {
+    "chunk": 127,
+    "start_s": 64.56,
+    "end_s": 64.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0012833407381549478,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 128,
+    "start_s": 64.64,
+    "end_s": 64.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00023381499340757728,
+    "output": " this <NEXT_AUDIO>",
+    "ids": [
+      419,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1029600,
+        "ref_s": 64.35,
+        "chunk": 128,
+        "text": " this",
+        "ids": [
+          419
+        ],
+        "reason": "ES2002a.B.words21",
+        "label_observed_until_s": null,
+        "ordinal": 14
+      }
+    ]
+  },
+  {
+    "chunk": 129,
+    "start_s": 64.72,
+    "end_s": 64.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00010540625225985423,
+    "output": " is <NEXT_AUDIO>",
+    "ids": [
+      374,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1031360,
+        "ref_s": 64.46,
+        "chunk": 129,
+        "text": " is",
+        "ids": [
+          374
+        ],
+        "reason": "ES2002a.B.words22",
+        "label_observed_until_s": null,
+        "ordinal": 15
+      }
+    ]
+  },
+  {
+    "chunk": 130,
+    "start_s": 64.8,
+    "end_s": 64.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0007369038066826761,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 131,
+    "start_s": 64.88,
+    "end_s": 64.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.004999138880521059,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 132,
+    "start_s": 64.96,
+    "end_s": 65.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.003242215607315302,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 133,
+    "start_s": 65.04,
+    "end_s": 65.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002692548790946603,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 134,
+    "start_s": 65.12,
+    "end_s": 65.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0027872652281075716,
+    "output": " just <NEXT_AUDIO>",
+    "ids": [
+      1101,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1036800,
+        "ref_s": 64.8,
+        "chunk": 134,
+        "text": " just",
+        "ids": [
+          1101
+        ],
+        "reason": "ES2002a.B.words23",
+        "label_observed_until_s": null,
+        "ordinal": 16
+      }
+    ]
+  },
+  {
+    "chunk": 135,
+    "start_s": 65.2,
+    "end_s": 65.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0030272668227553368,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 136,
+    "start_s": 65.28,
+    "end_s": 65.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0014587952755391598,
+    "output": " what <NEXT_AUDIO>",
+    "ids": [
+      1128,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1039360,
+        "ref_s": 64.96,
+        "chunk": 136,
+        "text": " what",
+        "ids": [
+          1128
+        ],
+        "reason": "ES2002a.B.words24",
+        "label_observed_until_s": null,
+        "ordinal": 17
+      }
+    ]
+  },
+  {
+    "chunk": 137,
+    "start_s": 65.36,
+    "end_s": 65.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00371649581938982,
+    "output": " we're <NEXT_AUDIO>",
+    "ids": [
+      582,
+      2299,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1040960,
+        "ref_s": 65.06,
+        "chunk": 137,
+        "text": " we're",
+        "ids": [
+          582,
+          2299
+        ],
+        "reason": "ES2002a.B.words25",
+        "label_observed_until_s": null,
+        "ordinal": 18
+      }
+    ]
+  },
+  {
+    "chunk": 138,
+    "start_s": 65.44,
+    "end_s": 65.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026423686649650335,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 139,
+    "start_s": 65.52,
+    "end_s": 65.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0031630380544811487,
+    "output": " gonna <NEXT_AUDIO>",
+    "ids": [
+      16519,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1043360,
+        "ref_s": 65.21,
+        "chunk": 139,
+        "text": " gonna",
+        "ids": [
+          16519
+        ],
+        "reason": "ES2002a.B.words26",
+        "label_observed_until_s": null,
+        "ordinal": 19
+      }
+    ]
+  },
+  {
+    "chunk": 140,
+    "start_s": 65.6,
+    "end_s": 65.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0022157258354127407,
+    "output": " be <NEXT_AUDIO>",
+    "ids": [
+      387,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1044800,
+        "ref_s": 65.3,
+        "chunk": 140,
+        "text": " be",
+        "ids": [
+          387
+        ],
+        "reason": "ES2002a.B.words27",
+        "label_observed_until_s": null,
+        "ordinal": 20
+      }
+    ]
+  },
+  {
+    "chunk": 141,
+    "start_s": 65.68,
+    "end_s": 65.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0021880515851080418,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 142,
+    "start_s": 65.76,
+    "end_s": 65.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0029530744068324566,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 143,
+    "start_s": 65.84,
+    "end_s": 65.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0015183186624199152,
+    "output": " doing <NEXT_AUDIO>",
+    "ids": [
+      3730,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1048960,
+        "ref_s": 65.56,
+        "chunk": 143,
+        "text": " doing",
+        "ids": [
+          3730
+        ],
+        "reason": "ES2002a.B.words28",
+        "label_observed_until_s": null,
+        "ordinal": 21
+      }
+    ]
+  },
+  {
+    "chunk": 144,
+    "start_s": 65.92,
+    "end_s": 66.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0008158281561918557,
+    "output": " over <NEXT_AUDIO>",
+    "ids": [
+      916,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1050400,
+        "ref_s": 65.65,
+        "chunk": 144,
+        "text": " over",
+        "ids": [
+          916
+        ],
+        "reason": "ES2002a.B.words29",
+        "label_observed_until_s": null,
+        "ordinal": 22
+      }
+    ]
+  },
+  {
+    "chunk": 145,
+    "start_s": 66.0,
+    "end_s": 66.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002394496463239193,
+    "output": " the <NEXT_AUDIO>",
+    "ids": [
+      279,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1051680,
+        "ref_s": 65.73,
+        "chunk": 145,
+        "text": " the",
+        "ids": [
+          279
+        ],
+        "reason": "ES2002a.B.words30",
+        "label_observed_until_s": null,
+        "ordinal": 23
+      }
+    ]
+  },
+  {
+    "chunk": 146,
+    "start_s": 66.08,
+    "end_s": 66.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0029087583534419537,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 147,
+    "start_s": 66.16,
+    "end_s": 66.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016870222752913833,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 148,
+    "start_s": 66.24,
+    "end_s": 66.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0018239340279251337,
+    "output": " next <NEXT_AUDIO>",
+    "ids": [
+      1790,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1055520,
+        "ref_s": 65.97,
+        "chunk": 148,
+        "text": " next",
+        "ids": [
+          1790
+        ],
+        "reason": "ES2002a.B.words31",
+        "label_observed_until_s": null,
+        "ordinal": 24
+      }
+    ]
+  },
+  {
+    "chunk": 149,
+    "start_s": 66.32,
+    "end_s": 66.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002812678460031748,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 150,
+    "start_s": 66.4,
+    "end_s": 66.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001247173990122974,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 151,
+    "start_s": 66.48,
+    "end_s": 66.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002297705039381981,
+    "output": " twenty <NEXT_AUDIO>",
+    "ids": [
+      17073,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1059040,
+        "ref_s": 66.19,
+        "chunk": 151,
+        "text": " twenty",
+        "ids": [
+          17073
+        ],
+        "reason": "ES2002a.B.words32",
+        "label_observed_until_s": null,
+        "ordinal": 25
+      }
+    ]
+  },
+  {
+    "chunk": 152,
+    "start_s": 66.56,
+    "end_s": 66.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0022419332526624203,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 153,
+    "start_s": 66.64,
+    "end_s": 66.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0008451244793832302,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 154,
+    "start_s": 66.72,
+    "end_s": 66.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00015359352983068675,
+    "output": " five <NEXT_AUDIO>",
+    "ids": [
+      4236,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1062720,
+        "ref_s": 66.42,
+        "chunk": 154,
+        "text": " five",
+        "ids": [
+          4236
+        ],
+        "reason": "ES2002a.B.words33",
+        "label_observed_until_s": null,
+        "ordinal": 26
+      }
+    ]
+  },
+  {
+    "chunk": 155,
+    "start_s": 66.8,
+    "end_s": 66.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0002548792399466038,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 156,
+    "start_s": 66.88,
+    "end_s": 66.96,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0003117165178991854,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 157,
+    "start_s": 66.96,
+    "end_s": 67.04,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00010362846660427749,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 158,
+    "start_s": 67.04,
+    "end_s": 67.12,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 7.518831262132153e-05,
+    "output": "<SPK_2> <ONSET> <NEXT_AUDIO>",
+    "ids": [
+      151718,
+      151721,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "onset",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1071072,
+        "ref_s": 66.942,
+        "chunk": 158,
+        "text": "<ONSET>",
+        "ids": [
+          151721
+        ],
+        "reason": "annotation_segment_start",
+        "label_observed_until_s": 66.942,
+        "ordinal": 94
+      }
+    ]
+  },
+  {
+    "chunk": 159,
+    "start_s": 67.12,
+    "end_s": 67.2,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00024308323918376118,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 160,
+    "start_s": 67.2,
+    "end_s": 67.28,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.001433923956938088,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 161,
+    "start_s": 67.28,
+    "end_s": 67.36,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.001563348574563861,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 162,
+    "start_s": 67.36,
+    "end_s": 67.44,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.001002584700472653,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 163,
+    "start_s": 67.44,
+    "end_s": 67.52,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001222047139890492,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 164,
+    "start_s": 67.52,
+    "end_s": 67.6,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00046344875590875745,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 165,
+    "start_s": 67.6,
+    "end_s": 67.68,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.003990580327808857,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 166,
+    "start_s": 67.68,
+    "end_s": 67.76,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0038734683766961098,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 167,
+    "start_s": 67.76,
+    "end_s": 67.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0036361052189022303,
+    "output": " mm hmm <NEXT_AUDIO>",
+    "ids": [
+      9465,
+      87501,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1079200,
+        "ref_s": 67.45,
+        "chunk": 167,
+        "text": " mm hmm",
+        "ids": [
+          9465,
+          87501
+        ],
+        "reason": "ES2002a.D.words0",
+        "label_observed_until_s": null,
+        "ordinal": 28
+      }
+    ]
+  },
+  {
+    "chunk": 168,
+    "start_s": 67.84,
+    "end_s": 67.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0034740432165563107,
+    "output": "<SPK_1>  minutes <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      4420,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1080800,
+        "ref_s": 67.55,
+        "chunk": 168,
+        "text": " minutes",
+        "ids": [
+          4420
+        ],
+        "reason": "ES2002a.B.words34",
+        "label_observed_until_s": null,
+        "ordinal": 27
+      }
+    ]
+  },
+  {
+    "chunk": 169,
+    "start_s": 67.92,
+    "end_s": 68.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0033786657731980085,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 170,
+    "start_s": 68.0,
+    "end_s": 68.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.003194121876731515,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 171,
+    "start_s": 68.08,
+    "end_s": 68.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.003141529392451048,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 172,
+    "start_s": 68.16,
+    "end_s": 68.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026526045985519886,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 173,
+    "start_s": 68.24,
+    "end_s": 68.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0019043561769649386,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 174,
+    "start_s": 68.32,
+    "end_s": 68.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001587968086823821,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 175,
+    "start_s": 68.4,
+    "end_s": 68.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0011013642651960254,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 176,
+    "start_s": 68.48,
+    "end_s": 68.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.735439430689439e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 177,
+    "start_s": 68.56,
+    "end_s": 68.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0002663462364580482,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 178,
+    "start_s": 68.64,
+    "end_s": 68.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0008260934264399111,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 179,
+    "start_s": 68.72,
+    "end_s": 68.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.005498968530446291,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 180,
+    "start_s": 68.8,
+    "end_s": 68.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.004513997584581375,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 181,
+    "start_s": 68.88,
+    "end_s": 68.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002044557360932231,
+    "output": " um <NEXT_AUDIO>",
+    "ids": [
+      4443,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1096960,
+        "ref_s": 68.56,
+        "chunk": 181,
+        "text": " um",
+        "ids": [
+          4443
+        ],
+        "reason": "ES2002a.B.words36",
+        "label_observed_until_s": null,
+        "ordinal": 29
+      }
+    ]
+  },
+  {
+    "chunk": 182,
+    "start_s": 68.96,
+    "end_s": 69.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001039137423504144,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 183,
+    "start_s": 69.04,
+    "end_s": 69.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 5.0486676627770066e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 184,
+    "start_s": 69.12,
+    "end_s": 69.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 3.872082015732303e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 185,
+    "start_s": 69.2,
+    "end_s": 69.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0028607745189219713,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 186,
+    "start_s": 69.28,
+    "end_s": 69.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.005558817181736231,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 187,
+    "start_s": 69.36,
+    "end_s": 69.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0028590678703039885,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 188,
+    "start_s": 69.44,
+    "end_s": 69.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0007674904773011804,
+    "output": " so <NEXT_AUDIO>",
+    "ids": [
+      773,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1106400,
+        "ref_s": 69.15,
+        "chunk": 188,
+        "text": " so",
+        "ids": [
+          773
+        ],
+        "reason": "ES2002a.B.words37",
+        "label_observed_until_s": null,
+        "ordinal": 30
+      }
+    ]
+  },
+  {
+    "chunk": 189,
+    "start_s": 69.52,
+    "end_s": 69.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0019448829116299748,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 190,
+    "start_s": 69.6,
+    "end_s": 69.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.003845334518700838,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 191,
+    "start_s": 69.68,
+    "end_s": 69.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.004003495909273624,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 192,
+    "start_s": 69.76,
+    "end_s": 69.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001857747440226376,
+    "output": " first <NEXT_AUDIO>",
+    "ids": [
+      1156,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1112160,
+        "ref_s": 69.51,
+        "chunk": 192,
+        "text": " first",
+        "ids": [
+          1156
+        ],
+        "reason": "ES2002a.B.words38",
+        "label_observed_until_s": null,
+        "ordinal": 31
+      }
+    ]
+  },
+  {
+    "chunk": 193,
+    "start_s": 69.84,
+    "end_s": 69.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0009885504841804504,
+    "output": " of <NEXT_AUDIO>",
+    "ids": [
+      315,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1113280,
+        "ref_s": 69.58,
+        "chunk": 193,
+        "text": " of",
+        "ids": [
+          315
+        ],
+        "reason": "ES2002a.B.words39",
+        "label_observed_until_s": null,
+        "ordinal": 32
+      }
+    ]
+  },
+  {
+    "chunk": 194,
+    "start_s": 69.92,
+    "end_s": 70.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0009403963922522962,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 195,
+    "start_s": 70.0,
+    "end_s": 70.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0021830606274306774,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 196,
+    "start_s": 70.08,
+    "end_s": 70.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001403949223458767,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 197,
+    "start_s": 70.16,
+    "end_s": 70.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0051354640163481236,
+    "output": " all <NEXT_AUDIO>",
+    "ids": [
+      678,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1117600,
+        "ref_s": 69.85,
+        "chunk": 197,
+        "text": " all",
+        "ids": [
+          678
+        ],
+        "reason": "ES2002a.B.words40",
+        "label_observed_until_s": null,
+        "ordinal": 33
+      }
+    ]
+  },
+  {
+    "chunk": 198,
+    "start_s": 70.24,
+    "end_s": 70.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00234282948076725,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 199,
+    "start_s": 70.32,
+    "end_s": 70.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0020401154179126024,
+    "output": " just <NEXT_AUDIO>",
+    "ids": [
+      1101,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1120320,
+        "ref_s": 70.02,
+        "chunk": 199,
+        "text": " just",
+        "ids": [
+          1101
+        ],
+        "reason": "ES2002a.B.words42",
+        "label_observed_until_s": null,
+        "ordinal": 34
+      }
+    ]
+  },
+  {
+    "chunk": 200,
+    "start_s": 70.4,
+    "end_s": 70.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0015796107472851872,
+    "output": " to <NEXT_AUDIO>",
+    "ids": [
+      311,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1121760,
+        "ref_s": 70.11,
+        "chunk": 200,
+        "text": " to",
+        "ids": [
+          311
+        ],
+        "reason": "ES2002a.B.words43",
+        "label_observed_until_s": null,
+        "ordinal": 35
+      }
+    ]
+  },
+  {
+    "chunk": 201,
+    "start_s": 70.48,
+    "end_s": 70.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0002115325041813776,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 202,
+    "start_s": 70.56,
+    "end_s": 70.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00014011516759637743,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 203,
+    "start_s": 70.64,
+    "end_s": 70.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00011206667841179296,
+    "output": " kind <NEXT_AUDIO>",
+    "ids": [
+      3093,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1125760,
+        "ref_s": 70.36,
+        "chunk": 203,
+        "text": " kind",
+        "ids": [
+          3093
+        ],
+        "reason": "ES2002a.B.words44",
+        "label_observed_until_s": null,
+        "ordinal": 36
+      }
+    ]
+  },
+  {
+    "chunk": 204,
+    "start_s": 70.72,
+    "end_s": 70.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.513688615290448e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 205,
+    "start_s": 70.8,
+    "end_s": 70.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00013218799722380936,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 206,
+    "start_s": 70.88,
+    "end_s": 70.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0004042001091875136,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 207,
+    "start_s": 70.96,
+    "end_s": 71.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00022343614546116441,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 208,
+    "start_s": 71.04,
+    "end_s": 71.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002280445070937276,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 209,
+    "start_s": 71.12,
+    "end_s": 71.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026654363609850407,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 210,
+    "start_s": 71.2,
+    "end_s": 71.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0009266006527468562,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 211,
+    "start_s": 71.28,
+    "end_s": 71.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0018341719405725598,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 212,
+    "start_s": 71.36,
+    "end_s": 71.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0031710281036794186,
+    "output": " of <NEXT_AUDIO>",
+    "ids": [
+      315,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1136640,
+        "ref_s": 71.04,
+        "chunk": 212,
+        "text": " of",
+        "ids": [
+          315
+        ],
+        "reason": "ES2002a.B.words45",
+        "label_observed_until_s": null,
+        "ordinal": 37
+      }
+    ]
+  },
+  {
+    "chunk": 213,
+    "start_s": 71.44,
+    "end_s": 71.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026293289847671986,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 214,
+    "start_s": 71.52,
+    "end_s": 71.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0028856017161160707,
+    "output": " make <NEXT_AUDIO>",
+    "ids": [
+      1281,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1139840,
+        "ref_s": 71.24,
+        "chunk": 214,
+        "text": " make",
+        "ids": [
+          1281
+        ],
+        "reason": "ES2002a.B.words46",
+        "label_observed_until_s": null,
+        "ordinal": 38
+      }
+    ]
+  },
+  {
+    "chunk": 215,
+    "start_s": 71.6,
+    "end_s": 71.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0025825579650700092,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 216,
+    "start_s": 71.68,
+    "end_s": 71.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.003491404466331005,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 217,
+    "start_s": 71.76,
+    "end_s": 71.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00310366484336555,
+    "output": " sure <NEXT_AUDIO>",
+    "ids": [
+      2704,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1143680,
+        "ref_s": 71.48,
+        "chunk": 217,
+        "text": " sure",
+        "ids": [
+          2704
+        ],
+        "reason": "ES2002a.B.words47",
+        "label_observed_until_s": null,
+        "ordinal": 39
+      }
+    ]
+  },
+  {
+    "chunk": 218,
+    "start_s": 71.84,
+    "end_s": 71.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0021970276720821857,
+    "output": " that <NEXT_AUDIO>",
+    "ids": [
+      429,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1145440,
+        "ref_s": 71.59,
+        "chunk": 218,
+        "text": " that",
+        "ids": [
+          429
+        ],
+        "reason": "ES2002a.B.words48",
+        "label_observed_until_s": null,
+        "ordinal": 40
+      }
+    ]
+  },
+  {
+    "chunk": 219,
+    "start_s": 71.92,
+    "end_s": 72.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002601849613711238,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 220,
+    "start_s": 72.0,
+    "end_s": 72.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0025660491082817316,
+    "output": " we <NEXT_AUDIO>",
+    "ids": [
+      582,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1146880,
+        "ref_s": 71.68,
+        "chunk": 220,
+        "text": " we",
+        "ids": [
+          582
+        ],
+        "reason": "ES2002a.B.words49",
+        "label_observed_until_s": null,
+        "ordinal": 41
+      }
+    ]
+  },
+  {
+    "chunk": 221,
+    "start_s": 72.08,
+    "end_s": 72.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0003641844668891281,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 222,
+    "start_s": 72.16,
+    "end_s": 72.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0031894398853182793,
+    "output": " all <NEXT_AUDIO>",
+    "ids": [
+      678,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1149760,
+        "ref_s": 71.86,
+        "chunk": 222,
+        "text": " all",
+        "ids": [
+          678
+        ],
+        "reason": "ES2002a.B.words50",
+        "label_observed_until_s": null,
+        "ordinal": 42
+      }
+    ]
+  },
+  {
+    "chunk": 223,
+    "start_s": 72.24,
+    "end_s": 72.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0021453502122312784,
+    "output": " know <NEXT_AUDIO>",
+    "ids": [
+      1414,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1151520,
+        "ref_s": 71.97,
+        "chunk": 223,
+        "text": " know",
+        "ids": [
+          1414
+        ],
+        "reason": "ES2002a.B.words51",
+        "label_observed_until_s": null,
+        "ordinal": 43
+      }
+    ]
+  },
+  {
+    "chunk": 224,
+    "start_s": 72.32,
+    "end_s": 72.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.003199934959411621,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 225,
+    "start_s": 72.4,
+    "end_s": 72.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002735421760007739,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 226,
+    "start_s": 72.48,
+    "end_s": 72.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00022237458324525505,
+    "output": " each <NEXT_AUDIO>",
+    "ids": [
+      1817,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1155360,
+        "ref_s": 72.21,
+        "chunk": 226,
+        "text": " each",
+        "ids": [
+          1817
+        ],
+        "reason": "ES2002a.B.words52",
+        "label_observed_until_s": null,
+        "ordinal": 44
+      }
+    ]
+  },
+  {
+    "chunk": 227,
+    "start_s": 72.56,
+    "end_s": 72.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.262935832841322e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 228,
+    "start_s": 72.64,
+    "end_s": 72.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 5.763578519690782e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 229,
+    "start_s": 72.72,
+    "end_s": 72.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0003500773455016315,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 230,
+    "start_s": 72.8,
+    "end_s": 72.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0022085884120315313,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 231,
+    "start_s": 72.88,
+    "end_s": 72.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0032342232298105955,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 232,
+    "start_s": 72.96,
+    "end_s": 73.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002257708692923188,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 233,
+    "start_s": 73.04,
+    "end_s": 73.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026471156161278486,
+    "output": " other <NEXT_AUDIO>",
+    "ids": [
+      1008,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1164640,
+        "ref_s": 72.79,
+        "chunk": 233,
+        "text": " other",
+        "ids": [
+          1008
+        ],
+        "reason": "ES2002a.B.words53",
+        "label_observed_until_s": null,
+        "ordinal": 45
+      }
+    ]
+  },
+  {
+    "chunk": 234,
+    "start_s": 73.12,
+    "end_s": 73.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0025209919549524784,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 235,
+    "start_s": 73.2,
+    "end_s": 73.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0034761950373649597,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 236,
+    "start_s": 73.28,
+    "end_s": 73.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0035868934355676174,
+    "output": " i'm <NEXT_AUDIO>",
+    "ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1168480,
+        "ref_s": 73.03,
+        "chunk": 236,
+        "text": " i'm",
+        "ids": [
+          600,
+          2776
+        ],
+        "reason": "ES2002a.B.words55",
+        "label_observed_until_s": null,
+        "ordinal": 46
+      }
+    ]
+  },
+  {
+    "chunk": 237,
+    "start_s": 73.36,
+    "end_s": 73.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016200511017814279,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 238,
+    "start_s": 73.44,
+    "end_s": 73.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0024403275456279516,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 239,
+    "start_s": 73.52,
+    "end_s": 73.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002005845308303833,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 240,
+    "start_s": 73.6,
+    "end_s": 73.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0015675339382141829,
+    "output": " laura <NEXT_AUDIO>",
+    "ids": [
+      1187,
+      5690,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1172480,
+        "ref_s": 73.28,
+        "chunk": 240,
+        "text": " laura",
+        "ids": [
+          1187,
+          5690
+        ],
+        "reason": "ES2002a.B.words56",
+        "label_observed_until_s": null,
+        "ordinal": 47
+      }
+    ]
+  },
+  {
+    "chunk": 241,
+    "start_s": 73.68,
+    "end_s": 73.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.004816483240574598,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 242,
+    "start_s": 73.76,
+    "end_s": 73.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.008797294460237026,
+    "output": " and <NEXT_AUDIO>",
+    "ids": [
+      323,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1176000,
+        "ref_s": 73.5,
+        "chunk": 242,
+        "text": " and",
+        "ids": [
+          323
+        ],
+        "reason": "ES2002a.B.words57",
+        "label_observed_until_s": null,
+        "ordinal": 48
+      }
+    ]
+  },
+  {
+    "chunk": 243,
+    "start_s": 73.84,
+    "end_s": 73.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016819603042677045,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 244,
+    "start_s": 73.92,
+    "end_s": 74.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026986245065927505,
+    "output": " i'm <NEXT_AUDIO>",
+    "ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1177760,
+        "ref_s": 73.61,
+        "chunk": 244,
+        "text": " i'm",
+        "ids": [
+          600,
+          2776
+        ],
+        "reason": "ES2002a.B.words58",
+        "label_observed_until_s": null,
+        "ordinal": 49
+      }
+    ]
+  },
+  {
+    "chunk": 245,
+    "start_s": 74.0,
+    "end_s": 74.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0015006314497441053,
+    "output": " the <NEXT_AUDIO>",
+    "ids": [
+      279,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1179040,
+        "ref_s": 73.69,
+        "chunk": 245,
+        "text": " the",
+        "ids": [
+          279
+        ],
+        "reason": "ES2002a.B.words59",
+        "label_observed_until_s": null,
+        "ordinal": 50
+      }
+    ]
+  },
+  {
+    "chunk": 246,
+    "start_s": 74.08,
+    "end_s": 74.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001688643591478467,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 247,
+    "start_s": 74.16,
+    "end_s": 74.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0019297832623124123,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 248,
+    "start_s": 74.24,
+    "end_s": 74.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0022849550005048513,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 249,
+    "start_s": 74.32,
+    "end_s": 74.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0018955220002681017,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 250,
+    "start_s": 74.4,
+    "end_s": 74.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002612118376418948,
+    "output": " project <NEXT_AUDIO>",
+    "ids": [
+      2390,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1185280,
+        "ref_s": 74.08,
+        "chunk": 250,
+        "text": " project",
+        "ids": [
+          2390
+        ],
+        "reason": "ES2002a.B.words60",
+        "label_observed_until_s": null,
+        "ordinal": 51
+      }
+    ]
+  },
+  {
+    "chunk": 251,
+    "start_s": 74.48,
+    "end_s": 74.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0013072246219962835,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 252,
+    "start_s": 74.56,
+    "end_s": 74.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00031668980955146253,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 253,
+    "start_s": 74.64,
+    "end_s": 74.72,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00493306340649724,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 254,
+    "start_s": 74.72,
+    "end_s": 74.8,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.010583571158349514,
+    "output": " manager <NEXT_AUDIO>",
+    "ids": [
+      6645,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1190720,
+        "ref_s": 74.42,
+        "chunk": 254,
+        "text": " manager",
+        "ids": [
+          6645
+        ],
+        "reason": "ES2002a.B.words61",
+        "label_observed_until_s": null,
+        "ordinal": 52
+      }
+    ]
+  },
+  {
+    "chunk": 255,
+    "start_s": 74.8,
+    "end_s": 74.88,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.004014177713543177,
+    "output": "<SPK_2> <ONSET> <NEXT_AUDIO>",
+    "ids": [
+      151718,
+      151721,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "onset",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1195360,
+        "ref_s": 74.71,
+        "chunk": 255,
+        "text": "<ONSET>",
+        "ids": [
+          151721
+        ],
+        "reason": "annotation_segment_start",
+        "label_observed_until_s": 74.71,
+        "ordinal": 95
+      }
+    ]
+  },
+  {
+    "chunk": 256,
+    "start_s": 74.88,
+    "end_s": 74.96,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.004278526641428471,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 257,
+    "start_s": 74.96,
+    "end_s": 75.04,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0034096678718924522,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 258,
+    "start_s": 75.04,
+    "end_s": 75.12,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.002280787331983447,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 259,
+    "start_s": 75.12,
+    "end_s": 75.2,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00023441249504685402,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 260,
+    "start_s": 75.2,
+    "end_s": 75.28,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00022760102001484483,
+    "output": "<SPK_1>  do <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      653,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1198560,
+        "ref_s": 74.91,
+        "chunk": 260,
+        "text": " do",
+        "ids": [
+          653
+        ],
+        "reason": "ES2002a.B.words64",
+        "label_observed_until_s": null,
+        "ordinal": 53
+      }
+    ]
+  },
+  {
+    "chunk": 261,
+    "start_s": 75.28,
+    "end_s": 75.36,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00022633536718785763,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 262,
+    "start_s": 75.36,
+    "end_s": 75.44,
+    "activity": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00015741304378025234,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 263,
+    "start_s": 75.44,
+    "end_s": 75.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00010153563925996423,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 264,
+    "start_s": 75.52,
+    "end_s": 75.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 9.560436592437327e-05,
+    "output": "<SPK_2>  great <NEXT_AUDIO>",
+    "ids": [
+      151718,
+      2244,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1203840,
+        "ref_s": 75.24,
+        "chunk": 264,
+        "text": " great",
+        "ids": [
+          2244
+        ],
+        "reason": "ES2002a.D.words2",
+        "label_observed_until_s": null,
+        "ordinal": 54
+      }
+    ]
+  },
+  {
+    "chunk": 265,
+    "start_s": 75.6,
+    "end_s": 75.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 8.38802516227588e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 266,
+    "start_s": 75.68,
+    "end_s": 75.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 8.308687392855063e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 267,
+    "start_s": 75.76,
+    "end_s": 75.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00010033836588263512,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 268,
+    "start_s": 75.84,
+    "end_s": 75.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001226215244969353,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 269,
+    "start_s": 75.92,
+    "end_s": 76.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.938787166494876e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 270,
+    "start_s": 76.0,
+    "end_s": 76.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0008030153694562614,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 271,
+    "start_s": 76.08,
+    "end_s": 76.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0027535262051969767,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 272,
+    "start_s": 76.16,
+    "end_s": 76.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001373574952594936,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 273,
+    "start_s": 76.24,
+    "end_s": 76.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001490146154537797,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 274,
+    "start_s": 76.32,
+    "end_s": 76.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0017870182637125254,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 275,
+    "start_s": 76.4,
+    "end_s": 76.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016362284077331424,
+    "output": "<SPK_1>  you <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      498,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1217600,
+        "ref_s": 76.1,
+        "chunk": 275,
+        "text": " you",
+        "ids": [
+          498
+        ],
+        "reason": "ES2002a.B.words65",
+        "label_observed_until_s": null,
+        "ordinal": 55
+      }
+    ]
+  },
+  {
+    "chunk": 276,
+    "start_s": 76.48,
+    "end_s": 76.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0007022448698990047,
+    "output": " want <NEXT_AUDIO>",
+    "ids": [
+      1366,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1219680,
+        "ref_s": 76.23,
+        "chunk": 276,
+        "text": " want",
+        "ids": [
+          1366
+        ],
+        "reason": "ES2002a.B.words66",
+        "label_observed_until_s": null,
+        "ordinal": 56
+      }
+    ]
+  },
+  {
+    "chunk": 277,
+    "start_s": 76.56,
+    "end_s": 76.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0013871666742488742,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 278,
+    "start_s": 76.64,
+    "end_s": 76.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016288638580590487,
+    "output": " to <NEXT_AUDIO>",
+    "ids": [
+      311,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1221600,
+        "ref_s": 76.35,
+        "chunk": 278,
+        "text": " to",
+        "ids": [
+          311
+        ],
+        "reason": "ES2002a.B.words67",
+        "label_observed_until_s": null,
+        "ordinal": 57
+      }
+    ]
+  },
+  {
+    "chunk": 279,
+    "start_s": 76.72,
+    "end_s": 76.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0009869028581306338,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 280,
+    "start_s": 76.8,
+    "end_s": 76.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0017447508871555328,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 281,
+    "start_s": 76.88,
+    "end_s": 76.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001916270237416029,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 282,
+    "start_s": 76.96,
+    "end_s": 77.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0018237901385873556,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 283,
+    "start_s": 77.04,
+    "end_s": 77.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.000364104489563033,
+    "output": " introduce <NEXT_AUDIO>",
+    "ids": [
+      19131,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1228160,
+        "ref_s": 76.76,
+        "chunk": 283,
+        "text": " introduce",
+        "ids": [
+          19131
+        ],
+        "reason": "ES2002a.B.words68",
+        "label_observed_until_s": null,
+        "ordinal": 58
+      }
+    ]
+  },
+  {
+    "chunk": 284,
+    "start_s": 77.12,
+    "end_s": 77.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0007137442007660866,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 285,
+    "start_s": 77.2,
+    "end_s": 77.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001416540239006281,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 286,
+    "start_s": 77.28,
+    "end_s": 77.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0007532657473348081,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 287,
+    "start_s": 77.36,
+    "end_s": 77.44,
+    "activity": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00023377902107313275,
+    "output": " yourself <NEXT_AUDIO>",
+    "ids": [
+      6133,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1233280,
+        "ref_s": 77.08,
+        "chunk": 287,
+        "text": " yourself",
+        "ids": [
+          6133
+        ],
+        "reason": "ES2002a.B.words69",
+        "label_observed_until_s": null,
+        "ordinal": 59
+      }
+    ]
+  },
+  {
+    "chunk": 288,
+    "start_s": 77.44,
+    "end_s": 77.52,
+    "activity": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0007565402192994952,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 289,
+    "start_s": 77.52,
+    "end_s": 77.6,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0010344826150685549,
+    "output": "<SPK_3> <ONSET> <NEXT_AUDIO>",
+    "ids": [
+      151719,
+      151721,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "onset",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1238528,
+        "ref_s": 77.408,
+        "chunk": 289,
+        "text": "<ONSET>",
+        "ids": [
+          151721
+        ],
+        "reason": "annotation_segment_start",
+        "label_observed_until_s": 77.408,
+        "ordinal": 96
+      }
+    ]
+  },
+  {
+    "chunk": 290,
+    "start_s": 77.6,
+    "end_s": 77.68,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0003034338587895036,
+    "output": "<SPK_1>  again <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      1549,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1236640,
+        "ref_s": 77.29,
+        "chunk": 290,
+        "text": " again",
+        "ids": [
+          1549
+        ],
+        "reason": "ES2002a.B.words70",
+        "label_observed_until_s": null,
+        "ordinal": 60
+      }
+    ]
+  },
+  {
+    "chunk": 291,
+    "start_s": 77.68,
+    "end_s": 77.76,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00010841120820259675,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 292,
+    "start_s": 77.76,
+    "end_s": 77.84,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00028401598683558404,
+    "output": "<SPK_1> <EOT> <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      151722,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "eot",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1239296,
+        "ref_s": 77.456,
+        "chunk": 292,
+        "text": "<EOT>",
+        "ids": [
+          151722
+        ],
+        "reason": "overlap_end",
+        "label_observed_until_s": 80.456,
+        "ordinal": 93
+      }
+    ]
+  },
+  {
+    "chunk": 293,
+    "start_s": 77.84,
+    "end_s": 77.92,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0005865307175554335,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 294,
+    "start_s": 77.92,
+    "end_s": 78.0,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.000493082741741091,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 295,
+    "start_s": 78.0,
+    "end_s": 78.08,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0004681997816078365,
+    "output": "<SPK_3>  hi <NEXT_AUDIO>",
+    "ids": [
+      151719,
+      15588,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1243840,
+        "ref_s": 77.74,
+        "chunk": 295,
+        "text": " hi",
+        "ids": [
+          15588
+        ],
+        "reason": "ES2002a.A.words0",
+        "label_observed_until_s": null,
+        "ordinal": 61
+      }
+    ]
+  },
+  {
+    "chunk": 296,
+    "start_s": 78.08,
+    "end_s": 78.16,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0003203619853593409,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 297,
+    "start_s": 78.16,
+    "end_s": 78.24,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0003511040995363146,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 298,
+    "start_s": 78.24,
+    "end_s": 78.32,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0007253038929775357,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 299,
+    "start_s": 78.32,
+    "end_s": 78.4,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00047153630293905735,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 300,
+    "start_s": 78.4,
+    "end_s": 78.48,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.000907464767806232,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 301,
+    "start_s": 78.48,
+    "end_s": 78.56,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00043264348641969264,
+    "output": " i'm <NEXT_AUDIO>",
+    "ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1250560,
+        "ref_s": 78.16,
+        "chunk": 301,
+        "text": " i'm",
+        "ids": [
+          600,
+          2776
+        ],
+        "reason": "ES2002a.A.words2",
+        "label_observed_until_s": null,
+        "ordinal": 62
+      }
+    ]
+  },
+  {
+    "chunk": 302,
+    "start_s": 78.56,
+    "end_s": 78.64,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 8.555500244256109e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 303,
+    "start_s": 78.64,
+    "end_s": 78.72,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00029822136275470257,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 304,
+    "start_s": 78.72,
+    "end_s": 78.8,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00034904328640550375,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 305,
+    "start_s": 78.8,
+    "end_s": 78.88,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0004304165777284652,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 306,
+    "start_s": 78.88,
+    "end_s": 78.96,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.000386884348699823,
+    "output": " david <NEXT_AUDIO>",
+    "ids": [
+      53946,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1257600,
+        "ref_s": 78.6,
+        "chunk": 306,
+        "text": " david",
+        "ids": [
+          53946
+        ],
+        "reason": "ES2002a.A.words3",
+        "label_observed_until_s": null,
+        "ordinal": 63
+      }
+    ]
+  },
+  {
+    "chunk": 307,
+    "start_s": 78.96,
+    "end_s": 79.04,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0003859854768961668,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 308,
+    "start_s": 79.04,
+    "end_s": 79.12,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00040463468758389354,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 309,
+    "start_s": 79.12,
+    "end_s": 79.2,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0002637660363689065,
+    "output": " and <NEXT_AUDIO>",
+    "ids": [
+      323,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1261600,
+        "ref_s": 78.85,
+        "chunk": 309,
+        "text": " and",
+        "ids": [
+          323
+        ],
+        "reason": "ES2002a.A.words4",
+        "label_observed_until_s": null,
+        "ordinal": 64
+      }
+    ]
+  },
+  {
+    "chunk": 310,
+    "start_s": 79.2,
+    "end_s": 79.28,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00016785887419246137,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 311,
+    "start_s": 79.28,
+    "end_s": 79.36,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 8.701592014404014e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 312,
+    "start_s": 79.36,
+    "end_s": 79.44,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00043285058927722275,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 313,
+    "start_s": 79.44,
+    "end_s": 79.52,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.000337520003085956,
+    "output": " i'm <NEXT_AUDIO>",
+    "ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1266560,
+        "ref_s": 79.16,
+        "chunk": 313,
+        "text": " i'm",
+        "ids": [
+          600,
+          2776
+        ],
+        "reason": "ES2002a.A.words5",
+        "label_observed_until_s": null,
+        "ordinal": 65
+      }
+    ]
+  },
+  {
+    "chunk": 314,
+    "start_s": 79.52,
+    "end_s": 79.6,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.000202255294425413,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 315,
+    "start_s": 79.6,
+    "end_s": 79.68,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0007146017160266638,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 316,
+    "start_s": 79.68,
+    "end_s": 79.76,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0007343111792579293,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 317,
+    "start_s": 79.76,
+    "end_s": 79.84,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0006068580551072955,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 318,
+    "start_s": 79.84,
+    "end_s": 79.92,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0011516272788867354,
+    "output": " supposed <NEXT_AUDIO>",
+    "ids": [
+      9966,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1272480,
+        "ref_s": 79.53,
+        "chunk": 318,
+        "text": " supposed",
+        "ids": [
+          9966
+        ],
+        "reason": "ES2002a.A.words6",
+        "label_observed_until_s": null,
+        "ordinal": 66
+      }
+    ]
+  },
+  {
+    "chunk": 319,
+    "start_s": 79.92,
+    "end_s": 80.0,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0005703539354726672,
+    "output": " to <NEXT_AUDIO>",
+    "ids": [
+      311,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1273600,
+        "ref_s": 79.6,
+        "chunk": 319,
+        "text": " to",
+        "ids": [
+          311
+        ],
+        "reason": "ES2002a.A.words7",
+        "label_observed_until_s": null,
+        "ordinal": 67
+      }
+    ]
+  },
+  {
+    "chunk": 320,
+    "start_s": 80.0,
+    "end_s": 80.08,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00015296963101718575,
+    "output": " be <NEXT_AUDIO>",
+    "ids": [
+      387,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1275840,
+        "ref_s": 79.74,
+        "chunk": 320,
+        "text": " be",
+        "ids": [
+          387
+        ],
+        "reason": "ES2002a.A.words8",
+        "label_observed_until_s": null,
+        "ordinal": 68
+      }
+    ]
+  },
+  {
+    "chunk": 321,
+    "start_s": 80.08,
+    "end_s": 80.16,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0005487515009008348,
+    "output": " an <NEXT_AUDIO>",
+    "ids": [
+      458,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1277280,
+        "ref_s": 79.83,
+        "chunk": 321,
+        "text": " an",
+        "ids": [
+          458
+        ],
+        "reason": "ES2002a.A.words9",
+        "label_observed_until_s": null,
+        "ordinal": 69
+      }
+    ]
+  },
+  {
+    "chunk": 322,
+    "start_s": 80.16,
+    "end_s": 80.24,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0005057014641351998,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 323,
+    "start_s": 80.24,
+    "end_s": 80.32,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0004658851830754429,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 324,
+    "start_s": 80.32,
+    "end_s": 80.4,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00023387208057101816,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 325,
+    "start_s": 80.4,
+    "end_s": 80.48,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00031707712332718074,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 326,
+    "start_s": 80.48,
+    "end_s": 80.56,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.0003224482643418014,
+    "output": " industrial <NEXT_AUDIO>",
+    "ids": [
+      12785,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1283360,
+        "ref_s": 80.21,
+        "chunk": 326,
+        "text": " industrial",
+        "ids": [
+          12785
+        ],
+        "reason": "ES2002a.A.words10",
+        "label_observed_until_s": null,
+        "ordinal": 70
+      }
+    ]
+  },
+  {
+    "chunk": 327,
+    "start_s": 80.56,
+    "end_s": 80.64,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00035934228799305856,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 328,
+    "start_s": 80.64,
+    "end_s": 80.72,
+    "activity": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00012420925486367196,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 329,
+    "start_s": 80.72,
+    "end_s": 80.8,
+    "activity": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00024385080905631185,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 330,
+    "start_s": 80.8,
+    "end_s": 80.88,
+    "activity": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.001994701102375984,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 331,
+    "start_s": 80.88,
+    "end_s": 80.96,
+    "activity": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "audio_rms": 0.00031151733128353953,
+    "output": "<SPK_1> <ONSET> <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      151721,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "onset",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1291776,
+        "ref_s": 80.736,
+        "chunk": 331,
+        "text": "<ONSET>",
+        "ids": [
+          151721
+        ],
+        "reason": "annotation_segment_start",
+        "label_observed_until_s": 80.736,
+        "ordinal": 98
+      }
+    ]
+  },
+  {
+    "chunk": 332,
+    "start_s": 80.96,
+    "end_s": 81.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.003143291687592864,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 333,
+    "start_s": 81.04,
+    "end_s": 81.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0023819138295948505,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 334,
+    "start_s": 81.12,
+    "end_s": 81.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001863968907855451,
+    "output": "<SPK_3>  designer <NEXT_AUDIO>",
+    "ids": [
+      151719,
+      14692,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1293920,
+        "ref_s": 80.87,
+        "chunk": 334,
+        "text": " designer",
+        "ids": [
+          14692
+        ],
+        "reason": "ES2002a.A.words11",
+        "label_observed_until_s": null,
+        "ordinal": 71
+      }
+    ]
+  },
+  {
+    "chunk": 335,
+    "start_s": 81.2,
+    "end_s": 81.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0010393450502306223,
+    "output": "<SPK_3> <EOT> <NEXT_AUDIO>",
+    "ids": [
+      151719,
+      151722,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "eot",
+        "agent": "A",
+        "slot": 3,
+        "ref_sample": 1295280,
+        "ref_s": 80.955,
+        "chunk": 335,
+        "text": "<EOT>",
+        "ids": [
+          151722
+        ],
+        "reason": "overlap_end",
+        "label_observed_until_s": 83.955,
+        "ordinal": 97
+      }
+    ]
+  },
+  {
+    "chunk": 336,
+    "start_s": 81.28,
+    "end_s": 81.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00014748674584552646,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 337,
+    "start_s": 81.36,
+    "end_s": 81.44,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00020926828437950462,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 338,
+    "start_s": 81.44,
+    "end_s": 81.52,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0002956051321234554,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 339,
+    "start_s": 81.52,
+    "end_s": 81.6,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00012484339822549373,
+    "output": "<SPK_1>  okay <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      16910,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1300160,
+        "ref_s": 81.26,
+        "chunk": 339,
+        "text": " okay",
+        "ids": [
+          16910
+        ],
+        "reason": "ES2002a.B.words72",
+        "label_observed_until_s": null,
+        "ordinal": 72
+      }
+    ]
+  },
+  {
+    "chunk": 340,
+    "start_s": 81.6,
+    "end_s": 81.68,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00010125084372702986,
+    "output": "<SPK_1> <EOT> <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      151722,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "eot",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1300736,
+        "ref_s": 81.296,
+        "chunk": 340,
+        "text": "<EOT>",
+        "ids": [
+          151722
+        ],
+        "reason": "shift",
+        "label_observed_until_s": 84.296,
+        "ordinal": 99
+      }
+    ]
+  },
+  {
+    "chunk": 341,
+    "start_s": 81.68,
+    "end_s": 81.76,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 9.208020492224023e-05,
+    "output": "<SPK_2> <ONSET> <NEXT_AUDIO>",
+    "ids": [
+      151718,
+      151721,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "onset",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1305200,
+        "ref_s": 81.575,
+        "chunk": 341,
+        "text": "<ONSET>",
+        "ids": [
+          151721
+        ],
+        "reason": "annotation_segment_start",
+        "label_observed_until_s": 81.575,
+        "ordinal": 100
+      }
+    ]
+  },
+  {
+    "chunk": 342,
+    "start_s": 81.76,
+    "end_s": 81.84,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 8.693278505234048e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 343,
+    "start_s": 81.84,
+    "end_s": 81.92,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001488159759901464,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 344,
+    "start_s": 81.92,
+    "end_s": 82.0,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00014823945821262896,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 345,
+    "start_s": 82.0,
+    "end_s": 82.08,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00024174139252863824,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 346,
+    "start_s": 82.08,
+    "end_s": 82.16,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0022147679701447487,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 347,
+    "start_s": 82.16,
+    "end_s": 82.24,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00334758753888309,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 348,
+    "start_s": 82.24,
+    "end_s": 82.32,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.003656568005681038,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 349,
+    "start_s": 82.32,
+    "end_s": 82.4,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.003055427921935916,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 350,
+    "start_s": 82.4,
+    "end_s": 82.48,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0027851646300405264,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 351,
+    "start_s": 82.48,
+    "end_s": 82.56,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.002962008584290743,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 352,
+    "start_s": 82.56,
+    "end_s": 82.64,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00162981147877872,
+    "output": " and <NEXT_AUDIO>",
+    "ids": [
+      323,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1316000,
+        "ref_s": 82.25,
+        "chunk": 352,
+        "text": " and",
+        "ids": [
+          323
+        ],
+        "reason": "ES2002a.D.words4",
+        "label_observed_until_s": null,
+        "ordinal": 73
+      }
+    ]
+  },
+  {
+    "chunk": 353,
+    "start_s": 82.64,
+    "end_s": 82.72,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.002933661686256528,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 354,
+    "start_s": 82.72,
+    "end_s": 82.8,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0035598406102508307,
+    "output": " i'm <NEXT_AUDIO>",
+    "ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1318880,
+        "ref_s": 82.43,
+        "chunk": 354,
+        "text": " i'm",
+        "ids": [
+          600,
+          2776
+        ],
+        "reason": "ES2002a.D.words5",
+        "label_observed_until_s": null,
+        "ordinal": 74
+      }
+    ]
+  },
+  {
+    "chunk": 355,
+    "start_s": 82.8,
+    "end_s": 82.88,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.003023478901013732,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 356,
+    "start_s": 82.88,
+    "end_s": 82.96,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0024513443931937218,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 357,
+    "start_s": 82.96,
+    "end_s": 83.04,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0018540681339800358,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 358,
+    "start_s": 83.04,
+    "end_s": 83.12,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0022970798891037703,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 359,
+    "start_s": 83.12,
+    "end_s": 83.2,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0019078815821558237,
+    "output": " andrew <NEXT_AUDIO>",
+    "ids": [
+      323,
+      4266,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1325920,
+        "ref_s": 82.87,
+        "chunk": 359,
+        "text": " andrew",
+        "ids": [
+          323,
+          4266
+        ],
+        "reason": "ES2002a.D.words6",
+        "label_observed_until_s": null,
+        "ordinal": 75
+      }
+    ]
+  },
+  {
+    "chunk": 360,
+    "start_s": 83.2,
+    "end_s": 83.28,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0017235592240467668,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 361,
+    "start_s": 83.28,
+    "end_s": 83.36,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0017262243200093508,
+    "output": " and <NEXT_AUDIO>",
+    "ids": [
+      323,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1328320,
+        "ref_s": 83.02,
+        "chunk": 361,
+        "text": " and",
+        "ids": [
+          323
+        ],
+        "reason": "ES2002a.D.words7",
+        "label_observed_until_s": null,
+        "ordinal": 76
+      }
+    ]
+  },
+  {
+    "chunk": 362,
+    "start_s": 83.36,
+    "end_s": 83.44,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00237149465829134,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 363,
+    "start_s": 83.44,
+    "end_s": 83.52,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0023019853979349136,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 364,
+    "start_s": 83.52,
+    "end_s": 83.6,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0020648480858653784,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 365,
+    "start_s": 83.6,
+    "end_s": 83.68,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016331783263012767,
+    "output": " i'm <NEXT_AUDIO>",
+    "ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1333600,
+        "ref_s": 83.35,
+        "chunk": 365,
+        "text": " i'm",
+        "ids": [
+          600,
+          2776
+        ],
+        "reason": "ES2002a.D.words8",
+        "label_observed_until_s": null,
+        "ordinal": 77
+      }
+    ]
+  },
+  {
+    "chunk": 366,
+    "start_s": 83.68,
+    "end_s": 83.76,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0007062629447318614,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 367,
+    "start_s": 83.76,
+    "end_s": 83.84,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0011134829837828875,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 368,
+    "start_s": 83.84,
+    "end_s": 83.92,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0017859813524410129,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 369,
+    "start_s": 83.92,
+    "end_s": 84.0,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0025138778146356344,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 370,
+    "start_s": 84.0,
+    "end_s": 84.08,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.002262356225401163,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 371,
+    "start_s": 84.08,
+    "end_s": 84.16,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.00027546376804821193,
+    "output": " uh <NEXT_AUDIO>",
+    "ids": [
+      43744,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1340320,
+        "ref_s": 83.77,
+        "chunk": 371,
+        "text": " uh",
+        "ids": [
+          43744
+        ],
+        "reason": "ES2002a.D.words9",
+        "label_observed_until_s": null,
+        "ordinal": 78
+      }
+    ]
+  },
+  {
+    "chunk": 372,
+    "start_s": 84.16,
+    "end_s": 84.24,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0015937293646857142,
+    "output": " our <NEXT_AUDIO>",
+    "ids": [
+      1039,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1342080,
+        "ref_s": 83.88,
+        "chunk": 372,
+        "text": " our",
+        "ids": [
+          1039
+        ],
+        "reason": "ES2002a.D.words10",
+        "label_observed_until_s": null,
+        "ordinal": 79
+      }
+    ]
+  },
+  {
+    "chunk": 373,
+    "start_s": 84.24,
+    "end_s": 84.32,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.0026766329538077116,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 374,
+    "start_s": 84.32,
+    "end_s": 84.4,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.001622435636818409,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 375,
+    "start_s": 84.4,
+    "end_s": 84.48,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 0.000817426887806505,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 376,
+    "start_s": 84.48,
+    "end_s": 84.56,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 9.964960918296129e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 377,
+    "start_s": 84.56,
+    "end_s": 84.64,
+    "activity": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "audio_rms": 8.38214109535329e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 378,
+    "start_s": 84.64,
+    "end_s": 84.72,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 4.90697639179416e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 379,
+    "start_s": 84.72,
+    "end_s": 84.8,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 3.776598532567732e-05,
+    "output": " marketing <NEXT_AUDIO>",
+    "ids": [
+      8493,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1351360,
+        "ref_s": 84.46,
+        "chunk": 379,
+        "text": " marketing",
+        "ids": [
+          8493
+        ],
+        "reason": "ES2002a.D.words11",
+        "label_observed_until_s": null,
+        "ordinal": 80
+      }
+    ]
+  },
+  {
+    "chunk": 380,
+    "start_s": 84.8,
+    "end_s": 84.88,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 4.5957305701449513e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 381,
+    "start_s": 84.88,
+    "end_s": 84.96,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 4.047558468300849e-05,
+    "output": "<SPK_2> <EOT> <NEXT_AUDIO>",
+    "ids": [
+      151718,
+      151722,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "eot",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1353216,
+        "ref_s": 84.576,
+        "chunk": 381,
+        "text": "<EOT>",
+        "ids": [
+          151722
+        ],
+        "reason": "shift",
+        "label_observed_until_s": 87.576,
+        "ordinal": 101
+      }
+    ]
+  },
+  {
+    "chunk": 382,
+    "start_s": 84.96,
+    "end_s": 85.04,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 6.187575490912423e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 383,
+    "start_s": 85.04,
+    "end_s": 85.12,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.816057768650353e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 384,
+    "start_s": 85.12,
+    "end_s": 85.2,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00010343542089685798,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 385,
+    "start_s": 85.2,
+    "end_s": 85.28,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 6.960548489587381e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 386,
+    "start_s": 85.28,
+    "end_s": 85.36,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 6.231296720216051e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 387,
+    "start_s": 85.36,
+    "end_s": 85.44,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 5.041817348683253e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 388,
+    "start_s": 85.44,
+    "end_s": 85.52,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 4.527191413217224e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 389,
+    "start_s": 85.52,
+    "end_s": 85.6,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.00024268688866868615,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 390,
+    "start_s": 85.6,
+    "end_s": 85.68,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0001395365979988128,
+    "output": "<SPK_4> <ONSET> <NEXT_AUDIO>",
+    "ids": [
+      151720,
+      151721,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "onset",
+        "agent": "C",
+        "slot": 4,
+        "ref_sample": 1368144,
+        "ref_s": 85.509,
+        "chunk": 390,
+        "text": "<ONSET>",
+        "ids": [
+          151721
+        ],
+        "reason": "annotation_segment_start",
+        "label_observed_until_s": 85.509,
+        "ordinal": 102
+      }
+    ]
+  },
+  {
+    "chunk": 391,
+    "start_s": 85.68,
+    "end_s": 85.76,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 6.615743768634275e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 392,
+    "start_s": 85.76,
+    "end_s": 85.84,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 8.710132533451542e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 393,
+    "start_s": 85.84,
+    "end_s": 85.92,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.00016503181541338563,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 394,
+    "start_s": 85.92,
+    "end_s": 86.0,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0007507828413508832,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 395,
+    "start_s": 86.0,
+    "end_s": 86.08,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.0009861766593530774,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 396,
+    "start_s": 86.08,
+    "end_s": 86.16,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.0010531186126172543,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 397,
+    "start_s": 86.16,
+    "end_s": 86.24,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.0015097890282049775,
+    "output": "<SPK_2> <ONSET> <NEXT_AUDIO>",
+    "ids": [
+      151718,
+      151721,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "onset",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1376768,
+        "ref_s": 86.048,
+        "chunk": 397,
+        "text": "<ONSET>",
+        "ids": [
+          151721
+        ],
+        "reason": "annotation_segment_start",
+        "label_observed_until_s": 86.048,
+        "ordinal": 104
+      }
+    ]
+  },
+  {
+    "chunk": 398,
+    "start_s": 86.24,
+    "end_s": 86.32,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.0009792131604626775,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 399,
+    "start_s": 86.32,
+    "end_s": 86.4,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.0029040370136499405,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 400,
+    "start_s": 86.4,
+    "end_s": 86.48,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.0009921399177983403,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 401,
+    "start_s": 86.48,
+    "end_s": 86.56,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.000362288294127211,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 402,
+    "start_s": 86.56,
+    "end_s": 86.64,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.0001606055157026276,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 403,
+    "start_s": 86.64,
+    "end_s": 86.72,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.0001815086870919913,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 404,
+    "start_s": 86.72,
+    "end_s": 86.8,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.00013741136353928596,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 405,
+    "start_s": 86.8,
+    "end_s": 86.88,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.00018357673252467066,
+    "output": " expert <NEXT_AUDIO>",
+    "ids": [
+      6203,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "D",
+        "slot": 2,
+        "ref_sample": 1384000,
+        "ref_s": 86.5,
+        "chunk": 405,
+        "text": " expert",
+        "ids": [
+          6203
+        ],
+        "reason": "ES2002a.D.words12",
+        "label_observed_until_s": null,
+        "ordinal": 82
+      }
+    ]
+  },
+  {
+    "chunk": 406,
+    "start_s": 86.88,
+    "end_s": 86.96,
+    "activity": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "audio_rms": 0.00017012478201650083,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 407,
+    "start_s": 86.96,
+    "end_s": 87.04,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 6.661945371888578e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 408,
+    "start_s": 87.04,
+    "end_s": 87.12,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.00011583982995944098,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 409,
+    "start_s": 87.12,
+    "end_s": 87.2,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 5.9192374465055764e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 410,
+    "start_s": 87.2,
+    "end_s": 87.28,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0019719935953617096,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 411,
+    "start_s": 87.28,
+    "end_s": 87.36,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0020410926081240177,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 412,
+    "start_s": 87.36,
+    "end_s": 87.44,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0006771563203074038,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 413,
+    "start_s": 87.44,
+    "end_s": 87.52,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0030588784720748663,
+    "output": "<SPK_4>  um <NEXT_AUDIO>",
+    "ids": [
+      151720,
+      4443,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "C",
+        "slot": 4,
+        "ref_sample": 1394720,
+        "ref_s": 87.17,
+        "chunk": 413,
+        "text": " um",
+        "ids": [
+          4443
+        ],
+        "reason": "ES2002a.C.words0",
+        "label_observed_until_s": null,
+        "ordinal": 81
+      }
+    ]
+  },
+  {
+    "chunk": 414,
+    "start_s": 87.52,
+    "end_s": 87.6,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0037380210123956203,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 415,
+    "start_s": 87.6,
+    "end_s": 87.68,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.002590383170172572,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 416,
+    "start_s": 87.68,
+    "end_s": 87.76,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0031171697191894054,
+    "output": " i'm <NEXT_AUDIO>",
+    "ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "C",
+        "slot": 4,
+        "ref_sample": 1397760,
+        "ref_s": 87.36,
+        "chunk": 416,
+        "text": " i'm",
+        "ids": [
+          600,
+          2776
+        ],
+        "reason": "ES2002a.C.words1",
+        "label_observed_until_s": null,
+        "ordinal": 83
+      }
+    ]
+  },
+  {
+    "chunk": 417,
+    "start_s": 87.76,
+    "end_s": 87.84,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.00332727306522429,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 418,
+    "start_s": 87.84,
+    "end_s": 87.92,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0026470068842172623,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 419,
+    "start_s": 87.92,
+    "end_s": 88.0,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0011527056340128183,
+    "output": " craig <NEXT_AUDIO>",
+    "ids": [
+      45041,
+      343,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "C",
+        "slot": 4,
+        "ref_sample": 1402560,
+        "ref_s": 87.66,
+        "chunk": 419,
+        "text": " craig",
+        "ids": [
+          45041,
+          343
+        ],
+        "reason": "ES2002a.C.words2",
+        "label_observed_until_s": null,
+        "ordinal": 84
+      }
+    ]
+  },
+  {
+    "chunk": 420,
+    "start_s": 88.0,
+    "end_s": 88.08,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0033156489953398705,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 421,
+    "start_s": 88.08,
+    "end_s": 88.16,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.002126595936715603,
+    "output": " and <NEXT_AUDIO>",
+    "ids": [
+      323,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "C",
+        "slot": 4,
+        "ref_sample": 1404320,
+        "ref_s": 87.77,
+        "chunk": 421,
+        "text": " and",
+        "ids": [
+          323
+        ],
+        "reason": "ES2002a.C.words3",
+        "label_observed_until_s": null,
+        "ordinal": 85
+      }
+    ]
+  },
+  {
+    "chunk": 422,
+    "start_s": 88.16,
+    "end_s": 88.24,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0033780063968151808,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 423,
+    "start_s": 88.24,
+    "end_s": 88.32,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0010145886335521936,
+    "output": " i'm <NEXT_AUDIO>",
+    "ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "C",
+        "slot": 4,
+        "ref_sample": 1407200,
+        "ref_s": 87.95,
+        "chunk": 423,
+        "text": " i'm",
+        "ids": [
+          600,
+          2776
+        ],
+        "reason": "ES2002a.C.words4",
+        "label_observed_until_s": null,
+        "ordinal": 86
+      }
+    ]
+  },
+  {
+    "chunk": 424,
+    "start_s": 88.32,
+    "end_s": 88.4,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.00022457927116192877,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 425,
+    "start_s": 88.4,
+    "end_s": 88.48,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0012944354675710201,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 426,
+    "start_s": 88.48,
+    "end_s": 88.56,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0006756231305189431,
+    "output": " user <NEXT_AUDIO>",
+    "ids": [
+      1196,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "C",
+        "slot": 4,
+        "ref_sample": 1410880,
+        "ref_s": 88.18,
+        "chunk": 426,
+        "text": " user",
+        "ids": [
+          1196
+        ],
+        "reason": "ES2002a.C.words5",
+        "label_observed_until_s": null,
+        "ordinal": 87
+      }
+    ]
+  },
+  {
+    "chunk": 427,
+    "start_s": 88.56,
+    "end_s": 88.64,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.00027553713880479336,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 428,
+    "start_s": 88.64,
+    "end_s": 88.72,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0001253256486961618,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 429,
+    "start_s": 88.72,
+    "end_s": 88.8,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.00013391282118391246,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 430,
+    "start_s": 88.8,
+    "end_s": 88.88,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.0001399679167661816,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 431,
+    "start_s": 88.88,
+    "end_s": 88.96,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.00012569286627694964,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 432,
+    "start_s": 88.96,
+    "end_s": 89.04,
+    "activity": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "audio_rms": 0.00017553709039930254,
+    "output": " interface <NEXT_AUDIO>",
+    "ids": [
+      3749,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "C",
+        "slot": 4,
+        "ref_sample": 1419360,
+        "ref_s": 88.71,
+        "chunk": 432,
+        "text": " interface",
+        "ids": [
+          3749
+        ],
+        "reason": "ES2002a.C.words6",
+        "label_observed_until_s": null,
+        "ordinal": 88
+      }
+    ]
+  },
+  {
+    "chunk": 433,
+    "start_s": 89.04,
+    "end_s": 89.12,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 6.976340955588967e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 434,
+    "start_s": 89.12,
+    "end_s": 89.2,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 4.831045225728303e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 435,
+    "start_s": 89.2,
+    "end_s": 89.28,
+    "activity": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 2.987071820825804e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 436,
+    "start_s": 89.28,
+    "end_s": 89.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0002909113245550543,
+    "output": "<SPK_4> <EOT> <NEXT_AUDIO>",
+    "ids": [
+      151720,
+      151722,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "eot",
+        "agent": "C",
+        "slot": 4,
+        "ref_sample": 1423712,
+        "ref_s": 88.982,
+        "chunk": 436,
+        "text": "<EOT>",
+        "ids": [
+          151722
+        ],
+        "reason": "shift",
+        "label_observed_until_s": 91.982,
+        "ordinal": 103
+      }
+    ]
+  },
+  {
+    "chunk": 437,
+    "start_s": 89.36,
+    "end_s": 89.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.002948413835838437,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 438,
+    "start_s": 89.44,
+    "end_s": 89.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0020359514746814966,
+    "output": "<SPK_1> <ONSET> <NEXT_AUDIO>",
+    "ids": [
+      151717,
+      151721,
+      151705
+    ],
+    "output_tokens": 3,
+    "events": [
+      {
+        "kind": "onset",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1428480,
+        "ref_s": 89.28,
+        "chunk": 438,
+        "text": "<ONSET>",
+        "ids": [
+          151721
+        ],
+        "reason": "annotation_segment_start",
+        "label_observed_until_s": 89.28,
+        "ordinal": 105
+      }
+    ]
+  },
+  {
+    "chunk": 439,
+    "start_s": 89.52,
+    "end_s": 89.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0014805961400270462,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 440,
+    "start_s": 89.6,
+    "end_s": 89.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00043415810796432197,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 441,
+    "start_s": 89.68,
+    "end_s": 89.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00048233463894575834,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 442,
+    "start_s": 89.76,
+    "end_s": 89.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001654566964134574,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 443,
+    "start_s": 89.84,
+    "end_s": 89.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00014094954531174153,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 444,
+    "start_s": 89.92,
+    "end_s": 90.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00015499349683523178,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 445,
+    "start_s": 90.0,
+    "end_s": 90.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001730198971927166,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 446,
+    "start_s": 90.08,
+    "end_s": 90.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0016974166501313448,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 447,
+    "start_s": 90.16,
+    "end_s": 90.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0023282822221517563,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 448,
+    "start_s": 90.24,
+    "end_s": 90.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0023693805560469627,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 449,
+    "start_s": 90.32,
+    "end_s": 90.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001899177092127502,
+    "output": " great <NEXT_AUDIO>",
+    "ids": [
+      2244,
+      151705
+    ],
+    "output_tokens": 2,
+    "events": [
+      {
+        "kind": "text",
+        "agent": "B",
+        "slot": 1,
+        "ref_sample": 1440160,
+        "ref_s": 90.01,
+        "chunk": 449,
+        "text": " great",
+        "ids": [
+          2244
+        ],
+        "reason": "ES2002a.B.words74",
+        "label_observed_until_s": null,
+        "ordinal": 89
+      }
+    ]
+  },
+  {
+    "chunk": 450,
+    "start_s": 90.4,
+    "end_s": 90.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0009715929627418518,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 451,
+    "start_s": 90.48,
+    "end_s": 90.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00012754445197060704,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 452,
+    "start_s": 90.56,
+    "end_s": 90.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 7.662789721507579e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 453,
+    "start_s": 90.64,
+    "end_s": 90.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0001504939136793837,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 454,
+    "start_s": 90.72,
+    "end_s": 90.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00025604007532820106,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 455,
+    "start_s": 90.8,
+    "end_s": 90.88,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00017139653209596872,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 456,
+    "start_s": 90.88,
+    "end_s": 90.96,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0004470203130040318,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 457,
+    "start_s": 90.96,
+    "end_s": 91.04,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.012671109288930893,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 458,
+    "start_s": 91.04,
+    "end_s": 91.12,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.024107038974761963,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 459,
+    "start_s": 91.12,
+    "end_s": 91.2,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.021153990179300308,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 460,
+    "start_s": 91.2,
+    "end_s": 91.28,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.016014331951737404,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 461,
+    "start_s": 91.28,
+    "end_s": 91.36,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.014563723467290401,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 462,
+    "start_s": 91.36,
+    "end_s": 91.44,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.012778629548847675,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 463,
+    "start_s": 91.44,
+    "end_s": 91.52,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.006397919729351997,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 464,
+    "start_s": 91.52,
+    "end_s": 91.6,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.009388704784214497,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 465,
+    "start_s": 91.6,
+    "end_s": 91.68,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0012487081112340093,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 466,
+    "start_s": 91.68,
+    "end_s": 91.76,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00415307842195034,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 467,
+    "start_s": 91.76,
+    "end_s": 91.84,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0007387246587313712,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 468,
+    "start_s": 91.84,
+    "end_s": 91.92,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00012453668750822544,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 469,
+    "start_s": 91.92,
+    "end_s": 92.0,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0002427522704238072,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 470,
+    "start_s": 92.0,
+    "end_s": 92.08,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.000417367642512545,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 471,
+    "start_s": 92.08,
+    "end_s": 92.16,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.00047321690362878144,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 472,
+    "start_s": 92.16,
+    "end_s": 92.24,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0004064076638314873,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 473,
+    "start_s": 92.24,
+    "end_s": 92.32,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0003719680244103074,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 474,
+    "start_s": 92.32,
+    "end_s": 92.4,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.0003311123582534492,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 475,
+    "start_s": 92.4,
+    "end_s": 92.48,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 9.771299664862454e-05,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 476,
+    "start_s": 92.48,
+    "end_s": 92.56,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.001552950358018279,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 477,
+    "start_s": 92.56,
+    "end_s": 92.64,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.007503623142838478,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 478,
+    "start_s": 92.64,
+    "end_s": 92.72,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.007339521776884794,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  },
+  {
+    "chunk": 479,
+    "start_s": 92.72,
+    "end_s": 92.8,
+    "activity": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "audio_rms": 0.004998342599719763,
+    "output": "<NEXT_AUDIO>",
+    "ids": [
+      151705
+    ],
+    "output_tokens": 1,
+    "events": []
+  }
+]

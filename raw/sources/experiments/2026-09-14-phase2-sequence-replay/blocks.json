@@ -1,0 +1,7343 @@
+[
+  {
+    "chunk": 0,
+    "start_s": 54.4,
+    "end_s": 54.48,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 1,
+    "start_s": 54.48,
+    "end_s": 54.56,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 2,
+    "start_s": 54.56,
+    "end_s": 54.64,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 3,
+    "start_s": 54.64,
+    "end_s": 54.72,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 4,
+    "start_s": 54.72,
+    "end_s": 54.8,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 5,
+    "start_s": 54.8,
+    "end_s": 54.88,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 6,
+    "start_s": 54.88,
+    "end_s": 54.96,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 7,
+    "start_s": 54.96,
+    "end_s": 55.04,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 8,
+    "start_s": 55.04,
+    "end_s": 55.12,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 9,
+    "start_s": 55.12,
+    "end_s": 55.2,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 10,
+    "start_s": 55.2,
+    "end_s": 55.28,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 11,
+    "start_s": 55.28,
+    "end_s": 55.36,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 12,
+    "start_s": 55.36,
+    "end_s": 55.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 13,
+    "start_s": 55.44,
+    "end_s": 55.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 14,
+    "start_s": 55.52,
+    "end_s": 55.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151717,
+      151721,
+      151705
+    ],
+    "output": "<SPK_1><ONSET><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 15,
+    "start_s": 55.6,
+    "end_s": 55.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 16,
+    "start_s": 55.68,
+    "end_s": 55.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 17,
+    "start_s": 55.76,
+    "end_s": 55.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 18,
+    "start_s": 55.84,
+    "end_s": 55.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 19,
+    "start_s": 55.92,
+    "end_s": 56.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 20,
+    "start_s": 56.0,
+    "end_s": 56.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 21,
+    "start_s": 56.08,
+    "end_s": 56.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 22,
+    "start_s": 56.16,
+    "end_s": 56.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 23,
+    "start_s": 56.24,
+    "end_s": 56.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 24,
+    "start_s": 56.32,
+    "end_s": 56.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 25,
+    "start_s": 56.4,
+    "end_s": 56.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 26,
+    "start_s": 56.48,
+    "end_s": 56.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 27,
+    "start_s": 56.56,
+    "end_s": 56.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 28,
+    "start_s": 56.64,
+    "end_s": 56.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 29,
+    "start_s": 56.72,
+    "end_s": 56.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 30,
+    "start_s": 56.8,
+    "end_s": 56.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      4443,
+      151705
+    ],
+    "output": " um<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 31,
+    "start_s": 56.88,
+    "end_s": 56.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 32,
+    "start_s": 56.96,
+    "end_s": 57.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1632,
+      151705
+    ],
+    "output": " well<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 33,
+    "start_s": 57.04,
+    "end_s": 57.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 34,
+    "start_s": 57.12,
+    "end_s": 57.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      419,
+      151705
+    ],
+    "output": " this<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 35,
+    "start_s": 57.2,
+    "end_s": 57.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 36,
+    "start_s": 57.28,
+    "end_s": 57.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      374,
+      151705
+    ],
+    "output": " is<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 37,
+    "start_s": 57.36,
+    "end_s": 57.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      279,
+      151705
+    ],
+    "output": " the<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 38,
+    "start_s": 57.44,
+    "end_s": 57.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 39,
+    "start_s": 57.52,
+    "end_s": 57.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 40,
+    "start_s": 57.6,
+    "end_s": 57.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 41,
+    "start_s": 57.68,
+    "end_s": 57.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 42,
+    "start_s": 57.76,
+    "end_s": 57.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      10323,
+      1007,
+      151705
+    ],
+    "output": " kick off<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 43,
+    "start_s": 57.84,
+    "end_s": 57.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 44,
+    "start_s": 57.92,
+    "end_s": 58.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 45,
+    "start_s": 58.0,
+    "end_s": 58.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 46,
+    "start_s": 58.08,
+    "end_s": 58.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 47,
+    "start_s": 58.16,
+    "end_s": 58.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      6438,
+      151705
+    ],
+    "output": " meeting<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 48,
+    "start_s": 58.24,
+    "end_s": 58.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 49,
+    "start_s": 58.32,
+    "end_s": 58.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      369,
+      151705
+    ],
+    "output": " for<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 50,
+    "start_s": 58.4,
+    "end_s": 58.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 51,
+    "start_s": 58.48,
+    "end_s": 58.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 52,
+    "start_s": 58.56,
+    "end_s": 58.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 53,
+    "start_s": 58.64,
+    "end_s": 58.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 54,
+    "start_s": 58.72,
+    "end_s": 58.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 55,
+    "start_s": 58.8,
+    "end_s": 58.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1039,
+      151705
+    ],
+    "output": " our<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 56,
+    "start_s": 58.88,
+    "end_s": 58.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 57,
+    "start_s": 58.96,
+    "end_s": 59.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1039,
+      151705
+    ],
+    "output": " our<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 58,
+    "start_s": 59.04,
+    "end_s": 59.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 59,
+    "start_s": 59.12,
+    "end_s": 59.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 60,
+    "start_s": 59.2,
+    "end_s": 59.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 61,
+    "start_s": 59.28,
+    "end_s": 59.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 62,
+    "start_s": 59.36,
+    "end_s": 59.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 63,
+    "start_s": 59.44,
+    "end_s": 59.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 64,
+    "start_s": 59.52,
+    "end_s": 59.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 65,
+    "start_s": 59.6,
+    "end_s": 59.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 66,
+    "start_s": 59.68,
+    "end_s": 59.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 67,
+    "start_s": 59.76,
+    "end_s": 59.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 68,
+    "start_s": 59.84,
+    "end_s": 59.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 69,
+    "start_s": 59.92,
+    "end_s": 60.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 70,
+    "start_s": 60.0,
+    "end_s": 60.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 71,
+    "start_s": 60.08,
+    "end_s": 60.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 72,
+    "start_s": 60.16,
+    "end_s": 60.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 73,
+    "start_s": 60.24,
+    "end_s": 60.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 74,
+    "start_s": 60.32,
+    "end_s": 60.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 75,
+    "start_s": 60.4,
+    "end_s": 60.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 76,
+    "start_s": 60.48,
+    "end_s": 60.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 77,
+    "start_s": 60.56,
+    "end_s": 60.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 78,
+    "start_s": 60.64,
+    "end_s": 60.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      2390,
+      151705
+    ],
+    "output": " project<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 79,
+    "start_s": 60.72,
+    "end_s": 60.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 80,
+    "start_s": 60.8,
+    "end_s": 60.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 81,
+    "start_s": 60.88,
+    "end_s": 60.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 82,
+    "start_s": 60.96,
+    "end_s": 61.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 83,
+    "start_s": 61.04,
+    "end_s": 61.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 84,
+    "start_s": 61.12,
+    "end_s": 61.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 85,
+    "start_s": 61.2,
+    "end_s": 61.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 86,
+    "start_s": 61.28,
+    "end_s": 61.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 87,
+    "start_s": 61.36,
+    "end_s": 61.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 88,
+    "start_s": 61.44,
+    "end_s": 61.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 89,
+    "start_s": 61.52,
+    "end_s": 61.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 90,
+    "start_s": 61.6,
+    "end_s": 61.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 91,
+    "start_s": 61.68,
+    "end_s": 61.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 92,
+    "start_s": 61.76,
+    "end_s": 61.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 93,
+    "start_s": 61.84,
+    "end_s": 61.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 94,
+    "start_s": 61.92,
+    "end_s": 62.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 95,
+    "start_s": 62.0,
+    "end_s": 62.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 96,
+    "start_s": 62.08,
+    "end_s": 62.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 97,
+    "start_s": 62.16,
+    "end_s": 62.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 98,
+    "start_s": 62.24,
+    "end_s": 62.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 99,
+    "start_s": 62.32,
+    "end_s": 62.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 100,
+    "start_s": 62.4,
+    "end_s": 62.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 101,
+    "start_s": 62.48,
+    "end_s": 62.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      4443,
+      151705
+    ],
+    "output": " um<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 102,
+    "start_s": 62.56,
+    "end_s": 62.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 103,
+    "start_s": 62.64,
+    "end_s": 62.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 104,
+    "start_s": 62.72,
+    "end_s": 62.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 105,
+    "start_s": 62.8,
+    "end_s": 62.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 106,
+    "start_s": 62.88,
+    "end_s": 62.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 107,
+    "start_s": 62.96,
+    "end_s": 63.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 108,
+    "start_s": 63.04,
+    "end_s": 63.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      323,
+      151705
+    ],
+    "output": " and<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 109,
+    "start_s": 63.12,
+    "end_s": 63.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 110,
+    "start_s": 63.2,
+    "end_s": 63.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 111,
+    "start_s": 63.28,
+    "end_s": 63.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 112,
+    "start_s": 63.36,
+    "end_s": 63.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 113,
+    "start_s": 63.44,
+    "end_s": 63.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 114,
+    "start_s": 63.52,
+    "end_s": 63.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 115,
+    "start_s": 63.6,
+    "end_s": 63.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 116,
+    "start_s": 63.68,
+    "end_s": 63.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 117,
+    "start_s": 63.76,
+    "end_s": 63.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 118,
+    "start_s": 63.84,
+    "end_s": 63.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 119,
+    "start_s": 63.92,
+    "end_s": 64.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 120,
+    "start_s": 64.0,
+    "end_s": 64.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 121,
+    "start_s": 64.08,
+    "end_s": 64.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 122,
+    "start_s": 64.16,
+    "end_s": 64.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 123,
+    "start_s": 64.24,
+    "end_s": 64.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 124,
+    "start_s": 64.32,
+    "end_s": 64.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 125,
+    "start_s": 64.4,
+    "end_s": 64.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 126,
+    "start_s": 64.48,
+    "end_s": 64.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      4443,
+      151705
+    ],
+    "output": " um<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 127,
+    "start_s": 64.56,
+    "end_s": 64.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 128,
+    "start_s": 64.64,
+    "end_s": 64.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      419,
+      151705
+    ],
+    "output": " this<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 129,
+    "start_s": 64.72,
+    "end_s": 64.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      374,
+      151705
+    ],
+    "output": " is<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 130,
+    "start_s": 64.8,
+    "end_s": 64.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 131,
+    "start_s": 64.88,
+    "end_s": 64.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 132,
+    "start_s": 64.96,
+    "end_s": 65.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 133,
+    "start_s": 65.04,
+    "end_s": 65.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 134,
+    "start_s": 65.12,
+    "end_s": 65.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1101,
+      151705
+    ],
+    "output": " just<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 135,
+    "start_s": 65.2,
+    "end_s": 65.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 136,
+    "start_s": 65.28,
+    "end_s": 65.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1128,
+      151705
+    ],
+    "output": " what<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 137,
+    "start_s": 65.36,
+    "end_s": 65.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      582,
+      2299,
+      151705
+    ],
+    "output": " we're<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 138,
+    "start_s": 65.44,
+    "end_s": 65.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 139,
+    "start_s": 65.52,
+    "end_s": 65.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      16519,
+      151705
+    ],
+    "output": " gonna<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 140,
+    "start_s": 65.6,
+    "end_s": 65.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      387,
+      151705
+    ],
+    "output": " be<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 141,
+    "start_s": 65.68,
+    "end_s": 65.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 142,
+    "start_s": 65.76,
+    "end_s": 65.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 143,
+    "start_s": 65.84,
+    "end_s": 65.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      3730,
+      151705
+    ],
+    "output": " doing<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 144,
+    "start_s": 65.92,
+    "end_s": 66.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      916,
+      151705
+    ],
+    "output": " over<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 145,
+    "start_s": 66.0,
+    "end_s": 66.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      279,
+      151705
+    ],
+    "output": " the<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 146,
+    "start_s": 66.08,
+    "end_s": 66.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 147,
+    "start_s": 66.16,
+    "end_s": 66.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 148,
+    "start_s": 66.24,
+    "end_s": 66.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1790,
+      151705
+    ],
+    "output": " next<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 149,
+    "start_s": 66.32,
+    "end_s": 66.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 150,
+    "start_s": 66.4,
+    "end_s": 66.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 151,
+    "start_s": 66.48,
+    "end_s": 66.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      17073,
+      151705
+    ],
+    "output": " twenty<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 152,
+    "start_s": 66.56,
+    "end_s": 66.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 153,
+    "start_s": 66.64,
+    "end_s": 66.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 154,
+    "start_s": 66.72,
+    "end_s": 66.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      4236,
+      151705
+    ],
+    "output": " five<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 155,
+    "start_s": 66.8,
+    "end_s": 66.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 156,
+    "start_s": 66.88,
+    "end_s": 66.96,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 157,
+    "start_s": 66.96,
+    "end_s": 67.04,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 158,
+    "start_s": 67.04,
+    "end_s": 67.12,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151718,
+      151721,
+      151705
+    ],
+    "output": "<SPK_2><ONSET><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 159,
+    "start_s": 67.12,
+    "end_s": 67.2,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 160,
+    "start_s": 67.2,
+    "end_s": 67.28,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 161,
+    "start_s": 67.28,
+    "end_s": 67.36,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 162,
+    "start_s": 67.36,
+    "end_s": 67.44,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 163,
+    "start_s": 67.44,
+    "end_s": 67.52,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 164,
+    "start_s": 67.52,
+    "end_s": 67.6,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 165,
+    "start_s": 67.6,
+    "end_s": 67.68,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 166,
+    "start_s": 67.68,
+    "end_s": 67.76,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 167,
+    "start_s": 67.76,
+    "end_s": 67.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      9465,
+      87501,
+      151705
+    ],
+    "output": " mm hmm<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 168,
+    "start_s": 67.84,
+    "end_s": 67.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151717,
+      4420,
+      151705
+    ],
+    "output": "<SPK_1> minutes<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 169,
+    "start_s": 67.92,
+    "end_s": 68.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 170,
+    "start_s": 68.0,
+    "end_s": 68.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 171,
+    "start_s": 68.08,
+    "end_s": 68.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 172,
+    "start_s": 68.16,
+    "end_s": 68.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 173,
+    "start_s": 68.24,
+    "end_s": 68.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 174,
+    "start_s": 68.32,
+    "end_s": 68.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 175,
+    "start_s": 68.4,
+    "end_s": 68.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 176,
+    "start_s": 68.48,
+    "end_s": 68.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 177,
+    "start_s": 68.56,
+    "end_s": 68.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 178,
+    "start_s": 68.64,
+    "end_s": 68.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 179,
+    "start_s": 68.72,
+    "end_s": 68.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 180,
+    "start_s": 68.8,
+    "end_s": 68.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 181,
+    "start_s": 68.88,
+    "end_s": 68.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      4443,
+      151705
+    ],
+    "output": " um<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 182,
+    "start_s": 68.96,
+    "end_s": 69.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 183,
+    "start_s": 69.04,
+    "end_s": 69.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 184,
+    "start_s": 69.12,
+    "end_s": 69.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 185,
+    "start_s": 69.2,
+    "end_s": 69.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 186,
+    "start_s": 69.28,
+    "end_s": 69.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 187,
+    "start_s": 69.36,
+    "end_s": 69.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 188,
+    "start_s": 69.44,
+    "end_s": 69.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      773,
+      151705
+    ],
+    "output": " so<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 189,
+    "start_s": 69.52,
+    "end_s": 69.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 190,
+    "start_s": 69.6,
+    "end_s": 69.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 191,
+    "start_s": 69.68,
+    "end_s": 69.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 192,
+    "start_s": 69.76,
+    "end_s": 69.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1156,
+      151705
+    ],
+    "output": " first<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 193,
+    "start_s": 69.84,
+    "end_s": 69.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      315,
+      151705
+    ],
+    "output": " of<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 194,
+    "start_s": 69.92,
+    "end_s": 70.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 195,
+    "start_s": 70.0,
+    "end_s": 70.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 196,
+    "start_s": 70.08,
+    "end_s": 70.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 197,
+    "start_s": 70.16,
+    "end_s": 70.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      678,
+      151705
+    ],
+    "output": " all<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 198,
+    "start_s": 70.24,
+    "end_s": 70.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 199,
+    "start_s": 70.32,
+    "end_s": 70.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1101,
+      151705
+    ],
+    "output": " just<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 200,
+    "start_s": 70.4,
+    "end_s": 70.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      311,
+      151705
+    ],
+    "output": " to<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 201,
+    "start_s": 70.48,
+    "end_s": 70.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 202,
+    "start_s": 70.56,
+    "end_s": 70.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 203,
+    "start_s": 70.64,
+    "end_s": 70.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      3093,
+      151705
+    ],
+    "output": " kind<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 204,
+    "start_s": 70.72,
+    "end_s": 70.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 205,
+    "start_s": 70.8,
+    "end_s": 70.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 206,
+    "start_s": 70.88,
+    "end_s": 70.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 207,
+    "start_s": 70.96,
+    "end_s": 71.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 208,
+    "start_s": 71.04,
+    "end_s": 71.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 209,
+    "start_s": 71.12,
+    "end_s": 71.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 210,
+    "start_s": 71.2,
+    "end_s": 71.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 211,
+    "start_s": 71.28,
+    "end_s": 71.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 212,
+    "start_s": 71.36,
+    "end_s": 71.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      315,
+      151705
+    ],
+    "output": " of<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 213,
+    "start_s": 71.44,
+    "end_s": 71.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 214,
+    "start_s": 71.52,
+    "end_s": 71.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1281,
+      151705
+    ],
+    "output": " make<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 215,
+    "start_s": 71.6,
+    "end_s": 71.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 216,
+    "start_s": 71.68,
+    "end_s": 71.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 217,
+    "start_s": 71.76,
+    "end_s": 71.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      2704,
+      151705
+    ],
+    "output": " sure<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 218,
+    "start_s": 71.84,
+    "end_s": 71.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      429,
+      151705
+    ],
+    "output": " that<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 219,
+    "start_s": 71.92,
+    "end_s": 72.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 220,
+    "start_s": 72.0,
+    "end_s": 72.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      582,
+      151705
+    ],
+    "output": " we<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 221,
+    "start_s": 72.08,
+    "end_s": 72.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 222,
+    "start_s": 72.16,
+    "end_s": 72.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      678,
+      151705
+    ],
+    "output": " all<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 223,
+    "start_s": 72.24,
+    "end_s": 72.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1414,
+      151705
+    ],
+    "output": " know<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 224,
+    "start_s": 72.32,
+    "end_s": 72.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 225,
+    "start_s": 72.4,
+    "end_s": 72.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 226,
+    "start_s": 72.48,
+    "end_s": 72.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1817,
+      151705
+    ],
+    "output": " each<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 227,
+    "start_s": 72.56,
+    "end_s": 72.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 228,
+    "start_s": 72.64,
+    "end_s": 72.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 229,
+    "start_s": 72.72,
+    "end_s": 72.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 230,
+    "start_s": 72.8,
+    "end_s": 72.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 231,
+    "start_s": 72.88,
+    "end_s": 72.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 232,
+    "start_s": 72.96,
+    "end_s": 73.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 233,
+    "start_s": 73.04,
+    "end_s": 73.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1008,
+      151705
+    ],
+    "output": " other<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 234,
+    "start_s": 73.12,
+    "end_s": 73.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 235,
+    "start_s": 73.2,
+    "end_s": 73.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 236,
+    "start_s": 73.28,
+    "end_s": 73.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output": " i'm<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 237,
+    "start_s": 73.36,
+    "end_s": 73.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 238,
+    "start_s": 73.44,
+    "end_s": 73.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 239,
+    "start_s": 73.52,
+    "end_s": 73.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 240,
+    "start_s": 73.6,
+    "end_s": 73.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1187,
+      5690,
+      151705
+    ],
+    "output": " laura<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 241,
+    "start_s": 73.68,
+    "end_s": 73.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 242,
+    "start_s": 73.76,
+    "end_s": 73.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      323,
+      151705
+    ],
+    "output": " and<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 243,
+    "start_s": 73.84,
+    "end_s": 73.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 244,
+    "start_s": 73.92,
+    "end_s": 74.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output": " i'm<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 245,
+    "start_s": 74.0,
+    "end_s": 74.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      279,
+      151705
+    ],
+    "output": " the<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 246,
+    "start_s": 74.08,
+    "end_s": 74.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 247,
+    "start_s": 74.16,
+    "end_s": 74.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 248,
+    "start_s": 74.24,
+    "end_s": 74.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 249,
+    "start_s": 74.32,
+    "end_s": 74.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 250,
+    "start_s": 74.4,
+    "end_s": 74.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      2390,
+      151705
+    ],
+    "output": " project<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 251,
+    "start_s": 74.48,
+    "end_s": 74.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 252,
+    "start_s": 74.56,
+    "end_s": 74.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 253,
+    "start_s": 74.64,
+    "end_s": 74.72,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 254,
+    "start_s": 74.72,
+    "end_s": 74.8,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      6645,
+      151705
+    ],
+    "output": " manager<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 255,
+    "start_s": 74.8,
+    "end_s": 74.88,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151718,
+      151721,
+      151705
+    ],
+    "output": "<SPK_2><ONSET><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 256,
+    "start_s": 74.88,
+    "end_s": 74.96,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 257,
+    "start_s": 74.96,
+    "end_s": 75.04,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 258,
+    "start_s": 75.04,
+    "end_s": 75.12,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 259,
+    "start_s": 75.12,
+    "end_s": 75.2,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 260,
+    "start_s": 75.2,
+    "end_s": 75.28,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151717,
+      653,
+      151705
+    ],
+    "output": "<SPK_1> do<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 261,
+    "start_s": 75.28,
+    "end_s": 75.36,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 262,
+    "start_s": 75.36,
+    "end_s": 75.44,
+    "activity_proxy": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 263,
+    "start_s": 75.44,
+    "end_s": 75.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 264,
+    "start_s": 75.52,
+    "end_s": 75.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151718,
+      2244,
+      151705
+    ],
+    "output": "<SPK_2> great<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 265,
+    "start_s": 75.6,
+    "end_s": 75.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 266,
+    "start_s": 75.68,
+    "end_s": 75.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 267,
+    "start_s": 75.76,
+    "end_s": 75.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 268,
+    "start_s": 75.84,
+    "end_s": 75.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 269,
+    "start_s": 75.92,
+    "end_s": 76.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 270,
+    "start_s": 76.0,
+    "end_s": 76.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 271,
+    "start_s": 76.08,
+    "end_s": 76.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 272,
+    "start_s": 76.16,
+    "end_s": 76.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 273,
+    "start_s": 76.24,
+    "end_s": 76.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 274,
+    "start_s": 76.32,
+    "end_s": 76.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 275,
+    "start_s": 76.4,
+    "end_s": 76.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151717,
+      498,
+      151705
+    ],
+    "output": "<SPK_1> you<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 276,
+    "start_s": 76.48,
+    "end_s": 76.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      1366,
+      151705
+    ],
+    "output": " want<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 277,
+    "start_s": 76.56,
+    "end_s": 76.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 278,
+    "start_s": 76.64,
+    "end_s": 76.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      311,
+      151705
+    ],
+    "output": " to<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 279,
+    "start_s": 76.72,
+    "end_s": 76.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 280,
+    "start_s": 76.8,
+    "end_s": 76.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 281,
+    "start_s": 76.88,
+    "end_s": 76.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 282,
+    "start_s": 76.96,
+    "end_s": 77.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 283,
+    "start_s": 77.04,
+    "end_s": 77.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      19131,
+      151705
+    ],
+    "output": " introduce<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 284,
+    "start_s": 77.12,
+    "end_s": 77.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 285,
+    "start_s": 77.2,
+    "end_s": 77.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 286,
+    "start_s": 77.28,
+    "end_s": 77.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 287,
+    "start_s": 77.36,
+    "end_s": 77.44,
+    "activity_proxy": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      6133,
+      151705
+    ],
+    "output": " yourself<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 288,
+    "start_s": 77.44,
+    "end_s": 77.52,
+    "activity_proxy": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 289,
+    "start_s": 77.52,
+    "end_s": 77.6,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151719,
+      151721,
+      151705
+    ],
+    "output": "<SPK_3><ONSET><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 290,
+    "start_s": 77.6,
+    "end_s": 77.68,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151717,
+      1549,
+      151705
+    ],
+    "output": "<SPK_1> again<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 291,
+    "start_s": 77.68,
+    "end_s": 77.76,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 292,
+    "start_s": 77.76,
+    "end_s": 77.84,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151717,
+      151722,
+      151705
+    ],
+    "output": "<SPK_1><EOT><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 293,
+    "start_s": 77.84,
+    "end_s": 77.92,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 294,
+    "start_s": 77.92,
+    "end_s": 78.0,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 295,
+    "start_s": 78.0,
+    "end_s": 78.08,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151719,
+      15588,
+      151705
+    ],
+    "output": "<SPK_3> hi<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 296,
+    "start_s": 78.08,
+    "end_s": 78.16,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 297,
+    "start_s": 78.16,
+    "end_s": 78.24,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 298,
+    "start_s": 78.24,
+    "end_s": 78.32,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 299,
+    "start_s": 78.32,
+    "end_s": 78.4,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 300,
+    "start_s": 78.4,
+    "end_s": 78.48,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 301,
+    "start_s": 78.48,
+    "end_s": 78.56,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output": " i'm<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 302,
+    "start_s": 78.56,
+    "end_s": 78.64,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 303,
+    "start_s": 78.64,
+    "end_s": 78.72,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 304,
+    "start_s": 78.72,
+    "end_s": 78.8,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 305,
+    "start_s": 78.8,
+    "end_s": 78.88,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 306,
+    "start_s": 78.88,
+    "end_s": 78.96,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      53946,
+      151705
+    ],
+    "output": " david<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 307,
+    "start_s": 78.96,
+    "end_s": 79.04,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 308,
+    "start_s": 79.04,
+    "end_s": 79.12,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 309,
+    "start_s": 79.12,
+    "end_s": 79.2,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      323,
+      151705
+    ],
+    "output": " and<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 310,
+    "start_s": 79.2,
+    "end_s": 79.28,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 311,
+    "start_s": 79.28,
+    "end_s": 79.36,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 312,
+    "start_s": 79.36,
+    "end_s": 79.44,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 313,
+    "start_s": 79.44,
+    "end_s": 79.52,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output": " i'm<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 314,
+    "start_s": 79.52,
+    "end_s": 79.6,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 315,
+    "start_s": 79.6,
+    "end_s": 79.68,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 316,
+    "start_s": 79.68,
+    "end_s": 79.76,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 317,
+    "start_s": 79.76,
+    "end_s": 79.84,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 318,
+    "start_s": 79.84,
+    "end_s": 79.92,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      9966,
+      151705
+    ],
+    "output": " supposed<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 319,
+    "start_s": 79.92,
+    "end_s": 80.0,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      311,
+      151705
+    ],
+    "output": " to<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 320,
+    "start_s": 80.0,
+    "end_s": 80.08,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      387,
+      151705
+    ],
+    "output": " be<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 321,
+    "start_s": 80.08,
+    "end_s": 80.16,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      458,
+      151705
+    ],
+    "output": " an<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 322,
+    "start_s": 80.16,
+    "end_s": 80.24,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 323,
+    "start_s": 80.24,
+    "end_s": 80.32,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 324,
+    "start_s": 80.32,
+    "end_s": 80.4,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 325,
+    "start_s": 80.4,
+    "end_s": 80.48,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 326,
+    "start_s": 80.48,
+    "end_s": 80.56,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      12785,
+      151705
+    ],
+    "output": " industrial<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 327,
+    "start_s": 80.56,
+    "end_s": 80.64,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 328,
+    "start_s": 80.64,
+    "end_s": 80.72,
+    "activity_proxy": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 329,
+    "start_s": 80.72,
+    "end_s": 80.8,
+    "activity_proxy": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 330,
+    "start_s": 80.8,
+    "end_s": 80.88,
+    "activity_proxy": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 331,
+    "start_s": 80.88,
+    "end_s": 80.96,
+    "activity_proxy": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "token_ids": [
+      151717,
+      151721,
+      151705
+    ],
+    "output": "<SPK_1><ONSET><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 332,
+    "start_s": 80.96,
+    "end_s": 81.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 333,
+    "start_s": 81.04,
+    "end_s": 81.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 334,
+    "start_s": 81.12,
+    "end_s": 81.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151719,
+      14692,
+      151705
+    ],
+    "output": "<SPK_3> designer<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 335,
+    "start_s": 81.2,
+    "end_s": 81.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151719,
+      151722,
+      151705
+    ],
+    "output": "<SPK_3><EOT><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 336,
+    "start_s": 81.28,
+    "end_s": 81.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 337,
+    "start_s": 81.36,
+    "end_s": 81.44,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 338,
+    "start_s": 81.44,
+    "end_s": 81.52,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 339,
+    "start_s": 81.52,
+    "end_s": 81.6,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151717,
+      16910,
+      151705
+    ],
+    "output": "<SPK_1> okay<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 340,
+    "start_s": 81.6,
+    "end_s": 81.68,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151717,
+      151722,
+      151705
+    ],
+    "output": "<SPK_1><EOT><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 341,
+    "start_s": 81.68,
+    "end_s": 81.76,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151718,
+      151721,
+      151705
+    ],
+    "output": "<SPK_2><ONSET><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 342,
+    "start_s": 81.76,
+    "end_s": 81.84,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 343,
+    "start_s": 81.84,
+    "end_s": 81.92,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 344,
+    "start_s": 81.92,
+    "end_s": 82.0,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 345,
+    "start_s": 82.0,
+    "end_s": 82.08,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 346,
+    "start_s": 82.08,
+    "end_s": 82.16,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 347,
+    "start_s": 82.16,
+    "end_s": 82.24,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 348,
+    "start_s": 82.24,
+    "end_s": 82.32,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 349,
+    "start_s": 82.32,
+    "end_s": 82.4,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 350,
+    "start_s": 82.4,
+    "end_s": 82.48,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 351,
+    "start_s": 82.48,
+    "end_s": 82.56,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 352,
+    "start_s": 82.56,
+    "end_s": 82.64,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      323,
+      151705
+    ],
+    "output": " and<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 353,
+    "start_s": 82.64,
+    "end_s": 82.72,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 354,
+    "start_s": 82.72,
+    "end_s": 82.8,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output": " i'm<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 355,
+    "start_s": 82.8,
+    "end_s": 82.88,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 356,
+    "start_s": 82.88,
+    "end_s": 82.96,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 357,
+    "start_s": 82.96,
+    "end_s": 83.04,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 358,
+    "start_s": 83.04,
+    "end_s": 83.12,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 359,
+    "start_s": 83.12,
+    "end_s": 83.2,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      323,
+      4266,
+      151705
+    ],
+    "output": " andrew<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 360,
+    "start_s": 83.2,
+    "end_s": 83.28,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 361,
+    "start_s": 83.28,
+    "end_s": 83.36,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      323,
+      151705
+    ],
+    "output": " and<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 362,
+    "start_s": 83.36,
+    "end_s": 83.44,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 363,
+    "start_s": 83.44,
+    "end_s": 83.52,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 364,
+    "start_s": 83.52,
+    "end_s": 83.6,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 365,
+    "start_s": 83.6,
+    "end_s": 83.68,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output": " i'm<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 366,
+    "start_s": 83.68,
+    "end_s": 83.76,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 367,
+    "start_s": 83.76,
+    "end_s": 83.84,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 368,
+    "start_s": 83.84,
+    "end_s": 83.92,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 369,
+    "start_s": 83.92,
+    "end_s": 84.0,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 370,
+    "start_s": 84.0,
+    "end_s": 84.08,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 371,
+    "start_s": 84.08,
+    "end_s": 84.16,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      43744,
+      151705
+    ],
+    "output": " uh<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 372,
+    "start_s": 84.16,
+    "end_s": 84.24,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      1039,
+      151705
+    ],
+    "output": " our<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 373,
+    "start_s": 84.24,
+    "end_s": 84.32,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 374,
+    "start_s": 84.32,
+    "end_s": 84.4,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 375,
+    "start_s": 84.4,
+    "end_s": 84.48,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 376,
+    "start_s": 84.48,
+    "end_s": 84.56,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 377,
+    "start_s": 84.56,
+    "end_s": 84.64,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 378,
+    "start_s": 84.64,
+    "end_s": 84.72,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 379,
+    "start_s": 84.72,
+    "end_s": 84.8,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      8493,
+      151705
+    ],
+    "output": " marketing<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 380,
+    "start_s": 84.8,
+    "end_s": 84.88,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 381,
+    "start_s": 84.88,
+    "end_s": 84.96,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151718,
+      151722,
+      151705
+    ],
+    "output": "<SPK_2><EOT><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 382,
+    "start_s": 84.96,
+    "end_s": 85.04,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 383,
+    "start_s": 85.04,
+    "end_s": 85.12,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 384,
+    "start_s": 85.12,
+    "end_s": 85.2,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 385,
+    "start_s": 85.2,
+    "end_s": 85.28,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 386,
+    "start_s": 85.28,
+    "end_s": 85.36,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 387,
+    "start_s": 85.36,
+    "end_s": 85.44,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 388,
+    "start_s": 85.44,
+    "end_s": 85.52,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 389,
+    "start_s": 85.52,
+    "end_s": 85.6,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 390,
+    "start_s": 85.6,
+    "end_s": 85.68,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151720,
+      151721,
+      151705
+    ],
+    "output": "<SPK_4><ONSET><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 391,
+    "start_s": 85.68,
+    "end_s": 85.76,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 392,
+    "start_s": 85.76,
+    "end_s": 85.84,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 393,
+    "start_s": 85.84,
+    "end_s": 85.92,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 394,
+    "start_s": 85.92,
+    "end_s": 86.0,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 395,
+    "start_s": 86.0,
+    "end_s": 86.08,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 396,
+    "start_s": 86.08,
+    "end_s": 86.16,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 397,
+    "start_s": 86.16,
+    "end_s": 86.24,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151718,
+      151721,
+      151705
+    ],
+    "output": "<SPK_2><ONSET><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 398,
+    "start_s": 86.24,
+    "end_s": 86.32,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 399,
+    "start_s": 86.32,
+    "end_s": 86.4,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 400,
+    "start_s": 86.4,
+    "end_s": 86.48,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 401,
+    "start_s": 86.48,
+    "end_s": 86.56,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 402,
+    "start_s": 86.56,
+    "end_s": 86.64,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 403,
+    "start_s": 86.64,
+    "end_s": 86.72,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 404,
+    "start_s": 86.72,
+    "end_s": 86.8,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 405,
+    "start_s": 86.8,
+    "end_s": 86.88,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      6203,
+      151705
+    ],
+    "output": " expert<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 406,
+    "start_s": 86.88,
+    "end_s": 86.96,
+    "activity_proxy": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 407,
+    "start_s": 86.96,
+    "end_s": 87.04,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 408,
+    "start_s": 87.04,
+    "end_s": 87.12,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 409,
+    "start_s": 87.12,
+    "end_s": 87.2,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 410,
+    "start_s": 87.2,
+    "end_s": 87.28,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 411,
+    "start_s": 87.28,
+    "end_s": 87.36,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 412,
+    "start_s": 87.36,
+    "end_s": 87.44,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 413,
+    "start_s": 87.44,
+    "end_s": 87.52,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151720,
+      4443,
+      151705
+    ],
+    "output": "<SPK_4> um<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 414,
+    "start_s": 87.52,
+    "end_s": 87.6,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 415,
+    "start_s": 87.6,
+    "end_s": 87.68,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 416,
+    "start_s": 87.68,
+    "end_s": 87.76,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output": " i'm<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 417,
+    "start_s": 87.76,
+    "end_s": 87.84,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 418,
+    "start_s": 87.84,
+    "end_s": 87.92,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 419,
+    "start_s": 87.92,
+    "end_s": 88.0,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      45041,
+      343,
+      151705
+    ],
+    "output": " craig<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 420,
+    "start_s": 88.0,
+    "end_s": 88.08,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 421,
+    "start_s": 88.08,
+    "end_s": 88.16,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      323,
+      151705
+    ],
+    "output": " and<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 422,
+    "start_s": 88.16,
+    "end_s": 88.24,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 423,
+    "start_s": 88.24,
+    "end_s": 88.32,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      600,
+      2776,
+      151705
+    ],
+    "output": " i'm<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 424,
+    "start_s": 88.32,
+    "end_s": 88.4,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 425,
+    "start_s": 88.4,
+    "end_s": 88.48,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 426,
+    "start_s": 88.48,
+    "end_s": 88.56,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      1196,
+      151705
+    ],
+    "output": " user<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 427,
+    "start_s": 88.56,
+    "end_s": 88.64,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 428,
+    "start_s": 88.64,
+    "end_s": 88.72,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 429,
+    "start_s": 88.72,
+    "end_s": 88.8,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 430,
+    "start_s": 88.8,
+    "end_s": 88.88,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 431,
+    "start_s": 88.88,
+    "end_s": 88.96,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 432,
+    "start_s": 88.96,
+    "end_s": 89.04,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "token_ids": [
+      3749,
+      151705
+    ],
+    "output": " interface<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 433,
+    "start_s": 89.04,
+    "end_s": 89.12,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 434,
+    "start_s": 89.12,
+    "end_s": 89.2,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 435,
+    "start_s": 89.2,
+    "end_s": 89.28,
+    "activity_proxy": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 436,
+    "start_s": 89.28,
+    "end_s": 89.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151720,
+      151722,
+      151705
+    ],
+    "output": "<SPK_4><EOT><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 437,
+    "start_s": 89.36,
+    "end_s": 89.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 438,
+    "start_s": 89.44,
+    "end_s": 89.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151717,
+      151721,
+      151705
+    ],
+    "output": "<SPK_1><ONSET><NEXT_AUDIO>"
+  },
+  {
+    "chunk": 439,
+    "start_s": 89.52,
+    "end_s": 89.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 440,
+    "start_s": 89.6,
+    "end_s": 89.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 441,
+    "start_s": 89.68,
+    "end_s": 89.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 442,
+    "start_s": 89.76,
+    "end_s": 89.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 443,
+    "start_s": 89.84,
+    "end_s": 89.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 444,
+    "start_s": 89.92,
+    "end_s": 90.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 445,
+    "start_s": 90.0,
+    "end_s": 90.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 446,
+    "start_s": 90.08,
+    "end_s": 90.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 447,
+    "start_s": 90.16,
+    "end_s": 90.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 448,
+    "start_s": 90.24,
+    "end_s": 90.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 449,
+    "start_s": 90.32,
+    "end_s": 90.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      2244,
+      151705
+    ],
+    "output": " great<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 450,
+    "start_s": 90.4,
+    "end_s": 90.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 451,
+    "start_s": 90.48,
+    "end_s": 90.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 452,
+    "start_s": 90.56,
+    "end_s": 90.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 453,
+    "start_s": 90.64,
+    "end_s": 90.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 454,
+    "start_s": 90.72,
+    "end_s": 90.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 455,
+    "start_s": 90.8,
+    "end_s": 90.88,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 456,
+    "start_s": 90.88,
+    "end_s": 90.96,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 457,
+    "start_s": 90.96,
+    "end_s": 91.04,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 458,
+    "start_s": 91.04,
+    "end_s": 91.12,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 459,
+    "start_s": 91.12,
+    "end_s": 91.2,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 460,
+    "start_s": 91.2,
+    "end_s": 91.28,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 461,
+    "start_s": 91.28,
+    "end_s": 91.36,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 462,
+    "start_s": 91.36,
+    "end_s": 91.44,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 463,
+    "start_s": 91.44,
+    "end_s": 91.52,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 464,
+    "start_s": 91.52,
+    "end_s": 91.6,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 465,
+    "start_s": 91.6,
+    "end_s": 91.68,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 466,
+    "start_s": 91.68,
+    "end_s": 91.76,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 467,
+    "start_s": 91.76,
+    "end_s": 91.84,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 468,
+    "start_s": 91.84,
+    "end_s": 91.92,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 469,
+    "start_s": 91.92,
+    "end_s": 92.0,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 470,
+    "start_s": 92.0,
+    "end_s": 92.08,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 471,
+    "start_s": 92.08,
+    "end_s": 92.16,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 472,
+    "start_s": 92.16,
+    "end_s": 92.24,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 473,
+    "start_s": 92.24,
+    "end_s": 92.32,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 474,
+    "start_s": 92.32,
+    "end_s": 92.4,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 475,
+    "start_s": 92.4,
+    "end_s": 92.48,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 476,
+    "start_s": 92.48,
+    "end_s": 92.56,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 477,
+    "start_s": 92.56,
+    "end_s": 92.64,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 478,
+    "start_s": 92.64,
+    "end_s": 92.72,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  },
+  {
+    "chunk": 479,
+    "start_s": 92.72,
+    "end_s": 92.8,
+    "activity_proxy": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "token_ids": [
+      151705
+    ],
+    "output": "<NEXT_AUDIO>"
+  }
+]

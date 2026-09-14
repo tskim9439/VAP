@@ -1,0 +1,140 @@
+{
+  "meeting": "ES2002a",
+  "start_s": 54.4,
+  "end_s": 92.8,
+  "blocks": 480,
+  "slots": {
+    "B": 1,
+    "D": 2,
+    "A": 3,
+    "C": 4
+  },
+  "channels": {
+    "B": 1,
+    "A": 0,
+    "C": 2,
+    "D": 3
+  },
+  "delta_text": 4,
+  "delta_onset": 2,
+  "tokenizer_sha256": "ebf1941d2d019a1c6ef336b3232f3bdace3e3107ea50570b88bb601e398e4500",
+  "source_xml_sha256": {
+    "words/ES2002a.B.words.xml": "a51156e0b3f1b05d9d1a631206d523c5247d2d6fd851ecfe826317ab261cc17a",
+    "segments/ES2002a.B.segments.xml": "ff370c9b7968ee5cf76357eda8447c63f3af664c482a71843dc0fb4bd5d445c9",
+    "words/ES2002a.A.words.xml": "03e7f37c4b3519ee78396779bbc90e2778b7b7ccd7a7388f7fa3a22cb31f7044",
+    "segments/ES2002a.A.segments.xml": "c8d26cf329af8c8917c07f4725a02c362d2471f01ea735d9016a89fccb847c02",
+    "words/ES2002a.C.words.xml": "c539fca7b7183a2b56be43f2362432a91a4552512ed03df8c4ce96aee75f3330",
+    "segments/ES2002a.C.segments.xml": "6b3667b7c49ea81902a19593b21c7c74568da73f9e33dd0062a9f238a0e50f68",
+    "words/ES2002a.D.words.xml": "d4f8b66e53de583c839424323f0e05d038a1426e5628042d03dcd2ee72e68b05",
+    "segments/ES2002a.D.segments.xml": "655286757eab17d36aa2ff1fada19742ce1b131be94fcc655c492790aed3797e"
+  },
+  "wave_info": [
+    {
+      "agent": "B",
+      "channel": 1,
+      "path": "/Users/taesookim/Downloads/vapkt-corpora/ami/ES2002a/ES2002a.Headset-1.wav",
+      "crop_pcm_sha256": "c70f6873650c835d30aa731e720ebe3723ce42a7effb4ac9643fd4dd40bfc9d3",
+      "frames": 20362240
+    },
+    {
+      "agent": "D",
+      "channel": 3,
+      "path": "/Users/taesookim/Downloads/vapkt-corpora/ami/ES2002a/ES2002a.Headset-3.wav",
+      "crop_pcm_sha256": "ff7cad0824e2e1a013a5d7b0c1eca8347b364750c19974a1ea955274c9c036fd",
+      "frames": 20362240
+    },
+    {
+      "agent": "A",
+      "channel": 0,
+      "path": "/Users/taesookim/Downloads/vapkt-corpora/ami/ES2002a/ES2002a.Headset-0.wav",
+      "crop_pcm_sha256": "b87a18ee3b2bd75573f292084a53ebaa1a2921f62542fa5ef846fde7d6777440",
+      "frames": 20362240
+    },
+    {
+      "agent": "C",
+      "channel": 2,
+      "path": "/Users/taesookim/Downloads/vapkt-corpora/ami/ES2002a/ES2002a.Headset-2.wav",
+      "crop_pcm_sha256": "1498101f992221afb37b4aaf174edee25f8870a1550af64ae379f8c44ae04c07",
+      "frames": 20362240
+    }
+  ],
+  "vocabulary_before": 151717,
+  "provisional_special_ids": {
+    "<SPK_1>": 151717,
+    "<SPK_2>": 151718,
+    "<SPK_3>": 151719,
+    "<SPK_4>": 151720,
+    "<ONSET>": 151721,
+    "<EOT>": 151722
+  },
+  "activity_proxy": "AMI transcriber segments, gaps <250ms merged; NOT acoustic VAD",
+  "normalization": "restricted EN lowercase/punctuation subset; not project TN-v1 parity verified",
+  "target_only": true,
+  "encoder_features_extracted": false,
+  "model_inference": false,
+  "chunk_counts": {
+    "0": 27,
+    "1": 415,
+    "2": 38
+  },
+  "emitted_kind_counts": {
+    "onset": 9,
+    "text": 90,
+    "eot": 5
+  },
+  "max_output_tokens": 3,
+  "over_cap8_chunks": 0,
+  "pending_records": [
+    {
+      "kind": "text",
+      "agent": "B",
+      "slot": 1,
+      "ref_sample": 1479680,
+      "ref_s": 92.48,
+      "chunk": 480,
+      "text": " okay",
+      "ids": [
+        16910
+      ],
+      "reason": "ES2002a.B.words76",
+      "label_observed_until_s": null,
+      "ordinal": 90
+    },
+    {
+      "kind": "text",
+      "agent": "B",
+      "slot": 1,
+      "ref_sample": 1484640,
+      "ref_s": 92.79,
+      "chunk": 483,
+      "text": " um",
+      "ids": [
+        4443
+      ],
+      "reason": "ES2002a.B.words79",
+      "label_observed_until_s": null,
+      "ordinal": 91
+    }
+  ],
+  "excluded_events": [],
+  "transcripts": {
+    "1": " um well this is the kick off meeting for our our project um and um this is just what we're gonna be doing over the next twenty five minutes um so first of all just to kind of make sure that we all know each other i'm laura and i'm the project manager do you want to introduce yourself again okay great",
+    "2": " mm hmm great and i'm andrew and i'm uh our marketing expert",
+    "3": " hi i'm david and i'm supposed to be an industrial designer",
+    "4": " um i'm craig and i'm user interface"
+  },
+  "checks": [
+    "speaker_token_round_trip",
+    "one_NEXT_per_block",
+    "lexical_delay_bound",
+    "cap32",
+    "WAV_crop_lengths"
+  ],
+  "limitations": [
+    "annotation-defined silence/overlap",
+    "heuristic EOT, no semantic gold",
+    "no acoustic encoder or live decoder",
+    "provisional special IDs",
+    "mid-conversation end: pending targets carry, no fake EOF flush"
+  ]
+}

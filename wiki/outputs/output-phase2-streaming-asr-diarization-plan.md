@@ -2,8 +2,8 @@
 type: output
 status: active
 created: 2026-09-11
-updated: 2026-09-11
-summary: Phase 2 정본 — K화자 mono ASR·겹침 전사·ONSET/EOT 예측, 데이터 품질·블록·학습·평가 계약; 의미 라벨은 Stage 3 이월
+updated: 2026-09-14
+summary: Phase 2 정본 — Q1 C-mode EOT·K슬롯 mono ASR, Q3 미래 예측; TN/registry·KO 실물 경로·16사례 테스트와 경량 QC 우선
 contributors:
   - tskim
 sources:
@@ -26,9 +26,11 @@ sources:
 
 # Phase 2 개발 계획: Streaming ASR & Speaker Diarization / Turn-Taking
 
-개정 기준: 2026-09-11. **최대 2화자 제한 해제, ONSET/EOT 우선, 의미 라벨 Stage 3 이월**을 통합한 정본이다. 결정된 범위와 아래의 구현 제안·수치 관문을 구분한다. 모델 구현·라벨 생성·성능 검증 완료를 뜻하지 않는다.
+개정 기준: 2026-09-14. **Q1의 EOT 토큰은 C 모드, P 모드는 Q3 ablation으로 이월**한다. 최대 2화자 제한 해제·ONSET/EOT 우선·의미 라벨 Stage 3 이월은 유지한다. 이번 변경은 실행 설계이며 모델·라벨러 구현 완료가 아니다. 사용자 8개 비판의 검증과 처리 결과는 [[output-phase2-sequence-critique-response]]에 기록한다.
 
 이 문서가 이전 실행 요약·최종안·turn-token 제안서 및 [[output-phase2-block-and-turn-label-spec]]의 상충 규약보다 우선한다. 특히 contribution당 start/end, EOT에 의한 전사 강제 확정, A/B 고정 블록은 이번 기본 규약이 아니다. 변경 근거는 [[decision-multi-speaker-scope]], [[question-turn-token-label-reliability]], 데이터 실측은 [[output-phase2-data-inventory]]·[[output-phase2-db-survey]]다.
+
+**규약은 이 정본에만 둔다.** probe/replay 문서와 코드는 당시 P-mode 실험 기록이며 현재 기본 규칙을 정의하지 않는다. 검수 문서는 정본을 실행하는 작업 안내다. 공용 serializer 구현 후 정본 fixture로 일치성을 검사한다.
 
 ## 1. 목표와 범위
 
@@ -119,6 +121,10 @@ Muse에서 참고하는 것은 전사·화자·endpoint 이벤트의 공동 생�
 
 ### 4.2 겹침 전사의 직렬화
 
+**Q0 token registry 결정:** 슬롯 1/2는 기존 `<SPK_A>`/`<SPK_B>` ID를 재사용한다. 이 문서의 `<SPK_1>`/`<SPK_2>`는 논리 슬롯 표기이며 새 tokenizer 문자열이 아니다. 슬롯 3..K만 `<SPK_3..K>`, 이벤트는 `<ONSET>`·`<EOT>`를 추가한다. raw 텍스트 별칭을 중복 등록하지 않고 `slot_to_token_id`로 매핑한다. 기존 probe의 `<SPK_1..4>` 임시 ID와 혼용하지 않는다.
+
+2026-09-14 E2 MLX export 실측은 `<SPK_A>=151707`, `<SPK_B>=151708`, tokenizer ID 0..151716, embedding `[151936,1024]`다. 코드상 출력 head는 tied이며 MLX 파일에는 독립 lm_head 텐서가 없다. **219개 미등록 행은 용량 여유일 뿐 미사용/안전 초기화 보증이 아니다.** HF 원 체크포인트의 config·input/output 행 수·weight tying을 재확인한 뒤 새 ID 행만 고정 seed로 초기화한다. 기존 A/B 행은 재초기화하지 않는다. padding·비등록 ID는 학습 softmax/생성에서 마스킹하고, A/B의 기존 decode 차단은 Phase 2에서만 해제한다. `len(tokenizer)`로 embedding을 151936행 미만으로 축소하지 않는다. save/load·HF/MLX ID/logit parity가 resize 생략의 관문이다. 실제 migration은 아직 미구현이다.
+
 각 화자의 lexical 전사를 독립적으로 tokenize·정렬한 뒤 토큰 종료 시각으로 합친다. 동일 시각은 슬롯 번호 및 원래 토큰 순서로 결정하고, 화자 내부 순서를 보존한다. 기본 청크 배정은 E2의 `k=floor(t_end/0.08)+δ_text`를 유지한다. ONSET/EOT를 합치는 우선순위와 시각은 §4.4·§6.3을 따른다.
 
 ```text
@@ -130,9 +136,15 @@ Muse에서 참고하는 것은 전사·화자·endpoint 이벤트의 공동 생�
 
 BPE byte 조각 사이에 다른 화자의 토큰을 끼워 넣으면 화면 텍스트가 깨질 수 있다. 같은 정렬 단위의 토큰 묶음은 원자적으로 유지하고 화자별 decoder buffer로 Unicode/공백을 복원한다. 단어 전체 완료까지 기다리는 변형은 추가 지연을 따로 잰다. TN은 현재 lexical 규약과 지문을 유지하고 화자 태그를 문자열 정규화에 섞지 않는다.
 
+학습 경로는 `asr-tn-v1.3.0`의 `target(text, lang, corpus)` → `target_flags` 격리 → tokenization → alignment 순서를 사용한다. KO는 `corpus=aihub71631`, EN은 실제 corpus key를 전달한다. `target_en`만 호출하고 숫자 quarantine을 생략하면 불완전하다. AMI는 기존 숫자 허용 corpus가 아니므로 digit 잔존 행을 격리한다. TN 코드·숫자 backend·tokenizer/registry 지문을 저장하며 fallback `norm_word`는 진단 재현에만 허용한다.
+
 K화자 전사·태그·이벤트로 청크당 생성량이 증가한다. 안전 상한을 단순히 K배로 올리지 않고 실제 밀도 p99·강제 NEXT·삭제율·처리 지연을 측정한다. lexical·selector·event 및 전체 예산을 따로 기록한다. selector를 내기 전 최소 payload까지 2자리 여유를 확보해 `<SPK_s><NEXT_AUDIO>`를 만들지 않는다. cap 초과는 bounded backlog로 이월하며 청크를 버리거나 EOT로 대체하지 않는다. 학습·추론의 cap 차이도 QC한다.
 
 기본은 **시각순 교차 직렬화**다. 청크 안 슬롯별 묶음 출력은 태그 감소 ablation일 뿐 기본이 아니다. 비교 시 뒤 슬롯의 계산 지연·삭제·cap 편향을 함께 측정한다.
+
+공용 `dialogue_interleave.py`의 순서 계약은 먼저 화자 내부 lexical 순서·원자 payload·ONSET/lexical/EOT 의존성을 만족시킨 뒤, ready 항목을 `(target_chunk, reference_sample, slot, kind_priority, source_ordinal)`로 안정 정렬하는 것이다. 완전 동률의 `kind_priority`는 ONSET < lexical < EOT다. 이 tie-break만으로 서로 다른 reference 시각의 의존성이 해결된다고 가정하지 않는다. pending 이월 뒤에도 의존성을 재검사한다. probe의 정렬 코드를 그대로 정본 구현으로 승격하지 않는다.
+
+cap은 아직 미동결이다. Q0의 KO 실제 데이터와 EN 회의에서 전체/출력있는 청크 각각의 lexical·selector·event·총량 p50/p95/p99/max를 측정한다. 동시 0/1/2/3+화자별, EN/KO별 분리하고 자연 3+ 표본이 없으면 미측정으로 남긴다. 합성 stress 결과는 자연 회의 결과와 합치지 않는다. cap 후보마다 강제 NEXT·이월·화자별 삭제·tick을 함께 비교하며 AMI 38.4초 최대 3토큰은 cap=8의 근거가 아니다.
 
 ### 4.3 출력 API와 세 개의 시각
 
@@ -144,7 +156,7 @@ K화자 전사·태그·이벤트로 청크당 생성량이 증가한다. 안전
 
 매 80ms 실제 PCM은 무음이어도 `[AUDIO_k]` 하나를 만든다. `[AUDIO_k] payload* <NEXT_AUDIO>`가 기본이며 payload가 없는 슬롯의 빈 블록은 만들지 않는다. `<NEXT_AUDIO>`는 청크 라운드 종료이지 발화/턴 종료가 아니다. `<EMPTY_AUDIO>`는 실제 EOF 이후 flush용이지 무음용이 아니다.
 
-`<ONSET>`은 음향 발화 구간의 시작, `<EOT>`는 화자별 행동적 종료 예측이다. **ONSET 한 번당 EOT 한 번인 괄호 문법이 아니다.** 같은 화자가 pause 뒤 재개하면 EOT 없이 ONSET이 반복될 수 있고, 맞장구에도 ONSET·전사는 있지만 종료 예측 토큰은 생략될 수 있다. 모든 ONSET/EOT 앞에 `<SPK_s>`를 명시한다. 아래 1/2/3은 예시 슬롯이며 나머지 슬롯은 생략한다.
+`<ONSET>`은 음향 발화 구간의 시작, Q1의 `<EOT>`는 **관측한 행동 조건에 근거한 종료 판단(C 모드)**이다. **ONSET 한 번당 EOT 한 번인 괄호 문법이 아니다.** 같은 화자가 pause 뒤 재개하면 EOT 없이 ONSET이 반복될 수 있고, 맞장구에도 ONSET·전사는 있지만 EOT는 생략될 수 있다. 모든 ONSET/EOT 앞에 `<SPK_s>`를 명시한다. 아래 1/2/3은 논리 슬롯 표기이며 C 모드의 ready 시각은 §6.3을 따른다.
 
 | 입력/상황 | 학습 출력 예시 | 활동·상태 해석 |
 |---|---|---|
@@ -155,15 +167,17 @@ K화자 전사·태그·이벤트로 청크당 생성량이 증가한다. 안전
 | 1의 자연 pause | `[AUDIO_k] <NEXT_AUDIO>` | activity 0; EOT를 무조건 붙이지 않음 |
 | pause 뒤 1 재개 | `[AUDIO_k] <SPK_1><ONSET> 그리고 <NEXT_AUDIO>` | gap ≥0.25s일 때 새 음향 구간; 이전 EOT 필수 아님 |
 | 무음 중 지연 전사 도착 | `[AUDIO_k] <SPK_1>감사합니다 <NEXT_AUDIO>` | 현재 activity와 전사 귀속을 분리 |
-| 1 종료 예측, 전사 없음 | `[AUDIO_k] <SPK_1><EOT> <NEXT_AUDIO>` | 이벤트-only 블록 허용 |
-| 1 마지막 전사와 종료 예측 | `[AUDIO_k] <SPK_1>이상입니다 <SPK_1><EOT> <NEXT_AUDIO>` | 학습상 해당 경계의 마지막 lexical 뒤 EOT |
+| 1 종료 판단 ready, 전사 없음 | `[AUDIO_k] <SPK_1><EOT> <NEXT_AUDIO>` | C 증거 가용 이후 이벤트-only 블록 허용 |
+| 1 마지막 전사와 종료 판단 ready | `[AUDIO_k] <SPK_1>이상입니다 <SPK_1><EOT> <NEXT_AUDIO>` | C 증거 가용 이후 해당 경계의 마지막 lexical 뒤 EOT |
 | 1 계속 + 2 맞장구 | `[AUDIO_k] <SPK_1>설명하면 <SPK_2><ONSET> 응 <NEXT_AUDIO>` | 두 활동이 1; 1의 EOT를 강제하지 않음; BC 토큰 없음 |
 | 2의 짧은 맞장구 종료, 1 계속 | `[AUDIO_k] <SPK_1>이렇게 <NEXT_AUDIO>` | 2의 activity만 0; 휴리스틱상 EOT 없음 |
 | 2 발화 중 1의 지연 EOT | `[AUDIO_k] <SPK_1><EOT> <SPK_2>네 <NEXT_AUDIO>` | 1의 이벤트가 2를 닫지 않음 |
 | 1·2·3 동시 발화 | `[AUDIO_k] <SPK_1>저는 <SPK_3><ONSET> 잠깐 <SPK_2>동의해요 <NEXT_AUDIO>` | 시간순으로 직렬화; 슬롯 수만큼 audio를 복제하지 않음 |
 | 겹치지만 pending 없음 | `[AUDIO_k] <NEXT_AUDIO>` | activity는 복수 1이어도 됨 |
-| 두 종료 예측이 함께 due | `[AUDIO_k] <SPK_1><EOT> <SPK_2><EOT> <NEXT_AUDIO>` | 각각 독립 귀속; global EOT 없음 |
+| 두 종료 판단이 함께 due | `[AUDIO_k] <SPK_1><EOT> <SPK_2><EOT> <NEXT_AUDIO>` | 각각 C 증거 확인·독립 귀속; global EOT 없음 |
 | crop/전송 종료 | bounded flush 후 stream-closed API | crop/EOF 자체를 EOT 정답으로 만들지 않음 |
+
+테스트에서 위 16행을 표 순서대로 `case_01`…`case_16`으로 고정한다. C의 실제 ready 시각, 논리 슬롯→실제 ID, next-token shift와 loss mask까지 assert한다. 문자열 스냅샷만 맞는 검사를 통과로 보지 않는다. 실제 EOF와 중간 crop의 차이는 아래 규약을 따른다.
 
 표는 pending 순서가 성립하는 예시이지 VAD→문자열의 고정 변환기가 아니다. 모델은 같은 청크에서 NEXT/lexical/ONSET/EOT 중 무엇을 낼지 CE로 학습한다. activity 헤드는 별도의 조밀한 감독을 받는다.
 
@@ -218,6 +232,12 @@ parser 상태는 `current_selector`, 슬롯별 `last_onset_seq`, `last_eot_seq`,
 
 중간 레코드는 `conversation_id, source_speaker_id, slot, segment_id, event_type, boundary_ref_s, target_chunk, label_observed_until_s, label_source, confidence, valid_mask`와 token alignment를 갖는다. `label_observed_until_s`는 **정답을 만들 때 본 미래의 끝**이고 모델의 `audio_seen_until`과 다르다. TN/tokenizer·VAD·gap·event-rule·K·split·audio hash를 manifest 버전에 고정한다.
 
+**바로 다음 실물 Q0는 71631 성인 실외 대화 1개**다. 데이터 식별자는 분명히 한다: 71631 `VS_02` 186개는 E2가 사용한 dev stereo 원본, 134-1 `TS_02` 1,492개는 같은 성인 자원의 조각 후보 풀이다. 우선 원본과 대응 조각을 모두 확인할 수 있는 실외 대화를 원 ID로 join해 2채널 복원을 대조한다. 대응 조각이 없으면 그 사실을 보고하고 원본 경로와 다른 조각 대화 검사를 분리하며 대응을 지어내지 않는다. [[output-phase2-training-db]]
+
+순서는 `raw Text + 원 대화 offset → target_ko(aihub71631)·flags → 화자 채널 기원 조각 ForcedAligner → 2채널 시간축 복원 → 관측 mask·에너지 VAD 50Hz → mono mix → registry·공용 serializer → 실제 Dataset`이다. 내부 문맥과 미래 3초 이상을 확보한 **38.4초(480블록)** 창을 선택한다. 숫자·Latin·겹침·재개·무음 사례를 기록하고 모든 사례가 한 창에 있다고 가정하지 않는다. 조각 사이 인공 zero는 자연 무음 gold가 아니며 원본과의 비교가 없으면 그 구간과 영향을 받는 horizon을 제외한다.
+
+필수 산출물은 PCM·전사/정렬·VAD와 `activity[480,K]`, `future_activity[480,K,4]`, hazard bin/risk/censor 및 각 mask다. target 생성과 head 학습 구현은 별개이며 Q0에서 target만 검사할 수 있다. 의미 라벨 대신 원 오디오·offset·VAD/정렬 오차를 검수한다. 이 대화는 진단 노출로 기록하고 학습/untouched test에 넣지 않는다. 실제 Dataset 경로가 없으면 실물 JSON 성공만 보고하며 Q0 완료를 선언하지 않는다.
+
 처음에는 완전한 자연 대화의 event-positive/negative 창으로 만든다. noisy 자동 라벨의 일치도·coverage·EOT/min·ONSET/min·빈 슬롯 오류·이월 토큰을 dyadic/회의·EN/KO별로 보고하고 32창 overfit 전에 §4.4 사례를 round-trip한다. 새로운 학습 라벨을 gold로 부르지 않는다.
 
 ## 6. Turn-taking 라벨과 학습 목표
@@ -244,28 +264,33 @@ Hazard 초판 사건은 **현재 식별됐고 비활동인 각 슬롯의 다음 
 
 ### 6.3 ONSET/EOT 타이밍 라벨과 방출 의미
 
-**기본 제안은 행동적 EOT의 조기 예측(P 모드)**다. 정답을 미래로 확인하되 모델은 그 미래를 보지 않고 예측한다. 이를 ‘관측 증거로 이미 종료를 확정함’이나 ‘의미적 문장 완결’로 보고하지 않는다. 증거 확인 뒤의 지연 확정(C 모드)은 별도 latency–quality 대조군으로 두고 한 학습 타깃에 혼합하지 않는다.
+**Q1 기본은 C 모드다.** 종료 판정에 실제로 필요한 관측을 끝낸 뒤 EOT를 출력한다. 미래 예측은 Q3의 VAP/hazard 헤드와 별도 P-mode 토큰 ablation에 맡긴다. 헤드는 현재 미구현이며, 역할 분리가 성능 우위를 보장하지는 않는다. C도 행동 휴리스틱의 오라벨을 없애지는 못한다.
 
-| 항목 | 자동 라벨·기본 제안 | 목표 위치 |
+초기 후보 horizon은 offset 뒤 **3초**로 유지한다. “그 안에 본인 재개 없음”을 조건으로 사용하는 이상 **상대가 시작한 즉시 C 토큰을 내서는 안 된다.** 상대 시작 직후 내는 빠른 C 규칙을 시험하려면 판정 자체를 짧은 관측 구간으로 다시 정의·검증해야 한다. 미래 3초 조건으로 라벨을 걸러 놓고 그 전에 출력시키는 것은 선택 편향이 남은 P 타깃이다.
+
+| 항목 | Q1 규칙 | 목표 위치 / 감독 |
 |---|---|---|
-| ONSET | 화자별 VAD, gap <0.25s 병합 후 각 음향 구간 시작 | `floor(t_on/0.08)+δ_on`, δ_on∈{0,1,2} Q1 sweep |
-| EOT: 교대 | 화자 s offset 뒤 3초 안 s 재개보다 다른 화자의 유효 시작이 먼저임 | P: `floor(t_off/0.08)+δ_text` |
-| EOT: terminal overlap/중단 | s가 종료하고 다른 화자가 이어가며, s의 재개 없음이 확인된 후보 | P: 같은 offset 기준; 다자 충돌/불확실 후보는 mask |
-| EOT: 모두 무음 | 마지막 offset 뒤 τ_max=3초 동안 아무도 발화하지 않음 | `t_off+τ_max`를 실제 관측한 첫 청크; offset으로 소급 금지 |
-| 재개/짧은 맞장구 | timing 휴리스틱으로 HOLD/BC에 해당 | lexical·ONSET은 유지, HOLD/BC 토큰 및 의미 loss 없음 |
-| 미래 부족·결손·불명확 | 판단 horizon이 완전하지 않음 | negative로 채우지 않고 event mask |
+| ONSET | 화자별 VAD, gap <0.25s 병합. onset detector의 실제 가용 시각도 기록 | 기존 δ_on∈{0,1,2}와 실제 가용 시각 중 늦은 시점 |
+| EOT: shift 후보 | 다른 화자 시작이 horizon 안에 있고, 원 화자 재개는 horizon 전체에서 없음 | C: 최소 horizon 끝과 필요한 검출 지연을 관측한 뒤 |
+| EOT: terminal overlap 후보 | 다른 화자가 offset을 지나 계속 말하고, 원 화자는 horizon 안 재개하지 않음 | 같은 C 기준. 짧은 겹침/귀속 불명확은 uncertain |
+| **상대 시작 + 원 화자 재개** | 둘 다 같은 horizon 안에 있으면 순서와 무관하게 uncertain | 초기에는 해당 창 event 감독 제외; non-EOT로도 확정하지 않음 |
+| 본인 재개·타 화자 없음 | 신뢰 가능한 pause negative 후보 | NEXT negative는 관측/라벨 완전성이 확인된 창에서만 |
+| 모두 무음 / silence_timeout | 3초 실제 무음은 정책 증거이지 자동 floor gold 아님 | Q1 EOT positive에서 제외, timeout-policy 기록만 |
+| 미래 부족·결손·짧은 겹침·다자 충돌 | 재개/상대/시각/귀속을 확정할 수 없음 | unknown mask; zero padding이나 파일 끝으로 보충하지 않음 |
 
-ONSET은 ‘관측된 음향 구간 시작’이지 contribution 시작이 아니다. gap 0.25초는 후보 분절 규약이며 미래 gap 병합에 필요한 정보를 추론 입력으로 주지 않는다. δ_on=0도 청크와 encoder를 처리한 뒤의 출력이므로 0ms wall-clock 지연이 아니다. 슬롯 식별·cap에 의한 추가 지연도 포함한다.
+이 표는 **보수적인 weak-label 선정 규칙**이다. 본인 재개와 상대 시작이 공존해도 실제 floor transfer였을 수 있으므로 uncertain은 오류 확정이 아니다. “marketing … expert”는 새 규칙에서 자동 positive가 아니라 uncertain으로 분류할 사례다. 기존 probe 산출물은 이전 P-rule 결과로 보존하며 새 승인 라벨로 재사용하지 않는다.
 
-기존 `derive_events`는 2화자 함수이며 무사건을 HOLD로 두고, INTERRUPT 행위자는 끼어든 화자다. **그대로 EOT로 rename하지 않는다.** K화자 어댑터는 종료된 화자에게 EOT를 귀속하고, (s, 각 다른 화자)의 후보를 만들되 같은 s의 같은 offset은 한 번만 낸다. terminal overlap 초기 후보는 0.5초, 재개 검사 1초, 짧은 맞장구 후보는 ≤1초 등 기존 규칙을 참고하되 3초 전체 관측 여부를 저장한다. 서로 다른 상대가 엇갈려 단순 pairwise 판단이 충돌하면 `uncertain`으로 mask한다. 다자 floor owner나 상대 수신자를 억지로 gold로 만들지 않는다. 이 파라미터·우선순위는 Q0 QC 후 동결한다.
+시간은 sample 정수로 계산한다. crop 원점 `a`, 청크 길이 `C=1280`, 필요한 관측 끝 `t_evidence`에 대해 `k_seen=ceil((t_evidence-a)/C)-1`이다. `k_eot=max(k_seen,k_last_text)`로 배정하고, encoder가 실제로 그 관측을 사용할 수 있는 시각·연산·cap 지연은 별도 더한다. `t_evidence`는 최소 offset+3초이며 규칙에 필요한 VAD 안정화 지연도 포함한다. `label_observed_until`을 단순 다른 화자 onset으로 축소하지 않는다.
 
-시간은 sample 정수로 계산한다. 명목 청크 끝 `b_k=(k+1)·0.08`과 실제 encoder 가용 시각을 기록한다. EOT는 해당 offset까지의 마지막 lexical 이후로 스케줄한다(`k_eot=max(k_event,k_last_text)`); 같은 경계에서 ONSET→lexical→EOT 순서를 지킨다. 서로 다른 화자의 ready 항목은 목표 가용 시각, reference 시각, 슬롯 번호 순으로 교차시킨다. 원자적 BPE 묶음·이벤트 selector 의존성은 보존한다. EOT가 같은 화자의 다음 ONSET보다 뒤로 밀리는 충돌은 target을 조용히 재귀속하지 않고 QC 계수 후 그 창을 event 학습에서 제외한다.
+예: offset=84.576초면 3초 비재개 조건의 관측 끝은 최소 **87.576초**다. 예전 P 타깃 84.96초를 C 타깃으로 이름만 바꿀 수 없다. 실제 AMI 사례에는 86.048초 본인 재개가 있으므로 C positive를 만들지 않는다. clean shift라면 관측 끝 이후 첫 청크와 마지막 lexical 중 늦은 위치에 배치한다. 같은 화자의 다음 ONSET을 EOT가 넘어가면 자동 재귀속하지 않고 창 event 감독을 보류한다.
 
-예: `t_off=1.12s, δ_text=2`라면 기본 P target k=16, 명목 가용 시각 1.36s다. 정답 판정이 2.0s의 다른 화자 발화를 사용했다면 1.36s EOT는 **미래 행동 예측**이다. C 모드는 최소 그 판단 증거를 본 뒤에 낸다. 두 모드를 같은 ‘증거 후 종료’ 지표로 합치지 않는다. lexical의 조기 방출 위반과 EOT 예측의 선행 시간도 별개다.
+P ablation은 동일한 유효 후보 집합에서 `floor((t_off-a)/C)+δ_text`로 조기 배정한다. 결과를 C와 섞지 않고 사건 precision/coverage, offset 기준 지연, 관측 완료 기준 지연을 함께 낸다. **3초 C는 저지연 제품 해법이 아니라 라벨/학습 가능성 대조군**이다. lexical 지연 관문과 EOT 지연을 분리하고, Q3의 빠른 예측 경로를 통과하기 전 저지연 turn-taking 달성을 주장하지 않는다.
 
-기본 API에서 EOT는 `endpoint_prediction`이며 **전사 hard-final이 아니다**. 모델이 틀리게 일찍 낸 EOT도 실제 오류로 기록하되 뒤늦은 전사를 버리지 않는다. timeout/hazard 서비스 종료는 별도 정책 이벤트로 기록하고 모델-only 성능과 따로 평가한다. 정책이 낸 이벤트를 모델 생성 토큰처럼 이력에 삽입하지 않는 것을 기본으로 한다.
+원 `derive_events`는 2화자 함수다. K 일반화는 종료한 화자에게 귀속하고 같은 offset 중복을 제거하며 pairwise 충돌을 uncertain으로 남긴다. ONSET은 contribution 시작이 아니므로 EOT와 괄호로 짝짓지 않는다. 짧은 겹침을 semantic BC로 자동 확정하지 않는다.
 
-자동 라벨은 weak target이다. 문장부호·파일 끝을 EOT gold로 쓰지 않는다. EN TurnBench gold 및 KO/회의 청취 QC로 정의 차이·오귀속·누락을 측정한다. QC의 목적은 타이밍 라벨 검증이며 의미 등급 대규모 구축이 아니다. [[output-vap-target-pipeline]]
+API는 `endpoint_prediction`과 `event_mode=C/P`, `emission_source=model/timeout_policy/hazard_policy`를 함께 낸다. 이름에 관계없이 **전사 hard-final이 아니다**. 정책 이벤트를 모델 생성 토큰처럼 이력에 삽입하지 않는다. C의 “확인”도 지정한 관측 조건의 확인이지 의미적 종료 gold 보증이 아니다.
+
+자동 라벨은 weak target이다. Q0 검수는 §9의 경량 범위로 제한한다. 모호한 라벨을 마스킹하더라도 NEXT의 softmax가 false negative를 학습하지 않도록 §6.1의 ASR-only/event-complete 분리를 유지한다.
 
 ### 6.4 Stage 3 이월
 
@@ -278,9 +303,9 @@ ONSET은 ‘관측된 음향 구간 시작’이지 contribution 시작이 아�
 | 단계 | 추가하는 능력 / 데이터 | 주요 산출물 | 다음 단계 진입 |
 |---|---|---|---|
 | Q0 기준선·데이터 계약 | E2 δ=2/4, dyadic/회의·합성 QC pack 2–5 h | K·split·event rule·P/C 의미 동결, 복원·mask·serializer·no-future 검사 | 누락·덮어쓰기·누출 0; training 세션 화자 수 수용; 평가 재현 |
-| Q1 비중첩 중심 K화자 전사·이벤트 | 약 20–50 h, EN/KO·화자 수별 층화; lexical warm-up → SPK/activity/ONSET/EOT | K슬롯·32창 overfit·δ_on sweep·pause/무음 negative | ASR guardrail, dyadic DER ≤10%·귀속 오류 ≤5% 제안; 회의 관문은 Q0 별도 동결 |
+| Q1 비중첩 중심 K화자 전사·이벤트 | 약 20–50 h, EN/KO·화자 수별 층화; lexical warm-up → SPK/activity/ONSET/EOT(C) | K슬롯·32창 overfit·δ_on sweep·pause/무음 negative | ASR guardrail, dyadic DER ≤10%·귀속 오류 ≤5% 제안; C 지연·coverage 별도 |
 | Q2 겹침 전사 | Q1 + 자연 dyadic/회의 overlap·2–4화자 합성; QC 통과 데이터만 확장 | 각 화자 전사·고정 ID·다자 event QC·밀도/삭제 진단 | overlap cp 오류 ≥20% 상대 감소·화자 소실 ≤5%를 dyadic 제안 관문으로; 회의는 동시 발화 수별 별도 판정 |
-| Q3 미래 활동·행동 예측 | 완전 관측 자연 대화; frozen head probe → 저율 joint | K×4 미래 활동·선택적 hazard·자체 이력 대조 | 동일 FPR에서 음향 대조군 대비 검증 가능한 개선, ASR guardrail 유지; 의미 라벨 필수 아님 |
+| Q3 미래 활동·행동 예측 | 완전 관측 자연 대화; frozen head probe → 저율 joint | K×4 미래 활동·선택적 hazard·P-token ablation·자체 이력 대조 | 동일 FPR에서 음향 대조군 대비 검증 가능한 개선, ASR guardrail 유지; 의미 라벨 필수 아님 |
 | Q4 장문·실시간 통합 | 실제 및 합성 10–60분 세션, 자유실행·잡음·음량차 | K행 전사+활동+예측/정책 분리 API, 단독 장치 벤치 | RTF <1, backlog 비발산, ID·슬롯 초과·지연 관문 충족 |
 
 32개 창 overfit는 코드 경로 검사다. unseen 화자 일반화의 근거로 쓰지 않는다. 초기 자연 데이터는 화자 다양성·턴 수·겹침 시간을 기준으로 추출하며 단순 폴더 순 20시간을 쓰지 않는다.
@@ -289,7 +314,7 @@ ONSET은 ‘관측된 음향 구간 시작’이지 contribution 시작이 아�
 
 ### 7.1 학습 recipe 시작점
 
-- 모든 초기화는 E2에서 시작한다. 새 speaker/event 행과 heads만 초기화하고 기존 token ID를 보존한다. `<SPK_A/B>`는 legacy로 남겨 K슬롯 token registry와 명시적 migration을 둔다. ‘새 Qwen’ 재초기화와 비교하지 않는다.
+- 모든 초기화는 E2에서 시작한다. §4.2 registry에 따라 슬롯 1/2는 `<SPK_A/B>` 기존 ID·행을 재사용하고 신규 슬롯/event 행과 heads만 초기화한다. 기존 Phase 1의 blocked 설정은 해당 모델에 유지하며 Phase 2 설정에서만 허용한다. ‘새 Qwen’ 재초기화와 비교하지 않는다.
 - Q1에서 encoder를 잠시 동결하고 새 출력 규약을 배운 뒤, 정체 시 상위층부터 해동한다. 후보 LR은 thinker `5e-6–1e-5`, adapter `1e-5–5e-5`, 새 heads `1e-4`, encoder 해동 시 `1e-6–5e-6`. 이는 측정 전 탐색 범위다.
 - E2의 `next_weight EN/KO=0.3/0.15`, delay 분포, TN을 첫 run에 유지한다. 태그 추가가 NEXT 비율을 바꾸므로 삭제·조기 방출·태그율을 보고 별도 sweep한다.
 - Q1/Q2 시작 배치 예산은 대화 70% + 단일 화자 replay 30%의 **오디오 초 기준**으로 제안한다. 대화 내 합성 비율은 최대 약 절반부터 시험하며 자연 표본을 유지한다. ONSET/EOT·미래 활동·hazard 손실은 해당 목표가 완전 감독되는 자연 창에만 적용한다. dyadic/회의·EN/KO·동시 발화 수별 노출량을 따로 기록해 KO 추가 데이터가 EN을 압도하지 않게 한다.
@@ -337,7 +362,7 @@ dyadic 개선 목표는 같은 공식 FPR≤0.10에서 EOT/INT recall **+3%p 이
 
 TurnBench는 기존 공식 규약을 따라 비교하되, mono 혼합으로 바꾼 입력임을 명시한다. 기존 stereo VAP 숫자는 별도 입력 조건의 참고선이다. 기존 dev 반복 사용 사실과 hidden test 접근 여부를 기록하고, KO는 검수된 held-out 대화에서 같은 규약을 적용한다. [[turn-taking-evaluation-protocol]], [TurnBench 논문](https://arxiv.org/abs/2608.25218)
 
-native EOT는 화자별 행동 예측이고 공식 EOT와 1:1이라고 가정하지 않는다. dyadic에서만 공식 EOT/INT adapter를 검증한다. 회의는 §6.3의 슬롯별 onset·offset/교대 후보라는 **명시한 로컬 사건 정의**로 보고하고, 인간 gold 없는 자동 라벨 점수는 weak-target agreement라고 표시한다. Stage 3 의미 평가와 별개다.
+native EOT는 Q1에서 C-mode 행동 판단, Q3에서 P ablation이며 공식 EOT와 1:1이라고 가정하지 않는다. dyadic에서만 공식 EOT/INT adapter를 검증한다. 회의는 §6.3의 슬롯별 onset·offset/교대 후보라는 **명시한 로컬 사건 정의**로 보고하고, 인간 gold 없는 자동 라벨 점수는 weak-target agreement라고 표시한다. Stage 3 의미 평가와 별개다.
 
 ### 8.3 최종 채택 관문
 
@@ -369,6 +394,14 @@ native EOT는 화자별 행동 예측이고 공식 EOT와 1:1이라고 가정하
 검증 순서는 serializer round-trip → 실제 Dataset 오디오 spot-check → 32창 overfit → HF save/load logits·heads·encoder parity → prefix 절단/미래 교체 인과성 → 단일/불균등 multi-rank smoke → 동일 held-out 자유실행 → live parity → 장문이다. tiny run에서 optimizer/scheduler/RNG·샘플 위치·split hash 재개도 확인한다.
 
 `tests/test_dialogue_turn_sequence.py`에 §4.4 전 사례와 K+1번째 화자·미등장 슬롯 future mask·결손 화자 조각·EOT 후 지연 lexical·ONSET 반복·중복 EOT·timeout 분리·crop EOF를 fixture로 둔다. causal 입력을 고정하고 미래 suffix만 바꿨을 때 **추론 출력은 같아야 하지만 미래 예측 정답은 달라질 수 있다**. 두 검사를 혼동하지 않는다.
+
+실데이터 사전 점검: [[output-phase2-real-sequence-probe]](2026-09-13)는 AMI 4화자 38.4초로 480개 블록·BPE ID·next-token label을 생성했다. encoder/모델 추론은 미실행이며, 자동 EOT가 `marketing … expert` 사이에 놓이는 검수 후보가 확인됐다. 청취 전 확정 오답으로 취급하지 않는다. Q0 라벨 검수 사례로 사용하고 이 직렬화 결과만으로 학습 관문을 통과시키지 않는다.
+
+**검수 범위를 경량화한다.** Q0/F2는 `TurnBench dev gold 대조 + AMI 200경계`로 제한한다. AMI는 무작위 EOT 후보 100·no_eot 50·위험 50을 구분하고, 기존 재생 도구와 JSON/TSV 응답으로 처리한다. 정적 HTML·전 코퍼스 200개씩·필수 2인 전수 검수·독립 릴리스 플랫폼은 Q1 선행 조건에서 뺀다. 애매한 사례만 추가 검토하고 안 풀리면 uncertain이다. KO 1대화는 §5.3의 음향·정렬·시퀀스 QA로 유지하되 별도 의미 라벨링 프로젝트로 확대하지 않는다.
+
+이 축소 검수로 AMI 전체 EOT recall·KO floor 라벨 품질·검수자 일치도 통과를 주장하지 않는다. 후보 조건부 precision·오류 유형·unknown/유효 감독 coverage를 먼저 보고한다. TurnBench dev를 보고 규칙을 수정하면 해당 점수는 **튜닝된 dev 결과**이며 독립 검증이 아니다. 최초 고정 규칙 결과를 보존하고, 새 held-out 평가 전 일반화 주장을 보류한다. 작업 상세만 [[output-phase2-eot-review-framework]]에 두고 사건/직렬화 규칙은 이 정본만 따른다.
+
+구현 우선순위는 `(1) registry·TN fail-fast → (2) 공용 serializer·state와 §4.4 16 fixtures → (3) 71631 실외 480블록 실제 Dataset·head targets → (4) 경량 QC·밀도 → (5) Trainer 32창 overfit`다. HF Trainer가 실제 batch를 읽고 forward/backward·save/load까지 통과해야 연결 완료다. probe/replay 독립 JSON은 이 관문을 충족하지 않는다.
 
 ## 10. 실행 예산과 우선순위
 

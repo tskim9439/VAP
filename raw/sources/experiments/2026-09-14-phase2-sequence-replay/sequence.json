@@ -1,0 +1,6608 @@
+[
+  {
+    "kind": "audio",
+    "chunk": 0,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 0,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 1,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 1,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 2,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 2,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 3,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 3,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 4,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 4,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 5,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 5,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 6,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 6,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 7,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 7,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 8,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 8,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 9,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 9,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 10,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 10,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 11,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 11,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 12,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 12,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 13,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 13,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 14,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 14,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 151721
+  },
+  {
+    "kind": "onset",
+    "chunk": 14,
+    "token_id": 151721,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 14,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 15,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 15,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 16,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 16,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 17,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 17,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 18,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 18,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 19,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 19,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 20,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 20,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 21,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 21,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 22,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 22,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 23,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 23,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 24,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 24,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 25,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 25,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 26,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 26,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 27,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 27,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 28,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 28,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 29,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 29,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 30,
+    "token_id": null,
+    "diagnostic_next_token_label": 4443
+  },
+  {
+    "kind": "text",
+    "chunk": 30,
+    "token_id": 4443,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 30,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 31,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 31,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 32,
+    "token_id": null,
+    "diagnostic_next_token_label": 1632
+  },
+  {
+    "kind": "text",
+    "chunk": 32,
+    "token_id": 1632,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 32,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 33,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 33,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 34,
+    "token_id": null,
+    "diagnostic_next_token_label": 419
+  },
+  {
+    "kind": "text",
+    "chunk": 34,
+    "token_id": 419,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 34,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 35,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 35,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 36,
+    "token_id": null,
+    "diagnostic_next_token_label": 374
+  },
+  {
+    "kind": "text",
+    "chunk": 36,
+    "token_id": 374,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 36,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 37,
+    "token_id": null,
+    "diagnostic_next_token_label": 279
+  },
+  {
+    "kind": "text",
+    "chunk": 37,
+    "token_id": 279,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 37,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 38,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 38,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 39,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 39,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 40,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 40,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 41,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 41,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 42,
+    "token_id": null,
+    "diagnostic_next_token_label": 10323
+  },
+  {
+    "kind": "text",
+    "chunk": 42,
+    "token_id": 10323,
+    "diagnostic_next_token_label": 1007
+  },
+  {
+    "kind": "text",
+    "chunk": 42,
+    "token_id": 1007,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 42,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 43,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 43,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 44,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 44,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 45,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 45,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 46,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 46,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 47,
+    "token_id": null,
+    "diagnostic_next_token_label": 6438
+  },
+  {
+    "kind": "text",
+    "chunk": 47,
+    "token_id": 6438,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 47,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 48,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 48,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 49,
+    "token_id": null,
+    "diagnostic_next_token_label": 369
+  },
+  {
+    "kind": "text",
+    "chunk": 49,
+    "token_id": 369,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 49,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 50,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 50,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 51,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 51,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 52,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 52,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 53,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 53,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 54,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 54,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 55,
+    "token_id": null,
+    "diagnostic_next_token_label": 1039
+  },
+  {
+    "kind": "text",
+    "chunk": 55,
+    "token_id": 1039,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 55,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 56,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 56,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 57,
+    "token_id": null,
+    "diagnostic_next_token_label": 1039
+  },
+  {
+    "kind": "text",
+    "chunk": 57,
+    "token_id": 1039,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 57,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 58,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 58,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 59,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 59,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 60,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 60,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 61,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 61,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 62,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 62,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 63,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 63,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 64,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 64,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 65,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 65,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 66,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 66,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 67,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 67,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 68,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 68,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 69,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 69,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 70,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 70,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 71,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 71,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 72,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 72,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 73,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 73,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 74,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 74,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 75,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 75,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 76,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 76,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 77,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 77,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 78,
+    "token_id": null,
+    "diagnostic_next_token_label": 2390
+  },
+  {
+    "kind": "text",
+    "chunk": 78,
+    "token_id": 2390,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 78,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 79,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 79,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 80,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 80,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 81,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 81,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 82,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 82,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 83,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 83,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 84,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 84,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 85,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 85,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 86,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 86,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 87,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 87,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 88,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 88,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 89,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 89,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 90,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 90,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 91,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 91,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 92,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 92,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 93,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 93,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 94,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 94,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 95,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 95,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 96,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 96,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 97,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 97,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 98,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 98,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 99,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 99,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 100,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 100,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 101,
+    "token_id": null,
+    "diagnostic_next_token_label": 4443
+  },
+  {
+    "kind": "text",
+    "chunk": 101,
+    "token_id": 4443,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 101,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 102,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 102,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 103,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 103,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 104,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 104,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 105,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 105,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 106,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 106,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 107,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 107,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 108,
+    "token_id": null,
+    "diagnostic_next_token_label": 323
+  },
+  {
+    "kind": "text",
+    "chunk": 108,
+    "token_id": 323,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 108,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 109,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 109,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 110,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 110,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 111,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 111,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 112,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 112,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 113,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 113,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 114,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 114,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 115,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 115,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 116,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 116,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 117,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 117,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 118,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 118,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 119,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 119,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 120,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 120,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 121,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 121,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 122,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 122,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 123,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 123,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 124,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 124,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 125,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 125,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 126,
+    "token_id": null,
+    "diagnostic_next_token_label": 4443
+  },
+  {
+    "kind": "text",
+    "chunk": 126,
+    "token_id": 4443,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 126,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 127,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 127,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 128,
+    "token_id": null,
+    "diagnostic_next_token_label": 419
+  },
+  {
+    "kind": "text",
+    "chunk": 128,
+    "token_id": 419,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 128,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 129,
+    "token_id": null,
+    "diagnostic_next_token_label": 374
+  },
+  {
+    "kind": "text",
+    "chunk": 129,
+    "token_id": 374,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 129,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 130,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 130,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 131,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 131,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 132,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 132,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 133,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 133,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 134,
+    "token_id": null,
+    "diagnostic_next_token_label": 1101
+  },
+  {
+    "kind": "text",
+    "chunk": 134,
+    "token_id": 1101,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 134,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 135,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 135,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 136,
+    "token_id": null,
+    "diagnostic_next_token_label": 1128
+  },
+  {
+    "kind": "text",
+    "chunk": 136,
+    "token_id": 1128,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 136,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 137,
+    "token_id": null,
+    "diagnostic_next_token_label": 582
+  },
+  {
+    "kind": "text",
+    "chunk": 137,
+    "token_id": 582,
+    "diagnostic_next_token_label": 2299
+  },
+  {
+    "kind": "text",
+    "chunk": 137,
+    "token_id": 2299,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 137,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 138,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 138,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 139,
+    "token_id": null,
+    "diagnostic_next_token_label": 16519
+  },
+  {
+    "kind": "text",
+    "chunk": 139,
+    "token_id": 16519,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 139,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 140,
+    "token_id": null,
+    "diagnostic_next_token_label": 387
+  },
+  {
+    "kind": "text",
+    "chunk": 140,
+    "token_id": 387,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 140,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 141,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 141,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 142,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 142,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 143,
+    "token_id": null,
+    "diagnostic_next_token_label": 3730
+  },
+  {
+    "kind": "text",
+    "chunk": 143,
+    "token_id": 3730,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 143,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 144,
+    "token_id": null,
+    "diagnostic_next_token_label": 916
+  },
+  {
+    "kind": "text",
+    "chunk": 144,
+    "token_id": 916,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 144,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 145,
+    "token_id": null,
+    "diagnostic_next_token_label": 279
+  },
+  {
+    "kind": "text",
+    "chunk": 145,
+    "token_id": 279,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 145,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 146,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 146,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 147,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 147,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 148,
+    "token_id": null,
+    "diagnostic_next_token_label": 1790
+  },
+  {
+    "kind": "text",
+    "chunk": 148,
+    "token_id": 1790,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 148,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 149,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 149,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 150,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 150,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 151,
+    "token_id": null,
+    "diagnostic_next_token_label": 17073
+  },
+  {
+    "kind": "text",
+    "chunk": 151,
+    "token_id": 17073,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 151,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 152,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 152,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 153,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 153,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 154,
+    "token_id": null,
+    "diagnostic_next_token_label": 4236
+  },
+  {
+    "kind": "text",
+    "chunk": 154,
+    "token_id": 4236,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 154,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 155,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 155,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 156,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 156,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 157,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 157,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 158,
+    "token_id": null,
+    "diagnostic_next_token_label": 151718
+  },
+  {
+    "kind": "speaker",
+    "chunk": 158,
+    "token_id": 151718,
+    "diagnostic_next_token_label": 151721
+  },
+  {
+    "kind": "onset",
+    "chunk": 158,
+    "token_id": 151721,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 158,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 159,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 159,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 160,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 160,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 161,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 161,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 162,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 162,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 163,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 163,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 164,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 164,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 165,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 165,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 166,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 166,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 167,
+    "token_id": null,
+    "diagnostic_next_token_label": 9465
+  },
+  {
+    "kind": "text",
+    "chunk": 167,
+    "token_id": 9465,
+    "diagnostic_next_token_label": 87501
+  },
+  {
+    "kind": "text",
+    "chunk": 167,
+    "token_id": 87501,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 167,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 168,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 168,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 4420
+  },
+  {
+    "kind": "text",
+    "chunk": 168,
+    "token_id": 4420,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 168,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 169,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 169,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 170,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 170,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 171,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 171,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 172,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 172,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 173,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 173,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 174,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 174,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 175,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 175,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 176,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 176,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 177,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 177,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 178,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 178,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 179,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 179,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 180,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 180,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 181,
+    "token_id": null,
+    "diagnostic_next_token_label": 4443
+  },
+  {
+    "kind": "text",
+    "chunk": 181,
+    "token_id": 4443,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 181,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 182,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 182,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 183,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 183,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 184,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 184,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 185,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 185,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 186,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 186,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 187,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 187,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 188,
+    "token_id": null,
+    "diagnostic_next_token_label": 773
+  },
+  {
+    "kind": "text",
+    "chunk": 188,
+    "token_id": 773,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 188,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 189,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 189,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 190,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 190,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 191,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 191,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 192,
+    "token_id": null,
+    "diagnostic_next_token_label": 1156
+  },
+  {
+    "kind": "text",
+    "chunk": 192,
+    "token_id": 1156,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 192,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 193,
+    "token_id": null,
+    "diagnostic_next_token_label": 315
+  },
+  {
+    "kind": "text",
+    "chunk": 193,
+    "token_id": 315,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 193,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 194,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 194,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 195,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 195,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 196,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 196,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 197,
+    "token_id": null,
+    "diagnostic_next_token_label": 678
+  },
+  {
+    "kind": "text",
+    "chunk": 197,
+    "token_id": 678,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 197,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 198,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 198,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 199,
+    "token_id": null,
+    "diagnostic_next_token_label": 1101
+  },
+  {
+    "kind": "text",
+    "chunk": 199,
+    "token_id": 1101,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 199,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 200,
+    "token_id": null,
+    "diagnostic_next_token_label": 311
+  },
+  {
+    "kind": "text",
+    "chunk": 200,
+    "token_id": 311,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 200,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 201,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 201,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 202,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 202,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 203,
+    "token_id": null,
+    "diagnostic_next_token_label": 3093
+  },
+  {
+    "kind": "text",
+    "chunk": 203,
+    "token_id": 3093,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 203,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 204,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 204,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 205,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 205,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 206,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 206,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 207,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 207,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 208,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 208,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 209,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 209,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 210,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 210,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 211,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 211,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 212,
+    "token_id": null,
+    "diagnostic_next_token_label": 315
+  },
+  {
+    "kind": "text",
+    "chunk": 212,
+    "token_id": 315,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 212,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 213,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 213,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 214,
+    "token_id": null,
+    "diagnostic_next_token_label": 1281
+  },
+  {
+    "kind": "text",
+    "chunk": 214,
+    "token_id": 1281,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 214,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 215,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 215,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 216,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 216,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 217,
+    "token_id": null,
+    "diagnostic_next_token_label": 2704
+  },
+  {
+    "kind": "text",
+    "chunk": 217,
+    "token_id": 2704,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 217,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 218,
+    "token_id": null,
+    "diagnostic_next_token_label": 429
+  },
+  {
+    "kind": "text",
+    "chunk": 218,
+    "token_id": 429,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 218,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 219,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 219,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 220,
+    "token_id": null,
+    "diagnostic_next_token_label": 582
+  },
+  {
+    "kind": "text",
+    "chunk": 220,
+    "token_id": 582,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 220,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 221,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 221,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 222,
+    "token_id": null,
+    "diagnostic_next_token_label": 678
+  },
+  {
+    "kind": "text",
+    "chunk": 222,
+    "token_id": 678,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 222,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 223,
+    "token_id": null,
+    "diagnostic_next_token_label": 1414
+  },
+  {
+    "kind": "text",
+    "chunk": 223,
+    "token_id": 1414,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 223,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 224,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 224,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 225,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 225,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 226,
+    "token_id": null,
+    "diagnostic_next_token_label": 1817
+  },
+  {
+    "kind": "text",
+    "chunk": 226,
+    "token_id": 1817,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 226,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 227,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 227,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 228,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 228,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 229,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 229,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 230,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 230,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 231,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 231,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 232,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 232,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 233,
+    "token_id": null,
+    "diagnostic_next_token_label": 1008
+  },
+  {
+    "kind": "text",
+    "chunk": 233,
+    "token_id": 1008,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 233,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 234,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 234,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 235,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 235,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 236,
+    "token_id": null,
+    "diagnostic_next_token_label": 600
+  },
+  {
+    "kind": "text",
+    "chunk": 236,
+    "token_id": 600,
+    "diagnostic_next_token_label": 2776
+  },
+  {
+    "kind": "text",
+    "chunk": 236,
+    "token_id": 2776,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 236,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 237,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 237,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 238,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 238,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 239,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 239,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 240,
+    "token_id": null,
+    "diagnostic_next_token_label": 1187
+  },
+  {
+    "kind": "text",
+    "chunk": 240,
+    "token_id": 1187,
+    "diagnostic_next_token_label": 5690
+  },
+  {
+    "kind": "text",
+    "chunk": 240,
+    "token_id": 5690,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 240,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 241,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 241,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 242,
+    "token_id": null,
+    "diagnostic_next_token_label": 323
+  },
+  {
+    "kind": "text",
+    "chunk": 242,
+    "token_id": 323,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 242,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 243,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 243,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 244,
+    "token_id": null,
+    "diagnostic_next_token_label": 600
+  },
+  {
+    "kind": "text",
+    "chunk": 244,
+    "token_id": 600,
+    "diagnostic_next_token_label": 2776
+  },
+  {
+    "kind": "text",
+    "chunk": 244,
+    "token_id": 2776,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 244,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 245,
+    "token_id": null,
+    "diagnostic_next_token_label": 279
+  },
+  {
+    "kind": "text",
+    "chunk": 245,
+    "token_id": 279,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 245,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 246,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 246,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 247,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 247,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 248,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 248,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 249,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 249,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 250,
+    "token_id": null,
+    "diagnostic_next_token_label": 2390
+  },
+  {
+    "kind": "text",
+    "chunk": 250,
+    "token_id": 2390,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 250,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 251,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 251,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 252,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 252,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 253,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 253,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 254,
+    "token_id": null,
+    "diagnostic_next_token_label": 6645
+  },
+  {
+    "kind": "text",
+    "chunk": 254,
+    "token_id": 6645,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 254,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 255,
+    "token_id": null,
+    "diagnostic_next_token_label": 151718
+  },
+  {
+    "kind": "speaker",
+    "chunk": 255,
+    "token_id": 151718,
+    "diagnostic_next_token_label": 151721
+  },
+  {
+    "kind": "onset",
+    "chunk": 255,
+    "token_id": 151721,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 255,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 256,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 256,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 257,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 257,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 258,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 258,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 259,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 259,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 260,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 260,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 653
+  },
+  {
+    "kind": "text",
+    "chunk": 260,
+    "token_id": 653,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 260,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 261,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 261,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 262,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 262,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 263,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 263,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 264,
+    "token_id": null,
+    "diagnostic_next_token_label": 151718
+  },
+  {
+    "kind": "speaker",
+    "chunk": 264,
+    "token_id": 151718,
+    "diagnostic_next_token_label": 2244
+  },
+  {
+    "kind": "text",
+    "chunk": 264,
+    "token_id": 2244,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 264,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 265,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 265,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 266,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 266,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 267,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 267,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 268,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 268,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 269,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 269,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 270,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 270,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 271,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 271,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 272,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 272,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 273,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 273,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 274,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 274,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 275,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 275,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 498
+  },
+  {
+    "kind": "text",
+    "chunk": 275,
+    "token_id": 498,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 275,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 276,
+    "token_id": null,
+    "diagnostic_next_token_label": 1366
+  },
+  {
+    "kind": "text",
+    "chunk": 276,
+    "token_id": 1366,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 276,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 277,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 277,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 278,
+    "token_id": null,
+    "diagnostic_next_token_label": 311
+  },
+  {
+    "kind": "text",
+    "chunk": 278,
+    "token_id": 311,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 278,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 279,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 279,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 280,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 280,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 281,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 281,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 282,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 282,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 283,
+    "token_id": null,
+    "diagnostic_next_token_label": 19131
+  },
+  {
+    "kind": "text",
+    "chunk": 283,
+    "token_id": 19131,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 283,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 284,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 284,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 285,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 285,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 286,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 286,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 287,
+    "token_id": null,
+    "diagnostic_next_token_label": 6133
+  },
+  {
+    "kind": "text",
+    "chunk": 287,
+    "token_id": 6133,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 287,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 288,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 288,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 289,
+    "token_id": null,
+    "diagnostic_next_token_label": 151719
+  },
+  {
+    "kind": "speaker",
+    "chunk": 289,
+    "token_id": 151719,
+    "diagnostic_next_token_label": 151721
+  },
+  {
+    "kind": "onset",
+    "chunk": 289,
+    "token_id": 151721,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 289,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 290,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 290,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 1549
+  },
+  {
+    "kind": "text",
+    "chunk": 290,
+    "token_id": 1549,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 290,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 291,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 291,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 292,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 292,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 151722
+  },
+  {
+    "kind": "eot",
+    "chunk": 292,
+    "token_id": 151722,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 292,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 293,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 293,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 294,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 294,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 295,
+    "token_id": null,
+    "diagnostic_next_token_label": 151719
+  },
+  {
+    "kind": "speaker",
+    "chunk": 295,
+    "token_id": 151719,
+    "diagnostic_next_token_label": 15588
+  },
+  {
+    "kind": "text",
+    "chunk": 295,
+    "token_id": 15588,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 295,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 296,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 296,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 297,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 297,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 298,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 298,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 299,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 299,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 300,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 300,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 301,
+    "token_id": null,
+    "diagnostic_next_token_label": 600
+  },
+  {
+    "kind": "text",
+    "chunk": 301,
+    "token_id": 600,
+    "diagnostic_next_token_label": 2776
+  },
+  {
+    "kind": "text",
+    "chunk": 301,
+    "token_id": 2776,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 301,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 302,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 302,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 303,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 303,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 304,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 304,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 305,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 305,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 306,
+    "token_id": null,
+    "diagnostic_next_token_label": 53946
+  },
+  {
+    "kind": "text",
+    "chunk": 306,
+    "token_id": 53946,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 306,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 307,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 307,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 308,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 308,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 309,
+    "token_id": null,
+    "diagnostic_next_token_label": 323
+  },
+  {
+    "kind": "text",
+    "chunk": 309,
+    "token_id": 323,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 309,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 310,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 310,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 311,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 311,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 312,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 312,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 313,
+    "token_id": null,
+    "diagnostic_next_token_label": 600
+  },
+  {
+    "kind": "text",
+    "chunk": 313,
+    "token_id": 600,
+    "diagnostic_next_token_label": 2776
+  },
+  {
+    "kind": "text",
+    "chunk": 313,
+    "token_id": 2776,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 313,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 314,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 314,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 315,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 315,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 316,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 316,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 317,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 317,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 318,
+    "token_id": null,
+    "diagnostic_next_token_label": 9966
+  },
+  {
+    "kind": "text",
+    "chunk": 318,
+    "token_id": 9966,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 318,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 319,
+    "token_id": null,
+    "diagnostic_next_token_label": 311
+  },
+  {
+    "kind": "text",
+    "chunk": 319,
+    "token_id": 311,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 319,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 320,
+    "token_id": null,
+    "diagnostic_next_token_label": 387
+  },
+  {
+    "kind": "text",
+    "chunk": 320,
+    "token_id": 387,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 320,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 321,
+    "token_id": null,
+    "diagnostic_next_token_label": 458
+  },
+  {
+    "kind": "text",
+    "chunk": 321,
+    "token_id": 458,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 321,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 322,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 322,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 323,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 323,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 324,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 324,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 325,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 325,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 326,
+    "token_id": null,
+    "diagnostic_next_token_label": 12785
+  },
+  {
+    "kind": "text",
+    "chunk": 326,
+    "token_id": 12785,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 326,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 327,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 327,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 328,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 328,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 329,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 329,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 330,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 330,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 331,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 331,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 151721
+  },
+  {
+    "kind": "onset",
+    "chunk": 331,
+    "token_id": 151721,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 331,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 332,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 332,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 333,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 333,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 334,
+    "token_id": null,
+    "diagnostic_next_token_label": 151719
+  },
+  {
+    "kind": "speaker",
+    "chunk": 334,
+    "token_id": 151719,
+    "diagnostic_next_token_label": 14692
+  },
+  {
+    "kind": "text",
+    "chunk": 334,
+    "token_id": 14692,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 334,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 335,
+    "token_id": null,
+    "diagnostic_next_token_label": 151719
+  },
+  {
+    "kind": "speaker",
+    "chunk": 335,
+    "token_id": 151719,
+    "diagnostic_next_token_label": 151722
+  },
+  {
+    "kind": "eot",
+    "chunk": 335,
+    "token_id": 151722,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 335,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 336,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 336,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 337,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 337,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 338,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 338,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 339,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 339,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 16910
+  },
+  {
+    "kind": "text",
+    "chunk": 339,
+    "token_id": 16910,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 339,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 340,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 340,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 151722
+  },
+  {
+    "kind": "eot",
+    "chunk": 340,
+    "token_id": 151722,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 340,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 341,
+    "token_id": null,
+    "diagnostic_next_token_label": 151718
+  },
+  {
+    "kind": "speaker",
+    "chunk": 341,
+    "token_id": 151718,
+    "diagnostic_next_token_label": 151721
+  },
+  {
+    "kind": "onset",
+    "chunk": 341,
+    "token_id": 151721,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 341,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 342,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 342,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 343,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 343,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 344,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 344,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 345,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 345,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 346,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 346,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 347,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 347,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 348,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 348,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 349,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 349,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 350,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 350,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 351,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 351,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 352,
+    "token_id": null,
+    "diagnostic_next_token_label": 323
+  },
+  {
+    "kind": "text",
+    "chunk": 352,
+    "token_id": 323,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 352,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 353,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 353,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 354,
+    "token_id": null,
+    "diagnostic_next_token_label": 600
+  },
+  {
+    "kind": "text",
+    "chunk": 354,
+    "token_id": 600,
+    "diagnostic_next_token_label": 2776
+  },
+  {
+    "kind": "text",
+    "chunk": 354,
+    "token_id": 2776,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 354,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 355,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 355,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 356,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 356,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 357,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 357,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 358,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 358,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 359,
+    "token_id": null,
+    "diagnostic_next_token_label": 323
+  },
+  {
+    "kind": "text",
+    "chunk": 359,
+    "token_id": 323,
+    "diagnostic_next_token_label": 4266
+  },
+  {
+    "kind": "text",
+    "chunk": 359,
+    "token_id": 4266,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 359,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 360,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 360,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 361,
+    "token_id": null,
+    "diagnostic_next_token_label": 323
+  },
+  {
+    "kind": "text",
+    "chunk": 361,
+    "token_id": 323,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 361,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 362,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 362,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 363,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 363,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 364,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 364,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 365,
+    "token_id": null,
+    "diagnostic_next_token_label": 600
+  },
+  {
+    "kind": "text",
+    "chunk": 365,
+    "token_id": 600,
+    "diagnostic_next_token_label": 2776
+  },
+  {
+    "kind": "text",
+    "chunk": 365,
+    "token_id": 2776,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 365,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 366,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 366,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 367,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 367,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 368,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 368,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 369,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 369,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 370,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 370,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 371,
+    "token_id": null,
+    "diagnostic_next_token_label": 43744
+  },
+  {
+    "kind": "text",
+    "chunk": 371,
+    "token_id": 43744,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 371,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 372,
+    "token_id": null,
+    "diagnostic_next_token_label": 1039
+  },
+  {
+    "kind": "text",
+    "chunk": 372,
+    "token_id": 1039,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 372,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 373,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 373,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 374,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 374,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 375,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 375,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 376,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 376,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 377,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 377,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 378,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 378,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 379,
+    "token_id": null,
+    "diagnostic_next_token_label": 8493
+  },
+  {
+    "kind": "text",
+    "chunk": 379,
+    "token_id": 8493,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 379,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 380,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 380,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 381,
+    "token_id": null,
+    "diagnostic_next_token_label": 151718
+  },
+  {
+    "kind": "speaker",
+    "chunk": 381,
+    "token_id": 151718,
+    "diagnostic_next_token_label": 151722
+  },
+  {
+    "kind": "eot",
+    "chunk": 381,
+    "token_id": 151722,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 381,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 382,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 382,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 383,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 383,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 384,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 384,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 385,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 385,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 386,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 386,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 387,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 387,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 388,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 388,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 389,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 389,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 390,
+    "token_id": null,
+    "diagnostic_next_token_label": 151720
+  },
+  {
+    "kind": "speaker",
+    "chunk": 390,
+    "token_id": 151720,
+    "diagnostic_next_token_label": 151721
+  },
+  {
+    "kind": "onset",
+    "chunk": 390,
+    "token_id": 151721,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 390,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 391,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 391,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 392,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 392,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 393,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 393,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 394,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 394,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 395,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 395,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 396,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 396,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 397,
+    "token_id": null,
+    "diagnostic_next_token_label": 151718
+  },
+  {
+    "kind": "speaker",
+    "chunk": 397,
+    "token_id": 151718,
+    "diagnostic_next_token_label": 151721
+  },
+  {
+    "kind": "onset",
+    "chunk": 397,
+    "token_id": 151721,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 397,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 398,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 398,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 399,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 399,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 400,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 400,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 401,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 401,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 402,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 402,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 403,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 403,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 404,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 404,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 405,
+    "token_id": null,
+    "diagnostic_next_token_label": 6203
+  },
+  {
+    "kind": "text",
+    "chunk": 405,
+    "token_id": 6203,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 405,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 406,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 406,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 407,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 407,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 408,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 408,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 409,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 409,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 410,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 410,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 411,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 411,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 412,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 412,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 413,
+    "token_id": null,
+    "diagnostic_next_token_label": 151720
+  },
+  {
+    "kind": "speaker",
+    "chunk": 413,
+    "token_id": 151720,
+    "diagnostic_next_token_label": 4443
+  },
+  {
+    "kind": "text",
+    "chunk": 413,
+    "token_id": 4443,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 413,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 414,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 414,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 415,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 415,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 416,
+    "token_id": null,
+    "diagnostic_next_token_label": 600
+  },
+  {
+    "kind": "text",
+    "chunk": 416,
+    "token_id": 600,
+    "diagnostic_next_token_label": 2776
+  },
+  {
+    "kind": "text",
+    "chunk": 416,
+    "token_id": 2776,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 416,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 417,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 417,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 418,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 418,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 419,
+    "token_id": null,
+    "diagnostic_next_token_label": 45041
+  },
+  {
+    "kind": "text",
+    "chunk": 419,
+    "token_id": 45041,
+    "diagnostic_next_token_label": 343
+  },
+  {
+    "kind": "text",
+    "chunk": 419,
+    "token_id": 343,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 419,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 420,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 420,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 421,
+    "token_id": null,
+    "diagnostic_next_token_label": 323
+  },
+  {
+    "kind": "text",
+    "chunk": 421,
+    "token_id": 323,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 421,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 422,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 422,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 423,
+    "token_id": null,
+    "diagnostic_next_token_label": 600
+  },
+  {
+    "kind": "text",
+    "chunk": 423,
+    "token_id": 600,
+    "diagnostic_next_token_label": 2776
+  },
+  {
+    "kind": "text",
+    "chunk": 423,
+    "token_id": 2776,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 423,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 424,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 424,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 425,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 425,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 426,
+    "token_id": null,
+    "diagnostic_next_token_label": 1196
+  },
+  {
+    "kind": "text",
+    "chunk": 426,
+    "token_id": 1196,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 426,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 427,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 427,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 428,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 428,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 429,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 429,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 430,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 430,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 431,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 431,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 432,
+    "token_id": null,
+    "diagnostic_next_token_label": 3749
+  },
+  {
+    "kind": "text",
+    "chunk": 432,
+    "token_id": 3749,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 432,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 433,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 433,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 434,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 434,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 435,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 435,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 436,
+    "token_id": null,
+    "diagnostic_next_token_label": 151720
+  },
+  {
+    "kind": "speaker",
+    "chunk": 436,
+    "token_id": 151720,
+    "diagnostic_next_token_label": 151722
+  },
+  {
+    "kind": "eot",
+    "chunk": 436,
+    "token_id": 151722,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 436,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 437,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 437,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 438,
+    "token_id": null,
+    "diagnostic_next_token_label": 151717
+  },
+  {
+    "kind": "speaker",
+    "chunk": 438,
+    "token_id": 151717,
+    "diagnostic_next_token_label": 151721
+  },
+  {
+    "kind": "onset",
+    "chunk": 438,
+    "token_id": 151721,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 438,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 439,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 439,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 440,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 440,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 441,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 441,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 442,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 442,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 443,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 443,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 444,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 444,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 445,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 445,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 446,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 446,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 447,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 447,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 448,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 448,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 449,
+    "token_id": null,
+    "diagnostic_next_token_label": 2244
+  },
+  {
+    "kind": "text",
+    "chunk": 449,
+    "token_id": 2244,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 449,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 450,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 450,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 451,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 451,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 452,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 452,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 453,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 453,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 454,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 454,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 455,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 455,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 456,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 456,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 457,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 457,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 458,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 458,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 459,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 459,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 460,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 460,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 461,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 461,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 462,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 462,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 463,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 463,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 464,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 464,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 465,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 465,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 466,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 466,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 467,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 467,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 468,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 468,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 469,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 469,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 470,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 470,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 471,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 471,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 472,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 472,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 473,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 473,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 474,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 474,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 475,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 475,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 476,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 476,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 477,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 477,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 478,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 478,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  },
+  {
+    "kind": "audio",
+    "chunk": 479,
+    "token_id": null,
+    "diagnostic_next_token_label": 151705
+  },
+  {
+    "kind": "next",
+    "chunk": 479,
+    "token_id": 151705,
+    "diagnostic_next_token_label": -100
+  }
+]

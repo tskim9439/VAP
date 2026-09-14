@@ -1,0 +1,74 @@
+[
+  {
+    "agent": "B",
+    "slot": 1,
+    "start_s": 55.415,
+    "end_s": 77.456,
+    "reason": "overlap_end",
+    "label_observed_until_s": 80.456
+  },
+  {
+    "agent": "D",
+    "slot": 2,
+    "start_s": 66.942,
+    "end_s": 67.755,
+    "reason": "short_overlap_continuation_no_eot",
+    "label_observed_until_s": 70.755
+  },
+  {
+    "agent": "D",
+    "slot": 2,
+    "start_s": 74.71,
+    "end_s": 75.413,
+    "reason": "short_overlap_continuation_no_eot",
+    "label_observed_until_s": 78.413
+  },
+  {
+    "agent": "A",
+    "slot": 3,
+    "start_s": 77.408,
+    "end_s": 80.955,
+    "reason": "overlap_end",
+    "label_observed_until_s": 83.955
+  },
+  {
+    "agent": "B",
+    "slot": 1,
+    "start_s": 80.736,
+    "end_s": 81.296,
+    "reason": "shift",
+    "label_observed_until_s": 84.296
+  },
+  {
+    "agent": "D",
+    "slot": 2,
+    "start_s": 81.575,
+    "end_s": 84.576,
+    "reason": "shift",
+    "label_observed_until_s": 87.576
+  },
+  {
+    "agent": "C",
+    "slot": 4,
+    "start_s": 85.509,
+    "end_s": 88.982,
+    "reason": "shift",
+    "label_observed_until_s": 91.982
+  },
+  {
+    "agent": "D",
+    "slot": 2,
+    "start_s": 86.048,
+    "end_s": 86.912,
+    "reason": "short_overlap_continuation_no_eot",
+    "label_observed_until_s": 89.912
+  },
+  {
+    "agent": "B",
+    "slot": 1,
+    "start_s": 89.28,
+    "end_s": 102.283,
+    "reason": "same_speaker_resume_no_eot",
+    "label_observed_until_s": 105.283
+  }
+]

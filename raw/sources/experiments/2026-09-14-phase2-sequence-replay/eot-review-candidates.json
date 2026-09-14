@@ -1,0 +1,67 @@
+[
+  {
+    "candidate_id": "ami:ES2002a:B:1239296",
+    "source_speaker": "B",
+    "slot": 1,
+    "chunk": 292,
+    "reference_s": 77.456,
+    "target_emit_s": 77.84,
+    "label_observed_until_s": 80.456,
+    "reason": "overlap_end",
+    "provenance": "weak_auto",
+    "review_status": "unreviewed",
+    "human_verdict": null
+  },
+  {
+    "candidate_id": "ami:ES2002a:A:1295280",
+    "source_speaker": "A",
+    "slot": 3,
+    "chunk": 335,
+    "reference_s": 80.955,
+    "target_emit_s": 81.28,
+    "label_observed_until_s": 83.955,
+    "reason": "overlap_end",
+    "provenance": "weak_auto",
+    "review_status": "unreviewed",
+    "human_verdict": null
+  },
+  {
+    "candidate_id": "ami:ES2002a:B:1300736",
+    "source_speaker": "B",
+    "slot": 1,
+    "chunk": 340,
+    "reference_s": 81.296,
+    "target_emit_s": 81.68,
+    "label_observed_until_s": 84.296,
+    "reason": "shift",
+    "provenance": "weak_auto",
+    "review_status": "unreviewed",
+    "human_verdict": null
+  },
+  {
+    "candidate_id": "ami:ES2002a:D:1353216",
+    "source_speaker": "D",
+    "slot": 2,
+    "chunk": 381,
+    "reference_s": 84.576,
+    "target_emit_s": 84.96,
+    "label_observed_until_s": 87.576,
+    "reason": "shift",
+    "provenance": "weak_auto",
+    "review_status": "unreviewed",
+    "human_verdict": null
+  },
+  {
+    "candidate_id": "ami:ES2002a:C:1423712",
+    "source_speaker": "C",
+    "slot": 4,
+    "chunk": 436,
+    "reference_s": 88.982,
+    "target_emit_s": 89.36,
+    "label_observed_until_s": 91.982,
+    "reason": "shift",
+    "provenance": "weak_auto",
+    "review_status": "unreviewed",
+    "human_verdict": null
+  }
+]
