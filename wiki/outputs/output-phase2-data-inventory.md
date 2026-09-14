@@ -63,11 +63,11 @@ sources:
 
 | 코퍼스 | 규모(대략) | 화자 수 | 채널 | 라이선스·확보 | 서버 | 활용 |
 |---|---|---|---|---|---|---|
-| AMI | ~100 h | 회의당 4 | IHM(헤드셋) + SDM/MDM(원거리) | CC BY 4.0, 공개 | **있음** `english_16kHz/ami`(발화 단위 wav ihm/sdm + CSV·JSONL `spk_id, meeting_id, microphone`; 시각은 원본 어노테이션 필요) | 서버 사본은 발화 단위라 원본 회의 파일·단어 시각을 추가 확보해야 시간축 복원. 1 순위 |
-| ICSI | ~72 h | 3–10 | 헤드셋 + 테이블 마이크 | LDC(LDC2004S02) 배포, 연구용 계약 | 없음 | 화자 수 최대 10 — 슬롯 상한 설계에 영향 |
-| CHiME-6 | ~50 h | 4 | 참가자 binaural + 6 개 Kinect 어레이 | CHiME 계약(연구용 무료) | 없음 | 원거리 mono 로 잡음·잔향 강건성. 전사 라벨은 있으나 정렬 품질 낮음(대화 파티) |
-| NOTSOFAR-1 | ~24 h | 4–8 | 다중 어레이 + 헤드셋 | CC BY 4.0(확인 필요), 공개 | 없음 | 회의 도메인 원거리 |
-| DiPCo | ~5 h | 4 | 헤드셋 + 어레이 | CDLA-Permissive(확인 필요), 공개 | 없음 | 소량, 평가·검증용 |
+| AMI | ~100 h | 회의당 4 | IHM(헤드셋) + SDM/MDM(원거리) | CC BY 4.0, 공개 | **확보 완료(2026-09-13)** `/soundai/DB/raw/ami/<회의>/Headset-0..3(4)·Mix-Headset.wav` 171 회의 + `annotations/ami_public_manual_1.6.2.zip`(NXT, 단어 시각), 54 GB | 원본 회의 전체 헤드셋 채널 — A 등급 |
+| ICSI | ~72 h | 3–10 | 헤드셋 + 테이블 마이크 | CC BY 4.0(에든버러 AMI 사이트 무료 배포) | **확보 완료(2026-09-13)** `/soundai/DB/raw/icsi/<회의>/chan*.sph` 75 회의 922 파일 + NXT zip 3, 34.2 GB | 화자 수 최대 10 — 슬롯 상한 설계에 영향 |
+| CHiME-6 | ~50 h | 4 | 참가자 binaural + 6 개 Kinect 어레이 | CC BY-SA 4.0(2024 재배포) | **확보 완료(2026-09-14)** `/soundai/DB/raw/chime6/CHiME6_{train,dev,eval}.tar.gz` + transcriptions·floorplans, 122 GB(미해제) | 착용 마이크 누설 확인 후 등급 결정 |
+| NOTSOFAR-1 | ~24 h | 4–8 | 다중 어레이 + 근접 마이크(논문 확인) | CC BY 4.0 | **확보 완료(2026-09-14)** `/soundai/DB/raw/notsofar/{240825.1_dev1, 240825.1_train, 240825.1_eval_full_with_GT}` 93.9 GB | 회의 도메인, 근접 채널로 A 등급 |
+| DiPCo | ~5 h | 4 | 근접 마이크 + 어레이 5 대 | CDLA-Permissive 1.0 | **확보 완료(2026-09-13)** `/soundai/DB/raw/dipco/DipCo.tgz` 13.4 GB(미해제) | 소량, 평가·검증용 |
 
 - 우선순위: **AMI**(서버에 있고 라이선스 자유) → NOTSOFAR-1·DiPCo(공개 다운로드, 로컬 경유 업로드) → CHiME-6(계약) → ICSI(LDC 비용).
 - 기대 규모: 전량 사용 시 약 250 h(확보 가능한 AMI·NOTSOFAR-1·DiPCo 만이면 약 130 h). 자연 dyadic 대화 290 h 와 합쳐 자연 다화자 데이터 ≈ 420–540 h.

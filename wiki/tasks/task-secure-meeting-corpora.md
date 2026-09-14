@@ -38,6 +38,7 @@ sources:
 `scripts/corpus-relay.sh run`(맥에서 nohup 백그라운드, 로그 `~/Downloads/vapkt-corpora/relay.log`): DiPCo·AMI 다운로드 완료 대기 → rsync 업로드 → 바이트 합계 검증 → **로컬만** 삭제 → ICSI 다운로드·업로드 → NOTSOFAR-1 서브셋 3 개(HF) → CHiME-6 소형 파일 → CHiME-6 train(97 GB, 로컬 디스크 초과)은 10 GB 범위 조각으로 받기→올리기→지우기를 반복한 뒤 서버에서 `cat` 으로 합침(`_parts_*` 보존). 서버 목적지 `/soundai/DB/raw/{dipco,ami,icsi,chime6,notsofar}`(사용자 지정 2026-09-11).
 
 ## 진행 기록
+- 2026-09-14 18:30: **5 종 확보 완료**. 총 ≈290 GB(DiPCo 13.4, AMI 54, ICSI 34.2, NOTSOFAR-1 93.9, CHiME-6 122). 남은 일: 각 코퍼스 리더·시간축 검증은 Q0 데이터 계약에서.
 - 2026-09-14 18:30: CHiME-6 train 합침 완료로 5 종 확보 종료. 총 ≈250 GB, 09-11 18:58 시작 → 약 3 일. 남은 것: 데이터 목록 갱신, `_parts_` 조각과 서버 `_uptest` 디렉토리는 삭제 금지 규칙에 따라 그대로 둠(사용자 판단).
 - 2026-09-14: iCloud 복구(사용자, 다른 네트워크). CHiME-6 eval 수신 시간 초과 → 아카이브 완전성(Content-Length) 검증 뒤 업로드하도록 `stage_chime6` 개정; part-0005 검증이 SSH 포트 폐쇄로 실패 → `chime6-train` 재실행. NOTSOFAR-1 별도 스크립트로 시작.
 - 2026-09-13: 스테이징을 내장 디스크에서 **T5 SSD(`/Volumes/Samsung_T5/vapkt-corpora`)** 로 이전(사용자 지시). rsync `-e` 호스트명 버그·exFAT `._` 사이드카 검증 제외 수정.
