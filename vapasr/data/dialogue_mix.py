@@ -12,8 +12,9 @@ from .streams import load_utt_audio, SR
 def load_channel(ref: ChannelRef, duration_s: float, sr: int = SR) -> np.ndarray:
     T = int(round(duration_s * sr)); out = np.zeros(T, dtype=np.float32)
     if ref.pieces is not None:
-        for p, off in ref.pieces:
-            x = load_utt_audio(p); a = int(round(off * sr)); b = min(T, a + len(x))
+        for pc in ref.pieces:                                   # (path, offset) = 조각 파일 전체, (path, offset, src_offset, dur) = 원본의 구간(stitching)
+            p, off = pc[0], pc[1]; x = load_utt_audio(p, pc[2], pc[3]) if len(pc) >= 4 else load_utt_audio(p)
+            a = int(round(off * sr)); b = min(T, a + len(x))
             if a < T and b > a: out[a:b] = x[: b - a]
         return out
     x = load_utt_audio(ref.path); n = min(T, len(x)); out[:n] = x[:n]; return out

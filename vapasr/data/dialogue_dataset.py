@@ -87,6 +87,7 @@ class DialogueWindowDataset(Dataset):
         hist = assign_p_end(eps, d.observed() - t0)
         for ep in eps:
             if ep.end >= L - 1e-6 and any(u.end > t1 for u in d.utterances if u.speaker == ep.speaker and u.start < t1 and u.end > t0): ep.outcome = "truncated"; ep.p_end = None
+            if d.meta.get("mask_eot"): ep.outcome = "synthetic"; ep.p_end = None          # 합성(stitch): EOT 감독 없음(정본 §8)
         return eps, dict(alloc=st, outcomes=hist)
 
     def sequence(self, i: int, delay: int):
