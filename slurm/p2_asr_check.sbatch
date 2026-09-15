@@ -18,7 +18,7 @@ export OMP_NUM_THREADS=8 TOKENIZERS_PARALLELISM=false
 OUT=${OUT:-/soundai/users/tskim/VAPKT-data/data/phase2}; C=${CORPUS:?CORPUS=aihub71631 등}; D="$OUT/$C.dialogues.jsonl"
 [ -f "$D" ] || { echo "!! $D 없음 — slurm/p2_build_dialogues.sbatch 먼저"; exit 1; }
 echo "[$(date '+%F %T')] asr check $C ← $D"
-NG=$(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l); W=${WORKERS_PER_GPU:-6}; N=$((NG * W)); FR=$(python -c "print(round(0.8/$W, 3))"); mkdir -p "$OUT/asrcheck"
+NG=$(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l); W=${WORKERS_PER_GPU:-6}   # 실측(H200, 2026-09-15): 워커당 peak 정렬 ≤19 GB·ASR ≤13 GB → 6 워커 합계 ≈80 GB(53 %), 프로세스 상한 0.8/6=13 %; N=$((NG * W)); FR=$(python -c "print(round(0.8/$W, 3))"); mkdir -p "$OUT/asrcheck"
 echo "  $NG GPUs × $W workers = $N shards, per-process mem cap $FR"
 for k in $(seq 0 $((NG - 1))); do for w in $(seq 0 $((W - 1))); do i=$((k * W + w))
   CUDA_VISIBLE_DEVICES=$k python experiments/p2_asr_check.py --dialogues "$D" --out "$OUT/asrcheck/$C.json" --limit-utts ${LIMIT:-100000000} --shard "$i/$N" --gpu 0 --mem-frac $FR > "logs/train/p2asr-$C-$SLURM_JOB_ID-$i.log" 2>&1 &

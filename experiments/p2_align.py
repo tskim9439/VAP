@@ -29,6 +29,7 @@ ALIGNER = os.environ.get("MXC_ALIGNER_DIR", "Qwen/Qwen3-ForcedAligner-0.6B"); QW
 corpus = os.path.basename(a.dialogues).split(".")[0]
 out = os.path.join(a.out_root or os.path.join(os.path.dirname(a.dialogues), f"align-{TEXTNORM_ID_SHORT}"), corpus); PARTS = os.path.join(out, "parts"); os.makedirs(PARTS, exist_ok=True)
 dlgs = [Dialogue.from_json(l) for l in open(a.dialogues, encoding="utf-8")]
+dlgs.sort(key=lambda d: -d.duration_s)                                   # 긴 대화부터 round-robin 샤딩 → 워커 간 부하 균형(실측: 불균형 시 워커 하나가 3.6× 오래 걸림)
 if a.shard: k, n = (int(x) for x in a.shard.split("/")); dlgs = dlgs[k::n]
 done = set()
 for pf in os.listdir(PARTS):
