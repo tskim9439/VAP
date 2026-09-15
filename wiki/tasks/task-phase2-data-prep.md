@@ -34,12 +34,12 @@ sources:
 공통 산출물: `conversations.jsonl`(대화 단위: 화자별 채널 경로·오프셋·게인·split·품질 플래그), `segments.jsonl`(화자별 발화 구간·단어 시각·TN 텍스트), lane 라벨(lazy-free allocator, R=6), EOT 후보 위치와 p_end, 청크 단위 직렬화 결과, QC 리포트.
 
 ## 순서
-1. [ ] 기존 데이터 계층 파악(스키마·71631 복원·정렬 도구·VAD·interleave) — 재사용 지점 확정
-2. [ ] 코퍼스별 파서: 대화 복원 → 화자별 채널 wav(또는 구간 목록) + 참조 전사 (`vapasr/data/dialogue.py`, 코퍼스별 loader)
-3. [ ] TN(asr-tn v1.3 `target(text, lang, corpus)`) 적용, fail-fast 검사
-4. [ ] 화자별 forced alignment(SLURM, 사용자 제출) → 단어 시각·segment(gap 0.25 s 병합)
-5. [ ] mono 혼합·관측 mask·crop 창(20–40 s, carry 60–120 s) 생성
-6. [ ] `lane_alloc.py`(never_free/lazy_free)·`eot_soft.py`(구간 끝 결과 → p_end)·직렬화 → Dataset 레코드
+1. [x] 기존 데이터 계층 파악 — 기존 streams.jsonl·interleave·targets 는 2화자 고정이라 별도 dialogue 계층 신설(`vapasr/data/dialogue*.py`, `lane_alloc.py`, `eot_soft.py`)
+2. [~] 코퍼스별 파서 `vapasr/data/dialogue_corpora.py`(71631 stereo·134-x 조각·otoSpeech·AMI·NOTSOFAR·ICSI) 작성, 서버 실물 검증 대기(ICSI Words 경로·mrt 채널 매핑 확인 필요)
+3. [~] TN 적용은 `experiments/p2_build_dialogues.py` 에 구현(quarantine → text=""), 서버 실행 대기
+4. [~] `experiments/p2_align.py`(화자 채널·조각에서 Qwen aligner, 재개 가능) 작성, SLURM 제출 대기
+5. [~] mono 혼합기 `vapasr/data/dialogue_mix.py`(+테스트) 작성; crop 창·관측 mask 는 Dataset 단계에서
+6. [x] `lane_alloc.py`·`eot_soft.py`·`dialogue_interleave.py`(serialize/flatten/활동)·`dialogue_tokens.py` + `tests/test_lane_protocol.py` 19개 통과(D0). Dataset 레코드 연결은 남음
 7. [ ] 중복·노출 감사(71631 E2 노출, 134-1 원본↔조각 join), split(actor·회의 계열·공식 split)
 8. [ ] 경량 QC: 밀도 p99·강제 NEXT·삭제율·lane 부족률·EOT 후보 분포·오디오 spot-check
 9. [ ] 32창 overfit 용 소형 셋 추출
@@ -52,4 +52,4 @@ sources:
 - [ ] QC 리포트와 manifest 버전 고정, 32창 overfit 셋 준비
 
 ## 진행 기록
-- 2026-09-15: 생성. 기존 데이터 계층 탐색 시작.
+- 2026-09-15: 생성. 기존 데이터 계층 탐색 → D0 모듈·테스트 커밋(8fe16cc), 코퍼스 로더·혼합기·빌더·정렬 잡 커밋(b8f59e2). 서버 SSH 불가(포트 닫힘)로 실물 검증 대기.
