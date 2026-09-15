@@ -1,0 +1,84 @@
+{
+ "dialogues": {
+  "dialogues": 2,
+  "windows": 19,
+  "skipped_untranscribed": 10,
+  "skipped_unaligned": 0,
+  "no_start": 148
+ },
+ "windows": [
+  {
+   "index": 9,
+   "conv": "oto:10",
+   "t0": 20.0,
+   "L": 30.094,
+   "K": 376,
+   "speakers": 1,
+   "episodes": 1,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "silence": 1
+   },
+   "soft": 0,
+   "eot_masked": 1,
+   "text_tokens": 0,
+   "tags": 2,
+   "overflow": 0,
+   "max_per_chunk": 0,
+   "errors": []
+  },
+  {
+   "index": 11,
+   "conv": "oto:10",
+   "t0": 780.0,
+   "L": 22.014,
+   "K": 275,
+   "speakers": 2,
+   "episodes": 5,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "shift": 2,
+    "both": 1,
+    "hold_short": 1,
+    "silence": 1
+   },
+   "soft": 4,
+   "eot_masked": 1,
+   "text_tokens": 72,
+   "tags": 15,
+   "overflow": 0,
+   "max_per_chunk": 3,
+   "errors": []
+  },
+  {
+   "index": 14,
+   "conv": "oto:1",
+   "t0": 80.0,
+   "L": 28.411,
+   "K": 355,
+   "speakers": 2,
+   "episodes": 4,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "hold_long": 1,
+    "silence": 2,
+    "hold_short": 1
+   },
+   "soft": 3,
+   "eot_masked": 1,
+   "text_tokens": 74,
+   "tags": 8,
+   "overflow": 0,
+   "max_per_chunk": 2,
+   "errors": []
+  }
+ ],
+ "tokenizer": "/soundai/Model/Qwen3-ASR-0.6B",
+ "delay": 4,
+ "R": 6,
+ "proxy": false,
+ "all_ok": true
+}

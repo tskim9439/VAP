@@ -1,0 +1,29 @@
+{
+ "utts": 583,
+ "quarantined": 3,
+ "dialogues": 2,
+ "speakers_total": 4,
+ "missing_pieces": 0,
+ "n_speakers=2": 2,
+ "hours": 0.46,
+ "textnorm": "asr-tn-v1",
+ "flags": {
+  "anon": 2,
+  "charset": 1,
+  "digit": 1
+ },
+ "args": {
+  "corpus": "aihub134-2",
+  "root": null,
+  "audio_root": null,
+  "label_root": "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth/Json/TL_02.실외",
+  "crop_dir": "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth/Training/TS_02.실외",
+  "annotations": null,
+  "transcripts": null,
+  "out": "/soundai/users/tskim/VAPKT-data/data/phase2-samples",
+  "limit": 2,
+  "split": "train",
+  "workers": 1
+ },
+ "sec": 8.9
+}

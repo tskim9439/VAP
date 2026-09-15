@@ -1,0 +1,82 @@
+{
+ "dialogues": {
+  "dialogues": 2,
+  "windows": 5,
+  "skipped_untranscribed": 3,
+  "skipped_unaligned": 0,
+  "no_start": 231
+ },
+ "windows": [
+  {
+   "index": 2,
+   "conv": "71631:2_6368G1A2_6364G2A2_T1_2D11T0473C000136_029276",
+   "t0": 980.0,
+   "L": 30.225,
+   "K": 378,
+   "speakers": 1,
+   "episodes": 2,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "hold_short": 1,
+    "silence": 1
+   },
+   "soft": 1,
+   "eot_masked": 1,
+   "text_tokens": 145,
+   "tags": 4,
+   "overflow": 0,
+   "max_per_chunk": 6,
+   "errors": []
+  },
+  {
+   "index": 1,
+   "conv": "71631:2_6368G1A2_6364G2A2_T1_2D11T0473C000136_029276",
+   "t0": 0.0,
+   "L": 36.888,
+   "K": 461,
+   "speakers": 2,
+   "episodes": 8,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "both": 5,
+    "shift": 2,
+    "silence": 1
+   },
+   "soft": 7,
+   "eot_masked": 1,
+   "text_tokens": 126,
+   "tags": 32,
+   "overflow": 0,
+   "max_per_chunk": 6,
+   "errors": []
+  },
+  {
+   "index": 0,
+   "conv": "71631:2_6368G1A2_6364G2A2_T1_2D11T0473C000136_029276",
+   "t0": 310.0,
+   "L": 35.159,
+   "K": 439,
+   "speakers": 1,
+   "episodes": 1,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "silence": 1
+   },
+   "soft": 0,
+   "eot_masked": 1,
+   "text_tokens": 175,
+   "tags": 2,
+   "overflow": 0,
+   "max_per_chunk": 7,
+   "errors": []
+  }
+ ],
+ "tokenizer": "/soundai/Model/Qwen3-ASR-0.6B",
+ "delay": 4,
+ "R": 6,
+ "proxy": false,
+ "all_ok": true
+}

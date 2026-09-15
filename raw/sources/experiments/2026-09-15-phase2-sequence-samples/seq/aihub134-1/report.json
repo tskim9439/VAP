@@ -1,0 +1,87 @@
+{
+ "dialogues": {
+  "dialogues": 2,
+  "windows": 12,
+  "skipped_untranscribed": 16,
+  "skipped_unaligned": 0,
+  "no_start": 100
+ },
+ "windows": [
+  {
+   "index": 1,
+   "conv": "aihub134-1:2_2532G2A5_2566G2A5_T2_2D08T0372C000348_010818",
+   "t0": 110.0,
+   "L": 35.159,
+   "K": 439,
+   "speakers": 2,
+   "episodes": 18,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "both": 12,
+    "shift": 3,
+    "hold_short": 2,
+    "silence": 1
+   },
+   "soft": 17,
+   "eot_masked": 1,
+   "text_tokens": 172,
+   "tags": 56,
+   "overflow": 0,
+   "max_per_chunk": 11,
+   "errors": []
+  },
+  {
+   "index": 9,
+   "conv": "aihub134-1:2_2532G2A5_2566G2A5_T2_2D08T0372C000387_010781",
+   "t0": 370.0,
+   "L": 36.204,
+   "K": 453,
+   "speakers": 2,
+   "episodes": 22,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "hold_short": 4,
+    "both": 12,
+    "shift": 5,
+    "silence": 1
+   },
+   "soft": 21,
+   "eot_masked": 1,
+   "text_tokens": 151,
+   "tags": 65,
+   "overflow": 0,
+   "max_per_chunk": 5,
+   "errors": []
+  },
+  {
+   "index": 8,
+   "conv": "aihub134-1:2_2532G2A5_2566G2A5_T2_2D08T0372C000387_010781",
+   "t0": 540.0,
+   "L": 29.443,
+   "K": 368,
+   "speakers": 2,
+   "episodes": 18,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "both": 15,
+    "shift": 2,
+    "silence": 1
+   },
+   "soft": 17,
+   "eot_masked": 1,
+   "text_tokens": 169,
+   "tags": 71,
+   "overflow": 0,
+   "max_per_chunk": 7,
+   "errors": []
+  }
+ ],
+ "tokenizer": "/soundai/Model/Qwen3-ASR-0.6B",
+ "delay": 4,
+ "R": 6,
+ "proxy": false,
+ "all_ok": true
+}

@@ -1,0 +1,29 @@
+{
+ "utts": 1565,
+ "dialogues": 2,
+ "speakers_total": 9,
+ "missing_pieces": 0,
+ "n_speakers=5": 1,
+ "quarantined": 1,
+ "n_speakers=4": 1,
+ "hours": 2.42,
+ "textnorm": "asr-tn-v1",
+ "flags": {
+  "charset": 1,
+  "not_idempotent": 1
+ },
+ "args": {
+  "corpus": "ami",
+  "root": "/soundai/DB/raw/ami",
+  "audio_root": null,
+  "label_root": null,
+  "crop_dir": null,
+  "annotations": "/soundai/DB/raw/ami/annotations/ami_public_manual_1.6.2.zip",
+  "transcripts": null,
+  "out": "/soundai/users/tskim/VAPKT-data/data/phase2-samples",
+  "limit": 2,
+  "split": "train",
+  "workers": 1
+ },
+ "sec": 1.0
+}

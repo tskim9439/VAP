@@ -28,7 +28,7 @@ def proxy_tokens(d: Dialogue):
     n = 0
     for u in d.utterances:
         if not u.text or u.tokens: continue
-        enc = tok(u.text, add_special_tokens=False)["input_ids"]
+        enc = tok(" " + u.text, add_special_tokens=False)["input_ids"]
         if not enc: continue
         if u.word_timing:
             words = [w for w in u.word_timing if w[2] >= u.start - 1e-3]; ends = [w[2] for w in words]

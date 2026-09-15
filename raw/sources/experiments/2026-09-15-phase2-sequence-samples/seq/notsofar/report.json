@@ -1,0 +1,85 @@
+{
+ "dialogues": {
+  "dialogues": 2,
+  "windows": 5,
+  "skipped_untranscribed": 0,
+  "skipped_unaligned": 0,
+  "no_start": 67
+ },
+ "windows": [
+  {
+   "index": 2,
+   "conv": "notsofar:MTG_30860",
+   "t0": 240.0,
+   "L": 35.159,
+   "K": 439,
+   "speakers": 5,
+   "episodes": 22,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "both": 9,
+    "shift": 12,
+    "silence": 1
+   },
+   "soft": 21,
+   "eot_masked": 1,
+   "text_tokens": 133,
+   "tags": 90,
+   "overflow": 0,
+   "max_per_chunk": 3,
+   "errors": []
+  },
+  {
+   "index": 1,
+   "conv": "notsofar:MTG_30861",
+   "t0": 290.0,
+   "L": 30.225,
+   "K": 378,
+   "speakers": 5,
+   "episodes": 19,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "both": 7,
+    "shift": 11,
+    "silence": 1
+   },
+   "soft": 18,
+   "eot_masked": 1,
+   "text_tokens": 143,
+   "tags": 95,
+   "overflow": 0,
+   "max_per_chunk": 3,
+   "errors": []
+  },
+  {
+   "index": 0,
+   "conv": "notsofar:MTG_30860",
+   "t0": 0.0,
+   "L": 36.888,
+   "K": 461,
+   "speakers": 3,
+   "episodes": 12,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "both": 8,
+    "shift": 3,
+    "silence": 1
+   },
+   "soft": 11,
+   "eot_masked": 1,
+   "text_tokens": 121,
+   "tags": 55,
+   "overflow": 0,
+   "max_per_chunk": 3,
+   "errors": []
+  }
+ ],
+ "tokenizer": "/soundai/Model/Qwen3-ASR-0.6B",
+ "delay": 4,
+ "R": 6,
+ "proxy": false,
+ "all_ok": true
+}

@@ -1,0 +1,28 @@
+{
+ "utts": 498,
+ "quarantined": 3,
+ "dialogues": 2,
+ "speakers_total": 4,
+ "missing_pieces": 0,
+ "n_speakers=2": 2,
+ "hours": 0.5,
+ "textnorm": "asr-tn-v1",
+ "flags": {
+  "charset": 3,
+  "digit": 3
+ },
+ "args": {
+  "corpus": "otoSpeech",
+  "root": "/soundai/DB/raw/otoSpeech16k",
+  "audio_root": null,
+  "label_root": null,
+  "crop_dir": null,
+  "annotations": null,
+  "transcripts": null,
+  "out": "/soundai/users/tskim/VAPKT-data/data/phase2-samples",
+  "limit": 2,
+  "split": "train",
+  "workers": 1
+ },
+ "sec": 0.3
+}

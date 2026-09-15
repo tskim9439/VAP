@@ -35,10 +35,10 @@ sources:
 
 ## 순서
 1. [x] 기존 데이터 계층 파악 — 기존 streams.jsonl·interleave·targets 는 2화자 고정이라 별도 dialogue 계층 신설(`vapasr/data/dialogue*.py`, `lane_alloc.py`, `eot_soft.py`)
-2. [~] 코퍼스별 파서 `vapasr/data/dialogue_corpora.py`(71631 stereo·134-x 조각·otoSpeech·AMI·NOTSOFAR·ICSI) 작성, 서버 실물 검증 대기(ICSI Words 경로·mrt 채널 매핑 확인 필요)
-3. [~] TN 적용은 `experiments/p2_build_dialogues.py` 에 구현(quarantine → text=""), 서버 실행 대기
-4. [~] `experiments/p2_align.py`(화자 채널·조각에서 Qwen aligner, 재개 가능) 작성, SLURM 제출 대기
-5. [~] mono 혼합기 `vapasr/data/dialogue_mix.py`(+테스트) 작성; crop 창·관측 mask 는 Dataset 단계에서
+2. [x] 코퍼스별 파서 `vapasr/data/dialogue_corpora.py` 7종 서버 실물 검증 완료(각 2대화 빌드). ICSI 는 SPH(shorten)→FLAC 변환(sph2pipe, `VAPKT-data/data/audio/icsi/`) 진행 중
+3. [x] TN 적용 `experiments/p2_build_dialogues.py` 서버 실행 확인(EN 대화 코퍼스는 숫자 규칙 `yodas` 키). 71631 quarantine 20 %(digit·anon) 는 결정 항목
+4. [~] `experiments/p2_align.py` 로그인 노드 GPU 로 샘플 정렬 성공(6 코퍼스). 전량은 `slurm/p2_align.sbatch` 제출 대기
+5. [x] mono 혼합기·창 Dataset 실물 검증(창 wav 생성)
 6. [x] `lane_alloc.py`·`eot_soft.py`·`dialogue_interleave.py`(serialize/flatten/활동)·`dialogue_tokens.py` + `tests/test_lane_protocol.py` 19개 통과(D0); `dialogue_dataset.py`(창 선택·잘림 EOT mask·soft/활동·collate) + 테스트; `dialogue_stitch.py`(대화 결합 합성, EOT mask) + 테스트; `experiments/p2_qc.py`
 7. [ ] 중복·노출 감사(71631 E2 노출, 134-1 원본↔조각 join), split(actor·회의 계열·공식 split)
 8. [ ] 경량 QC: 밀도 p99·강제 NEXT·삭제율·lane 부족률·EOT 후보 분포·오디오 spot-check
@@ -52,4 +52,5 @@ sources:
 - [ ] QC 리포트와 manifest 버전 고정, 32창 overfit 셋 준비
 
 ## 진행 기록
+- 2026-09-15 (2): 서버 복구 → 7 DB 샘플 2대화씩 빌드·정렬(6)·시퀀스 생성·8 검사 ALL_OK → [[output-phase2-sequence-samples]]. 로더 수정(AMI 빈 segment·NOTSOFAR 태그·앞 공백 토큰화), ICSI sph2pipe 변환 시작.
 - 2026-09-15: 생성. 기존 데이터 계층 탐색 → D0 모듈·테스트(8fe16cc), 코퍼스 로더·혼합기·빌더·정렬 잡(b8f59e2), Dataset·SLURM 잡(17cb27f), stitch·QC(4c404ea). 로컬 테스트 29개 통과. 서버 SSH 불가(포트 3206 timeout)로 실물 검증·빌드 대기. 남은 것: 서버 코드 동기화 → 로더 스모크(ICSI Words·mrt 매핑 확인) → `slurm/p2_build_dialogues.sbatch`(CPU) → `slurm/p2_align.sbatch`(GPU, 사용자 제출) → QC → 모델 forward 의 soft CE·활동 헤드(D1).

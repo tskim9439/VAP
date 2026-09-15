@@ -1,0 +1,24 @@
+{
+ "utts": 367,
+ "dialogues": 2,
+ "speakers_total": 10,
+ "missing_pieces": 0,
+ "n_speakers=5": 2,
+ "hours": 0.21,
+ "textnorm": "asr-tn-v1",
+ "flags": {},
+ "args": {
+  "corpus": "notsofar",
+  "root": "/soundai/DB/raw/notsofar/240825.1_dev1",
+  "audio_root": null,
+  "label_root": null,
+  "crop_dir": null,
+  "annotations": null,
+  "transcripts": null,
+  "out": "/soundai/users/tskim/VAPKT-data/data/phase2-samples",
+  "limit": 2,
+  "split": "train",
+  "workers": 1
+ },
+ "sec": 2.6
+}

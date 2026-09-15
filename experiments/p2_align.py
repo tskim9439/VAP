@@ -86,7 +86,7 @@ def load_chunk(chunk):
             if not u.text or dur < a.min_dur or dur > a.max_dur: st["skipped"] += 1; continue
             try: audio = utt_audio(d, u)
             except Exception as ex: st["audio_missing"] += 1; continue
-            us.append(dict(d=d, u=u, audio=audio, dur=dur, text=u.text, lang=d.lang))
+            us.append(dict(d=d, u=u, audio=audio, dur=dur, text=" " + u.text, lang=d.lang))      # 대화 안 발화는 모두 앞 공백 포함 토큰화(s1_align 과 같이: "tv"+"and" 가 "tvand" 로 붙지 않게)
         return d, us
     return list(pool.map(one, chunk))
 chunks = [dlgs[i: i + a.chunk] for i in range(0, len(dlgs), a.chunk)]; fut = pool.submit(load_chunk, chunks[0]) if chunks else None
