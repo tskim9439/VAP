@@ -27,3 +27,8 @@ def test_refine_tightens_and_splits(tmp_path):
 def test_refine_without_vad_uses_tokens(tmp_path):
     d = make(tmp_path); out, st = refine_utterances(d, {"0": [], "1": []})
     assert st["no_vad"] == 1 and len(out) == 1 and abs(out[0].end - 3.45) < 1e-6 and out[0].start == 0.8
+
+def test_refine_keeps_tokenless_utterance_as_one_span(tmp_path):
+    d = make(tmp_path); d.utterances[0].tokens = None; d.utterances[0].flags = ["digit"]; d.utterances[0].text = ""
+    out, st = refine_utterances(d, channel_vad(d))
+    assert len(out) == 1 and out[0].flags == ["digit"] and out[0].tokens is None and abs(out[0].start - 0.9) < 0.15 and abs(out[0].end - 3.5) < 0.2

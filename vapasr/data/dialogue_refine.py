@@ -34,6 +34,9 @@ def refine_utterances(dlg: Dialogue, vad: Dict[str, List[Tuple[float, float]]], 
     for u in dlg.utterances:
         st["utts"] += 1; toks = sorted(u.tokens or [], key=lambda t: t[1])
         inside = [(max(s, u.start), min(e, u.end)) for s, e in vad.get(u.speaker, []) if e > u.start and s < u.end]
+        if not toks and inside:                                          # 토큰 없는 발화(quarantine 등): 분할하지 않고 VAD 범위로만 당긴다(창 제외 판정용 span 유지)
+            s0 = max(u.start, inside[0][0] - pad_s); e0 = max(min(u.end, inside[-1][1] + pad_s), s0 + min_dur); st["tightened_s"] += (u.end - u.start) - (e0 - s0)
+            out.append(Utterance(u.speaker, round(s0, 3), round(e0, 3), u.text, u.raw, None, u.utt_id, u.word_timing, u.flags)); continue
         if not inside:
             st["no_vad"] += 1; end = min(u.end, toks[-1][1] + pad_s) if toks else u.end
             out.append(Utterance(u.speaker, u.start, max(end, u.start + min_dur), u.text, u.raw, toks or None, u.utt_id, u.word_timing, u.flags)); st["tightened_s"] += u.end - end; continue
