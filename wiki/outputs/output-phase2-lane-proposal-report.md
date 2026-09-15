@@ -69,15 +69,15 @@ stateDiagram-v2
 - **따름정리**: N ≤ R 이면 빼앗기가 없으므로 lane 번호 = 도착 순서이고, 토큰열은 정본 K=6 시퀀스와 같다(EOT 후보 위치만 구간 끝).
 - **EOT 오방출·미방출의 영향**: lane 소유는 바뀌지 않으니 후속 전사는 같은 lane 의 새 구간이 된다. 오귀속이 없고 구간 수만 는다.
 
-## 4. 토큰열 예시 (설명용 R=3, 4번째 화자 등장)
+## 4. 토큰열 예시 (설명용 R=3: 민수·지수·철수 뒤 4번째 화자 영희 등장)
 
 ```text
-[AUDIO_k]    <SPK_A><ONSET> 안녕하세요 저는 <SPK_B><ONSET> 네 <NEXT_AUDIO>
-[AUDIO_k+n]  <SPK_A> 김입니다 <SPK_A><EOT> <NEXT_AUDIO>              # 구간 끝 즉시 EOT 후보(target p_end), lane 1 유지
-[AUDIO_j]    <SPK_A><ONSET> 그리고요 <NEXT_AUDIO>                     # 같은 화자 재개 = 같은 lane (앞 EOT 는 낮은 p 였을 것)
-[AUDIO_m]    <SPK_A><EOT> <SPK_B> 그렇군요 <NEXT_AUDIO>               # 마지막 lexical 직후 EOT
-[AUDIO_p]    <SPK_A><ONSET> 잠깐만요 <NEXT_AUDIO>                     # FREE 없음 → 가장 오래 닫힌 lane 1 을 영희가 받음
-[AUDIO_q]    <SPK_A><EOT> <NEXT_AUDIO>                                # 영희 구간 끝, 영희의 EOT
+[AUDIO_k]    <SPK_A><ONSET> 안녕하세요 저는 <SPK_B><ONSET> 네 <NEXT_AUDIO>              # 민수 시작(lane 1), 지수 맞장구(lane 2, EOT 후보는 p≈0)
+[AUDIO_k+n]  <SPK_A> 김입니다 <SPK_A><EOT> <NEXT_AUDIO>                                # 민수 구간 끝 즉시 EOT 후보(target p_end), lane 1 유지
+[AUDIO_j]    <SPK_A><ONSET> 그리고요 <SPK_A><EOT> <NEXT_AUDIO>                          # 같은 화자 재개 = 같은 lane, 구간 끝 EOT
+[AUDIO_m]    <SPK_B><ONSET> 그렇군요 <SPK_3><ONSET> 동의해요 <SPK_B> 그러면 <NEXT_AUDIO>  # 지수 발화 중 철수 시작 → 빈 lane 3, 시간순 교차
+[AUDIO_m+n]  <SPK_B><EOT> <SPK_3> 다만 <SPK_3><EOT> <NEXT_AUDIO>                       # 지수 끝, 이어서 철수 끝. 각자 자기 lane 의 EOT
+[AUDIO_p]    <SPK_A><ONSET> 잠깐만요 <SPK_A><EOT> <NEXT_AUDIO>                          # FREE 없음 → 가장 오래 닫힌 lane 1 을 영희가 받음(generation 2)
 ```
 
 **EOT 의미**: 구간 끝에서 즉시 나오는 후보이며 학습 target 은 그 뒤 3 s 의 결과(교대 1.0 · 침묵 0.8 · 혼재 0.5 · 긴 pause 0.3 · 짧은 pause 0.0)다. p(EOT) 가 곧 종료 신뢰도이고 임계값은 런타임 정책이다. 3 s 대기가 없어 재배정 뒤 귀속 모호 문제도 사라진다. 상세는 [[output-phase2-dynamic-speaker-memory-plan-v2]] §11.
