@@ -107,6 +107,29 @@ def check_window(i):
         fo.write(f"# checks: {'OK' if not errs else errs}\n\n")
         for ep in eps: fo.write(f"ep{ep.ep_id:03d} spk={ep.speaker} lane={ep.lane} g{ep.generation} {ep.start:7.2f}-{ep.end:7.2f} outcome={ep.outcome} p_end={ep.p_end} tokens={len(ep.tokens)} :: {tok.decode([t for t,_ in ep.tokens])[:80]}\n")
         fo.write("\n" + render(chunks, names, K) + "\n")
+    # 시각화용 JSON: 디코딩된 토큰·시각·청크 방출
+    def clean(x): return x.replace("\ufffd", "\u25af")                        # 바이트 BPE 조각 단독 디코딩의 U+FFFD → ▯
+    def word_groups(ep, emitk):
+        """토큰 → 단어 묶음: 다음 토큰이 공백으로 시작하고 누적 디코딩이 깨지지 않았을 때 경계. (text, 참조 끝 t, 방출 청크 k, 조각 수)"""
+        out = []; acc = []; ks = []; ts = []
+        for i, (t, tt) in enumerate(ep.tokens):
+            acc.append(t); ts.append(tt); ks.append(emitk[i] if i < len(emitk) else None)
+            nxt = tok.decode([ep.tokens[i + 1][0]]) if i + 1 < len(ep.tokens) else " "
+            txt = tok.decode(acc)
+            if nxt.startswith(" ") and "\ufffd" not in txt:
+                out.append(dict(text=clean(txt).strip(), t=round(ts[-1], 3), k=ks[-1], n=len(acc))); acc, ks, ts = [], [], []
+        if acc: out.append(dict(text=clean(tok.decode(acc)).strip(), t=round(ts[-1], 3), k=ks[-1], n=len(acc)))
+        return out
+    emitk = {}
+    for k, em in chunks:
+        for e in em:
+            if e.kind == "text": emitk.setdefault(e.ep, []).append(k)
+    js = dict(conv=s["cid"], corpus=d.corpus, lang=d.lang, t0=s["t0"], L=s["L"], K=K, delay=a.delay, R=a.R, lanes={e.speaker: e.lane for e in eps},
+              episodes=[dict(ep=e.ep_id, speaker=e.speaker, lane=e.lane, gen=e.generation, start=round(e.start, 3), end=round(e.end, 3), outcome=e.outcome, p_end=e.p_end,
+                             tokens=[dict(text=clean(tok.decode([t])), t=round(tt, 3)) for t, tt in e.tokens], words=word_groups(e, emitk.get(e.ep_id, [])), text=clean(tok.decode([t for t, _ in e.tokens])).strip()) for e in eps],
+              chunks=[dict(k=k, emits=[dict(kind=e.kind, lane=e.lane, ep=e.ep, text=(clean(tok.decode([e.tid])) if e.kind == "text" else NAMES.get(e.tid, str(e.tid))), p_end=e.p_end) for e in em]) for k, em in chunks],
+              stats=dict(text=st.text, tags=st.tags, onset=st.onset, eot=st.eot, overflow=st.overflow, soft=len(f["soft_pos"]), eot_masked=n_eot_masked, reassigned=info["alloc"].reassigned, outcomes=info["outcomes"]))
+    json.dump(js, open(name + ".json", "w"), ensure_ascii=False)
     return dict(index=i, conv=s["cid"], t0=s["t0"], L=s["L"], K=K, speakers=len({e.speaker for e in eps}), episodes=len(eps), reassigned=info["alloc"].reassigned, exhausted=info["alloc"].exhausted,
                 outcomes=info["outcomes"], soft=len(f["soft_pos"]), eot_masked=n_eot_masked, text_tokens=st.text, tags=st.tags, overflow=st.overflow, max_per_chunk=max(st.per_chunk_hist) if st.per_chunk_hist else 0, errors=errs)
 

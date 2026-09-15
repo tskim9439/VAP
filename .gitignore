@@ -21,3 +21,6 @@ Thumbs.db
 __pycache__/
 *.pyc
 logs/
+
+# Phase 2 샘플 창 오디오(아티팩트 게시용, 서버 phase2-samples/seq 에 원본)
+raw/sources/experiments/*/seq-audio/

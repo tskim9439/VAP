@@ -1,59 +1,15 @@
 {
  "dialogues": {
   "dialogues": 2,
-  "windows": 19,
+  "windows": 16,
   "skipped_untranscribed": 10,
   "skipped_unaligned": 0,
+  "skipped_sparse": 3,
   "no_start": 148
  },
  "windows": [
   {
-   "index": 9,
-   "conv": "oto:10",
-   "t0": 20.0,
-   "L": 30.094,
-   "K": 376,
-   "speakers": 1,
-   "episodes": 1,
-   "reassigned": 0,
-   "exhausted": 0,
-   "outcomes": {
-    "silence": 1
-   },
-   "soft": 0,
-   "eot_masked": 1,
-   "text_tokens": 0,
-   "tags": 2,
-   "overflow": 0,
-   "max_per_chunk": 0,
-   "errors": []
-  },
-  {
-   "index": 11,
-   "conv": "oto:10",
-   "t0": 780.0,
-   "L": 22.014,
-   "K": 275,
-   "speakers": 2,
-   "episodes": 5,
-   "reassigned": 0,
-   "exhausted": 0,
-   "outcomes": {
-    "shift": 2,
-    "both": 1,
-    "hold_short": 1,
-    "silence": 1
-   },
-   "soft": 4,
-   "eot_masked": 1,
-   "text_tokens": 72,
-   "tags": 15,
-   "overflow": 0,
-   "max_per_chunk": 3,
-   "errors": []
-  },
-  {
-   "index": 14,
+   "index": 10,
    "conv": "oto:1",
    "t0": 80.0,
    "L": 28.411,
@@ -73,6 +29,54 @@
    "tags": 8,
    "overflow": 0,
    "max_per_chunk": 2,
+   "errors": []
+  },
+  {
+   "index": 14,
+   "conv": "oto:10",
+   "t0": 60.0,
+   "L": 25.01,
+   "K": 313,
+   "speakers": 2,
+   "episodes": 11,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "hold_short": 3,
+    "shift": 4,
+    "both": 3,
+    "silence": 1
+   },
+   "soft": 10,
+   "eot_masked": 1,
+   "text_tokens": 82,
+   "tags": 24,
+   "overflow": 0,
+   "max_per_chunk": 4,
+   "errors": []
+  },
+  {
+   "index": 5,
+   "conv": "oto:1",
+   "t0": 800.0,
+   "L": 29.532,
+   "K": 369,
+   "speakers": 2,
+   "episodes": 8,
+   "reassigned": 0,
+   "exhausted": 0,
+   "outcomes": {
+    "both": 2,
+    "shift": 3,
+    "hold_long": 2,
+    "silence": 1
+   },
+   "soft": 7,
+   "eot_masked": 1,
+   "text_tokens": 107,
+   "tags": 26,
+   "overflow": 0,
+   "max_per_chunk": 4,
    "errors": []
   }
  ],

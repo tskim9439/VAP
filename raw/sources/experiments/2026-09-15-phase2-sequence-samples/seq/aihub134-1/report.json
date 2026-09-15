@@ -4,6 +4,7 @@
   "windows": 12,
   "skipped_untranscribed": 16,
   "skipped_unaligned": 0,
+  "skipped_sparse": 0,
   "no_start": 100
  },
  "windows": [
