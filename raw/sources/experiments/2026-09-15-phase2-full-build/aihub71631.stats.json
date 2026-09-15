@@ -1,0 +1,31 @@
+{
+ "utts": 238531,
+ "quarantined": 2822,
+ "dialogues": 757,
+ "speakers_total": 1514,
+ "missing_pieces": 0,
+ "n_speakers=2": 757,
+ "hours": 196.56,
+ "textnorm": "asr-tn-v1",
+ "flags": {
+  "charset": 191,
+  "digit": 191,
+  "anon": 2549,
+  "jamo": 18,
+  "empty": 71
+ },
+ "args": {
+  "corpus": "aihub71631",
+  "root": null,
+  "audio_root": "/soundai/DB/raw/aihub/71631_audio/Training",
+  "label_root": "/soundai/users/tskim/VAPKT-data/data/labels/aihub71631/TL_01.실내",
+  "crop_dir": null,
+  "annotations": null,
+  "transcripts": null,
+  "out": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "limit": null,
+  "split": "train",
+  "workers": 1
+ },
+ "sec": 626.1
+}

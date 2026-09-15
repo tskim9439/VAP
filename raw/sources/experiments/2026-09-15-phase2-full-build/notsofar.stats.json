@@ -1,0 +1,32 @@
+{
+ "utts": 54650,
+ "dialogues": 237,
+ "speakers_total": 1191,
+ "missing_pieces": 0,
+ "n_speakers=5": 70,
+ "n_speakers=6": 47,
+ "n_speakers=7": 21,
+ "n_speakers=4": 75,
+ "quarantined": 15,
+ "n_speakers=3": 16,
+ "n_speakers=8": 8,
+ "hours": 24.48,
+ "textnorm": "asr-tn-v1",
+ "flags": {
+  "empty": 15
+ },
+ "args": {
+  "corpus": "notsofar",
+  "root": "/soundai/DB/raw/notsofar",
+  "audio_root": null,
+  "label_root": null,
+  "crop_dir": null,
+  "annotations": null,
+  "transcripts": null,
+  "out": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "limit": null,
+  "split": "train",
+  "workers": 1
+ },
+ "sec": 49.0
+}

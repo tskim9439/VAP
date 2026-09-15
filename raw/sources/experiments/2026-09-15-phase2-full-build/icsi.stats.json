@@ -1,0 +1,33 @@
+{
+ "utts": 102177,
+ "quarantined": 4806,
+ "dialogues": 75,
+ "speakers_total": 469,
+ "missing_pieces": 0,
+ "n_speakers=6": 23,
+ "n_speakers=4": 5,
+ "n_speakers=7": 17,
+ "n_speakers=5": 16,
+ "n_speakers=3": 1,
+ "n_speakers=8": 8,
+ "n_speakers=9": 5,
+ "hours": 71.69,
+ "textnorm": "asr-tn-v1",
+ "flags": {
+  "empty": 4806
+ },
+ "args": {
+  "corpus": "icsi",
+  "root": "/soundai/users/tskim/VAPKT-data/data/audio/icsi",
+  "audio_root": null,
+  "label_root": null,
+  "crop_dir": null,
+  "annotations": "/soundai/DB/raw/icsi/annotations/ICSI_core_NXT.zip",
+  "transcripts": "/soundai/DB/raw/icsi/annotations/ICSI_original_transcripts.zip",
+  "out": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "limit": null,
+  "split": "train",
+  "workers": 1
+ },
+ "sec": 40.3
+}

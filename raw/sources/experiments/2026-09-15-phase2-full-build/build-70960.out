@@ -1,0 +1,38 @@
+  [stage] 이미 복사됨: /tmp/sa_tskim/vapasr-env (원본 /soundai/users/tskim/VAPKT-data/conda/envs/vapasr)
+[2026-09-15 22:48:14] build otoSpeech
+  200 dialogues 50.0 h 32s
+  400 dialogues 99.9 h 60s
+{"utts": 86893, "quarantined": 484, "dialogues": 420, "speakers_total": 840, "missing_pieces": 0, "n_speakers=2": 420, "hours": 104.94, "textnorm": "asr-tn-v1", "flags": {"charset": 479, "digit": 479, "empty": 5}, "args": {"corpus": "otoSpeech", "root": "/soundai/DB/raw/otoSpeech16k", "audio_root": null, "label_root": null, "crop_dir": null, "annotations": null, "transcripts": null, "out": "/soundai/users/tskim/VAPKT-data/data/phase2", "limit": null, "split": "train", "workers": 1}, "sec": 62.3}
+[2026-09-15 22:49:20] build ami
+{"utts": 83478, "dialogues": 171, "speakers_total": 682, "missing_pieces": 0, "n_speakers=5": 3, "quarantined": 38, "n_speakers=4": 163, "n_speakers=3": 5, "hours": 99.96, "textnorm": "asr-tn-v1", "flags": {"charset": 30, "not_idempotent": 30, "empty": 8}, "args": {"corpus": "ami", "root": "/soundai/DB/raw/ami", "audio_root": null, "label_root": null, "crop_dir": null, "annotations": "/soundai/DB/raw/ami/annotations/ami_public_manual_1.6.2.zip", "transcripts": null, "out": "/soundai/users/tskim/VAPKT-data/data/phase2", "limit": null, "split": "train", "workers": 1}, "sec": 49.4}
+[2026-09-15 22:50:11] build notsofar
+  200 dialogues 20.7 h 46s
+{"utts": 54650, "dialogues": 237, "speakers_total": 1191, "missing_pieces": 0, "n_speakers=5": 70, "n_speakers=6": 47, "n_speakers=7": 21, "n_speakers=4": 75, "quarantined": 15, "n_speakers=3": 16, "n_speakers=8": 8, "hours": 24.48, "textnorm": "asr-tn-v1", "flags": {"empty": 15}, "args": {"corpus": "notsofar", "root": "/soundai/DB/raw/notsofar", "audio_root": null, "label_root": null, "crop_dir": null, "annotations": null, "transcripts": null, "out": "/soundai/users/tskim/VAPKT-data/data/phase2", "limit": null, "split": "train", "workers": 1}, "sec": 49.0}
+[2026-09-15 22:51:01] build icsi
+{"utts": 102177, "quarantined": 4806, "dialogues": 75, "speakers_total": 469, "missing_pieces": 0, "n_speakers=6": 23, "n_speakers=4": 5, "n_speakers=7": 17, "n_speakers=5": 16, "n_speakers=3": 1, "n_speakers=8": 8, "n_speakers=9": 5, "hours": 71.69, "textnorm": "asr-tn-v1", "flags": {"empty": 4806}, "args": {"corpus": "icsi", "root": "/soundai/users/tskim/VAPKT-data/data/audio/icsi", "audio_root": null, "label_root": null, "crop_dir": null, "annotations": "/soundai/DB/raw/icsi/annotations/ICSI_core_NXT.zip", "transcripts": "/soundai/DB/raw/icsi/annotations/ICSI_original_transcripts.zip", "out": "/soundai/users/tskim/VAPKT-data/data/phase2", "limit": null, "split": "train", "workers": 1}, "sec": 40.3}
+[2026-09-15 22:51:43] build aihub134-1
+  200 dialogues 41.5 h 207s
+  400 dialogues 85.0 h 384s
+  600 dialogues 130.4 h 557s
+  800 dialogues 176.7 h 730s
+  1000 dialogues 225.9 h 887s
+  1200 dialogues 270.7 h 1028s
+  1400 dialogues 319.2 h 1188s
+{"utts": 426780, "quarantined": 5306, "dialogues": 1492, "speakers_total": 2984, "missing_pieces": 46020, "n_speakers=2": 1492, "hours": 344.22, "textnorm": "asr-tn-v1", "flags": {"anon": 5138, "empty": 53, "charset": 102, "digit": 102, "jamo": 24}, "args": {"corpus": "aihub134-1", "root": null, "audio_root": null, "label_root": "/soundai/users/tskim/VAPKT-data/data/labels/aihub71631/TL_02.실외", "crop_dir": "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-1_Emotion_Conv_Adult/Training/TS_02.실외", "annotations": null, "transcripts": null, "out": "/soundai/users/tskim/VAPKT-data/data/phase2", "limit": null, "split": "train", "workers": 1}, "sec": 1288.6}
+[2026-09-15 23:13:13] build aihub134-2
+  200 dialogues 45.9 h 185s
+  400 dialogues 99.1 h 341s
+  600 dialogues 151.0 h 510s
+  800 dialogues 198.3 h 640s
+  1000 dialogues 247.3 h 827s
+  1200 dialogues 292.8 h 1029s
+  1400 dialogues 339.3 h 1268s
+  1600 dialogues 388.4 h 1392s
+{"utts": 477664, "quarantined": 5824, "dialogues": 1649, "speakers_total": 3298, "missing_pieces": 60494, "n_speakers=2": 1649, "hours": 399.9, "textnorm": "asr-tn-v1", "flags": {"anon": 4565, "charset": 283, "digit": 282, "jamo": 49, "empty": 950}, "args": {"corpus": "aihub134-2", "root": null, "audio_root": null, "label_root": "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth/Json/TL_02.실외", "crop_dir": "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/asr_db/korean_16kHz/NIA24/134-2_Emotion_Conv_Youth/Training/TS_02.실외", "annotations": null, "transcripts": null, "out": "/soundai/users/tskim/VAPKT-data/data/phase2", "limit": null, "split": "train", "workers": 1}, "sec": 1423.8}
+[2026-09-15 23:36:59] build aihub71631
+  200 dialogues 54.1 h 119s
+  400 dialogues 102.8 h 224s
+  600 dialogues 156.0 h 411s
+{"utts": 238531, "quarantined": 2822, "dialogues": 757, "speakers_total": 1514, "missing_pieces": 0, "n_speakers=2": 757, "hours": 196.56, "textnorm": "asr-tn-v1", "flags": {"charset": 191, "digit": 191, "anon": 2549, "jamo": 18, "empty": 71}, "args": {"corpus": "aihub71631", "root": null, "audio_root": "/soundai/DB/raw/aihub/71631_audio/Training", "label_root": "/soundai/users/tskim/VAPKT-data/data/labels/aihub71631/TL_01.실내", "crop_dir": null, "annotations": null, "transcripts": null, "out": "/soundai/users/tskim/VAPKT-data/data/phase2", "limit": null, "split": "train", "workers": 1}, "sec": 626.1}
+[2026-09-15 23:47:27] p2 build done
+EXIT=0
