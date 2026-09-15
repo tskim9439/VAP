@@ -1,9 +1,9 @@
 ---
 type: output
-status: active
+status: superseded
 created: 2026-09-11
-updated: 2026-09-14
-summary: Phase 2 정본 — Q1 C-mode EOT·K슬롯 mono ASR, Q3 미래 예측; TN/registry·KO 실물 경로·16사례 테스트와 경량 QC 우선
+updated: 2026-09-15
+summary: (2026-09-15 이후 정본은 [[output-phase2-lane-plan]]) 이전 Phase 2 정본 — Q1 C-mode EOT·K슬롯 mono ASR, Q3 미래 예측; 직렬화·스키마·80 ms 정합·평가 원칙·구현 지도·QC 절은 참조로 유효
 contributors:
   - tskim
 sources:
@@ -25,6 +25,8 @@ sources:
 ---
 
 # Phase 2 개발 계획: Streaming ASR & Speaker Diarization / Turn-Taking
+
+> **2026-09-15 이후 정본은 [[output-phase2-lane-plan]] 이다**([[decision-phase2-canonical-lane-plan]]). 이 문서는 이전 정본으로, 새 정본이 참조로 지정한 절(§3.2 헤드, §4.2 직렬화 순서, §4.4 무음·flush 규칙, §5.2 스키마, §5.3 파이프라인, §6.2 80 ms 정합, §8 평가 원칙, §9 구현 지도·QC, §10 예산)만 계속 유효하다. K 슬롯 정체성(§4.1)·C-mode EOT(§6.3)·16 사례의 EOT 시각은 새 정본이 대체한다.
 
 개정 기준: 2026-09-14. **Q1의 EOT 토큰은 C 모드, P 모드는 Q3 ablation으로 이월**한다. 최대 2화자 제한 해제·ONSET/EOT 우선·의미 라벨 Stage 3 이월은 유지한다. 이번 변경은 실행 설계이며 모델·라벨러 구현 완료가 아니다. 사용자 8개 비판의 검증과 처리 결과는 [[output-phase2-sequence-critique-response]]에 기록한다.
 

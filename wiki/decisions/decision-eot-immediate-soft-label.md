@@ -8,6 +8,7 @@ created: 2026-09-15
 updated: 2026-09-15
 summary: Phase 2 EOT 를 C-mode(3 s 관측 뒤)가 아니라 발화 구간 끝에서 즉시 낸다(2026-09-15). SEG_END 토큰은 두지 않고 EOT 가 그 자리를 맡으며, 라벨은 구간 종료 뒤 결과(교대/침묵/재개)로 만든 soft target 이다
 sources:
+  - '[[output-phase2-lane-plan]]'
   - '[[output-phase2-dynamic-speaker-memory-plan-v2]]'
   - '[[output-phase2-streaming-asr-diarization-plan]]'
   - '[[output-phase2-lane-proposal-report]]'
@@ -46,7 +47,7 @@ sources:
 | §6.1 손실 | EOT hard CE(가중 2) | 두 점 soft target CE(가중 2) |
 | §8 평가 | C offset 지연 | 후보 위치 AUC·calibration·hold 내 오방출률, 지연은 고정 320 ms + 연산 |
 
-상세 규칙·수치는 [[output-phase2-dynamic-speaker-memory-plan-v2]] §11.
+상세 규칙·수치는 정본 [[output-phase2-lane-plan]] §5 (원 분석 [[output-phase2-dynamic-speaker-memory-plan-v2]] §11).
 
 ## 재검토
 

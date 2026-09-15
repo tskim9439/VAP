@@ -12,7 +12,7 @@ sources:
 
 # Lane 유지형 화자 전사 제안 (설명 보고서)
 
-그림이 포함된 판은 아티팩트 <https://claude.ai/code/artifact/5df5cfd8-9336-4417-b19f-e0bee4d5094b> 에 있다. 이 페이지는 같은 내용을 위키에 남기기 위한 텍스트·mermaid 판이다. 상세 규약과 실측은 [[output-phase2-dynamic-speaker-memory-plan-v2]] §3·§8·§10 을 따른다.
+2026-09-15 이 제안이 정본 [[output-phase2-lane-plan]] 으로 채택됐다([[decision-phase2-canonical-lane-plan]]). 그림이 포함된 판은 아티팩트 <https://claude.ai/code/artifact/5df5cfd8-9336-4417-b19f-e0bee4d5094b> 에 있다. 이 페이지는 같은 내용을 위키에 남기기 위한 텍스트·mermaid 판이다. 상세 규약과 실측은 [[output-phase2-dynamic-speaker-memory-plan-v2]] §3·§8·§10 을 따른다.
 
 ## 한 줄 요약
 
