@@ -20,6 +20,8 @@ class Utterance:
     speaker: str; start: float; end: float; text: str = ""; raw: str = ""
     tokens: Optional[List[Tuple[int, float]]] = None      # 정렬 결과 [(token_id, end_time_s)] — 대화 시간축
     utt_id: str = ""
+    word_timing: Optional[List[Tuple[str, float, float]]] = None   # 코퍼스 제공 단어 시각(NOTSOFAR-1) — 정렬 QC 용
+    flags: Optional[List[str]] = None                     # TN quarantine 사유(있으면 text="" 로 두고 lexical 감독 제외)
 
 @dataclass
 class Episode:
