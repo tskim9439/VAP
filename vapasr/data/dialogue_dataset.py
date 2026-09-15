@@ -55,7 +55,8 @@ class DialogueWindowDataset(Dataset):
         for s, e in spans: m = max(m, e); ends_max.append(m)             # prefix max of ends → "t 이전에 시작한 발화가 t 를 넘는가"
         def silent(t):
             i = bisect.bisect_left(starts, t); return i == 0 or ends_max[i - 1] <= t
-        bad = [(u.start, u.end) for u in d.utterances if (u.flags or (not u.text)) or (u.text and not u.tokens and not self.allow_unaligned)]
+        # 전사 없는 음성: quarantine(flags) · 토큰도 텍스트도 없음 · 텍스트는 있는데 미정렬(allow_unaligned 가 아니면). 보정(refine)으로 분할된 조각은 text="" 이지만 tokens 가 있어 정상
+        bad = [(u.start, u.end) for u in d.utterances if u.flags or (not u.tokens and (not u.text or not self.allow_unaligned))]
         missing = set(d.meta.get("missing", [])); bad += [(u.start, u.end) for i, u in enumerate(d.utterances, 1) if i in missing]
         out = []; t = 0.0; lo, hi = window_s
         while t + lo <= d.duration_s:
