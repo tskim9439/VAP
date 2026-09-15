@@ -250,3 +250,23 @@ D0·D2는 GPU 학습 없이 지금 시작할 수 있다. D1은 정본 Q1과 동�
 - [[output-phase2-training-db]]·[[output-phase2-data-inventory]]·[[task-secure-meeting-corpora]] — 보유 DB·서버 경로
 - `raw/sources/experiments/2026-09-15-phase2-lane-sim/lane_sim.py`, `lane_sim.out` — AMI/ICSI/NOTSOFAR 어노테이션 lane 시뮬레이션(2026-09-15, mxc)
 - NOTSOFAR-1 서버 사본 `…/MTG_30860/close_talk/CT_21..25.wav`, `gt_meeting_metadata.json`(`ParticipantAliasToCtDevice`), `gt_transcription.json`(`word_timing`) — 화자별 close-talk 확인(2026-09-15)
+
+## 10. 변형: 세션 정체성을 모델 밖(외부 화자 인식기)에서 해결할 때
+
+사용자 질문(2026-09-15): "3번째 등장한 화자를 1번째 화자와 같은 lane으로 붙일 필요가 없고, 구간만 뽑히면 추론 때 외부 화자 인식기로 재매핑한다"면 계획이 어떻게 바뀌는가.
+
+**결론: 계획은 §4.2 매처·§4.3 메모리 헤드·§6.1 메모리 snapshot 학습·D3/D4를 빼고 D0·D1·D5만 남는다.** 남는 것은 정본 K=6에 `<SEG_END>`·lazy-free 재사용을 더한 것이므로 이 변형은 별도 대안이 아니라 정본의 옵션이다. 조건부로 남는 것은 per-episode 임베딩 출력 헤드 하나다(아래).
+
+**lazy-free는 이 변형에서 더 중요해진다.** 외부 인식기는 mono 혼합 위에서 동작하므로 겹침 속 짧은 episode에는 증거가 없다. 같은 어노테이션으로 잰 값(`clean_evidence.out`):
+
+| 코퍼스 | episode 자체 비겹침 음성 <0.5 s | 그 episode의 음성 시간 비중 | lazy-free R=6 lane run 누적 비겹침 <0.5 s | 음성 시간 비중 |
+|---|---:|---:|---:|---:|
+| AMI | 53.3 % | 16.2 % | 1.0 % | 0.3 % |
+| ICSI | 48.9 % | 20.7 % | 6.1 % | 3.7 % |
+| NOTSOFAR-1 | 66.4 % | 30.8 % | 10.8 % | 4.7 % |
+
+episode마다 독립으로 판별하면 절반 이상이 증거 부족이지만, lane이 유지되어 이전 episode의 증거를 이어받으면 1–11 %로 준다. 따라서 "같은 사람 = 같은 lane"을 학습 라벨에서 없애고 lane을 순수 채널로 무작위 배정하면 외부 재매핑이 실측상 성립하지 않는다. 라벨은 lazy-free 그대로 두고, 모델에게 세션 정체성을 **평가·주장하지 않을 뿐**이다.
+
+남는 비용 세 가지. (1) N>R 재배정(episode의 2.3 %)에서 lane 세대 변경은 모델 출력만으로 구별되지 않으므로 외부 모듈이 "이 lane run과 같은 목소리인가"를 판정해야 한다. (2) 위 표의 잔여 1–11 % episode는 어떤 외부 모듈도 mono 증거로 못 푼다. 이를 줄이려면 모델의 payload 조건 표현(z_dec)을 per-episode 임베딩으로 내보내는 헤드가 필요하며, 이것은 metric loss 하나를 §6.1 병렬 forward에 더하는 것으로 토큰 규약·메모리 상태를 바꾸지 않는다. D2 probe가 z_ext만으로 겹침 EER이 충분하다고 나오면 이 헤드도 뺀다. (3) 화자별 미래 활동·hazard 헤드는 lane 단위가 된다. N≤6에서는 lane=화자이므로 손실이 없고, ICSI·NOTSOFAR N≥7에서만 재배정 뒤 예측이 끊긴다.
+
+R=6·lazy-free는 이 변형에서도 유지한다. R=4 eager는 lane 부족 1.8–2.2 %·EOT 결합 모호 3–8 %에 더해 lane run이 짧아져 위 잔여 비율이 커진다.

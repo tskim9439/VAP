@@ -1,0 +1,9 @@
+# 2026-09-15 mxc, 같은 어노테이션·병합(gap 0.25 s), lane_sim.py 의 ami()/icsi()/notsofar() 사용
+## episode 자체의 비겹침(clean) 음성이 부족한 비율
+AMI: episodes 92286; clean < 0.25/0.5/1.0 s: 47.9% (speech time 14.6%), 53.3% (16.2%), 62.0% (19.7%)
+ICSI: episodes 103024; clean < 0.25/0.5/1.0 s: 40.9% (17.7%), 48.9% (20.7%), 58.7% (25.9%)
+NOTSOFAR: episodes 47210; clean < 0.25/0.5/1.0 s: 59.6% (26.5%), 66.4% (30.8%), 73.6% (36.9%)
+## lazy-free R=6 lane run(같은 소유자 연속 구간)의 누적 clean 음성이 0.5 s 미만인 episode(해당 episode 포함)
+AMI: 1.0% of episodes, 0.3% of speech time
+ICSI: 6.1% of episodes, 3.7% of speech time
+NOTSOFAR: 10.8% of episodes, 4.7% of speech time
