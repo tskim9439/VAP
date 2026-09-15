@@ -23,7 +23,7 @@ ap.add_argument("--split", default="train"); ap.add_argument("--workers", type=i
 a = ap.parse_args()
 
 def nfc(s): return unicodedata.normalize("NFC", s)
-TN_CORPUS = {"aihub71631": "aihub71631", "aihub134-1": "aihub71631", "aihub134-2": "aihub71631"}
+TN_CORPUS = {"aihub71631": "aihub71631", "aihub134-1": "aihub71631", "aihub134-2": "aihub71631", "otoSpeech": "yodas", "ami": "yodas", "notsofar": "yodas", "icsi": "yodas"}   # EN 대화 코퍼스는 숫자 표기가 있어 NUMERIC_CORPORA_EN 규칙("yodas")으로 숫자를 말로 푼다(textnorm 자체는 동결)
 
 def gen():
     c = a.corpus

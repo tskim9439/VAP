@@ -72,7 +72,7 @@ def load_otospeech_dialogue(d: str, split: str = "train") -> Dialogue:
                 utts.append(Utterance(speaker=str(c), start=s, end=e, raw=text, utt_id=f"s{c+1}_{k:05d}"))
     tid = meta.get("task_id", os.path.basename(d.rstrip("/")))
     return Dialogue(conv_id=f"oto:{tid}", corpus="otoSpeech", lang="English", split=split, duration_s=float(dur), speakers=["0", "1"], utterances=utts, channels=chans,
-                    meta=dict(actors=[meta.get("speaker_1_id") or meta.get("actor_1"), meta.get("speaker_2_id") or meta.get("actor_2")], src=d))
+                    meta=dict(actors=[meta.get("speaker_1_actor_id"), meta.get("speaker_2_actor_id")], conversation_type=meta.get("conversation_type"), src=d))
 
 # ───────────────────────────── AMI ─────────────────────────────
 class AmiAnnotations:
@@ -93,6 +93,7 @@ class AmiAnnotations:
                 s, e = el.get("transcriber_start"), el.get("transcriber_end")
                 if not (s and e): continue
                 s, e = float(s), float(e); txt = " ".join(w for ws, we, w in words if ws >= s - 1e-3 and we <= e + 1e-3)
+                if not txt.strip(): continue                                      # 단어 없는 segment(웃음·비음성) 제외
                 utts.append(Utterance(speaker=agent, start=s, end=e, raw=txt, utt_id=f"{agent}_{n:05d}"))
         return Dialogue(conv_id=f"ami:{meeting}", corpus="AMI", lang="English", split=split, duration_s=dur, speakers=sorted(crefs), utterances=[u for u in utts if u.speaker in crefs], channels=crefs, meta=dict(channels=chans))
 
@@ -103,7 +104,9 @@ def load_notsofar(meeting_dir: str, split: str = "train") -> Dialogue:
     for i, u in enumerate(gt):
         spk = u["speaker_id"]; crefs.setdefault(spk, ChannelRef(path=os.path.join(meeting_dir, u["ct_wav_file_name"])))
         wt = [(w, float(a), float(b)) for w, a, b in u.get("word_timing", [])]
-        utts.append(Utterance(speaker=spk, start=float(u["start_time"]), end=float(u["end_time"]), raw=u.get("text", ""), utt_id=f"u{i:05d}", word_timing=wt))
+        raw = re.sub(r"<[^>]*>", " ", u.get("text", "")).strip()                 # <ST/> 등 태그 제거
+        if not raw: continue
+        utts.append(Utterance(speaker=spk, start=float(u["start_time"]), end=float(u["end_time"]), raw=raw, utt_id=f"u{i:05d}", word_timing=wt))
     return Dialogue(conv_id=f"notsofar:{md.get('meeting_id', os.path.basename(meeting_dir))}", corpus="NOTSOFAR", lang="English", split=split, duration_s=float(md.get("MeetingDurationSec", max((u.end for u in utts), default=0.0))),
                     speakers=sorted(crefs), utterances=utts, channels=crefs, meta=dict(hashtags=md.get("Hashtags"), room=md.get("Room"), n=md.get("NumParticipants")))
 
@@ -129,7 +132,8 @@ class IcsiAnnotations:
                 if not el.tag.endswith("segment") or not (el.get("starttime") and el.get("endtime")): continue
                 part = el.get("participant"); ch = pchan.get(part)
                 if not part or not ch: continue
-                wav = os.path.join(root, meeting, f"{ch}.sph")
+                wav = os.path.join(root, meeting, f"{ch}.flac")                     # 원본 SPH 는 shorten 압축이라 sph2pipe→flac 변환본(VAPKT-data/data/audio/icsi)을 root 로 준다
+                if not os.path.exists(wav): wav = os.path.join(root, meeting, f"{ch}.sph")
                 if not os.path.exists(wav): continue
                 if part not in crefs:
                     info = sf.info(wav); dur = max(dur, info.frames / info.samplerate); crefs[part] = ChannelRef(path=wav)
