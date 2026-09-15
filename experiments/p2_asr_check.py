@@ -5,7 +5,7 @@
 import os, sys, json, argparse, random, collections
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser(); ap.add_argument("--dialogues", required=True); ap.add_argument("--out", required=True); ap.add_argument("--limit-utts", type=int, default=400)
-ap.add_argument("--gpu", default="0"); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--min-dur", type=float, default=0.3); a = ap.parse_args()
+ap.add_argument("--gpu", default="0"); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--min-dur", type=float, default=0.3); ap.add_argument("--batch", type=int, default=64, help="배치 발화 수. 실측(2026-09-15, H200): 32–256 에서 peak 11 GB 로 일정(모델이 내부 배치 고정)"); ap.add_argument("--shard", default=None); ap.add_argument("--mem-frac", type=float, default=0.8, help="프로세스당 GPU 메모리 상한 비율(워커 W 개면 0.8/W)"); a = ap.parse_args()
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", a.gpu)
 import numpy as np, torch
 from qwen_asr import Qwen3ASRModel
@@ -35,16 +35,29 @@ def utt_audio(d, u):
 dlgs = [Dialogue.from_json(l) for l in open(a.dialogues, encoding="utf-8")]
 cands = [(d, u) for d in dlgs for u in d.utterances if u.text and (u.end - u.start) >= a.min_dur]
 random.Random(a.seed).shuffle(cands); cands = cands[: a.limit_utts]
-model = Qwen3ASRModel.from_pretrained(QWEN, dtype=torch.bfloat16, device_map="cuda")
-rows = []; B = 16
-for i in range(0, len(cands), B):
-    batch = cands[i: i + B]; auds = []
+if a.shard: k, n = (int(x) for x in a.shard.split("/")); cands = cands[k::n]
+torch.cuda.set_per_process_memory_fraction(a.mem_frac, 0); TOTAL = torch.cuda.get_device_properties(0).total_memory
+model = Qwen3ASRModel.from_pretrained(QWEN, dtype=torch.bfloat16, device_map="cuda"); BASE = torch.cuda.memory_allocated()
+print(f"  GPU total {TOTAL/1e9:.0f} GB, cap {a.mem_frac:.0%}, weights {BASE/1e9:.1f} GB", flush=True)
+def transcribe(auds, langs):
+    global B
+    try: return model.transcribe(audio=auds, language=langs)
+    except torch.cuda.OutOfMemoryError:
+        torch.cuda.empty_cache(); B = max(8, B // 2)
+        if len(auds) == 1: raise
+        h = len(auds) // 2; return transcribe(auds[:h], langs[:h]) + transcribe(auds[h:], langs[h:])
+rows = []; B = int(a.batch); import time as _t; T0 = _t.time(); i = 0; pre = {}
+while i < len(cands):
+    batch = cands[i: i + B]; i += len(batch); auds = []
     for d, u in batch:
         try: auds.append((utt_audio(d, u), SR))
         except Exception: auds.append(None)
     keep = [(x, au) for x, au in zip(batch, auds) if au is not None]
+    for (d, u), _ in keep:
+        if id(u) in pre: r = pre[id(u)]; hyp = r.text if hasattr(r, "text") else str(r); e = err(d.lang, u.text, hyp); rows.append(dict(conv=d.conv_id, utt=u.utt_id, dur=round(u.end - u.start, 2), ref=u.text, hyp=hyp, err=round(e, 3), cps=round(len(u.text.replace(" ", "")) / max(0.1, u.end - u.start), 2)))
+    keep = [(x, au) for x, au in keep if id(x[1]) not in pre]
     if not keep: continue
-    res = model.transcribe(audio=[au for _, au in keep], language=[d.lang for (d, _), _ in keep])
+    res = transcribe([au for _, au in keep], [d.lang for (d, _), _ in keep])
     for ((d, u), _), r in zip(keep, res):
         hyp = r.text if hasattr(r, "text") else str(r); e = err(d.lang, u.text, hyp)
         rows.append(dict(conv=d.conv_id, utt=u.utt_id, dur=round(u.end - u.start, 2), ref=u.text, hyp=hyp, err=round(e, 3), cps=round(len(u.text.replace(" ", "")) / max(0.1, u.end - u.start), 2)))
@@ -60,6 +73,8 @@ with open(a.out.replace(".json", ".utts.jsonl"), "w", encoding="utf-8") as f:
     for r in rows: f.write(json.dumps(r, ensure_ascii=False) + "\n")
 rep = dict(corpus=os.path.basename(a.dialogues).split(".")[0], lang=dlgs[0].lang if dlgs else None, n=len(rows), err_median=q(errs, 50), err_p90=q(errs, 90), share_ge_0_3=float((errs >= 0.3).mean()) if len(errs) else None,
            share_ge_0_5=float((errs >= 0.5).mean()) if len(errs) else None, by_dur=by_dur, worst=sorted(rows, key=lambda r: -r["err"])[:20], model=QWEN)
+rep["sec"] = round(_t.time() - T0, 1); rep["batch_final"] = B; rep["gpu_total_gb"] = round(TOTAL / 1e9, 1); rep["utts_per_s"] = round(len(rows) / max(1e-6, rep["sec"]), 1); rep["peak_gpu_gb"] = round(torch.cuda.max_memory_allocated() / 1e9, 1)
+if a.shard: a.out = a.out.replace(".json", f".shard{a.shard.replace('/', 'of')}.json")
 os.makedirs(os.path.dirname(a.out), exist_ok=True); json.dump(rep, open(a.out, "w"), ensure_ascii=False, indent=1)
 print(json.dumps({k: v for k, v in rep.items() if k != "worst"}, ensure_ascii=False))
 for r in rep["worst"][:8]: print(f"  [{r['err']:.2f}] {r['dur']}s REF: {r['ref'][:70]} || ASR: {r['hyp'][:70]}")

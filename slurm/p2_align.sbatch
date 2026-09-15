@@ -21,10 +21,11 @@ if [ -n "$VAPASR_LOCAL_ENV" ]; then bash scripts/stage-env-local.sh 2>&1 | grep 
 export OMP_NUM_THREADS=8 TOKENIZERS_PARALLELISM=false
 OUT=${OUT:-/soundai/users/tskim/VAPKT-data/data/phase2}; C=${CORPUS:?CORPUS=ami 등}; D="$OUT/$C.dialogues.jsonl"
 [ -f "$D" ] || { echo "!! $D 없음 — slurm/p2_build_dialogues.sbatch 먼저"; exit 1; }
-NG=$(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l); echo "[$(date '+%F %T')] align $C on $NG GPUs ← $D"
-for k in $(seq 0 $((NG - 1))); do
-  CUDA_VISIBLE_DEVICES=$k python experiments/p2_align.py --dialogues "$D" --shard "$k/$NG" --gpu 0 > "logs/train/p2align-$C-$SLURM_JOB_ID-$k.log" 2>&1 &
-done
+NG=$(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l); W=${WORKERS_PER_GPU:-6}; N=$((NG * W)); FR=$(python -c "print(round(0.8/$W, 3))")
+echo "[$(date '+%F %T')] align $C: $NG GPUs × $W workers = $N shards, per-process mem cap $FR ← $D"
+for k in $(seq 0 $((NG - 1))); do for w in $(seq 0 $((W - 1))); do i=$((k * W + w))
+  CUDA_VISIBLE_DEVICES=$k python experiments/p2_align.py --dialogues "$D" --shard "$i/$N" --gpu 0 --mem-frac $FR --io-threads 4 > "logs/train/p2align-$C-$SLURM_JOB_ID-$i.log" 2>&1 &
+done; done
 wait
 python - "$OUT/align-asr-tn-v1/$C" <<'EOF'
 import sys, os, json, glob, collections

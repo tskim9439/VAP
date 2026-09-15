@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser()
 ap.add_argument("--dialogues", required=True); ap.add_argument("--out-root", default=None); ap.add_argument("--shard", default=None); ap.add_argument("--limit", type=int)
 ap.add_argument("--gpu", default=None); ap.add_argument("--min-dur", type=float, default=0.1); ap.add_argument("--max-dur", type=float, default=120.0)
-ap.add_argument("--batch", type=int, default=64); ap.add_argument("--batch-sec", type=float, default=480.0); ap.add_argument("--chunk", type=int, default=32); ap.add_argument("--io-threads", type=int, default=8)
+ap.add_argument("--batch", type=int, default=256, help="배치 최대 발화 수"); ap.add_argument("--batch-sec", type=float, default=1920.0, help="배치 오디오 합계 상한(초). 실측(2026-09-15, H200): 960–7680 s 에서 peak 5 GB 로 일정(정렬기가 내부 배치를 고정) → 1920 고정"); ap.add_argument("--mem-frac", type=float, default=0.8, help="이 프로세스의 GPU 메모리 상한 비율(초과 시 OOM → gc 후 배치 반분). 한 GPU 에 워커 W 개면 0.8/W 로 준다"); ap.add_argument("--chunk", type=int, default=32); ap.add_argument("--io-threads", type=int, default=8)
 a = ap.parse_args()
 if "CUDA_VISIBLE_DEVICES" not in os.environ:
     if a.gpu is None:
@@ -38,9 +38,13 @@ for pf in os.listdir(PARTS):
             except Exception: pass
 dlgs = [d for d in dlgs if d.conv_id not in done][: a.limit or None]
 print(f"align ← {corpus}: {len(dlgs)} dialogues (기존 {len(done)} 건너뜀) → {out} [GPU {os.environ['CUDA_VISIBLE_DEVICES']}]", flush=True)
+torch.cuda.set_per_process_memory_fraction(a.mem_frac, 0); TOTAL = torch.cuda.get_device_properties(0).total_memory
 aligner = Qwen3ForcedAligner.from_pretrained(ALIGNER, dtype=torch.bfloat16, device_map="cuda"); tok = AutoTokenizer.from_pretrained(QWEN)
+BASE = torch.cuda.memory_allocated(); BATCH_SEC = float(a.batch_sec)
+print(f"  GPU total {TOTAL/1e9:.0f} GB, 프로세스 상한 {a.mem_frac:.0%} = {a.mem_frac*TOTAL/1e9:.0f} GB, weights {BASE/1e9:.1f} GB, batch-sec {BATCH_SEC:.0f}, batch {a.batch}", flush=True)
 
 def tokens_from_items(items, text):
+    """aligner 항목(단어/문자 시각) → BPE 토큰 종료 시각. offsets 로 문자 구간을 잇는다(s1_align.py 와 동일)."""
     enc = tok(text, return_offsets_mapping=True, add_special_tokens=False); ids, offs = enc["input_ids"], enc["offset_mapping"]
     spans, cur = [], 0
     for it in items:
@@ -61,18 +65,31 @@ def utt_audio(d: Dialogue, u):
         return load_utt_audio(p[0])
     return load_utt_audio(ref.path, u.start, u.end - u.start)
 
-def run_batch(items):
+import gc
+def _align_once(items):
+    """→ (결과 목록, None) | (None, "oom") | (None, 예외). 예외 객체는 여기서 끊어 traceback 이 GPU 텐서를 붙잡지 않게 한다."""
     try:
         res = aligner.align(audio=[(it["audio"], SR) for it in items], text=[it["text"] for it in items], language=[it["lang"] for it in items])
-        return [(r.items if hasattr(r, "items") else r) for r in res]
-    except Exception as ex:
-        if len(items) == 1: return [ex]
-        torch.cuda.empty_cache(); h = len(items) // 2; return run_batch(items[:h]) + run_batch(items[h:])
+        return [(r.items if hasattr(r, "items") else r) for r in res], None
+    except torch.cuda.OutOfMemoryError: return None, "oom"
+    except Exception as ex: return None, RuntimeError(f"{type(ex).__name__}: {str(ex)[:120]}")
+def run_batch(items):
+    global BATCH_SEC
+    res, err = _align_once(items)
+    if err is None: return res
+    if err == "oom":
+        gc.collect(); torch.cuda.empty_cache(); st["oom"] += 1; BATCH_SEC = max(240.0, BATCH_SEC * 0.5)      # 상한 초과: 메모리 정리 → 반분 재시도, 이후 배치 절반
+        if len(items) == 1:
+            res, err2 = _align_once(items); return res if err2 is None else [RuntimeError("OOM on single utterance")]
+    elif len(items) == 1: return [err]
+    else: torch.cuda.empty_cache()
+    h = len(items) // 2; return run_batch(items[:h]) + run_batch(items[h:])
 
-def make_batches(utts):
+def make_batches(utts, batch_sec=None):
+    batch_sec = BATCH_SEC if batch_sec is None else batch_sec
     utts = sorted(utts, key=lambda u: u["dur"]); bs, cur, sec = [], [], 0.0
     for u in utts:
-        if cur and (sec + u["dur"] > a.batch_sec or len(cur) >= a.batch): bs.append(cur); cur, sec = [], 0.0
+        if cur and (sec + u["dur"] > batch_sec or len(cur) >= a.batch): bs.append(cur); cur, sec = [], 0.0
         cur.append(u); sec += u["dur"]
     if cur: bs.append(cur)
     return bs
@@ -104,12 +121,18 @@ for ci in range(len(chunks)):
             rec = dict(conv_id=d.conv_id, utts=dict(proxies.get(d.conv_id, {})), fail=[], proxy=sorted(proxies.get(d.conv_id, {})))
             for x in us:
                 res = results[id(x)]
-                if isinstance(res, Exception): st["fail"] += 1; rec["fail"].append(x["u"].utt_id); continue
+                if isinstance(res, Exception):
+                    st["fail"] += 1; rec["fail"].append(x["u"].utt_id)
+                    if st["fail"] <= 10: print(f"  ! {d.conv_id} {x['u'].utt_id}: {res}", flush=True)
+                    continue
                 try: toks = tokens_from_items(res, x["text"])
-                except Exception: st["fail"] += 1; rec["fail"].append(x["u"].utt_id); continue
+                except Exception as ex:
+                    st["fail"] += 1; rec["fail"].append(x["u"].utt_id)
+                    if st["fail"] <= 5: print(f"  ! tokens {d.conv_id} {x['u'].utt_id}: {type(ex).__name__}: {str(ex)[:160]} | res={type(res).__name__} {str(res)[:120]}", flush=True)
+                    continue
                 rec["utts"][x["u"].utt_id] = [[tid, round(x["u"].start + t, 3)] for tid, t in toks]; st["utts"] += 1; st["tokens"] += len(toks)
             f.write(json.dumps(rec, ensure_ascii=False) + "\n"); st["dialogues"] += 1
     os.replace(tmpp, partp); el = time.time() - T0
     print(f"  {st['dialogues']} dialogues · {st['utts']} utts ({st['utts']/max(1,el):.1f}/s) · fail {st['fail']} · missing {st['audio_missing']} · {el:.0f}s", flush=True)
-pool.shutdown(); st["sec"] = round(time.time() - T0, 1)
+pool.shutdown(); st["sec"] = round(time.time() - T0, 1); st["peak_gpu_gb"] = round(torch.cuda.max_memory_allocated() / 1e9, 1) if torch.cuda.is_available() else None; st["batch_sec_final"] = round(BATCH_SEC); st["gpu_total_gb"] = round(TOTAL / 1e9, 1); st["utts_per_s"] = round(st["utts"] / max(1e-6, st["sec"]), 1)
 json.dump(dict(st), open(os.path.join(out, f"stats-{TAG}.json"), "w"), indent=1); print(json.dumps(dict(st)))
