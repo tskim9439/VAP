@@ -1,0 +1,12 @@
+{
+ "dialogues": 2,
+ "utts": 1565,
+ "split": 2949,
+ "tightened_s": 270.6,
+ "no_vad": 435,
+ "unaligned": 7,
+ "dur_median_before": 2.62,
+ "dur_median_after": 1.18,
+ "out": "/soundai/users/tskim/VAPKT-data/data/phase2-samples/ami.refined.dialogues.jsonl",
+ "sec": 9.3
+}

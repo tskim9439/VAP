@@ -1,0 +1,12 @@
+{
+ "dialogues": 2,
+ "utts": 735,
+ "split": 46,
+ "tightened_s": 13.0,
+ "no_vad": 10,
+ "unaligned": 38,
+ "dur_median_before": 1.07,
+ "dur_median_after": 1.05,
+ "out": "/soundai/users/tskim/VAPKT-data/data/phase2-samples/aihub134-1.refined.dialogues.jsonl",
+ "sec": 9.4
+}

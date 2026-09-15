@@ -1,0 +1,218 @@
+{
+ "corpus": "otoSpeech",
+ "lang": "English",
+ "n": 300,
+ "err_median": 0.0,
+ "err_p90": 1.0,
+ "share_ge_0_3": 0.19333333333333333,
+ "share_ge_0_5": 0.16666666666666666,
+ "by_dur": {
+  "0-2s": {
+   "n": 161,
+   "med": 0.0,
+   "p90": 1.0,
+   "ge30": 0.2981366459627329
+  },
+  "2-5s": {
+   "n": 71,
+   "med": 0.0,
+   "p90": 0.294,
+   "ge30": 0.09859154929577464
+  },
+  "5-10s": {
+   "n": 51,
+   "med": 0.027,
+   "p90": 0.2,
+   "ge30": 0.0392156862745098
+  },
+  "10-infs": {
+   "n": 17,
+   "med": 0.042,
+   "p90": 0.1904,
+   "ge30": 0.058823529411764705
+  }
+ },
+ "worst": [
+  {
+   "conv": "oto:1",
+   "utt": "s1_00074",
+   "dur": 1.21,
+   "ref": "ahehehe",
+   "hyp": "Ha ha ha.",
+   "err": 3.0,
+   "cps": 5.77
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s2_00038",
+   "dur": 0.87,
+   "ref": "aahh",
+   "hyp": "Ah, ah.",
+   "err": 2.0,
+   "cps": 4.59
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s2_00053",
+   "dur": 0.97,
+   "ref": "aahhh",
+   "hyp": "Ah.",
+   "err": 1.0,
+   "cps": 5.17
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s1_00060",
+   "dur": 0.3,
+   "ref": "mm hmm",
+   "hyp": "Uh huh.",
+   "err": 1.0,
+   "cps": 16.67
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s1_00191",
+   "dur": 0.3,
+   "ref": "bye",
+   "hyp": "Five.",
+   "err": 1.0,
+   "cps": 10.0
+  },
+  {
+   "conv": "oto:1",
+   "utt": "s2_00008",
+   "dur": 0.54,
+   "ref": "ahm",
+   "hyp": "Um.",
+   "err": 1.0,
+   "cps": 5.51
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s1_00043",
+   "dur": 0.88,
+   "ref": "aahmm",
+   "hyp": "Ah.",
+   "err": 1.0,
+   "cps": 5.71
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s1_00131",
+   "dur": 2.05,
+   "ref": "its it's ahm",
+   "hyp": "It's, it's um it's.",
+   "err": 1.0,
+   "cps": 4.89
+  },
+  {
+   "conv": "oto:1",
+   "utt": "s1_00078",
+   "dur": 0.46,
+   "ref": "ah",
+   "hyp": "Oh.",
+   "err": 1.0,
+   "cps": 4.35
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s2_00179",
+   "dur": 0.98,
+   "ref": "ahh",
+   "hyp": "Uh.",
+   "err": 1.0,
+   "cps": 3.07
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s2_00042",
+   "dur": 0.47,
+   "ref": "ahh",
+   "hyp": "I.",
+   "err": 1.0,
+   "cps": 6.37
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s1_00089",
+   "dur": 1.19,
+   "ref": "aahhmm",
+   "hyp": "Um.",
+   "err": 1.0,
+   "cps": 5.05
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s1_00077",
+   "dur": 0.62,
+   "ref": "aahmm",
+   "hyp": "Um.",
+   "err": 1.0,
+   "cps": 8.08
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s1_00008",
+   "dur": 0.63,
+   "ref": "aahnnmm",
+   "hyp": "Um.",
+   "err": 1.0,
+   "cps": 11.08
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s1_00025",
+   "dur": 0.88,
+   "ref": "aahhmm",
+   "hyp": "Um.",
+   "err": 1.0,
+   "cps": 6.86
+  },
+  {
+   "conv": "oto:1",
+   "utt": "s1_00022",
+   "dur": 0.59,
+   "ref": "ahm",
+   "hyp": "Um.",
+   "err": 1.0,
+   "cps": 5.12
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s1_00187",
+   "dur": 1.25,
+   "ref": "yeah",
+   "hyp": "Okay.",
+   "err": 1.0,
+   "cps": 3.19
+  },
+  {
+   "conv": "oto:10",
+   "utt": "s2_00175",
+   "dur": 0.92,
+   "ref": "hhm",
+   "hyp": "Well.",
+   "err": 1.0,
+   "cps": 3.25
+  },
+  {
+   "conv": "oto:1",
+   "utt": "s2_00016",
+   "dur": 0.63,
+   "ref": "ahm",
+   "hyp": "Um.",
+   "err": 1.0,
+   "cps": 4.78
+  },
+  {
+   "conv": "oto:1",
+   "utt": "s1_00031",
+   "dur": 0.34,
+   "ref": "its it is",
+   "hyp": "It's.",
+   "err": 1.0,
+   "cps": 20.9
+  }
+ ],
+ "model": "/soundai/Model/Qwen3-ASR-0.6B"
+}

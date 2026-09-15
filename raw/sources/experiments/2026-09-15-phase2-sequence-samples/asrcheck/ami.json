@@ -1,0 +1,218 @@
+{
+ "corpus": "ami",
+ "lang": "English",
+ "n": 300,
+ "err_median": 0.074,
+ "err_p90": 1.0,
+ "share_ge_0_3": 0.17333333333333334,
+ "share_ge_0_5": 0.13333333333333333,
+ "by_dur": {
+  "0-2s": {
+   "n": 138,
+   "med": 0.0,
+   "p90": 1.0,
+   "ge30": 0.2971014492753623
+  },
+  "2-5s": {
+   "n": 59,
+   "med": 0.091,
+   "p90": 0.29040000000000005,
+   "ge30": 0.1016949152542373
+  },
+  "5-10s": {
+   "n": 57,
+   "med": 0.13,
+   "p90": 0.2844,
+   "ge30": 0.08771929824561403
+  },
+  "10-infs": {
+   "n": 46,
+   "med": 0.084,
+   "p90": 0.1855,
+   "ge30": 0.0
+  }
+ },
+ "worst": [
+  {
+   "conv": "ami:EN2001a",
+   "utt": "A_00037",
+   "dur": 0.38,
+   "ref": "oh",
+   "hyp": "嗯。",
+   "err": 1.0,
+   "cps": 5.32
+  },
+  {
+   "conv": "ami:EN2001b",
+   "utt": "A_00007",
+   "dur": 0.42,
+   "ref": "mm",
+   "hyp": "嗯。",
+   "err": 1.0,
+   "cps": 4.81
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "A_00015",
+   "dur": 0.49,
+   "ref": "hmm",
+   "hyp": "嗯。",
+   "err": 1.0,
+   "cps": 6.1
+  },
+  {
+   "conv": "ami:EN2001b",
+   "utt": "C_00029",
+   "dur": 0.67,
+   "ref": "mm hmm",
+   "hyp": "嗯。",
+   "err": 1.0,
+   "cps": 7.43
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "E_00159",
+   "dur": 0.48,
+   "ref": "mm hmm",
+   "hyp": "Uh huh.",
+   "err": 1.0,
+   "cps": 10.4
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "A_00114",
+   "dur": 0.45,
+   "ref": "hmm",
+   "hyp": "嗯。",
+   "err": 1.0,
+   "cps": 6.68
+  },
+  {
+   "conv": "ami:EN2001b",
+   "utt": "B_00250",
+   "dur": 0.52,
+   "ref": "mm",
+   "hyp": "Hmm.",
+   "err": 1.0,
+   "cps": 3.83
+  },
+  {
+   "conv": "ami:EN2001b",
+   "utt": "D_00012",
+   "dur": 0.44,
+   "ref": "oh yeah",
+   "hyp": "Um.",
+   "err": 1.0,
+   "cps": 13.64
+  },
+  {
+   "conv": "ami:EN2001b",
+   "utt": "B_00243",
+   "dur": 0.48,
+   "ref": "hmm",
+   "hyp": "嗯。",
+   "err": 1.0,
+   "cps": 6.25
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "A_00100",
+   "dur": 0.52,
+   "ref": "hmm",
+   "hyp": "嗯。",
+   "err": 1.0,
+   "cps": 5.81
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "A_00097",
+   "dur": 0.48,
+   "ref": "hmm",
+   "hyp": "嗯。",
+   "err": 1.0,
+   "cps": 6.29
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "A_00024",
+   "dur": 0.31,
+   "ref": "mm",
+   "hyp": "Hmm.",
+   "err": 1.0,
+   "cps": 6.47
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "C_00094",
+   "dur": 0.5,
+   "ref": "mm hmm",
+   "hyp": "Uh huh.",
+   "err": 1.0,
+   "cps": 9.98
+  },
+  {
+   "conv": "ami:EN2001b",
+   "utt": "A_00122",
+   "dur": 1.35,
+   "ref": "yeah mm yeah",
+   "hyp": "Oh, um.",
+   "err": 1.0,
+   "cps": 7.42
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "C_00006",
+   "dur": 0.8,
+   "ref": "mm",
+   "hyp": "Hmm.",
+   "err": 1.0,
+   "cps": 2.51
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "E_00002",
+   "dur": 0.5,
+   "ref": "kay",
+   "hyp": "Okay.",
+   "err": 1.0,
+   "cps": 6.01
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "A_00123",
+   "dur": 0.32,
+   "ref": "yeah",
+   "hyp": "嗯。",
+   "err": 1.0,
+   "cps": 12.38
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "B_00035",
+   "dur": 0.33,
+   "ref": "oh",
+   "hyp": "Hmm.",
+   "err": 1.0,
+   "cps": 5.99
+  },
+  {
+   "conv": "ami:EN2001a",
+   "utt": "E_00005",
+   "dur": 0.38,
+   "ref": "mm",
+   "hyp": "Hmm.",
+   "err": 1.0,
+   "cps": 5.21
+  },
+  {
+   "conv": "ami:EN2001b",
+   "utt": "B_00110",
+   "dur": 0.58,
+   "ref": "mm hmm",
+   "hyp": "Uh huh.",
+   "err": 1.0,
+   "cps": 8.59
+  }
+ ],
+ "model": "/soundai/Model/Qwen3-ASR-0.6B"
+}
