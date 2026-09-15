@@ -14,6 +14,9 @@
 set -uo pipefail
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
 MXC_CONDA_DIR=${CONDA_OVERRIDE:-$MXC_CONDA_DIR}; source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
+export VAPASR_LOCAL_ENV=${LOCAL_ENV-/tmp/sa_tskim/vapasr-env}
+if [ -n "$VAPASR_LOCAL_ENV" ]; then bash scripts/stage-env-local.sh 2>&1 | grep -vE "^cp: .*File exists" | sed "s/^/  [stage] /"
+  [ -x "$VAPASR_LOCAL_ENV/bin/python" ] && export PATH="$VAPASR_LOCAL_ENV/bin:$PATH" CONDA_PREFIX="$VAPASR_LOCAL_ENV" TMPDIR="$(dirname "$VAPASR_LOCAL_ENV")/tmp" && mkdir -p "$TMPDIR"; fi   # NFS conda 에서 torch·transformers import 가 69 s(실측) → 노드 로컬 /tmp 사본으로 1 회 스테이징
 export OMP_NUM_THREADS=8 TOKENIZERS_PARALLELISM=false
 OUT=${OUT:-/soundai/users/tskim/VAPKT-data/data/phase2}; C=${CORPUS:?CORPUS=aihub71631 등}; D="$OUT/$C.dialogues.jsonl"
 [ -f "$D" ] || { echo "!! $D 없음 — slurm/p2_build_dialogues.sbatch 먼저"; exit 1; }
