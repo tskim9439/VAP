@@ -37,7 +37,7 @@ sources:
 1. [x] 기존 데이터 계층 파악 — 기존 streams.jsonl·interleave·targets 는 2화자 고정이라 별도 dialogue 계층 신설(`vapasr/data/dialogue*.py`, `lane_alloc.py`, `eot_soft.py`)
 2. [x] 코퍼스별 파서 `vapasr/data/dialogue_corpora.py` 7종 서버 실물 검증 완료(각 2대화 빌드). ICSI 는 SPH(shorten)→FLAC 변환(sph2pipe, `VAPKT-data/data/audio/icsi/`) 진행 중
 3. [x] TN 적용 `experiments/p2_build_dialogues.py` 서버 실행 확인(EN 대화 코퍼스는 숫자 규칙 `yodas` 키). 71631 quarantine 20 %(digit·anon) 는 결정 항목
-4. [~] `experiments/p2_align.py` 로그인 노드 GPU 로 샘플 정렬 성공(6 코퍼스). 전량은 `slurm/p2_align.sbatch` 제출 대기
+4. [x] 전량 정렬 완료(잡 70988). GPU 잡은 프로세스별 메모리 상한 0.8/워커·워커 6/GPU·환경 로컬 스테이징
 5. [x] mono 혼합기·창 Dataset 실물 검증(창 wav 생성)
 6. [x] `lane_alloc.py`·`eot_soft.py`·`dialogue_interleave.py`(serialize/flatten/활동)·`dialogue_tokens.py` + `tests/test_lane_protocol.py` 19개 통과(D0); `dialogue_dataset.py`(창 선택·잘림 EOT mask·soft/활동·collate) + 테스트; `dialogue_stitch.py`(대화 결합 합성, EOT mask) + 테스트; `experiments/p2_qc.py`
 7. [ ] 중복·노출 감사(71631 E2 노출, 134-1 원본↔조각 join), split(actor·회의 계열·공식 split)
@@ -67,7 +67,8 @@ sources:
 주의: 134-1 실외는 인벤토리에서 "1,492 대화 완전"으로 적었으나 대화 단위로는 끝부분 조각이 빠진 대화가 많아 완전 대화는 459 (77.1 h) 다. 원자료 `raw/sources/experiments/2026-09-15-phase2-full-build/`.
 
 ## 진행 기록
-- 2026-09-15 (5): 전량 빌드 완료(잡 70960, 59 분, 오류 0). 다음: 정렬(`p2_align.sbatch`)·ASR 대조(`p2_asr_check.sbatch`) 제출.
+- 2026-09-15 (5): 전량 빌드 완료(잡 70960, 59 분, 오류 0).
+- 2026-09-16 (6): 전량 정렬 완료(잡 70988, hpc, 00:11–01:18; 선점으로 3회 requeue 됐으나 재개로 이어짐). 노드 1개 GPU 8×워커 6. 정렬 발화: 71631 235,214 · 134-1 376,010(결손 조각 45,464 건너뜀) · 134-2 412,013(59,827) · otoSpeech 86,345(proxy 64, OOM 재시도 22) · AMI 83,429 · NOTSOFAR-1 54,635 · ICSI 97,135(proxy 236). ASR 대조 잡 70991 이 01:20 에 이어 시작. 보정은 SLURM 없이 mxc 로그인 노드에서 `scripts/p2-refine-local.sh` 가 코퍼스별로 자동 시작(otoSpeech·AMI·NOTSOFAR·ICSI 진행 중, AI Hub 3종은 ASR 대조 뒤). `p2_refine.py` 를 대화 병렬(fork Pool)로 바꿈.
 - 2026-09-15 (4): 사용자 결정 [[decision-aihub-transcript-policy]] 구현 — ASR 일치(CER<0.2) 전사 감독, 불일치 청크 손실 마스크(창 유지), 배치 정책 정본 §8 반영. 샘플 검증 9 항목 통과.
 - 2026-09-15 (3): AI Hub 라벨 품질 실측 → [[output-phase2-aihub-label-quality]]. 채널 VAD 시각 보정(`p2_refine.py`)·결손 의심/ASR 불일치 quarantine·ASR 대조(`p2_asr_check.py`, sbatch) 추가. pseudo-label 대체는 사용자 결정 대기.
 - 2026-09-15 (2): 서버 복구 → 7 DB 샘플 2대화씩 빌드·정렬(6)·시퀀스 생성·8 검사 ALL_OK → [[output-phase2-sequence-samples]]. 로더 수정(AMI 빈 segment·NOTSOFAR 태그·앞 공백 토큰화), ICSI sph2pipe 변환 시작.
