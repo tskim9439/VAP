@@ -39,7 +39,7 @@ sources:
 3. [~] TN 적용은 `experiments/p2_build_dialogues.py` 에 구현(quarantine → text=""), 서버 실행 대기
 4. [~] `experiments/p2_align.py`(화자 채널·조각에서 Qwen aligner, 재개 가능) 작성, SLURM 제출 대기
 5. [~] mono 혼합기 `vapasr/data/dialogue_mix.py`(+테스트) 작성; crop 창·관측 mask 는 Dataset 단계에서
-6. [x] `lane_alloc.py`·`eot_soft.py`·`dialogue_interleave.py`(serialize/flatten/활동)·`dialogue_tokens.py` + `tests/test_lane_protocol.py` 19개 통과(D0). Dataset 레코드 연결은 남음
+6. [x] `lane_alloc.py`·`eot_soft.py`·`dialogue_interleave.py`(serialize/flatten/활동)·`dialogue_tokens.py` + `tests/test_lane_protocol.py` 19개 통과(D0); `dialogue_dataset.py`(창 선택·잘림 EOT mask·soft/활동·collate) + 테스트; `dialogue_stitch.py`(대화 결합 합성, EOT mask) + 테스트; `experiments/p2_qc.py`
 7. [ ] 중복·노출 감사(71631 E2 노출, 134-1 원본↔조각 join), split(actor·회의 계열·공식 split)
 8. [ ] 경량 QC: 밀도 p99·강제 NEXT·삭제율·lane 부족률·EOT 후보 분포·오디오 spot-check
 9. [ ] 32창 overfit 용 소형 셋 추출
@@ -52,4 +52,4 @@ sources:
 - [ ] QC 리포트와 manifest 버전 고정, 32창 overfit 셋 준비
 
 ## 진행 기록
-- 2026-09-15: 생성. 기존 데이터 계층 탐색 → D0 모듈·테스트 커밋(8fe16cc), 코퍼스 로더·혼합기·빌더·정렬 잡 커밋(b8f59e2). 서버 SSH 불가(포트 닫힘)로 실물 검증 대기.
+- 2026-09-15: 생성. 기존 데이터 계층 탐색 → D0 모듈·테스트(8fe16cc), 코퍼스 로더·혼합기·빌더·정렬 잡(b8f59e2), Dataset·SLURM 잡(17cb27f), stitch·QC(4c404ea). 로컬 테스트 29개 통과. 서버 SSH 불가(포트 3206 timeout)로 실물 검증·빌드 대기. 남은 것: 서버 코드 동기화 → 로더 스모크(ICSI Words·mrt 매핑 확인) → `slurm/p2_build_dialogues.sbatch`(CPU) → `slurm/p2_align.sbatch`(GPU, 사용자 제출) → QC → 모델 forward 의 soft CE·활동 헤드(D1).
