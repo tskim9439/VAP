@@ -69,6 +69,18 @@ sources:
 3. FREE lane이 없으면 **닫힌 lane(SEG_END 출력 뒤 새 episode가 없는 lane) 중 가장 오래 전에 닫힌 lane**을 새 화자에게 넘긴다. 이때 이전 소유자의 episode는 episode table에 남고, lane은 `generation+1`이 된다.
 4. 닫힌 lane도 없으면 `lane_capacity_exhausted`를 보고하고 덮어쓰지 않는다(원안 규칙 유지).
 
+**lane 상태 판정 기준(2026-09-15 보충).** lane 은 `FREE / OPEN / HELD` 세 상태와 `owner, generation, closed_at` 을 가진다.
+
+| 전이 | 라벨 측(reference allocator) | 추론 측(runtime parser) |
+|---|---|---|
+| FREE → OPEN | 참조 segment 시작 | 그 lane 의 `<SPK_r><ONSET>` 방출 |
+| OPEN → HELD (episode 닫힘) | 참조 화자 VAD 가 0.25 s 이상 꺼진 시점 = segment 끝(병합 gap 과 같은 값) | (a) `<SPK_r><EOT>` 방출, 또는 (b) lane r 활동 헤드가 마지막 lexical/ONSET 이후 0.25 s(3 청크) 이상 임계 미만. 둘 중 먼저 오는 것. `closed_at` 기록 |
+| HELD → OPEN | 같은 화자의 다음 segment 시작 | 그 lane 의 `<SPK_r><ONSET>` (규칙 1: 같은 소유자) |
+| HELD → OPEN, generation+1 | FREE 없음 + 새 화자 시작 → `closed_at` 이 가장 오래된 lane | 같음(규칙 3). 모델이 그 lane 토큰으로 ONSET 을 냄 |
+| HELD → FREE | 없음(시간 경과로 해제하지 않음) | 없음 |
+
+HELD 는 "episode 는 닫혔지만 소유는 남은" 상태다. EOT 는 episode 를 닫을 뿐 lane 을 해제하지 않으며, 해제는 규칙 3 의 수요가 있을 때만 일어난다. 규칙 3 의 후보는 HELD lane 뿐이므로 EOT 도 활동 비활성도 관측되지 않은 OPEN lane 은 재배정되지 않는다(→ 필요하면 `lane_capacity_exhausted`). EOT 뒤 같은 lane 에 ONSET 없이 늦은 lexical 이 오면 정본대로 보존·프로토콜 지연 오류로 계수하고 `closed_at` 을 그 청크로 갱신한다. 0.25 s 는 라벨의 segment 병합 gap 과 같은 값으로 두어 라벨 측과 추론 측의 닫힘 기준을 일치시킨다.
+
 **따름정리.** N≤R이면 규칙 3이 한 번도 발동하지 않으므로 lane i = 도착순 i번째 화자이고, 생성되는 토큰열은 정본 §4.2·§4.4의 K=R 슬롯 시퀀스에 `<SEG_END>`만 더한 것이다. 따라서 D1 모델은 정본 Q1 모델과 같은 데이터·같은 registry·같은 초기 backbone으로 학습되고, `<SEG_END>`를 무시하면 정본 평가에 그대로 들어간다. 이것이 두 안을 공정하게 비교할 수 있는 조건이다.
 
 **SEG_END 오류의 영향.** 조기 SEG_END: lane은 유지되므로 후속 lexical은 같은 lane·같은 소유자의 새 episode가 된다. 오귀속은 없고 episode 분절 수만 늘며 이를 계수한다. 누락·지연 SEG_END: 그 lane이 재배정 후보에서 빠지므로 N>R 상황에서 `lane_capacity_exhausted`가 조금 늘 뿐이다. 두 경우 모두 다른 화자의 전사에 영향을 주지 않는다. 원안 §13 (b)의 "lane/memory 전체 오염" 경로는 규칙 1·3 때문에 존재하지 않는다.
