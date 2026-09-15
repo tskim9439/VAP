@@ -1,16 +1,16 @@
 # aihub134-2:1_1202G1A1_1204G1A1_T2_1D01T0025C000324_006075 t0=100.0 L=33.363 K=417 delay=4 speakers=['0', '1'] lanes={'0': 1, '1': 2}
-# episodes=9 reassigned=0 outcomes={'silence': 2, 'both': 2, 'shift': 3, 'hold_short': 2} soft=9 eot_masked=0 tokens=92 tags=25 overflow=0
+# episodes=9 reassigned=0 outcomes={'silence': 2, 'both': 2, 'shift': 3, 'hold_short': 2} soft=9 eot_masked=0 tokens=90 tags=25 overflow=0
 # checks: OK
 
-ep000 spk=0 lane=1 g0    1.55-   3.93 outcome=silence p_end=0.8 tokens=8 :: 아 야채 꽃빵
-ep001 spk=0 lane=1 g0    9.10-  12.78 outcome=both p_end=0.5 tokens=16 :: 중학교 때는 일단 제육볶음 밖에 기억 안 나거든
-ep002 spk=1 lane=2 g0   13.65-  15.33 outcome=both p_end=0.5 tokens=3 :: 어어 그렇지
-ep003 spk=0 lane=1 g0   14.95-  16.93 outcome=shift p_end=1.0 tokens=7 :: 스마트 체육실
-ep004 spk=1 lane=2 g0   17.10-  19.28 outcome=hold_short p_end=0.0 tokens=9 :: 그런데 중학교는 약간
-ep005 spk=1 lane=2 g0   19.75-  23.23 outcome=hold_short p_end=0.0 tokens=7 :: 뭔가 좋은 그니까 좋은데
-ep006 spk=1 lane=2 g0   23.90-  26.23 outcome=shift p_end=1.0 tokens=15 :: 그 냉동 제육볶음 좀 별로였어
-ep007 spk=0 lane=1 g0   27.05-  33.18 outcome=silence p_end=0.8 tokens=19 :: 맛이 있는데너무 많이우리 너무 많이 나와서 질려버린 거지
-ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가 냉동된 느낌
+ep000 spk=0 lane=1 g0    1.55-   3.93 outcome=silence p_end=0.8 tokens=8 ::  아 야채 꽃빵
+ep001 spk=0 lane=1 g0    9.10-  12.78 outcome=both p_end=0.5 tokens=16 ::  중학교 때는 일단 제육볶음 밖에 기억 안 나거든
+ep002 spk=1 lane=2 g0   13.65-  15.33 outcome=both p_end=0.5 tokens=3 ::  어어 그렇지
+ep003 spk=0 lane=1 g0   14.95-  16.93 outcome=shift p_end=1.0 tokens=7 ::  스마트 체육실
+ep004 spk=1 lane=2 g0   17.10-  19.28 outcome=hold_short p_end=0.0 tokens=7 ::  그런데 중학교는 약간
+ep005 spk=1 lane=2 g0   19.75-  23.23 outcome=hold_short p_end=0.0 tokens=9 ::  뭔가 좋은 그니까 좋은데
+ep006 spk=1 lane=2 g0   23.90-  26.23 outcome=shift p_end=1.0 tokens=15 ::  그 냉동 제육볶음 좀 별로였어
+ep007 spk=0 lane=1 g0   27.05-  33.18 outcome=silence p_end=0.8 tokens=18 ::  맛이 있는데 너무 많이 우리 너무 많이 나와서 질려버린 거지
+ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=7 ::  내가 냉동된 느낌
 
 [AUDIO_0] <NEXT_AUDIO>
 [AUDIO_1] <NEXT_AUDIO>
@@ -47,7 +47,7 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_32] <NEXT_AUDIO>
 [AUDIO_33] <NEXT_AUDIO>
 [AUDIO_34] <NEXT_AUDIO>
-[AUDIO_35] 아 <NEXT_AUDIO>
+[AUDIO_35]  아 <NEXT_AUDIO>
 [AUDIO_36] <NEXT_AUDIO>
 [AUDIO_37] <NEXT_AUDIO>
 [AUDIO_38]  � � 채 <NEXT_AUDIO>
@@ -144,7 +144,7 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_129] <NEXT_AUDIO>
 [AUDIO_130] <NEXT_AUDIO>
 [AUDIO_131] <NEXT_AUDIO>
-[AUDIO_132] 중 학교 <NEXT_AUDIO>
+[AUDIO_132]  중 학교 <NEXT_AUDIO>
 [AUDIO_133] <NEXT_AUDIO>
 [AUDIO_134] <NEXT_AUDIO>
 [AUDIO_135] <NEXT_AUDIO>
@@ -199,7 +199,7 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_184] <NEXT_AUDIO>
 [AUDIO_185] <NEXT_AUDIO>
 [AUDIO_186] <SPK_A> <ONSET> <NEXT_AUDIO>
-[AUDIO_187] <SPK_B> 어 어 <NEXT_AUDIO>
+[AUDIO_187] <SPK_B>  어 어 <NEXT_AUDIO>
 [AUDIO_188] <NEXT_AUDIO>
 [AUDIO_189] <NEXT_AUDIO>
 [AUDIO_190] <NEXT_AUDIO>
@@ -216,7 +216,7 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_201] <NEXT_AUDIO>
 [AUDIO_202] <NEXT_AUDIO>
 [AUDIO_203] <NEXT_AUDIO>
-[AUDIO_204] <SPK_A> 스 마 트 <NEXT_AUDIO>
+[AUDIO_204] <SPK_A>  스 마 트 <NEXT_AUDIO>
 [AUDIO_205] <NEXT_AUDIO>
 [AUDIO_206] <NEXT_AUDIO>
 [AUDIO_207] <NEXT_AUDIO>
@@ -241,7 +241,7 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_226] <NEXT_AUDIO>
 [AUDIO_227] <NEXT_AUDIO>
 [AUDIO_228] <NEXT_AUDIO>
-[AUDIO_229] <SPK_B> 그 런 데 <NEXT_AUDIO>
+[AUDIO_229] <SPK_B>  그런데 <NEXT_AUDIO>
 [AUDIO_230] <NEXT_AUDIO>
 [AUDIO_231] <NEXT_AUDIO>
 [AUDIO_232] <NEXT_AUDIO>
@@ -275,7 +275,7 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_260] <NEXT_AUDIO>
 [AUDIO_261] <NEXT_AUDIO>
 [AUDIO_262] <NEXT_AUDIO>
-[AUDIO_263] 뭔 가 <NEXT_AUDIO>
+[AUDIO_263]  � � � 가 <NEXT_AUDIO>
 [AUDIO_264] <NEXT_AUDIO>
 [AUDIO_265] <NEXT_AUDIO>
 [AUDIO_266] <NEXT_AUDIO>
@@ -324,7 +324,7 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_309] <NEXT_AUDIO>
 [AUDIO_310] <NEXT_AUDIO>
 [AUDIO_311] <NEXT_AUDIO>
-[AUDIO_312] 그 <NEXT_AUDIO>
+[AUDIO_312]  그 <NEXT_AUDIO>
 [AUDIO_313] <NEXT_AUDIO>
 [AUDIO_314] <NEXT_AUDIO>
 [AUDIO_315] <NEXT_AUDIO>
@@ -368,7 +368,7 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_353] <NEXT_AUDIO>
 [AUDIO_354] <NEXT_AUDIO>
 [AUDIO_355] <NEXT_AUDIO>
-[AUDIO_356] 맛 이 <NEXT_AUDIO>
+[AUDIO_356]  � � 이 <NEXT_AUDIO>
 [AUDIO_357] <NEXT_AUDIO>
 [AUDIO_358] <NEXT_AUDIO>
 [AUDIO_359] <NEXT_AUDIO>
@@ -390,12 +390,12 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_375] <NEXT_AUDIO>
 [AUDIO_376] <NEXT_AUDIO>
 [AUDIO_377] <NEXT_AUDIO>
-[AUDIO_378] <SPK_A> 너 무 <NEXT_AUDIO>
+[AUDIO_378] <SPK_A>  너무 <NEXT_AUDIO>
 [AUDIO_379] <NEXT_AUDIO>
 [AUDIO_380] <NEXT_AUDIO>
 [AUDIO_381] <NEXT_AUDIO>
 [AUDIO_382]  많이 <NEXT_AUDIO>
-[AUDIO_383] <SPK_B> 내 가 <NEXT_AUDIO>
+[AUDIO_383] <SPK_B>  내가 <NEXT_AUDIO>
 [AUDIO_384] <NEXT_AUDIO>
 [AUDIO_385] <NEXT_AUDIO>
 [AUDIO_386] <NEXT_AUDIO>
@@ -407,7 +407,7 @@ ep008 spk=1 lane=2 g0   29.25-  31.38 outcome=shift p_end=1.0 tokens=8 :: 내가
 [AUDIO_392] <NEXT_AUDIO>
 [AUDIO_393]  느낌 <NEXT_AUDIO>
 [AUDIO_394] <NEXT_AUDIO>
-[AUDIO_395] <SPK_A> 우 리 <SPK_B> <EOT> <NEXT_AUDIO>
+[AUDIO_395] <SPK_A>  우리 <SPK_B> <EOT> <NEXT_AUDIO>
 [AUDIO_396] <NEXT_AUDIO>
 [AUDIO_397] <NEXT_AUDIO>
 [AUDIO_398] <NEXT_AUDIO>

@@ -2,7 +2,7 @@
 # episodes=1 reassigned=0 outcomes={'silence': 1} soft=0 eot_masked=1 tokens=175 tags=2 overflow=0
 # checks: OK
 
-ep000 spk=0 lane=1 g0    0.00-  35.16 outcome=truncated p_end=None tokens=175 :: 어 전반적인 판세는 하원은 공화당이 우세하고 상원은 박빙 이야미 하원 사백 삼십 오석 중 공화당 우세 지역은 스 이백 이십 곳으로 민주당 이런 
+ep000 spk=0 lane=1 g0    0.00-  35.16 outcome=truncated p_end=None tokens=175 ::  어 전반적인 판세는 하원은 공화당이 우세하고 상원은 박빙 이야 미 하원 사백 삼십 오석 중 공화당 우세 지역은 스 이백 이십 곳으로 민주당 이
 
 [AUDIO_0] <SPK_A> <ONSET> <NEXT_AUDIO>
 [AUDIO_1] <NEXT_AUDIO>
@@ -20,7 +20,7 @@ ep000 spk=0 lane=1 g0    0.00-  35.16 outcome=truncated p_end=None tokens=175 ::
 [AUDIO_13] <NEXT_AUDIO>
 [AUDIO_14] <NEXT_AUDIO>
 [AUDIO_15] <NEXT_AUDIO>
-[AUDIO_16] 어 <NEXT_AUDIO>
+[AUDIO_16]  어 <NEXT_AUDIO>
 [AUDIO_17] <NEXT_AUDIO>
 [AUDIO_18] <NEXT_AUDIO>
 [AUDIO_19] <NEXT_AUDIO>
@@ -98,7 +98,7 @@ ep000 spk=0 lane=1 g0    0.00-  35.16 outcome=truncated p_end=None tokens=175 ::
 [AUDIO_91] <NEXT_AUDIO>
 [AUDIO_92] <NEXT_AUDIO>
 [AUDIO_93] <NEXT_AUDIO>
-[AUDIO_94] 미 <NEXT_AUDIO>
+[AUDIO_94]  미 <NEXT_AUDIO>
 [AUDIO_95] <NEXT_AUDIO>
 [AUDIO_96] <NEXT_AUDIO>
 [AUDIO_97]  하 원 <NEXT_AUDIO>
@@ -274,7 +274,7 @@ ep000 spk=0 lane=1 g0    0.00-  35.16 outcome=truncated p_end=None tokens=175 ::
 [AUDIO_267] <NEXT_AUDIO>
 [AUDIO_268] <NEXT_AUDIO>
 [AUDIO_269] <NEXT_AUDIO>
-[AUDIO_270] 이 <NEXT_AUDIO>
+[AUDIO_270]  이 <NEXT_AUDIO>
 [AUDIO_271] <NEXT_AUDIO>
 [AUDIO_272] <NEXT_AUDIO>
 [AUDIO_273] <NEXT_AUDIO>

@@ -2,11 +2,11 @@
 # episodes=5 reassigned=0 outcomes={'hold_long': 1, 'shift': 2, 'both': 1, 'silence': 1} soft=4 eot_masked=1 tokens=71 tags=25 overflow=0
 # checks: OK
 
-ep000 spk=E lane=1 g0    1.65-   3.17 outcome=hold_long p_end=0.3 tokens=5 :: and they have a score
-ep001 spk=E lane=1 g0    5.39-  16.90 outcome=shift p_end=1.0 tokens=34 :: and that's as much as we really need and of cou and they also have a time a time
-ep002 spk=D lane=2 g0   12.81-  20.75 outcome=both p_end=0.5 tokens=13 :: and speaker speaker and um topic segmenting we'll need as well
-ep003 spk=E lane=1 g0   20.77-  25.01 outcome=truncated p_end=None tokens=18 :: yeah so an information which topic they're in yeah and and probably separate to 
-ep004 spk=D lane=2 g0   22.82-  23.26 outcome=shift p_end=1.0 tokens=1 :: yeah
+ep000 spk=E lane=1 g0    1.65-   3.17 outcome=hold_long p_end=0.3 tokens=5 ::  and they have a score
+ep001 spk=E lane=1 g0    5.39-  16.90 outcome=shift p_end=1.0 tokens=34 ::  and that's as much as we really need and of cou and they also have a time a tim
+ep002 spk=D lane=2 g0   12.81-  20.75 outcome=both p_end=0.5 tokens=13 ::  and speaker speaker and um topic segmenting we'll need as well
+ep003 spk=E lane=1 g0   20.77-  25.01 outcome=truncated p_end=None tokens=18 ::  yeah so an information which topic they're in yeah and and probably separate to
+ep004 spk=D lane=2 g0   22.82-  23.26 outcome=shift p_end=1.0 tokens=1 ::  yeah
 
 [AUDIO_0] <NEXT_AUDIO>
 [AUDIO_1] <NEXT_AUDIO>
@@ -35,7 +35,7 @@ ep004 spk=D lane=2 g0   22.82-  23.26 outcome=shift p_end=1.0 tokens=1 :: yeah
 [AUDIO_24] <NEXT_AUDIO>
 [AUDIO_25] <NEXT_AUDIO>
 [AUDIO_26] <NEXT_AUDIO>
-[AUDIO_27] and <NEXT_AUDIO>
+[AUDIO_27]  and <NEXT_AUDIO>
 [AUDIO_28] <NEXT_AUDIO>
 [AUDIO_29]  they <NEXT_AUDIO>
 [AUDIO_30] <NEXT_AUDIO>
@@ -80,7 +80,7 @@ ep004 spk=D lane=2 g0   22.82-  23.26 outcome=shift p_end=1.0 tokens=1 :: yeah
 [AUDIO_69] <NEXT_AUDIO>
 [AUDIO_70] <NEXT_AUDIO>
 [AUDIO_71] <NEXT_AUDIO>
-[AUDIO_72] and <NEXT_AUDIO>
+[AUDIO_72]  and <NEXT_AUDIO>
 [AUDIO_73] <NEXT_AUDIO>
 [AUDIO_74] <NEXT_AUDIO>
 [AUDIO_75]  that 's <NEXT_AUDIO>
@@ -175,7 +175,7 @@ ep004 spk=D lane=2 g0   22.82-  23.26 outcome=shift p_end=1.0 tokens=1 :: yeah
 [AUDIO_164] <NEXT_AUDIO>
 [AUDIO_165] <NEXT_AUDIO>
 [AUDIO_166] <NEXT_AUDIO>
-[AUDIO_167] <SPK_B> and <SPK_A>  course <NEXT_AUDIO>
+[AUDIO_167] <SPK_B>  and <SPK_A>  course <NEXT_AUDIO>
 [AUDIO_168] <NEXT_AUDIO>
 [AUDIO_169] <NEXT_AUDIO>
 [AUDIO_170] <NEXT_AUDIO>
@@ -273,7 +273,7 @@ ep004 spk=D lane=2 g0   22.82-  23.26 outcome=shift p_end=1.0 tokens=1 :: yeah
 [AUDIO_262] <NEXT_AUDIO>
 [AUDIO_263] <SPK_B>  well <SPK_B> <EOT> <NEXT_AUDIO>
 [AUDIO_264] <NEXT_AUDIO>
-[AUDIO_265] <SPK_A> yeah <NEXT_AUDIO>
+[AUDIO_265] <SPK_A>  yeah <NEXT_AUDIO>
 [AUDIO_266] <NEXT_AUDIO>
 [AUDIO_267]  so <NEXT_AUDIO>
 [AUDIO_268]  an <NEXT_AUDIO>
@@ -300,7 +300,7 @@ ep004 spk=D lane=2 g0   22.82-  23.26 outcome=shift p_end=1.0 tokens=1 :: yeah
 [AUDIO_289] <NEXT_AUDIO>
 [AUDIO_290] <NEXT_AUDIO>
 [AUDIO_291] <NEXT_AUDIO>
-[AUDIO_292] <SPK_B> yeah <NEXT_AUDIO>
+[AUDIO_292] <SPK_B>  yeah <NEXT_AUDIO>
 [AUDIO_293] <SPK_B> <EOT> <NEXT_AUDIO>
 [AUDIO_294] <SPK_A>  and <NEXT_AUDIO>
 [AUDIO_295] <NEXT_AUDIO>

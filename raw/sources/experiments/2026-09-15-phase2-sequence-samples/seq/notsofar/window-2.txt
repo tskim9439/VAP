@@ -1,29 +1,29 @@
 # notsofar:MTG_30860 t0=240.0 L=35.159 K=439 delay=4 speakers=['Bert', 'Ernie', 'Olivia', 'Peter', 'Walter'] lanes={'Ernie': 1, 'Peter': 2, 'Olivia': 3, 'Walter': 4, 'Bert': 5}
-# episodes=22 reassigned=0 outcomes={'both': 9, 'shift': 12, 'silence': 1} soft=21 eot_masked=1 tokens=133 tags=90 overflow=0
+# episodes=22 reassigned=0 outcomes={'both': 9, 'shift': 12, 'silence': 1} soft=21 eot_masked=1 tokens=130 tags=90 overflow=0
 # checks: OK
 
-ep000 spk=Ernie lane=1 g0    0.26-   1.43 outcome=both p_end=0.5 tokens=4 :: reclining seat
-ep001 spk=Peter lane=2 g0    1.26-   1.96 outcome=shift p_end=1.0 tokens=1 :: yes
-ep002 spk=Olivia lane=3 g0    2.20-   6.76 outcome=both p_end=0.5 tokens=10 :: big tvand some movie some some uh internet for
-ep003 spk=Ernie lane=1 g0    3.32-   4.17 outcome=shift p_end=1.0 tokens=2 :: big tv
-ep004 spk=Olivia lane=3 g0    7.07-  10.59 outcome=both p_end=0.5 tokens=8 :: for uh for our participants therefore a yeah
-ep005 spk=Ernie lane=1 g0    9.04-  10.71 outcome=shift p_end=1.0 tokens=2 :: charging stations
-ep006 spk=Peter lane=2 g0    9.34-  11.11 outcome=both p_end=0.5 tokens=2 :: netflix
-ep007 spk=Walter lane=4 g0   10.54-  10.93 outcome=shift p_end=1.0 tokens=2 :: hmm
-ep008 spk=Bert lane=5 g0   10.88-  13.98 outcome=both p_end=0.5 tokens=14 :: you sold me on charging station as long as i could charge my phone
-ep009 spk=Olivia lane=3 g0   12.67-  14.95 outcome=shift p_end=1.0 tokens=6 :: yes we definitely need those yeah
-ep010 spk=Peter lane=2 g0   13.33-  15.43 outcome=shift p_end=1.0 tokens=4 :: that's important exactly
-ep011 spk=Walter lane=4 g0   14.24-  14.66 outcome=shift p_end=1.0 tokens=2 :: hmm
-ep012 spk=Bert lane=5 g0   14.78-  22.38 outcome=shift p_end=1.0 tokens=32 :: i mean that's the problem in the current buses that i just took here it eh if yo
-ep013 spk=Peter lane=2 g0   22.36-  23.12 outcome=both p_end=0.5 tokens=1 :: yeah
-ep014 spk=Ernie lane=1 g0   22.97-  23.70 outcome=both p_end=0.5 tokens=1 :: mmm
-ep015 spk=Walter lane=4 g0   23.18-  23.55 outcome=both p_end=0.5 tokens=2 :: hmm
-ep016 spk=Peter lane=2 g0   23.39-  35.16 outcome=truncated p_end=None tokens=35 :: exactly it doesn't actually charge the deviceuh which is frustrating umi think e
-ep017 spk=Olivia lane=3 g0   23.45-  23.99 outcome=both p_end=0.5 tokens=1 :: mmm
-ep018 spk=Walter lane=4 g0   25.29-  25.77 outcome=shift p_end=1.0 tokens=1 :: yeah
-ep019 spk=Ernie lane=1 g0   25.66-  26.47 outcome=shift p_end=1.0 tokens=1 :: right
-ep020 spk=Olivia lane=3 g0   25.81-  26.35 outcome=shift p_end=1.0 tokens=1 :: yeah
-ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: right
+ep000 spk=Ernie lane=1 g0    0.26-   1.43 outcome=both p_end=0.5 tokens=3 ::  reclining seat
+ep001 spk=Peter lane=2 g0    1.26-   1.96 outcome=shift p_end=1.0 tokens=1 ::  yes
+ep002 spk=Olivia lane=3 g0    2.20-   6.76 outcome=both p_end=0.5 tokens=10 ::  big tv and some movie some some uh internet for
+ep003 spk=Ernie lane=1 g0    3.32-   4.17 outcome=shift p_end=1.0 tokens=2 ::  big tv
+ep004 spk=Olivia lane=3 g0    7.07-  10.59 outcome=both p_end=0.5 tokens=8 ::  for uh for our participants therefore a yeah
+ep005 spk=Ernie lane=1 g0    9.04-  10.71 outcome=shift p_end=1.0 tokens=2 ::  charging stations
+ep006 spk=Peter lane=2 g0    9.34-  11.11 outcome=both p_end=0.5 tokens=2 ::  netflix
+ep007 spk=Walter lane=4 g0   10.54-  10.93 outcome=shift p_end=1.0 tokens=1 ::  hmm
+ep008 spk=Bert lane=5 g0   10.88-  13.98 outcome=both p_end=0.5 tokens=14 ::  you sold me on charging station as long as i could charge my phone
+ep009 spk=Olivia lane=3 g0   12.67-  14.95 outcome=shift p_end=1.0 tokens=6 ::  yes we definitely need those yeah
+ep010 spk=Peter lane=2 g0   13.33-  15.43 outcome=shift p_end=1.0 tokens=4 ::  that's important exactly
+ep011 spk=Walter lane=4 g0   14.24-  14.66 outcome=shift p_end=1.0 tokens=1 ::  hmm
+ep012 spk=Bert lane=5 g0   14.78-  22.38 outcome=shift p_end=1.0 tokens=32 ::  i mean that's the problem in the current buses that i just took here it eh if y
+ep013 spk=Peter lane=2 g0   22.36-  23.12 outcome=both p_end=0.5 tokens=1 ::  yeah
+ep014 spk=Ernie lane=1 g0   22.97-  23.70 outcome=both p_end=0.5 tokens=2 ::  mmm
+ep015 spk=Walter lane=4 g0   23.18-  23.55 outcome=both p_end=0.5 tokens=1 ::  hmm
+ep016 spk=Peter lane=2 g0   23.39-  35.16 outcome=truncated p_end=None tokens=34 ::  exactly it doesn't actually charge the device uh which is frustrating um i thin
+ep017 spk=Olivia lane=3 g0   23.45-  23.99 outcome=both p_end=0.5 tokens=2 ::  mmm
+ep018 spk=Walter lane=4 g0   25.29-  25.77 outcome=shift p_end=1.0 tokens=1 ::  yeah
+ep019 spk=Ernie lane=1 g0   25.66-  26.47 outcome=shift p_end=1.0 tokens=1 ::  right
+ep020 spk=Olivia lane=3 g0   25.81-  26.35 outcome=shift p_end=1.0 tokens=1 ::  yeah
+ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 ::  right
 
 [AUDIO_0] <NEXT_AUDIO>
 [AUDIO_1] <NEXT_AUDIO>
@@ -40,7 +40,7 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_12] <NEXT_AUDIO>
 [AUDIO_13] <NEXT_AUDIO>
 [AUDIO_14] <NEXT_AUDIO>
-[AUDIO_15] re cl ining <SPK_B> <ONSET> <NEXT_AUDIO>
+[AUDIO_15]  recl ining <SPK_B> <ONSET> <NEXT_AUDIO>
 [AUDIO_16] <NEXT_AUDIO>
 [AUDIO_17] <NEXT_AUDIO>
 [AUDIO_18] <NEXT_AUDIO>
@@ -51,7 +51,7 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_23] <NEXT_AUDIO>
 [AUDIO_24] <NEXT_AUDIO>
 [AUDIO_25] <NEXT_AUDIO>
-[AUDIO_26] <SPK_B> yes <NEXT_AUDIO>
+[AUDIO_26] <SPK_B>  yes <NEXT_AUDIO>
 [AUDIO_27] <SPK_B> <EOT> <SPK_3> <ONSET> <NEXT_AUDIO>
 [AUDIO_28] <NEXT_AUDIO>
 [AUDIO_29] <NEXT_AUDIO>
@@ -59,7 +59,7 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_31] <NEXT_AUDIO>
 [AUDIO_32] <NEXT_AUDIO>
 [AUDIO_33] <NEXT_AUDIO>
-[AUDIO_34] big <NEXT_AUDIO>
+[AUDIO_34]  big <NEXT_AUDIO>
 [AUDIO_35] <NEXT_AUDIO>
 [AUDIO_36] <NEXT_AUDIO>
 [AUDIO_37] <NEXT_AUDIO>
@@ -73,7 +73,7 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_45] <NEXT_AUDIO>
 [AUDIO_46] <NEXT_AUDIO>
 [AUDIO_47] <NEXT_AUDIO>
-[AUDIO_48] <SPK_3> and <SPK_A> big <NEXT_AUDIO>
+[AUDIO_48] <SPK_3>  and <SPK_A>  big <NEXT_AUDIO>
 [AUDIO_49] <NEXT_AUDIO>
 [AUDIO_50] <NEXT_AUDIO>
 [AUDIO_51] <SPK_3>  some <NEXT_AUDIO>
@@ -122,7 +122,7 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_94] <NEXT_AUDIO>
 [AUDIO_95] <NEXT_AUDIO>
 [AUDIO_96] <NEXT_AUDIO>
-[AUDIO_97] for <NEXT_AUDIO>
+[AUDIO_97]  for <NEXT_AUDIO>
 [AUDIO_98] <NEXT_AUDIO>
 [AUDIO_99] <NEXT_AUDIO>
 [AUDIO_100] <NEXT_AUDIO>
@@ -149,7 +149,7 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_121] <NEXT_AUDIO>
 [AUDIO_122]  a <NEXT_AUDIO>
 [AUDIO_123] <NEXT_AUDIO>
-[AUDIO_124] <SPK_A> charging <NEXT_AUDIO>
+[AUDIO_124] <SPK_A>  charging <NEXT_AUDIO>
 [AUDIO_125] <NEXT_AUDIO>
 [AUDIO_126] <NEXT_AUDIO>
 [AUDIO_127] <NEXT_AUDIO>
@@ -160,15 +160,15 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_132] <NEXT_AUDIO>
 [AUDIO_133] <NEXT_AUDIO>
 [AUDIO_134] <SPK_3>  yeah <NEXT_AUDIO>
-[AUDIO_135] <SPK_B> net flix <SPK_3> <EOT> <NEXT_AUDIO>
+[AUDIO_135] <SPK_B>  net flix <SPK_3> <EOT> <NEXT_AUDIO>
 [AUDIO_136] <SPK_5> <ONSET> <NEXT_AUDIO>
 [AUDIO_137] <SPK_A>  stations <SPK_A> <EOT> <NEXT_AUDIO>
 [AUDIO_138] <NEXT_AUDIO>
-[AUDIO_139] <SPK_4> h mm <SPK_4> <EOT> <NEXT_AUDIO>
+[AUDIO_139] <SPK_4>  hmm <SPK_4> <EOT> <NEXT_AUDIO>
 [AUDIO_140] <NEXT_AUDIO>
 [AUDIO_141] <SPK_B> <EOT> <NEXT_AUDIO>
 [AUDIO_142] <NEXT_AUDIO>
-[AUDIO_143] <SPK_5> you <NEXT_AUDIO>
+[AUDIO_143] <SPK_5>  you <NEXT_AUDIO>
 [AUDIO_144] <NEXT_AUDIO>
 [AUDIO_145] <NEXT_AUDIO>
 [AUDIO_146] <NEXT_AUDIO>
@@ -196,11 +196,11 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_168]  i <NEXT_AUDIO>
 [AUDIO_169]  could <NEXT_AUDIO>
 [AUDIO_170] <NEXT_AUDIO>
-[AUDIO_171] <SPK_3> yes <NEXT_AUDIO>
+[AUDIO_171] <SPK_3>  yes <NEXT_AUDIO>
 [AUDIO_172] <SPK_5>  charge <NEXT_AUDIO>
 [AUDIO_173] <SPK_3>  we <NEXT_AUDIO>
 [AUDIO_174] <SPK_5>  my <NEXT_AUDIO>
-[AUDIO_175] <SPK_B> that 's <NEXT_AUDIO>
+[AUDIO_175] <SPK_B>  that 's <NEXT_AUDIO>
 [AUDIO_176] <NEXT_AUDIO>
 [AUDIO_177] <NEXT_AUDIO>
 [AUDIO_178] <SPK_5>  phone <SPK_3>  definitely <SPK_5> <EOT> <SPK_4> <ONSET> <NEXT_AUDIO>
@@ -210,12 +210,12 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_182] <SPK_B>  important <NEXT_AUDIO>
 [AUDIO_183] <NEXT_AUDIO>
 [AUDIO_184] <SPK_5> <ONSET> <NEXT_AUDIO>
-[AUDIO_185] <SPK_4> h mm <NEXT_AUDIO>
+[AUDIO_185] <SPK_4>  hmm <NEXT_AUDIO>
 [AUDIO_186] <SPK_3>  those <SPK_4> <EOT> <NEXT_AUDIO>
 [AUDIO_187] <NEXT_AUDIO>
 [AUDIO_188] <NEXT_AUDIO>
 [AUDIO_189] <NEXT_AUDIO>
-[AUDIO_190] <SPK_3>  yeah <SPK_5> i <SPK_3> <EOT> <NEXT_AUDIO>
+[AUDIO_190] <SPK_3>  yeah <SPK_5>  i <SPK_3> <EOT> <NEXT_AUDIO>
 [AUDIO_191] <NEXT_AUDIO>
 [AUDIO_192] <SPK_5>  mean <NEXT_AUDIO>
 [AUDIO_193] <NEXT_AUDIO>
@@ -315,19 +315,19 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_287] <SPK_A> <ONSET> <NEXT_AUDIO>
 [AUDIO_288] <NEXT_AUDIO>
 [AUDIO_289] <SPK_4> <ONSET> <NEXT_AUDIO>
-[AUDIO_290] <SPK_B> yeah <NEXT_AUDIO>
+[AUDIO_290] <SPK_B>  yeah <NEXT_AUDIO>
 [AUDIO_291] <NEXT_AUDIO>
 [AUDIO_292] <SPK_B> <EOT> <SPK_B> <ONSET> <NEXT_AUDIO>
 [AUDIO_293] <SPK_3> <ONSET> <NEXT_AUDIO>
 [AUDIO_294] <NEXT_AUDIO>
 [AUDIO_295] <NEXT_AUDIO>
-[AUDIO_296] <SPK_A> mmm <NEXT_AUDIO>
-[AUDIO_297] <SPK_4> h mm <SPK_4> <EOT> <NEXT_AUDIO>
+[AUDIO_296] <SPK_A>  m mm <NEXT_AUDIO>
+[AUDIO_297] <SPK_4>  hmm <SPK_4> <EOT> <NEXT_AUDIO>
 [AUDIO_298] <NEXT_AUDIO>
 [AUDIO_299] <SPK_A> <EOT> <NEXT_AUDIO>
 [AUDIO_300] <NEXT_AUDIO>
 [AUDIO_301] <NEXT_AUDIO>
-[AUDIO_302] <SPK_3> mmm <SPK_B> ex actly <SPK_3> <EOT> <NEXT_AUDIO>
+[AUDIO_302] <SPK_3>  m mm <SPK_B>  exactly <SPK_3> <EOT> <NEXT_AUDIO>
 [AUDIO_303] <SPK_B>  it <NEXT_AUDIO>
 [AUDIO_304] <NEXT_AUDIO>
 [AUDIO_305]  doesn 't <NEXT_AUDIO>
@@ -350,15 +350,15 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_322] <SPK_3> <ONSET> <NEXT_AUDIO>
 [AUDIO_323] <NEXT_AUDIO>
 [AUDIO_324] <NEXT_AUDIO>
-[AUDIO_325] <SPK_4> yeah <SPK_4> <EOT> <NEXT_AUDIO>
+[AUDIO_325] <SPK_4>  yeah <SPK_4> <EOT> <NEXT_AUDIO>
 [AUDIO_326] <NEXT_AUDIO>
 [AUDIO_327] <NEXT_AUDIO>
 [AUDIO_328] <NEXT_AUDIO>
-[AUDIO_329] <SPK_A> right <NEXT_AUDIO>
+[AUDIO_329] <SPK_A>  right <NEXT_AUDIO>
 [AUDIO_330] <NEXT_AUDIO>
 [AUDIO_331] <NEXT_AUDIO>
-[AUDIO_332] <SPK_3> yeah <SPK_3> <EOT> <NEXT_AUDIO>
-[AUDIO_333] <SPK_B> uh <SPK_A> <EOT> <NEXT_AUDIO>
+[AUDIO_332] <SPK_3>  yeah <SPK_3> <EOT> <NEXT_AUDIO>
+[AUDIO_333] <SPK_B>  uh <SPK_A> <EOT> <NEXT_AUDIO>
 [AUDIO_334] <NEXT_AUDIO>
 [AUDIO_335] <NEXT_AUDIO>
 [AUDIO_336] <SPK_B>  which <NEXT_AUDIO>
@@ -385,7 +385,7 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_357]  um <NEXT_AUDIO>
 [AUDIO_358] <NEXT_AUDIO>
 [AUDIO_359] <NEXT_AUDIO>
-[AUDIO_360] i <NEXT_AUDIO>
+[AUDIO_360]  i <NEXT_AUDIO>
 [AUDIO_361] <NEXT_AUDIO>
 [AUDIO_362] <NEXT_AUDIO>
 [AUDIO_363] <NEXT_AUDIO>
@@ -464,4 +464,4 @@ ep021 spk=Ernie lane=1 g0   34.64-  35.13 outcome=shift p_end=1.0 tokens=1 :: ri
 [AUDIO_436] <NEXT_AUDIO>
 [AUDIO_437] <NEXT_AUDIO>
 [AUDIO_438] <NEXT_AUDIO>
-[EMPTY_0] right <SPK_A> <EOT> <SPK_B> <EOT> <NEXT_AUDIO>
+[EMPTY_0]  right <SPK_A> <EOT> <SPK_B> <EOT> <NEXT_AUDIO>

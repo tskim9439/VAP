@@ -1,28 +1,28 @@
 # aihub134-1:2_2532G2A5_2566G2A5_T2_2D08T0372C000387_010781 t0=370.0 L=36.204 K=453 delay=4 speakers=['0', '1'] lanes={'0': 1, '1': 2}
-# episodes=22 reassigned=0 outcomes={'hold_short': 4, 'both': 12, 'shift': 5, 'silence': 1} soft=21 eot_masked=1 tokens=151 tags=65 overflow=0
+# episodes=22 reassigned=0 outcomes={'hold_short': 4, 'both': 12, 'shift': 5, 'silence': 1} soft=21 eot_masked=1 tokens=149 tags=65 overflow=0
 # checks: OK
 
-ep000 spk=0 lane=1 g0    0.00-   0.64 outcome=hold_short p_end=0.0 tokens=5 :: 왜 뭔가
-ep001 spk=0 lane=1 g0    0.96-   1.88 outcome=hold_short p_end=0.0 tokens=4 :: 얼마 크면
-ep002 spk=0 lane=1 g0    2.37-   3.42 outcome=both p_end=0.5 tokens=7 :: 이렇게 자기가 얘기해
-ep003 spk=0 lane=1 g0    3.79-   5.19 outcome=both p_end=0.5 tokens=8 :: 그죠 그다음부터는 가
-ep004 spk=1 lane=2 g0    5.22-   6.49 outcome=both p_end=0.5 tokens=8 :: 아침 아침 먹자고
-ep005 spk=0 lane=1 g0    7.98-  12.81 outcome=shift p_end=1.0 tokens=18 :: 뭐 자기를 좋아한대라 모르는 아 맨날 자기를 좋아한대
-ep006 spk=1 lane=2 g0    8.93-   9.54 outcome=both p_end=0.5 tokens=5 :: 그다음부터는
-ep007 spk=1 lane=2 g0   11.30-  11.72 outcome=both p_end=0.5 tokens=1 :: 어
-ep008 spk=1 lane=2 g0   12.66-  13.72 outcome=both p_end=0.5 tokens=3 :: 아 진짜
-ep009 spk=1 lane=2 g0   15.07-  15.79 outcome=shift p_end=1.0 tokens=6 :: 미경이 언니가
-ep010 spk=0 lane=1 g0   16.28-  18.04 outcome=both p_end=0.5 tokens=8 :: 몰라 자기를 좋아해 줘
-ep011 spk=0 lane=1 g0   18.58-  23.66 outcome=both p_end=0.5 tokens=22 :: 그니까 좀 관심을 준 아니 그 자기를 좋아해 주니까 고모가서 사준 거지
-ep012 spk=1 lane=2 g0   19.19-  20.28 outcome=shift p_end=1.0 tokens=4 :: 사진 보래
-ep013 spk=0 lane=1 g0   23.96-  25.10 outcome=both p_end=0.5 tokens=5 :: 좀 주는 건지
-ep014 spk=1 lane=2 g0   24.91-  25.27 outcome=both p_end=0.5 tokens=1 :: 어
-ep015 spk=0 lane=1 g0   25.59-  25.94 outcome=both p_end=0.5 tokens=1 :: 어
-ep016 spk=1 lane=2 g0   26.38-  27.28 outcome=shift p_end=1.0 tokens=1 :: 음
-ep017 spk=0 lane=1 g0   27.00-  31.00 outcome=hold_short p_end=0.0 tokens=23 :: 그냥 느낌을 얘기할 때 있잖아 어우 괜히 막 기다리고 막
-ep018 spk=0 lane=1 g0   31.25-  33.15 outcome=both p_end=0.5 tokens=9 :: 이런 거는 그렇게 얘기하라는 게
-ep019 spk=0 lane=1 g0   33.49-  35.80 outcome=hold_short p_end=0.0 tokens=11 :: 자기를 쪼끔 좋아한다는 식으로
-ep020 spk=1 lane=2 g0   34.42-  34.91 outcome=shift p_end=1.0 tokens=1 :: 아
+ep000 spk=0 lane=1 g0    0.00-   0.64 outcome=hold_short p_end=0.0 tokens=6 ::  왜 뭔가
+ep001 spk=0 lane=1 g0    0.96-   1.88 outcome=hold_short p_end=0.0 tokens=3 ::  얼마 크면
+ep002 spk=0 lane=1 g0    2.37-   3.42 outcome=both p_end=0.5 tokens=5 ::  이렇게 자기가 얘기해
+ep003 spk=0 lane=1 g0    3.79-   5.19 outcome=both p_end=0.5 tokens=8 ::  그죠 그다음부터는 가
+ep004 spk=1 lane=2 g0    5.22-   6.49 outcome=both p_end=0.5 tokens=8 ::  아침 아침 먹자고
+ep005 spk=0 lane=1 g0    7.98-  12.81 outcome=shift p_end=1.0 tokens=19 ::  뭐 자기를 좋아한대라 모르는 아 맨날 자기를 좋아한대
+ep006 spk=1 lane=2 g0    8.93-   9.54 outcome=both p_end=0.5 tokens=5 ::  그다음부터는
+ep007 spk=1 lane=2 g0   11.30-  11.72 outcome=both p_end=0.5 tokens=1 ::  어
+ep008 spk=1 lane=2 g0   12.66-  13.72 outcome=both p_end=0.5 tokens=3 ::  아 진짜
+ep009 spk=1 lane=2 g0   15.07-  15.79 outcome=shift p_end=1.0 tokens=6 ::  미경이 언니가
+ep010 spk=0 lane=1 g0   16.28-  18.04 outcome=both p_end=0.5 tokens=9 ::  몰라 자기를 좋아해 줘
+ep011 spk=0 lane=1 g0   18.58-  23.66 outcome=both p_end=0.5 tokens=22 ::  그니까 좀 관심을 준 아니 그 자기를 좋아해 주니까 고모가서 사준 거지
+ep012 spk=1 lane=2 g0   19.19-  20.28 outcome=shift p_end=1.0 tokens=3 ::  사진 보래
+ep013 spk=0 lane=1 g0   23.96-  25.10 outcome=both p_end=0.5 tokens=5 ::  좀 주는 건지
+ep014 spk=1 lane=2 g0   24.91-  25.27 outcome=both p_end=0.5 tokens=1 ::  어
+ep015 spk=0 lane=1 g0   25.59-  25.94 outcome=both p_end=0.5 tokens=1 ::  어
+ep016 spk=1 lane=2 g0   26.38-  27.28 outcome=shift p_end=1.0 tokens=2 ::  음
+ep017 spk=0 lane=1 g0   27.00-  31.00 outcome=hold_short p_end=0.0 tokens=22 ::  그냥 느낌을 얘기할 때 있잖아 어우 괜히 막 기다리고 막
+ep018 spk=0 lane=1 g0   31.25-  33.15 outcome=both p_end=0.5 tokens=8 ::  이런 거는 그렇게 얘기하라는 게
+ep019 spk=0 lane=1 g0   33.49-  35.80 outcome=hold_short p_end=0.0 tokens=11 ::  자기를 쪼끔 좋아한다는 식으로
+ep020 spk=1 lane=2 g0   34.42-  34.91 outcome=shift p_end=1.0 tokens=1 ::  아
 ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 :: 
 
 [AUDIO_0] <SPK_A> <ONSET> <NEXT_AUDIO>
@@ -31,7 +31,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_3] <NEXT_AUDIO>
 [AUDIO_4] <NEXT_AUDIO>
 [AUDIO_5] <NEXT_AUDIO>
-[AUDIO_6] 왜 <NEXT_AUDIO>
+[AUDIO_6]  � � <NEXT_AUDIO>
 [AUDIO_7] <NEXT_AUDIO>
 [AUDIO_8] <NEXT_AUDIO>
 [AUDIO_9] <NEXT_AUDIO>
@@ -43,7 +43,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_15] <NEXT_AUDIO>
 [AUDIO_16] <NEXT_AUDIO>
 [AUDIO_17] <NEXT_AUDIO>
-[AUDIO_18] 얼 마 <NEXT_AUDIO>
+[AUDIO_18]  얼마 <NEXT_AUDIO>
 [AUDIO_19] <NEXT_AUDIO>
 [AUDIO_20] <NEXT_AUDIO>
 [AUDIO_21] <NEXT_AUDIO>
@@ -61,7 +61,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_33] <NEXT_AUDIO>
 [AUDIO_34] <NEXT_AUDIO>
 [AUDIO_35] <NEXT_AUDIO>
-[AUDIO_36] 이 렇 게 <NEXT_AUDIO>
+[AUDIO_36]  이렇게 <NEXT_AUDIO>
 [AUDIO_37] <NEXT_AUDIO>
 [AUDIO_38] <NEXT_AUDIO>
 [AUDIO_39]  자기 <NEXT_AUDIO>
@@ -80,7 +80,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_52] <NEXT_AUDIO>
 [AUDIO_53] <NEXT_AUDIO>
 [AUDIO_54] <NEXT_AUDIO>
-[AUDIO_55] 그 죠 <NEXT_AUDIO>
+[AUDIO_55]  그 죠 <NEXT_AUDIO>
 [AUDIO_56] <NEXT_AUDIO>
 [AUDIO_57] <NEXT_AUDIO>
 [AUDIO_58] <NEXT_AUDIO>
@@ -97,7 +97,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_69] <NEXT_AUDIO>
 [AUDIO_70] <NEXT_AUDIO>
 [AUDIO_71] <NEXT_AUDIO>
-[AUDIO_72] <SPK_B> 아 침 <NEXT_AUDIO>
+[AUDIO_72] <SPK_B>  아 침 <NEXT_AUDIO>
 [AUDIO_73] <NEXT_AUDIO>
 [AUDIO_74] <NEXT_AUDIO>
 [AUDIO_75] <NEXT_AUDIO>
@@ -130,7 +130,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_102] <NEXT_AUDIO>
 [AUDIO_103] <NEXT_AUDIO>
 [AUDIO_104] <NEXT_AUDIO>
-[AUDIO_105] 뭐 <NEXT_AUDIO>
+[AUDIO_105]  � �� <NEXT_AUDIO>
 [AUDIO_106] <NEXT_AUDIO>
 [AUDIO_107] <NEXT_AUDIO>
 [AUDIO_108] <NEXT_AUDIO>
@@ -148,7 +148,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_120]  모르 <NEXT_AUDIO>
 [AUDIO_121] 는 <NEXT_AUDIO>
 [AUDIO_122]  아 <NEXT_AUDIO>
-[AUDIO_123] <SPK_B> 그 다 음 부터 는 <SPK_B> <EOT> <NEXT_AUDIO>
+[AUDIO_123] <SPK_B>  그 다 음 부터 는 <SPK_B> <EOT> <NEXT_AUDIO>
 [AUDIO_124] <NEXT_AUDIO>
 [AUDIO_125] <NEXT_AUDIO>
 [AUDIO_126] <NEXT_AUDIO>
@@ -174,7 +174,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_146] <NEXT_AUDIO>
 [AUDIO_147] <NEXT_AUDIO>
 [AUDIO_148] <NEXT_AUDIO>
-[AUDIO_149] <SPK_B> 어 <SPK_B> <EOT> <NEXT_AUDIO>
+[AUDIO_149] <SPK_B>  어 <SPK_B> <EOT> <NEXT_AUDIO>
 [AUDIO_150] <NEXT_AUDIO>
 [AUDIO_151] <NEXT_AUDIO>
 [AUDIO_152] <NEXT_AUDIO>
@@ -192,7 +192,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_164] <NEXT_AUDIO>
 [AUDIO_165] <NEXT_AUDIO>
 [AUDIO_166] <NEXT_AUDIO>
-[AUDIO_167] <SPK_B> 아 <NEXT_AUDIO>
+[AUDIO_167] <SPK_B>  아 <NEXT_AUDIO>
 [AUDIO_168] <NEXT_AUDIO>
 [AUDIO_169] <NEXT_AUDIO>
 [AUDIO_170] <NEXT_AUDIO>
@@ -221,7 +221,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_193] <NEXT_AUDIO>
 [AUDIO_194] <NEXT_AUDIO>
 [AUDIO_195] <NEXT_AUDIO>
-[AUDIO_196] 미 경 이 <NEXT_AUDIO>
+[AUDIO_196]  미 경 이 <NEXT_AUDIO>
 [AUDIO_197] <NEXT_AUDIO>
 [AUDIO_198]  언 니 <NEXT_AUDIO>
 [AUDIO_199] 가 <NEXT_AUDIO>
@@ -239,7 +239,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_211] <NEXT_AUDIO>
 [AUDIO_212] <NEXT_AUDIO>
 [AUDIO_213] <NEXT_AUDIO>
-[AUDIO_214] 몰 라 <NEXT_AUDIO>
+[AUDIO_214]  � � 라 <NEXT_AUDIO>
 [AUDIO_215] <NEXT_AUDIO>
 [AUDIO_216] <NEXT_AUDIO>
 [AUDIO_217] <NEXT_AUDIO>
@@ -263,7 +263,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_235] <NEXT_AUDIO>
 [AUDIO_236] <NEXT_AUDIO>
 [AUDIO_237] <NEXT_AUDIO>
-[AUDIO_238] 그 니까 <NEXT_AUDIO>
+[AUDIO_238]  그 니까 <NEXT_AUDIO>
 [AUDIO_239] <SPK_B> <ONSET> <NEXT_AUDIO>
 [AUDIO_240] <NEXT_AUDIO>
 [AUDIO_241] <NEXT_AUDIO>
@@ -277,7 +277,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_249]  관심 <NEXT_AUDIO>
 [AUDIO_250] <NEXT_AUDIO>
 [AUDIO_251] 을 <NEXT_AUDIO>
-[AUDIO_252] <SPK_B> 사 진 <NEXT_AUDIO>
+[AUDIO_252] <SPK_B>  사진 <NEXT_AUDIO>
 [AUDIO_253] <NEXT_AUDIO>
 [AUDIO_254] <SPK_A>  준 <NEXT_AUDIO>
 [AUDIO_255] <NEXT_AUDIO>
@@ -329,7 +329,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_301] <NEXT_AUDIO>
 [AUDIO_302] <NEXT_AUDIO>
 [AUDIO_303] <NEXT_AUDIO>
-[AUDIO_304] 좀 <NEXT_AUDIO>
+[AUDIO_304]  좀 <NEXT_AUDIO>
 [AUDIO_305] <NEXT_AUDIO>
 [AUDIO_306] <NEXT_AUDIO>
 [AUDIO_307] <NEXT_AUDIO>
@@ -344,7 +344,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_316] <NEXT_AUDIO>
 [AUDIO_317] <SPK_A>  건 지 <SPK_A> <EOT> <NEXT_AUDIO>
 [AUDIO_318] <NEXT_AUDIO>
-[AUDIO_319] <SPK_B> 어 <SPK_B> <EOT> <SPK_A> <ONSET> <NEXT_AUDIO>
+[AUDIO_319] <SPK_B>  어 <SPK_B> <EOT> <SPK_A> <ONSET> <NEXT_AUDIO>
 [AUDIO_320] <NEXT_AUDIO>
 [AUDIO_321] <NEXT_AUDIO>
 [AUDIO_322] <NEXT_AUDIO>
@@ -352,7 +352,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_324] <NEXT_AUDIO>
 [AUDIO_325] <NEXT_AUDIO>
 [AUDIO_326] <NEXT_AUDIO>
-[AUDIO_327] 어 <SPK_A> <EOT> <NEXT_AUDIO>
+[AUDIO_327]  어 <SPK_A> <EOT> <NEXT_AUDIO>
 [AUDIO_328] <NEXT_AUDIO>
 [AUDIO_329] <SPK_B> <ONSET> <NEXT_AUDIO>
 [AUDIO_330] <NEXT_AUDIO>
@@ -363,12 +363,12 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_335] <NEXT_AUDIO>
 [AUDIO_336] <NEXT_AUDIO>
 [AUDIO_337] <SPK_A> <ONSET> <NEXT_AUDIO>
-[AUDIO_338] <SPK_B> 음 <NEXT_AUDIO>
+[AUDIO_338] <SPK_B>  � � <NEXT_AUDIO>
 [AUDIO_339] <NEXT_AUDIO>
 [AUDIO_340] <NEXT_AUDIO>
 [AUDIO_341] <NEXT_AUDIO>
 [AUDIO_342] <NEXT_AUDIO>
-[AUDIO_343] <SPK_A> 그 냥 <NEXT_AUDIO>
+[AUDIO_343] <SPK_A>  그냥 <NEXT_AUDIO>
 [AUDIO_344] <SPK_B> <EOT> <NEXT_AUDIO>
 [AUDIO_345] <NEXT_AUDIO>
 [AUDIO_346] <NEXT_AUDIO>
@@ -421,7 +421,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_393] <NEXT_AUDIO>
 [AUDIO_394] <NEXT_AUDIO>
 [AUDIO_395] <NEXT_AUDIO>
-[AUDIO_396] 이 런 <NEXT_AUDIO>
+[AUDIO_396]  이런 <NEXT_AUDIO>
 [AUDIO_397] <NEXT_AUDIO>
 [AUDIO_398] <NEXT_AUDIO>
 [AUDIO_399] <NEXT_AUDIO>
@@ -450,7 +450,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_422] <NEXT_AUDIO>
 [AUDIO_423] <NEXT_AUDIO>
 [AUDIO_424] <NEXT_AUDIO>
-[AUDIO_425] 자 <NEXT_AUDIO>
+[AUDIO_425]  자 <NEXT_AUDIO>
 [AUDIO_426] <NEXT_AUDIO>
 [AUDIO_427] 기를 <NEXT_AUDIO>
 [AUDIO_428] <NEXT_AUDIO>
@@ -463,7 +463,7 @@ ep021 spk=0 lane=1 g0   36.08-  36.20 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_435] <NEXT_AUDIO>
 [AUDIO_436] <NEXT_AUDIO>
 [AUDIO_437] <NEXT_AUDIO>
-[AUDIO_438] <SPK_B> 아 <NEXT_AUDIO>
+[AUDIO_438] <SPK_B>  아 <NEXT_AUDIO>
 [AUDIO_439] <SPK_B> <EOT> <NEXT_AUDIO>
 [AUDIO_440] <NEXT_AUDIO>
 [AUDIO_441] <SPK_A>  좋아 한다는 <NEXT_AUDIO>

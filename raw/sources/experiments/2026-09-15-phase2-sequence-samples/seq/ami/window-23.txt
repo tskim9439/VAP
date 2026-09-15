@@ -2,12 +2,12 @@
 # episodes=7 reassigned=0 outcomes={'shift': 4, 'both': 1, 'silence': 2} soft=5 eot_masked=2 tokens=92 tags=30 overflow=0
 # checks: OK
 
-ep000 spk=B lane=1 g0    7.70-  10.40 outcome=shift p_end=1.0 tokens=15 :: so you would you're doing i you're doing a word by word base
-ep001 spk=C lane=2 g0   10.35-  25.27 outcome=shift p_end=1.0 tokens=40 :: yeah the problem is probably that um i extract all the words and then uh i don't
-ep002 spk=B lane=1 g0   14.86-  15.59 outcome=shift p_end=1.0 tokens=2 :: mm hmm
-ep003 spk=B lane=1 g0   20.94-  21.50 outcome=shift p_end=1.0 tokens=1 :: okay
-ep004 spk=B lane=1 g0   24.72-  31.31 outcome=both p_end=0.5 tokens=28 :: but every word does does the word picking like does it always have the same info
-ep005 spk=C lane=2 g0   30.77-  32.60 outcome=truncated p_end=None tokens=6 :: it depends on the position i
+ep000 spk=B lane=1 g0    7.70-  10.40 outcome=shift p_end=1.0 tokens=15 ::  so you would you're doing i you're doing a word by word base
+ep001 spk=C lane=2 g0   10.35-  25.27 outcome=shift p_end=1.0 tokens=40 ::  yeah the problem is probably that um i extract all the words and then uh i don'
+ep002 spk=B lane=1 g0   14.86-  15.59 outcome=shift p_end=1.0 tokens=2 ::  mm hmm
+ep003 spk=B lane=1 g0   20.94-  21.50 outcome=shift p_end=1.0 tokens=1 ::  okay
+ep004 spk=B lane=1 g0   24.72-  31.31 outcome=both p_end=0.5 tokens=28 ::  but every word does does the word picking like does it always have the same inf
+ep005 spk=C lane=2 g0   30.77-  32.60 outcome=truncated p_end=None tokens=6 ::  it depends on the position i
 ep006 spk=B lane=1 g0   32.56-  32.60 outcome=truncated p_end=None tokens=0 :: 
 
 [AUDIO_0] <NEXT_AUDIO>
@@ -113,7 +113,7 @@ ep006 spk=B lane=1 g0   32.56-  32.60 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_100] <NEXT_AUDIO>
 [AUDIO_101] <NEXT_AUDIO>
 [AUDIO_102] <NEXT_AUDIO>
-[AUDIO_103] so <NEXT_AUDIO>
+[AUDIO_103]  so <NEXT_AUDIO>
 [AUDIO_104] <NEXT_AUDIO>
 [AUDIO_105] <NEXT_AUDIO>
 [AUDIO_106]  you <NEXT_AUDIO>
@@ -146,7 +146,7 @@ ep006 spk=B lane=1 g0   32.56-  32.60 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_133] <SPK_A> <EOT> <NEXT_AUDIO>
 [AUDIO_134] <NEXT_AUDIO>
 [AUDIO_135] <NEXT_AUDIO>
-[AUDIO_136] <SPK_B> yeah <NEXT_AUDIO>
+[AUDIO_136] <SPK_B>  yeah <NEXT_AUDIO>
 [AUDIO_137] <NEXT_AUDIO>
 [AUDIO_138]  the <NEXT_AUDIO>
 [AUDIO_139] <NEXT_AUDIO>
@@ -205,7 +205,7 @@ ep006 spk=B lane=1 g0   32.56-  32.60 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_192] <NEXT_AUDIO>
 [AUDIO_193] <NEXT_AUDIO>
 [AUDIO_194]  and <NEXT_AUDIO>
-[AUDIO_195] <SPK_A> mm  hmm <NEXT_AUDIO>
+[AUDIO_195] <SPK_A>  mm  hmm <NEXT_AUDIO>
 [AUDIO_196] <NEXT_AUDIO>
 [AUDIO_197] <SPK_A> <EOT> <NEXT_AUDIO>
 [AUDIO_198] <NEXT_AUDIO>
@@ -280,7 +280,7 @@ ep006 spk=B lane=1 g0   32.56-  32.60 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_267] <NEXT_AUDIO>
 [AUDIO_268] <NEXT_AUDIO>
 [AUDIO_269]  it <NEXT_AUDIO>
-[AUDIO_270] <SPK_A> okay <NEXT_AUDIO>
+[AUDIO_270] <SPK_A>  okay <NEXT_AUDIO>
 [AUDIO_271] <SPK_A> <EOT> <NEXT_AUDIO>
 [AUDIO_272] <SPK_B>  would <NEXT_AUDIO>
 [AUDIO_273] <NEXT_AUDIO>
@@ -326,7 +326,7 @@ ep006 spk=B lane=1 g0   32.56-  32.60 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_313] <SPK_B>  position <NEXT_AUDIO>
 [AUDIO_314] <NEXT_AUDIO>
 [AUDIO_315] <NEXT_AUDIO>
-[AUDIO_316] <SPK_A> but <NEXT_AUDIO>
+[AUDIO_316] <SPK_A>  but <NEXT_AUDIO>
 [AUDIO_317] <NEXT_AUDIO>
 [AUDIO_318] <SPK_B> <EOT> <NEXT_AUDIO>
 [AUDIO_319] <NEXT_AUDIO>
@@ -401,7 +401,7 @@ ep006 spk=B lane=1 g0   32.56-  32.60 outcome=truncated p_end=None tokens=0 ::
 [AUDIO_388] <NEXT_AUDIO>
 [AUDIO_389] <NEXT_AUDIO>
 [AUDIO_390] <NEXT_AUDIO>
-[AUDIO_391]  position <SPK_B> it <NEXT_AUDIO>
+[AUDIO_391]  position <SPK_B>  it <NEXT_AUDIO>
 [AUDIO_392] <NEXT_AUDIO>
 [AUDIO_393] <SPK_A>  like <NEXT_AUDIO>
 [AUDIO_394] <SPK_A> <EOT> <NEXT_AUDIO>

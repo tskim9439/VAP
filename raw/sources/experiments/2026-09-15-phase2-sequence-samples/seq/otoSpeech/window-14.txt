@@ -2,10 +2,10 @@
 # episodes=4 reassigned=0 outcomes={'hold_long': 1, 'silence': 2, 'hold_short': 1} soft=3 eot_masked=1 tokens=74 tags=8 overflow=0
 # checks: OK
 
-ep000 spk=0 lane=1 g0    0.73-   4.53 outcome=hold_long p_end=0.3 tokens=16 :: you know it's like that first jump is this intuition of i want this now
-ep001 spk=0 lane=1 g0    5.73-  19.33 outcome=silence p_end=0.8 tokens=44 :: but then there's like what you said there's like a deeper deeper knowing inside 
-ep002 spk=1 lane=2 g0   22.90-  23.90 outcome=hold_short p_end=0.0 tokens=2 :: yeah yeah
-ep003 spk=1 lane=2 g0   24.40-  28.41 outcome=truncated p_end=None tokens=12 :: i mean i'm someone in general who tends to believe that
+ep000 spk=0 lane=1 g0    0.73-   4.53 outcome=hold_long p_end=0.3 tokens=16 ::  you know it's like that first jump is this intuition of i want this now
+ep001 spk=0 lane=1 g0    5.73-  19.33 outcome=silence p_end=0.8 tokens=44 ::  but then there's like what you said there's like a deeper deeper knowing inside
+ep002 spk=1 lane=2 g0   22.90-  23.90 outcome=hold_short p_end=0.0 tokens=2 ::  yeah yeah
+ep003 spk=1 lane=2 g0   24.40-  28.41 outcome=truncated p_end=None tokens=12 ::  i mean i'm someone in general who tends to believe that
 
 [AUDIO_0] <NEXT_AUDIO>
 [AUDIO_1] <NEXT_AUDIO>
@@ -21,7 +21,7 @@ ep003 spk=1 lane=2 g0   24.40-  28.41 outcome=truncated p_end=None tokens=12 :: 
 [AUDIO_11] <NEXT_AUDIO>
 [AUDIO_12] <NEXT_AUDIO>
 [AUDIO_13] <NEXT_AUDIO>
-[AUDIO_14] you <NEXT_AUDIO>
+[AUDIO_14]  you <NEXT_AUDIO>
 [AUDIO_15]  know <NEXT_AUDIO>
 [AUDIO_16] <NEXT_AUDIO>
 [AUDIO_17]  it 's <NEXT_AUDIO>
@@ -83,7 +83,7 @@ ep003 spk=1 lane=2 g0   24.40-  28.41 outcome=truncated p_end=None tokens=12 :: 
 [AUDIO_73] <NEXT_AUDIO>
 [AUDIO_74] <NEXT_AUDIO>
 [AUDIO_75] <NEXT_AUDIO>
-[AUDIO_76] but <NEXT_AUDIO>
+[AUDIO_76]  but <NEXT_AUDIO>
 [AUDIO_77] <NEXT_AUDIO>
 [AUDIO_78]  then <NEXT_AUDIO>
 [AUDIO_79] <NEXT_AUDIO>
@@ -301,7 +301,7 @@ ep003 spk=1 lane=2 g0   24.40-  28.41 outcome=truncated p_end=None tokens=12 :: 
 [AUDIO_291] <NEXT_AUDIO>
 [AUDIO_292] <NEXT_AUDIO>
 [AUDIO_293] <NEXT_AUDIO>
-[AUDIO_294] yeah <NEXT_AUDIO>
+[AUDIO_294]  yeah <NEXT_AUDIO>
 [AUDIO_295] <NEXT_AUDIO>
 [AUDIO_296] <NEXT_AUDIO>
 [AUDIO_297] <NEXT_AUDIO>
@@ -317,7 +317,7 @@ ep003 spk=1 lane=2 g0   24.40-  28.41 outcome=truncated p_end=None tokens=12 :: 
 [AUDIO_307] <NEXT_AUDIO>
 [AUDIO_308] <NEXT_AUDIO>
 [AUDIO_309] <NEXT_AUDIO>
-[AUDIO_310] i <NEXT_AUDIO>
+[AUDIO_310]  i <NEXT_AUDIO>
 [AUDIO_311] <NEXT_AUDIO>
 [AUDIO_312] <NEXT_AUDIO>
 [AUDIO_313]  mean <NEXT_AUDIO>

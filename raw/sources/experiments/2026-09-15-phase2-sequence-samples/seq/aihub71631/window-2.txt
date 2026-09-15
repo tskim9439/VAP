@@ -1,9 +1,9 @@
 # 71631:2_6368G1A2_6364G2A2_T1_2D11T0473C000136_029276 t0=980.0 L=30.225 K=378 delay=4 speakers=['1'] lanes={'1': 1}
-# episodes=2 reassigned=0 outcomes={'hold_short': 1, 'silence': 1} soft=1 eot_masked=1 tokens=145 tags=4 overflow=0
+# episodes=2 reassigned=0 outcomes={'hold_short': 1, 'silence': 1} soft=1 eot_masked=1 tokens=135 tags=4 overflow=0
 # checks: OK
 
-ep000 spk=1 lane=1 g0    0.05-   7.30 outcome=hold_short p_end=0.0 tokens=26 :: 그리고 또 내가 얘기할 건우리나라 한국 수출 감소세에 대해서 얘기 좀 하려고 해
-ep001 spk=1 lane=1 g0    7.55-  30.23 outcome=truncated p_end=None tokens=119 :: 우리나라는 수출이 없으면 먹고사는 게 어려운 나라잖아수출이 줄어들면 경제가 휘청이고 그런데 최근 수출 실적이 너무 안 좋아서 꾸준히 늘어나는 수
+ep000 spk=1 lane=1 g0    0.05-   7.30 outcome=hold_short p_end=0.0 tokens=21 ::  그리고 또 내가 얘기할 건 우리나라 한국 수출 감소세에 대해서 얘기 좀 하려고 해
+ep001 spk=1 lane=1 g0    7.55-  30.23 outcome=truncated p_end=None tokens=114 ::  우리나라는 수출이 없으면 먹고사는 게 어려운 나라잖아 수출이 줄어들면 경제가 휘청이고 그런데 최근 수출 실적이 너무 안 좋아서 꾸준히 늘어나는
 
 [AUDIO_0] <SPK_A> <ONSET> <NEXT_AUDIO>
 [AUDIO_1] <NEXT_AUDIO>
@@ -13,7 +13,7 @@ ep001 spk=1 lane=1 g0    7.55-  30.23 outcome=truncated p_end=None tokens=119 ::
 [AUDIO_5] <NEXT_AUDIO>
 [AUDIO_6] <NEXT_AUDIO>
 [AUDIO_7] <NEXT_AUDIO>
-[AUDIO_8] 그 리 고 <NEXT_AUDIO>
+[AUDIO_8]  그리고 <NEXT_AUDIO>
 [AUDIO_9] <NEXT_AUDIO>
 [AUDIO_10]  또 <NEXT_AUDIO>
 [AUDIO_11] <NEXT_AUDIO>
@@ -44,7 +44,7 @@ ep001 spk=1 lane=1 g0    7.55-  30.23 outcome=truncated p_end=None tokens=119 ::
 [AUDIO_36] <NEXT_AUDIO>
 [AUDIO_37] <NEXT_AUDIO>
 [AUDIO_38] <NEXT_AUDIO>
-[AUDIO_39] 우 리 나 라 <NEXT_AUDIO>
+[AUDIO_39]  우리나라 <NEXT_AUDIO>
 [AUDIO_40] <NEXT_AUDIO>
 [AUDIO_41] <NEXT_AUDIO>
 [AUDIO_42] <NEXT_AUDIO>
@@ -110,7 +110,7 @@ ep001 spk=1 lane=1 g0    7.55-  30.23 outcome=truncated p_end=None tokens=119 ::
 [AUDIO_102] <NEXT_AUDIO>
 [AUDIO_103] <NEXT_AUDIO>
 [AUDIO_104] <NEXT_AUDIO>
-[AUDIO_105] 우 리 나 <NEXT_AUDIO>
+[AUDIO_105]  우리나 <NEXT_AUDIO>
 [AUDIO_106] 라는 <NEXT_AUDIO>
 [AUDIO_107] <NEXT_AUDIO>
 [AUDIO_108] <NEXT_AUDIO>
@@ -152,7 +152,7 @@ ep001 spk=1 lane=1 g0    7.55-  30.23 outcome=truncated p_end=None tokens=119 ::
 [AUDIO_144] <NEXT_AUDIO>
 [AUDIO_145] <NEXT_AUDIO>
 [AUDIO_146] <NEXT_AUDIO>
-[AUDIO_147] 수 출 이 <NEXT_AUDIO>
+[AUDIO_147]  수 출 이 <NEXT_AUDIO>
 [AUDIO_148] <NEXT_AUDIO>
 [AUDIO_149] <NEXT_AUDIO>
 [AUDIO_150] <NEXT_AUDIO>
@@ -292,7 +292,7 @@ ep001 spk=1 lane=1 g0    7.55-  30.23 outcome=truncated p_end=None tokens=119 ::
 [AUDIO_284] <NEXT_AUDIO>
 [AUDIO_285] <NEXT_AUDIO>
 [AUDIO_286] <NEXT_AUDIO>
-[AUDIO_287] 우 리 나 라 <NEXT_AUDIO>
+[AUDIO_287]  우리나라 <NEXT_AUDIO>
 [AUDIO_288] <NEXT_AUDIO>
 [AUDIO_289] <NEXT_AUDIO>
 [AUDIO_290]  제품 <NEXT_AUDIO>

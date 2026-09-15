@@ -9,7 +9,7 @@ import os, sys, json, time, argparse, subprocess, socket, collections
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser()
 ap.add_argument("--dialogues", required=True); ap.add_argument("--out-root", default=None); ap.add_argument("--shard", default=None); ap.add_argument("--limit", type=int)
-ap.add_argument("--gpu", default=None); ap.add_argument("--min-dur", type=float, default=0.3); ap.add_argument("--max-dur", type=float, default=60.0)
+ap.add_argument("--gpu", default=None); ap.add_argument("--min-dur", type=float, default=0.1); ap.add_argument("--max-dur", type=float, default=120.0)
 ap.add_argument("--batch", type=int, default=64); ap.add_argument("--batch-sec", type=float, default=480.0); ap.add_argument("--chunk", type=int, default=32); ap.add_argument("--io-threads", type=int, default=8)
 a = ap.parse_args()
 if "CUDA_VISIBLE_DEVICES" not in os.environ:
@@ -77,13 +77,16 @@ def make_batches(utts):
     if cur: bs.append(cur)
     return bs
 
-st = collections.Counter(); T0 = time.time(); pool = ThreadPoolExecutor(a.io_threads); TAG = f"{socket.gethostname()}-{os.getpid()}"
+st = collections.Counter(); proxies = {}; T0 = time.time(); pool = ThreadPoolExecutor(a.io_threads); TAG = f"{socket.gethostname()}-{os.getpid()}"
 def load_chunk(chunk):
     def one(d):
         us = []
         for u in d.utterances:
             dur = u.end - u.start
-            if not u.text or dur < a.min_dur or dur > a.max_dur: st["skipped"] += 1; continue
+            if not u.text: st["skipped"] += 1; continue
+            if dur < a.min_dur or dur > a.max_dur:                                   # 정렬 범위 밖(아주 짧은 맞장구·아주 긴 발화): 균등 배치 proxy 로 채우고 계수(창 제외를 피함)
+                enc = tok(" " + u.text, add_special_tokens=False)["input_ids"]; st["proxy"] += 1
+                proxies.setdefault(d.conv_id, {})[u.utt_id] = [[int(t), round(u.start + dur * (i + 1) / len(enc), 3)] for i, t in enumerate(enc)]; continue
             try: audio = utt_audio(d, u)
             except Exception as ex: st["audio_missing"] += 1; continue
             us.append(dict(d=d, u=u, audio=audio, dur=dur, text=" " + u.text, lang=d.lang))      # 대화 안 발화는 모두 앞 공백 포함 토큰화(s1_align 과 같이: "tv"+"and" 가 "tvand" 로 붙지 않게)
@@ -98,7 +101,7 @@ for ci in range(len(chunks)):
     partp = os.path.join(PARTS, f"{TAG}-{ci:06d}.jsonl"); tmpp = partp + ".tmp"
     with open(tmpp, "w", encoding="utf-8") as f:
         for d, us in loaded:
-            rec = dict(conv_id=d.conv_id, utts={}, fail=[])
+            rec = dict(conv_id=d.conv_id, utts=dict(proxies.get(d.conv_id, {})), fail=[], proxy=sorted(proxies.get(d.conv_id, {})))
             for x in us:
                 res = results[id(x)]
                 if isinstance(res, Exception): st["fail"] += 1; rec["fail"].append(x["u"].utt_id); continue

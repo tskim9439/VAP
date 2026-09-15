@@ -31,11 +31,11 @@ def load_align_parts(align_dir: str) -> Tuple[Dict[str, Dict[str, list]], set]:
 class DialogueWindowDataset(Dataset):
     def __init__(self, dialogues: List[str], tok, align_dir: Optional[str] = None, R: int = R_LANES, window_s: Tuple[float, float] = (20.0, 40.0), hop_s: float = 10.0,
                  delays=(2, 3, 4, 6), delay_onset: int = 0, policy: str = "lazy_free", max_per_chunk: int = 0, seed: int = 0, mix_kw: Optional[dict] = None,
-                 max_items: Optional[int] = None, allow_unaligned: bool = False, cache_convs: int = 4):
+                 max_items: Optional[int] = None, allow_unaligned: bool = False, cache_convs: int = 4, min_text_tokens: int = 8):
         self.tok = tok; self.sp_ids = add_phase2_specials(tok); self.sp = lane_specials_of(self.sp_ids, R); self.R = R; self.delays = tuple(delays); self.delay_onset = delay_onset
-        self.policy = policy; self.M = max_per_chunk; self.mix_kw = mix_kw or {}; self.allow_unaligned = allow_unaligned; self.cache_convs = cache_convs
+        self.policy = policy; self.M = max_per_chunk; self.mix_kw = mix_kw or {}; self.allow_unaligned = allow_unaligned; self.cache_convs = cache_convs; self.min_text_tokens = min_text_tokens
         self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>"); self._pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]
-        self.dlgs: Dict[str, Dialogue] = {}; self.stats = dict(dialogues=0, windows=0, skipped_untranscribed=0, skipped_unaligned=0, no_start=0)
+        self.dlgs: Dict[str, Dialogue] = {}; self.stats = dict(dialogues=0, windows=0, skipped_untranscribed=0, skipped_unaligned=0, skipped_sparse=0, no_start=0)
         aligned, failed = load_align_parts(align_dir) if align_dir else ({}, set())
         for path in dialogues:
             for line in open(path, encoding="utf-8"):
@@ -62,6 +62,8 @@ class DialogueWindowDataset(Dataset):
             if not silent(t): self.stats["no_start"] += 1; t += hop_s; continue
             L = min(rng.uniform(lo, hi), d.duration_s - t); t1 = t + L
             if any(s < t1 and e > t for s, e in bad): self.stats["skipped_untranscribed"] += 1; t += hop_s; continue
+            n_tok = sum(len([1 for _, tt in (u.tokens or []) if t <= tt <= t1]) for u in d.utterances if u.end > t and u.start < t1)
+            if n_tok < self.min_text_tokens: self.stats["skipped_sparse"] += 1; t += hop_s; continue      # 거의 무음인 창 제외
             out.append((d.conv_id, round(t, 3), round(L, 3))); self.stats["windows"] += 1; t += hop_s
         return out
 
