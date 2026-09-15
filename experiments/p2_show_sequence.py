@@ -82,7 +82,8 @@ def check_window(i):
         p = pos.get(ep.ep_id, {}); on = p.get("onset", [None])[0]; tx = p.get("text", []); eo = p.get("eot", [None])[0]
         if on is None or eo is None: errs.append(f"missing onset/eot ep{ep.ep_id}"); continue
         if tx and not (on <= min(tx) and max(tx) <= eo): errs.append(f"order ep{ep.ep_id}")
-        if eo != eot_chunk(ep, a.delay): errs.append(f"eot chunk ep{ep.ep_id} {eo}!={eot_chunk(ep, a.delay)}")
+        want = eot_chunk(ep, a.delay)
+        if (want < K and eo != want) or (want >= K and eo < K): errs.append(f"eot chunk ep{ep.ep_id} {eo}!={want}")     # K 이상은 flush 라운드(청크 K, K+1, …)
     f = s; eot_id = ds.sp.eot
     for j, w in zip(f["soft_pos"], f["soft_w"]):
         if f["ids"][j] != eot_id or not (0.0 <= w <= 1.0) or f["soft_alt"][f["soft_pos"].index(j)] != f["ids"][j + 1]: errs.append("soft label")
