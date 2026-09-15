@@ -3,7 +3,7 @@ type: output
 status: active
 created: 2026-09-15
 updated: 2026-09-15
-summary: 동적 화자 메모리 대안의 실행안 v2 — lazy-free lane(R=6, N≤R이면 정본 K슬롯과 동일)·EOT lane 결합 규칙·병렬 학습·보유 DB(71631/otoSpeech/AMI/ICSI/NOTSOFAR) 배치·AMI/ICSI/NOTSOFAR 실측 근거·D0–D5 관문
+summary: 동적 화자 메모리 대안의 실행안 v2 — lazy-free lane(R=6, N≤R이면 정본 K슬롯과 동일)·EOT 즉시 방출 soft label(§11, SEG_END 없음)·병렬 학습·보유 DB(71631/otoSpeech/AMI/ICSI/NOTSOFAR) 배치·AMI/ICSI/NOTSOFAR 실측 근거·D0–D5 관문
 sources:
   - '[[output-phase2-dynamic-speaker-memory-plan]]'
   - '[[output-phase2-speaker-representation-comparison]]'
@@ -50,11 +50,11 @@ sources:
 |---|---|---|
 | lane 수 R | **6** | §3.3 실측. AMI(N≤5)는 재배정 0, ICSI/NOTSOFAR 재배정 ≤2.4 % |
 | lane 토큰 | lane 1/2 = `<SPK_A>`(151707)/`<SPK_B>`(151708), lane 3–6 = `<SPK_3..6>` 신규 | 정본 §4.1 Q0 registry 결정과 동일. 정본 K를 6으로 두면 vocabulary가 같다 |
-| 구조 토큰 | `<ONSET>`·`<EOT>` 정본 공유, `<SEG_END>` 신규 1개 | `<EVENT_REF>` 미등록 |
+| 구조 토큰 | `<ONSET>`·`<EOT>` 정본 공유. **`<SEG_END>` 없음**(2026-09-15 결정, §11) | `<EVENT_REF>` 미등록. 정본 대비 새 구조 토큰 0개 |
 | 음향 segment | 화자별 VAD, gap <0.25 s 병합 | 정본 §6.3 |
-| SEG_END 라벨 위치 | 해당 segment의 마지막 lexical 목표 청크(δ=4 → offset+0.32 s 부근)와 offset+0.24 s 중 늦은 청크, 그 lexical 직후 | 원안 §5.2. δ=4에서는 사실상 마지막 lexical 청크와 같다 |
+| EOT 후보 위치 | 해당 segment의 마지막 lexical 목표 청크(δ=4 → offset+0.32 s 부근)와 offset+0.24 s 중 늦은 청크, 그 lexical 직후. 이 자리가 이전 판의 SEG_END 자리다 | §11 |
 | lane 해제 | lazy-free(§3.1) | 원안 최대 위험 (b) 제거 |
-| EOT 귀속 | lane 결합 규칙(§3.2), C-mode 3 s, 모호 시 unknown | 정본 §6.3 유지 |
+| EOT 의미·target | 구간 끝 즉시 후보, soft target p_end(§11.2). C-mode 3 s 는 ablation | [[decision-eot-immediate-soft-label]] |
 | 세션 메모리 | prototype ≤4/화자, 256-d 정규화, 학습 N_max=16, 런타임 상한 32 | 보유 자료 최대 N=10 |
 | 미결 event TTL | 8 s | 원안. C horizon 3 s + 검출 지연 여유 |
 | 입력 | E2 mono encoder, 80 ms clock, δ_text=4 주·2 보조 | 정본 |
@@ -270,3 +270,51 @@ episode마다 독립으로 판별하면 절반 이상이 증거 부족이지만,
 남는 비용 세 가지. (1) N>R 재배정(episode의 2.3 %)에서 lane 세대 변경은 모델 출력만으로 구별되지 않으므로 외부 모듈이 "이 lane run과 같은 목소리인가"를 판정해야 한다. (2) 위 표의 잔여 1–11 % episode는 어떤 외부 모듈도 mono 증거로 못 푼다. 이를 줄이려면 모델의 payload 조건 표현(z_dec)을 per-episode 임베딩으로 내보내는 헤드가 필요하며, 이것은 metric loss 하나를 §6.1 병렬 forward에 더하는 것으로 토큰 규약·메모리 상태를 바꾸지 않는다. D2 probe가 z_ext만으로 겹침 EER이 충분하다고 나오면 이 헤드도 뺀다. (3) 화자별 미래 활동·hazard 헤드는 lane 단위가 된다. N≤6에서는 lane=화자이므로 손실이 없고, ICSI·NOTSOFAR N≥7에서만 재배정 뒤 예측이 끊긴다.
 
 R=6·lazy-free는 이 변형에서도 유지한다. R=4 eager는 lane 부족 1.8–2.2 %·EOT 결합 모호 3–8 %에 더해 lane run이 짧아져 위 잔여 비율이 커진다.
+
+## 11. EOT 즉시 방출과 soft label (2026-09-15 결정)
+
+[[decision-eot-immediate-soft-label]]에 따라 §2·§3.2·§3.4·§6 의 `<SEG_END>` 서술을 이 절이 대체한다. lane 규약(§3.1 lazy-free)·R=6·병렬 학습·데이터 배치는 그대로다.
+
+### 11.1 규칙
+
+1. **토큰.** 구조 토큰은 `<ONSET>`·`<EOT>` 뿐이다. `<SEG_END>` 는 등록하지 않는다. 정본 registry 에 더할 것은 lane 3–6 토큰뿐이다.
+2. **후보 위치.** 각 발화 구간(화자별 VAD, gap <0.25 s 병합)의 끝에서 `k_eot = max(k_last_text, floor((offset+0.24)/0.08))` 청크, 그 구간의 마지막 lexical 직후에 `<SPK_r><EOT>` 후보를 둔다. 방출 지연은 offset 기준 약 320 ms + 연산이며 미래 관측을 기다리지 않는다.
+3. **lane 닫힘.** EOT 가 방출되면 lane 은 HELD 가 된다. 방출되지 않았어도 활동 헤드가 그 lane 을 0.25 s 이상 비활성으로 보면 HELD 로 둔다. 재개·재배정은 §3.1 그대로다. EOT 오방출·미방출은 lane 소유를 바꾸지 않으므로 오귀속으로 번지지 않는다.
+4. **귀속.** EOT 는 그 lane 에서 방금 닫힌 구간의 것이다. 3 s 대기가 없으므로 §3.2 의 "재배정 뒤 미결 EOT" 사례와 pointer head 는 더 이상 존재하지 않는다.
+5. **후보 이후.** v1 에서는 후보 위치 하나에서만 결정한다. 그 뒤 본인 재개 없이 침묵이 이어지면 정본의 `timeout_policy`(emission_source 구분)가 맡는다. 후보 뒤 청크에서 재결정을 허용하는 변형은 ablation 이다.
+
+### 11.2 soft target
+
+라벨은 구간 끝 뒤 3 s 의 참조 결과로 만든다(미래는 정답 산출에만 쓴다). 후보 위치의 next-token target 은 두 점 분포다: `<EOT>` 에 p_end, 참조열에서 EOT 를 건너뛴 다음 토큰에 1−p_end.
+
+| 구간 끝 뒤 3 s 의 결과 | p_end (초기값, Q0 동결) |
+|---|---:|
+| 교대: 다른 화자가 말하고(끝 시점에 겹치거나 3 s 안 시작) 본인 재개 없음 | 1.0 |
+| 침묵: 아무도 말하지 않음 | 0.8 |
+| 혼재: 다른 화자도 말하고 본인도 3 s 안 재개 | 0.5 |
+| 유지(긴 pause): 본인만 1–3 s 뒤 재개 | 0.3 |
+| 유지(짧은 pause): 본인만 1 s 안 재개 | 0.0 |
+| 미래 미관측(EOF·결손) | mask |
+
+EOT 는 teacher-forced 입력열에 항상 넣고, 그 토큰을 **예측하는 위치**의 label 만 soft 로 둔다. 구현은 collator 가 해당 위치에 `(label_alt, weight=p_end)` 를 추가하고 forward 의 CE 를 `p·CE(EOT) + (1−p)·CE(label_alt)` 로 합치는 것이다. 위치 가중치는 정본대로 EOT=2. hard 대조(교대=1, 유지=0, 혼재·침묵 mask)를 같은 데이터로 ablation 한다.
+
+### 11.3 왜 soft 인가: 구간 끝 뒤 실제 결과
+
+같은 어노테이션(§3.3)에서 각 구간 끝 뒤 3 s 를 분류했다(`raw/sources/experiments/2026-09-15-phase2-lane-sim/segment_end_outcomes.out`).
+
+| 코퍼스 | 교대 | 침묵 | 혼재 | 유지 1–3 s | 유지 <1 s |
+|---|---:|---:|---:|---:|---:|
+| AMI | 54.2 % | 3.4 % | 35.5 % | 5.9 % | 1.0 % |
+| ICSI | 36.7 % | 0.8 % | 40.4 % | 4.5 % | 17.7 % |
+| NOTSOFAR-1 | 44.4 % | 0.5 % | 50.4 % | 0.2 % | 4.4 % |
+| 71631 (KO 2인, 10,961대화) | 29.0 % | 4.7 % | 35.0 % | 9.3 % | 21.9 % |
+
+구간 끝 뒤 3 s 안에 본인이 다시 말하는 경우(혼재+유지)가 회의에서 42–62 %, KO 2인 대화에서 66 % 다. 모든 구간 끝을 hard EOT 로 두면 절반이 오라벨이지만, soft target 이면 모델이 배우는 것은 "이 시점의 단서로 본 종료 확률"이고 p(EOT) 가 그 신뢰도다. 임계값·bias 는 런타임 정책이다. ICSI 의 "유지 <1 s" 가 큰 것은 어노테이션 구간이 더 잘게 나뉜 탓이며 정렬 후 재계산한다.
+
+### 11.4 평가
+
+- 후보 위치에서 p(EOT) 의 AUC 와 calibration(ECE): 양성 = 교대∪침묵, 음성 = 유지, 혼재는 제외.
+- 임계값별 precision/recall 과 **유지 구간 내 오방출률**(barge-in 위험의 직접 지표). 코퍼스·언어·N 별.
+- 지연은 offset+320 ms + 연산으로 고정이므로 별도 분포 대신 C-mode ablation 과의 지연 차를 보고.
+- TurnBench dev 는 이 P 출력으로 채점하고, 기존 C-mode 결과와 섞지 않는다.
+- D1 관문(§9)에 "유지 구간 내 오방출률 ≤ 임계(Q0 에서 dev 로 동결)"를 추가한다.
