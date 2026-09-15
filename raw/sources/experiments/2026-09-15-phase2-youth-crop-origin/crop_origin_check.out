@@ -1,0 +1,7 @@
+youth label index 10588
+adult label index 11023
+== adult 134-1 실외 (대조군, 채널 기원 확인됨): dialogs=147 pairs=401 |r| n=401 median=0.050 mean=0.063 p90=0.119 frac>0.3=0.015 frac>0.6=0.000  lag_ms median=27.0
+   positive control (artificial mix) |r| n=401 median=0.776 mean=0.698 p90=0.994 frac>0.3=0.873 frac>0.6=0.683
+== youth 134-2 실외: dialogs=138 pairs=401 |r| n=401 median=0.058 mean=0.068 p90=0.131 frac>0.3=0.002 frac>0.6=0.000  lag_ms median=26.5
+== youth 134-2 실내: dialogs=138 pairs=401 |r| n=401 median=0.058 mean=0.071 p90=0.140 frac>0.3=0.002 frac>0.6=0.000  lag_ms median=28.0
+DONE

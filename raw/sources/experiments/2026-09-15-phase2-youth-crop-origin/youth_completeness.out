@@ -1,0 +1,14 @@
+== youth TL_01.실내: dialogs=7828 label_hours=2021.7
+   complete: dialogs=16 hours=0.2
+   ge95: dialogs=5 hours=0.1
+   ge80: dialogs=4095 hours=782.8
+   some: dialogs=3705 hours=1238.6
+   none: dialogs=7 hours=0.0
+== youth TL_02.실외: dialogs=1649 label_hours=399.9
+   complete: dialogs=523 hours=90.1
+   ge95: dialogs=427 hours=75.4
+   ge80: dialogs=555 hours=170.2
+   some: dialogs=144 hours=64.2
+   none: dialogs=0 hours=0.0
+
+[exited with code 0]
