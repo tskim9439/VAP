@@ -10,7 +10,7 @@ from vapasr.data.dialogue_dataset import load_align_parts
 from vapasr.data.dialogue_refine import channel_vad, refine_utterances
 ap = argparse.ArgumentParser(); ap.add_argument("--dialogues", required=True); ap.add_argument("--align", required=True); ap.add_argument("--no-vad", action="store_true"); ap.add_argument("--limit", type=int); ap.add_argument("--out")
 ap.add_argument("--min-cps", type=float, default=1.5, help="KO 글자/초(EN 은 /2.2) 하한 — 1 s 이상 발화에서 이보다 성기면 라벨 결손 의심(예: 71631 의 3.9 s 짜리 '이')")
-ap.add_argument("--asr-flags", help="p2_asr_check 의 *.utts.jsonl — err ≥ --asr-thr 이고 길이 ≥ 2 s 면 quarantine(asr_mismatch)"); ap.add_argument("--asr-thr", type=float, default=0.5)
+ap.add_argument("--asr-flags", help="p2_asr_check 의 *.utts.jsonl — err ≥ --asr-thr 면 전사 감독 제외(asr_disagree; 시각·활동·ONSET/EOT 는 유지, Dataset 이 그 구간 손실을 마스크)"); ap.add_argument("--asr-thr", type=float, default=0.2)
 a = ap.parse_args()
 asr = {}
 if a.asr_flags:
@@ -29,8 +29,9 @@ with open(tmp, "w", encoding="utf-8") as f:
             if u.text and dur >= 1.0 and cps < (a.min_cps if d.lang == "Korean" else a.min_cps * 2.2):
                 u.flags = (u.flags or []) + ["implausible_rate"]; u.text = ""; u.tokens = None; tot["implausible"] = tot.get("implausible", 0) + 1
             r = asr.get((d.conv_id, u.utt_id))
-            if r and u.text and dur >= 2.0 and r["err"] >= a.asr_thr:
-                u.flags = (u.flags or []) + ["asr_mismatch"]; u.text = ""; u.tokens = None; tot["asr_mismatch"] = tot.get("asr_mismatch", 0) + 1
+            if r and u.text and r["err"] >= a.asr_thr:
+                u.flags = (u.flags or []) + ["asr_disagree"]; u.text = ""; u.tokens = None; tot["asr_disagree"] = tot.get("asr_disagree", 0) + 1
+            elif a.asr_flags and u.text and r is None: tot["asr_unchecked"] = tot.get("asr_unchecked", 0) + 1
         vad = {s: [] for s in d.speakers} if a.no_vad else channel_vad(d)
         d.utterances, st = refine_utterances(d, vad); d.meta["refined"] = dict(vad=not a.no_vad, **st)
         for u in d.utterances: after.append(u.end - u.start)

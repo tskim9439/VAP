@@ -98,12 +98,14 @@ def check_window(i):
     wav = ds[i]["wav"].numpy()
     if abs(len(wav) - int(round(s["L"] * 16000))) > 1: errs.append(f"audio len {len(wav)} vs {int(round(s['L']*16000))}")
     if info["alloc"].exhausted: errs.append(f"lane exhausted {info['alloc'].exhausted}")
+    mk = set(f.get("masked_chunks", []))                                                   # (9) 마스크 청크의 label 은 전부 -100, soft 도 없음
+    if any(f["labels"][j] != -100 for j in range(len(f["labels"])) if f["chunk_of"][j] in mk) or any(f["chunk_of"][j] in mk for j in f["soft_pos"]): errs.append("mask")
     # 출력
     name = os.path.join(a.out, f"window-{i}"); sf.write(name + ".wav", wav, 16000)
     names = {**NAMES, **{t: tok.decode([t]) for _, em in chunks for e in em for t in [e.tid] if e.kind == "text"}}
     with open(name + ".txt", "w", encoding="utf-8") as fo:
         fo.write(f"# {s['cid']} t0={s['t0']} L={s['L']} K={K} delay={a.delay} speakers={sorted({e.speaker for e in eps})} lanes={ {e.speaker: e.lane for e in eps} }\n")
-        fo.write(f"# episodes={len(eps)} reassigned={info['alloc'].reassigned} outcomes={info['outcomes']} soft={len(f['soft_pos'])} eot_masked={n_eot_masked} tokens={st.text} tags={st.tags} overflow={st.overflow}\n")
+        fo.write(f"# episodes={len(eps)} reassigned={info['alloc'].reassigned} outcomes={info['outcomes']} soft={len(f['soft_pos'])} eot_masked={n_eot_masked} tokens={st.text} tags={st.tags} overflow={st.overflow} masked_chunks={len(mk)}/{K}\n")
         fo.write(f"# checks: {'OK' if not errs else errs}\n\n")
         for ep in eps: fo.write(f"ep{ep.ep_id:03d} spk={ep.speaker} lane={ep.lane} g{ep.generation} {ep.start:7.2f}-{ep.end:7.2f} outcome={ep.outcome} p_end={ep.p_end} tokens={len(ep.tokens)} :: {tok.decode([t for t,_ in ep.tokens])[:80]}\n")
         fo.write("\n" + render(chunks, names, K) + "\n")
@@ -128,10 +130,10 @@ def check_window(i):
               episodes=[dict(ep=e.ep_id, speaker=e.speaker, lane=e.lane, gen=e.generation, start=round(e.start, 3), end=round(e.end, 3), outcome=e.outcome, p_end=e.p_end,
                              tokens=[dict(text=clean(tok.decode([t])), t=round(tt, 3)) for t, tt in e.tokens], words=word_groups(e, emitk.get(e.ep_id, [])), text=clean(tok.decode([t for t, _ in e.tokens])).strip()) for e in eps],
               chunks=[dict(k=k, emits=[dict(kind=e.kind, lane=e.lane, ep=e.ep, text=(clean(tok.decode([e.tid])) if e.kind == "text" else NAMES.get(e.tid, str(e.tid))), p_end=e.p_end) for e in em]) for k, em in chunks],
-              stats=dict(text=st.text, tags=st.tags, onset=st.onset, eot=st.eot, overflow=st.overflow, soft=len(f["soft_pos"]), eot_masked=n_eot_masked, reassigned=info["alloc"].reassigned, outcomes=info["outcomes"]))
+              masked_chunks=sorted(mk), stats=dict(text=st.text, tags=st.tags, onset=st.onset, eot=st.eot, overflow=st.overflow, soft=len(f["soft_pos"]), eot_masked=n_eot_masked, reassigned=info["alloc"].reassigned, outcomes=info["outcomes"], masked=len(mk)))
     json.dump(js, open(name + ".json", "w"), ensure_ascii=False)
     return dict(index=i, conv=s["cid"], t0=s["t0"], L=s["L"], K=K, speakers=len({e.speaker for e in eps}), episodes=len(eps), reassigned=info["alloc"].reassigned, exhausted=info["alloc"].exhausted,
-                outcomes=info["outcomes"], soft=len(f["soft_pos"]), eot_masked=n_eot_masked, text_tokens=st.text, tags=st.tags, overflow=st.overflow, max_per_chunk=max(st.per_chunk_hist) if st.per_chunk_hist else 0, errors=errs)
+                outcomes=info["outcomes"], soft=len(f["soft_pos"]), eot_masked=n_eot_masked, text_tokens=st.text, tags=st.tags, overflow=st.overflow, max_per_chunk=max(st.per_chunk_hist) if st.per_chunk_hist else 0, masked_chunks=len(mk), errors=errs)
 
 for i in picks:
     r = check_window(i); rep["windows"].append(r); print(json.dumps({k: v for k, v in r.items() if k != "outcomes"}, ensure_ascii=False))

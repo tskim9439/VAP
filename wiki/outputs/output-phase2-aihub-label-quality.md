@@ -53,8 +53,9 @@ sources:
 |---|---|---|
 | 채널 VAD 시각 보정 | 적용(기본) | `p2_refine.py`: 발화 끝 = min(라벨 끝, max(VAD 끝, 마지막 토큰 끝)+0.1), 시작 = max(라벨 시작, VAD 시작−0.1), 발화 안 0.25 s 이상 VAD 공백에서 분할(토큰 시각으로 배분). 정본 §3.2 의 "화자별 VAD" 를 라벨 대신 실제 채널로 구현 |
 | 결손 의심 quarantine | 적용(기본) | 1 s 이상 발화에서 글자/초 < 1.5(KO; EN 3.3) → `implausible_rate` |
-| ASR 대조 quarantine | 적용(옵션 `--asr-flags`) | 2 s 이상 발화에서 CER ≥ 0.5 → `asr_mismatch`. 전량은 `slurm/p2_asr_check.sbatch` |
-| pseudo-label 대체 | **결정 필요** | 위 두 quarantine 발화 중 1 s 이상인 것을 ASR 가설로 대체(`pseudo` 표시)해 창을 살린다. 위험: ASR 오류가 라벨이 됨. 완화: ASR 를 두 번(다른 seed·모델) 돌려 일치할 때만, 또는 E2 와 Qwen3-ASR 일치 조건 |
+| ASR 일치 규칙 | 적용(옵션 `--asr-flags`, 기본 임계 0.2) | CER ≥ 0.2 → `asr_disagree`(전사 감독 제외). 전량은 `slurm/p2_asr_check.sbatch` |
+| 불일치 구간 손실 마스크 | 적용(기본 `untranscribed="mask"`) | 창을 유지하고 해당 청크의 payload·NEXT label 을 전부 −100. 71631 샘플 창 10 → 27, 134-1 12 → 30, 134-2 39 → 81 |
+| pseudo-label 대체 | 채택 안 함 | 사용자 청취 결과 라벨·ASR 이 반반이라 단일 ASR 은 심판이 못 됨. 두 번째 ASR 확보 뒤 일치 조건으로 재검토([[decision-aihub-transcript-policy]]) |
 | 134-2 청소년 편입 | 보류 | 전량 ASR 대조 뒤 CER 분포를 보고 편입·pseudo-label·제외를 정한다 |
 | 창 시작 격자 | 적용 예정 | hop 10 s → 2 s 로 창 후보를 늘린다(quarantine 로 잃는 창 보전) |
 

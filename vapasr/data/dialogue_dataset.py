@@ -3,7 +3,8 @@
 샘플 키는 MonoStreamDataset(vapasr.uslm.mono_data) 과 호환: wav, ids, is_audio, chunk_of, labels, lang, delay, name, id, n_text, overflow, n_flush, K, rounds
   + soft_pos/soft_alt/soft_w (EOT soft target), activity (K,R) float, lanes (L,) int, t0.
 창: 길이 window_s 범위, 시작은 아무도 말하지 않는 시각(부분 발화 방지), 끝은 잘릴 수 있다(잘린 episode 는 토큰을 창 안 것만 두고 EOT 는 mask).
-제외 창: 전사 없는 음성(quarantine·미정렬·결손 조각)이 창 안에 있으면 건너뛴다(모델이 '음성인데 전사 없음' 을 배우지 않게) — 건수는 stats 에.
+전사 없는 음성(quarantine·ASR 불일치·미정렬·결손 조각): untranscribed="mask"(기본) 이면 창은 유지하고 그 발화가 덮는 청크(+δ) 의 payload·NEXT label 을 전부 -100 으로 둔다(아무 학습 신호 없음; 활동 타깃은 유지).
+  untranscribed="skip" 이면 이전처럼 그 창을 제외한다. 건수는 stats 에.
 """
 import os, json, glob, math, random, bisect
 from typing import List, Dict, Tuple, Optional
@@ -31,11 +32,11 @@ def load_align_parts(align_dir: str) -> Tuple[Dict[str, Dict[str, list]], set]:
 class DialogueWindowDataset(Dataset):
     def __init__(self, dialogues: List[str], tok, align_dir: Optional[str] = None, R: int = R_LANES, window_s: Tuple[float, float] = (20.0, 40.0), hop_s: float = 10.0,
                  delays=(2, 3, 4, 6), delay_onset: int = 0, policy: str = "lazy_free", max_per_chunk: int = 0, seed: int = 0, mix_kw: Optional[dict] = None,
-                 max_items: Optional[int] = None, allow_unaligned: bool = False, cache_convs: int = 4, min_text_tokens: int = 8):
+                 max_items: Optional[int] = None, allow_unaligned: bool = False, cache_convs: int = 4, min_text_tokens: int = 8, untranscribed: str = "mask"):
         self.tok = tok; self.sp_ids = add_phase2_specials(tok); self.sp = lane_specials_of(self.sp_ids, R); self.R = R; self.delays = tuple(delays); self.delay_onset = delay_onset
-        self.policy = policy; self.M = max_per_chunk; self.mix_kw = mix_kw or {}; self.allow_unaligned = allow_unaligned; self.cache_convs = cache_convs; self.min_text_tokens = min_text_tokens
+        self.policy = policy; self.M = max_per_chunk; self.mix_kw = mix_kw or {}; self.allow_unaligned = allow_unaligned; self.cache_convs = cache_convs; self.min_text_tokens = min_text_tokens; self.untranscribed = untranscribed; assert untranscribed in ("mask", "skip")
         self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>"); self._pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]
-        self.dlgs: Dict[str, Dialogue] = {}; self.stats = dict(dialogues=0, windows=0, skipped_untranscribed=0, skipped_unaligned=0, skipped_sparse=0, no_start=0)
+        self.dlgs: Dict[str, Dialogue] = {}; self.stats = dict(dialogues=0, windows=0, skipped_untranscribed=0, skipped_unaligned=0, skipped_sparse=0, no_start=0, windows_with_mask=0)
         aligned, failed = load_align_parts(align_dir) if align_dir else ({}, set())
         for path in dialogues:
             for line in open(path, encoding="utf-8"):
@@ -56,16 +57,31 @@ class DialogueWindowDataset(Dataset):
         def silent(t):
             i = bisect.bisect_left(starts, t); return i == 0 or ends_max[i - 1] <= t
         # 전사 없는 음성: quarantine(flags) · 토큰도 텍스트도 없음 · 텍스트는 있는데 미정렬(allow_unaligned 가 아니면). 보정(refine)으로 분할된 조각은 text="" 이지만 tokens 가 있어 정상
-        bad = [(u.start, u.end) for u in d.utterances if u.flags or (not u.tokens and (not u.text or not self.allow_unaligned))]
-        missing = set(d.meta.get("missing", [])); bad += [(u.start, u.end) for i, u in enumerate(d.utterances, 1) if i in missing]
+        bad = self._bad_spans(d)
         out = []; t = 0.0; lo, hi = window_s
         while t + lo <= d.duration_s:
             if not silent(t): self.stats["no_start"] += 1; t += hop_s; continue
             L = min(rng.uniform(lo, hi), d.duration_s - t); t1 = t + L
-            if any(s < t1 and e > t for s, e in bad): self.stats["skipped_untranscribed"] += 1; t += hop_s; continue
+            hit = any(s < t1 and e > t for s, e in bad)
+            if hit and self.untranscribed == "skip": self.stats["skipped_untranscribed"] += 1; t += hop_s; continue
+            if hit: self.stats["windows_with_mask"] += 1
             n_tok = sum(len([1 for _, tt in (u.tokens or []) if t <= tt <= t1]) for u in d.utterances if u.end > t and u.start < t1)
             if n_tok < self.min_text_tokens: self.stats["skipped_sparse"] += 1; t += hop_s; continue      # 거의 무음인 창 제외
             out.append((d.conv_id, round(t, 3), round(L, 3))); self.stats["windows"] += 1; t += hop_s
+        return out
+
+    def _bad_spans(self, d: Dialogue):
+        """전사 없는 음성 구간: quarantine(flags) · 토큰도 텍스트도 없음 · 텍스트는 있는데 미정렬(allow_unaligned 가 아니면) · 결손 조각. 보정으로 분할된 조각은 text="" 이지만 tokens 가 있어 정상."""
+        bad = [(u.start, u.end) for u in d.utterances if u.flags or (not u.tokens and (not u.text or not self.allow_unaligned))]
+        missing = set(d.meta.get("missing", [])); bad += [(u.start, u.end) for i, u in enumerate(d.utterances, 1) if i in missing]
+        return bad
+    def mask_chunks(self, d: Dialogue, t0: float, L: float, K: int, delay: int) -> set:
+        """창 [t0,t0+L) 에서 전사 없는 구간이 덮는 청크 집합(lexical 이 δ 만큼 늦게 놓이므로 끝은 +(δ+1) 청크, EOT 후보 +0.24 s 도 포함)."""
+        out = set(); tail = (delay + 1) * CHUNK_S + 0.24
+        for s, e in self._bad_spans(d):
+            a, b = s - t0, e - t0
+            if b <= 0 or a >= L: continue
+            for k in range(max(0, int(a / CHUNK_S)), min(K, int(math.ceil((b + tail) / CHUNK_S)))): out.add(k)
         return out
 
     def __len__(self): return len(self.items)
@@ -96,7 +112,8 @@ class DialogueWindowDataset(Dataset):
     def sequence(self, i: int, delay: int):
         cid, t0, L = self.items[i]; d = self.dlgs[cid]; K = int(round(L / CHUNK_S)); eps, info = self.window_episodes(d, t0, L)
         chunks, st = serialize(eps, (K - 0.5) * CHUNK_S, self.sp, delay_text=delay, delay_onset=self.delay_onset, max_per_chunk=self.M)
-        f = flatten(chunks, K, self.audio_pad, self.sp.empty_audio, self.prefix(d.lang, delay)); act = lane_activity(eps, K, self.R)
+        mk = self.mask_chunks(d, t0, L, K, delay) if self.untranscribed == "mask" else set()
+        f = flatten(chunks, K, self.audio_pad, self.sp.empty_audio, self.prefix(d.lang, delay), mask_chunks=mk); act = lane_activity(eps, K, self.R)
         return dict(f, K=K, activity=act, stats=st, info=info, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus)
 
     def __getitem__(self, i):

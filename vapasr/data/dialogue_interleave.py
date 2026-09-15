@@ -75,23 +75,24 @@ def serialize(episodes: List[Episode], duration_s: float, sp: LaneSpecials, dela
         emit.append(Emit(sp.next_audio, "next")); out.append((k, emit)); k += 1
     return out, st
 
-def flatten(chunks: List[Tuple[int, List[Emit]]], n_chunks: int, audio_pad: int, empty_audio: int, prefix_ids: List[int] = ()) -> Dict:
+def flatten(chunks: List[Tuple[int, List[Emit]]], n_chunks: int, audio_pad: int, empty_audio: int, prefix_ids: List[int] = (), mask_chunks: Optional[set] = None) -> Dict:
     """→ dict(ids, is_audio, chunk_of, labels, soft_pos, soft_alt, soft_w, kinds, lanes).
-    labels[i] = ids[i] (모델이 labels[:,1:] 로 shift), prefix·audio·EMPTY 위치는 -100. soft_*: EOT 위치 j 의 대안 label 과 가중치 p_end."""
+    labels[i] = ids[i] (모델이 labels[:,1:] 로 shift), prefix·audio·EMPTY 위치는 -100. soft_*: EOT 위치 j 의 대안 label 과 가중치 p_end.
+    mask_chunks: 이 청크들의 payload(NEXT 포함)는 label -100 — 전사 없는 음성 구간에 아무 학습 신호도 주지 않는다(정본 §8 조치 2). soft 도 제외."""
     ids, is_audio, cof, labels, kinds, lanes = list(prefix_ids), [False] * len(prefix_ids), [-1] * len(prefix_ids), [-100] * len(prefix_ids), ["prefix"] * len(prefix_ids), [0] * len(prefix_ids)
-    eot_pos: List[Tuple[int, Optional[float]]] = []
+    eot_pos: List[Tuple[int, Optional[float]]] = []; mask_chunks = mask_chunks or set(); n_masked = 0
     for k, emits in chunks:
         if k < n_chunks: ids.append(audio_pad); is_audio.append(True); cof.append(k)
         else: ids.append(empty_audio); is_audio.append(False); cof.append(-1)
-        labels.append(-100); kinds.append("audio" if k < n_chunks else "empty"); lanes.append(0)
+        labels.append(-100); kinds.append("audio" if k < n_chunks else "empty"); lanes.append(0); m = k in mask_chunks
         for e in emits:
-            if e.kind == "eot": eot_pos.append((len(ids), e.p_end))
-            ids.append(e.tid); is_audio.append(False); cof.append(k if k < n_chunks else -1); labels.append(e.tid); kinds.append(e.kind); lanes.append(e.lane or 0)
+            if e.kind == "eot" and not m: eot_pos.append((len(ids), e.p_end))
+            ids.append(e.tid); is_audio.append(False); cof.append(k if k < n_chunks else -1); labels.append(-100 if m else e.tid); kinds.append(e.kind); lanes.append(e.lane or 0); n_masked += int(m)
     soft_pos, soft_alt, soft_w = [], [], []
     for j, p in eot_pos:
         if p is None: labels[j] = -100; continue
         soft_pos.append(j); soft_alt.append(ids[j + 1]); soft_w.append(float(p))
-    return dict(ids=ids, is_audio=is_audio, chunk_of=cof, labels=labels, soft_pos=soft_pos, soft_alt=soft_alt, soft_w=soft_w, kinds=kinds, lanes=lanes)
+    return dict(ids=ids, is_audio=is_audio, chunk_of=cof, labels=labels, soft_pos=soft_pos, soft_alt=soft_alt, soft_w=soft_w, kinds=kinds, lanes=lanes, n_masked=n_masked, masked_chunks=sorted(mask_chunks))
 
 def lane_activity(episodes: List[Episode], n_chunks: int, R: int, chunk_s: float = CHUNK_S) -> List[List[int]]:
     """(n_chunks, R) 0/1 — 청크 [k·0.08, (k+1)·0.08) 와 episode 가 겹치면 그 lane 활성. lane 없는 episode 는 제외."""

@@ -41,9 +41,21 @@ def test_truncated_episode_masks_eot(tmp_path):
     assert cut.outcome == "truncated" and cut.p_end is None and cut.end == 7.0 and [t for _, t in cut.tokens] == [7.0]
     full = [e for e in eps if e.speaker == "0" and e.start == 0.0][0]; assert full.p_end is not None and full.outcome == "shift"
 
-def test_unaligned_utterance_excludes_window(tmp_path):
-    ds = DialogueWindowDataset([make(tmp_path, n_utts_missing_tokens=True)], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,))
-    assert ds.stats["skipped_untranscribed"] > 0 and not any(t0 < 29.0 < t0 + L for _, t0, L in ds.items)      # b4(27–29 s) 를 덮는 창 없음
+def test_unaligned_utterance_masks_chunks_or_excludes_window(tmp_path):
+    p = make(tmp_path, n_utts_missing_tokens=True)          # b4(27–29 s) 미정렬
+    ds = DialogueWindowDataset([p], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), untranscribed="skip")
+    assert ds.stats["skipped_untranscribed"] > 0 and not any(t0 < 29.0 < t0 + L for _, t0, L in ds.items)      # skip: 그 창 없음
+    ds = DialogueWindowDataset([p], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), untranscribed="mask")
+    hit = [i for i, (_, t0, L) in enumerate(ds.items) if t0 < 29.0 and 27.0 < t0 + L]; assert hit and ds.stats["windows_with_mask"] > 0
+    i = hit[0]; s = ds.sequence(i, 4); t0 = s["t0"]; K = s["K"]
+    mk = set(s["masked_chunks"]); lo, hi = int((27.0 - t0) / 0.08), int(((29.0 - t0) + 5 * 0.08 + 0.24) / 0.08)
+    assert mk and min(mk) == max(0, lo) and max(mk) == min(K - 1, hi) and all(k in mk for k in range(max(0, lo), min(K, hi + 1)))
+    labs = s["labels"]; cof = s["chunk_of"]; kinds = s["kinds"]
+    assert all(labs[j] == -100 for j in range(len(labs)) if cof[j] in mk)                       # 마스크 청크: payload·NEXT 전부 -100
+    assert any(labs[j] != -100 for j in range(len(labs)) if cof[j] >= 0 and cof[j] not in mk and kinds[j] == "next")   # 다른 청크의 NEXT 는 감독됨
+    assert all(cof[j] not in mk for j in s["soft_pos"]) and s["n_masked"] > 0
+    eps, _ = ds.window_episodes(ds.dlgs["c1"], t0, s["L"]); lane = [e.lane for e in eps if e.speaker == "1"][0]
+    act = s["activity"]; assert any(act[k][lane - 1] == 1 for k in mk)                           # 활동 타깃은 유지(전사 없는 발화도 lane 활성)
 
 def test_collate_dialogue(tmp_path):
     ds = DialogueWindowDataset([make(tmp_path)], FakeTok(), window_s=(20.0, 25.0), hop_s=5.0, delays=(4,), seed=2)
