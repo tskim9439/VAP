@@ -6,7 +6,7 @@
 데이터: 코퍼스별 DialogueWindowDataset(창 20–40 s, hop 10 s, δ∈{2,3,4,6}, R=6, untranscribed=mask) 을 라운드로빈. --windows 를 주면 그 창 목록만(overfit).
   배치: --max-tokens N 이면 동적 길이 배치(TokenBudgetSampler: 창 수 × 최장 추정 길이 ≤ N, 짧은 창은 많이·긴 창은 적게 → step 당 토큰 균일), 0 이면 고정 bs-en/bs-ko.
   코퍼스 비중 --mix: equal(균등 라운드로빈; 작은 코퍼스 반복)·sqrt·prop(창 수 비례). 실측 예산은 experiments/p2_mem_probe.py 로 잰다(GPU 메모리 80 %).
-평가: D1 은 학습 손실 분해(text/next/eot/act)와 32창 check 로 시작하며 자유실행 lane 디코드 평가는 lane_state parser 연결 뒤 붙인다. 단일 GPU 기본(사용자 지시 2026-09-16)."""
+평가: D1 은 학습 손실 분해(text/next/eot/act)와 32창 check 로 시작하며 자유실행 lane 디코드 평가는 lane_state parser 연결 뒤 붙인다. 단일 프로세스(--gpu) 또는 torchrun(노드당 GPU 8, slurm/p2_train_d1.sbatch) 모두 지원; 완료 시 out-dir/DONE."""
 import os, sys, json, time, random, argparse
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser()
@@ -21,9 +21,22 @@ ap.add_argument("--max-tokens", type=int, default=0, help="동적 길이 배치:
 ap.add_argument("--mix", default="equal", choices=["equal", "sqrt", "prop"], help="코퍼스 배치 비중: equal(라운드로빈 균등)·sqrt(배치 수^0.5 비례)·prop(배치 수 비례)")
 ap.add_argument("--train-encoder", action="store_true", help="인코더도 학습(기본 동결 — 정본 §1)"); ap.add_argument("--mono-cache", default=None, help="대화별 mono 혼합 캐시 디렉토리(float16 npy, mmap)"); ap.add_argument("--resume", default="auto"); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--num-workers", type=int, default=2); ap.add_argument("--gpu", default=None); ap.add_argument("--check", action="store_true", help="학습 전 창별 라운드트립(라벨 토큰 = 참조 토큰) 검사")
 a = ap.parse_args()
-if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
-import torch
+rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))
+_cache_root = os.path.join(os.environ.get("VAPASR_LOCAL_CACHE", "/tmp"), f"vapasr-{os.getuid()}-{os.environ.get('SLURM_JOB_ID', 'local')}")
+os.environ.setdefault("TRITON_CACHE_DIR", os.path.join(_cache_root, f"triton-{local}")); os.environ.setdefault("TORCHINDUCTOR_CACHE_DIR", os.path.join(_cache_root, f"inductor-{local}"))
+os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True); os.makedirs(os.environ["TORCHINDUCTOR_CACHE_DIR"], exist_ok=True)
+if world == 1 and a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
+import torch, torch.distributed as dist
 from torch.utils.data import DataLoader
+gloo_pg = None
+if world > 1:                                                     # torchrun(노드당 GPU 8): s3_train_hf.py 와 같은 초기화(NCCL 학습 pg + 선점 합의용 gloo pg)
+    from datetime import timedelta; import faulthandler, signal as _sig; faulthandler.enable(); faulthandler.register(_sig.SIGUSR2, all_threads=True, chain=False)
+    os.environ.setdefault("TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC", "3600")
+    torch.cuda.set_device(local); dist.init_process_group("nccl", timeout=timedelta(hours=3), device_id=torch.device("cuda", local))
+    gloo_pg = dist.new_group(backend="gloo", timeout=timedelta(hours=1))
+main = rank == 0
+def barrier():
+    if world > 1: dist.barrier(group=gloo_pg)
 from transformers import TrainingArguments
 from vapasr.hf import VapAsrForStreamingASR, load_tokenizer
 from vapasr.hf.trainer import VapAsrTrainer, PreemptCallback
@@ -53,9 +66,10 @@ class WeightedRoundRobin(RoundRobinLoader):
         random.Random(f"{self.seed}:{self.epoch}:mix").shuffle(sched)
         for m in sched: yield next(its[m])
 from vapasr.data.dialogue_tokens import load_frozen_registry
-torch.manual_seed(a.seed); random.seed(a.seed); torch.backends.cuda.matmul.allow_tf32 = True
+torch.manual_seed(a.seed); random.seed(a.seed + rank); torch.backends.cuda.matmul.allow_tf32 = True      # torch seed 는 rank 공통(신규 토큰 임베딩 초기화가 rank 간 같아야 함)
 out = a.out_dir; os.makedirs(out, exist_ok=True)
-def log(*s): print(*s, flush=True)
+def log(*s):
+    if main: print(*s, flush=True)
 
 # ── 모델
 t0 = time.time(); model = VapAsrForStreamingASR.from_pretrained(a.init); tok = load_tokenizer(a.init)
@@ -117,6 +131,7 @@ class P2Trainer(VapAsrTrainer):
         self._parts["n_labels"] = self._parts.get("n_labels", 0) + int(out.n_labels); self._parts["n_soft"] = self._parts.get("n_soft", 0) + int(out.n_soft or 0); self._n_parts += 1
         return (out.loss, out) if return_outputs else out.loss
     def log(self, logs: dict, start_time=None):
+        if self.args.process_index != 0: self._parts = {}; self._n_parts = 0; return
         if self._n_parts and "loss" in logs:
             for k in ("loss_next", "loss_text", "top1_text", "loss_eot", "loss_act", "act_acc"):
                 if k in self._parts: logs[k] = round(self._parts[k] / self._n_parts, 4)
@@ -129,17 +144,23 @@ targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradien
                           learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, bf16=True, logging_strategy="steps", logging_steps=a.log_every, logging_first_step=True,
                           eval_strategy="no", save_strategy="steps", save_steps=a.save_every, save_total_limit=2, save_safetensors=True, seed=a.seed, data_seed=a.seed, report_to=["tensorboard"], logging_dir=os.path.join(out, "tb"),
                           remove_unused_columns=False, disable_tqdm=True, ignore_data_skip=True, dataloader_num_workers=a.num_workers, label_names=["labels"], log_level="warning")
-trainer = P2Trainer(model=model, args=targs, train_sets=train_sets, dev_sets={}, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, num_workers=a.num_workers, callbacks=[PreemptCallback(out)], processing_class=tok)
+preempt_cb = PreemptCallback(out, gloo_pg)
+trainer = P2Trainer(model=model, args=targs, train_sets=train_sets, dev_sets={}, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, num_workers=a.num_workers, gloo_pg=gloo_pg, callbacks=[preempt_cb], processing_class=tok)
 tdl = trainer.get_train_dataloader(); log("배치/epoch: " + ", ".join(f"{m}:{len(s)}" for m, s in tdl.samplers.items()) + f" → steps/epoch {len(tdl)} · 비중({a.mix}) " + ", ".join(f"{m}:{n}" for m, n in tdl.counts.items()))
 if a.max_tokens > 0:
     for m, sp in tdl.samplers.items(): log(f"  동적 배치 {m}: {sp.describe()}")
-json.dump(dict(args=vars(a), registry=cfg.phase2_registry, train_windows={k: len(v) for k, v in train_sets.items()}, steps_per_epoch=len(tdl), mix_counts=tdl.counts, batching={m: sp.describe() for m, sp in tdl.samplers.items()} if a.max_tokens > 0 else None, trainable_m=n_tr / 1e6), open(os.path.join(out, "run.json"), "w"), indent=1, ensure_ascii=False)
+if main: json.dump(dict(args=vars(a), world=world, registry=cfg.phase2_registry, train_windows={k: len(v) for k, v in train_sets.items()}, steps_per_epoch=len(tdl), mix_counts=tdl.counts, batching={m: sp.describe() for m, sp in tdl.samplers.items()} if a.max_tokens > 0 else None, trainable_m=n_tr / 1e6), open(os.path.join(out, "run.json"), "w"), indent=1, ensure_ascii=False)
 last = None
 if a.resume == "auto":
     import re; c = [(int(m.group(1)), os.path.join(out, x)) for x in os.listdir(out) for m in [re.fullmatch(r"checkpoint-(\d+)", x)] if m and os.path.exists(os.path.join(out, x, "trainer_state.json"))]
     last = max(c)[1] if c else None
 elif a.resume != "none": last = a.resume
-res = trainer.train(resume_from_checkpoint=last); st = trainer.state
-log(f"train 종료: step {st.global_step}/{st.max_steps} · {res.metrics}")
-trainer.save_model(os.path.join(out, "final")); tok.save_pretrained(os.path.join(out, "final"))
-json.dump(dict(args=vars(a), log_history=st.log_history[-300:], steps=st.global_step), open(os.path.join(out, "results.json"), "w"), indent=1, ensure_ascii=False); log("final →", os.path.join(out, "final"))
+barrier(); res = trainer.train(resume_from_checkpoint=last); st = trainer.state; preempted = preempt_cb.fired
+done = st.global_step >= st.max_steps and not preempted
+log(f"train 종료: step {st.global_step}/{st.max_steps} {'완료' if done else '(선점/중단 → 재시작 시 이어서)'} · {res.metrics}")
+if done:
+    trainer.save_model(os.path.join(out, "final"))
+    if main:
+        tok.save_pretrained(os.path.join(out, "final")); json.dump(dict(args=vars(a), log_history=st.log_history[-300:], steps=st.global_step), open(os.path.join(out, "results.json"), "w"), indent=1, ensure_ascii=False)
+        open(os.path.join(out, "DONE"), "w").write(time.strftime("%F %T")); log("final →", os.path.join(out, "final"))
+if world > 1: dist.destroy_process_group()
