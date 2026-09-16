@@ -3,7 +3,9 @@
 
   python experiments/p2_train_hf.py --init /soundai/Model/VAPASR/hf-E2/final --data <phase2 dir> --corpora aihub71631,otoSpeech,ami --out-dir <run> [--windows <overfit32.windows.jsonl>] [--max-steps 300]
 초기화: E2 HF 체크포인트 → add_phase2_tokens(registry 동결·<SPK_3..6>/<ONSET>/<EOT> 임베딩 초기화·활동 헤드·A/B 차단 해제). 이전 정본 §7.1 recipe: lr 6e-5(adapter 1e-3), cosine, bf16, grad ckpt, Liger.
-데이터: 코퍼스별 DialogueWindowDataset(창 20–40 s, hop 10 s, δ∈{2,3,4,6}, R=6, untranscribed=mask) 을 언어별 배치 크기로 라운드로빈. --windows 를 주면 그 창 목록만(overfit).
+데이터: 코퍼스별 DialogueWindowDataset(창 20–40 s, hop 10 s, δ∈{2,3,4,6}, R=6, untranscribed=mask) 을 라운드로빈. --windows 를 주면 그 창 목록만(overfit).
+  배치: --max-tokens N 이면 동적 길이 배치(TokenBudgetSampler: 창 수 × 최장 추정 길이 ≤ N, 짧은 창은 많이·긴 창은 적게 → step 당 토큰 균일), 0 이면 고정 bs-en/bs-ko.
+  코퍼스 비중 --mix: equal(균등 라운드로빈; 작은 코퍼스 반복)·sqrt·prop(창 수 비례). 실측 예산은 experiments/p2_mem_probe.py 로 잰다(GPU 메모리 80 %).
 평가: D1 은 학습 손실 분해(text/next/eot/act)와 32창 check 로 시작하며 자유실행 lane 디코드 평가는 lane_state parser 연결 뒤 붙인다. 단일 GPU 기본(사용자 지시 2026-09-16)."""
 import os, sys, json, time, random, argparse
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,6 +17,8 @@ ap.add_argument("--bs-en", type=int, default=8); ap.add_argument("--bs-ko", type
 ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--R", type=int, default=6); ap.add_argument("--hop", type=float, default=10.0); ap.add_argument("--window", type=float, nargs=2, default=(20.0, 40.0))
 ap.add_argument("--act-weight", type=float, default=1.0); ap.add_argument("--eot-weight", type=float, default=2.0); ap.add_argument("--next-weight", type=float, default=0.3); ap.add_argument("--next-weight-ko", type=float, default=0.15)
 ap.add_argument("--no-liger", action="store_true"); ap.add_argument("--no-grad-ckpt", action="store_true"); ap.add_argument("--save-every", type=int, default=500); ap.add_argument("--log-every", type=int, default=10)
+ap.add_argument("--max-tokens", type=int, default=0, help="동적 길이 배치: 배치의 (창 수 × 최장 추정 길이) ≤ 이 토큰 수(0 이면 고정 bs-en/bs-ko)"); ap.add_argument("--max-bs", type=int, default=48, help="동적 배치의 창 수 상한")
+ap.add_argument("--mix", default="equal", choices=["equal", "sqrt", "prop"], help="코퍼스 배치 비중: equal(라운드로빈 균등)·sqrt(배치 수^0.5 비례)·prop(배치 수 비례)")
 ap.add_argument("--train-encoder", action="store_true", help="인코더도 학습(기본 동결 — 정본 §1)"); ap.add_argument("--mono-cache", default=None, help="대화별 mono 혼합 캐시 디렉토리(float16 npy, mmap)"); ap.add_argument("--resume", default="auto"); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--num-workers", type=int, default=2); ap.add_argument("--gpu", default=None); ap.add_argument("--check", action="store_true", help="학습 전 창별 라운드트립(라벨 토큰 = 참조 토큰) 검사")
 a = ap.parse_args()
 if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
@@ -31,7 +35,23 @@ class WindowBucketSampler(BucketBatchSampler):
         order = sorted(range(len(ds)), key=lambda i: ds.items[i][2]); self.batches = [order[i: i + bs] for i in range(0, len(order), bs)]
         if drop_last and self.batches and len(self.batches[-1]) < bs: self.batches = self.batches[:-1]
         self.seed, self.rank, self.world, self.epoch = seed, rank, world, 0; self.n = len(self.batches) // world
-from vapasr.data.dialogue_dataset import DialogueWindowDataset, collate_dialogue
+from vapasr.data.dialogue_dataset import DialogueWindowDataset, collate_dialogue, TokenBudgetSampler
+from vapasr.hf.data import RoundRobinLoader
+
+class WeightedRoundRobin(RoundRobinLoader):
+    """코퍼스 배치 비중을 가중(equal/sqrt/prop) 으로 두는 라운드로빈. epoch 당 step 수는 코퍼스 배치 수의 합(부모와 같음)이고, 그 step 을 가중치대로 나눠 셔플한 일정(seed+epoch 로 결정적)으로 코퍼스를 고른다.
+    equal 은 부모와 같은 균등(작은 코퍼스가 여러 epoch 반복), prop 은 창 수 비례(모두 ≈1 epoch), sqrt 는 그 중간."""
+    def __init__(self, train_sets, samplers, num_workers, mix="equal", seed=0):
+        self.names = list(train_sets); self.samplers = samplers
+        self.loaders = {m: DataLoader(ds, batch_sampler=samplers[m], num_workers=num_workers, collate_fn=collate_dialogue, persistent_workers=False) for m, ds in train_sets.items()}
+        self.epoch = 0; self._n = sum(len(s) for s in samplers.values()); self.mix = mix; self.seed = seed
+        alpha = {"equal": 0.0, "sqrt": 0.5, "prop": 1.0}[mix]; w = {m: max(1, len(samplers[m])) ** alpha for m in self.names}; tot = sum(w.values())
+        self.counts = {m: int(round(self._n * w[m] / tot)) for m in self.names}
+        diff = self._n - sum(self.counts.values()); self.counts[max(self.counts, key=self.counts.get)] += diff
+    def __iter__(self):
+        its = {m: self._cycle(m, self.epoch) for m in self.names}; sched = [m for m in self.names for _ in range(self.counts[m])]
+        random.Random(f"{self.seed}:{self.epoch}:mix").shuffle(sched)
+        for m in sched: yield next(its[m])
 from vapasr.data.dialogue_tokens import load_frozen_registry
 torch.manual_seed(a.seed); random.seed(a.seed); torch.backends.cuda.matmul.allow_tf32 = True
 out = a.out_dir; os.makedirs(out, exist_ok=True)
@@ -84,11 +104,9 @@ class P2Trainer(VapAsrTrainer):
     """VapAsrTrainer 의 데이터·손실만 Phase 2 로: 창 데이터셋 라운드로빈(collate_dialogue), forward 에 soft/활동 타깃 전달, 손실 분해 로그. 평가는 D1 초기엔 없음(lane parser 연결 뒤)."""
     def bs_of(self, name): return self.bs_ko if LANG.get(name, "English") == "Korean" else self.bs_en
     def get_train_dataloader(self):
-        from vapasr.hf.data import RoundRobinLoader
-        rr = RoundRobinLoader.__new__(RoundRobinLoader); rr.names = list(self.train_sets)
-        rr.samplers = {m: WindowBucketSampler(ds, min(self.bs_of(m), len(ds)), seed=self.args.seed, drop_last=len(ds) > self.bs_of(m), rank=self.args.process_index, world=self.args.world_size) for m, ds in self.train_sets.items()}
-        rr.loaders = {m: DataLoader(ds, batch_sampler=rr.samplers[m], num_workers=self.num_workers, collate_fn=collate_dialogue, persistent_workers=False) for m, ds in self.train_sets.items()}
-        rr.epoch = 0; rr._n = sum(len(s) for s in rr.samplers.values()); return rr
+        if a.max_tokens > 0: samplers = {m: TokenBudgetSampler(ds, a.max_tokens, max_bs=a.max_bs, seed=self.args.seed, rank=self.args.process_index, world=self.args.world_size, drop_last=len(ds) > a.max_bs) for m, ds in self.train_sets.items()}
+        else: samplers = {m: WindowBucketSampler(ds, min(self.bs_of(m), len(ds)), seed=self.args.seed, drop_last=len(ds) > self.bs_of(m), rank=self.args.process_index, world=self.args.world_size) for m, ds in self.train_sets.items()}
+        return WeightedRoundRobin(self.train_sets, samplers, self.num_workers, mix=a.mix, seed=self.args.seed)
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         lang = inputs.get("lang", ["English"])[0]; nw = model.config.next_weight_ko if lang == "Korean" else model.config.next_weight
         x = {k: inputs[k] for k in ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "labels_alt", "activity", "activity_mask") if k in inputs}; x["soft_w"] = inputs["soft_w_full"]
@@ -112,8 +130,10 @@ targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradien
                           eval_strategy="no", save_strategy="steps", save_steps=a.save_every, save_total_limit=2, save_safetensors=True, seed=a.seed, data_seed=a.seed, report_to=["tensorboard"], logging_dir=os.path.join(out, "tb"),
                           remove_unused_columns=False, disable_tqdm=True, ignore_data_skip=True, dataloader_num_workers=a.num_workers, label_names=["labels"], log_level="warning")
 trainer = P2Trainer(model=model, args=targs, train_sets=train_sets, dev_sets={}, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, num_workers=a.num_workers, callbacks=[PreemptCallback(out)], processing_class=tok)
-tdl = trainer.get_train_dataloader(); log("배치/epoch: " + ", ".join(f"{m}:{len(s)}" for m, s in tdl.samplers.items()) + f" → steps/epoch {len(tdl)}")
-json.dump(dict(args=vars(a), registry=cfg.phase2_registry, train_windows={k: len(v) for k, v in train_sets.items()}, steps_per_epoch=len(tdl), trainable_m=n_tr / 1e6), open(os.path.join(out, "run.json"), "w"), indent=1, ensure_ascii=False)
+tdl = trainer.get_train_dataloader(); log("배치/epoch: " + ", ".join(f"{m}:{len(s)}" for m, s in tdl.samplers.items()) + f" → steps/epoch {len(tdl)} · 비중({a.mix}) " + ", ".join(f"{m}:{n}" for m, n in tdl.counts.items()))
+if a.max_tokens > 0:
+    for m, sp in tdl.samplers.items(): log(f"  동적 배치 {m}: {sp.describe()}")
+json.dump(dict(args=vars(a), registry=cfg.phase2_registry, train_windows={k: len(v) for k, v in train_sets.items()}, steps_per_epoch=len(tdl), mix_counts=tdl.counts, batching={m: sp.describe() for m, sp in tdl.samplers.items()} if a.max_tokens > 0 else None, trainable_m=n_tr / 1e6), open(os.path.join(out, "run.json"), "w"), indent=1, ensure_ascii=False)
 last = None
 if a.resume == "auto":
     import re; c = [(int(m.group(1)), os.path.join(out, x)) for x in os.listdir(out) for m in [re.fullmatch(r"checkpoint-(\d+)", x)] if m and os.path.exists(os.path.join(out, x, "trainer_state.json"))]

@@ -69,3 +69,24 @@ def test_mono_cache_roundtrip(tmp_path):
     a = ds[0]["wav"].clone(); import os; assert any(f.endswith(".npy") for r, _, fs in os.walk(cache) for f in fs)
     ds2 = DialogueWindowDataset([p], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), seed=1, mono_cache_dir=cache); b = ds2[0]["wav"]
     assert a.shape == b.shape and float((a - b).abs().max()) < 2e-3 and a.dtype == torch.float32
+
+def test_est_lens_and_token_budget_sampler(tmp_path):
+    from vapasr.data.dialogue_dataset import TokenBudgetSampler
+    ds = DialogueWindowDataset([make(tmp_path)], FakeTok(), window_s=(20.0, 40.0), hop_s=5.0, delays=(4,), seed=3)
+    est = ds.est_lens(); assert len(est) == len(ds) > 2
+    for i in range(len(ds)):                                        # 추정 길이는 실제 시퀀스 길이의 ±25 % 안(패딩 예산에 쓰는 근사)
+        real = len(ds.sequence(i, 4)["ids"]); assert abs(int(est[i]) - real) <= 0.25 * real + 8, (i, int(est[i]), real)
+    sp = TokenBudgetSampler(ds, max_tokens=int(est.max()) * 3, max_bs=64, seed=0)
+    got = sorted(i for b in sp.batches for i in b); assert got == list(range(len(ds)))          # 모든 창이 정확히 한 번
+    for b in sp.batches: assert len(b) * int(est[b[-1]]) <= int(est.max()) * 3 and est[b[-1]] == max(est[i] for i in b)
+    sp.set_epoch(0); a = list(iter(sp)); sp.set_epoch(0); assert a == list(iter(sp)); sp.set_epoch(1); assert a != list(iter(sp)) or len(a) <= 2
+    small = TokenBudgetSampler(ds, max_tokens=int(est.max()), max_bs=64); assert all(len(b) == 1 for b in small.batches)
+    capped = TokenBudgetSampler(ds, max_tokens=10 ** 9, max_bs=2); assert max(len(b) for b in capped.batches) == 2 and capped.describe()["bs_max"] == 2
+
+def test_build_mono_cache_matches_mix(tmp_path):
+    from vapasr.data.dialogue_dataset import build_mono_cache, mono_cache_path
+    from vapasr.data.dialogue_mix import mix_dialogue
+    d = Dialogue.from_json(open(make(tmp_path)).readline()); f = build_mono_cache(d, str(tmp_path / "mono"))
+    assert f == mono_cache_path(str(tmp_path / "mono"), d) and f.endswith(".npy")
+    y, _ = mix_dialogue(d); x = np.load(f, mmap_mode="r"); assert x.dtype == np.float16 and x.shape == y.shape and np.abs(x.astype(np.float32) - y).max() < 2e-3
+    assert build_mono_cache(d, str(tmp_path / "mono")) == f and not [p for p in (tmp_path / "mono" / "test").iterdir() if ".tmp" in p.name]

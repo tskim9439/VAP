@@ -89,16 +89,14 @@ class DialogueWindowDataset(Dataset):
         return self._pre + self.tok(f"language {lang}<asr_text>", add_special_tokens=False)["input_ids"] + [self.sp_ids[f"<DELAY_{delay}>"]]
 
     def mono(self, cid: str) -> np.ndarray:
-        """대화의 mono 혼합. mono_cache_dir 가 있으면 <dir>/<corpus>/<conv>.npy(float16) 에 한 번 저장하고 이후 mmap 으로 연다(창마다 채널 전체를 섞는 비용 제거)."""
+        """대화의 mono 혼합. mono_cache_dir 가 있으면 <dir>/<corpus>/<conv>.npy(float16) 에 한 번 저장하고 이후 mmap 으로 연다(창마다 채널 전체를 섞는 비용 제거).
+        캐시는 experiments/p2_build_mono.py 로 미리 만들어 둘 수 있다(같은 build_mono_cache 사용)."""
         if cid in self._mono: return self._mono[cid]
         d = self.dlgs[cid]; x = None
         if self.mono_cache_dir:
-            f = os.path.join(self.mono_cache_dir, d.corpus, cid.replace("/", "_").replace(":", "_") + ".npy")
-            if os.path.exists(f):
-                try: x = np.load(f, mmap_mode="r")
-                except Exception: x = None
-            if x is None:
-                y, _ = mix_dialogue(d, **self.mix_kw); os.makedirs(os.path.dirname(f), exist_ok=True); tmp = f + f".{os.getpid()}.tmp"; np.save(tmp, y.astype(np.float16)); os.replace(tmp + ".npy" if not tmp.endswith(".npy") else tmp, f); x = np.load(f, mmap_mode="r")
+            f = build_mono_cache(d, self.mono_cache_dir, self.mix_kw)
+            try: x = np.load(f, mmap_mode="r")
+            except Exception: x = None
         if x is None: x, _ = mix_dialogue(d, **self.mix_kw)
         self._mono[cid] = x; self._order.append(cid)
         while len(self._order) > self.cache_convs: self._mono.pop(self._order.pop(0), None)
@@ -133,6 +131,48 @@ class DialogueWindowDataset(Dataset):
                     soft_pos=torch.tensor(s["soft_pos"], dtype=torch.long), soft_alt=torch.tensor(s["soft_alt"], dtype=torch.long), soft_w=torch.tensor(s["soft_w"], dtype=torch.float),
                     activity=torch.tensor(s["activity"], dtype=torch.float), lanes=torch.tensor(s["lanes"]), lang=s["lang"], delay=delay, name=s["corpus"], id=f"{s['cid']}@{s['t0']}",
                     n_text=s["stats"].text, overflow=s["stats"].overflow, n_flush=sum(1 for c in s["chunk_of"] if c < 0) - len(self._pre), K=s["K"], rounds=0, t0=s["t0"])
+
+    # ── 길이 추정(동적 배치용)
+    def est_lens(self) -> np.ndarray:
+        """창별 시퀀스 길이(토큰) 추정: prefix + 청크당 2(audio_pad·NEXT_AUDIO) + 창 안 텍스트 토큰 + 발화당 3(lane 태그·ONSET·EOT 근사). serialize 를 돌리지 않아 129 k 창도 수 초."""
+        if getattr(self, "_est", None) is not None and len(self._est) == len(self.items): return self._est
+        arr = {}
+        for cid, d in self.dlgs.items():
+            us = d.utterances; arr[cid] = (np.array([u.start for u in us]), np.array([u.end for u in us]), np.array([len(u.tokens or []) for u in us]))
+        pre = len(self._pre) + 6; est = np.zeros(len(self.items), dtype=np.int64)
+        for i, (cid, t0, L) in enumerate(self.items):
+            st, en, nt = arr[cid]; m = (st < t0 + L) & (en > t0)
+            est[i] = pre + 2 * int(round(L / CHUNK_S)) + int(nt[m].sum()) + 3 * int(m.sum())
+        self._est = est; return est
+
+def mono_cache_path(mono_dir: str, d: Dialogue) -> str:
+    return os.path.join(mono_dir, d.corpus, d.conv_id.replace("/", "_").replace(":", "_") + ".npy")
+
+def build_mono_cache(d: Dialogue, mono_dir: str, mix_kw: Optional[dict] = None) -> str:
+    """대화의 mono 혼합을 <mono_dir>/<corpus>/<conv>.npy(float16) 로 저장(있으면 그대로) → 경로. 원자적 저장(tmp → replace)이라 여러 프로세스가 동시에 만들어도 안전."""
+    f = mono_cache_path(mono_dir, d)
+    if os.path.exists(f): return f
+    y, _ = mix_dialogue(d, **(mix_kw or {})); os.makedirs(os.path.dirname(f), exist_ok=True)
+    tmp = f[:-4] + f".{os.getpid()}.tmp.npy"; np.save(tmp, y.astype(np.float16)); os.replace(tmp, f); return f
+
+class TokenBudgetSampler(torch.utils.data.Sampler):
+    """동적 길이 배치: 창을 추정 길이순으로 정렬해 배치의 (창 수 × 최장 길이) ≤ max_tokens 가 되도록 연속 구간을 묶는다(패딩 후 실제 토큰 수 기준이라 GPU 메모리가 배치마다 비슷).
+    짧은 창(20 s)은 많이, 긴 창(40 s)은 적게 → 고정 bs 보다 step 당 토큰이 균일하고 GPU 활용이 높다. 배치 순서는 epoch 마다 셔플(seed+epoch), DDP 는 BucketBatchSampler 와 같은 규약."""
+    def __init__(self, ds: DialogueWindowDataset, max_tokens: int, max_bs: int = 64, seed: int = 0, rank: int = 0, world: int = 1, drop_last: bool = False):
+        est = ds.est_lens(); order = sorted(range(len(ds)), key=lambda i: (int(est[i]), i)); self.batches = []; cur = []
+        for i in order:                                          # 오름차순이라 est[i] 가 배치의 최장 길이 = 패딩 후 열 길이
+            if cur and ((len(cur) + 1) * int(est[i]) > max_tokens or len(cur) >= max_bs): self.batches.append(cur); cur = []
+            cur.append(i)
+        if cur and not (drop_last and self.batches and len(cur) * int(est[cur[-1]]) < max_tokens // 2): self.batches.append(cur)   # 마지막 자투리는 예산 절반 미만이면(drop_last) 버림
+        self.seed, self.rank, self.world, self.epoch = seed, rank, world, 0; self.n = max(1, len(self.batches) // world) if self.batches else 0
+        self.max_tokens = max_tokens; self.tokens = [len(b) * int(est[b[-1]]) for b in self.batches]
+    def set_epoch(self, e: int): self.epoch = e
+    def __iter__(self):
+        b = list(self.batches); random.Random(f"{self.seed}:{self.epoch}").shuffle(b); return iter(b[self.rank::self.world][: self.n])
+    def __len__(self): return self.n
+    def describe(self) -> dict:
+        bs = [len(b) for b in self.batches]
+        return dict(batches=len(self.batches), max_tokens=self.max_tokens, bs_min=min(bs) if bs else 0, bs_mean=round(sum(bs) / max(1, len(bs)), 1), bs_max=max(bs) if bs else 0, tokens_mean=round(sum(self.tokens) / max(1, len(self.tokens))), fill=round(sum(self.tokens) / max(1, len(self.tokens)) / self.max_tokens, 3))
 
 def collate_dialogue(batch):
     """collate_streams 와 같은 패딩 + soft(배치 평탄화: soft_b, soft_pos, soft_alt, soft_w) + activity (B,K,R) 와 activity_mask (B,K)."""
