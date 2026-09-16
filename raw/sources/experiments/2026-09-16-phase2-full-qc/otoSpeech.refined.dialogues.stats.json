@@ -1,0 +1,13 @@
+{
+ "dialogues": 420,
+ "utts": 86893,
+ "split": 39678,
+ "tightened_s": 1271.8,
+ "no_vad": 188,
+ "unaligned": 0,
+ "implausible": 715,
+ "dur_median_before": 1.4,
+ "dur_median_after": 1.3,
+ "out": "/soundai/users/tskim/VAPKT-data/data/phase2/otoSpeech.refined.dialogues.jsonl",
+ "sec": 1114.1
+}

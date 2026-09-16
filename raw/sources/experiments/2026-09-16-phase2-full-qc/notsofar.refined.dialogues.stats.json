@@ -1,0 +1,13 @@
+{
+ "dialogues": 237,
+ "utts": 54650,
+ "split": 11845,
+ "tightened_s": 3314.6,
+ "no_vad": 2125,
+ "unaligned": 0,
+ "implausible": 782,
+ "dur_median_before": 1.35,
+ "dur_median_after": 1.13,
+ "out": "/soundai/users/tskim/VAPKT-data/data/phase2/notsofar.refined.dialogues.jsonl",
+ "sec": 467.0
+}

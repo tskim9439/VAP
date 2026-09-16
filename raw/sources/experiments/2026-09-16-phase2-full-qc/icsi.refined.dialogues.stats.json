@@ -1,0 +1,13 @@
+{
+ "dialogues": 75,
+ "utts": 102177,
+ "split": 41573,
+ "tightened_s": 11735.4,
+ "no_vad": 12717,
+ "unaligned": 0,
+ "implausible": 3100,
+ "dur_median_before": 1.51,
+ "dur_median_after": 1.05,
+ "out": "/soundai/users/tskim/VAPKT-data/data/phase2/icsi.refined.dialogues.jsonl",
+ "sec": 1034.7
+}

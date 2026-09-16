@@ -1,0 +1,44 @@
+{
+ "dialogues": 420,
+ "hours": 104.94,
+ "speaker_hours": 67.06,
+ "speakers_per_dialogue": {
+  "2": 420
+ },
+ "utts": 126571,
+ "quarantined": 1199,
+ "empty_text": 60445,
+ "aligned": 64927,
+ "unaligned": 0,
+ "align_failed": 0,
+ "missing_pieces": 0,
+ "episodes": 95961,
+ "lane_reassigned": 0,
+ "lane_exhausted": 0,
+ "eot_outcomes": {
+  "both": 22256,
+  "hold_long": 9267,
+  "hold_short": 29088,
+  "shift": 25560,
+  "silence": 9037,
+  "unobserved": 753
+ },
+ "simultaneous_share_of_speech": {
+  "1": 0.968,
+  "2": 0.032
+ },
+ "silence_share": 0.3537,
+ "text_tokens": 908664,
+ "tags": 242625,
+ "onset": 95961,
+ "eot": 95961,
+ "overflow": 0,
+ "tokens_per_chunk": {
+  "p50": 0.0,
+  "p99": 2.0,
+  "max": 220
+ },
+ "tags_per_min": 38.53,
+ "R": 6,
+ "delay": 4
+}

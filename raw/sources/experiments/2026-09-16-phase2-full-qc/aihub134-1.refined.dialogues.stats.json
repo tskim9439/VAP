@@ -1,0 +1,16 @@
+{
+ "dialogues": 1492,
+ "utts": 426780,
+ "split": 65840,
+ "tightened_s": 81136.1,
+ "no_vad": 49363,
+ "unaligned": 45464,
+ "implausible": 29069,
+ "asr_disagree": 160431,
+ "asr_unchecked": 8589,
+ "dur_median_before": 1.82,
+ "dur_median_after": 1.5,
+ "out": "/soundai/users/tskim/VAPKT-data/data/phase2/aihub134-1.refined.dialogues.jsonl",
+ "workers": 16,
+ "sec": 6606.9
+}

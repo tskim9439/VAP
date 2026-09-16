@@ -26,8 +26,8 @@ for line in open(a.dialogues, encoding="utf-8"):
         if u.utt_id in toks: u.tokens = toks[u.utt_id]
         st["utts"] += 1; spk_time += max(0.0, u.end - u.start)
         if u.flags: st["quarantined"] += 1
+        elif u.tokens: st["aligned"] += 1                       # 보정으로 분할된 조각은 text="" 이지만 tokens 가 있어 정렬됨으로 센다
         elif not u.text: st["empty_text"] += 1
-        elif u.tokens: st["aligned"] += 1
         elif a.align: st["unaligned"] += 1
     st["dialogues"] += 1; hours += d.duration_s / 3600; spk_hist[len(d.speakers)] += 1; st["missing_pieces"] += len(d.meta.get("missing", []))
     eps = build_episodes(d); al = allocate(eps, R=a.R, policy="lazy_free", delay_text=a.delay); st["episodes"] += al.episodes; st["reassigned"] += al.reassigned; st["exhausted"] += al.exhausted
