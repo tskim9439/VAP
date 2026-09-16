@@ -17,8 +17,14 @@ def add_phase2_specials(tok) -> Dict[str, int]:
 def lane_specials_of(ids: Dict[str, int], R: int = R_LANES) -> LaneSpecials:
     return LaneSpecials(next_audio=ids["<NEXT_AUDIO>"], empty_audio=ids["<EMPTY_AUDIO>"], lanes=[ids[t] for t in LANE_TOKENS[:R]], onset=ids["<ONSET>"], eot=ids["<EOT>"])
 
+FROZEN_REGISTRY = {"<NEXT_AUDIO>": 151705, "<EMPTY_AUDIO>": 151706, "<SPK_A>": 151707, "<SPK_B>": 151708, **{f"<DELAY_{d}>": 151708 + d for d in range(1, 9)},
+                   "<SPK_3>": 151717, "<SPK_4>": 151718, "<SPK_5>": 151719, "<SPK_6>": 151720, "<ONSET>": 151721, "<EOT>": 151722}   # 2026-09-16 실측(experiments/p2_registry.py, Qwen3-ASR-0.6B tokenizer, E2 config 일치)
+
 def load_frozen_registry(path: str = None) -> Dict[str, int]:
-    """동결된 Phase 2 registry(vapasr/data/schemas/phase2-registry.json). experiments/p2_registry.py 가 tokenizer 실측으로 만든다."""
+    """동결된 Phase 2 registry. 기본은 코드 상수 FROZEN_REGISTRY 이며, schemas/phase2-registry.json 이 있으면 그것과 같은지 검사한다(서버 사본의 schemas/ 가 root 소유라 파일 동기화가 막혀 상수를 정본으로 둔다)."""
     import json, os
     path = path or os.path.join(os.path.dirname(__file__), "schemas", "phase2-registry.json")
-    return {k: int(v) for k, v in json.load(open(path))["ids"].items()}
+    if os.path.exists(path):
+        ids = {k: int(v) for k, v in json.load(open(path))["ids"].items()}
+        assert ids == FROZEN_REGISTRY, f"phase2-registry.json 과 FROZEN_REGISTRY 불일치: {ids} vs {FROZEN_REGISTRY}"
+    return dict(FROZEN_REGISTRY)
