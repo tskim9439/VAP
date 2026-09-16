@@ -68,13 +68,13 @@ by_dur = {}
 for lo, hi in ((0, 2), (2, 5), (5, 10), (10, 1e9)):
     m = (durs >= lo) & (durs < hi)
     if m.any(): by_dur[f"{lo}-{hi if hi < 1e9 else 'inf'}s"] = dict(n=int(m.sum()), med=q(errs[m], 50), p90=q(errs[m], 90), ge30=float((errs[m] >= 0.3).mean()))
-# 발화별 결과 전량(jsonl) — refine 의 --asr-flags 입력
+if a.shard: a.out = a.out.replace(".json", f".shard{a.shard.replace('/', 'of')}.json")      # 샤드별 파일명(요약·발화별 모두) — 워커들이 같은 파일을 덮어쓰던 버그 수정(2026-09-16)
+# 발화별 결과 전량(jsonl) — refine 의 --asr-flags 입력(sbatch 가 샤드를 <corpus>.utts.jsonl 로 합친다)
 with open(a.out.replace(".json", ".utts.jsonl"), "w", encoding="utf-8") as f:
     for r in rows: f.write(json.dumps(r, ensure_ascii=False) + "\n")
 rep = dict(corpus=os.path.basename(a.dialogues).split(".")[0], lang=dlgs[0].lang if dlgs else None, n=len(rows), err_median=q(errs, 50), err_p90=q(errs, 90), share_ge_0_3=float((errs >= 0.3).mean()) if len(errs) else None,
            share_ge_0_5=float((errs >= 0.5).mean()) if len(errs) else None, by_dur=by_dur, worst=sorted(rows, key=lambda r: -r["err"])[:20], model=QWEN)
 rep["sec"] = round(_t.time() - T0, 1); rep["batch_final"] = B; rep["gpu_total_gb"] = round(TOTAL / 1e9, 1); rep["utts_per_s"] = round(len(rows) / max(1e-6, rep["sec"]), 1); rep["peak_gpu_gb"] = round(torch.cuda.max_memory_allocated() / 1e9, 1)
-if a.shard: a.out = a.out.replace(".json", f".shard{a.shard.replace('/', 'of')}.json")
 os.makedirs(os.path.dirname(a.out), exist_ok=True); json.dump(rep, open(a.out, "w"), ensure_ascii=False, indent=1)
 print(json.dumps({k: v for k, v in rep.items() if k != "worst"}, ensure_ascii=False))
 for r in rep["worst"][:8]: print(f"  [{r['err']:.2f}] {r['dur']}s REF: {r['ref'][:70]} || ASR: {r['hyp'][:70]}")

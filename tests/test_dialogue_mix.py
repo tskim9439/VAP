@@ -31,3 +31,8 @@ def test_mix_normalizes_each_speaker_and_limits_peak(tmp_path):
 def test_missing_channel_reported(tmp_path):
     d = Dialogue(conv_id="c", corpus="t", lang="Korean", split="train", duration_s=1.0, speakers=["0", "1"], utterances=[], channels={"0": ChannelRef(pieces=[])})
     mono, meta = mix_dialogue(d); assert meta["missing_channels"] == ["0", "1"] and float(np.abs(mono).max()) == 0
+
+def test_empty_pieces_survive_json_roundtrip_and_mix(tmp_path):
+    d = Dialogue(conv_id="c", corpus="t", lang="Korean", split="train", duration_s=1.0, speakers=["0", "1"], utterances=[], channels={"0": ChannelRef(pieces=[]), "1": ChannelRef(pieces=[])})
+    d2 = Dialogue.from_json(d.to_json()); assert d2.channels["0"].pieces == [] and d2.channels["0"].path == ""
+    mono, meta = mix_dialogue(d2); assert len(mono) == SR and meta["missing_channels"] == ["0", "1"]

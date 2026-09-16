@@ -56,7 +56,7 @@ class Dialogue:
     def from_json(s: str) -> "Dialogue":
         d = json.loads(s)
         d["utterances"] = [Utterance(**{**u, "tokens": [tuple(t) for t in u["tokens"]] if u.get("tokens") else None}) for u in d["utterances"]]
-        d["channels"] = {k: ChannelRef(**{**v, "pieces": [tuple(p) for p in v["pieces"]] if v.get("pieces") else None}) for k, v in d.get("channels", {}).items()}
+        d["channels"] = {k: ChannelRef(**{**v, "pieces": [tuple(p) for p in v["pieces"]] if v.get("pieces") is not None else None}) for k, v in d.get("channels", {}).items()}   # pieces=[] (조각 없는 화자)는 [] 로 보존 — None 이면 path="" 를 열려다 실패(2026-09-16)
         return Dialogue(**d)
 
 def build_episodes(dlg: Dialogue, gap_s: float = GAP_S) -> List[Episode]:
