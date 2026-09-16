@@ -131,7 +131,8 @@ class P2Trainer(VapAsrTrainer):
         else: samplers = {m: WindowBucketSampler(ds, min(self.bs_of(m), len(ds)), seed=self.args.seed, drop_last=len(ds) > self.bs_of(m), rank=self.args.process_index, world=self.args.world_size) for m, ds in self.train_sets.items()}
         return WeightedRoundRobin(self.train_sets, samplers, self.num_workers, mix=a.mix, seed=self.args.seed)
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        lang = inputs.get("lang", ["English"])[0]; nw = model.config.next_weight_ko if lang == "Korean" else model.config.next_weight
+        cfg_ = getattr(model, "module", model).config                                   # DDP 래퍼면 .module
+        lang = inputs.get("lang", ["English"])[0]; nw = cfg_.next_weight_ko if lang == "Korean" else cfg_.next_weight
         x = {k: inputs[k] for k in ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "labels_alt", "activity", "activity_mask") if k in inputs}; x["soft_w"] = inputs["soft_w_full"]
         out = model(**x, next_weight=nw)
         for k in ("loss_next", "loss_text", "top1_text", "loss_eot", "loss_act", "act_acc"):

@@ -24,3 +24,9 @@ def test_assemble_uses_src_offset_and_keys_cache(stereo_wav):
     ref = load_seg_audio(seg); o = int(0.3 * SR)
     assert len(y) == int(1.1 * SR) and np.allclose(y[o: o + len(ref)], ref) and list(cache) == [seg_audio_key(seg)] and "@1.25" in seg_audio_key(seg)
     u = next(iter_utterances(dict(segments=[seg]))); assert u["src_offset_s"] == 1.25 and u["dur_s"] == 0.5
+
+def test_segment_past_eof_is_clamped_or_rejected(stereo_wav):
+    x = load_utt_audio(stereo_wav + "#ch0", 3.5, 1.0)                    # 4 s 파일에서 3.5–4.5 s → 0.5 s 만
+    assert abs(len(x) - int(0.5 * SR)) <= 2
+    with pytest.raises(ValueError): load_utt_audio(stereo_wav + "#ch0", 4.2, 1.0)
+    with pytest.raises(ValueError): load_utt_audio(stereo_wav + "#ch0", 3.97, 1.0)   # 남은 오디오 0.1 s 미만
