@@ -42,14 +42,14 @@ sources:
 6. [x] `lane_alloc.py`·`eot_soft.py`·`dialogue_interleave.py`(serialize/flatten/활동)·`dialogue_tokens.py` + `tests/test_lane_protocol.py` 19개 통과(D0); `dialogue_dataset.py`(창 선택·잘림 EOT mask·soft/활동·collate) + 테스트; `dialogue_stitch.py`(대화 결합 합성, EOT mask) + 테스트; `experiments/p2_qc.py`
 7. [ ] 중복·노출 감사(71631 E2 노출, 134-1 원본↔조각 join), split(actor·회의 계열·공식 split)
 8. [ ] 경량 QC: 밀도 p99·강제 NEXT·삭제율·lane 부족률·EOT 후보 분포·오디오 spot-check
-9. [ ] 32창 overfit 용 소형 셋 추출
+9. [x] 32창 overfit 용 소형 셋 추출 → 300 step overfit 수렴 확인(D1 준비 절 참조)
 
 ## 완료 조건
 - [x] 7 개 자료 모두 dialogues.jsonl 생성(잡 70960). 대화 수·시간은 인벤토리와 일치, 단 134-1 실외 완전 대화는 459 로 정정
 - [x] 정렬 coverage: 결손 조각 외 미정렬 0–495, 실패 0 (잡 70988)
 - [ ] N≤6 세션에서 `never_free` ≡ `lazy_free` 테스트 통과, 16+11 fixture 통과
 - [x] EOT 결과 분포(보정본): 교대 27–42 %, 혼재 23–49 %, 유지 20–40 % — 어노테이션 실측과 같은 자릿수
-- [ ] QC 리포트와 manifest 버전 고정, 32창 overfit 셋 준비
+- [x] 32창 overfit 셋 준비·수렴 확인(QC 리포트·manifest 버전 고정은 D1 이후)
 
 ## 전량 빌드 결과 (SLURM 70960, 2026-09-15 22:48–23:47, 사용자 제출)
 
@@ -85,9 +85,11 @@ QC(`p2_qc.py`, R=6, δ=4; 보정본 기준): lane 재배정 NOTSOFAR-1 913(부�
 ## D1 준비 (2026-09-16)
 - 창 통계·overfit32: `experiments/p2_build_windows.py` → 129,381 창 1,083 h(hop 10 s). AI Hub 창 마스크 비율 평균 0.30(창의 17–21 % 가 절반 이상 마스크), EN 코퍼스 ≈0. overfit32 = 코퍼스별 4–6 창, 마스크 0, 회의는 3–4 명. 원자료 `raw/sources/experiments/2026-09-16-phase2-windows/`.
 - 모델: registry 동결(`<SPK_3..6>` 151717–151720, `<ONSET>` 151721, `<EOT>` 151722; 코드 상수 `FROZEN_REGISTRY`), `add_phase2_tokens`(임베딩 초기화·활동 헤드·A/B 차단 해제), forward 에 EOT soft CE(가중 2)·활동 BCE(가중 1) — `vapasr/hf/p2_losses.py`(단위 테스트 3). 인코더 동결 기본.
-- 학습: `experiments/p2_train_hf.py`(창 라운드로빈·soft/활동 손실·mono 캐시), `slurm/p2_train_d1.sbatch`(GPU 1 장). 스모크(3 step, GPU 1 장): 7 코퍼스 창 라운드트립 불일치 0, loss_text 6.84→5.60, top1 0.59→0.63, loss_eot ≈10(신규 토큰), loss_act 0.75(초기). 32 창 overfit 300 step 진행 중(`runs/p2-overfit32`).
+- 학습: `experiments/p2_train_hf.py`(창 라운드로빈·soft/활동 손실·mono 캐시), `slurm/p2_train_d1.sbatch`(GPU 1 장). 스모크(3 step, GPU 1 장): 7 코퍼스 창 라운드트립 불일치 0, loss_text 6.84→5.60, top1 0.59→0.63, loss_eot ≈10(신규 토큰), loss_act 0.75(초기). 32 창 overfit 300 step(GPU 1 장, lr 1e-4·adapter 1e-3, warmup 20, 378 s = 1.26 s/step, 창당 라벨 ≈2.2 k·soft 위치 ≈40) 수렴: loss_text 6.85→0.012(top1 0.59→0.996), loss_eot 9.92→0.27, loss_act 0.76→0.008(act_acc 0.49→0.998), loss_next 0.20→0.02. loss_eot 는 0.26–0.29 에서 평탄 — soft 두 점 목표(p_end 0.8/0.5/0.3)의 엔트로피 하한이므로 0 으로 가지 않는 것이 정상. 산출물 `/soundai/users/tskim/VAPKT-data/runs/p2-overfit32/{final,checkpoint-300,tb}`.
+- D1 실학습 recipe(정본 §9 Q1, GPU 1 장): `sbatch --partition=apex --export=ALL,RUN=D1 slurm/p2_train_d1.sbatch` — 7 코퍼스 창 라운드로빈(bs 8, hop 10 s, 창 20–40 s, delays 2/3/4/6, R=6), lr 6e-5·adapter 1e-3, warmup 500, 16,000 step(라운드로빈 ≈ 창 128 k ≈ 1 epoch), EOT 가중 2·활동 가중 1·NEXT 0.3/0.15, 인코더 동결, 500 step 마다 저장·선점 시 requeue 재개. overfit 속도 기준 예상 6–9 h(초회 mono 캐시 생성 포함). 산출물 `/soundai/Model/VAPASR/p2-D1`. 이후: lane 상태 디코더(`vapasr/hf/lane_state.py`)·D1 평가.
 
 ## 진행 기록
+- 2026-09-16 (8): 사용자 지시 3 단계(GPU ≤1) 완료 — (1) 창 통계·overfit32 셋, (2) forward 에 EOT soft CE·활동 헤드·registry 동결, (3) overfit32 300 step 수렴 확인 → D1 잡 스크립트 준비(제출은 사용자).
 - 2026-09-16 (7): ASR 대조·보정·QC 전량 완료(134-2 QC 만 진행 중). 134-2 청소년은 ASR 불일치 52 % 로 전사 감독 절반이 빠짐 → 편입 유지하되 전사 기여는 제한적, 활동·턴 감독 위주.
 - 2026-09-15 (5): 전량 빌드 완료(잡 70960, 59 분, 오류 0).
 - 2026-09-16 (6): 전량 정렬 완료(잡 70988, hpc, 00:11–01:18; 선점으로 3회 requeue 됐으나 재개로 이어짐). 노드 1개 GPU 8×워커 6. 정렬 발화: 71631 235,214 · 134-1 376,010(결손 조각 45,464 건너뜀) · 134-2 412,013(59,827) · otoSpeech 86,345(proxy 64, OOM 재시도 22) · AMI 83,429 · NOTSOFAR-1 54,635 · ICSI 97,135(proxy 236). ASR 대조 잡 70991 이 01:20 에 이어 시작. 보정은 SLURM 없이 mxc 로그인 노드에서 `scripts/p2-refine-local.sh` 가 코퍼스별로 자동 시작(otoSpeech·AMI·NOTSOFAR·ICSI 진행 중, AI Hub 3종은 ASR 대조 뒤). `p2_refine.py` 를 대화 병렬(fork Pool)로 바꿈.
