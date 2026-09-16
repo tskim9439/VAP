@@ -15,7 +15,7 @@ class VapAsrConfig(PretrainedConfig):
                  encoder_trainable: bool = False, sp_ids: Optional[Dict[str, int]] = None, special_tokens: Optional[List[str]] = None,
                  chunk_s: float = 0.08, frame_hz: float = 12.5, delays: List[int] = (2, 3, 4, 6), next_weight: float = 0.3, next_weight_ko: float = 0.15,
                  full_ft: bool = True, lora_r: int = 0, runaway_cap: int = 8, max_flush_rounds: int = 8, blocked_ids: Optional[List[int]] = None, audio_pad_id: Optional[int] = None,
-                 prefix_ids: Optional[List[int]] = None, **kw):
+                 prefix_ids: Optional[List[int]] = None, lanes: int = 0, act_weight: float = 1.0, act_hidden: int = 256, eot_weight: float = 2.0, phase2_registry: Optional[Dict[str, int]] = None, **kw):
         self.thinker = thinker or {}; self.thinker_name_or_path = thinker_name_or_path
         self.adapter_d_in, self.adapter_d_out, self.adapter_hidden = adapter_d_in, adapter_d_out, adapter_hidden
         self.encoder_type, self.encoder_name = encoder_type, encoder_name; self.encoder_left_context, self.encoder_right_context = encoder_left_context, encoder_right_context
@@ -24,6 +24,8 @@ class VapAsrConfig(PretrainedConfig):
         self.chunk_s, self.frame_hz, self.delays = chunk_s, frame_hz, list(delays); self.next_weight, self.next_weight_ko = next_weight, next_weight_ko
         self.full_ft, self.lora_r, self.runaway_cap, self.max_flush_rounds = full_ft, lora_r, runaway_cap, max_flush_rounds
         self.blocked_ids = list(blocked_ids or []); self.audio_pad_id = audio_pad_id; self.prefix_ids = list(prefix_ids or [])   # 디코드에 tokenizer 없이도 쓰도록 id 를 보관
+        self.lanes, self.act_weight, self.act_hidden, self.eot_weight = lanes, act_weight, act_hidden, eot_weight   # Phase 2: lanes>0 이면 활동 헤드(R 행)·EOT soft CE·EOT 가중
+        self.phase2_registry = dict(phase2_registry or {})                                                          # Phase 2 토큰 id 동결(<SPK_3..6>, <ONSET>, <EOT>)
         super().__init__(**kw)
 
     # thinker 의 텍스트 설정에서 자주 쓰는 값

@@ -127,10 +127,14 @@ class DialogueWindowDataset(Dataset):
 def collate_dialogue(batch):
     """collate_streams 와 같은 패딩 + soft(배치 평탄화: soft_b, soft_pos, soft_alt, soft_w) + activity (B,K,R) 와 activity_mask (B,K)."""
     from ..uslm.mono_data import collate_streams
-    out = collate_streams([{k: v for k, v in b.items() if k not in ("soft_pos", "soft_alt", "soft_w", "activity", "lanes", "t0")} for b in batch])
+    B = len(batch); out = collate_streams([{k: v for k, v in b.items() if k not in ("soft_pos", "soft_alt", "soft_w", "activity", "lanes", "t0")} for b in batch])
     out["soft_b"] = torch.cat([torch.full_like(b["soft_pos"], i) for i, b in enumerate(batch)]); out["soft_pos"] = torch.cat([b["soft_pos"] for b in batch])
     out["soft_alt"] = torch.cat([b["soft_alt"] for b in batch]); out["soft_w"] = torch.cat([b["soft_w"] for b in batch])
-    B = len(batch); K = max(b["activity"].shape[0] for b in batch); R = batch[0]["activity"].shape[1]
+    L = out["labels"].shape[1]; la = torch.full((B, L), -100, dtype=torch.long); sw = torch.ones(B, L)          # 모델 forward 용 (B,L) 형태
+    for i, b in enumerate(batch):
+        if b["soft_pos"].numel(): la[i, b["soft_pos"]] = b["soft_alt"]; sw[i, b["soft_pos"]] = b["soft_w"]
+    out["labels_alt"] = la; out["soft_w_full"] = sw
+    K = max(b["activity"].shape[0] for b in batch); R = batch[0]["activity"].shape[1]
     act = torch.zeros(B, K, R); am = torch.zeros(B, K)
     for i, b in enumerate(batch): k = b["activity"].shape[0]; act[i, :k] = b["activity"]; am[i, :k] = 1
     out["activity"] = act; out["activity_mask"] = am; return out

@@ -16,3 +16,9 @@ def add_phase2_specials(tok) -> Dict[str, int]:
 
 def lane_specials_of(ids: Dict[str, int], R: int = R_LANES) -> LaneSpecials:
     return LaneSpecials(next_audio=ids["<NEXT_AUDIO>"], empty_audio=ids["<EMPTY_AUDIO>"], lanes=[ids[t] for t in LANE_TOKENS[:R]], onset=ids["<ONSET>"], eot=ids["<EOT>"])
+
+def load_frozen_registry(path: str = None) -> Dict[str, int]:
+    """동결된 Phase 2 registry(vapasr/data/schemas/phase2-registry.json). experiments/p2_registry.py 가 tokenizer 실측으로 만든다."""
+    import json, os
+    path = path or os.path.join(os.path.dirname(__file__), "schemas", "phase2-registry.json")
+    return {k: int(v) for k, v in json.load(open(path))["ids"].items()}

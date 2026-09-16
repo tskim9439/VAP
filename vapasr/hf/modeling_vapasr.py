@@ -11,6 +11,7 @@ import torch, torch.nn as nn, torch.nn.functional as F
 from transformers import PreTrainedModel
 from transformers.utils import ModelOutput
 from .configuration_vapasr import VapAsrConfig
+from .p2_losses import soft_ce, activity_bce, gather_audio_targets
 
 class Adapter(nn.Module):                                   # uslm/model.Adapter 와 동일 구조(키 이름 net.* 유지 → 기존 ckpt 호환)
     def __init__(self, d_in=1024, d_out=1024, h=2048):
@@ -24,6 +25,10 @@ class VapAsrOutput(ModelOutput):
     loss_text: Optional[float] = None       # 텍스트 위치 평균 CE
     top1_text: Optional[float] = None       # 텍스트 위치 top-1 정확도
     n_labels: Optional[int] = None
+    loss_eot: Optional[float] = None        # Phase 2: EOT 위치 평균 CE(soft 혼합 후)
+    loss_act: Optional[float] = None        # Phase 2: lane 활동 BCE
+    act_acc: Optional[float] = None
+    n_soft: Optional[int] = None
 
 class VapAsrForStreamingASR(PreTrainedModel):
     config_class = VapAsrConfig
@@ -45,6 +50,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.encoder: Optional[nn.Module] = None                                  # attach_encoder 로 붙인다(무거운 NeMo 복원은 __init__ 밖에서)
         self.sp_ids = dict(config.sp_ids); self.next_audio = self.sp_ids.get("<NEXT_AUDIO>"); self.empty_audio = self.sp_ids.get("<EMPTY_AUDIO>")
         self.register_buffer("blocked", torch.tensor(sorted(set(config.blocked_ids)), dtype=torch.long), persistent=False)
+        self.act_head = nn.Sequential(nn.Linear(config.hidden_size, config.act_hidden), nn.GELU(), nn.Linear(config.act_hidden, config.lanes)) if config.lanes > 0 else None   # Phase 2 lane 활동 헤드(audio 위치)
         self.post_init()
 
     # ── HF 규약(tie·임베딩)
@@ -71,21 +77,49 @@ class VapAsrForStreamingASR(PreTrainedModel):
         g = torch.gather(ce, 1, chunk_of.clamp(min=0)[..., None].expand(-1, -1, D))
         return torch.where(is_audio[..., None], g, E)
 
-    def forward(self, ids=None, is_audio=None, chunk_of=None, labels=None, mask=None, wav=None, wav_len=None, K=None, feats=None, next_weight: Optional[float] = None, return_dict: bool = True, **_):
-        """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight."""
+    def forward(self, ids=None, is_audio=None, chunk_of=None, labels=None, mask=None, wav=None, wav_len=None, K=None, feats=None, next_weight: Optional[float] = None, return_dict: bool = True,
+                labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, **_):
+        """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight.
+        Phase 2(config.lanes>0): labels_alt/soft_w 가 있으면 EOT 후보 위치의 label 을 (labels: w, labels_alt: 1−w) 두 점 분포로 학습(정본 §5.2),
+        activity (B,K,R)·activity_mask (B,K) 가 있으면 audio 위치 hidden 으로 lane 활동 BCE 를 더한다(정본 §6). EOT 위치 가중 config.eot_weight."""
         if wav is not None: feats = self.encode(wav, wav_len, K)
         nw = self.config.next_weight if next_weight is None else float(next_weight)
         h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of), attention_mask=mask).last_hidden_state
         tgt = labels[:, 1:]; sel = tgt != -100; t = tgt[sel]
         logits = self.thinker.lm_head(h[:, :-1][sel]).float()                       # 라벨 위치만 (전 위치 fp32 logits 는 OOM)
-        tok_loss = F.cross_entropy(logits, t, reduction="none")
-        na = t == self.next_audio; tx = ~na
-        w = torch.where(na, tok_loss.new_tensor(nw), tok_loss.new_tensor(1.0)); loss = (tok_loss * w).sum() / w.sum().clamp(min=1)
-        with torch.no_grad():
-            top1 = (logits.argmax(-1) == t) & tx
-            out = VapAsrOutput(loss=loss, loss_next=tok_loss[na].mean().item() if na.any() else 0.0, loss_text=tok_loss[tx].mean().item() if tx.any() else 0.0,
-                               top1_text=(top1.sum() / tx.sum().clamp(min=1)).item(), n_labels=int(t.numel()))
+        alt = labels_alt[:, 1:][sel] if labels_alt is not None else None; w = soft_w[:, 1:][sel] if soft_w is not None else None
+        eot_id = self.config.phase2_registry.get("<EOT>", -1) if self.config.lanes > 0 else -1
+        loss, st = soft_ce(logits, t, alt, w, self.next_audio, nw, eot_id=eot_id, eot_weight=self.config.eot_weight if eot_id >= 0 else 1.0)
+        loss_act, act_st = None, {}
+        if self.act_head is not None and activity is not None:
+            ha, tg = gather_audio_targets(h, is_audio, chunk_of, activity, activity_mask if activity_mask is not None else torch.ones(activity.shape[:2], device=h.device))
+            loss_act, act_st = activity_bce(self.act_head(ha).float(), tg); loss = loss + (self.config.act_weight if act_weight is None else float(act_weight)) * loss_act
+        out = VapAsrOutput(loss=loss, loss_next=st["loss_next"], loss_text=st["loss_text"], top1_text=st["top1_text"], n_labels=int(t.numel()),
+                           loss_eot=st["loss_eot"], loss_act=(loss_act.item() if loss_act is not None else None), act_acc=act_st.get("act_acc"), n_soft=st["n_soft"])
         return out if return_dict else (loss,)
+
+    def activity_logits(self, h_audio: torch.Tensor) -> torch.Tensor:
+        """Phase 2 lane 활동 logits (…, R) — 추론 parser(lane_state) 가 닫힘 판정에 쓴다."""
+        assert self.act_head is not None, "Phase 2 활동 헤드 없음(config.lanes=0)"; return self.act_head(h_audio)
+
+    def add_phase2_tokens(self, tok, R: int = 6, seed: int = 0) -> Dict[str, int]:
+        """Phase 1 체크포인트(E2)에 Phase 2 registry 를 더한다: <SPK_3..R>, <ONSET>, <EOT> 를 tokenizer·config.sp_ids 에 추가하고 임베딩 행을 평균+잡음으로 초기화(기존 A/B 행은 그대로),
+        활동 헤드(R 행)를 만들고, decode 차단 목록에서 <SPK_A>/<SPK_B> 를 뺀다(정본 §1·§11). 동결 registry(vapasr/data/schemas/phase2-registry.json)와 id 가 같아야 한다."""
+        from ..data.dialogue_tokens import add_phase2_specials, PHASE2_SPECIALS, load_frozen_registry, LANE_TOKENS
+        ids = add_phase2_specials(tok); frozen = load_frozen_registry()
+        for name in PHASE2_SPECIALS: assert ids[name] == frozen[name], f"registry 불일치 {name}: tokenizer {ids[name]} vs 동결 {frozen[name]}"
+        new = [ids[n] for n in PHASE2_SPECIALS if n not in self.config.sp_ids]
+        W = self.get_input_embeddings().weight; assert max(ids.values()) < W.shape[0], "임베딩 여유 행 없음"
+        if new:
+            g = torch.Generator().manual_seed(seed)
+            with torch.no_grad():
+                mu = W[: min(ids.values())].float().mean(0)
+                for r in new: W[r] = (mu + 0.02 * torch.randn(mu.shape, generator=g)).to(W.dtype)
+        self.config.sp_ids.update({n: ids[n] for n in PHASE2_SPECIALS}); self.config.special_tokens = list(dict.fromkeys(self.config.special_tokens + PHASE2_SPECIALS)); self.sp_ids = dict(self.config.sp_ids)
+        self.config.phase2_registry = {n: ids[n] for n in LANE_TOKENS[:R] + ["<ONSET>", "<EOT>"]}; self.config.lanes = R
+        self.config.blocked_ids = sorted(set(self.config.blocked_ids) - {ids["<SPK_A>"], ids["<SPK_B>"]}); self.blocked = torch.tensor(self.config.blocked_ids, dtype=torch.long, device=W.device)
+        if self.act_head is None: self.act_head = nn.Sequential(nn.Linear(self.config.hidden_size, self.config.act_hidden), nn.GELU(), nn.Linear(self.config.act_hidden, R)).to(W.device)
+        return ids
 
     # ── 스트리밍 디코드 (mono_model.stream_decode 와 동일)
     @torch.inference_mode()
