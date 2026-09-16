@@ -1,0 +1,40 @@
+{
+ "dialogues": 757,
+ "dialogue_hours": 196.6,
+ "windows": 22426,
+ "window_hours": 187.2,
+ "yield_ratio": 0.953,
+ "hop_s": 10.0,
+ "window_s": [
+  20.0,
+  40.0
+ ],
+ "skipped": {
+  "no_start": 44239,
+  "sparse": 2961,
+  "untranscribed": 0,
+  "with_mask": 24109
+ },
+ "sampled": 1000,
+ "mask_frac": {
+  "mean": 0.301,
+  "p50": 0.271,
+  "p90": 0.598,
+  "share_zero": 0.053,
+  "share_gt_half": 0.168
+ },
+ "text_tokens_per_window": {
+  "mean": 55.9,
+  "p10": 18.0,
+  "p90": 99.0
+ },
+ "tags_per_window": 23.9,
+ "eot_per_window": 10.4,
+ "soft_eot_per_window": 5.1,
+ "speakers_per_window": {
+  "1": 62,
+  "2": 938
+ },
+ "reassigned_per_sampled_window": 0.0,
+ "sec": 6.3
+}

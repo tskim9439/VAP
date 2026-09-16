@@ -1,0 +1,296 @@
+{
+ "aihub71631": {
+  "dialogues": 757,
+  "dialogue_hours": 196.6,
+  "windows": 22426,
+  "window_hours": 187.2,
+  "yield_ratio": 0.953,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 44239,
+   "sparse": 2961,
+   "untranscribed": 0,
+   "with_mask": 24109
+  },
+  "sampled": 1000,
+  "mask_frac": {
+   "mean": 0.301,
+   "p50": 0.271,
+   "p90": 0.598,
+   "share_zero": 0.053,
+   "share_gt_half": 0.168
+  },
+  "text_tokens_per_window": {
+   "mean": 55.9,
+   "p10": 18.0,
+   "p90": 99.0
+  },
+  "tags_per_window": 23.9,
+  "eot_per_window": 10.4,
+  "soft_eot_per_window": 5.1,
+  "speakers_per_window": {
+   "1": 62,
+   "2": 938
+  },
+  "reassigned_per_sampled_window": 0.0,
+  "sec": 6.3
+ },
+ "aihub134-1": {
+  "dialogues": 1492,
+  "dialogue_hours": 344.2,
+  "windows": 29528,
+  "window_hours": 246.3,
+  "yield_ratio": 0.715,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 88370,
+   "sparse": 3796,
+   "untranscribed": 0,
+   "with_mask": 31354
+  },
+  "sampled": 1000,
+  "mask_frac": {
+   "mean": 0.322,
+   "p50": 0.27,
+   "p90": 0.664,
+   "share_zero": 0.066,
+   "share_gt_half": 0.207
+  },
+  "text_tokens_per_window": {
+   "mean": 71.0,
+   "p10": 29.0,
+   "p90": 115.0
+  },
+  "tags_per_window": 27.1,
+  "eot_per_window": 11.1,
+  "soft_eot_per_window": 5.5,
+  "speakers_per_window": {
+   "1": 83,
+   "2": 917
+  },
+  "reassigned_per_sampled_window": 0.0,
+  "sec": 12.4
+ },
+ "aihub134-2": {
+  "dialogues": 1649,
+  "dialogue_hours": 399.9,
+  "windows": 49911,
+  "window_hours": 419.0,
+  "yield_ratio": 1.048,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 69919,
+   "sparse": 21675,
+   "untranscribed": 0,
+   "with_mask": 68235
+  },
+  "sampled": 1000,
+  "mask_frac": {
+   "mean": 0.323,
+   "p50": 0.3,
+   "p90": 0.57,
+   "share_zero": 0.03,
+   "share_gt_half": 0.175
+  },
+  "text_tokens_per_window": {
+   "mean": 43.4,
+   "p10": 13.0,
+   "p90": 85.0
+  },
+  "tags_per_window": 22.9,
+  "eot_per_window": 10.3,
+  "soft_eot_per_window": 4.5,
+  "speakers_per_window": {
+   "1": 66,
+   "2": 934
+  },
+  "reassigned_per_sampled_window": 0.0,
+  "sec": 10.8
+ },
+ "otoSpeech": {
+  "dialogues": 420,
+  "dialogue_hours": 104.9,
+  "windows": 12522,
+  "window_hours": 104.8,
+  "yield_ratio": 0.998,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 22794,
+   "sparse": 1840,
+   "untranscribed": 0,
+   "with_mask": 1165
+  },
+  "sampled": 1000,
+  "mask_frac": {
+   "mean": 0.014,
+   "p50": 0.0,
+   "p90": 0.0,
+   "share_zero": 0.903,
+   "share_gt_half": 0.003
+  },
+  "text_tokens_per_window": {
+   "mean": 62.6,
+   "p10": 18.900000000000006,
+   "p90": 104.10000000000002
+  },
+  "tags_per_window": 19.4,
+  "eot_per_window": 7.9,
+  "soft_eot_per_window": 7.2,
+  "speakers_per_window": {
+   "1": 118,
+   "2": 882
+  },
+  "reassigned_per_sampled_window": 0.0,
+  "sec": 3.8
+ },
+ "ami": {
+  "dialogues": 171,
+  "dialogue_hours": 100.0,
+  "windows": 8314,
+  "window_hours": 69.5,
+  "yield_ratio": 0.695,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 26380,
+   "sparse": 1041,
+   "untranscribed": 0,
+   "with_mask": 2260
+  },
+  "sampled": 1000,
+  "mask_frac": {
+   "mean": 0.035,
+   "p50": 0.0,
+   "p90": 0.113,
+   "share_zero": 0.724,
+   "share_gt_half": 0.007
+  },
+  "text_tokens_per_window": {
+   "mean": 77.7,
+   "p10": 32.0,
+   "p90": 126.0
+  },
+  "tags_per_window": 35.6,
+  "eot_per_window": 11.0,
+  "soft_eot_per_window": 9.6,
+  "speakers_per_window": {
+   "1": 123,
+   "2": 245,
+   "3": 332,
+   "4": 300
+  },
+  "reassigned_per_sampled_window": 0.0,
+  "sec": 6.5
+ },
+ "notsofar": {
+  "dialogues": 237,
+  "dialogue_hours": 24.5,
+  "windows": 840,
+  "window_hours": 7.0,
+  "yield_ratio": 0.284,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 7599,
+   "sparse": 0,
+   "untranscribed": 0,
+   "with_mask": 171
+  },
+  "sampled": 840,
+  "mask_frac": {
+   "mean": 0.015,
+   "p50": 0.0,
+   "p90": 0.062,
+   "share_zero": 0.796,
+   "share_gt_half": 0.0
+  },
+  "text_tokens_per_window": {
+   "mean": 110.2,
+   "p10": 64.0,
+   "p90": 165.0
+  },
+  "tags_per_window": 62.9,
+  "eot_per_window": 14.9,
+  "soft_eot_per_window": 13.3,
+  "speakers_per_window": {
+   "1": 44,
+   "2": 92,
+   "3": 196,
+   "4": 247,
+   "5": 145,
+   "6": 81,
+   "7": 26,
+   "8": 9
+  },
+  "reassigned_per_sampled_window": 0.104,
+  "sec": 3.5
+ },
+ "icsi": {
+  "dialogues": 75,
+  "dialogue_hours": 71.7,
+  "windows": 5840,
+  "window_hours": 48.9,
+  "yield_ratio": 0.682,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 18346,
+   "sparse": 1505,
+   "untranscribed": 0,
+   "with_mask": 3217
+  },
+  "sampled": 1000,
+  "mask_frac": {
+   "mean": 0.048,
+   "p50": 0.03,
+   "p90": 0.125,
+   "share_zero": 0.457,
+   "share_gt_half": 0.002
+  },
+  "text_tokens_per_window": {
+   "mean": 83.6,
+   "p10": 47.0,
+   "p90": 125.10000000000002
+  },
+  "tags_per_window": 37.6,
+  "eot_per_window": 12.9,
+  "soft_eot_per_window": 10.7,
+  "speakers_per_window": {
+   "1": 130,
+   "2": 320,
+   "3": 282,
+   "4": 169,
+   "5": 68,
+   "6": 22,
+   "7": 8,
+   "8": 1
+  },
+  "reassigned_per_sampled_window": 0.012,
+  "sec": 5.7
+ }
+}

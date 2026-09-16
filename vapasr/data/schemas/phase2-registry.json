@@ -1,0 +1,40 @@
+{
+ "schema": "vapasr-phase2-registry-1.0",
+ "ids": {
+  "<NEXT_AUDIO>": 151705,
+  "<EMPTY_AUDIO>": 151706,
+  "<SPK_A>": 151707,
+  "<SPK_B>": 151708,
+  "<DELAY_1>": 151709,
+  "<DELAY_2>": 151710,
+  "<DELAY_3>": 151711,
+  "<DELAY_4>": 151712,
+  "<DELAY_5>": 151713,
+  "<DELAY_6>": 151714,
+  "<DELAY_7>": 151715,
+  "<DELAY_8>": 151716,
+  "<SPK_3>": 151717,
+  "<SPK_4>": 151718,
+  "<SPK_5>": 151719,
+  "<SPK_6>": 151720,
+  "<ONSET>": 151721,
+  "<EOT>": 151722
+ },
+ "lanes": {
+  "lane1": 151707,
+  "lane2": 151708,
+  "lane3": 151717,
+  "lane4": 151718,
+  "lane5": 151719,
+  "lane6": 151720
+ },
+ "R": 6,
+ "source": {
+  "tokenizer": "/soundai/Model/Qwen3-ASR-0.6B",
+  "measured": "2026-09-16 experiments/p2_registry.py",
+  "e2": "/soundai/Model/VAPASR/hf-E2/final",
+  "e2_vocab_rows": 151936,
+  "e2_mismatch": {},
+  "note": "lane 1/2 = 기존 <SPK_A>/<SPK_B>; 신규 6개는 tokenizer 추가 순서대로 151717–151722. E2 blocked_ids 에서 151707/151708 은 Phase 2 에서 해제"
+ }
+}
