@@ -32,9 +32,9 @@ def load_align_parts(align_dir: str) -> Tuple[Dict[str, Dict[str, list]], set]:
 class DialogueWindowDataset(Dataset):
     def __init__(self, dialogues: List[str], tok, align_dir: Optional[str] = None, R: int = R_LANES, window_s: Tuple[float, float] = (20.0, 40.0), hop_s: float = 10.0,
                  delays=(2, 3, 4, 6), delay_onset: int = 0, policy: str = "lazy_free", max_per_chunk: int = 0, seed: int = 0, mix_kw: Optional[dict] = None,
-                 max_items: Optional[int] = None, allow_unaligned: bool = False, cache_convs: int = 4, min_text_tokens: int = 8, untranscribed: str = "mask"):
+                 max_items: Optional[int] = None, allow_unaligned: bool = False, cache_convs: int = 4, min_text_tokens: int = 8, untranscribed: str = "mask", mono_cache_dir: Optional[str] = None):
         self.tok = tok; self.sp_ids = add_phase2_specials(tok); self.sp = lane_specials_of(self.sp_ids, R); self.R = R; self.delays = tuple(delays); self.delay_onset = delay_onset
-        self.policy = policy; self.M = max_per_chunk; self.mix_kw = mix_kw or {}; self.allow_unaligned = allow_unaligned; self.cache_convs = cache_convs; self.min_text_tokens = min_text_tokens; self.untranscribed = untranscribed; assert untranscribed in ("mask", "skip")
+        self.policy = policy; self.M = max_per_chunk; self.mix_kw = mix_kw or {}; self.allow_unaligned = allow_unaligned; self.cache_convs = cache_convs; self.min_text_tokens = min_text_tokens; self.untranscribed = untranscribed; assert untranscribed in ("mask", "skip"); self.mono_cache_dir = mono_cache_dir
         self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>"); self._pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]
         self.dlgs: Dict[str, Dialogue] = {}; self.stats = dict(dialogues=0, windows=0, skipped_untranscribed=0, skipped_unaligned=0, skipped_sparse=0, no_start=0, windows_with_mask=0)
         aligned, failed = load_align_parts(align_dir) if align_dir else ({}, set())
@@ -89,10 +89,20 @@ class DialogueWindowDataset(Dataset):
         return self._pre + self.tok(f"language {lang}<asr_text>", add_special_tokens=False)["input_ids"] + [self.sp_ids[f"<DELAY_{delay}>"]]
 
     def mono(self, cid: str) -> np.ndarray:
-        if cid not in self._mono:
-            self._mono[cid], _ = mix_dialogue(self.dlgs[cid], **self.mix_kw); self._order.append(cid)
-            while len(self._order) > self.cache_convs: self._mono.pop(self._order.pop(0), None)
-        return self._mono[cid]
+        """대화의 mono 혼합. mono_cache_dir 가 있으면 <dir>/<corpus>/<conv>.npy(float16) 에 한 번 저장하고 이후 mmap 으로 연다(창마다 채널 전체를 섞는 비용 제거)."""
+        if cid in self._mono: return self._mono[cid]
+        d = self.dlgs[cid]; x = None
+        if self.mono_cache_dir:
+            f = os.path.join(self.mono_cache_dir, d.corpus, cid.replace("/", "_").replace(":", "_") + ".npy")
+            if os.path.exists(f):
+                try: x = np.load(f, mmap_mode="r")
+                except Exception: x = None
+            if x is None:
+                y, _ = mix_dialogue(d, **self.mix_kw); os.makedirs(os.path.dirname(f), exist_ok=True); tmp = f + f".{os.getpid()}.tmp"; np.save(tmp, y.astype(np.float16)); os.replace(tmp + ".npy" if not tmp.endswith(".npy") else tmp, f); x = np.load(f, mmap_mode="r")
+        if x is None: x, _ = mix_dialogue(d, **self.mix_kw)
+        self._mono[cid] = x; self._order.append(cid)
+        while len(self._order) > self.cache_convs: self._mono.pop(self._order.pop(0), None)
+        return x
 
     def window_episodes(self, d: Dialogue, t0: float, L: float) -> Tuple[List[Episode], dict]:
         """창 [t0, t0+L) 의 episode(시각은 창 기준). 창 끝을 넘는 episode 는 토큰을 잘라내고 EOT 를 mask 한다."""
@@ -118,7 +128,7 @@ class DialogueWindowDataset(Dataset):
 
     def __getitem__(self, i):
         delay = random.choice(self.delays); s = self.sequence(i, delay)
-        wav = crop_audio(self.mono(s["cid"]), s["t0"], s["t0"] + s["L"])
+        wav = np.asarray(crop_audio(self.mono(s["cid"]), s["t0"], s["t0"] + s["L"]), dtype=np.float32)
         return dict(wav=torch.from_numpy(np.ascontiguousarray(wav)), ids=torch.tensor(s["ids"]), is_audio=torch.tensor(s["is_audio"]), chunk_of=torch.tensor(s["chunk_of"]), labels=torch.tensor(s["labels"]),
                     soft_pos=torch.tensor(s["soft_pos"], dtype=torch.long), soft_alt=torch.tensor(s["soft_alt"], dtype=torch.long), soft_w=torch.tensor(s["soft_w"], dtype=torch.float),
                     activity=torch.tensor(s["activity"], dtype=torch.float), lanes=torch.tensor(s["lanes"]), lang=s["lang"], delay=delay, name=s["corpus"], id=f"{s['cid']}@{s['t0']}",

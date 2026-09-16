@@ -15,7 +15,7 @@ ap.add_argument("--bs-en", type=int, default=8); ap.add_argument("--bs-ko", type
 ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--R", type=int, default=6); ap.add_argument("--hop", type=float, default=10.0); ap.add_argument("--window", type=float, nargs=2, default=(20.0, 40.0))
 ap.add_argument("--act-weight", type=float, default=1.0); ap.add_argument("--eot-weight", type=float, default=2.0); ap.add_argument("--next-weight", type=float, default=0.3); ap.add_argument("--next-weight-ko", type=float, default=0.15)
 ap.add_argument("--no-liger", action="store_true"); ap.add_argument("--no-grad-ckpt", action="store_true"); ap.add_argument("--save-every", type=int, default=500); ap.add_argument("--log-every", type=int, default=10)
-ap.add_argument("--resume", default="auto"); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--num-workers", type=int, default=2); ap.add_argument("--gpu", default=None); ap.add_argument("--check", action="store_true", help="학습 전 창별 라운드트립(라벨 토큰 = 참조 토큰) 검사")
+ap.add_argument("--train-encoder", action="store_true", help="인코더도 학습(기본 동결 — 정본 §1)"); ap.add_argument("--mono-cache", default=None, help="대화별 mono 혼합 캐시 디렉토리(float16 npy, mmap)"); ap.add_argument("--resume", default="auto"); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--num-workers", type=int, default=2); ap.add_argument("--gpu", default=None); ap.add_argument("--check", action="store_true", help="학습 전 창별 라운드트립(라벨 토큰 = 참조 토큰) 검사")
 a = ap.parse_args()
 if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import torch
@@ -50,6 +50,9 @@ if not a.no_liger:
         from vapasr.hf.liger import apply_liger_to_thinker; log(f"liger: {apply_liger_to_thinker(model)}")
     except ImportError as e: log(f"liger 미적용({e})")
 model.encoder.eval()
+if not a.train_encoder:
+    for p_ in model.encoder.parameters(): p_.requires_grad_(False)
+    model.config.encoder_trainable = False
 n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad); log(f"모델 준비 {time.time()-t0:.0f}s · 학습 파라미터 {n_tr/1e6:.1f} M · lanes {cfg.lanes} · registry {cfg.phase2_registry}")
 
 # ── 데이터
@@ -63,7 +66,7 @@ for c in a.corpora.split(","):
     p = os.path.join(a.data, f"{c}.refined.dialogues.jsonl")
     if not os.path.exists(p): log(f"!! {p} 없음 — 건너뜀"); continue
     if wins is not None and c not in wins: continue
-    ds = DialogueWindowDataset([p], tok, R=a.R, window_s=tuple(a.window), hop_s=a.hop, delays=delays, seed=a.seed)
+    ds = DialogueWindowDataset([p], tok, R=a.R, window_s=tuple(a.window), hop_s=a.hop, delays=delays, seed=a.seed, mono_cache_dir=a.mono_cache)
     if wins is not None:
         want = wins[c]; ds.items = [it for it in ds.items if (it[0], round(it[1], 3), round(it[2], 3)) in want]
         if len(ds.items) != len(want): log(f"  ! {c}: 창 목록 {len(want)} 중 {len(ds.items)} 만 일치(창 규약이 바뀌었으면 목록을 다시 만든다)")

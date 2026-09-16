@@ -62,3 +62,10 @@ def test_collate_dialogue(tmp_path):
     b = collate_dialogue([ds[0], ds[1]])
     assert b["ids"].shape[0] == 2 and b["activity"].shape[0] == 2 and b["activity"].shape[2] == 6 and b["activity_mask"].sum() == ds[0]["K"] + ds[1]["K"]
     assert b["soft_b"].shape == b["soft_pos"].shape == b["soft_w"].shape and b["wav"].shape[0] == 2
+
+def test_mono_cache_roundtrip(tmp_path):
+    p = make(tmp_path); cache = str(tmp_path / "mono")
+    ds = DialogueWindowDataset([p], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), seed=1, mono_cache_dir=cache)
+    a = ds[0]["wav"].clone(); import os; assert any(f.endswith(".npy") for r, _, fs in os.walk(cache) for f in fs)
+    ds2 = DialogueWindowDataset([p], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), seed=1, mono_cache_dir=cache); b = ds2[0]["wav"]
+    assert a.shape == b.shape and float((a - b).abs().max()) < 2e-3 and a.dtype == torch.float32
