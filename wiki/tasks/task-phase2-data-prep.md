@@ -82,6 +82,11 @@ ASR 대조 잡 71381(13:36–15:13, 노드 1개), 보정은 mxc 로그인 노드
 
 QC(`p2_qc.py`, R=6, δ=4; 보정본 기준): lane 재배정 NOTSOFAR-1 913(부족 7)·ICSI 700(부족 1), 그 외 0. 청크당 토큰 p99 2–3. 동시 발화 2명 이상(음성 프레임): 71631 10.6 %, 134-1 10.5 %, otoSpeech 3.2 %, AMI 14.5 %, NOTSOFAR-1 29.8 %, ICSI 9.9 %. EOT 결과 분포(교대/혼재/유지 짧음/유지 김/침묵): 71631 27/33/19/13/7 %, 134-1 27/38/22/9/3, otoSpeech 27/23/30/10/9, AMI 37/36/18/7/3, NOTSOFAR-1 42/49/8/0/0, ICSI 29/36/26/7/1. 원자료 `raw/sources/experiments/2026-09-16-phase2-full-qc/`. (QC 의 aligned 계수는 분할 조각을 빼고 세는 버그가 있어 다음 실행에서 수정됨.)
 
+## D1 준비 (2026-09-16)
+- 창 통계·overfit32: `experiments/p2_build_windows.py` → 129,381 창 1,083 h(hop 10 s). AI Hub 창 마스크 비율 평균 0.30(창의 17–21 % 가 절반 이상 마스크), EN 코퍼스 ≈0. overfit32 = 코퍼스별 4–6 창, 마스크 0, 회의는 3–4 명. 원자료 `raw/sources/experiments/2026-09-16-phase2-windows/`.
+- 모델: registry 동결(`<SPK_3..6>` 151717–151720, `<ONSET>` 151721, `<EOT>` 151722; 코드 상수 `FROZEN_REGISTRY`), `add_phase2_tokens`(임베딩 초기화·활동 헤드·A/B 차단 해제), forward 에 EOT soft CE(가중 2)·활동 BCE(가중 1) — `vapasr/hf/p2_losses.py`(단위 테스트 3). 인코더 동결 기본.
+- 학습: `experiments/p2_train_hf.py`(창 라운드로빈·soft/활동 손실·mono 캐시), `slurm/p2_train_d1.sbatch`(GPU 1 장). 스모크(3 step, GPU 1 장): 7 코퍼스 창 라운드트립 불일치 0, loss_text 6.84→5.60, top1 0.59→0.63, loss_eot ≈10(신규 토큰), loss_act 0.75(초기). 32 창 overfit 300 step 진행 중(`runs/p2-overfit32`).
+
 ## 진행 기록
 - 2026-09-16 (7): ASR 대조·보정·QC 전량 완료(134-2 QC 만 진행 중). 134-2 청소년은 ASR 불일치 52 % 로 전사 감독 절반이 빠짐 → 편입 유지하되 전사 기여는 제한적, 활동·턴 감독 위주.
 - 2026-09-15 (5): 전량 빌드 완료(잡 70960, 59 분, 오류 0).
