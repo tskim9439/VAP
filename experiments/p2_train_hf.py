@@ -24,6 +24,13 @@ from transformers import TrainingArguments
 from vapasr.hf import VapAsrForStreamingASR, load_tokenizer
 from vapasr.hf.trainer import VapAsrTrainer, PreemptCallback
 from vapasr.uslm.mono_data import BucketBatchSampler
+
+class WindowBucketSampler(BucketBatchSampler):
+    """창 길이(L) 기준 버킷 배치 — DialogueWindowDataset.items 는 (conv, t0, L) 튜플이라 MonoStreamDataset 의 K 키를 쓰는 부모 순서를 대체한다."""
+    def __init__(self, ds, bs, seed=0, drop_last=True, rank=0, world=1):
+        order = sorted(range(len(ds)), key=lambda i: ds.items[i][2]); self.batches = [order[i: i + bs] for i in range(0, len(order), bs)]
+        if drop_last and self.batches and len(self.batches[-1]) < bs: self.batches = self.batches[:-1]
+        self.seed, self.rank, self.world, self.epoch = seed, rank, world, 0; self.n = len(self.batches) // world
 from vapasr.data.dialogue_dataset import DialogueWindowDataset, collate_dialogue
 from vapasr.data.dialogue_tokens import load_frozen_registry
 torch.manual_seed(a.seed); random.seed(a.seed); torch.backends.cuda.matmul.allow_tf32 = True
@@ -76,7 +83,7 @@ class P2Trainer(VapAsrTrainer):
     def get_train_dataloader(self):
         from vapasr.hf.data import RoundRobinLoader
         rr = RoundRobinLoader.__new__(RoundRobinLoader); rr.names = list(self.train_sets)
-        rr.samplers = {m: BucketBatchSampler(ds, min(self.bs_of(m), len(ds)), seed=self.args.seed, drop_last=len(ds) > self.bs_of(m), rank=self.args.process_index, world=self.args.world_size) for m, ds in self.train_sets.items()}
+        rr.samplers = {m: WindowBucketSampler(ds, min(self.bs_of(m), len(ds)), seed=self.args.seed, drop_last=len(ds) > self.bs_of(m), rank=self.args.process_index, world=self.args.world_size) for m, ds in self.train_sets.items()}
         rr.loaders = {m: DataLoader(ds, batch_sampler=rr.samplers[m], num_workers=self.num_workers, collate_fn=collate_dialogue, persistent_workers=False) for m, ds in self.train_sets.items()}
         rr.epoch = 0; rr._n = sum(len(s) for s in rr.samplers.values()); return rr
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
