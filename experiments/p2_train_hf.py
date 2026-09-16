@@ -55,12 +55,21 @@ class WeightedRoundRobin(RoundRobinLoader):
     """코퍼스 배치 비중을 가중(equal/sqrt/prop) 으로 두는 라운드로빈. epoch 당 step 수는 코퍼스 배치 수의 합(부모와 같음)이고, 그 step 을 가중치대로 나눠 셔플한 일정(seed+epoch 로 결정적)으로 코퍼스를 고른다.
     equal 은 부모와 같은 균등(작은 코퍼스가 여러 epoch 반복), prop 은 창 수 비례(모두 ≈1 epoch), sqrt 는 그 중간."""
     def __init__(self, train_sets, samplers, num_workers, mix="equal", seed=0):
+        empty = [m for m in train_sets if len(samplers[m]) == 0]                     # rank 당 배치가 0 인 코퍼스(배치 수 < world) — 남겨 두면 그 rank 의 iterator 가 비어 라운드로빈이 멈추고 다른 rank 는 all_reduce 에서 영원히 기다린다
+        if empty: log(f"  ! 배치 수 < world 라 제외: {empty}")
+        train_sets = {m: ds for m, ds in train_sets.items() if m not in empty}; samplers = {m: samplers[m] for m in train_sets}; assert train_sets, "모든 코퍼스의 배치 수가 world 보다 작음(창·예산을 늘리거나 GPU 를 줄인다)"
         self.names = list(train_sets); self.samplers = samplers
         self.loaders = {m: DataLoader(ds, batch_sampler=samplers[m], num_workers=num_workers, collate_fn=collate_dialogue, persistent_workers=False) for m, ds in train_sets.items()}
         self.epoch = 0; self._n = sum(len(s) for s in samplers.values()); self.mix = mix; self.seed = seed
         alpha = {"equal": 0.0, "sqrt": 0.5, "prop": 1.0}[mix]; w = {m: max(1, len(samplers[m])) ** alpha for m in self.names}; tot = sum(w.values())
         self.counts = {m: int(round(self._n * w[m] / tot)) for m in self.names}
         diff = self._n - sum(self.counts.values()); self.counts[max(self.counts, key=self.counts.get)] += diff
+    def _cycle(self, m, ep0):
+        ep = ep0
+        while True:
+            self.samplers[m].set_epoch(ep); n = 0
+            for b in self.loaders[m]: n += 1; yield b
+            assert n > 0, f"{m}: rank {self.samplers[m].rank} 에 배치 없음"; ep += 1
     def __iter__(self):
         its = {m: self._cycle(m, self.epoch) for m in self.names}; sched = [m for m in self.names for _ in range(self.counts[m])]
         random.Random(f"{self.seed}:{self.epoch}:mix").shuffle(sched)

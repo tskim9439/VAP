@@ -164,7 +164,7 @@ class TokenBudgetSampler(torch.utils.data.Sampler):
             if cur and ((len(cur) + 1) * int(est[i]) > max_tokens or len(cur) >= max_bs): self.batches.append(cur); cur = []
             cur.append(i)
         if cur and not (drop_last and self.batches and len(cur) * int(est[cur[-1]]) < max_tokens // 2): self.batches.append(cur)   # 마지막 자투리는 예산 절반 미만이면(drop_last) 버림
-        self.seed, self.rank, self.world, self.epoch = seed, rank, world, 0; self.n = max(1, len(self.batches) // world) if self.batches else 0
+        self.seed, self.rank, self.world, self.epoch = seed, rank, world, 0; self.n = len(self.batches) // world     # rank 당 배치 수(균등, 나머지 버림). 배치 < world 면 0 → 호출자가 그 코퍼스를 제외해야 한다
         self.max_tokens = max_tokens; self.tokens = [len(b) * int(est[b[-1]]) for b in self.batches]
     def set_epoch(self, e: int): self.epoch = e
     def __iter__(self):

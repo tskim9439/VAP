@@ -90,3 +90,10 @@ def test_build_mono_cache_matches_mix(tmp_path):
     assert f == mono_cache_path(str(tmp_path / "mono"), d) and f.endswith(".npy")
     y, _ = mix_dialogue(d); x = np.load(f, mmap_mode="r"); assert x.dtype == np.float16 and x.shape == y.shape and np.abs(x.astype(np.float32) - y).max() < 2e-3
     assert build_mono_cache(d, str(tmp_path / "mono")) == f and not [p for p in (tmp_path / "mono" / "test").iterdir() if ".tmp" in p.name]
+
+def test_token_budget_sampler_ddp_split(tmp_path):
+    from vapasr.data.dialogue_dataset import TokenBudgetSampler
+    ds = DialogueWindowDataset([make(tmp_path)], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), seed=0); est = ds.est_lens(); one = int(est.max())
+    sp = [TokenBudgetSampler(ds, one, max_bs=64, seed=0, rank=r, world=2) for r in range(2)]           # 창 1 개 = 배치 1 개
+    assert len(sp[0]) == len(sp[1]) == len(ds) // 2 and not (set(map(tuple, iter(sp[0]))) & set(map(tuple, iter(sp[1]))))   # rank 별 동수·서로소
+    few = TokenBudgetSampler(ds, 10 ** 9, max_bs=64, rank=1, world=8); assert len(few) == 0 and list(iter(few)) == []     # 배치 1 < world 8 → 0 (호출자가 제외)
