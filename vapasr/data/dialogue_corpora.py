@@ -186,3 +186,40 @@ def load_nikl_dialogue(json_path: str, idx: Dict[str, str], split: str = "heldou
     if not utts: return None
     dur = max(u.end for u in utts) + 0.5; chans = {s: ChannelRef(path="", pieces=pcs) for s, pcs in pieces.items()}
     return Dialogue(conv_id=f"{corpus}:{dlg_id}", corpus=corpus, lang="Korean", split=split, duration_s=dur, speakers=sorted(chans), utterances=utts, channels=chans, meta=dict(src_json=json_path))
+
+# ───────────────────────────── held-out 평가용: TurnBench dev (EN 2인 full-duplex, 화자별 채널 + 턴 라벨 3 트랙) ─────────────────────────────
+TURNBENCH_NONSPEECH = {"Non-Speech Noise", "Speech, Non-Linguistic"}
+def _iou(a0, a1, b0, b1) -> float:
+    inter = max(0.0, min(a1, b1) - max(a0, b0)); union = max(a1, b1) - min(a0, b0); return inter / union if union > 0 else 0.0
+
+def iter_turnbench(parquet_dir: str, audio_out: str, split: str = "heldout", consensus_iou: float = 0.5) -> Iterator[Dialogue]:
+    """HF parquet(conversation_id, speaker_{1,2}_audio{bytes,path} FLAC, speaker_{1,2}_annotation_{a,b,c}[{start_s,end_s,label,text}], metadata) → Dialogue.
+    발화 = 트랙 a 의 구간(비언어 라벨은 flags=nonspeech → 전사 없는 음성으로 마스크). 턴 채점용 합의(사용자 결정 2026-09-17: 3 트랙 합의 구간만) = 트랙 b·c 에 IoU ≥ consensus_iou 인 구간이 모두 있는 발화 → meta.consensus_utts.
+    오디오는 <audio_out>/<conv>_speaker_{1,2}.flac 로 한 번 풀어 둔다."""
+    import pyarrow.parquet as pq
+    os.makedirs(audio_out, exist_ok=True)
+    for pf in sorted(glob.glob(os.path.join(parquet_dir, "*.parquet"))):
+        t = pq.ParquetFile(pf)
+        for batch in t.iter_batches(batch_size=4):
+            for row in batch.to_pylist():
+                cid = str(row["conversation_id"]); utts = []; chans = {}; labels = {}; consensus = []; tracks = {}
+                for sp in ("1", "2"):
+                    au = row.get(f"speaker_{sp}_audio") or {}
+                    if not au.get("bytes"): continue
+                    wav = os.path.join(audio_out, f"{cid}_speaker_{sp}.flac")
+                    if not os.path.exists(wav):
+                        with open(wav + ".tmp", "wb") as f: f.write(au["bytes"])
+                        os.replace(wav + ".tmp", wav)
+                    chans[sp] = ChannelRef(path=wav)
+                    tr = {k: (row.get(f"speaker_{sp}_annotation_{k}") or []) for k in ("a", "b", "c")}; tracks[sp] = {k: len(v) for k, v in tr.items()}
+                    for i, seg in enumerate(sorted(tr["a"], key=lambda s: s["start_s"])):
+                        s, e = float(seg["start_s"]), float(seg["end_s"]); lab = seg.get("label") or ""; txt = (seg.get("text") or "").strip()
+                        if e <= s: continue
+                        uid = f"{cid}_{sp}_{i:04d}"; labels[uid] = lab
+                        nonspeech = lab in TURNBENCH_NONSPEECH or not txt
+                        utts.append(Utterance(speaker=sp, start=s, end=e, raw=txt, utt_id=uid, flags=(["nonspeech"] if nonspeech else [])))
+                        if not nonspeech and all(any(_iou(s, e, float(o["start_s"]), float(o["end_s"])) >= consensus_iou for o in tr[k]) for k in ("b", "c")): consensus.append(uid)
+                if len(chans) < 2 or not utts: continue
+                dur = max(u.end for u in utts) + 0.5; md = row.get("metadata") or {}
+                yield Dialogue(conv_id=f"turnbench:{cid}", corpus="TurnBench", lang="English", split=split, duration_s=dur, speakers=sorted(chans), utterances=utts, channels=chans,
+                               meta=dict(labels=labels, consensus_utts=consensus, tracks=tracks, conversation_type=md.get("conversation_type"), genders={"1": md.get("speaker_1_actor_gender"), "2": md.get("speaker_2_actor_gender")}))

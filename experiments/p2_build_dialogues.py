@@ -16,7 +16,7 @@ from vapasr.data.textnorm import target, target_flags, TEXTNORM_ID_SHORT as TEXT
 from vapasr.data import dialogue_corpora as C
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--corpus", required=True, choices=["aihub71631", "aihub134-1", "aihub134-2", "otoSpeech", "ami", "notsofar", "icsi", "chime6", "nikl2020"])
+ap.add_argument("--corpus", required=True, choices=["aihub71631", "aihub134-1", "aihub134-2", "otoSpeech", "ami", "notsofar", "icsi", "chime6", "nikl2020", "turnbench"])
 ap.add_argument("--year", default="2020", help="nikl: 연도"); ap.add_argument("--index-cache", default=None, help="nikl: index_year 캐시 디렉토리")
 ap.add_argument("--root"); ap.add_argument("--audio-root"); ap.add_argument("--label-root"); ap.add_argument("--crop-dir")
 ap.add_argument("--annotations"); ap.add_argument("--transcripts"); ap.add_argument("--out", required=True); ap.add_argument("--limit", type=int)
@@ -24,7 +24,7 @@ ap.add_argument("--split", default="train"); ap.add_argument("--workers", type=i
 a = ap.parse_args()
 
 def nfc(s): return unicodedata.normalize("NFC", s)
-TN_CORPUS = {"aihub71631": "aihub71631", "aihub134-1": "aihub71631", "aihub134-2": "aihub71631", "otoSpeech": "yodas", "ami": "yodas", "notsofar": "yodas", "icsi": "yodas", "chime6": "yodas", "nikl2020": "nikl"}   # EN 대화 코퍼스는 숫자 표기가 있어 NUMERIC_CORPORA_EN 규칙("yodas")으로 숫자를 말로 푼다(textnorm 자체는 동결)
+TN_CORPUS = {"aihub71631": "aihub71631", "aihub134-1": "aihub71631", "aihub134-2": "aihub71631", "otoSpeech": "yodas", "ami": "yodas", "notsofar": "yodas", "icsi": "yodas", "chime6": "yodas", "nikl2020": "nikl", "turnbench": "yodas"}   # EN 대화 코퍼스는 숫자 표기가 있어 NUMERIC_CORPORA_EN 규칙("yodas")으로 숫자를 말로 푼다(textnorm 자체는 동결)
 
 def gen():
     c = a.corpus
@@ -49,6 +49,8 @@ def gen():
     elif c == "chime6":                                              # held-out 평가용: --root <audio dir with S02_P05.wav …> --transcripts <transcriptions/<split> dir> --split dev
         for jp in sorted(glob.glob(os.path.join(a.transcripts, "*.json"))):
             yield C.load_chime6(os.path.splitext(os.path.basename(jp))[0], jp, a.root, a.split)
+    elif c == "turnbench":                                          # held-out 평가용: --root <parquet dir(dev/data)> --audio-root <flac 풀 곳> --split heldout
+        yield from C.iter_turnbench(a.root, a.audio_root, a.split)
     elif c == "nikl2020":                                            # held-out 평가용: --root /soundai/DB/raw/nikl --year 2020 --index-cache <dir> [--limit N]
         from vapasr.data.nikl import index_year
         idx = index_year(a.root, a.year, cache_dir=a.index_cache); rng = random.Random(0)
