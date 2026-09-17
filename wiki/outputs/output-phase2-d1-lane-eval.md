@@ -44,7 +44,7 @@ related: [output-phase2-lane-plan, task-phase2-data-prep, decision-eot-immediate
 - 1차 원인은 §1 의 인코더 사고였다(NIKL 33→12.6 %, 134-1 25→11 %). 수정 후 seen KO 의 치환은 1–2 %, 나머지는 **누락(71631 9.8 %)·삽입(4.6–5.9 %)** 즉 구조 오류다: 놓친 시작(누락), 허위 구간·같은 말 반복(삽입, 71631 허위 구간 81 개). EN 회의는 치환 17 % 가 추가된다 — 겹침 14–18 %, 1 s 미만 backchannel 이 episode 의 절반, mono 혼합의 SNR. CHiME-6 는 누락 51 %·치환 29 % 로 도메인(원거리·46 % 겹침·소음) 문제이며 E2 인코더가 본 적 없는 조건이다.
 - 보완안: (a) 구조부터 — §4.1 의 시작 검출 개선이 누락·삽입을 같이 줄인다; ONSET 정밀도/재현율 곡선으로 임계값 선택. (b) soft EOT 를 디코더에서 확률로 그대로 내보내되(TurnBench 용) 닫힘 판정은 제약 규칙 유지; hard/soft 혼합(p_end<0.3 은 mask) 학습 비교. (c) lane 3–6 노출 — 다자 창에서도 `<SPK_3>` 이 0 회. AMI/ICSI/NOTSOFAR 비중 상향 또는 2 인 대화 stitching 합성(정본 §8)으로 lane 3+ 사례 공급. (d) 겹침·backchannel — 활동 헤드에 겹침 구간 가중, 짧은 episode 의 최소 길이 규칙(0.3 s 미만은 병합) 검토. (e) 인코더 동결 유지 시 held-out KO 12.6 % 는 seen 18 % 와 같은 자릿수라 일반화는 되고 있다; 원거리 도메인은 인코더 미세조정(낮은 lr) 또는 far-field 자료 없이는 어렵다. (f) 세션 단위 held-out split 을 만들고 D1b 부터는 seen 수치 대신 held-out 으로 판단.
 
-## 5. 다음
-1. 제약 디코더 onset_thr 0.35 결과(c3) 반영 → 임계값 고정.
-2. D1b: 창 시작 평탄화 + δ_onset=2 + 태그 가중 + `encoder_saved` — 8 GPU 50 분.
-3. NIKL 2020·CHiME-6 정렬 후 지연·이벤트 지표 재계산, 세션 split.
+## 5. onset_thr 0.35 (c3) 와 다음
+- onset_thr 0.25 → 0.35(양쪽 언어 prior 0.245/0.27–0.29 위): pooled 71631 17.9→18.8 %, 134-1 11.2→10.9 %, **AMI 39.4→25.6 %**, ICSI 42.9→42.6 %, NIKL 12.6→14.8 %, CHiME-6 92.3→79.7 %; 허위 구간 71631 81→61, AMI 46→34; ONSET 정밀도 전반 상승(AMI 39→52 %). EN 이 크게 좋아지고 KO 는 1–2 %p 나빠져 0.35 를 기본값으로 둔다(`lane_state.decode_p2`).
+- D1b(2026-09-17 사용자 결정: **인코더 해동 학습**, SLURM 제출): `--train-encoder --lr-encoder 1e-5 --delay-onset 2 --tag-weight 2 --start-mode mixed`(임의 시점 시작 창 50 % 추가) + 학습 종료 시 final 재로드 parity 검사 기본. 예산은 인코더 학습 포함 메모리 실측으로 정한다.
+- 이후: NIKL 2020·CHiME-6 정렬 후 지연·이벤트 지표 재계산, 세션 단위 held-out split, D1b 는 held-out 으로 판단.
