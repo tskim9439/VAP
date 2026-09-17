@@ -9,21 +9,22 @@
   python experiments/p2_build_dialogues.py --corpus notsofar --root /soundai/DB/raw/notsofar --out <dir>
   python experiments/p2_build_dialogues.py --corpus icsi --root /soundai/DB/raw/icsi --annotations …/ICSI_core_NXT.zip --transcripts …/ICSI_original_transcripts.zip --out <dir>
 출력: <out>/<corpus>.dialogues.jsonl + <out>/<corpus>.stats.json (대화·시간·발화·quarantine·결손). 읽기 전용 입력, 서버 쓰기는 --out 아래만."""
-import os, sys, json, glob, argparse, time, collections, unicodedata
+import os, sys, json, glob, argparse, time, collections, unicodedata, random
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from vapasr.data.dialogue import Dialogue
 from vapasr.data.textnorm import target, target_flags, TEXTNORM_ID_SHORT as TEXTNORM_ID
 from vapasr.data import dialogue_corpora as C
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--corpus", required=True, choices=["aihub71631", "aihub134-1", "aihub134-2", "otoSpeech", "ami", "notsofar", "icsi"])
+ap.add_argument("--corpus", required=True, choices=["aihub71631", "aihub134-1", "aihub134-2", "otoSpeech", "ami", "notsofar", "icsi", "chime6", "nikl2020"])
+ap.add_argument("--year", default="2020", help="nikl: 연도"); ap.add_argument("--index-cache", default=None, help="nikl: index_year 캐시 디렉토리")
 ap.add_argument("--root"); ap.add_argument("--audio-root"); ap.add_argument("--label-root"); ap.add_argument("--crop-dir")
 ap.add_argument("--annotations"); ap.add_argument("--transcripts"); ap.add_argument("--out", required=True); ap.add_argument("--limit", type=int)
 ap.add_argument("--split", default="train"); ap.add_argument("--workers", type=int, default=1)
 a = ap.parse_args()
 
 def nfc(s): return unicodedata.normalize("NFC", s)
-TN_CORPUS = {"aihub71631": "aihub71631", "aihub134-1": "aihub71631", "aihub134-2": "aihub71631", "otoSpeech": "yodas", "ami": "yodas", "notsofar": "yodas", "icsi": "yodas"}   # EN 대화 코퍼스는 숫자 표기가 있어 NUMERIC_CORPORA_EN 규칙("yodas")으로 숫자를 말로 푼다(textnorm 자체는 동결)
+TN_CORPUS = {"aihub71631": "aihub71631", "aihub134-1": "aihub71631", "aihub134-2": "aihub71631", "otoSpeech": "yodas", "ami": "yodas", "notsofar": "yodas", "icsi": "yodas", "chime6": "yodas", "nikl2020": "nikl"}   # EN 대화 코퍼스는 숫자 표기가 있어 NUMERIC_CORPORA_EN 규칙("yodas")으로 숫자를 말로 푼다(textnorm 자체는 동결)
 
 def gen():
     c = a.corpus
@@ -45,6 +46,16 @@ def gen():
         for gt in sorted(glob.glob(os.path.join(a.root, "**", "gt_transcription.json"), recursive=True)):
             sub = "eval" if "eval" in gt else ("dev" if "dev" in gt else "train")
             yield C.load_notsofar(os.path.dirname(gt), sub)
+    elif c == "chime6":                                              # held-out 평가용: --root <audio dir with S02_P05.wav …> --transcripts <transcriptions/<split> dir> --split dev
+        for jp in sorted(glob.glob(os.path.join(a.transcripts, "*.json"))):
+            yield C.load_chime6(os.path.splitext(os.path.basename(jp))[0], jp, a.root, a.split)
+    elif c == "nikl2020":                                            # held-out 평가용: --root /soundai/DB/raw/nikl --year 2020 --index-cache <dir> [--limit N]
+        from vapasr.data.nikl import index_year
+        idx = index_year(a.root, a.year, cache_dir=a.index_cache); rng = random.Random(0)
+        keys = sorted(k for k in idx if k.startswith("json:")); rng.shuffle(keys)
+        for k in keys:
+            d = C.load_nikl_dialogue(idx[k], idx, a.split, corpus=f"nikl{a.year}")
+            if d is not None and len(d.speakers) >= 2: yield d
     elif c == "icsi":
         ann = C.IcsiAnnotations(a.annotations, a.transcripts)
         for m in sorted({x.split("/")[2].split(".")[0] for x in ann.members if x.startswith("ICSI/Segments/") and x.endswith(".segs.xml")}):

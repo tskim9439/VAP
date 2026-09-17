@@ -141,3 +141,48 @@ class IcsiAnnotations:
                 if not txt: continue                                             # 비음성(nonvocalsound) segment 제외
                 utts.append(Utterance(speaker=part, start=s, end=e, raw=txt, utt_id=f"{agent}_{n:05d}"))
         return Dialogue(conv_id=f"icsi:{meeting}", corpus="ICSI", lang="English", split=split, duration_s=dur, speakers=sorted(crefs), utterances=utts, channels=crefs, meta=dict(channels=pchan))
+
+# ───────────────────────────── held-out(미학습) 평가용: CHiME-6 dev/eval · NIKL 일상대화 2020 ─────────────────────────────
+def _hms(x) -> float:
+    """"HH:MM:SS.ss" 또는 초(숫자/문자열) → 초."""
+    if isinstance(x, (int, float)): return float(x)
+    s = str(x).strip()
+    if ":" not in s: return float(s)
+    parts = [float(p) for p in s.split(":")]; t = 0.0
+    for p in parts: t = t * 60 + p
+    return t
+
+_CHIME_TAG = re.compile(r"\[[^\]]*\]")
+def load_chime6(session: str, transcript_json: str, audio_dir: str, split: str = "dev") -> Dialogue:
+    """CHiME-6: transcriptions/<split>/<S>.json (start_time/end_time "HH:MM:SS.ss", words, speaker P05…) + 바이노럴 <audio_dir>/<S>_<P>.wav(2ch → 왼쪽 채널).
+    [laughs]/[noise] 등 태그 제거, [inaudible]/[redacted]/[unintelligible] 가 있던 발화는 flags=unintelligible(전사 없는 음성으로 취급)."""
+    gt = json.load(open(transcript_json)); utts = []; crefs = {}
+    for i, u in enumerate(sorted(gt, key=lambda u: _hms(u["start_time"]))):
+        spk = u["speaker"]; wav = os.path.join(audio_dir, f"{session}_{spk}.wav")
+        if spk not in crefs:
+            if not os.path.exists(wav): continue
+            crefs[spk] = ChannelRef(path=wav + "#ch0")
+        words = u.get("words", ""); bad = bool(re.search(r"\[(inaudible|redacted|unintelligible)[^\]]*\]", words, re.I))
+        raw = re.sub(r"\s+", " ", _CHIME_TAG.sub(" ", words)).strip()
+        if not raw and not bad: continue
+        s, e = _hms(u["start_time"]), _hms(u["end_time"])
+        if e <= s: continue
+        utts.append(Utterance(speaker=spk, start=s, end=e, raw=raw, utt_id=f"{session}_{i:05d}", flags=(["unintelligible"] if bad else [])))
+    dur = max((u.end for u in utts), default=0.0) + 1.0
+    return Dialogue(conv_id=f"chime6:{session}", corpus="CHiME6", lang="English", split=split, duration_s=dur, speakers=sorted(crefs), utterances=[u for u in utts if u.speaker in crefs], channels=crefs, meta=dict(binaural=True))
+
+def load_nikl_dialogue(json_path: str, idx: Dict[str, str], split: str = "heldout", corpus: str = "nikl2020") -> Optional[Dialogue]:
+    """NIKL 일상대화(연도별 JSON + 발화 단위 PCM): 발화 PCM 을 그 화자 채널의 [start, end] 자리에 놓는다(pieces). note='발화겹침' 발화는 flags=overlap(다른 화자 소리가 섞임).
+    텍스트는 original_form(raw), TN 은 builder 의 'nikl' 파서."""
+    from .nikl import read_dialogue, pcm_path, pcm_duration
+    utts = []; pieces: Dict[str, list] = {}; dlg_id = None
+    for u in read_dialogue(json_path):
+        dlg_id = dlg_id or u["dialogue"]; p = pcm_path(idx, u["id"])
+        if not p or not os.path.exists(p) or u["start"] is None or u["end"] is None: continue
+        s, e = _hms(u["start"]), _hms(u["end"])
+        if e <= s: e = s + pcm_duration(p)
+        spk = str(u["speaker"]); pieces.setdefault(spk, []).append((p, s))
+        utts.append(Utterance(speaker=spk, start=s, end=e, raw=u["raw"], utt_id=u["id"], flags=(["overlap"] if "겹침" in (u["note"] or "") else [])))
+    if not utts: return None
+    dur = max(u.end for u in utts) + 0.5; chans = {s: ChannelRef(path="", pieces=pcs) for s, pcs in pieces.items()}
+    return Dialogue(conv_id=f"{corpus}:{dlg_id}", corpus=corpus, lang="Korean", split=split, duration_s=dur, speakers=sorted(chans), utterances=utts, channels=chans, meta=dict(src_json=json_path))
