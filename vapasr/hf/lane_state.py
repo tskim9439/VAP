@@ -15,20 +15,28 @@ class Segment:
     lane: int; k_on: Optional[int]; k_eot: Optional[int]
     tokens: List[Tuple[int, int]] = field(default_factory=list)     # (token id, 방출 청크 k)
     implicit: bool = False                                          # ONSET 없이 텍스트가 먼저 나와 연 구간
+    k_act_close: Optional[int] = None                               # 활동 헤드 비활성으로 닫힌 청크(EOT 토큰 없음)
     @property
     def start(self) -> Optional[float]: return None if self.k_on is None else (self.k_on + 1) * CHUNK_S
     @property
-    def end(self) -> Optional[float]: return None if self.k_eot is None else (self.k_eot + 1) * CHUNK_S
+    def end(self) -> Optional[float]:
+        k = self.k_eot if self.k_eot is not None else self.k_act_close
+        return None if k is None else (k + 1) * CHUNK_S
 
 class LaneParser:
     """registry: {"<SPK_A>": id, …, "<ONSET>": id, "<EOT>": id}; lane_ids: lane 순서대로의 태그 id 목록(lane 1 = <SPK_A>)."""
     def __init__(self, registry: Dict[str, int], R: int = 6):
         names = ["<SPK_A>", "<SPK_B>"] + [f"<SPK_{i}>" for i in range(3, R + 1)]
         self.lane_of = {registry[n]: i + 1 for i, n in enumerate(names) if n in registry}; self.onset = registry["<ONSET>"]; self.eot = registry["<EOT>"]; self.R = R
-    def parse(self, emits: List[Tuple[int, int]]) -> Tuple[List[Segment], dict]:
-        """emits: [(chunk k, token id)] → (segments, stats{stray_eot, implicit, text_no_lane, unclosed})."""
-        open_seg: Dict[int, Segment] = {}; segs: List[Segment] = []; cur: Optional[int] = None; st = dict(stray_eot=0, implicit=0, text_no_lane=0, unclosed=0, reopen=0)
-        for k, tid in emits:
+    def parse(self, emits: List[Tuple[int, int]], act_closed: Optional[List[Tuple[int, int]]] = None) -> Tuple[List[Segment], dict]:
+        """emits: [(chunk k, token id)] (+ act_closed: [(lane, k)] 활동 헤드로 닫힌 사건) → (segments, stats{stray_eot, implicit, text_no_lane, unclosed, reopen, act_closed})."""
+        open_seg: Dict[int, Segment] = {}; segs: List[Segment] = []; cur: Optional[int] = None; st = dict(stray_eot=0, implicit=0, text_no_lane=0, unclosed=0, reopen=0, act_closed=0)
+        ev = [(k, 1, tid, None) for k, tid in emits] + [(k, 0, None, l) for l, k in (act_closed or [])]    # 같은 청크면 활동 닫힘(0)이 그 청크의 토큰(1)보다 먼저(디코더의 tick 순서와 같음)
+        ev.sort(key=lambda x: (x[0], x[1]))
+        for k, kind, tid, l in ev:
+            if kind == 0:
+                if l in open_seg: sg = open_seg.pop(l); sg.k_act_close = k; segs.append(sg); st["act_closed"] += 1
+                continue
             if tid in self.lane_of: cur = self.lane_of[tid]; continue
             if tid == self.onset:
                 if cur is None: st["text_no_lane"] += 1; continue
@@ -43,10 +51,36 @@ class LaneParser:
         for s in open_seg.values(): st["unclosed"] += 1; segs.append(s)
         segs.sort(key=lambda s: (s.k_on if s.k_on is not None else 10 ** 9, s.lane)); return segs, st
 
+class LaneStates:
+    """디코더의 lane 상태(정본 §3.1 lazy-free): FREE / OPEN / HELD(닫힘, 마지막 EOT 청크 보관). 새 화자는 FREE 중 최소 번호, 없으면 가장 오래전에 닫힌 HELD lane.
+    닫힘은 EOT 방출 또는 활동 헤드 비활성 ≥ act_close_chunks 청크(정본: 0.25 s)."""
+    def __init__(self, R: int, act_close_chunks: int = 3, act_thr: float = 0.5):
+        self.R = R; self.state = {l: "FREE" for l in range(1, R + 1)}; self.closed_at = {}; self.inactive = {l: 0 for l in range(1, R + 1)}; self.n_close = act_close_chunks; self.thr = act_thr; self.act_closed = []
+    def open_lanes(self): return [l for l in range(1, self.R + 1) if self.state[l] == "OPEN"]
+    def next_lane(self) -> Optional[int]:
+        free = [l for l in range(1, self.R + 1) if self.state[l] == "FREE"]
+        if free: return free[0]
+        held = [l for l in range(1, self.R + 1) if self.state[l] == "HELD"]
+        return min(held, key=lambda l: self.closed_at.get(l, -1)) if held else None
+    def open(self, l): self.state[l] = "OPEN"; self.inactive[l] = 0
+    def close(self, l, k): self.state[l] = "HELD"; self.closed_at[l] = k
+    def tick(self, k, probs):
+        """청크 k 의 활동 확률(R,) 로 비활성 카운트 갱신 → 활동으로 닫힌 lane 목록."""
+        out = []
+        for l in self.open_lanes():
+            self.inactive[l] = self.inactive[l] + 1 if float(probs[l - 1]) < self.thr else 0
+            if self.inactive[l] >= self.n_close: self.close(l, k); out.append(l); self.act_closed.append((l, k))
+        return out
+
 @torch.inference_mode()
-def decode_p2(model, tok, wav: np.ndarray, lang: str = "English", delay: int = 4, runaway_cap: Optional[int] = None, max_flush_rounds: int = 8, max_total_per_chunk: float = 6.0, next_bias: float = 0.0) -> dict:
-    """wav (T,) float32 16 kHz → dict(emits=[(k, tid)], forced, rounds, K, act=(K,R) 활동 확률, ticks_ms).
-    규약은 modeling_vapasr.stream_decode 와 같고(blocked·runaway cap·flush), 매 청크의 audio 위치 hidden 에 act_head 를 적용한다."""
+def decode_p2(model, tok, wav: np.ndarray, lang: str = "English", delay: int = 4, runaway_cap: Optional[int] = None, max_flush_rounds: int = 8, max_total_per_chunk: float = 6.0, next_bias: float = 0.0,
+              constrain: bool = True, act_close_chunks: int = 3, act_thr: float = 0.5) -> dict:
+    """wav (T,) float32 16 kHz → dict(emits=[(k, tid)], probs=[p(선택 토큰)], forced, rounds, K, act=(K,R) 활동 확률, ticks_ms, act_closed=[(lane, k)]).
+    규약은 modeling_vapasr.stream_decode 와 같고(blocked·runaway cap·flush), 매 청크의 audio 위치 hidden 에 act_head 를 적용한다.
+    constrain=True 면 lane 규약으로 후보를 제한한다(정본 §3·§5 를 추론에 적용):
+      · 태그 직후: 그 lane 이 OPEN 이면 {EOT, 텍스트}(NEXT 불가 — soft EOT 라 p(EOT)<0.5 여도 NEXT 에 지지 않게), 닫혀 있으면 {ONSET} 만.
+      · 그 외: NEXT · OPEN lane 태그 · 새 lane 태그(lazy-free 가 줄 lane 하나) · 현재 lane 이 OPEN 일 때만 텍스트. ONSET/EOT 는 태그 없이 못 나온다.
+      · 활동 헤드가 act_close_chunks 청크 연속 비활성이면 그 lane 을 닫는다(ONSET 없이는 다시 텍스트를 못 붙임)."""
     from .infer import prefix_ids
     dev = next(model.parameters()).device; cap = model.config.runaway_cap if runaway_cap is None else runaway_cap
     w = torch.from_numpy(np.asarray(wav, dtype=np.float32)).to(dev); K = int(round(w.shape[0] / 16000 / CHUNK_S))
@@ -55,32 +89,59 @@ def decode_p2(model, tok, wav: np.ndarray, lang: str = "English", delay: int = 4
     from transformers import DynamicCache
     cache = DynamicCache(); base = model.thinker.model; head = model.thinker.lm_head
     use_ac = dev.type == "cuda" and emb.weight.dtype == torch.float32
+    reg = dict(model.config.phase2_registry); R = model.config.lanes; parser = LaneParser(reg, R=R); tag_of_lane = {l: t for t, l in parser.lane_of.items()}
+    NEXT, ONSET, EOT = model.next_audio, parser.onset, parser.eot; V = emb.weight.shape[0]
+    special = torch.tensor(sorted([NEXT, ONSET, EOT] + list(tag_of_lane.values())), device=dev)
+    lanes = LaneStates(R, act_close_chunks, act_thr); cur: Optional[int] = None; just_tag = False
+    def allowed_mask(flush: bool):
+        """(V,) bool — constrain 규칙에 따른 허용 집합."""
+        if just_tag:                                                     # 태그 직후: OPEN lane 이면 EOT 또는 텍스트, 닫힌 lane 이면 ONSET
+            if lanes.state[cur] == "OPEN": m = torch.ones(V, dtype=torch.bool, device=dev); m[special] = False; m[EOT] = True
+            else: m = torch.zeros(V, dtype=torch.bool, device=dev); m[ONSET] = True
+            return m
+        text_ok = cur is not None and lanes.state[cur] == "OPEN"            # 태그 없는 텍스트는 현재 lane 이 OPEN 일 때만
+        m = torch.ones(V, dtype=torch.bool, device=dev) if text_ok else torch.zeros(V, dtype=torch.bool, device=dev)
+        m[special] = False; m[NEXT] = True
+        for l in lanes.open_lanes(): m[tag_of_lane[l]] = True
+        nl = lanes.next_lane()
+        if nl is not None and not flush: m[tag_of_lane[nl]] = True
+        return m
     def step(e):
         h = base(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=cache, use_cache=True).last_hidden_state[0, -1]
         return head(h).float(), h
     import time
     with torch.autocast("cuda", dtype=torch.bfloat16, enabled=use_ac):
         step(emb(torch.tensor(prefix_ids(model, tok, lang, delay), device=dev)))
-        e_next = emb.weight[model.next_audio]; e_empty = emb.weight[model.empty_audio]; total = 0; max_total = int(max_total_per_chunk * K) + 64
-        emits, forced, ticks, act = [], 0, [], []
-        def emit_round(k, logits):
-            nonlocal total, forced; n = 0
+        e_next = emb.weight[NEXT]; e_empty = emb.weight[model.empty_audio]; total = 0; max_total = int(max_total_per_chunk * K) + 64
+        emits, probs, forced, ticks, act = [], [], 0, [], []
+        def emit_round(k, logits, flush=False):
+            nonlocal total, forced, cur, just_tag; n = 0
             while True:
-                logits[model.blocked] = float("-inf"); logits[model.next_audio] -= next_bias; tid = int(logits.argmax())
-                if tid == model.next_audio or n >= cap or total >= max_total:
-                    forced += int(tid != model.next_audio); step(e_next); return n
-                emits.append((k, tid)); n += 1; total += 1; logits, _ = step(emb.weight[tid])
+                logits[model.blocked] = float("-inf"); logits[NEXT] -= next_bias
+                if constrain: logits[~allowed_mask(flush)] = float("-inf")
+                tid = int(logits.argmax())
+                if tid == NEXT or n >= cap or total >= max_total:
+                    forced += int(tid != NEXT); just_tag = False; step(e_next); return n
+                p = float(torch.softmax(logits, 0)[tid]); emits.append((k, tid)); probs.append(round(p, 3)); n += 1; total += 1
+                if tid in parser.lane_of: cur = parser.lane_of[tid]; just_tag = True
+                else:
+                    if tid == ONSET and cur is not None: lanes.open(cur)
+                    elif tid == EOT and cur is not None: lanes.close(cur, k)
+                    just_tag = False
+                logits, _ = step(emb.weight[tid])
         for k in range(K):
             t = time.time(); logits, h = step(ce[k])
-            if model.act_head is not None: act.append(torch.sigmoid(model.act_head(h.float() if model.act_head[0].weight.dtype == torch.float32 else h)).float().cpu().numpy())
+            if model.act_head is not None:
+                pa = torch.sigmoid(model.act_head(h.float() if model.act_head[0].weight.dtype == torch.float32 else h)).float().cpu().numpy(); act.append(pa)
+                if constrain: lanes.tick(k, pa)
             emit_round(k, logits)
             if dev.type == "cuda": torch.cuda.synchronize()
             ticks.append((time.time() - t) * 1000)
         rounds = 0
         for r in range(max_flush_rounds):
             rounds += 1; logits, _ = step(e_empty)
-            if emit_round(K + r, logits) == 0: break
-    return dict(emits=emits, forced=forced, rounds=rounds, K=K, act=(np.stack(act) if act else np.zeros((K, 0))), ticks_ms=ticks)
+            if emit_round(K + r, logits, flush=True) == 0: break
+    return dict(emits=emits, probs=probs, forced=forced, rounds=rounds, K=K, act=(np.stack(act) if act else np.zeros((K, 0))), ticks_ms=ticks, act_closed=lanes.act_closed, constrain=constrain)
 
 # ── 평가 보조
 def edit_distance(a: List, b: List) -> int:

@@ -10,6 +10,7 @@ ap = argparse.ArgumentParser(); ap.add_argument("--model", required=True); ap.ad
 ap.add_argument("--delay", type=int, default=4); ap.add_argument("--R", type=int, default=6); ap.add_argument("--window", type=float, nargs=2, default=(20.0, 40.0)); ap.add_argument("--hop", type=float, default=10.0)
 ap.add_argument("--seed", type=int, default=0); ap.add_argument("--tol", type=float, default=0.4, help="ONSET/EOT 매칭 허용 오차(초)"); ap.add_argument("--mono-cache", default=None); ap.add_argument("--gpu", default=None)
 ap.add_argument("--min-speakers", type=int, default=2); ap.add_argument("--max-tries", type=int, default=40); ap.add_argument("--runaway-cap", type=int, default=None)
+ap.add_argument("--no-constrain", action="store_true", help="lane 규약 제약 없이 argmax 만(비교용)"); ap.add_argument("--act-close-chunks", type=int, default=3); ap.add_argument("--act-thr", type=float, default=0.5)
 a = ap.parse_args()
 if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import numpy as np, torch, soundfile as sf
@@ -71,8 +72,8 @@ def eval_window(ds, i, corpus, tag, idx_out):
     eps, info = ds.window_episodes(d, s["t0"], L); eps = [e for e in eps if e.lane]
     if len({e.speaker for e in eps}) < a.min_speakers or s.get("masked_chunks"): return None
     wav = np.asarray(crop_audio(ds.mono(s["cid"]), s["t0"], s["t0"] + L), dtype=np.float32)
-    t = time.time(); out = decode_p2(model, tok, wav, lang=lang, delay=a.delay, runaway_cap=a.runaway_cap); dt = time.time() - t
-    segs, pst = parser.parse(out["emits"])
+    t = time.time(); out = decode_p2(model, tok, wav, lang=lang, delay=a.delay, runaway_cap=a.runaway_cap, constrain=not a.no_constrain, act_close_chunks=a.act_close_chunks, act_thr=a.act_thr); dt = time.time() - t
+    segs, pst = parser.parse(out["emits"], out.get("act_closed"))
     # ── 참조: lane 별 텍스트·ONSET/EOT 청크(직렬화 규약과 동일)·활동
     chunks, _ = serialize(eps, (K - 0.5) * CHUNK_S, ds.sp, delay_text=a.delay, delay_onset=0)
     ref_on, ref_eot = {}, {}
@@ -95,7 +96,7 @@ def eval_window(ds, i, corpus, tag, idx_out):
     ref_all = text_of(sorted([(t_, tt) for e in eps for t_, tt in e.tokens], key=lambda x: x[1])); hyp_all = text_of(sorted([(t_, k) for sg in segs for t_, k in sg.tokens], key=lambda x: x[1]))
     pooled = err_fn(hyp_all, ref_all)
     # ── 이벤트(청크 단위 → 초), lane 정확도, 활동, 지연
-    tol = a.tol; on_h = [(sg.k_on + 1) * CHUNK_S for sg in segs if sg.k_on is not None and not sg.implicit]; on_r = [(k + 1) * CHUNK_S for k in ref_on.values()]
+    tol = a.tol; on_h = [(sg.k_on + 1) * CHUNK_S for sg in segs if sg.k_on is not None and not sg.implicit]; on_r = [(k + 1) * CHUNK_S for k in ref_on.values()]   # EOT 매칭은 EOT 토큰만(활동 닫힘 제외)
     eot_h = [(sg.k_eot + 1) * CHUNK_S for sg in segs if sg.k_eot is not None]; eot_r = [(k + 1) * CHUNK_S for k in ref_eot.values() if k < K]
     on_m = match_events(on_h, on_r, tol); eot_m = match_events(eot_h, eot_r, tol)
     lane_ok = lane_bad = spurious = 0
@@ -123,9 +124,10 @@ def eval_window(ds, i, corpus, tag, idx_out):
               ref=dict(episodes=[dict(ep=e.ep_id, speaker=e.speaker, lane=e.lane, start=round(e.start, 3), end=round(e.end, 3), outcome=e.outcome, p_end=e.p_end, k_on=ref_on.get(e.ep_id), k_eot=ref_eot.get(e.ep_id),
                                       words=words_of(e.tokens), text=clean(tok.decode([t_ for t_, _ in e.tokens])).strip()) for e in sorted(eps, key=lambda e: e.start)],
                        activity=ref_act.astype(int).tolist()),
-              hyp=dict(segments=[dict(lane=sg.lane, k_on=sg.k_on, k_eot=sg.k_eot, start=(round(sg.start, 3) if sg.start is not None else None), end=(round(sg.end, 3) if sg.end is not None else None), implicit=sg.implicit, unclosed=sg.k_eot is None,
+              hyp=dict(constrain=not a.no_constrain, act_closed=out.get("act_closed", []),
+                       segments=[dict(lane=sg.lane, k_on=sg.k_on, k_eot=sg.k_eot, k_act_close=sg.k_act_close, start=(round(sg.start, 3) if sg.start is not None else None), end=(round(sg.end, 3) if sg.end is not None else None), implicit=sg.implicit, unclosed=(sg.k_eot is None and sg.k_act_close is None),
                                       words=[dict(text=w["text"], k=int(w["pos"]), n=w["n"]) for w in words_of(sg.tokens)], text=clean(tok.decode([t_ for t_, _ in sg.tokens])).strip()) for sg in segs],
-                       activity=np.round(hyp_act, 2).tolist(), stream=[dict(k=k, text=(clean(tok.decode([t_])) if t_ not in NAMES else NAMES[t_]), kind=("lane" if t_ in parser.lane_of else "onset" if t_ == parser.onset else "eot" if t_ == parser.eot else "text"), lane=parser.lane_of.get(t_)) for k, t_ in out["emits"]]),
+                       activity=np.round(hyp_act, 2).tolist(), stream=[dict(k=k, text=(clean(tok.decode([t_])) if t_ not in NAMES else NAMES[t_]), kind=("lane" if t_ in parser.lane_of else "onset" if t_ == parser.onset else "eot" if t_ == parser.eot else "text"), lane=parser.lane_of.get(t_), p=p_) for (k, t_), p_ in zip(out["emits"], out.get("probs", [None] * len(out["emits"])))]),
               per_lane={str(k): v for k, v in per_lane.items()}, metrics=m)
     json.dump(js, open(os.path.join(a.out, "windows", name + ".json"), "w"), ensure_ascii=False)
     return dict(name=name, conv=s["cid"], t0=s["t0"], L=L, speakers=len(js["speakers"]), episodes=len(eps), **{k: v for k, v in m.items()})
@@ -140,7 +142,7 @@ def agg(rows):
                 latency_mean=mean([r["latency"]["mean"] for r in rows]), latency_p50=mean([r["latency"]["p50"] for r in rows]), latency_match=(round(sum(r["latency"]["n"] for r in rows) / max(1, sum(r["latency"]["n_ref_tokens"] for r in rows)), 3)),
                 forced=sum(r["decode"]["forced"] for r in rows), stray_eot=sum(r["decode"]["stray_eot"] for r in rows), implicit=sum(r["decode"]["implicit"] for r in rows), unclosed=sum(r["decode"]["unclosed"] for r in rows), ms_per_chunk=mean([r["decode"]["ms_per_chunk"] for r in rows]))
 
-report = dict(model=a.model, delay=a.delay, tol=a.tol, sets={}, args=vars(a))
+report = dict(model=a.model, delay=a.delay, tol=a.tol, constrain=not a.no_constrain, sets={}, args=vars(a))
 for spec in a.sets.split(","):
     corpus, tag, n = spec.split(":"); n = int(n); t = time.time()
     ds, meta = load_set(corpus); log(f"[{corpus}] {meta}")

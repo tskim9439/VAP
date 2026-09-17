@@ -18,3 +18,12 @@ def test_metrics():
     assert edit_distance(list("abc"), list("abd")) == 1 and cer("가나 다", "가나다") == 0.0 and wer("a b c", "a b d") == 1 / 3 and cer("x", "") is None
     lat, n = token_latency([(1, 5), (2, 6), (3, 9)], [(1, 0.3), (2, 0.4), (4, 0.5)]); assert n == 2 and abs(lat[0] - (6 * 0.08 - 0.3)) < 1e-9
     assert match_events([1.0, 2.0, 9.0], [1.2, 2.5, 5.0], 0.4) == (1, 3, 3) and match_events([1.0, 2.0, 9.0], [1.2, 2.5, 5.0], 0.6) == (2, 3, 3)
+
+def test_lane_states_and_act_close_parse():
+    from vapasr.hf.lane_state import LaneStates
+    ls = LaneStates(3, act_close_chunks=2, act_thr=0.5); assert ls.next_lane() == 1
+    ls.open(1); ls.open(2); assert ls.next_lane() == 3; ls.open(3); assert ls.next_lane() is None
+    ls.close(2, 10); ls.close(1, 20); assert ls.next_lane() == 2                       # 가장 오래전에 닫힌 HELD
+    assert ls.tick(21, [0.9, 0.0, 0.1]) == [] and ls.tick(22, [0.9, 0.0, 0.1]) == [3] and ls.state[3] == "HELD" and ls.act_closed == [(3, 22)]
+    p = LaneParser(REG); segs, st = p.parse([(0, 900), (0, 910), (1, 5), (6, 900), (6, 910), (7, 6), (9, 900), (9, 911)], act_closed=[(1, 4)])
+    assert len(segs) == 2 and segs[0].k_act_close == 4 and segs[0].k_eot is None and abs(segs[0].end - 5 * 0.08) < 1e-9 and segs[1].k_on == 6 and segs[1].k_eot == 9 and st["act_closed"] == 1 and st["reopen"] == 0
