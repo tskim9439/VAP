@@ -12,6 +12,7 @@ ap.add_argument("--window", type=float, default=30.0); ap.add_argument("--tail-m
 ap.add_argument("--delay", type=int, default=4); ap.add_argument("--delay-onset", type=int, default=0); ap.add_argument("--R", type=int, default=6); ap.add_argument("--mono-cache", default=None); ap.add_argument("--gpu", default=None); ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--no-constrain", action="store_true"); ap.add_argument("--onset-thr", type=float, default=0.35); ap.add_argument("--act-close-chunks", type=int, default=6); ap.add_argument("--act-thr", type=float, default=0.3); ap.add_argument("--runaway-cap", type=int, default=None)
 ap.add_argument("--viewer-windows", type=int, default=6); ap.add_argument("--meeteval", action="store_true", help="창 단위 meeteval cpWER/ORC-WER 대조 열")
+ap.add_argument("--split-file", default=None, help="세션 split JSON: 각 코퍼스를 heldout 세션 목록으로 제한(7 코퍼스 벤치마크 세션)")
 a = ap.parse_args()
 if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import numpy as np, torch, soundfile as sf
@@ -45,6 +46,9 @@ def load_set(corpus):
     refined = os.path.join(a.data, f"{corpus}.refined.dialogues.jsonl"); plain = os.path.join(a.data, f"{corpus}.dialogues.jsonl"); path = refined if os.path.exists(refined) else plain; assert os.path.exists(path), f"{path} 없음"
     align_dir = os.path.join(a.data, "align-asr-tn-v1", corpus); align_dir = align_dir if os.path.isdir(align_dir) else None
     ds = DialogueWindowDataset([path], tok, align_dir=align_dir, R=a.R, delays=(a.delay,), delay_onset=a.delay_onset, seed=a.seed, mono_cache_dir=a.mono_cache, max_items=1)   # 창 목록은 안 쓰고 dlgs·mono·episode 도구만
+    if a.split_file:
+        held = set(json.load(open(a.split_file))["corpora"].get(corpus, {}).get("heldout", []))
+        if held: ds.dlgs = {k: v for k, v in ds.dlgs.items() if k in held}
     tokens_from = "align" if align_dir and any(u.tokens for d in ds.dlgs.values() for u in d.utterances) else "proxy"
     if tokens_from == "proxy":
         for d in ds.dlgs.values(): proxy_tokens(d)
@@ -79,6 +83,7 @@ def eval_window(ds, d: Dialogue, t0: float, L: float, corpus: str, tag: str, kee
     D = M.lane_der(ref, hyp, mapping, horizon=L); SW = M.lane_switches(ref, hyp)
     # ── C: 참조 ONSET/EOT 청크는 학습 직렬화 규약(episode·δ_onset·EOT 후보 규칙)으로, 합의 발화만
     eps, _ = ds.window_episodes(d, t0, L); eps = [e for e in eps if e.lane]
+    if bad: eps = [e for e in eps if sum(M.overlap(e.start, e.end, b0, b1) for b0, b1 in bad) <= 0.5 * max(1e-3, e.end - e.start)]     # 가설과 같은 규칙: quarantine 구간의 참조 이벤트도 제외
     if cons: eps = [e for e in eps if any(uid in cons for uid in e.utt_ids)]
     chunks, _ = serialize(eps, (K - 0.5) * CHUNK_S, ds.sp, delay_text=a.delay, delay_onset=a.delay_onset); ref_on, ref_eot = [], []
     for k, em in chunks:
