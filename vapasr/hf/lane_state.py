@@ -74,13 +74,14 @@ class LaneStates:
 
 @torch.inference_mode()
 def decode_p2(model, tok, wav: np.ndarray, lang: str = "English", delay: int = 4, runaway_cap: Optional[int] = None, max_flush_rounds: int = 8, max_total_per_chunk: float = 6.0, next_bias: float = 0.0,
-              constrain: bool = True, act_close_chunks: int = 3, act_thr: float = 0.5) -> dict:
+              constrain: bool = True, act_close_chunks: int = 6, act_thr: float = 0.3, onset_thr: float = 0.25) -> dict:
     """wav (T,) float32 16 kHz → dict(emits=[(k, tid)], probs=[p(선택 토큰)], forced, rounds, K, act=(K,R) 활동 확률, ticks_ms, act_closed=[(lane, k)]).
     규약은 modeling_vapasr.stream_decode 와 같고(blocked·runaway cap·flush), 매 청크의 audio 위치 hidden 에 act_head 를 적용한다.
     constrain=True 면 lane 규약으로 후보를 제한한다(정본 §3·§5 를 추론에 적용):
       · 태그 직후: 그 lane 이 OPEN 이면 {EOT, 텍스트}(NEXT 불가 — soft EOT 라 p(EOT)<0.5 여도 NEXT 에 지지 않게), 닫혀 있으면 {ONSET} 만.
-      · 그 외: NEXT · OPEN lane 태그 · 새 lane 태그(lazy-free 가 줄 lane 하나) · 현재 lane 이 OPEN 일 때만 텍스트. ONSET/EOT 는 태그 없이 못 나온다.
-      · 활동 헤드가 act_close_chunks 청크 연속 비활성이면 그 lane 을 닫는다(ONSET 없이는 다시 텍스트를 못 붙임)."""
+      · 그 외: NEXT · OPEN/HELD lane 태그(자기 lane 복귀) · 새 lane 태그(FREE 중 최소 번호 하나) · 현재 lane 이 OPEN 일 때만 텍스트. ONSET/EOT 는 태그 없이 못 나온다.
+      · onset_thr: 태그가 argmax 가 아니어도 허용 태그의 최대 확률이 onset_thr 이상이면 태그를 낸다(δ_onset=0 이라 시작 청크의 증거가 80 ms 뿐이어서 argmax 는 시작을 자주 놓친다).
+      · 활동 헤드가 act_close_chunks 청크 연속 act_thr 미만이면 그 lane 을 닫는다(ONSET 없이는 다시 텍스트를 못 붙임)."""
     from .infer import prefix_ids
     dev = next(model.parameters()).device; cap = model.config.runaway_cap if runaway_cap is None else runaway_cap
     w = torch.from_numpy(np.asarray(wav, dtype=np.float32)).to(dev); K = int(round(w.shape[0] / 16000 / CHUNK_S))
@@ -102,10 +103,12 @@ def decode_p2(model, tok, wav: np.ndarray, lang: str = "English", delay: int = 4
         text_ok = cur is not None and lanes.state[cur] == "OPEN"            # 태그 없는 텍스트는 현재 lane 이 OPEN 일 때만
         m = torch.ones(V, dtype=torch.bool, device=dev) if text_ok else torch.zeros(V, dtype=torch.bool, device=dev)
         m[special] = False; m[NEXT] = True
-        for l in lanes.open_lanes(): m[tag_of_lane[l]] = True
+        for l in range(1, R + 1):
+            if lanes.state[l] != "FREE": m[tag_of_lane[l]] = True            # OPEN(계속/닫기)·HELD(자기 lane 복귀)
         nl = lanes.next_lane()
-        if nl is not None and not flush: m[tag_of_lane[nl]] = True
+        if nl is not None and not flush: m[tag_of_lane[nl]] = True           # 새 화자용 lane 은 하나
         return m
+    tag_ids = torch.tensor([tag_of_lane[l] for l in range(1, R + 1)], device=dev)
     def step(e):
         h = base(inputs_embeds=e.view(1, -1, e.shape[-1]), past_key_values=cache, use_cache=True).last_hidden_state[0, -1]
         return head(h).float(), h
@@ -120,6 +123,9 @@ def decode_p2(model, tok, wav: np.ndarray, lang: str = "English", delay: int = 4
                 logits[model.blocked] = float("-inf"); logits[NEXT] -= next_bias
                 if constrain: logits[~allowed_mask(flush)] = float("-inf")
                 tid = int(logits.argmax())
+                if constrain and tid == NEXT and not just_tag and onset_thr > 0:
+                    pr = torch.softmax(logits, 0)[tag_ids]; j = int(pr.argmax())
+                    if float(pr[j]) >= onset_thr: tid = int(tag_ids[j])
                 if tid == NEXT or n >= cap or total >= max_total:
                     forced += int(tid != NEXT); just_tag = False; step(e_next); return n
                 p = float(torch.softmax(logits, 0)[tid]); emits.append((k, tid)); probs.append(round(p, 3)); n += 1; total += 1

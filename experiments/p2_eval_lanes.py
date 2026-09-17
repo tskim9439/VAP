@@ -10,7 +10,7 @@ ap = argparse.ArgumentParser(); ap.add_argument("--model", required=True); ap.ad
 ap.add_argument("--delay", type=int, default=4); ap.add_argument("--R", type=int, default=6); ap.add_argument("--window", type=float, nargs=2, default=(20.0, 40.0)); ap.add_argument("--hop", type=float, default=10.0)
 ap.add_argument("--seed", type=int, default=0); ap.add_argument("--tol", type=float, default=0.4, help="ONSET/EOT 매칭 허용 오차(초)"); ap.add_argument("--mono-cache", default=None); ap.add_argument("--gpu", default=None)
 ap.add_argument("--min-speakers", type=int, default=2); ap.add_argument("--max-tries", type=int, default=40); ap.add_argument("--runaway-cap", type=int, default=None)
-ap.add_argument("--no-constrain", action="store_true", help="lane 규약 제약 없이 argmax 만(비교용)"); ap.add_argument("--act-close-chunks", type=int, default=3); ap.add_argument("--act-thr", type=float, default=0.5)
+ap.add_argument("--no-constrain", action="store_true", help="lane 규약 제약 없이 argmax 만(비교용)"); ap.add_argument("--act-close-chunks", type=int, default=6); ap.add_argument("--act-thr", type=float, default=0.3); ap.add_argument("--onset-thr", type=float, default=0.25)
 a = ap.parse_args()
 if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import numpy as np, torch, soundfile as sf
@@ -72,7 +72,7 @@ def eval_window(ds, i, corpus, tag, idx_out):
     eps, info = ds.window_episodes(d, s["t0"], L); eps = [e for e in eps if e.lane]
     if len({e.speaker for e in eps}) < a.min_speakers or s.get("masked_chunks"): return None
     wav = np.asarray(crop_audio(ds.mono(s["cid"]), s["t0"], s["t0"] + L), dtype=np.float32)
-    t = time.time(); out = decode_p2(model, tok, wav, lang=lang, delay=a.delay, runaway_cap=a.runaway_cap, constrain=not a.no_constrain, act_close_chunks=a.act_close_chunks, act_thr=a.act_thr); dt = time.time() - t
+    t = time.time(); out = decode_p2(model, tok, wav, lang=lang, delay=a.delay, runaway_cap=a.runaway_cap, constrain=not a.no_constrain, act_close_chunks=a.act_close_chunks, act_thr=a.act_thr, onset_thr=a.onset_thr); dt = time.time() - t
     segs, pst = parser.parse(out["emits"], out.get("act_closed"))
     # ── 참조: lane 별 텍스트·ONSET/EOT 청크(직렬화 규약과 동일)·활동
     chunks, _ = serialize(eps, (K - 0.5) * CHUNK_S, ds.sp, delay_text=a.delay, delay_onset=0)
@@ -99,7 +99,27 @@ def eval_window(ds, i, corpus, tag, idx_out):
     tol = a.tol; on_h = [(sg.k_on + 1) * CHUNK_S for sg in segs if sg.k_on is not None and not sg.implicit]; on_r = [(k + 1) * CHUNK_S for k in ref_on.values()]   # EOT 매칭은 EOT 토큰만(활동 닫힘 제외)
     eot_h = [(sg.k_eot + 1) * CHUNK_S for sg in segs if sg.k_eot is not None]; eot_r = [(k + 1) * CHUNK_S for k in ref_eot.values() if k < K]
     on_m = match_events(on_h, on_r, tol); eot_m = match_events(eot_h, eot_r, tol)
-    lane_ok = lane_bad = spurious = 0
+    # lane 순열 최적 매핑(가설 lane → 참조 lane, 겹침 시간 최대; 창 안에서 등장 순서가 다르면 번호가 어긋나므로 diarization 식으로 매핑한 값도 본다)
+    import itertools
+    def seg_span(sg): return (sg.start if sg.start is not None else ((sg.tokens[0][1] + 1) * CHUNK_S if sg.tokens else 0.0), sg.end if sg.end is not None else L)
+    hl = sorted({sg.lane for sg in segs}); rl = sorted({e.lane for e in eps}); ov = {}
+    for h in hl:
+        for r in rl: ov[(h, r)] = sum(max(0.0, min(seg_span(sg)[1], e.end) - max(seg_span(sg)[0], e.start)) for sg in segs if sg.lane == h for e in eps if e.lane == r)
+    best_map, best_ov = {h: h for h in hl}, sum(ov.get((h, h), 0.0) for h in hl)
+    if hl and rl and len(hl) <= 6:
+        for perm in itertools.permutations(rl, min(len(hl), len(rl))):
+            mp = dict(zip(hl, perm)); tot = sum(ov.get((h, r), 0.0) for h, r in mp.items())
+            if tot > best_ov + 1e-9: best_ov, best_map = tot, mp
+    mapped_rate = None
+    if hl:
+        hyp_m = collections.defaultdict(list)
+        for sg in segs: hyp_m[best_map.get(sg.lane, sg.lane)] += sg.tokens
+        ed_m = 0
+        for ln in sorted(set(ref_lane_tokens) | set(hyp_m)):
+            r = text_of(ref_lane_tokens.get(ln, [])); h = text_of(hyp_m.get(ln, []))
+            ru = list(r.replace(" ", "")) if unit == "cer" else r.split(); hu = list(h.replace(" ", "")) if unit == "cer" else h.split(); ed_m += edit_distance(hu, ru)
+        mapped_rate = ed_m / len_sum if len_sum else None
+    lane_ok = lane_bad = spurious = 0; lane_ok_m = 0
     for sg in segs:
         st_, en_ = sg.start if sg.start is not None else (sg.tokens[0][1] + 1) * CHUNK_S if sg.tokens else 0.0, sg.end if sg.end is not None else L
         best, bo = None, 0.0
@@ -107,14 +127,14 @@ def eval_window(ds, i, corpus, tag, idx_out):
             ov = min(en_, e.end) - max(st_, e.start)
             if ov > bo: best, bo = e, ov
         if best is None: spurious += 1
-        elif best.lane == sg.lane: lane_ok += 1
-        else: lane_bad += 1
+        else:
+            lane_ok += int(best.lane == sg.lane); lane_bad += int(best.lane != sg.lane); lane_ok_m += int(best.lane == best_map.get(sg.lane, sg.lane))
     ref_act = np.array(lane_activity(eps, K, a.R), dtype=np.float32); hyp_act = out["act"][:K, : a.R] if out["act"].size else np.zeros_like(ref_act)
     pred = (hyp_act > 0.5).astype(np.float32); act_acc = float((pred == ref_act).mean()); tp = float(((pred == 1) & (ref_act == 1)).sum()); fp = float(((pred == 1) & (ref_act == 0)).sum()); fn = float(((pred == 0) & (ref_act == 1)).sum())
     act_f1 = (2 * tp / (2 * tp + fp + fn)) if (2 * tp + fp + fn) else None
     lat, n_lat = token_latency(sorted([(t_, k) for sg in segs for t_, k in sg.tokens], key=lambda x: x[1]), sorted([(t_, tt) for e in eps for t_, tt in e.tokens], key=lambda x: x[1]))
-    m = dict(unit=unit, lane_rate=(ed_sum / len_sum if len_sum else None), pooled_rate=pooled, n_ref_units=len_sum,
-             onset=dict(hit=on_m[0], hyp=on_m[1], ref=on_m[2]), eot=dict(hit=eot_m[0], hyp=eot_m[1], ref=eot_m[2]), lane=dict(ok=lane_ok, bad=lane_bad, spurious=spurious),
+    m = dict(unit=unit, lane_rate=(ed_sum / len_sum if len_sum else None), mapped_rate=mapped_rate, pooled_rate=pooled, n_ref_units=len_sum, lane_map={str(k): v for k, v in best_map.items()},
+             onset=dict(hit=on_m[0], hyp=on_m[1], ref=on_m[2]), eot=dict(hit=eot_m[0], hyp=eot_m[1], ref=eot_m[2]), lane=dict(ok=lane_ok, bad=lane_bad, spurious=spurious, ok_mapped=lane_ok_m),
              act_acc=act_acc, act_f1=act_f1, latency=dict(mean=(float(np.mean(lat)) if lat else None), p50=(float(np.median(lat)) if lat else None), n=n_lat, n_ref_tokens=sum(len(e.tokens) for e in eps)),
              decode=dict(forced=out["forced"], rounds=out["rounds"], **pst, n_emits=len(out["emits"]), sec=round(dt, 1), ms_per_chunk=round(float(np.mean(out["ticks_ms"])), 1)))
     # ── 뷰어용 JSON
@@ -136,7 +156,9 @@ def agg(rows):
     def mean(xs): xs = [x for x in xs if x is not None]; return round(float(np.mean(xs)), 4) if xs else None
     ed = sum(r["lane_rate"] * r["n_ref_units"] for r in rows if r["lane_rate"] is not None); n = sum(r["n_ref_units"] for r in rows if r["lane_rate"] is not None)
     on = [sum(r["onset"][k] for r in rows) for k in ("hit", "hyp", "ref")]; eo = [sum(r["eot"][k] for r in rows) for k in ("hit", "hyp", "ref")]; ln = [sum(r["lane"][k] for r in rows) for k in ("ok", "bad", "spurious")]
-    return dict(windows=len(rows), unit=rows[0]["unit"] if rows else None, lane_rate=(round(ed / n, 4) if n else None), pooled_rate=mean([r["pooled_rate"] for r in rows]),
+    edm = sum(r["mapped_rate"] * r["n_ref_units"] for r in rows if r.get("mapped_rate") is not None); nm = sum(r["n_ref_units"] for r in rows if r.get("mapped_rate") is not None)
+    okm = sum(r["lane"].get("ok_mapped", 0) for r in rows)
+    return dict(windows=len(rows), unit=rows[0]["unit"] if rows else None, lane_rate=(round(ed / n, 4) if n else None), mapped_rate=(round(edm / nm, 4) if nm else None), lane_acc_mapped=(round(okm / (ln[0] + ln[1]), 3) if ln[0] + ln[1] else None), pooled_rate=mean([r["pooled_rate"] for r in rows]),
                 onset_p=(round(on[0] / on[1], 3) if on[1] else None), onset_r=(round(on[0] / on[2], 3) if on[2] else None), eot_p=(round(eo[0] / eo[1], 3) if eo[1] else None), eot_r=(round(eo[0] / eo[2], 3) if eo[2] else None),
                 lane_acc=(round(ln[0] / (ln[0] + ln[1]), 3) if ln[0] + ln[1] else None), spurious_segments=ln[2], act_acc=mean([r["act_acc"] for r in rows]), act_f1=mean([r["act_f1"] for r in rows]),
                 latency_mean=mean([r["latency"]["mean"] for r in rows]), latency_p50=mean([r["latency"]["p50"] for r in rows]), latency_match=(round(sum(r["latency"]["n"] for r in rows) / max(1, sum(r["latency"]["n_ref_tokens"] for r in rows)), 3)),
