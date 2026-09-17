@@ -11,3 +11,10 @@
 - Reason: 사용자 지적(첫 블록 ONSET·낮은 WER/CER) 분석 중 재로드 모델의 teacher-forced 손실이 학습 로그와 다름을 발견 → 인코더 미저장 사고 확인·수정
 - Next: onset_thr 0.35(c3) 반영, D1b(창 시작 평탄화·δ_onset·태그 가중), held-out split
 - By: tskim
+
+## [2026-09-17] query | Phase 2 평가 계획 v2
+
+- Changed: wiki/outputs/output-phase2-eval-plan.md(신규)
+- Reason: 사용자 지적 — lane 번호 기반 CER/WER 가 화자 오배정·순서 어긋남을 전사 점수에 전가, 턴 구간 정량 지표 부족, 학습 미사용 객관 평가셋 필요
+- Next: lane_metrics 모듈·테스트, NIKL 2020 정렬, TurnBench 로더, 세션 split 파일, p2_eval_sessions
+- By: tskim
