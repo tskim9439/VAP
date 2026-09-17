@@ -23,6 +23,7 @@ ap.add_argument("--no-check-save", action="store_true", help="학습 뒤 final �
 ap.add_argument("--delay-onset", type=int, default=0, help="δ_onset(청크): ONSET 을 시작보다 이만큼 늦게 놓아 시작 증거를 준다(D1b: 2)"); ap.add_argument("--tag-weight", type=float, default=1.0, help="lane 태그·ONSET 위치 손실 가중(D1b: 2)")
 ap.add_argument("--start-mode", default="grid", choices=["grid", "mixed"], help="창 시작: grid(무음 격자) | mixed(+ 임의 시점 시작 창, 발화 중간 포함)"); ap.add_argument("--random-frac", type=float, default=0.5)
 ap.add_argument("--lr-encoder", type=float, default=1e-5, help="--train-encoder 일 때 인코더 lr")
+ap.add_argument("--exclude-split", default=None, help="세션 split JSON(experiments/p2_make_split.py): 각 코퍼스의 heldout conv_id 를 학습에서 뺀다(D1c 부터)")
 ap.add_argument("--train-encoder", action="store_true", help="인코더도 학습(기본 동결 — 정본 §1)"); ap.add_argument("--mono-cache", default=None, help="대화별 mono 혼합 캐시 디렉토리(float16 npy, mmap)"); ap.add_argument("--resume", default="auto"); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--num-workers", type=int, default=2); ap.add_argument("--gpu", default=None); ap.add_argument("--check", action="store_true", help="학습 전 창별 라운드트립(라벨 토큰 = 참조 토큰) 검사")
 a = ap.parse_args()
 rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))
@@ -119,6 +120,8 @@ for c in a.corpora.split(","):
     if not os.path.exists(p): log(f"!! {p} 없음 — 건너뜀"); continue
     if wins is not None and c not in wins: continue
     ds = DialogueWindowDataset([p], tok, R=a.R, window_s=tuple(a.window), hop_s=a.hop, delays=delays, delay_onset=a.delay_onset, seed=a.seed, mono_cache_dir=a.mono_cache, start_mode=a.start_mode, random_frac=a.random_frac)
+    if a.exclude_split:
+        held = set(json.load(open(a.exclude_split))["corpora"].get(c, {}).get("heldout", [])); n0 = len(ds.items); ds.items = [it for it in ds.items if it[0] not in held]; log(f"  {c}: held-out 세션 {len(held)} 제외 → 창 {n0} → {len(ds.items)}")
     if wins is not None:
         want = wins[c]; ds.items = [it for it in ds.items if (it[0], round(it[1], 3), round(it[2], 3)) in want]
         if len(ds.items) != len(want): log(f"  ! {c}: 창 목록 {len(want)} 중 {len(ds.items)} 만 일치(창 규약이 바뀌었으면 목록을 다시 만든다)")
