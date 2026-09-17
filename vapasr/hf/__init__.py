@@ -21,5 +21,11 @@ def load_tokenizer(path: str):
     cfg = json.load(open(os.path.join(path, "config.json")))
     src = path if os.path.exists(os.path.join(path, "tokenizer_config.json")) else cfg.get("thinker_name_or_path", "Qwen/Qwen3-ASR-0.6B")
     tok = AutoTokenizer.from_pretrained(src); sp = add_specials(tok)
-    assert sp == cfg.get("sp_ids", sp), f"tokenizer 특수 토큰 id 가 config 와 다름: {sp} vs {cfg.get('sp_ids')}"
+    if cfg.get("phase2_registry"):                                                   # Phase 2 산출물: lane 3–6·ONSET·EOT 도 붙이고 registry 와 대조
+        from ..data.dialogue_tokens import add_phase2_specials
+        sp = add_phase2_specials(tok)
+        want = {**cfg.get("sp_ids", {}), **cfg["phase2_registry"]}
+    else: want = cfg.get("sp_ids", sp)
+    bad = {k: (sp.get(k), v) for k, v in want.items() if sp.get(k) != v}
+    assert not bad, f"tokenizer 특수 토큰 id 가 config 와 다름: {bad}"
     return tok

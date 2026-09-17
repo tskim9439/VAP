@@ -7,7 +7,7 @@ cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
 source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
 SETS=${SETS:?SETS=corpus:tag:n,...}; OUT=${OUT:?OUT}; MODEL=${MODEL:-/soundai/Model/VAPASR/p2-D1/final}; DATA=${DATA:-/soundai/users/tskim/VAPKT-data/data/phase2}
 for i in $(seq 1 $(( ${WAIT_MIN:-240} / 2 ))); do
-  FREE=$(nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits | awk -F", " '$2<1000{print $1}' | head -1)
+  FREE=$(nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits | awk -F", " -v lim="${MAX_USED_MIB:-30000}" '$2<lim{print $2, $1}' | sort -n | head -1 | awk '{print $2}')   # 사용량이 가장 적은 GPU(상한 MAX_USED_MIB, 기본 30 GB — 평가는 ~10 GB 면 충분)
   [ -n "$FREE" ] && break; [ $((i % 5)) -eq 1 ] && echo "[$(date '+%F %T')] 빈 GPU 없음 — 대기 ($i)"; sleep 120
 done
 [ -n "${FREE:-}" ] || { echo "빈 GPU 를 얻지 못함"; exit 1; }
