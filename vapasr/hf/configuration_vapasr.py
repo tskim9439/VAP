@@ -12,7 +12,7 @@ class VapAsrConfig(PretrainedConfig):
     def __init__(self, thinker: Optional[dict] = None, thinker_name_or_path: str = "Qwen/Qwen3-ASR-0.6B",
                  adapter_d_in: int = 1024, adapter_d_out: int = 1024, adapter_hidden: int = 2048,
                  encoder_type: str = "nemotron", encoder_name: str = "nvidia/nemotron-3.5-asr-streaming-0.6b", encoder_left_context: int = 56, encoder_right_context: int = 0,
-                 encoder_trainable: bool = False, sp_ids: Optional[Dict[str, int]] = None, special_tokens: Optional[List[str]] = None,
+                 encoder_trainable: bool = False, encoder_saved: bool = False, sp_ids: Optional[Dict[str, int]] = None, special_tokens: Optional[List[str]] = None,
                  chunk_s: float = 0.08, frame_hz: float = 12.5, delays: List[int] = (2, 3, 4, 6), next_weight: float = 0.3, next_weight_ko: float = 0.15,
                  full_ft: bool = True, lora_r: int = 0, runaway_cap: int = 8, max_flush_rounds: int = 8, blocked_ids: Optional[List[int]] = None, audio_pad_id: Optional[int] = None,
                  prefix_ids: Optional[List[int]] = None, lanes: int = 0, act_weight: float = 1.0, act_hidden: int = 256, eot_weight: float = 2.0, phase2_registry: Optional[Dict[str, int]] = None, **kw):
@@ -20,6 +20,7 @@ class VapAsrConfig(PretrainedConfig):
         self.adapter_d_in, self.adapter_d_out, self.adapter_hidden = adapter_d_in, adapter_d_out, adapter_hidden
         self.encoder_type, self.encoder_name = encoder_type, encoder_name; self.encoder_left_context, self.encoder_right_context = encoder_left_context, encoder_right_context
         self.encoder_trainable = encoder_trainable
+        self.encoder_saved = encoder_saved                    # 동결이어도 인코더 가중치를 체크포인트에 넣는다(초기화 체크포인트의 인코더가 .nemo 원본과 다를 때 — E2 는 인코더를 학습했음)
         self.sp_ids = dict(sp_ids or {}); self.special_tokens = list(special_tokens or [])
         self.chunk_s, self.frame_hz, self.delays = chunk_s, frame_hz, list(delays); self.next_weight, self.next_weight_ko = next_weight, next_weight_ko
         self.full_ft, self.lora_r, self.runaway_cap, self.max_flush_rounds = full_ft, lora_r, runaway_cap, max_flush_rounds

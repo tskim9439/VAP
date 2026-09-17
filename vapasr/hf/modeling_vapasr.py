@@ -154,9 +154,10 @@ class VapAsrForStreamingASR(PreTrainedModel):
 
     # ── 저장/로드
     def save_pretrained(self, save_directory, *args, state_dict=None, **kw):
-        """동결 인코더는 저장하지 않는다(.nemo 에서 재구성). 학습한 인코더(encoder_trainable) 는 함께 저장."""
+        """동결 인코더는 저장하지 않는다(.nemo 에서 재구성). 학습한 인코더(encoder_trainable) 또는 encoder_saved(초기화 체크포인트에서 가져온, .nemo 와 다른 인코더) 는 함께 저장.
+        (2026-09-17 D1 사고: E2 의 학습된 인코더를 동결해 쓰면서 encoder_trainable=False 로 저장 → 재로드 시 .nemo 원본 인코더가 붙어 text 손실 0.08→1.5. encoder_saved 로 막는다.)"""
         sd = state_dict if state_dict is not None else self.state_dict()
-        if not self.config.encoder_trainable: sd = {k: v for k, v in sd.items() if not k.startswith("encoder.")}
+        if not (self.config.encoder_trainable or getattr(self.config, "encoder_saved", False)): sd = {k: v for k, v in sd.items() if not k.startswith("encoder.")}
         return super().save_pretrained(save_directory, *args, state_dict=sd, **kw)
 
     @classmethod
@@ -164,7 +165,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
         m = super().from_pretrained(path, *args, **kw)
         if load_encoder:
             enc_sd = None
-            if m.config.encoder_trainable:                                        # 저장된 인코더 가중치를 safetensors 에서 읽어 붙인다
+            if m.config.encoder_trainable or getattr(m.config, "encoder_saved", False):     # 저장된 인코더 가중치를 safetensors 에서 읽어 붙인다
                 from safetensors.torch import load_file
                 import glob
                 enc_sd = {}

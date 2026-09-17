@@ -19,6 +19,7 @@ ap.add_argument("--act-weight", type=float, default=1.0); ap.add_argument("--eot
 ap.add_argument("--no-liger", action="store_true"); ap.add_argument("--no-grad-ckpt", action="store_true"); ap.add_argument("--save-every", type=int, default=500); ap.add_argument("--log-every", type=int, default=10)
 ap.add_argument("--max-tokens", type=int, default=0, help="동적 길이 배치: 배치의 (창 수 × 최장 추정 길이) ≤ 이 토큰 수(0 이면 고정 bs-en/bs-ko)"); ap.add_argument("--max-bs", type=int, default=48, help="동적 배치의 창 수 상한")
 ap.add_argument("--mix", default="equal", choices=["equal", "sqrt", "prop"], help="코퍼스 배치 비중: equal(라운드로빈 균등)·sqrt(배치 수^0.5 비례)·prop(배치 수 비례)")
+ap.add_argument("--check-save", action="store_true", help="학습 뒤 메모리 모델과 final 재로드 모델의 손실·가중치를 같은 배치로 대조(save/load 진단)")
 ap.add_argument("--train-encoder", action="store_true", help="인코더도 학습(기본 동결 — 정본 §1)"); ap.add_argument("--mono-cache", default=None, help="대화별 mono 혼합 캐시 디렉토리(float16 npy, mmap)"); ap.add_argument("--resume", default="auto"); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--num-workers", type=int, default=2); ap.add_argument("--gpu", default=None); ap.add_argument("--check", action="store_true", help="학습 전 창별 라운드트립(라벨 토큰 = 참조 토큰) 검사")
 a = ap.parse_args()
 rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))
@@ -92,10 +93,12 @@ if not a.no_liger:
     try:
         from vapasr.hf.liger import apply_liger_to_thinker; log(f"liger: {apply_liger_to_thinker(model)}")
     except ImportError as e: log(f"liger 미적용({e})")
-model.encoder.eval()
+model.encoder.eval(); init_has_encoder = bool(cfg.encoder_trainable or getattr(cfg, "encoder_saved", False))
 if not a.train_encoder:
     for p_ in model.encoder.parameters(): p_.requires_grad_(False)
     model.config.encoder_trainable = False
+    model.config.encoder_saved = init_has_encoder                 # 초기화 체크포인트(E2)가 학습된 인코더를 갖고 있으면 동결해도 함께 저장(재로드 시 .nemo 원본이 붙는 사고 방지)
+    log(f"인코더 동결 · 체크포인트에 인코더 저장: {model.config.encoder_saved}")
 n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad); log(f"모델 준비 {time.time()-t0:.0f}s · 학습 파라미터 {n_tr/1e6:.1f} M · lanes {cfg.lanes} · registry {cfg.phase2_registry}")
 
 # ── 데이터
@@ -168,6 +171,21 @@ elif a.resume != "none": last = a.resume
 barrier(); res = trainer.train(resume_from_checkpoint=last); st = trainer.state; preempted = preempt_cb.fired
 done = st.global_step >= st.max_steps and not preempted
 log(f"train 종료: step {st.global_step}/{st.max_steps} {'완료' if done else '(선점/중단 → 재시작 시 이어서)'} · {res.metrics}")
+if done and a.check_save and main:
+    def batch_loss(m, x):
+        m.eval(); xx = {k: (v.cuda() if torch.is_tensor(v) else v) for k, v in x.items()}; xin = {k: xx[k] for k in ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "labels_alt", "activity", "activity_mask")}; xin["soft_w"] = xx["soft_w_full"]
+        with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16): o = m(**xin, next_weight=0.15)
+        return dict(loss_text=round(float(o.loss_text), 4), top1=round(float(o.top1_text), 4), loss_next=round(float(o.loss_next), 4), loss_eot=(round(float(o.loss_eot), 4) if o.loss_eot is not None else None))
+    xb = next(iter(tdl)); mem = getattr(trainer.model, "module", trainer.model); log("check-save 메모리(trainer.model):", batch_loss(mem, xb), "| 스크립트 model 객체 동일:", mem is model)
+    trainer.save_model(os.path.join(out, "final")); tok.save_pretrained(os.path.join(out, "final"))
+    re = VapAsrForStreamingASR.from_pretrained(os.path.join(out, "final")).cuda(); log("check-save 재로드(final):", batch_loss(re, xb))
+    sd1 = {k: v.detach().float().cpu() for k, v in mem.state_dict().items() if not k.startswith("encoder.")}; sd2 = {k: v.detach().float().cpu() for k, v in re.state_dict().items() if not k.startswith("encoder.")}
+    miss = sorted(set(sd1) - set(sd2)); extra = sorted(set(sd2) - set(sd1)); diff = [(k, float((sd1[k] - sd2[k]).abs().max())) for k in sd1 if k in sd2 and sd1[k].shape == sd2[k].shape and float((sd1[k] - sd2[k]).abs().max()) > 1e-6]
+    shape = [k for k in sd1 if k in sd2 and sd1[k].shape != sd2[k].shape]
+    log(f"check-save state_dict: 메모리 {len(sd1)} 키 · 재로드 {len(sd2)} 키 · 누락 {miss[:10]} · 추가 {extra[:10]} · shape 불일치 {shape[:10]} · 값 차이 {len(diff)} 키: {sorted(diff, key=lambda x: -x[1])[:12]}")
+    enc1 = {k: v.detach().float().cpu() for k, v in mem.state_dict().items() if k.startswith("encoder.")}; enc2 = {k: v.detach().float().cpu() for k, v in re.state_dict().items() if k.startswith("encoder.")}
+    ediff = [(k, float((enc1[k] - enc2[k]).abs().max())) for k in enc1 if k in enc2 and enc1[k].shape == enc2[k].shape and float((enc1[k] - enc2[k]).abs().max()) > 1e-6]
+    log(f"check-save encoder: 메모리 {len(enc1)} · 재로드 {len(enc2)} · 값 차이 {len(ediff)} 키: {sorted(ediff, key=lambda x: -x[1])[:8]}")
 if done:
     trainer.save_model(os.path.join(out, "final"))
     if main:
