@@ -5,7 +5,7 @@ p(첫 화자 태그 | 청크 k) 을 청크 1·참조 첫 ONSET 청크·그 사�
 import os, sys, json, time, argparse, collections
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser(); ap.add_argument("--model", required=True); ap.add_argument("--data", required=True); ap.add_argument("--from-eval", required=True); ap.add_argument("--out", required=True)
-ap.add_argument("--delay", type=int, default=4); ap.add_argument("--R", type=int, default=6); ap.add_argument("--mono-cache", default=None); ap.add_argument("--gpu", default=None); ap.add_argument("--window", type=float, nargs=2, default=(20.0, 40.0)); ap.add_argument("--hop", type=float, default=10.0)
+ap.add_argument("--delay", type=int, default=4); ap.add_argument("--delay-onset", type=int, default=0); ap.add_argument("--R", type=int, default=6); ap.add_argument("--mono-cache", default=None); ap.add_argument("--gpu", default=None); ap.add_argument("--window", type=float, nargs=2, default=(20.0, 40.0)); ap.add_argument("--hop", type=float, default=10.0)
 a = ap.parse_args()
 if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import numpy as np, torch
@@ -34,7 +34,7 @@ for ev in a.from_eval.split(","):
             path = os.path.join(a.out + ".tmp", f"_{corpus}.proxy.jsonl"); os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w", encoding="utf-8") as f:
                 for d in dl: f.write(d.to_json() + "\n")
-        ds = DialogueWindowDataset([path], tok, R=a.R, window_s=tuple(a.window), hop_s=a.hop, delays=(a.delay,), seed=rep["args"]["seed"], mono_cache_dir=a.mono_cache)
+        ds = DialogueWindowDataset([path], tok, R=a.R, window_s=tuple(a.window), hop_s=a.hop, delays=(a.delay,), delay_onset=a.delay_onset, seed=rep["args"]["seed"], mono_cache_dir=a.mono_cache)
         idx = {(it[0], round(it[1], 3), round(it[2], 3)): i for i, it in enumerate(ds.items)}
         rows = []; kinds_acc = collections.defaultdict(lambda: [0, 0])
         for w in s["windows"]:
@@ -54,7 +54,7 @@ for ev in a.from_eval.split(","):
             audio_pos = [j for j, k in enumerate(kinds) if k == "audio"]; chunk_of = seq["chunk_of"]
             p_tag = {chunk_of[j]: float(sum(probs[j, t] for t in lane_ids)) for j in audio_pos}; p_a = {chunk_of[j]: float(probs[j, SPK_A]) for j in audio_pos}
             eps, _ = ds.window_episodes(ds.dlgs[seq["cid"]], seq["t0"], seq["L"]); first_on = None
-            for k, em in __import__("vapasr.data.dialogue_interleave", fromlist=["serialize"]).serialize([e for e in eps if e.lane], (seq["K"] - 0.5) * CHUNK_S, ds.sp, delay_text=a.delay, delay_onset=0)[0]:
+            for k, em in __import__("vapasr.data.dialogue_interleave", fromlist=["serialize"]).serialize([e for e in eps if e.lane], (seq["K"] - 0.5) * CHUNK_S, ds.sp, delay_text=a.delay, delay_onset=a.delay_onset)[0]:
                 if any(e.kind == "onset" for e in em): first_on = k; break
             before = [p_tag[k] for k in range(0, first_on) if k in p_tag] if first_on else []
             rows.append(dict(name=w["name"], K=seq["K"], first_onset=first_on, p_tag_k1=round(p_tag.get(1, 0.0), 3), p_spkA_k1=round(p_a.get(1, 0.0), 3), p_tag_at_onset=(round(p_tag.get(first_on, 0.0), 3) if first_on is not None else None),

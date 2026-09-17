@@ -7,7 +7,7 @@ import os, sys, json, time, argparse, random
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ap = argparse.ArgumentParser(); ap.add_argument("--init", required=True); ap.add_argument("--data", required=True); ap.add_argument("--corpora", default="aihub134-1,ami,notsofar,icsi")
 ap.add_argument("--budgets", default="8000,12000,16000,20000,24000,28000,32000"); ap.add_argument("--max-bs", type=int, default=48); ap.add_argument("--shape", default="long,short", help="long: 최장 창 소수 · short: 최단 창 다수(같은 예산)")
-ap.add_argument("--mono-cache", default=None); ap.add_argument("--gpu", default=None); ap.add_argument("--out", default=None); ap.add_argument("--reps", type=int, default=2); ap.add_argument("--no-liger", action="store_true")
+ap.add_argument("--mono-cache", default=None); ap.add_argument("--gpu", default=None); ap.add_argument("--out", default=None); ap.add_argument("--reps", type=int, default=2); ap.add_argument("--no-liger", action="store_true"); ap.add_argument("--train-encoder", action="store_true")
 a = ap.parse_args()
 if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import torch, numpy as np
@@ -24,7 +24,8 @@ if not a.no_liger:
         from vapasr.hf.liger import apply_liger_to_thinker; log(f"liger: {apply_liger_to_thinker(model)}")
     except ImportError as e: log(f"liger 미적용({e})")
 model.encoder.eval()
-for p_ in model.encoder.parameters(): p_.requires_grad_(False)
+for p_ in model.encoder.parameters(): p_.requires_grad_(bool(a.train_encoder))
+if a.train_encoder: model.encoder.train()
 model.cuda(); params = [p for p in model.parameters() if p.requires_grad]; opt = torch.optim.AdamW(params, lr=1e-6, weight_decay=0.01)
 log(f"모델 준비 {time.time()-t0:.0f}s · 학습 파라미터 {sum(p.numel() for p in params)/1e6:.1f} M · GPU {torch.cuda.get_device_name()} {torch.cuda.get_device_properties(0).total_memory/2**30:.0f} GiB")
 

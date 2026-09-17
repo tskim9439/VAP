@@ -10,7 +10,7 @@ ap = argparse.ArgumentParser(); ap.add_argument("--model", required=True); ap.ad
 ap.add_argument("--delay", type=int, default=4); ap.add_argument("--R", type=int, default=6); ap.add_argument("--window", type=float, nargs=2, default=(20.0, 40.0)); ap.add_argument("--hop", type=float, default=10.0)
 ap.add_argument("--seed", type=int, default=0); ap.add_argument("--tol", type=float, default=0.4, help="ONSET/EOT 매칭 허용 오차(초)"); ap.add_argument("--mono-cache", default=None); ap.add_argument("--gpu", default=None)
 ap.add_argument("--min-speakers", type=int, default=2); ap.add_argument("--max-tries", type=int, default=40); ap.add_argument("--runaway-cap", type=int, default=None)
-ap.add_argument("--no-constrain", action="store_true", help="lane 규약 제약 없이 argmax 만(비교용)"); ap.add_argument("--act-close-chunks", type=int, default=6); ap.add_argument("--act-thr", type=float, default=0.3); ap.add_argument("--onset-thr", type=float, default=0.25)
+ap.add_argument("--no-constrain", action="store_true", help="lane 규약 제약 없이 argmax 만(비교용)"); ap.add_argument("--act-close-chunks", type=int, default=6); ap.add_argument("--act-thr", type=float, default=0.3); ap.add_argument("--onset-thr", type=float, default=0.35); ap.add_argument("--delay-onset", type=int, default=0, help="참조 ONSET 청크 지연(학습 δ_onset 과 같게)")
 a = ap.parse_args()
 if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 import numpy as np, torch, soundfile as sf
@@ -64,7 +64,7 @@ def load_set(corpus):
         with open(tmp, "w", encoding="utf-8") as f:
             for d in dl: f.write(d.to_json() + "\n")
         path = tmp
-    ds = DialogueWindowDataset([path], tok, R=a.R, window_s=tuple(a.window), hop_s=a.hop, delays=(a.delay,), seed=a.seed, mono_cache_dir=a.mono_cache)
+    ds = DialogueWindowDataset([path], tok, R=a.R, window_s=tuple(a.window), hop_s=a.hop, delays=(a.delay,), delay_onset=a.delay_onset, seed=a.seed, mono_cache_dir=a.mono_cache)
     return ds, dict(path=os.path.basename(path), dialogues=len(dl), tokens_from=("align" if n_tok else "proxy"), proxied_utts=prox, windows=len(ds), stats=ds.stats)
 
 def eval_window(ds, i, corpus, tag, idx_out):
@@ -75,7 +75,7 @@ def eval_window(ds, i, corpus, tag, idx_out):
     t = time.time(); out = decode_p2(model, tok, wav, lang=lang, delay=a.delay, runaway_cap=a.runaway_cap, constrain=not a.no_constrain, act_close_chunks=a.act_close_chunks, act_thr=a.act_thr, onset_thr=a.onset_thr); dt = time.time() - t
     segs, pst = parser.parse(out["emits"], out.get("act_closed"))
     # ── 참조: lane 별 텍스트·ONSET/EOT 청크(직렬화 규약과 동일)·활동
-    chunks, _ = serialize(eps, (K - 0.5) * CHUNK_S, ds.sp, delay_text=a.delay, delay_onset=0)
+    chunks, _ = serialize(eps, (K - 0.5) * CHUNK_S, ds.sp, delay_text=a.delay, delay_onset=a.delay_onset)
     ref_on, ref_eot = {}, {}
     for k, em in chunks:
         for e in em:

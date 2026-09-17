@@ -32,11 +32,13 @@ def load_align_parts(align_dir: str) -> Tuple[Dict[str, Dict[str, list]], set]:
 class DialogueWindowDataset(Dataset):
     def __init__(self, dialogues: List[str], tok, align_dir: Optional[str] = None, R: int = R_LANES, window_s: Tuple[float, float] = (20.0, 40.0), hop_s: float = 10.0,
                  delays=(2, 3, 4, 6), delay_onset: int = 0, policy: str = "lazy_free", max_per_chunk: int = 0, seed: int = 0, mix_kw: Optional[dict] = None,
-                 max_items: Optional[int] = None, allow_unaligned: bool = False, cache_convs: int = 4, min_text_tokens: int = 8, untranscribed: str = "mask", mono_cache_dir: Optional[str] = None):
+                 max_items: Optional[int] = None, allow_unaligned: bool = False, cache_convs: int = 4, min_text_tokens: int = 8, untranscribed: str = "mask", mono_cache_dir: Optional[str] = None,
+                 start_mode: str = "grid", random_frac: float = 0.5):
         self.tok = tok; self.sp_ids = add_phase2_specials(tok); self.sp = lane_specials_of(self.sp_ids, R); self.R = R; self.delays = tuple(delays); self.delay_onset = delay_onset
         self.policy = policy; self.M = max_per_chunk; self.mix_kw = mix_kw or {}; self.allow_unaligned = allow_unaligned; self.cache_convs = cache_convs; self.min_text_tokens = min_text_tokens; self.untranscribed = untranscribed; assert untranscribed in ("mask", "skip"); self.mono_cache_dir = mono_cache_dir
+        assert start_mode in ("grid", "mixed"); self.start_mode = start_mode; self.random_frac = random_frac
         self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>"); self._pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]
-        self.dlgs: Dict[str, Dialogue] = {}; self.stats = dict(dialogues=0, windows=0, skipped_untranscribed=0, skipped_unaligned=0, skipped_sparse=0, no_start=0, windows_with_mask=0)
+        self.dlgs: Dict[str, Dialogue] = {}; self.stats = dict(dialogues=0, windows=0, skipped_untranscribed=0, skipped_unaligned=0, skipped_sparse=0, no_start=0, windows_with_mask=0, random_start=0)
         aligned, failed = load_align_parts(align_dir) if align_dir else ({}, set())
         for path in dialogues:
             for line in open(path, encoding="utf-8"):
@@ -68,6 +70,18 @@ class DialogueWindowDataset(Dataset):
             n_tok = sum(len([1 for _, tt in (u.tokens or []) if t <= tt <= t1]) for u in d.utterances if u.end > t and u.start < t1)
             if n_tok < self.min_text_tokens: self.stats["skipped_sparse"] += 1; t += hop_s; continue      # 거의 무음인 창 제외
             out.append((d.conv_id, round(t, 3), round(L, 3))); self.stats["windows"] += 1; t += hop_s
+        if self.start_mode == "mixed" and out and d.duration_s > lo:
+            # D1b: 창 시작을 무음 격자에만 두면 첫 ONSET 이 창 앞쪽에 몰려(청크 ≤5 가 1/3) 모델이 위치 prior 로 시작을 낸다. 임의 시점(발화 중간 포함) 시작 창을 random_frac 비율로 더한다.
+            # 발화 중간 시작이면 그 발화는 창 0 초에서 시작하는 episode 가 되고(ONSET 청크 0 = "이미 말하고 있다"), 창 이전 토큰은 버린다(window_episodes).
+            n_rand = int(round(len(out) * self.random_frac / max(1e-6, 1.0 - self.random_frac))); tries = 0
+            while n_rand > 0 and tries < 20 * (n_rand + 1):
+                tries += 1; t = rng.uniform(0.0, d.duration_s - lo); L = min(rng.uniform(lo, hi), d.duration_s - t); t1 = t + L
+                hit = any(s < t1 and e > t for s, e in bad)
+                if hit and self.untranscribed == "skip": continue
+                n_tok = sum(len([1 for _, tt in (u.tokens or []) if t <= tt <= t1]) for u in d.utterances if u.end > t and u.start < t1)
+                if n_tok < self.min_text_tokens: continue
+                if hit: self.stats["windows_with_mask"] += 1
+                out.append((d.conv_id, round(t, 3), round(L, 3))); self.stats["windows"] += 1; self.stats["random_start"] += 1; n_rand -= 1
         return out
 
     def _bad_spans(self, d: Dialogue):
@@ -107,7 +121,7 @@ class DialogueWindowDataset(Dataset):
         t1 = t0 + L; utts = []
         for u in d.utterances:
             if u.end <= t0 or u.start >= t1: continue
-            toks = [(tid, t - t0) for tid, t in (u.tokens or []) if t <= t1]
+            toks = [(tid, t - t0) for tid, t in (u.tokens or []) if t0 <= t <= t1]          # 창 이전 토큰은 버린다(발화 중간 시작 창)
             utts.append(Utterance(speaker=u.speaker, start=max(u.start, t0) - t0, end=min(u.end, t1) - t0, text=u.text, raw=u.raw, tokens=toks, utt_id=u.utt_id))
         sub = Dialogue(conv_id=d.conv_id, corpus=d.corpus, lang=d.lang, split=d.split, duration_s=L, speakers=d.speakers, utterances=utts)
         eps = build_episodes(sub); st = allocate(eps, R=self.R, policy=self.policy, delay_onset=self.delay_onset)

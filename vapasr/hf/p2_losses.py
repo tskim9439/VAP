@@ -7,8 +7,10 @@ activity_bce: audio 위치 hidden → head → (n_audio, R) logits, target activ
 from typing import Optional, Tuple, Dict
 import torch, torch.nn.functional as F
 
-def soft_ce(logits: torch.Tensor, tgt: torch.Tensor, alt: Optional[torch.Tensor], w: Optional[torch.Tensor], next_id: int, next_weight: float, eot_id: int = -1, eot_weight: float = 1.0) -> Tuple[torch.Tensor, Dict[str, float]]:
-    """logits (N,V) float, tgt (N,) long(유효 위치만), alt (N,) long(-100 = 없음), w (N,) float. → (loss, 분해 통계)."""
+def soft_ce(logits: torch.Tensor, tgt: torch.Tensor, alt: Optional[torch.Tensor], w: Optional[torch.Tensor], next_id: int, next_weight: float, eot_id: int = -1, eot_weight: float = 1.0,
+            tag_ids: Optional[torch.Tensor] = None, tag_weight: float = 1.0) -> Tuple[torch.Tensor, Dict[str, float]]:
+    """logits (N,V) float, tgt (N,) long(유효 위치만), alt (N,) long(-100 = 없음), w (N,) float. → (loss, 분해 통계).
+    tag_ids/tag_weight: lane 태그·<ONSET> 위치 가중(D1b — 시작 검출이 약해 태그 위치 손실을 키운다)."""
     ce = F.cross_entropy(logits, tgt, reduction="none")
     if alt is not None:
         has = alt != -100
@@ -16,12 +18,14 @@ def soft_ce(logits: torch.Tensor, tgt: torch.Tensor, alt: Optional[torch.Tensor]
             ce_alt = F.cross_entropy(logits[has], alt[has], reduction="none"); ww = w[has].to(ce.dtype)
             ce = ce.clone(); ce[has] = ww * ce[has] + (1.0 - ww) * ce_alt
     na = tgt == next_id; ne = (tgt == eot_id) if eot_id >= 0 else torch.zeros_like(na)
-    wt = torch.ones_like(ce); wt[na] = next_weight; wt[ne] = eot_weight
+    nt = torch.isin(tgt, tag_ids.to(tgt.device)) if tag_ids is not None and tag_ids.numel() else torch.zeros_like(na)
+    wt = torch.ones_like(ce); wt[na] = next_weight; wt[ne] = eot_weight; wt[nt] = tag_weight
     loss = (ce * wt).sum() / wt.sum().clamp(min=1)
     tx = ~na & ~ne
     with torch.no_grad():
         stats = dict(loss_next=ce[na].mean().item() if na.any() else 0.0, loss_text=ce[tx].mean().item() if tx.any() else 0.0, loss_eot=ce[ne].mean().item() if ne.any() else 0.0,
-                     top1_text=((logits.argmax(-1) == tgt) & tx).sum().item() / max(1, int(tx.sum())), n_soft=int((alt != -100).sum()) if alt is not None else 0, n_eot=int(ne.sum()))
+                     top1_text=((logits.argmax(-1) == tgt) & tx).sum().item() / max(1, int(tx.sum())), n_soft=int((alt != -100).sum()) if alt is not None else 0, n_eot=int(ne.sum()),
+                     loss_tag=ce[nt].mean().item() if nt.any() else 0.0, top1_tag=((logits.argmax(-1) == tgt) & nt).sum().item() / max(1, int(nt.sum())), n_tag=int(nt.sum()))
     return loss, stats
 
 def activity_bce(act_logits: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, float]]:

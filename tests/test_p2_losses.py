@@ -27,3 +27,9 @@ def test_activity_gather_and_bce():
     logits = torch.where(tg > 0.5, torch.full_like(tg, 5.0), torch.full_like(tg, -5.0)); loss, st = activity_bce(logits, tg)
     assert loss.item() < 0.01 and st["act_acc"] == 1.0
     empty, st0 = activity_bce(torch.zeros(0, R), torch.zeros(0, R)); assert empty.item() == 0.0
+
+def test_soft_ce_tag_weight():
+    torch.manual_seed(2); logits = torch.randn(5, 12); NEXT, EOT, TAG = 11, 10, 9; tgt = torch.tensor([3, TAG, NEXT, EOT, 4])
+    loss, st = soft_ce(logits, tgt, None, None, NEXT, 0.3, eot_id=EOT, eot_weight=2.0, tag_ids=torch.tensor([TAG]), tag_weight=3.0)
+    ce = torch.nn.functional.cross_entropy(logits, tgt, reduction="none"); wt = torch.tensor([1.0, 3.0, 0.3, 2.0, 1.0])
+    assert torch.allclose(loss, (ce * wt).sum() / wt.sum()) and st["n_tag"] == 1 and st["loss_tag"] == pytest.approx(ce[1].item(), rel=1e-5)

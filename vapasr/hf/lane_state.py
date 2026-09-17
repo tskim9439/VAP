@@ -74,7 +74,7 @@ class LaneStates:
 
 @torch.inference_mode()
 def decode_p2(model, tok, wav: np.ndarray, lang: str = "English", delay: int = 4, runaway_cap: Optional[int] = None, max_flush_rounds: int = 8, max_total_per_chunk: float = 6.0, next_bias: float = 0.0,
-              constrain: bool = True, act_close_chunks: int = 6, act_thr: float = 0.3, onset_thr: float = 0.25) -> dict:
+              constrain: bool = True, act_close_chunks: int = 6, act_thr: float = 0.3, onset_thr: float = 0.35) -> dict:
     """wav (T,) float32 16 kHz → dict(emits=[(k, tid)], probs=[p(선택 토큰)], forced, rounds, K, act=(K,R) 활동 확률, ticks_ms, act_closed=[(lane, k)]).
     규약은 modeling_vapasr.stream_decode 와 같고(blocked·runaway cap·flush), 매 청크의 audio 위치 hidden 에 act_head 를 적용한다.
     constrain=True 면 lane 규약으로 후보를 제한한다(정본 §3·§5 를 추론에 적용):

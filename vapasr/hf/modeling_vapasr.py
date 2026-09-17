@@ -89,7 +89,8 @@ class VapAsrForStreamingASR(PreTrainedModel):
         logits = self.thinker.lm_head(h[:, :-1][sel]).float()                       # 라벨 위치만 (전 위치 fp32 logits 는 OOM)
         alt = labels_alt[:, 1:][sel] if labels_alt is not None else None; w = soft_w[:, 1:][sel] if soft_w is not None else None
         eot_id = self.config.phase2_registry.get("<EOT>", -1) if self.config.lanes > 0 else -1
-        loss, st = soft_ce(logits, t, alt, w, self.next_audio, nw, eot_id=eot_id, eot_weight=self.config.eot_weight if eot_id >= 0 else 1.0)
+        tag_ids = torch.tensor([v for k, v in self.config.phase2_registry.items() if k != "<EOT>"], device=logits.device, dtype=torch.long) if self.config.lanes > 0 and getattr(self.config, "tag_weight", 1.0) != 1.0 else None
+        loss, st = soft_ce(logits, t, alt, w, self.next_audio, nw, eot_id=eot_id, eot_weight=self.config.eot_weight if eot_id >= 0 else 1.0, tag_ids=tag_ids, tag_weight=getattr(self.config, "tag_weight", 1.0))
         loss_act, act_st = None, {}
         if self.act_head is not None and activity is not None:
             ha, tg = gather_audio_targets(h, is_audio, chunk_of, activity, activity_mask if activity_mask is not None else torch.ones(activity.shape[:2], device=h.device))

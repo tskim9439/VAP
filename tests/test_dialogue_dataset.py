@@ -97,3 +97,11 @@ def test_token_budget_sampler_ddp_split(tmp_path):
     sp = [TokenBudgetSampler(ds, one, max_bs=64, seed=0, rank=r, world=2) for r in range(2)]           # 창 1 개 = 배치 1 개
     assert len(sp[0]) == len(sp[1]) == len(ds) // 2 and not (set(map(tuple, iter(sp[0]))) & set(map(tuple, iter(sp[1]))))   # rank 별 동수·서로소
     few = TokenBudgetSampler(ds, 10 ** 9, max_bs=64, rank=1, world=8); assert len(few) == 0 and list(iter(few)) == []     # 배치 1 < world 8 → 0 (호출자가 제외)
+
+def test_mixed_start_windows_drop_tokens_before_window(tmp_path):
+    p = make(tmp_path); g = DialogueWindowDataset([p], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), seed=0, start_mode="grid")
+    m = DialogueWindowDataset([p], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), seed=0, start_mode="mixed", random_frac=0.5)
+    assert m.stats["random_start"] > 0 and len(m) > len(g) and abs(len(m) - 2 * len(g)) <= 2
+    for i in range(len(m)):                                          # 임의 시작 창: 참조 토큰 시각은 모두 창 안, 발화 중간 시작이면 episode 가 0 초에서 시작
+        s = m.sequence(i, 4); cid, t0, L = m.items[i]; eps, _ = m.window_episodes(m.dlgs[cid], t0, L)
+        assert all(0 <= tt <= L + 1e-6 for e in eps for _, tt in e.tokens) and all(e.start >= 0 for e in eps) and len(s["ids"]) > 0

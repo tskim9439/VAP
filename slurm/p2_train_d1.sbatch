@@ -1,8 +1,11 @@
 #!/bin/bash
 # Phase 2 D1 실학습 — 노드 1 개 × GPU 8 장(torchrun DDP; 사용자 지시 2026-09-16 "노드당 8 GPU"). 정본 output-phase2-lane-plan §9·§13.
 #   제출:  sbatch --partition=apex --export=ALL,RUN=D1,MAX_TOKENS=28000,MIX=sqrt,EPOCHS=4 slurm/p2_train_d1.sbatch
+#   D1b:   sbatch --partition=apex --export=ALL,RUN=D1b,MAX_TOKENS=<probe>,MIX=sqrt,EPOCHS=5,LR=1e-4,WARMUP=150,TRAIN_ENCODER=1,LR_ENCODER=1e-5,DELAY_ONSET=2,TAG_WEIGHT=2,START_MODE=mixed slurm/p2_train_d1.sbatch
+#          (인코더 해동 학습 — 사용자 지시 2026-09-17; 창 시작 mixed·δ_onset 2·태그 가중 2 — output-phase2-d1-lane-eval §4; 학습 종료 시 final 재로드 parity 검사가 기본으로 돈다)
 #          옵션: EPOCHS(기본 3) 또는 STEPS(>0 이면 step 수 고정), CORPORA, MAX_TOKENS(rank 당 동적 배치 예산; 0 이면 BS_EN/BS_KO 고정 8/8), MAX_BS(48), MIX(equal|sqrt|prop),
-#                LR(6e-5), LR_ADAPTER(1e-3), WARMUP(150), SAVE_EVERY(200), WORKERS(rank 당 데이터 워커 6), GPUS(8), EXTRA="--train-encoder" 등
+#                LR(6e-5), LR_ADAPTER(1e-3), WARMUP(150), SAVE_EVERY(200), WORKERS(rank 당 데이터 워커 6), GPUS(8), TRAIN_ENCODER(1 이면 인코더 해동, LR_ENCODER 기본 1e-5),
+#                DELAY_ONSET(0), TAG_WEIGHT(1), START_MODE(grid|mixed), RANDOM_FRAC(0.5), EXTRA(추가 인자)
 #          동적 배치 예산은 experiments/p2_mem_probe.py 실측(GPU 1 장 기준 28 k → 106 GB 예약, 74 %)으로 정한다. mono 캐시는 scripts/p2-mono-local.sh 로 미리 만든다.
 #   산출물: /soundai/Model/VAPASR/p2-<RUN>/{checkpoint-N,final,DONE,run.json,results.json,tb}
 #   재개: 같은 명령을 다시 내면 마지막 완성 checkpoint 에서 이어간다(--resume auto). 선점(USR1/TERM) → PREEMPT 파일 → 모든 rank 가 다음 step 에서 저장 후 종료 → requeue.
@@ -29,7 +32,7 @@ if [ -n "$VAPASR_LOCAL_ENV" ]; then bash scripts/stage-env-local.sh 2>&1 | grep 
   [ -x "$VAPASR_LOCAL_ENV/bin/python" ] && export PATH="$VAPASR_LOCAL_ENV/bin:$PATH" CONDA_PREFIX="$VAPASR_LOCAL_ENV" TMPDIR="$(dirname "$VAPASR_LOCAL_ENV")/tmp" && mkdir -p "$TMPDIR"; fi
 export OMP_NUM_THREADS=8 TOKENIZERS_PARALLELISM=false PYTORCH_ALLOC_CONF=expandable_segments:True NCCL_DEBUG=${NCCL_DEBUG:-WARN} PYTHONFAULTHANDLER=1
 export NCCL_SOCKET_IFNAME=${NCCL_SOCKET_IFNAME:-eth0} GLOO_SOCKET_IFNAME=${GLOO_SOCKET_IFNAME:-eth0}      # 단일 노드라 GPU 간은 NVLink 지만 부트스트랩 소켓은 eth0 고정(s3_train_hf.sbatch 와 동일)
-ARGS="--init $INIT --data $DATA --corpora ${CORPORA:-aihub71631,aihub134-1,aihub134-2,otoSpeech,ami,notsofar,icsi} --mono-cache $DATA/mono --out-dir $R --max-steps ${STEPS:-0} --epochs ${EPOCHS:-3} --max-tokens ${MAX_TOKENS:-0} --max-bs ${MAX_BS:-48} --mix ${MIX:-equal} --bs-en ${BS_EN:-8} --bs-ko ${BS_KO:-8} --lr ${LR:-6e-5} --lr-adapter ${LR_ADAPTER:-1e-3} --warmup ${WARMUP:-150} --log-every ${LOG_EVERY:-20} --save-every ${SAVE_EVERY:-200} --num-workers ${WORKERS:-6} ${EXTRA:-}"
+ARGS="--init $INIT --data $DATA --corpora ${CORPORA:-aihub71631,aihub134-1,aihub134-2,otoSpeech,ami,notsofar,icsi} --mono-cache $DATA/mono --out-dir $R --max-steps ${STEPS:-0} --epochs ${EPOCHS:-3} --max-tokens ${MAX_TOKENS:-0} --max-bs ${MAX_BS:-48} --mix ${MIX:-equal} --bs-en ${BS_EN:-8} --bs-ko ${BS_KO:-8} --lr ${LR:-6e-5} --lr-adapter ${LR_ADAPTER:-1e-3} --lr-encoder ${LR_ENCODER:-1e-5} --warmup ${WARMUP:-150} --log-every ${LOG_EVERY:-20} --save-every ${SAVE_EVERY:-200} --num-workers ${WORKERS:-6} --delay-onset ${DELAY_ONSET:-0} --tag-weight ${TAG_WEIGHT:-1} --start-mode ${START_MODE:-grid} --random-frac ${RANDOM_FRAC:-0.5} ${TRAIN_ENCODER:+--train-encoder} ${EXTRA:-}"
 # ── 선점·시간 제한: PREEMPT 파일 → 모든 rank 가 다음 step 경계에서 감지(gloo all_reduce) → 저장 → 종료 → requeue
 rm -f "$R/PREEMPT"
 on_preempt() { echo "[$(date '+%T')] 신호 수신 → PREEMPT 표시, 저장 대기"; touch "$R/PREEMPT"; wait "$PID"; echo "requeue $SLURM_JOB_ID"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }
