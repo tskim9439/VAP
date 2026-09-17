@@ -91,9 +91,12 @@ QC(`p2_qc.py`, R=6, δ=4; 보정본 기준): lane 재배정 NOTSOFAR-1 913(부�
 - 코퍼스 비중(`--mix`): equal 은 NOTSOFAR 가 epoch 당 22 회 반복·134-2 는 0.37 회라 sqrt(배치 수^0.5 비례) 채택 — epoch 당 통과 71631 1.0·134-1 0.87·134-2 0.68·oto 1.35·AMI 1.6·NOTSOFAR 5.0·ICSI 1.9.
 - 로더 실측(캐시 사용): 창당 getitem 134-1 11 ms·AMI 121 ms(긴 회의의 발화 순회), collate(33 창) 0.33 s → 워커 8 이면 step 당 데이터 시간 ≈0.2–0.3 s < GPU 0.75 s.
 - D1 실학습 recipe(정본 §9 Q1, 노드 1 × GPU 8 torchrun DDP — 사용자 지시 2026-09-16 "노드당 8 GPU"): `sbatch --partition=apex --export=ALL,RUN=D1,MAX_TOKENS=28000,MIX=sqrt,EPOCHS=4,LR=1e-4,WARMUP=150 slurm/p2_train_d1.sbatch` — rank 당 동적 배치(예산 28 k 토큰 ≈ 창 32 개, 8 rank 유효 배치 ≈ 254 창/step), sqrt 비중, epoch 당 505 step(코퍼스별 배치 // 8 의 합), 4 epoch ≈ 2,020 step, lr 1e-4(유효 배치 8 배라 overfit 에서 검증한 1e-4 사용)·adapter 1e-3, warmup 150, EOT 가중 2·활동 가중 1·NEXT 0.3/0.15, 인코더 동결, 200 step 마다 저장, 선점(USR1/TERM → PREEMPT 파일 → gloo 합의 저장) 시 requeue 재개, 완료 표식 `DONE`. 예상 소요 ≈30–40 분 + 로드.
+- **D1 실학습 완료(잡 71599, hpc, 2026-09-16 23:52 → 09-17 04:40, 사용자 제출: MAX_TOKENS=28000 MIX=sqrt EPOCHS=10 LR=1e-4 WARMUP=150)**: 5,050 step(순 학습 ≈50 분 + 선점 2 회·재개 3 회 대기), step 1.3 s, rank 당 라벨 ≈12.5 k·soft ≈220. 학습 손실(에폭 끝): text 6.91→0.34(ep1)→0.20(ep4)→0.076(ep9, top1 0.972), eot 9.90→0.66→0.49→0.37, act 0.73→0.032→0.023(acc 0.992), next 0.20→0.08. 선점 시 checkpoint 는 90 s 안에 optimizer 까지만 써져 불완전(trainer_state 없음) → 직전 완전 checkpoint 에서 재개(82 step·~120 step 손실). 산출물 `/soundai/Model/VAPASR/p2-D1/{final,checkpoint-5050,results.json,tb}` 16 GB.
+  주의: 학습 손실만 있고 held-out 평가가 없다(split 미구성, 항목 7). ep5 이후 text 손실 0.1 아래는 71631 10 회 통과에 따른 암기 가능성 → lane 디코더(`vapasr/hf/lane_state.py`) 연결 뒤 미학습 세션(AMI/ICSI 공식 test, 71631 보류분)으로 평가해야 한다.
 - DDP 스모크(2026-09-16, GPU 2 장, overfit32 창, 예산 3 k, 8 step): 손실 하강(text 5.95→3.64, eot 8.6→2.8, act_acc 0.48→0.87), rank 0 만 로그, final·DONE 생성. 스모크에서 잡은 결함 2 건 수정 — (1) rank 당 배치 0 인 코퍼스가 라운드로빈을 멈춰 다른 rank 가 all_reduce 에서 행(샘플러 n=배치//world, 제외·검출), (2) compute_loss 가 DDP 래퍼의 config 접근 실패. 산출물 `/soundai/Model/VAPASR/p2-D1`. 이후: lane 상태 디코더(`vapasr/hf/lane_state.py`)·D1 평가.
 
 ## 진행 기록
+- 2026-09-17 (11): D1 실학습 완료(잡 71599, 5,050 step, 선점 2 회 자동 재개). 다음: lane 상태 디코더·held-out 평가·split 구성.
 - 2026-09-16 (10): 사용자 지시 노드당 GPU 8 → sbatch 를 torchrun DDP 로 재작성, 학습 스크립트 DDP 대응, 2-GPU 스모크 통과(결함 2 건 수정).
 - 2026-09-16 (9): 사용자 요청 — mono 캐시 사전 생성(133 GiB, 28 분)·동적 길이 배치 도입(예산 실측 28 k 토큰 = 메모리 74 %)·코퍼스 sqrt 비중. D1 명령 갱신(3 epoch ≈ 12 k step ≈ 3 h).
 - 2026-09-16 (8): 사용자 지시 3 단계(GPU ≤1) 완료 — (1) 창 통계·overfit32 셋, (2) forward 에 EOT soft CE·활동 헤드·registry 동결, (3) overfit32 300 step 수렴 확인 → D1 잡 스크립트 준비(제출은 사용자).
