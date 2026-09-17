@@ -1,0 +1,1514 @@
+{
+ "model": "/soundai/Model/VAPASR/p2-D1/final-enc",
+ "delay": 4,
+ "tol": 0.4,
+ "constrain": false,
+ "sets": {
+  "aihub71631": {
+   "tag": "seen",
+   "meta": {
+    "path": "aihub71631.refined.dialogues.jsonl",
+    "dialogues": 757,
+    "tokens_from": "align",
+    "proxied_utts": 0,
+    "windows": 22426,
+    "stats": {
+     "dialogues": 757,
+     "windows": 22426,
+     "skipped_untranscribed": 0,
+     "skipped_unaligned": 0,
+     "skipped_sparse": 2961,
+     "no_start": 44239,
+     "windows_with_mask": 24109
+    }
+   },
+   "summary": {
+    "windows": 8,
+    "unit": "cer",
+    "lane_rate": 0.3197,
+    "mapped_rate": 0.3037,
+    "lane_acc_mapped": 0.929,
+    "pooled_rate": 0.3229,
+    "onset_p": 0.323,
+    "onset_r": 0.368,
+    "eot_p": 0.316,
+    "eot_r": 0.453,
+    "lane_acc": 0.857,
+    "spurious_segments": 49,
+    "act_acc": 0.9587,
+    "act_f1": 0.6606,
+    "latency_mean": 0.4821,
+    "latency_p50": 0.3563,
+    "latency_match": 0.752,
+    "forced": 12,
+    "stray_eot": 11,
+    "implicit": 12,
+    "unclosed": 1,
+    "ms_per_chunk": 87.0125
+   },
+   "windows": [
+    {
+     "name": "aihub71631-0",
+     "conv": "71631:2_7454G1A2_7453G1A2_T1_2D05T0218C000190_033657",
+     "t0": 540.0,
+     "L": 24.108,
+     "speakers": 2,
+     "episodes": 5,
+     "unit": "cer",
+     "lane_rate": 0.015873015873015872,
+     "mapped_rate": 0.015873015873015872,
+     "pooled_rate": 0.015873015873015872,
+     "n_ref_units": 63,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 4,
+      "hyp": 7,
+      "ref": 5
+     },
+     "eot": {
+      "hit": 2,
+      "hyp": 8,
+      "ref": 4
+     },
+     "lane": {
+      "ok": 3,
+      "bad": 0,
+      "spurious": 5,
+      "ok_mapped": 3
+     },
+     "act_acc": 0.9828349944629015,
+     "act_f1": 0.8838951310861424,
+     "latency": {
+      "mean": 0.3693220338983099,
+      "p50": 0.3899999999999686,
+      "n": 59,
+      "n_ref_tokens": 59
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 8,
+      "stray_eot": 2,
+      "implicit": 1,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 2,
+      "act_closed": 0,
+      "n_emits": 103,
+      "sec": 41.9,
+      "ms_per_chunk": 99.6
+     }
+    },
+    {
+     "name": "aihub71631-1",
+     "conv": "71631:2_7477G1A2_7476G1A2_T1_2D09T0418C000355_033740",
+     "t0": 450.0,
+     "L": 24.126,
+     "speakers": 2,
+     "episodes": 5,
+     "unit": "cer",
+     "lane_rate": 0.9230769230769231,
+     "mapped_rate": 0.6923076923076923,
+     "pooled_rate": 0.6410256410256411,
+     "n_ref_units": 39,
+     "lane_map": {
+      "1": 2,
+      "2": 1
+     },
+     "onset": {
+      "hit": 1,
+      "hyp": 7,
+      "ref": 5
+     },
+     "eot": {
+      "hit": 2,
+      "hyp": 9,
+      "ref": 4
+     },
+     "lane": {
+      "ok": 0,
+      "bad": 2,
+      "spurious": 7,
+      "ok_mapped": 2
+     },
+     "act_acc": 0.9028697571743929,
+     "act_f1": 0.011235955056179775,
+     "latency": {
+      "mean": 1.5933333333333362,
+      "p50": 0.35000000000000675,
+      "n": 12,
+      "n_ref_tokens": 36
+     },
+     "decode": {
+      "forced": 1,
+      "rounds": 8,
+      "stray_eot": 2,
+      "implicit": 2,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 1,
+      "act_closed": 0,
+      "n_emits": 61,
+      "sec": 25.3,
+      "ms_per_chunk": 76.9
+     }
+    },
+    {
+     "name": "aihub71631-2",
+     "conv": "71631:2_8177G2A4_8176G1A4_T1_2D10T0444C000247_036663",
+     "t0": 500.0,
+     "L": 21.297,
+     "speakers": 2,
+     "episodes": 5,
+     "unit": "cer",
+     "lane_rate": 0.08450704225352113,
+     "mapped_rate": 0.08450704225352113,
+     "pooled_rate": 0.08450704225352113,
+     "n_ref_units": 71,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 3,
+      "hyp": 8,
+      "ref": 5
+     },
+     "eot": {
+      "hit": 2,
+      "hyp": 9,
+      "ref": 4
+     },
+     "lane": {
+      "ok": 3,
+      "bad": 0,
+      "spurious": 6,
+      "ok_mapped": 3
+     },
+     "act_acc": 0.981203007518797,
+     "act_f1": 0.9206349206349206,
+     "latency": {
+      "mean": 0.35508474576271226,
+      "p50": 0.35000000000002496,
+      "n": 59,
+      "n_ref_tokens": 65
+     },
+     "decode": {
+      "forced": 1,
+      "rounds": 8,
+      "stray_eot": 3,
+      "implicit": 1,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 5,
+      "act_closed": 0,
+      "n_emits": 115,
+      "sec": 25.4,
+      "ms_per_chunk": 85.7
+     }
+    },
+    {
+     "name": "aihub71631-3",
+     "conv": "71631:2_7661G1A2_7667G1A2_T1_2D09T0408C000394_034462",
+     "t0": 0.0,
+     "L": 27.51,
+     "speakers": 2,
+     "episodes": 5,
+     "unit": "cer",
+     "lane_rate": 0.7758620689655172,
+     "mapped_rate": 0.7758620689655172,
+     "pooled_rate": 0.8275862068965517,
+     "n_ref_units": 58,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 3,
+      "hyp": 9,
+      "ref": 5
+     },
+     "eot": {
+      "hit": 2,
+      "hyp": 8,
+      "ref": 4
+     },
+     "lane": {
+      "ok": 3,
+      "bad": 0,
+      "spurious": 6,
+      "ok_mapped": 3
+     },
+     "act_acc": 0.9636627906976745,
+     "act_f1": 0.5614035087719298,
+     "latency": {
+      "mean": 0.34416666666666734,
+      "p50": 0.379999999999999,
+      "n": 24,
+      "n_ref_tokens": 50
+     },
+     "decode": {
+      "forced": 4,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 1,
+      "reopen": 3,
+      "act_closed": 0,
+      "n_emits": 95,
+      "sec": 30.5,
+      "ms_per_chunk": 79.1
+     }
+    },
+    {
+     "name": "aihub71631-4",
+     "conv": "71631:2_7661G1A2_7667G1A2_T1_2D09T0408C000394_034462",
+     "t0": 900.0,
+     "L": 37.79,
+     "speakers": 2,
+     "episodes": 8,
+     "unit": "cer",
+     "lane_rate": 0.25210084033613445,
+     "mapped_rate": 0.25210084033613445,
+     "pooled_rate": 0.2184873949579832,
+     "n_ref_units": 119,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 2,
+      "hyp": 9,
+      "ref": 8
+     },
+     "eot": {
+      "hit": 2,
+      "hyp": 11,
+      "ref": 8
+     },
+     "lane": {
+      "ok": 3,
+      "bad": 1,
+      "spurious": 7,
+      "ok_mapped": 3
+     },
+     "act_acc": 0.9530367231638418,
+     "act_f1": 0.7485822306238186,
+     "latency": {
+      "mean": 0.18951219512194425,
+      "p50": 0.33999999999998654,
+      "n": 82,
+      "n_ref_tokens": 107
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 8,
+      "stray_eot": 1,
+      "implicit": 2,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 2,
+      "act_closed": 0,
+      "n_emits": 155,
+      "sec": 46.2,
+      "ms_per_chunk": 93.0
+     }
+    },
+    {
+     "name": "aihub71631-5",
+     "conv": "71631:2_6462G2A2_6463G2A2_T1_2D05T0185C000212_030928",
+     "t0": 400.0,
+     "L": 30.005,
+     "speakers": 2,
+     "episodes": 6,
+     "unit": "cer",
+     "lane_rate": 0.06557377049180328,
+     "mapped_rate": 0.06557377049180328,
+     "pooled_rate": 0.06557377049180328,
+     "n_ref_units": 61,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 3,
+      "hyp": 8,
+      "ref": 6
+     },
+     "eot": {
+      "hit": 4,
+      "hyp": 9,
+      "ref": 6
+     },
+     "lane": {
+      "ok": 4,
+      "bad": 0,
+      "spurious": 5,
+      "ok_mapped": 4
+     },
+     "act_acc": 0.9822222222222222,
+     "act_f1": 0.9239543726235742,
+     "latency": {
+      "mean": 0.31563636363636477,
+      "p50": 0.3399999999999963,
+      "n": 55,
+      "n_ref_tokens": 56
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 8,
+      "stray_eot": 3,
+      "implicit": 1,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 4,
+      "act_closed": 0,
+      "n_emits": 117,
+      "sec": 34.9,
+      "ms_per_chunk": 87.0
+     }
+    },
+    {
+     "name": "aihub71631-6",
+     "conv": "71631:2_7890G2A4_7891G2A2_T1_2D05T0176C000429_035409",
+     "t0": 710.0,
+     "L": 31.781,
+     "speakers": 2,
+     "episodes": 11,
+     "unit": "cer",
+     "lane_rate": 0.11392405063291139,
+     "mapped_rate": 0.11392405063291139,
+     "pooled_rate": 0.11392405063291139,
+     "n_ref_units": 79,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 3,
+      "hyp": 11,
+      "ref": 11
+     },
+     "eot": {
+      "hit": 7,
+      "hyp": 13,
+      "ref": 11
+     },
+     "lane": {
+      "ok": 6,
+      "bad": 1,
+      "spurious": 6,
+      "ok_mapped": 6
+     },
+     "act_acc": 0.9601175482787574,
+     "act_f1": 0.8155339805825242,
+     "latency": {
+      "mean": 0.34439393939393353,
+      "p50": 0.3300000000000374,
+      "n": 66,
+      "n_ref_tokens": 68
+     },
+     "decode": {
+      "forced": 4,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 2,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 4,
+      "act_closed": 0,
+      "n_emits": 158,
+      "sec": 39.3,
+      "ms_per_chunk": 91.9
+     }
+    },
+    {
+     "name": "aihub71631-7",
+     "conv": "71631:2_7477G1A2_7476G1A2_T1_2D01T0030C000193_033733",
+     "t0": 210.0,
+     "L": 36.018,
+     "speakers": 2,
+     "episodes": 12,
+     "unit": "cer",
+     "lane_rate": 0.6712328767123288,
+     "mapped_rate": 0.6712328767123288,
+     "pooled_rate": 0.6164383561643836,
+     "n_ref_units": 73,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 2,
+      "hyp": 6,
+      "ref": 12
+     },
+     "eot": {
+      "hit": 3,
+      "hyp": 9,
+      "ref": 12
+     },
+     "lane": {
+      "ok": 2,
+      "bad": 0,
+      "spurious": 7,
+      "ok_mapped": 2
+     },
+     "act_acc": 0.9437037037037037,
+     "act_f1": 0.4198473282442748,
+     "latency": {
+      "mean": 0.34545454545454707,
+      "p50": 0.3699999999999912,
+      "n": 22,
+      "n_ref_tokens": 63
+     },
+     "decode": {
+      "forced": 2,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 3,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 2,
+      "act_closed": 0,
+      "n_emits": 75,
+      "sec": 39.9,
+      "ms_per_chunk": 82.9
+     }
+    }
+   ],
+   "sec": 299
+  },
+  "aihub134-1": {
+   "tag": "seen",
+   "meta": {
+    "path": "aihub134-1.refined.dialogues.jsonl",
+    "dialogues": 1492,
+    "tokens_from": "align",
+    "proxied_utts": 0,
+    "windows": 29528,
+    "stats": {
+     "dialogues": 1492,
+     "windows": 29528,
+     "skipped_untranscribed": 0,
+     "skipped_unaligned": 0,
+     "skipped_sparse": 3796,
+     "no_start": 88370,
+     "windows_with_mask": 31354
+    }
+   },
+   "summary": {
+    "windows": 6,
+    "unit": "cer",
+    "lane_rate": 0.2675,
+    "mapped_rate": 0.2675,
+    "lane_acc_mapped": 0.739,
+    "pooled_rate": 0.1646,
+    "onset_p": 0.375,
+    "onset_r": 0.353,
+    "eot_p": 0.308,
+    "eot_r": 0.333,
+    "lane_acc": 0.739,
+    "spurious_segments": 30,
+    "act_acc": 0.956,
+    "act_f1": 0.8259,
+    "latency_mean": 0.3442,
+    "latency_p50": 0.345,
+    "latency_match": 0.871,
+    "forced": 8,
+    "stray_eot": 5,
+    "implicit": 5,
+    "unclosed": 1,
+    "ms_per_chunk": 75.7167
+   },
+   "windows": [
+    {
+     "name": "aihub134-1-0",
+     "conv": "aihub134-1:2_2859G2A4_2860G2A4_T2_2D08T0356C000414_012311",
+     "t0": 900.0,
+     "L": 26.394,
+     "speakers": 2,
+     "episodes": 7,
+     "unit": "cer",
+     "lane_rate": 0.7068965517241379,
+     "mapped_rate": 0.7068965517241379,
+     "pooled_rate": 0.15517241379310345,
+     "n_ref_units": 116,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 1,
+      "hyp": 4,
+      "ref": 7
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 4,
+      "ref": 7
+     },
+     "lane": {
+      "ok": 0,
+      "bad": 1,
+      "spurious": 4,
+      "ok_mapped": 0
+     },
+     "act_acc": 0.8919191919191919,
+     "act_f1": 0.6007462686567164,
+     "latency": {
+      "mean": 0.362886597938151,
+      "p50": 0.3500000000000014,
+      "n": 97,
+      "n_ref_tokens": 113
+     },
+     "decode": {
+      "forced": 5,
+      "rounds": 8,
+      "stray_eot": 1,
+      "implicit": 1,
+      "text_no_lane": 0,
+      "unclosed": 1,
+      "reopen": 6,
+      "act_closed": 0,
+      "n_emits": 169,
+      "sec": 30.9,
+      "ms_per_chunk": 86.3
+     }
+    },
+    {
+     "name": "aihub134-1-1",
+     "conv": "aihub134-1:2_3067G2A4_3068G2A4_T2_2D01T0001C000536_013382",
+     "t0": 640.0,
+     "L": 25.592,
+     "speakers": 2,
+     "episodes": 10,
+     "unit": "cer",
+     "lane_rate": 0.05263157894736842,
+     "mapped_rate": 0.05263157894736842,
+     "pooled_rate": 0.07017543859649122,
+     "n_ref_units": 114,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 4,
+      "hyp": 8,
+      "ref": 10
+     },
+     "eot": {
+      "hit": 2,
+      "hyp": 9,
+      "ref": 9
+     },
+     "lane": {
+      "ok": 2,
+      "bad": 2,
+      "spurious": 5,
+      "ok_mapped": 2
+     },
+     "act_acc": 0.975,
+     "act_f1": 0.916955017301038,
+     "latency": {
+      "mean": 0.325663716814159,
+      "p50": 0.32999999999998764,
+      "n": 113,
+      "n_ref_tokens": 120
+     },
+     "decode": {
+      "forced": 1,
+      "rounds": 8,
+      "stray_eot": 2,
+      "implicit": 1,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 5,
+      "act_closed": 0,
+      "n_emits": 189,
+      "sec": 29.0,
+      "ms_per_chunk": 85.5
+     }
+    },
+    {
+     "name": "aihub134-1-2",
+     "conv": "aihub134-1:2_4283G2A4_4282G2A5_T2_2D01T0001C000231_019220",
+     "t0": 0.0,
+     "L": 21.105,
+     "speakers": 2,
+     "episodes": 4,
+     "unit": "cer",
+     "lane_rate": 0.2826086956521739,
+     "mapped_rate": 0.2826086956521739,
+     "pooled_rate": 0.2826086956521739,
+     "n_ref_units": 46,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 3,
+      "hyp": 10,
+      "ref": 4
+     },
+     "eot": {
+      "hit": 4,
+      "hyp": 12,
+      "ref": 4
+     },
+     "lane": {
+      "ok": 3,
+      "bad": 1,
+      "spurious": 8,
+      "ok_mapped": 3
+     },
+     "act_acc": 0.9880050505050505,
+     "act_f1": 0.9073170731707317,
+     "latency": {
+      "mean": 0.33514285714285724,
+      "p50": 0.33999999999999986,
+      "n": 35,
+      "n_ref_tokens": 37
+     },
+     "decode": {
+      "forced": 1,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 2,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 1,
+      "act_closed": 0,
+      "n_emits": 107,
+      "sec": 19.8,
+      "ms_per_chunk": 66.8
+     }
+    },
+    {
+     "name": "aihub134-1-3",
+     "conv": "aihub134-1:2_5599G1A2_5601G1A2_T2_2D01T0035C000208_025046",
+     "t0": 80.0,
+     "L": 21.657,
+     "speakers": 2,
+     "episodes": 8,
+     "unit": "cer",
+     "lane_rate": 0.0449438202247191,
+     "mapped_rate": 0.0449438202247191,
+     "pooled_rate": 0.0449438202247191,
+     "n_ref_units": 89,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 2,
+      "hyp": 6,
+      "ref": 8
+     },
+     "eot": {
+      "hit": 5,
+      "hyp": 6,
+      "ref": 8
+     },
+     "lane": {
+      "ok": 4,
+      "bad": 1,
+      "spurious": 1,
+      "ok_mapped": 4
+     },
+     "act_acc": 0.9692496924969249,
+     "act_f1": 0.8691099476439791,
+     "latency": {
+      "mean": 0.3741025641025635,
+      "p50": 0.36999999999999744,
+      "n": 78,
+      "n_ref_tokens": 84
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 2,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 115,
+      "sec": 20.3,
+      "ms_per_chunk": 73.6
+     }
+    },
+    {
+     "name": "aihub134-1-4",
+     "conv": "aihub134-1:2_6093G1A5_6092G2A5_T2_2D03T0118C000447_028918",
+     "t0": 80.0,
+     "L": 34.106,
+     "speakers": 2,
+     "episodes": 15,
+     "unit": "cer",
+     "lane_rate": 0.30344827586206896,
+     "mapped_rate": 0.30344827586206896,
+     "pooled_rate": 0.3586206896551724,
+     "n_ref_units": 145,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 7,
+      "hyp": 12,
+      "ref": 15
+     },
+     "eot": {
+      "hit": 5,
+      "hyp": 13,
+      "ref": 14
+     },
+     "lane": {
+      "ok": 7,
+      "bad": 1,
+      "spurious": 5,
+      "ok_mapped": 7
+     },
+     "act_acc": 0.9346635367762128,
+     "act_f1": 0.7353407290015848,
+     "latency": {
+      "mean": 0.34261363636363706,
+      "p50": 0.3400000000000063,
+      "n": 88,
+      "n_ref_tokens": 127
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 8,
+      "stray_eot": 2,
+      "implicit": 1,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 5,
+      "act_closed": 0,
+      "n_emits": 181,
+      "sec": 31.3,
+      "ms_per_chunk": 69.4
+     }
+    },
+    {
+     "name": "aihub134-1-5",
+     "conv": "aihub134-1:2_4657G1A2_4653G2A5_T2_2D06T0224C000297_020753",
+     "t0": 600.0,
+     "L": 23.252,
+     "speakers": 2,
+     "episodes": 7,
+     "unit": "cer",
+     "lane_rate": 0.16101694915254236,
+     "mapped_rate": 0.16101694915254236,
+     "pooled_rate": 0.07627118644067797,
+     "n_ref_units": 118,
+     "lane_map": {
+      "1": 1
+     },
+     "onset": {
+      "hit": 1,
+      "hyp": 8,
+      "ref": 7
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 8,
+      "ref": 6
+     },
+     "lane": {
+      "ok": 1,
+      "bad": 0,
+      "spurious": 7,
+      "ok_mapped": 1
+     },
+     "act_acc": 0.97709049255441,
+     "act_f1": 0.9259259259259259,
+     "latency": {
+      "mean": 0.3248039215686309,
+      "p50": 0.339999999999975,
+      "n": 102,
+      "n_ref_tokens": 108
+     },
+     "decode": {
+      "forced": 1,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 4,
+      "act_closed": 0,
+      "n_emits": 162,
+      "sec": 22.6,
+      "ms_per_chunk": 72.7
+     }
+    }
+   ],
+   "sec": 175
+  },
+  "ami": {
+   "tag": "seen",
+   "meta": {
+    "path": "ami.refined.dialogues.jsonl",
+    "dialogues": 171,
+    "tokens_from": "align",
+    "proxied_utts": 0,
+    "windows": 8314,
+    "stats": {
+     "dialogues": 171,
+     "windows": 8314,
+     "skipped_untranscribed": 0,
+     "skipped_unaligned": 0,
+     "skipped_sparse": 1041,
+     "no_start": 26380,
+     "windows_with_mask": 2260
+    }
+   },
+   "summary": {
+    "windows": 6,
+    "unit": "wer",
+    "lane_rate": 0.6466,
+    "mapped_rate": 0.4809,
+    "lane_acc_mapped": 0.595,
+    "pooled_rate": 0.388,
+    "onset_p": 0.462,
+    "onset_r": 0.316,
+    "eot_p": 0.317,
+    "eot_r": 0.279,
+    "lane_acc": 0.486,
+    "spurious_segments": 24,
+    "act_acc": 0.8924,
+    "act_f1": 0.5733,
+    "latency_mean": 0.3958,
+    "latency_p50": 0.3615,
+    "latency_match": 0.633,
+    "forced": 6,
+    "stray_eot": 1,
+    "implicit": 9,
+    "unclosed": 1,
+    "ms_per_chunk": 72.15
+   },
+   "windows": [
+    {
+     "name": "ami-0",
+     "conv": "ami:ES2002c",
+     "t0": 830.0,
+     "L": 37.848,
+     "speakers": 3,
+     "episodes": 13,
+     "unit": "wer",
+     "lane_rate": 0.24427480916030533,
+     "mapped_rate": 0.24427480916030533,
+     "pooled_rate": 0.2824427480916031,
+     "n_ref_units": 131,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 4,
+      "hyp": 9,
+      "ref": 13
+     },
+     "eot": {
+      "hit": 2,
+      "hyp": 12,
+      "ref": 12
+     },
+     "lane": {
+      "ok": 4,
+      "bad": 1,
+      "spurious": 7,
+      "ok_mapped": 4
+     },
+     "act_acc": 0.95630725863284,
+     "act_f1": 0.8554778554778555,
+     "latency": {
+      "mean": 0.4128518518518572,
+      "p50": 0.384000000000011,
+      "n": 108,
+      "n_ref_tokens": 141
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 3,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 191,
+      "sec": 34.2,
+      "ms_per_chunk": 68.9
+     }
+    },
+    {
+     "name": "ami-1",
+     "conv": "ami:ES2007d",
+     "t0": 40.0,
+     "L": 34.054,
+     "speakers": 3,
+     "episodes": 16,
+     "unit": "wer",
+     "lane_rate": 0.9411764705882353,
+     "mapped_rate": 0.9411764705882353,
+     "pooled_rate": 0.9411764705882353,
+     "n_ref_units": 68,
+     "lane_map": {
+      "1": 1
+     },
+     "onset": {
+      "hit": 0,
+      "hyp": 5,
+      "ref": 16
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 7,
+      "ref": 15
+     },
+     "lane": {
+      "ok": 1,
+      "bad": 0,
+      "spurious": 6,
+      "ok_mapped": 1
+     },
+     "act_acc": 0.8755868544600939,
+     "act_f1": 0.12637362637362637,
+     "latency": {
+      "mean": 0.3040000000000049,
+      "p50": 0.3360000000000056,
+      "n": 5,
+      "n_ref_tokens": 74
+     },
+     "decode": {
+      "forced": 1,
+      "rounds": 8,
+      "stray_eot": 1,
+      "implicit": 2,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 4,
+      "act_closed": 0,
+      "n_emits": 50,
+      "sec": 29.1,
+      "ms_per_chunk": 63.6
+     }
+    },
+    {
+     "name": "ami-2",
+     "conv": "ami:IS1000c",
+     "t0": 1220.0,
+     "L": 28.546,
+     "speakers": 2,
+     "episodes": 6,
+     "unit": "wer",
+     "lane_rate": 0.0,
+     "mapped_rate": 0.0,
+     "pooled_rate": 0.04081632653061224,
+     "n_ref_units": 49,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 3,
+      "hyp": 3,
+      "ref": 6
+     },
+     "eot": {
+      "hit": 2,
+      "hyp": 3,
+      "ref": 5
+     },
+     "lane": {
+      "ok": 2,
+      "bad": 1,
+      "spurious": 0,
+      "ok_mapped": 2
+     },
+     "act_acc": 0.9822595704948646,
+     "act_f1": 0.9298892988929889,
+     "latency": {
+      "mean": 0.3812040816326367,
+      "p50": 0.37699999999998823,
+      "n": 49,
+      "n_ref_tokens": 50
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 2,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 1,
+      "act_closed": 0,
+      "n_emits": 71,
+      "sec": 25.2,
+      "ms_per_chunk": 69.6
+     }
+    },
+    {
+     "name": "ami-3",
+     "conv": "ami:TS3007b",
+     "t0": 2030.0,
+     "L": 21.125,
+     "speakers": 4,
+     "episodes": 11,
+     "unit": "wer",
+     "lane_rate": 0.21518987341772153,
+     "mapped_rate": 0.21518987341772153,
+     "pooled_rate": 0.26582278481012656,
+     "n_ref_units": 79,
+     "lane_map": {
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4
+     },
+     "onset": {
+      "hit": 6,
+      "hyp": 13,
+      "ref": 11
+     },
+     "eot": {
+      "hit": 4,
+      "hyp": 15,
+      "ref": 8
+     },
+     "lane": {
+      "ok": 4,
+      "bad": 5,
+      "spurious": 6,
+      "ok_mapped": 4
+     },
+     "act_acc": 0.9608585858585859,
+     "act_f1": 0.8904593639575972,
+     "latency": {
+      "mean": 0.31773239436621226,
+      "p50": 0.3200000000000367,
+      "n": 71,
+      "n_ref_tokens": 82
+     },
+     "decode": {
+      "forced": 1,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 2,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 178,
+      "sec": 23.3,
+      "ms_per_chunk": 81.7
+     }
+    },
+    {
+     "name": "ami-4",
+     "conv": "ami:ES2004c",
+     "t0": 1360.0,
+     "L": 31.628,
+     "speakers": 4,
+     "episodes": 13,
+     "unit": "wer",
+     "lane_rate": 1.0,
+     "mapped_rate": 0.723404255319149,
+     "pooled_rate": 0.48936170212765956,
+     "n_ref_units": 141,
+     "lane_map": {
+      "1": 1,
+      "2": 3,
+      "3": 4
+     },
+     "onset": {
+      "hit": 5,
+      "hyp": 13,
+      "ref": 13
+     },
+     "eot": {
+      "hit": 5,
+      "hyp": 14,
+      "ref": 12
+     },
+     "lane": {
+      "ok": 3,
+      "bad": 7,
+      "spurious": 5,
+      "ok_mapped": 6
+     },
+     "act_acc": 0.7725738396624473,
+     "act_f1": 0.2606310013717421,
+     "latency": {
+      "mean": 0.6610769230769352,
+      "p50": 0.41599999999993553,
+      "n": 78,
+      "n_ref_tokens": 151
+     },
+     "decode": {
+      "forced": 4,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 2,
+      "text_no_lane": 0,
+      "unclosed": 1,
+      "reopen": 1,
+      "act_closed": 0,
+      "n_emits": 187,
+      "sec": 30.6,
+      "ms_per_chunk": 71.6
+     }
+    },
+    {
+     "name": "ami-5",
+     "conv": "ami:IS1001c",
+     "t0": 530.0,
+     "L": 24.668,
+     "speakers": 3,
+     "episodes": 17,
+     "unit": "wer",
+     "lane_rate": 1.2469135802469136,
+     "mapped_rate": 0.6049382716049383,
+     "pooled_rate": 0.30864197530864196,
+     "n_ref_units": 81,
+     "lane_map": {
+      "1": 2,
+      "2": 1
+     },
+     "onset": {
+      "hit": 6,
+      "hyp": 9,
+      "ref": 17
+     },
+     "eot": {
+      "hit": 6,
+      "hyp": 9,
+      "ref": 16
+     },
+     "lane": {
+      "ok": 4,
+      "bad": 5,
+      "spurious": 0,
+      "ok_mapped": 5
+     },
+     "act_acc": 0.8068181818181818,
+     "act_f1": 0.3769633507853403,
+     "latency": {
+      "mean": 0.2978749999999983,
+      "p50": 0.33600000000001895,
+      "n": 56,
+      "n_ref_tokens": 82
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 2,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 1,
+      "act_closed": 0,
+      "n_emits": 125,
+      "sec": 24.2,
+      "ms_per_chunk": 77.5
+     }
+    }
+   ],
+   "sec": 182
+  },
+  "icsi": {
+   "tag": "seen",
+   "meta": {
+    "path": "icsi.refined.dialogues.jsonl",
+    "dialogues": 75,
+    "tokens_from": "align",
+    "proxied_utts": 0,
+    "windows": 5840,
+    "stats": {
+     "dialogues": 75,
+     "windows": 5840,
+     "skipped_untranscribed": 0,
+     "skipped_unaligned": 0,
+     "skipped_sparse": 1505,
+     "no_start": 18346,
+     "windows_with_mask": 3217
+    }
+   },
+   "summary": {
+    "windows": 4,
+    "unit": "wer",
+    "lane_rate": 0.7338,
+    "mapped_rate": 0.7293,
+    "lane_acc_mapped": 0.543,
+    "pooled_rate": 0.6363,
+    "onset_p": 0.717,
+    "onset_r": 0.423,
+    "eot_p": 0.556,
+    "eot_r": 0.405,
+    "lane_acc": 0.514,
+    "spurious_segments": 19,
+    "act_acc": 0.886,
+    "act_f1": 0.3352,
+    "latency_mean": 11.5423,
+    "latency_p50": 11.439,
+    "latency_match": 0.517,
+    "forced": 4,
+    "stray_eot": 1,
+    "implicit": 8,
+    "unclosed": 0,
+    "ms_per_chunk": 69.225
+   },
+   "windows": [
+    {
+     "name": "icsi-0",
+     "conv": "icsi:Bmr002",
+     "t0": 2410.0,
+     "L": 38.812,
+     "speakers": 3,
+     "episodes": 27,
+     "unit": "wer",
+     "lane_rate": 0.44755244755244755,
+     "mapped_rate": 0.44755244755244755,
+     "pooled_rate": 0.04195804195804196,
+     "n_ref_units": 143,
+     "lane_map": {
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4
+     },
+     "onset": {
+      "hit": 19,
+      "hyp": 19,
+      "ref": 27
+     },
+     "eot": {
+      "hit": 18,
+      "hyp": 19,
+      "ref": 26
+     },
+     "lane": {
+      "ok": 10,
+      "bad": 9,
+      "spurious": 0,
+      "ok_mapped": 10
+     },
+     "act_acc": 0.9013745704467354,
+     "act_f1": 0.6521212121212121,
+     "latency": {
+      "mean": 0.35658741258740645,
+      "p50": 0.35000000000014353,
+      "n": 143,
+      "n_ref_tokens": 147
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 2,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 1,
+      "act_closed": 0,
+      "n_emits": 267,
+      "sec": 37.9,
+      "ms_per_chunk": 77.6
+     }
+    },
+    {
+     "name": "icsi-1",
+     "conv": "icsi:Bmr009",
+     "t0": 2320.0,
+     "L": 29.948,
+     "speakers": 5,
+     "episodes": 25,
+     "unit": "wer",
+     "lane_rate": 0.675,
+     "mapped_rate": 0.6583333333333333,
+     "pooled_rate": 0.55,
+     "n_ref_units": 120,
+     "lane_map": {
+      "1": 1,
+      "2": 2,
+      "3": 4
+     },
+     "onset": {
+      "hit": 14,
+      "hyp": 18,
+      "ref": 25
+     },
+     "eot": {
+      "hit": 12,
+      "hyp": 22,
+      "ref": 23
+     },
+     "lane": {
+      "ok": 8,
+      "bad": 8,
+      "spurious": 6,
+      "ok_mapped": 9
+     },
+     "act_acc": 0.8899286987522281,
+     "act_f1": 0.6885245901639344,
+     "latency": {
+      "mean": 0.37057281553398697,
+      "p50": 0.33999999999992747,
+      "n": 103,
+      "n_ref_tokens": 145
+     },
+     "decode": {
+      "forced": 2,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 4,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 2,
+      "act_closed": 0,
+      "n_emits": 301,
+      "sec": 32.2,
+      "ms_per_chunk": 80.2
+     }
+    },
+    {
+     "name": "icsi-2",
+     "conv": "icsi:Bns003",
+     "t0": 2890.0,
+     "L": 28.703,
+     "speakers": 3,
+     "episodes": 7,
+     "unit": "wer",
+     "lane_rate": 1.0,
+     "mapped_rate": 1.0,
+     "pooled_rate": 0.9736842105263158,
+     "n_ref_units": 38,
+     "lane_map": {
+      "1": 1
+     },
+     "onset": {
+      "hit": 0,
+      "hyp": 5,
+      "ref": 7
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 7,
+      "ref": 7
+     },
+     "lane": {
+      "ok": 0,
+      "bad": 0,
+      "spurious": 7,
+      "ok_mapped": 0
+     },
+     "act_acc": 0.935468895078923,
+     "act_f1": 0.0,
+     "latency": {
+      "mean": 24.256000000000203,
+      "p50": 24.256000000000203,
+      "n": 1,
+      "n_ref_tokens": 39
+     },
+     "decode": {
+      "forced": 1,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 2,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 1,
+      "act_closed": 0,
+      "n_emits": 48,
+      "sec": 23.4,
+      "ms_per_chunk": 59.6
+     }
+    },
+    {
+     "name": "icsi-3",
+     "conv": "icsi:Bmr006",
+     "t0": 3360.0,
+     "L": 31.762,
+     "speakers": 5,
+     "episodes": 19,
+     "unit": "wer",
+     "lane_rate": 0.9931506849315068,
+     "mapped_rate": 0.9931506849315068,
+     "pooled_rate": 0.9794520547945206,
+     "n_ref_units": 146,
+     "lane_map": {
+      "1": 1
+     },
+     "onset": {
+      "hit": 0,
+      "hyp": 4,
+      "ref": 19
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 6,
+      "ref": 18
+     },
+     "lane": {
+      "ok": 0,
+      "bad": 0,
+      "spurious": 6,
+      "ok_mapped": 0
+     },
+     "act_acc": 0.8173803526448362,
+     "act_f1": 0.0,
+     "latency": {
+      "mean": 21.18599999999991,
+      "p50": 20.810000000000166,
+      "n": 3,
+      "n_ref_tokens": 153
+     },
+     "decode": {
+      "forced": 1,
+      "rounds": 8,
+      "stray_eot": 1,
+      "implicit": 2,
+      "text_no_lane": 11,
+      "unclosed": 0,
+      "reopen": 3,
+      "act_closed": 0,
+      "n_emits": 49,
+      "sec": 25.6,
+      "ms_per_chunk": 59.5
+     }
+    }
+   ],
+   "sec": 127
+  }
+ },
+ "args": {
+  "model": "/soundai/Model/VAPASR/p2-D1/final-enc",
+  "data": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "sets": "aihub71631:seen:8,aihub134-1:seen:6,ami:seen:6,icsi:seen:4",
+  "out": "/soundai/users/tskim/VAPKT-data/eval/p2-D1e-argmax-seen",
+  "delay": 4,
+  "R": 6,
+  "window": [
+   20.0,
+   40.0
+  ],
+  "hop": 10.0,
+  "seed": 0,
+  "tol": 0.4,
+  "mono_cache": "/soundai/users/tskim/VAPKT-data/data/phase2/mono",
+  "gpu": null,
+  "min_speakers": 2,
+  "max_tries": 40,
+  "runaway_cap": null,
+  "no_constrain": true,
+  "act_close_chunks": 6,
+  "act_thr": 0.3,
+  "onset_thr": 0.25
+ }
+}

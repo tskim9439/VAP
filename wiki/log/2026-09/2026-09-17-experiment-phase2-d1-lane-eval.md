@@ -4,3 +4,10 @@
 - Reason: D1 실학습 뒤 free-running lane 디코드가 실제로 동작하는지 seen·held-out 창에서 확인하고 오디오와 함께 시각화(사용자 요청)
 - Next: D1b(δ_onset>0, lane 3–6 노출, held-out split), 디코더 임계값 sweep, held-out 정렬
 - By: tskim
+
+## [2026-09-17] experiment | D1 인코더 저장 사고 수정·재평가·문제 분석
+
+- Changed: vapasr/hf/{configuration,modeling}_vapasr.py(encoder_saved), experiments/p2_train_hf.py(--check-save·encoder_saved 자동), experiments/p2_fix_encoder.py, experiments/p2_tf_probe.py, wiki/outputs/output-phase2-d1-lane-eval.md(전면 수정), raw reports
+- Reason: 사용자 지적(첫 블록 ONSET·낮은 WER/CER) 분석 중 재로드 모델의 teacher-forced 손실이 학습 로그와 다름을 발견 → 인코더 미저장 사고 확인·수정
+- Next: onset_thr 0.35(c3) 반영, D1b(창 시작 평탄화·δ_onset·태그 가중), held-out split
+- By: tskim
