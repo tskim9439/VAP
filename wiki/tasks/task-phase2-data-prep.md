@@ -96,6 +96,7 @@ QC(`p2_qc.py`, R=6, δ=4; 보정본 기준): lane 재배정 NOTSOFAR-1 913(부�
 - DDP 스모크(2026-09-16, GPU 2 장, overfit32 창, 예산 3 k, 8 step): 손실 하강(text 5.95→3.64, eot 8.6→2.8, act_acc 0.48→0.87), rank 0 만 로그, final·DONE 생성. 스모크에서 잡은 결함 2 건 수정 — (1) rank 당 배치 0 인 코퍼스가 라운드로빈을 멈춰 다른 rank 가 all_reduce 에서 행(샘플러 n=배치//world, 제외·검출), (2) compute_loss 가 DDP 래퍼의 config 접근 실패. 산출물 `/soundai/Model/VAPASR/p2-D1`. 이후: lane 상태 디코더(`vapasr/hf/lane_state.py`)·D1 평가.
 
 ## 진행 기록
+- 2026-09-17 (12): D1 lane 디코드 평가 → [[output-phase2-d1-lane-eval]] (뷰어 https://claude.ai/code/artifact/416d0f85-a784-4ac3-aa38-c932be938c25). lane 상태 디코더·파서(`vapasr/hf/lane_state.py`), 평가(`experiments/p2_eval_lanes.py`), held-out 로더(NIKL 2020·CHiME-6 dev). argmax 디코드는 soft EOT 로 구조가 무너짐 → 규약 제약 디코딩으로 71631 pooled CER 44→20 %, EOT 재현율 26→72 %. held-out NIKL CER 33 %, CHiME-6 WER 83 %. 다음: D1b(δ_onset>0·lane 3–6 노출·split).
 - 2026-09-17 (11): D1 실학습 완료(잡 71599, 5,050 step, 선점 2 회 자동 재개). 다음: lane 상태 디코더·held-out 평가·split 구성.
 - 2026-09-16 (10): 사용자 지시 노드당 GPU 8 → sbatch 를 torchrun DDP 로 재작성, 학습 스크립트 DDP 대응, 2-GPU 스모크 통과(결함 2 건 수정).
 - 2026-09-16 (9): 사용자 요청 — mono 캐시 사전 생성(133 GiB, 28 분)·동적 길이 배치 도입(예산 실측 28 k 토큰 = 메모리 74 %)·코퍼스 sqrt 비중. D1 명령 갱신(3 epoch ≈ 12 k step ≈ 3 h).

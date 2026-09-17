@@ -1,0 +1,459 @@
+{
+ "model": "/soundai/Model/VAPASR/p2-D1/final",
+ "delay": 4,
+ "tol": 0.4,
+ "constrain": true,
+ "sets": {
+  "chime6": {
+   "tag": "heldout",
+   "meta": {
+    "path": "_chime6.proxy.dialogues.jsonl",
+    "dialogues": 2,
+    "tokens_from": "proxy",
+    "proxied_utts": 6644,
+    "windows": 147,
+    "stats": {
+     "dialogues": 2,
+     "windows": 147,
+     "skipped_untranscribed": 0,
+     "skipped_unaligned": 0,
+     "skipped_sparse": 60,
+     "no_start": 1397,
+     "windows_with_mask": 47
+    }
+   },
+   "summary": {
+    "windows": 8,
+    "unit": "wer",
+    "lane_rate": 0.9951,
+    "pooled_rate": 0.937,
+    "onset_p": 0.4,
+    "onset_r": 0.045,
+    "eot_p": 0.111,
+    "eot_r": 0.013,
+    "lane_acc": 0.3,
+    "spurious_segments": 0,
+    "act_acc": 0.8474,
+    "act_f1": 0.1018,
+    "latency_mean": -1.3168,
+    "latency_p50": -1.0828,
+    "latency_match": 0.044,
+    "forced": 0,
+    "stray_eot": 0,
+    "implicit": 0,
+    "unclosed": 0,
+    "ms_per_chunk": 62.325
+   },
+   "windows": [
+    {
+     "name": "chime6-0",
+     "conv": "chime6:S09",
+     "t0": 1520.0,
+     "L": 35.152,
+     "speakers": 4,
+     "episodes": 17,
+     "unit": "wer",
+     "lane_rate": 0.9743589743589743,
+     "pooled_rate": 0.9572649572649573,
+     "n_ref_units": 117,
+     "onset": {
+      "hit": 1,
+      "hyp": 2,
+      "ref": 17
+     },
+     "eot": {
+      "hit": 1,
+      "hyp": 1,
+      "ref": 15
+     },
+     "lane": {
+      "ok": 0,
+      "bad": 2,
+      "spurious": 0
+     },
+     "act_acc": 0.7923310554290053,
+     "act_f1": 0.23709902370990238,
+     "latency": {
+      "mean": -4.768666666666707,
+      "p50": -6.9360000000000035,
+      "n": 3,
+      "n_ref_tokens": 135
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 1,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 1,
+      "n_emits": 15,
+      "sec": 34.4,
+      "ms_per_chunk": 64.0
+     }
+    },
+    {
+     "name": "chime6-1",
+     "conv": "chime6:S09",
+     "t0": 2950.0,
+     "L": 22.03,
+     "speakers": 4,
+     "episodes": 8,
+     "unit": "wer",
+     "lane_rate": 1.0,
+     "pooled_rate": 1.0,
+     "n_ref_units": 28,
+     "onset": {
+      "hit": 0,
+      "hyp": 0,
+      "ref": 8
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 0,
+      "ref": 5
+     },
+     "lane": {
+      "ok": 0,
+      "bad": 0,
+      "spurious": 0
+     },
+     "act_acc": 0.8933333333333333,
+     "act_f1": 0.0,
+     "latency": {
+      "mean": null,
+      "p50": null,
+      "n": 0,
+      "n_ref_tokens": 34
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 1,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 0,
+      "sec": 16.7,
+      "ms_per_chunk": 60.3
+     }
+    },
+    {
+     "name": "chime6-2",
+     "conv": "chime6:S09",
+     "t0": 2270.0,
+     "L": 32.603,
+     "speakers": 3,
+     "episodes": 6,
+     "unit": "wer",
+     "lane_rate": 1.0,
+     "pooled_rate": 1.0,
+     "n_ref_units": 68,
+     "onset": {
+      "hit": 0,
+      "hyp": 0,
+      "ref": 6
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 0,
+      "ref": 6
+     },
+     "lane": {
+      "ok": 0,
+      "bad": 0,
+      "spurious": 0
+     },
+     "act_acc": 0.8958333333333334,
+     "act_f1": 0.0,
+     "latency": {
+      "mean": null,
+      "p50": null,
+      "n": 0,
+      "n_ref_tokens": 76
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 1,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 0,
+      "sec": 24.3,
+      "ms_per_chunk": 59.1
+     }
+    },
+    {
+     "name": "chime6-3",
+     "conv": "chime6:S09",
+     "t0": 120.0,
+     "L": 30.159,
+     "speakers": 4,
+     "episodes": 17,
+     "unit": "wer",
+     "lane_rate": 1.0,
+     "pooled_rate": 0.96,
+     "n_ref_units": 100,
+     "onset": {
+      "hit": 0,
+      "hyp": 1,
+      "ref": 17
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 1,
+      "ref": 15
+     },
+     "lane": {
+      "ok": 0,
+      "bad": 1,
+      "spurious": 0
+     },
+     "act_acc": 0.7882404951370469,
+     "act_f1": 0.07707129094412331,
+     "latency": {
+      "mean": -3.8033823529411714,
+      "p50": -0.40617647058823225,
+      "n": 4,
+      "n_ref_tokens": 108
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 1,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 12,
+      "sec": 23.8,
+      "ms_per_chunk": 62.7
+     }
+    },
+    {
+     "name": "chime6-4",
+     "conv": "chime6:S02",
+     "t0": 5340.0,
+     "L": 29.54,
+     "speakers": 2,
+     "episodes": 8,
+     "unit": "wer",
+     "lane_rate": 0.9759036144578314,
+     "pooled_rate": 0.9759036144578314,
+     "n_ref_units": 83,
+     "onset": {
+      "hit": 0,
+      "hyp": 2,
+      "ref": 8
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 2,
+      "ref": 6
+     },
+     "lane": {
+      "ok": 1,
+      "bad": 1,
+      "spurious": 0
+     },
+     "act_acc": 0.8193315266485999,
+     "act_f1": 0.02912621359223301,
+     "latency": {
+      "mean": 1.2522222222225357,
+      "p50": 1.2522222222225357,
+      "n": 2,
+      "n_ref_tokens": 95
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 1,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 11,
+      "sec": 23.1,
+      "ms_per_chunk": 62.2
+     }
+    },
+    {
+     "name": "chime6-5",
+     "conv": "chime6:S09",
+     "t0": 2070.0,
+     "L": 36.99,
+     "speakers": 3,
+     "episodes": 5,
+     "unit": "wer",
+     "lane_rate": 1.0,
+     "pooled_rate": 1.0,
+     "n_ref_units": 75,
+     "onset": {
+      "hit": 1,
+      "hyp": 2,
+      "ref": 5
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 2,
+      "ref": 5
+     },
+     "lane": {
+      "ok": 1,
+      "bad": 1,
+      "spurious": 0
+     },
+     "act_acc": 0.8896103896103896,
+     "act_f1": 0.03773584905660377,
+     "latency": {
+      "mean": null,
+      "p50": null,
+      "n": 0,
+      "n_ref_tokens": 86
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 1,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 15,
+      "sec": 30.2,
+      "ms_per_chunk": 65.0
+     }
+    },
+    {
+     "name": "chime6-6",
+     "conv": "chime6:S09",
+     "t0": 1810.0,
+     "L": 38.462,
+     "speakers": 3,
+     "episodes": 5,
+     "unit": "wer",
+     "lane_rate": 1.5,
+     "pooled_rate": 0.7222222222222222,
+     "n_ref_units": 18,
+     "onset": {
+      "hit": 1,
+      "hyp": 1,
+      "ref": 5
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 1,
+      "ref": 4
+     },
+     "lane": {
+      "ok": 0,
+      "bad": 1,
+      "spurious": 0
+     },
+     "act_acc": 0.9663894663894664,
+     "act_f1": 0.3310344827586207,
+     "latency": {
+      "mean": 0.3999999999999438,
+      "p50": 0.4159999999999968,
+      "n": 7,
+      "n_ref_tokens": 22
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 1,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 19,
+      "sec": 30.0,
+      "ms_per_chunk": 62.0
+     }
+    },
+    {
+     "name": "chime6-7",
+     "conv": "chime6:S09",
+     "t0": 6690.0,
+     "L": 33.244,
+     "speakers": 4,
+     "episodes": 22,
+     "unit": "wer",
+     "lane_rate": 0.9444444444444444,
+     "pooled_rate": 0.8809523809523809,
+     "n_ref_units": 126,
+     "onset": {
+      "hit": 1,
+      "hyp": 2,
+      "ref": 22
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 2,
+      "ref": 19
+     },
+     "lane": {
+      "ok": 1,
+      "bad": 1,
+      "spurious": 0
+     },
+     "act_acc": 0.7339743589743589,
+     "act_f1": 0.10270270270270271,
+     "latency": {
+      "mean": 0.33578181818179076,
+      "p50": 0.2599999999995637,
+      "n": 15,
+      "n_ref_tokens": 144
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 1,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 23,
+      "sec": 26.5,
+      "ms_per_chunk": 63.3
+     }
+    }
+   ],
+   "sec": 212
+  }
+ },
+ "args": {
+  "model": "/soundai/Model/VAPASR/p2-D1/final",
+  "data": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "sets": "chime6:heldout:8",
+  "out": "/soundai/users/tskim/VAPKT-data/eval/p2-D1c-chime6",
+  "delay": 4,
+  "R": 6,
+  "window": [
+   20.0,
+   40.0
+  ],
+  "hop": 10.0,
+  "seed": 0,
+  "tol": 0.4,
+  "mono_cache": "/soundai/users/tskim/VAPKT-data/data/phase2/mono",
+  "gpu": null,
+  "min_speakers": 2,
+  "max_tries": 40,
+  "runaway_cap": null,
+  "no_constrain": false,
+  "act_close_chunks": 3,
+  "act_thr": 0.5
+ }
+}
