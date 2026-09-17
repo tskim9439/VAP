@@ -101,7 +101,7 @@ def test_token_budget_sampler_ddp_split(tmp_path):
 def test_mixed_start_windows_drop_tokens_before_window(tmp_path):
     p = make(tmp_path); g = DialogueWindowDataset([p], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), seed=0, start_mode="grid")
     m = DialogueWindowDataset([p], FakeTok(), window_s=(20.0, 20.0), hop_s=5.0, delays=(4,), seed=0, start_mode="mixed", random_frac=0.5)
-    assert m.stats["random_start"] > 0 and len(m) > len(g) and abs(len(m) - 2 * len(g)) <= 2
+    assert m.stats["random_start"] > 0 and len(m) > len(g) and abs(len(m) - 2 * len(g)) <= 2 and set(g.items) <= set(m.items)   # 격자 창은 mode 와 무관하게 동일
     for i in range(len(m)):                                          # 임의 시작 창: 참조 토큰 시각은 모두 창 안, 발화 중간 시작이면 episode 가 0 초에서 시작
         s = m.sequence(i, 4); cid, t0, L = m.items[i]; eps, _ = m.window_episodes(m.dlgs[cid], t0, L)
         assert all(0 <= tt <= L + 1e-6 for e in eps for _, tt in e.tokens) and all(e.start >= 0 for e in eps) and len(s["ids"]) > 0

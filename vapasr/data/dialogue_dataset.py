@@ -46,7 +46,7 @@ class DialogueWindowDataset(Dataset):
                 for u in d.utterances:
                     if u.utt_id in toks: u.tokens = toks[u.utt_id]
                 self.dlgs[d.conv_id] = d; self.stats["dialogues"] += 1
-        self.items: List[Tuple[str, float, float]] = []; rng = random.Random(seed)
+        self.items: List[Tuple[str, float, float]] = []; rng = random.Random(seed); self._seed = seed
         for cid, d in self.dlgs.items(): self.items += self._windows(d, window_s, hop_s, rng)
         rng.shuffle(self.items)
         if max_items: self.items = self.items[:max_items]
@@ -74,8 +74,9 @@ class DialogueWindowDataset(Dataset):
             # D1b: 창 시작을 무음 격자에만 두면 첫 ONSET 이 창 앞쪽에 몰려(청크 ≤5 가 1/3) 모델이 위치 prior 로 시작을 낸다. 임의 시점(발화 중간 포함) 시작 창을 random_frac 비율로 더한다.
             # 발화 중간 시작이면 그 발화는 창 0 초에서 시작하는 episode 가 되고(ONSET 청크 0 = "이미 말하고 있다"), 창 이전 토큰은 버린다(window_episodes).
             n_rand = int(round(len(out) * self.random_frac / max(1e-6, 1.0 - self.random_frac))); tries = 0
+            rr = random.Random(f"{self._seed}:{d.conv_id}:random-start")          # 격자 창의 난수열을 건드리지 않도록 별도 스트림(grid 창 목록이 mode 와 무관하게 같게)
             while n_rand > 0 and tries < 20 * (n_rand + 1):
-                tries += 1; t = rng.uniform(0.0, d.duration_s - lo); L = min(rng.uniform(lo, hi), d.duration_s - t); t1 = t + L
+                tries += 1; t = rr.uniform(0.0, d.duration_s - lo); L = min(rr.uniform(lo, hi), d.duration_s - t); t1 = t + L
                 hit = any(s < t1 and e > t for s, e in bad)
                 if hit and self.untranscribed == "skip": continue
                 n_tok = sum(len([1 for _, tt in (u.tokens or []) if t <= tt <= t1]) for u in d.utterances if u.end > t and u.start < t1)
