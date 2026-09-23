@@ -30,7 +30,7 @@ def test_stage_a_prompt_indices_and_hints():
     assert [x["role"] for x in m] == ["system", "user"] and "Precision first" in m[0]["content"]
     u = m[1]["content"]
     assert "[000] 병원에\n" in u and "[002] 음 {filler}\n" in u and u.endswith("[004] 왔어요 {.}")
-    assert "EXAMPLE OUTPUT" in u and '"semantic_boundaries": [13, 17]' in u   # KO example from plan §8
+    assert "EXAMPLE OUTPUT" in u and '"semantic_boundaries": [[13, "같아요"], [17, "만나려고요"]]' in u   # KO example from plan §8 (v0.2 anchors)
     assert "EXAMPLE TRANSCRIPT\n[000] 어 {filler}\n" in u and "[008] 음 {filler}\n" in u
     en = sc.stage_a_messages(["book"] * 13, "English", tags=[[]] * 12 + [["punct_final", "filler"]])[1]["content"]
     assert en.endswith("[012] book {filler} {.}") and "let's" in en
@@ -758,3 +758,30 @@ def test_hf_score_labels_matches_unpadded_forward():
                 lsm = llm.model(torch.tensor([ctx + cont])).logits[0].float().log_softmax(-1)
             exp = sum(lsm[len(ctx) + k - 1, t].item() for k, t in enumerate(cont))
             assert r["logprobs"][l] == pytest.approx(exp, abs=1e-3)
+
+
+# ───────────── v0.2: Stage A [index, word] anchors ─────────────
+def test_snap_boundaries_exact_snapped_dropped_bare():
+    words = ["she", "said", "in", "a", "clear", "sweet", "voice", "i'm", "very", "glad", "to", "see", "you"]
+    obj = {"semantic_boundaries": [[6, "voice"], [9, "you"], [8, "voice"], [3, "banana"], 12, {"i": 1, "w": "Said"}]}
+    out, info = sc.snap_boundaries(obj, words)
+    assert out["semantic_boundaries"] == [6, 12, 6, 12, 1] and info["exact"] == 2 and info["snapped"] == 2 and info["dropped"] == 1 and info["bare"] == 1
+    assert info["moves"] == [[9, 12], [8, 6]]
+    assert sc.validate_stage_a(out, len(words))["semantic_boundaries"] == [1, 6, 12]          # dedup + sort after snapping
+    far, inf2 = sc.snap_boundaries({"semantic_boundaries": [[0, "you"]]}, words)                # 12 is beyond ±4 → dropped
+    assert far["semantic_boundaries"] == [] and inf2["dropped"] == 1
+    tie, _ = sc.snap_boundaries({"semantic_boundaries": [[5, "a"]]}, ["a", "x", "x", "a", "x", "x", "x", "a"])   # d=2 both sides → earlier
+    assert tie["semantic_boundaries"] == [3]
+    ko, _ = sc.snap_boundaries({"semantic_boundaries": [[2, "같아요."]]}, ["것", "같아요", "그리고"])        # punctuation-insensitive
+    assert ko["semantic_boundaries"] == [1]
+    with pytest.raises(ValueError):
+        sc.snap_boundaries({"semantic_boundaries": [["2", "x"]]}, words)
+
+
+def test_run_stage_a_snaps_anchor_output():
+    class AnchorLLM:
+        def build_prompt(self, m): return "p"
+        def generate_json(self, prompts, max_new_tokens=0, batch_size=0):
+            return [{"text": '{"semantic_boundaries": [[4, "갔어요"], [7, "먹었어요"]], "fillers": [[0, 0]]}', "truncated": False}]
+    row = sc.run_stage_a(AnchorLLM(), [KO1], "qwen3", pv="t")[0]
+    assert row["status"] == "ok" and row["out"]["semantic_boundaries"] == [5, 8] and row["snap"]["snapped"] == 2

@@ -28,7 +28,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
-PROMPT_VERSION = "semcommit-prompt-v0.1"
+PROMPT_VERSION = "semcommit-prompt-v0.2"   # v0.2 (2026-09-23): Stage A [index, word] anchors + snapping; Stage C REVISION narrowed to plan §10 (continuation/added detail = STABLE)
 KINDS = {"qwen3": dict(template_kwargs={"enable_thinking": False}, trust_remote_code=False),
          "exaone35": dict(template_kwargs={}, trust_remote_code=True),
          "gptoss": dict(template_kwargs={"reasoning_effort": "low"}, trust_remote_code=False)}
@@ -41,7 +41,7 @@ GPTOSS_MAX_MEMORY = {0: "30GiB", "cpu": "120GiB"}
 B_LABELS = ("WAIT", "UNCERTAIN", "SAFE")   # conservative first: an exact score tie never yields SAFE/STABLE
 C_LABELS = ("REVISION", "STABLE")
 C_TYPES = {"STABLE": ("NEW_UNIT", "ADDITIONAL_INFORMATION"),
-           "REVISION": ("SELF_REPAIR", "CONTINUATION", "QUALIFICATION", "RESTART")}
+           "REVISION": ("SELF_REPAIR", "QUALIFICATION", "RESTART")}   # v0.2: CONTINUATION removed (it adds, not revises — plan §10)
 B_PREFIX, C_PREFIX = '{"decision": "', '{"relation": "'
 # Scored continuation = label + the terminator the full answer would have: Qwen/o200k BPE merge '"}' and '",' into one
 # token, so a bare '"' would score an off-distribution token (checked per prompt → row field tok_ok).
@@ -85,8 +85,8 @@ LANG_NOTE = {
 A_TASK = """TASK: Read the whole transcript and propose commit points.
 Each line is "[index] word". Hints in braces may follow a word: {filler} filler, {rep} repeated or cut-off word, {unclear} uncertain transcription, {.} sentence-final and {,} comma punctuation in the original transcript. Hints are not labels.
 Return ONLY one JSON object with exactly these keys:
-{"semantic_boundaries": [...], "fillers": [[s, e], ...], "repetitions": [[s, e], ...], "repairs": [{"reparandum": [s, e], "repair": [s, e]}, ...]}
-- semantic_boundaries: ascending indices of the LAST word of each committed unit.
+{"semantic_boundaries": [[index, "word"], ...], "fillers": [[s, e], ...], "repetitions": [[s, e], ...], "repairs": [{"reparandum": [s, e], "repair": [s, e]}, ...]}
+- semantic_boundaries: one [index, "word"] pair per committed unit, in ascending order, where index is the LAST word of the unit and "word" is that word copied exactly from its line (it is used to check the index).
 - fillers, repetitions: inclusive [start, end] index spans (for a repetition mark the abandoned copy).
 - repairs: reparandum = abandoned words; repair = replacing words, including an editing term such as 아니 or no.
 - Use [] when there is none. Every index must exist in the transcript. No explanation."""
@@ -95,11 +95,11 @@ A_EXAMPLE_TAGS = {"Korean": {0: ["filler"], 8: ["filler"]}, "English": {}}   # K
 A_EXAMPLE = {
     "Korean": (["어", "저는", "내일", "아니", "오늘", "오후에", "병원에", "갔다가요", "음", "회사로", "바로", "갈", "것",
                 "같아요", "그리고", "저녁에는", "친구를", "만나려고요"],
-               '{"semantic_boundaries": [13, 17], "fillers": [[0, 0], [8, 8]], "repetitions": [], '
+               '{"semantic_boundaries": [[13, "같아요"], [17, "만나려고요"]], "fillers": [[0, 0], [8, 8]], "repetitions": [], '
                '"repairs": [{"reparandum": [2, 2], "repair": [3, 4]}]}'),
     "English": (["uh", "let's", "meet", "friday", "no", "thursday", "because", "the", "room", "is", "booked", "and",
                  "the", "the", "projector", "is", "broken"],
-                '{"semantic_boundaries": [10, 16], "fillers": [[0, 0]], "repetitions": [[12, 12]], '
+                '{"semantic_boundaries": [[10, "booked"], [16, "broken"]], "fillers": [[0, 0]], "repetitions": [[12, 12]], '
                 '"repairs": [{"reparandum": [3, 3], "repair": [4, 5]}]}')}
 
 B_TASK = """TASK: Streaming decision. You see ONLY the words spoken so far; nothing after the last word is known.
@@ -116,9 +116,10 @@ B_EXAMPLES = {
 
 C_TASK = """TASK: Future stability check. PREFIX is everything up to a candidate commit point; FUTURE is the speech that immediately follows it.
 Decide whether FUTURE changes what PREFIX already expressed.
-REVISION = FUTURE corrects, cancels, repeats-to-fix or qualifies the end of PREFIX (for example a negation or a condition), or grammatically continues the same sentence so that PREFIX was not finished.
-STABLE = FUTURE starts a new unit or only adds information without changing PREFIX.
-type for REVISION: SELF_REPAIR, CONTINUATION, QUALIFICATION, RESTART. type for STABLE: NEW_UNIT, ADDITIONAL_INFORMATION.
+REVISION = FUTURE changes what PREFIX asserted: it corrects or replaces words of PREFIX (self-repair such as "no, thursday"), cancels or restarts it, negates it, or attaches a condition or exception that changes whether PREFIX holds (such as "if it doesn't rain").
+STABLE = FUTURE leaves what PREFIX asserted intact: it starts a new unit, or it keeps talking and only adds detail (time, place, reason, result, a further clause, who said it).
+Continuing the same sentence is STABLE unless it changes what PREFIX asserted. Whether PREFIX itself was complete is judged elsewhere; do not judge it here.
+type for REVISION: SELF_REPAIR, QUALIFICATION, RESTART. type for STABLE: NEW_UNIT, ADDITIONAL_INFORMATION.
 Examples:
 {examples}
 Return ONLY {{"relation": "...", "type": "..."}}."""
@@ -126,10 +127,11 @@ C_EXAMPLES = {
     "Korean": "PREFIX 내일 갈게요 | FUTURE 아 아니 오늘 갈게요 → REVISION SELF_REPAIR\n"
               "PREFIX 내일 갈게요 | FUTURE 김 대리도 같이 간다고 하네요 → STABLE ADDITIONAL_INFORMATION\n"
               "PREFIX 병원에 갔어요 | FUTURE 그리고 회사에 갔어요 → STABLE NEW_UNIT\n"
-              "PREFIX 제가 갈 수 있어요 | FUTURE 비가 안 오면요 → REVISION QUALIFICATION",
+              "PREFIX 제가 갈 수 있어요 | FUTURE 비가 안 오면요 → REVISION QUALIFICATION\n"
+              "PREFIX 병원에 다녀왔어요 | FUTURE 감기가 심해서요 → STABLE ADDITIONAL_INFORMATION",
     "English": "PREFIX let's meet friday | FUTURE no thursday → REVISION SELF_REPAIR\n"
                "PREFIX I will come tomorrow | FUTURE if it doesn't rain → REVISION QUALIFICATION\n"
-               "PREFIX I went home | FUTURE after the meeting ended → REVISION CONTINUATION\n"
+               "PREFIX I went home | FUTURE after the meeting ended → STABLE ADDITIONAL_INFORMATION\n"
                "PREFIX that's probably fine | FUTURE but we should check again → STABLE NEW_UNIT"}
 RETRY = "Your previous output was invalid: {error}. Return ONLY the corrected JSON object with the required keys."
 PROMPT_TEXTS = dict(version=PROMPT_VERSION, rules=RULES, lang=LANG_NOTE, a=A_TASK, a_ex=A_EXAMPLE,
@@ -718,11 +720,47 @@ def error_text(e):
     return str(e)[:500]
 
 
-def _parse_a(o, n):
+A_SNAP_RADIUS = 4
+_SNAP_STRIP = re.compile(r"[^\w']+", re.UNICODE)
+
+
+def _snap_norm(x):
+    return _SNAP_STRIP.sub("", str(x)).lower()
+
+
+def snap_boundaries(obj, words, radius=A_SNAP_RADIUS):
+    """v0.2 Stage A anchors: semantic_boundaries entries are [index, "word"] (a bare int is accepted unchecked).
+    An anchor whose word does not match words[index] is moved to the nearest index within ±radius whose word matches
+    (ties → the smaller distance, then the earlier index); no match → dropped. Returns (obj with int boundaries, info).
+    Rack4 smoke (2026-09-23): Qwen3-8B mis-indexed long unpunctuated LibriSpeech streams by 2–3 words."""
+    if not isinstance(obj, dict) or not isinstance(obj.get("semantic_boundaries"), list):
+        return obj, dict(anchors=0, exact=0, snapped=0, dropped=0, bare=0)
+    texts = [_snap_norm(_text(w)) for w in words]; out = []; info = dict(anchors=0, exact=0, snapped=0, dropped=0, bare=0, moves=[])
+    for x in obj["semantic_boundaries"]:
+        if _is_int(x):
+            out.append(x); info["bare"] += 1; continue
+        if isinstance(x, dict):
+            x = [x.get("i", x.get("index")), x.get("w", x.get("word"))]
+        if not (isinstance(x, (list, tuple)) and len(x) == 2 and _is_int(x[0]) and isinstance(x[1], str)):
+            raise ValueError(f"semantic_boundaries entry {x!r} must be [index, \"word\"]")
+        i, w = x[0], _snap_norm(x[1]); info["anchors"] += 1
+        if 0 <= i < len(texts) and texts[i] == w:
+            out.append(i); info["exact"] += 1; continue
+        cand = [j for d in range(1, radius + 1) for j in (i - d, i + d) if 0 <= j < len(texts) and texts[j] == w]
+        if cand and w:
+            out.append(cand[0]); info["snapped"] += 1; info["moves"].append([i, cand[0]])
+        else:
+            info["dropped"] += 1
+    return dict(obj, semantic_boundaries=out), info
+
+
+def _parse_a(o, words):
+    n = len(words)
     try:
-        return "ok", validate_stage_a(extract_json(o["text"]), n), None
+        obj, info = snap_boundaries(extract_json(o["text"]), words)
+        return "ok", validate_stage_a(obj, n), None, info
     except ValueError as e:
-        return ("truncated" if o.get("truncated") else "invalid_json"), None, error_text(e)
+        return ("truncated" if o.get("truncated") else "invalid_json"), None, error_text(e), None
 
 
 def run_stage_a(llm, streams, judge, max_new_tokens=768, batch_size=8, retries=1, pv=None):
@@ -731,19 +769,19 @@ def run_stage_a(llm, streams, judge, max_new_tokens=768, batch_size=8, retries=1
     pv = pv or prompt_version()
     msgs = [stage_a_messages(s["words"], s["lang"]) for s in streams]
     outs = llm.generate_json([llm.build_prompt(m) for m in msgs], max_new_tokens=max_new_tokens, batch_size=batch_size)
-    res = [list(_parse_a(o, len(s["words"]))) + [o, 1] for s, o in zip(streams, outs)]
+    res = [list(_parse_a(o, s["words"])) + [o, 1] for s, o in zip(streams, outs)]
     for _ in range(retries):
         redo = [k for k, r in enumerate(res) if r[0] == "invalid_json"]
         if not redo:
             break
-        rm = [msgs[k] + [{"role": "assistant", "content": res[k][3]["text"]},
+        rm = [msgs[k] + [{"role": "assistant", "content": res[k][4]["text"]},
                          {"role": "user", "content": RETRY.format(error=res[k][2])}] for k in redo]
         for k, o in zip(redo, llm.generate_json([llm.build_prompt(m) for m in rm], max_new_tokens=max_new_tokens,
                                                 batch_size=batch_size)):
-            res[k] = list(_parse_a(o, len(streams[k]["words"]))) + [o, res[k][4] + 1]
+            res[k] = list(_parse_a(o, streams[k]["words"])) + [o, res[k][5] + 1]
     rows = []
-    for s, (status, out, err, o, att) in zip(streams, res):
-        extra = dict(raw=o.get("text", "")[:4000], error=err) if status != "ok" else {}
+    for s, (status, out, err, snap, o, att) in zip(streams, res):
+        extra = dict(raw=o.get("text", "")[:4000], error=err) if status != "ok" else dict(snap=snap)
         rows.append(_row("A", s, None, judge, pv, status=status, out=out, n_words=len(s["words"]),
                          word_texts_sha256=word_texts_sha256(s["words"]), attempts=att,
                          truncated=bool(o.get("truncated")), **extra))
