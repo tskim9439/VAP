@@ -1,5 +1,5 @@
 """VapAsrTrainer — transformers.Trainer 서브클래스.
-덮어쓰는 곳: get_train_dataloader(라운드로빈·언어별 버킷 배치, rank 분할 → accelerate 로 다시 나누지 않는다), compute_loss(언어별 next_weight),
+덮어쓰는 곳: get_train_dataloader(라운드로빈·언어별 버킷 배치, rank 분할 → accelerate 로 다시 나누지 않는다), compute_loss(언어별 next_weight, semantic commit pos_weight·SEM 통계),
 create_optimizer(adapter/thinker/임베딩(wd 0)/encoder 그룹), evaluate(전 rank 분산 스트리밍 디코드 → gloo all_gather), log(손실 분해 평균).
 PreemptCallback: PREEMPT 파일·SIGUSR1/SIGTERM → 모든 rank 합의(gloo all_reduce) → 저장 후 종료(sbatch 가 requeue, 다음 시작은 resume_from_checkpoint)."""
 import os, json, math, time, signal, difflib
@@ -8,6 +8,8 @@ import numpy as np, torch, torch.distributed as dist
 from transformers import Trainer, TrainerCallback, TrainingArguments
 from ..uslm.mono_data import lang_of, CHUNK_S
 from ..data.textnorm import score_en, score_ko
+
+SEM_LOG_KEYS = ("loss_sem", "loss_turn", "top1_sem", "sem_fp")                  # semantic commit 로그(VapAsrOutput 필드, 없으면 None)
 
 def pct(x, p): return float(np.percentile(x, p)) if len(x) else None
 
@@ -65,15 +67,22 @@ class VapAsrTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         lang = inputs.get("lang", ["English"])[0]
         nw = self.model.config.next_weight_ko if (lang == "Korean" and self.model.config.next_weight_ko is not None) else self.model.config.next_weight
-        x = {k: inputs[k] for k in ("wav", "wav_len", "K", "feats", "ids", "is_audio", "chunk_of", "labels", "mask") if k in inputs}
+        x = {k: inputs[k] for k in ("wav", "wav_len", "K", "feats", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight") if k in inputs}   # pos_weight: semantic commit hard negative 위치 가중
         out = model(**x, next_weight=nw)
         for k in ("loss_next", "loss_text", "top1_text"): self._parts[k] = self._parts.get(k, 0.0) + float(getattr(out, k))
+        for k in SEM_LOG_KEYS:                                                                          # semantic commit 통계 — 배치에 없으면 None → 그 배치는 평균에서 뺀다(키별 개수)
+            v = getattr(out, k, None)
+            if v is not None: self._parts[k] = self._parts.get(k, 0.0) + float(v); self._parts[k + "#"] = self._parts.get(k + "#", 0) + 1
+        if getattr(out, "n_sem", None) is not None: self._parts["n_sem"] = self._parts.get("n_sem", 0) + int(out.n_sem)
         self._parts["n_labels"] = self._parts.get("n_labels", 0) + int(out.n_labels); self._n_parts += 1
         return (out.loss, out) if return_outputs else out.loss
     def log(self, logs: dict, start_time=None):
         if self.args.process_index != 0: self._parts = {}; self._n_parts = 0; return       # PrinterCallback 은 노드별 local rank 0 이 찍어 다중 노드에서 줄이 중복된다 → rank 0 만
         if self._n_parts and "loss" in logs:
             for k in ("loss_next", "loss_text", "top1_text"): logs[k] = round(self._parts[k] / self._n_parts, 4)
+            for k in SEM_LOG_KEYS:
+                if self._parts.get(k + "#"): logs[k] = round(self._parts[k] / self._parts[k + "#"], 4)
+            if "n_sem" in self._parts: logs["sem_per_step"] = round(self._parts["n_sem"] / self._n_parts, 2)
             logs["labels_per_step"] = round(self._parts["n_labels"] / self._n_parts); self._parts = {}; self._n_parts = 0
             # 진행률·ETA: 이 프로세스가 실제로 돈 step 수와 경과 시간으로 추정(재개 직후는 표본이 적어 부정확)
             st = self.state; now = time.time()
