@@ -1,0 +1,12 @@
+{
+  "expected_pairs": 22492,
+  "actual_pairs": 22492,
+  "duplicates": 0,
+  "missing": 0,
+  "extra": 0,
+  "all_tail_s_1": true,
+  "edit_count_identities_passed": true,
+  "smoke_parity_checks_passed": 16,
+  "full_run_parity_checks_passed": 16,
+  "forced_next_total": 5
+}

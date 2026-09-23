@@ -44,10 +44,12 @@ class PreemptCallback(TrainerCallback):
 
 class VapAsrTrainer(Trainer):
     def __init__(self, *a, train_sets: Dict[str, object] = None, dev_sets: Dict[str, object] = None, tokenizer=None, bs_en: int = 12, bs_ko: int = 48, lr_adapter: float = 1e-3,
-                 lr_encoder: float = 1e-5, eval_delay: int = 2, eval_biases=(0.0,), max_per_chunk: int = 0, gloo_pg=None, num_workers: int = 4, **kw):
+                 lr_encoder: float = 1e-5, eval_delay: int = 2, eval_biases=(0.0,), max_per_chunk: int = 0, gloo_pg=None, num_workers: int = 4,
+                 language_schedule: str = "balanced", **kw):
         self.train_sets, self.dev_sets, self.tok = train_sets or {}, dev_sets or {}, tokenizer
         self.bs_en, self.bs_ko, self.lr_adapter, self.lr_encoder = bs_en, bs_ko, lr_adapter, lr_encoder
         self.eval_delay, self.eval_biases, self.M, self.gloo_pg, self.num_workers = eval_delay, list(eval_biases), max_per_chunk, gloo_pg, num_workers
+        self.language_schedule = language_schedule
         self._parts = {}; self._n_parts = 0; self.eval_hist: List[dict] = []
         super().__init__(*a, train_dataset=next(iter(self.train_sets.values())) if self.train_sets else None, eval_dataset=next(iter(self.dev_sets.values())) if self.dev_sets else None, **kw)   # dict 를 주면 Trainer 가 셋마다 evaluate 를 부른다 → 자리표시자 하나만
 
@@ -55,7 +57,8 @@ class VapAsrTrainer(Trainer):
     def bs_of(self, name): return self.bs_ko if lang_of(name) == "Korean" else self.bs_en
     def get_train_dataloader(self):
         from .data import RoundRobinLoader
-        return RoundRobinLoader(self.train_sets, self.bs_of, seed=self.args.seed, rank=self.args.process_index, world=self.args.world_size, num_workers=self.num_workers)
+        return RoundRobinLoader(self.train_sets, self.bs_of, seed=self.args.seed, rank=self.args.process_index,
+                                world=self.args.world_size, num_workers=self.num_workers, schedule=self.language_schedule)
     def num_examples(self, dataloader): return sum(len(ds) for ds in self.train_sets.values())
 
     # ── 손실

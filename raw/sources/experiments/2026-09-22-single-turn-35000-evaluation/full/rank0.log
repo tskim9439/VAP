@@ -1,0 +1,105 @@
+/tmp/sa_tskim-vapasr-env-local/lib/python3.11/site-packages/torch/backends/__init__.py:46: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  self.setter(val)
+START rank=0 total=5623 remaining=5623 deltas=[2, 4]
+OneLogger: Setting error_handling_strategy to DISABLE_QUIETLY_AND_REPORT_METRIC_ERROR for rank (rank=0) with OneLogger disabled. To override: explicitly set error_handling_strategy parameter.
+Final configuration contains 0 exporter(s)
+No exporters were provided. This means that no telemetry data will be collected.
+nemotron encoder 학습: 서브샘플링 Triton 커널 끔(fuse_triton=False)
+The tokenizer you are loading from '/soundai/Model/VAPASR/hf-approved-qwen-v1-e10-n2/checkpoint-35000' with an incorrect regex pattern: https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/discussions/84#69121093e8b480e709447d5e. This will lead to incorrect tokenization. You should set the `fix_mistral_regex=True` flag when loading this tokenizer to fix this issue.
+PARITY rank=0 lang=Korean delta=2 samples=2 PASS
+PROGRESS rank=0 predictions=128/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=6.2 decode_s=2.7 elapsed_s=13.6 peak_gpu_gb=7.10
+PARITY rank=0 lang=Korean delta=4 samples=2 PASS
+PROGRESS rank=0 predictions=256/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=6.2 decode_s=2.4 elapsed_s=21.4 peak_gpu_gb=7.10
+PROGRESS rank=0 predictions=384/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=4.7 decode_s=2.8 elapsed_s=29.3 peak_gpu_gb=7.36
+PROGRESS rank=0 predictions=512/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=4.7 decode_s=2.8 elapsed_s=32.6 peak_gpu_gb=7.36
+PROGRESS rank=0 predictions=640/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=4.9 decode_s=3.2 elapsed_s=41.0 peak_gpu_gb=7.79
+PROGRESS rank=0 predictions=768/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=4.9 decode_s=3.5 elapsed_s=44.7 peak_gpu_gb=7.79
+PROGRESS rank=0 predictions=896/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=5.0 decode_s=3.6 elapsed_s=53.4 peak_gpu_gb=7.93
+PROGRESS rank=0 predictions=1024/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=5.0 decode_s=3.6 elapsed_s=57.1 peak_gpu_gb=7.93
+PROGRESS rank=0 predictions=1152/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=5.0 decode_s=4.0 elapsed_s=66.2 peak_gpu_gb=8.39
+PROGRESS rank=0 predictions=1280/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=5.0 decode_s=3.5 elapsed_s=70.0 peak_gpu_gb=8.41
+PROGRESS rank=0 predictions=1408/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=5.4 decode_s=4.7 elapsed_s=80.3 peak_gpu_gb=8.68
+PROGRESS rank=0 predictions=1536/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=5.4 decode_s=4.4 elapsed_s=84.8 peak_gpu_gb=8.68
+PROGRESS rank=0 predictions=1664/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=5.2 decode_s=5.1 elapsed_s=95.3 peak_gpu_gb=9.18
+PROGRESS rank=0 predictions=1792/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=5.2 decode_s=4.7 elapsed_s=100.2 peak_gpu_gb=9.18
+PROGRESS rank=0 predictions=1920/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=5.3 decode_s=5.7 elapsed_s=111.4 peak_gpu_gb=9.90
+PROGRESS rank=0 predictions=2048/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=5.3 decode_s=6.4 elapsed_s=117.9 peak_gpu_gb=9.90
+PROGRESS rank=0 predictions=2176/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=5.1 decode_s=5.8 elapsed_s=129.0 peak_gpu_gb=10.89
+PROGRESS rank=0 predictions=2304/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=5.1 decode_s=7.7 elapsed_s=136.9 peak_gpu_gb=10.89
+PROGRESS rank=0 predictions=2432/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=5.2 decode_s=9.8 elapsed_s=152.0 peak_gpu_gb=12.59
+PROGRESS rank=0 predictions=2560/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=5.2 decode_s=8.9 elapsed_s=161.1 peak_gpu_gb=12.59
+PROGRESS rank=0 predictions=2688/11246 dataset=kspon-eval_clean delta=2 batch=128 encode_s=5.0 decode_s=13.7 elapsed_s=180.0 peak_gpu_gb=14.86
+PROGRESS rank=0 predictions=2816/11246 dataset=kspon-eval_clean delta=4 batch=128 encode_s=5.0 decode_s=13.5 elapsed_s=193.7 peak_gpu_gb=14.86
+PROGRESS rank=0 predictions=2908/11246 dataset=kspon-eval_clean delta=2 batch=92 encode_s=3.5 decode_s=27.8 elapsed_s=225.5 peak_gpu_gb=18.90
+PROGRESS rank=0 predictions=3000/11246 dataset=kspon-eval_clean delta=4 batch=92 encode_s=3.5 decode_s=27.5 elapsed_s=253.1 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=3128/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=4.0 decode_s=3.0 elapsed_s=260.3 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=3256/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=4.0 decode_s=3.2 elapsed_s=263.5 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=3384/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=4.0 decode_s=3.0 elapsed_s=270.6 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=3512/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=4.0 decode_s=3.6 elapsed_s=274.4 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=3640/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=4.4 decode_s=3.5 elapsed_s=282.4 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=3768/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=4.4 decode_s=3.9 elapsed_s=291.4 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=3896/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=4.7 decode_s=4.4 elapsed_s=300.6 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=4024/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=4.7 decode_s=4.3 elapsed_s=305.0 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=4152/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=4.4 decode_s=4.6 elapsed_s=314.0 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=4280/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=4.4 decode_s=4.6 elapsed_s=318.7 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=4408/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=3.9 decode_s=5.4 elapsed_s=328.1 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=4536/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=3.9 decode_s=5.9 elapsed_s=334.2 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=4664/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=4.3 decode_s=6.9 elapsed_s=345.4 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=4792/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=4.3 decode_s=7.2 elapsed_s=352.7 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=4920/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=4.3 decode_s=8.4 elapsed_s=365.5 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=5048/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=4.3 decode_s=8.9 elapsed_s=374.6 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=5176/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=4.4 decode_s=11.1 elapsed_s=390.2 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=5304/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=4.4 decode_s=11.1 elapsed_s=401.4 peak_gpu_gb=18.98
+PROGRESS rank=0 predictions=5432/11246 dataset=kspon-eval_other delta=2 batch=128 encode_s=4.3 decode_s=17.0 elapsed_s=422.8 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=5560/11246 dataset=kspon-eval_other delta=4 batch=128 encode_s=4.3 decode_s=18.8 elapsed_s=441.9 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=5624/11246 dataset=kspon-eval_other delta=2 batch=64 encode_s=2.5 decode_s=20.6 elapsed_s=465.2 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=5688/11246 dataset=kspon-eval_other delta=4 batch=64 encode_s=2.5 decode_s=21.1 elapsed_s=486.4 peak_gpu_gb=19.13
+PARITY rank=0 lang=English delta=2 samples=2 PASS
+PROGRESS rank=0 predictions=5816/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=4.2 decode_s=3.9 elapsed_s=504.8 peak_gpu_gb=19.13
+PARITY rank=0 lang=English delta=4 samples=2 PASS
+PROGRESS rank=0 predictions=5944/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=4.2 decode_s=3.7 elapsed_s=514.4 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=6072/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=4.2 decode_s=4.2 elapsed_s=522.8 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=6200/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=4.2 decode_s=4.6 elapsed_s=527.7 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=6328/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=4.0 decode_s=4.9 elapsed_s=536.8 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=6456/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=4.0 decode_s=5.0 elapsed_s=542.0 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=6584/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=4.0 decode_s=6.3 elapsed_s=552.4 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=6712/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=4.0 decode_s=5.9 elapsed_s=558.5 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=6840/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=4.1 decode_s=7.1 elapsed_s=569.8 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=6968/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=4.1 decode_s=6.5 elapsed_s=576.4 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=7096/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=4.1 decode_s=7.6 elapsed_s=588.4 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=7224/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=4.1 decode_s=7.3 elapsed_s=595.9 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=7352/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=4.2 decode_s=8.7 elapsed_s=609.0 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=7480/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=4.2 decode_s=8.8 elapsed_s=618.3 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=7608/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=3.7 decode_s=14.6 elapsed_s=636.7 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=7736/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=3.7 decode_s=16.0 elapsed_s=652.9 peak_gpu_gb=19.13
+PROGRESS rank=0 predictions=7864/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=5.7 decode_s=23.2 elapsed_s=681.8 peak_gpu_gb=19.19
+PROGRESS rank=0 predictions=7992/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=5.7 decode_s=22.9 elapsed_s=704.9 peak_gpu_gb=19.19
+PROGRESS rank=0 predictions=8120/11246 dataset=librispeech-test-clean delta=2 batch=128 encode_s=6.4 decode_s=39.1 elapsed_s=750.6 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=8248/11246 dataset=librispeech-test-clean delta=4 batch=128 encode_s=6.4 decode_s=39.0 elapsed_s=789.9 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=8278/11246 dataset=librispeech-test-clean delta=2 batch=30 encode_s=1.5 decode_s=52.8 elapsed_s=844.3 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=8308/11246 dataset=librispeech-test-clean delta=4 batch=30 encode_s=1.5 decode_s=52.2 elapsed_s=896.6 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=8436/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=5.9 decode_s=5.8 elapsed_s=908.5 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=8564/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=5.9 decode_s=5.7 elapsed_s=914.3 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=8692/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=5.6 decode_s=6.5 elapsed_s=926.6 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=8820/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=5.6 decode_s=6.5 elapsed_s=933.2 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=8948/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=5.6 decode_s=7.3 elapsed_s=946.2 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=9076/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=5.6 decode_s=7.3 elapsed_s=953.7 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=9204/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=5.4 decode_s=8.2 elapsed_s=967.4 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=9332/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=5.4 decode_s=7.9 elapsed_s=975.5 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=9460/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=5.1 decode_s=9.0 elapsed_s=989.8 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=9588/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=5.1 decode_s=9.2 elapsed_s=999.2 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=9716/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=5.7 decode_s=10.1 elapsed_s=1015.0 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=9844/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=5.7 decode_s=10.4 elapsed_s=1025.6 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=9972/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=6.0 decode_s=12.4 elapsed_s=1044.2 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=10100/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=6.0 decode_s=12.4 elapsed_s=1056.7 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=10228/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=5.9 decode_s=14.5 elapsed_s=1077.2 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=10356/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=5.9 decode_s=14.1 elapsed_s=1091.4 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=10484/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=6.1 decode_s=16.5 elapsed_s=1114.1 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=10612/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=6.1 decode_s=16.4 elapsed_s=1130.5 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=10740/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=6.3 decode_s=21.1 elapsed_s=1158.1 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=10868/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=6.3 decode_s=19.4 elapsed_s=1177.6 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=10996/11246 dataset=librispeech-test-other delta=2 batch=128 encode_s=6.2 decode_s=27.4 elapsed_s=1211.5 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=11124/11246 dataset=librispeech-test-other delta=4 batch=128 encode_s=6.2 decode_s=28.1 elapsed_s=1239.8 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=11185/11246 dataset=librispeech-test-other delta=2 batch=61 encode_s=3.4 decode_s=57.0 elapsed_s=1300.4 peak_gpu_gb=26.28
+PROGRESS rank=0 predictions=11246/11246 dataset=librispeech-test-other delta=4 batch=61 encode_s=3.4 decode_s=55.4 elapsed_s=1356.0 peak_gpu_gb=26.28
+DONE rank=0 predictions=11246

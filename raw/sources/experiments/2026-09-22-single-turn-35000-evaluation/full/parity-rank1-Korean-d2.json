@@ -1,0 +1,80 @@
+[
+  {
+    "id": "kspon/eval_clean/KsponSpeech_E00930",
+    "delta": 2,
+    "match": true,
+    "serial": [
+      [
+        4,
+        48606
+      ],
+      [
+        4,
+        125894
+      ],
+      [
+        5,
+        127454
+      ]
+    ],
+    "batched": [
+      [
+        4,
+        48606
+      ],
+      [
+        4,
+        125894
+      ],
+      [
+        5,
+        127454
+      ]
+    ],
+    "forced_serial": 0,
+    "forced_batch": 0
+  },
+  {
+    "id": "kspon/eval_clean/KsponSpeech_E00670",
+    "delta": 2,
+    "match": true,
+    "serial": [
+      [
+        6,
+        52959
+      ],
+      [
+        6,
+        11
+      ],
+      [
+        10,
+        129547
+      ],
+      [
+        10,
+        13
+      ]
+    ],
+    "batched": [
+      [
+        6,
+        52959
+      ],
+      [
+        6,
+        11
+      ],
+      [
+        10,
+        129547
+      ],
+      [
+        10,
+        13
+      ]
+    ],
+    "forced_serial": 0,
+    "forced_batch": 0
+  }
+]

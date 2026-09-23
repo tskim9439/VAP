@@ -1,0 +1,247 @@
+{
+  "complete": true,
+  "predictions": 22492,
+  "expected_predictions": 22492,
+  "config": {
+    "protocol": "single-turn-asr-v1",
+    "checkpoint": "/soundai/Model/VAPASR/hf-approved-qwen-v1-e10-n2/checkpoint-35000",
+    "checkpoint_weights": {
+      "model.safetensors": {
+        "size": 4837811880,
+        "mtime_ns": 1790042049055238000
+      }
+    },
+    "checkpoint_config_sha256": "6a2d1586a23afab0c9e90789611dba30bbdf6c6fe43723c6230902e5599fe7ca",
+    "manifest_digest": "917dc49a4373bd162a8f051b0ee8b3bb45c286a17d16d3ba3046cd6992b7346c",
+    "utterances": 11246,
+    "deltas": [
+      2,
+      4
+    ],
+    "tail_s": 1.0,
+    "leading_silence_s": 0,
+    "next_bias": 0,
+    "dtype": "float32",
+    "tf32": false,
+    "max_flush_rounds": 8,
+    "textnorm": {
+      "textnorm_version": "asr-tn-v1.3.0",
+      "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+      "numeric_backend_version": "num2words 0.5.14"
+    },
+    "code": {
+      "experiments/eval_single_turn_asr.py": "096fb29f2e2e63e811000f9a16f96e04bc4aa22897635683ba2d1e9eaa273423",
+      "vapasr/hf/batch_decode.py": "32a34cee790f48d9ba8660824085f6a9c4866ca0d1b599712e89dd5866f6d4c6",
+      "vapasr/data/single_turn_eval.py": "8fbb8a38216554854b0aa64d001e7fe269597fb89a07bd38fad45a7e11168a9c",
+      "vapasr/hf/modeling_vapasr.py": "65635a8a68436c510c259260d235520eae890ea7cc0b1a6f452ccb143a6e2eca",
+      "vapasr/features/online.py": "7a03e58de3b80a4d8ef495c6fbb7cb20e05c8d1993027a314094bfb5691732dd"
+    },
+    "world_size": 2,
+    "limit_per_set": 0,
+    "batch_size": 128,
+    "encoder_batch_size": 1,
+    "cpu_threads": 4
+  },
+  "groups": {
+    "kspon-eval_clean/delta-2": {
+      "utterances": 3000,
+      "audio_s": 9518.368999999993,
+      "forced": 0,
+      "metrics": {
+        "cer_nospace": {
+          "substitutions": 4190,
+          "deletions": 1332,
+          "insertions": 807,
+          "n_ref": 48019,
+          "n_hyp": 47494,
+          "errors": 6329,
+          "rate": 0.13180199504362855
+        },
+        "cer_space": {
+          "substitutions": 4302,
+          "deletions": 2362,
+          "insertions": 1991,
+          "n_ref": 65687,
+          "n_hyp": 65316,
+          "errors": 8655,
+          "rate": 0.13176123129386333
+        },
+        "wer": {
+          "substitutions": 4277,
+          "deletions": 940,
+          "insertions": 1090,
+          "n_ref": 20668,
+          "n_hyp": 20818,
+          "errors": 6307,
+          "rate": 0.3051577317592413
+        }
+      }
+    },
+    "kspon-eval_clean/delta-4": {
+      "utterances": 3000,
+      "audio_s": 9518.368999999993,
+      "forced": 1,
+      "metrics": {
+        "cer_nospace": {
+          "substitutions": 3810,
+          "deletions": 1365,
+          "insertions": 642,
+          "n_ref": 48019,
+          "n_hyp": 47296,
+          "errors": 5817,
+          "rate": 0.12113954892854911
+        },
+        "cer_space": {
+          "substitutions": 3879,
+          "deletions": 2490,
+          "insertions": 1588,
+          "n_ref": 65687,
+          "n_hyp": 64785,
+          "errors": 7957,
+          "rate": 0.12113508000060895
+        },
+        "wer": {
+          "substitutions": 3916,
+          "deletions": 1030,
+          "insertions": 850,
+          "n_ref": 20668,
+          "n_hyp": 20488,
+          "errors": 5796,
+          "rate": 0.28043352041803754
+        }
+      }
+    },
+    "kspon-eval_other/delta-2": {
+      "utterances": 2687,
+      "audio_s": 12317.648,
+      "forced": 2,
+      "metrics": {
+        "cer_nospace": {
+          "substitutions": 5836,
+          "deletions": 1879,
+          "insertions": 1071,
+          "n_ref": 61829,
+          "n_hyp": 61021,
+          "errors": 8786,
+          "rate": 0.14210160280774395
+        },
+        "cer_space": {
+          "substitutions": 6028,
+          "deletions": 3252,
+          "insertions": 2917,
+          "n_ref": 83570,
+          "n_hyp": 83235,
+          "errors": 12197,
+          "rate": 0.1459495034103147
+        },
+        "wer": {
+          "substitutions": 6009,
+          "deletions": 1187,
+          "insertions": 1660,
+          "n_ref": 24428,
+          "n_hyp": 24901,
+          "errors": 8856,
+          "rate": 0.3625347961355821
+        }
+      }
+    },
+    "kspon-eval_other/delta-4": {
+      "utterances": 2687,
+      "audio_s": 12317.648,
+      "forced": 2,
+      "metrics": {
+        "cer_nospace": {
+          "substitutions": 5187,
+          "deletions": 1844,
+          "insertions": 828,
+          "n_ref": 61829,
+          "n_hyp": 60813,
+          "errors": 7859,
+          "rate": 0.12710863834123146
+        },
+        "cer_space": {
+          "substitutions": 5313,
+          "deletions": 3299,
+          "insertions": 2265,
+          "n_ref": 83570,
+          "n_hyp": 82536,
+          "errors": 10877,
+          "rate": 0.13015436161301902
+        },
+        "wer": {
+          "substitutions": 5481,
+          "deletions": 1278,
+          "insertions": 1260,
+          "n_ref": 24428,
+          "n_hyp": 24410,
+          "errors": 8019,
+          "rate": 0.3282708367447192
+        }
+      }
+    },
+    "librispeech-test-clean/delta-2": {
+      "utterances": 2620,
+      "audio_s": 19452.480625000047,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 2481,
+          "deletions": 331,
+          "insertions": 676,
+          "n_ref": 52576,
+          "n_hyp": 52921,
+          "errors": 3488,
+          "rate": 0.06634205721241632
+        }
+      }
+    },
+    "librispeech-test-clean/delta-4": {
+      "utterances": 2620,
+      "audio_s": 19452.480625000047,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 1940,
+          "deletions": 242,
+          "insertions": 310,
+          "n_ref": 52576,
+          "n_hyp": 52644,
+          "errors": 2492,
+          "rate": 0.047398052343274495
+        }
+      }
+    },
+    "librispeech-test-other/delta-2": {
+      "utterances": 2939,
+      "audio_s": 19229.57012499997,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 5440,
+          "deletions": 858,
+          "insertions": 1132,
+          "n_ref": 52343,
+          "n_hyp": 52617,
+          "errors": 7430,
+          "rate": 0.1419483025428424
+        }
+      }
+    },
+    "librispeech-test-other/delta-4": {
+      "utterances": 2939,
+      "audio_s": 19229.57012499997,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 4542,
+          "deletions": 700,
+          "insertions": 693,
+          "n_ref": 52343,
+          "n_hyp": 52336,
+          "errors": 5935,
+          "rate": 0.11338669927210897
+        }
+      }
+    }
+  }
+}

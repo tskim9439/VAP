@@ -1,0 +1,9 @@
+{
+  "status": "cancelled",
+  "complete": false,
+  "reason": "User requested stopping delta=8 and evaluating delta=6 instead.",
+  "checkpoint": "/soundai/Model/VAPASR/hf-approved-qwen-v1-e10-n2/checkpoint-35000",
+  "delta": 8,
+  "terminated_worker_pids": [1775865, 1775868],
+  "partial_results_preserved": "/soundai/users/tskim/VAPKT-data/results/single-turn-35000-d8-v1"
+}

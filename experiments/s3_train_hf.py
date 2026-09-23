@@ -15,12 +15,20 @@ ap.add_argument("--bs-en", type=int, default=12); ap.add_argument("--bs-ko", typ
 ap.add_argument("--lr", type=float, default=6e-5); ap.add_argument("--lr-adapter", type=float, default=1e-3); ap.add_argument("--lr-encoder", type=float, default=1e-5); ap.add_argument("--warmup", type=int, default=500); ap.add_argument("--wd", type=float, default=0.01)
 ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--M", type=int, default=0); ap.add_argument("--next-weight", type=float, default=0.3); ap.add_argument("--next-weight-ko", type=float, default=0.15)
 ap.add_argument("--init", default=None, help="Qwen3-ASR 디렉토리 | HF 산출물 디렉토리 | 기존 ckpt-last.pt"); ap.add_argument("--init-adapter", default=None, help="증류 adapter.pt (새 모델일 때)")
-ap.add_argument("--train-encoder", action="store_true"); ap.add_argument("--no-grad-ckpt", action="store_true"); ap.add_argument("--liger", action="store_true"); ap.add_argument("--no-liger", action="store_true")
+encoder_group = ap.add_mutually_exclusive_group()
+encoder_group.add_argument("--train-encoder", dest="train_encoder", action="store_true", help="encoder 해동(기본값)")
+encoder_group.add_argument("--freeze-encoder", dest="train_encoder", action="store_false", help="encoder 동결 ablation")
+ap.set_defaults(train_encoder=True)
+ap.add_argument("--no-grad-ckpt", action="store_true"); ap.add_argument("--liger", action="store_true"); ap.add_argument("--no-liger", action="store_true")
 ap.add_argument("--eval-every", type=int, default=2000); ap.add_argument("--save-every", type=int, default=500); ap.add_argument("--eval-bias", default="0"); ap.add_argument("--eval-delay", type=int, default=2)
 ap.add_argument("--sentinel-stream", type=int, default=10); ap.add_argument("--sentinel-utt", type=int, default=100); ap.add_argument("--eval-only", action="store_true")
 ap.add_argument("--eval-tag", default="offline", help="--eval-only 결과 이름 eval/<tag>-<step>.json (예: select)"); ap.add_argument("--eval-seed", type=int, default=1, help="dev 표본 추출 seed (sentinel 1, select 7)")
 ap.add_argument("--dev-extra", default="", help="추가 dev 셋 '라벨=manifest:subset:mode' 쉼표 구분 (예: ah71-dev=aihub71631-dev:dev:utt) — 새 도메인 평가용, 기본 3 셋 뒤에 붙는다")
 ap.add_argument("--out-dir", required=True); ap.add_argument("--resume", default="auto", help="auto | none | <checkpoint dir>"); ap.add_argument("--save-total-limit", type=int, default=2)
+ap.add_argument("--train-man-root", default=None, help="학습 manifest 전용 루트(dev/eval 기본 루트와 분리)")
+ap.add_argument("--train-align-root", default=None, help="학습 alignment 전용 루트")
+ap.add_argument("--language-schedule", choices=("balanced", "proportional"), default="balanced",
+                help="balanced=언어 step 1:1(작은 셋 반복), proportional=각 스트림을 epoch당 정확히 한 번")
 ap.add_argument("--seed", type=int, default=0); ap.add_argument("--log-every", type=int, default=50); ap.add_argument("--num-workers", type=int, default=4); ap.add_argument("--gpu", default=None)
 a = ap.parse_args()
 
@@ -84,7 +92,9 @@ for spec in [x for x in a.dev_extra.split(",") if x]:                           
 def make_sets(spec, cap_stream, cap_utt, seed=1):
     return {lab: MonoStreamDataset([m], tok, mode=mode, subsets=[sub], delays=(a.eval_delay,), max_per_chunk=a.M, seed=seed, max_items=min(DEV_CAP.get(lab, 10**9), cap_stream if mode == "stream" else cap_utt), online=True) for lab, m, sub, mode in spec}
 if world > 1 and not main: barrier()
-train_sets = {m: MonoStreamDataset([m], tok, mode="stream", delays=delays, max_per_chunk=a.M, seed=a.seed, online=True) for m in manifests} if not a.eval_only else {}
+train_sets = {m: MonoStreamDataset([m], tok, mode="stream", delays=delays, max_per_chunk=a.M, seed=a.seed,
+                                   manifest_root=a.train_man_root, align_root=a.train_align_root, online=True)
+              for m in manifests} if not a.eval_only else {}
 dev_sets = make_sets(DEV, a.sentinel_stream, a.sentinel_utt, seed=a.eval_seed)
 if world > 1 and main: barrier()
 log("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align})" for k, v in train_sets.items()) + " | dev " + ", ".join(f"{k}:{len(v)}" for k, v in dev_sets.items()) + f" | world {world}")
@@ -99,7 +109,7 @@ targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradien
 preempt_cb = PreemptCallback(out, gloo_pg)
 trainer = VapAsrTrainer(model=model, args=targs, train_sets=train_sets, dev_sets=dev_sets, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, lr_encoder=a.lr_encoder,
                         eval_delay=a.eval_delay, eval_biases=[float(x) for x in a.eval_bias.split(",")], max_per_chunk=a.M, gloo_pg=gloo_pg, num_workers=a.num_workers,
-                        callbacks=[preempt_cb], processing_class=tok)                    # checkpoint-N 에 tokenizer 도 저장
+                        language_schedule=a.language_schedule, callbacks=[preempt_cb], processing_class=tok)                    # checkpoint-N 에 tokenizer 도 저장
 if a.eval_only:                                                                # 오프라인 평가: --init <checkpoint-N 디렉토리> → out-dir/eval/offline-N.json
     import re; mstep = re.search(r"checkpoint-(\d+)", init or ""); trainer.state.global_step = int(mstep.group(1)) if mstep else 0
     r = trainer.evaluate(metric_key_prefix=a.eval_tag); log(json.dumps(r, ensure_ascii=False))

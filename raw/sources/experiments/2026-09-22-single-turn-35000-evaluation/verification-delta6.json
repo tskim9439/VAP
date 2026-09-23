@@ -1,0 +1,17 @@
+{
+  "complete": true,
+  "delta": 6,
+  "expected_utterances": 11246,
+  "actual_utterances": 11246,
+  "missing": 0,
+  "duplicates": 0,
+  "extra": 0,
+  "same_utterance_ids_as_delta2_delta4": true,
+  "previous_run_config_differences": ["deltas"],
+  "all_tail_s_1": true,
+  "source_hashes_match": true,
+  "edit_count_identities_passed": true,
+  "corpus_aggregation_verified": true,
+  "serial_batch_parity_checks_passed": 8,
+  "forced_next_total": 3
+}

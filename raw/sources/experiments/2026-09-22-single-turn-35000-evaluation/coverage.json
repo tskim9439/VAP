@@ -1,0 +1,2236 @@
+{
+  "protocol": "single-turn-asr-v1",
+  "coverage": {
+    "librispeech-test-clean": {
+      "source_labels": 2620,
+      "expected_standard_count": 2620,
+      "available": 2620,
+      "missing": 0,
+      "audio_hours": 5.403466840277786,
+      "full_standard_set": true
+    },
+    "librispeech-test-other": {
+      "source_labels": 2939,
+      "expected_standard_count": 2939,
+      "available": 2939,
+      "missing": 0,
+      "audio_hours": 5.341547256944456,
+      "full_standard_set": true
+    },
+    "kspon-eval_clean": {
+      "source_labels": 3000,
+      "expected_standard_count": 3000,
+      "available": 3000,
+      "missing": 0,
+      "audio_hours": 2.643991388888886,
+      "full_standard_set": true
+    },
+    "kspon-eval_other": {
+      "source_labels": 3000,
+      "expected_standard_count": 3000,
+      "available": 2687,
+      "missing": 313,
+      "audio_hours": 3.421568888888895,
+      "full_standard_set": false
+    }
+  },
+  "missing": [
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03001",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그+ 그래서 혼자 떨어졌을때 유괴범한테 납치를 당한 거고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03001.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03002",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 많이 갖고 있는데 아예 그걸 구비를 안 해놓는 거구나 우리나라에.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03002.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03003",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 편하기는 하겠다.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03003.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03004",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "의무행정 그쪽이 있어가지고 b/ 그거 간간히 들으면서 한번 부전공 해서",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03004.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03005",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "실제 사러 가서 우리가 살려고 하면",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03005.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03006",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "거기서 그니까 한 쪽 구석에서 내려줄 거 아니야 오른쪽 구석이든 왼쪽 구석이든.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03006.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03007",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "응/ 발자국 소리만 들려도 짖는데. (내가)/(내) 짖지 마 하면은 또",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03007.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03008",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "비슷하게 생겼어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03008.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03009",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "되는 게 꿈이었는데.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03009.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03010",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "왜냐면 (3주)/(삼 주)에 시험을 (2번)/(두 번) 보니까 u/ 시험기간인 거야 (3주)/(삼 주)동안.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03010.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03011",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "했는데 b/ 답이 없는 거야. b/ 그쪽 단과대에서는 우리에 대해서 모르고 우리 단과대에서는 그쪽에 대해서 모르고 왜 다같이 그렇게 멍청하게 굴고있는지",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03011.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03012",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 이것도 또+ 또 몰라 또 누구 또 불화설 터지거나 아니면 또",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03012.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03013",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "모르겠어 그러니까 식자재 할인 마트에서 산 거니까 그런 (이렇게)/(일케) 즐길 수 있는 술도 있겠지만 음식에 쓰거나.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03013.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03014",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "너 강아지 물품 니 돈으로 사지?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03014.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03015",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "응 돈이 되게 아까웠어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03015.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03016",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그럼 (20년)/(이십 년) 전+ 전처럼 이메일로 l/ 소통하면 되잖아. l/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03016.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03017",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어 전화로 그걸 먼저 시작을 해야돼 b/ 시작을 해서",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03017.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03018",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "겨울이었나?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03018.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03019",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "응 b/ 창업 준비한다고 b/ 이것저것",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03019.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03020",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그치. 친한 친구여야 그거를 자랑으로 안 받아들이고 b/ 그냥 그 친구의 장점으로",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03020.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03021",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "약간 저승에 대한 웹툰중에서 저승에서 만난 사람들이라는 웹툰도 있거든?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03021.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03022",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "우리가 이제 마감을 해야 되잖아. 놀이기구 한 (9시)/(아홉 시) (50분)/(오십 분) 쯤? (4, 50분)/(사오십 분) 쯤 마감을 한단 말이야. 그러면은",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03022.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03023",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "재밌다는데.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03023.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03024",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "내려주는",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03024.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03025",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그리고 그러더다고 진짜 고수들은 패딩입고도 많이 갈걸?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03025.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03026",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "막내여서 그래.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03026.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03027",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "l/ 근데 악의 있는 그런 말이 아니라 l/ 정말 악의 없는 그런 순수한 말이라서 내가 뭐라 하지도 못 하겠더라고 b/ 그냥 학교에서 보던 약간 부족 모자라지만 착한 친구? 그런 느낌?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03027.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03028",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그러시면 그렇다면 그 저는 이제 그 대전 토박이는 아닙니다. 저도 이제 (9살)/(아홉 살) 때 이 곳 아버지 회사 때문에",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03028.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03029",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어 취업이 생각보다 l/ 원하는 곳에 되면 한 번에 되면 좋겠지만 그게 또 힘들고 하니까 b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03029.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03030",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "냇가가 생긴다고 했는데 냇가가 원래는 그쪽 변에 다 생긴다고 했었어 그쪽 변으로.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03030.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03031",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 어제 그/ 본 나이키 후드 집업은 좀 괜찮았는데 그/ 언더아머랑",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03031.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03032",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "모른대. 모른대. 그래서 b/ 근데 그/ 하필 또 (소프트웨어)/(소프트웨어) 연계 전공을 한 애가 지금",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03032.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03033",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어 배 타고 갔는데 쾌속선이라서 b/ 부산에서 여객선이 여객 터미널에서 타면 (2시간)/(두 시간)이면 가더라고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03033.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03034",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "생활과 정치 월요일 (3시)/(세 시)부터 (4시)/(네 시).",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03034.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03035",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "우리 그/ 그때 그/ 뭐지/ 흠뻑쇼 갔을 때가 대박이었어 그때 사진이",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03035.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03036",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 스텔니 혹시 연기하셨던 분인가요?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03036.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03037",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이제 자세 적응되고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03037.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03038",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 상체는 b/ 하면 아예",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03038.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03039",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아아 수익이 올라서?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03039.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03040",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(1차)/(일 차)는 실기랑 그 생기부? 성적 들어가고 (2차)/(이 차)는 워크숍을 가 가지고 협동? 리더쉽 같은 거 보고 또 구술 면접 보고 막 글짓기 같은 것도 하고 하는데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03040.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03041",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "걔는 결말에 반전이여서 얘기를 안할게.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03041.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03042",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "수 목 금? 평일엔 수 목 금이고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03042.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03043",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "음/ 너무 많이 돌면 무리라고 생각하니까.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03043.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03044",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "맞춰 입고?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03044.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03045",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "세 군대 갔던 곳 중에서 가장 별로+ 별로는 아니지만",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03045.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03046",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "로 (사면)/(샀면*)",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03046.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03047",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "휴식기를 가지면서 인생을 돌아보고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03047.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03048",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "무슨 알반지 얘기 했어?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03048.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03049",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그냥 (1번)/(일 번) 동작 (2번)/(이 번) 동작 (3번)/(삼 번) 동작 왼쪽으로 두 걸음 갔다가 손 뻗고 그 다음에 거기서 대사 치고 하는 거는 너무 계산적이지 않나",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03049.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03050",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "존경합니다. b/ 어/ 그 이렇게 우리가 배우를 위해 지금 달려가고 있잖아요. 그 첫 걸음을 이제 입시로 했고 b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03050.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03051",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "자기가 생각하기엔 분명히 이 다음 세대에 때는 무조건 이게 되게 돼있는데 안된대. 안팔린대.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03051.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03052",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "나 최고의 행운.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03052.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03053",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "백수생활을 즐긴다고 열심히 이제 놀고 있긴 한데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03053.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03054",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이제 이런 거 더이상 안하겠다 막 이러고 이제 포+ 완전 포기할라 그랬+ 완전 그냥",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03054.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03055",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그 다리 이제 다리 밑으로 떨어질라고 하는 부+ 이제",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03055.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03056",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "거의 그렇게 맞춰서 해야된다는 얘기가 있더라고 지금까지는",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03056.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03057",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아 실+ 아직 안샀는데 실+ 필기 끝나면 살라고 실기만. 필기는 그냥 혼자 해보고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03057.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03058",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(일요일 날)/(일요일날) 알바를 간다고? 이래서 응",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03058.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03059",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그것도 문제가 있는데 그러고 있으면은 l/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03059.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03060",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그럼 차에 텐트를 설치하는 거야? 어떻게 하는 건데 그거는?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03060.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03061",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "앞으로 저기 자녀 있으면",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03061.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03062",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(7개)/(일곱 개)의 지옥에서 l/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03062.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03063",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아 걔 같은 경우에는 이제 여름에 휴가가 있기 때문에 그때 나한테 가자고 하는 의미인 거 같은데 내가 우선 갈려고 마음만+ 나도 마음이 먹어서 이제 오빠처럼 뭐 돈을 회비식으로 걷어가지고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03063.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03064",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(OT)/(오티) 가서 친구 사겨야지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03064.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03065",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "시+ 학점 공부를 잘 받기 위해 공부를 하는데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03065.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03066",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그래서 본업보다 l/ 치킨집 영업에 더 충실하게 되는",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03066.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03067",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "여기는 내가 잘 안 와가지고 이쪽 동네는 잘 안와서 내가 지리 쪽은 잘 몰라 그래서 뭐 가도 우리 맨날 가는데 뭐/ 둔산동이나 뭐/ 거기 서 대전 그쪽으로 가야 될 거 같아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03067.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03068",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 그래서 언니네는 텐트랑 다 갖고 다니지?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03068.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03069",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "기숙사 생활에는 다이소가 최고야.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03069.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03070",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "에피소드 다 나와.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03070.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03071",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "걔네 덕분에 우리가 잘 배웠으니까 또.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03071.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03072",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그러겠지. 으/ 한동안 안하셨으니까.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03072.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03073",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "다+ 내가 수강신청 도와줘야 된다 그랬잖아 월요일에. 근데 그날",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03073.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03074",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "일본에서 만난 애?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03074.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03075",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어. 근데 사실 그 (멤버)/(멤버) 그대로 대전에 이번에 놀러와",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03075.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03076",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아니 좀 거칠잖아. 원래 너 입던 티셔츠랑 다르지 않아?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03076.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03077",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이제 관객에게 이제 흥행을 좀 유도하려는 성향이 있어서 b/ 전 그렇게 영화를 기획했다고 생각을 합니다.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03077.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03078",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아님 좀 이+ (빠르던)/(빠르든) (늦던)/(늦든) 아 오늘은 이거땜에 b/ 좀 빨리 일어난거고 평소같은 (9시)/(아홉 시) 쯤 가서 갔다와서 밥 먹고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03078.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03079",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "자연경관지를 보려면 좀 한참을 가야되더라고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03079.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03080",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "막아야지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03080.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03081",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "내 친구 보증금 (1000)/(천) 에 (70)/(칠십)?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03081.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03082",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 나 근데 두팀 다 별로 내가 좋아하는 팀이 아니야",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03082.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03083",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "응. 하지 말라고 해야지. (그냥)/(그양) 보고 서 있으면 뭐해?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03083.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03084",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "단국대. 동국대.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03084.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03085",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "나이키 그거 가방 예뻤잖아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03085.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03086",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(1개월)/(한 개) 나 (2개)/(두 개) 정도는 있어야 돼.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03086.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03087",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "다 외우는데 또 이름이 또 왜 이렇게 긴지",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03087.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03088",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "바쁜가 요새?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03088.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03089",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "얼굴 나와?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03089.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03090",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "운동까지 할 정도로 부지런하면",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03090.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03091",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "러시아에서도 배우러 와. 우리 그 한예종에.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03091.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03092",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "알아보고 가려고 했는데 조금 뭐 시간이 안맞아가지고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03092.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03093",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그런데 또 수시 때 하향을 써서 만약에 붙었어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03093.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03094",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그러면은 모든 실태가 다 드러나",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03094.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03095",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "애들한테 그런 대응 다 시키잖아. 그니까",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03095.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03096",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(이제)/(제) 비누가 어느 정도 굳어야 되잖아? 근데 우리가 실험을 잘못 했는지 비누가 굳지 않아가지구 l/ 비누를 못 만든 적이 있어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03096.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03097",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그건 챙겨주시는 거고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03097.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03098",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "뭐 간혹 낚시하시는 분들 꽤 많이 그래. n/ 낚시하시는 분들이 (세단)/(쎄단)으로 많이 하시니까 b/ 그거는 우리는 근데 그거 말고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03098.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03099",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 오늘은 하체 할려고. 하체랑 하체 했다가 나 요즘에 살 많이 쪄가지고 다이어트 할겸 b/ 런닝도 달리고 그래야지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03099.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03100",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "걘 컴활 왜 딴대?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03100.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03101",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "너네 홈페이지에 기재됐던 거야?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03101.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03102",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "스토컨데 완전?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03102.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03103",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "학교 의자. l/ 스트레스 받아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03103.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03104",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그리고 좀 운동 그/ 경력이 많아야 돼 일단. 그래야지 그/ 자기가 갖고 있는 운동 지식 같은 게 많잖아. 그러면 사람들이 이젠 트레이너들한테 많이",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03104.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03105",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "알았어. 근데 내가 노트북으로 해봤거든.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03105.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03106",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "너네 오빠같은 사람이 없겠네.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03106.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03107",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이 어르신들이.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03107.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03108",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이제 갑자기 친구랑 말이 나+ 나와서 b/ 자기가 보드를 너무 타고 가고 싶다는 거야. 그래가지고 아 알겠다 그러면 b/ 그래 그럴까 하면서 뭔가 좀 신박한 걸",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03108.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03109",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "지금 전화해 아니면은 언제 전화해 n/ 그렇게 나눠지겠지?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03109.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03110",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "스키 뭐 좀/ 장비도 필요하고 멀리 가야되고 그 다음에 옷도 갖추고 타야되고 해서 b/ 확실히 좀 부담이 많이되는 거 같애 그 옷을 빌리는 거에 대한 b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03110.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03111",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "애기 병원이 들어서면서 거기서 이제 어/ 엄마들이랑 기다려야되고 하니깐 그 앞에 (이제)/(인제) 엄마들하고 이렇게 중심으로 커피숍 먼저 생겼었어. 그러니까",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03111.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03112",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "음식 장사 아니고 딴 게 뭐야? 뭘 얘기하는 건데?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03112.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03113",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "헐 또한+ 또한다고 그거를?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03113.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03114",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아/ (GRN)/(쥐알엔) 나도 살려고 했는데 세일 기다리고 있어. 엄마가 사온다 했거든?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03114.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03115",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그 탈진 해버린 거야 애들이. 그래서 그냥 하 뭘 나가냐 b/ 첫날인데 쉬자 이러고 b/ 그냥 밥 먹고 주변에서 밥 먹고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03115.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03116",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "요가 있는데 요가 선생님 이제 안와 바꼈어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03116.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03117",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아/ 근데 홈페이지에서 나는 것도 몇개 있고 아/ 근데 내가 장+ 입+ 작년에 입결 봤을 때 그/ 끝에 있는 번호?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03117.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03118",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "피가 너가 봤어? 그니까 사람 피나는 걸 너가 봤어? 꿈에서 기억나? 피 보면 좋은 꿈이랬어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03118.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03119",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 아 그런데 그렇게 해주신다 하셔서 이제",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03119.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03120",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아이/ 이제 갈까? 이래서 계산대에 갔거든? 갑자기 (더치 페이)/(더치페이)? 이래서 내가 어 이랬는데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03120.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03121",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 에피소드",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03121.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03122",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "말 그대로 이제 세상이 바뀌고 있는건 사실이고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03122.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03123",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "볼려고 하긴 했었거든.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03123.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03124",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "보기 굉장히 망설여지는.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03124.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03125",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "나 궁금한 거 있는데 그럼 보드타면 왼발로 먼저 내려와 오른발로 먼저 내려와?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03125.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03126",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 질문 좀 해달라고? 아/ b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03126.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03127",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "객관적으로 봐주는데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03127.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03128",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그 사+ 뒤에 나올 사건들이 이제 다른 웹툰으로 막 나오는데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03128.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03129",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "비행기 값 포함해가지고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03129.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03130",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그치. 바로 옆이잖아. 어/ 어쨌든 간에 그게 더 편하니까. 차라리 거기서 월세를 얼마랬지? 거의 천 불렀댔나?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03130.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03131",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 아니 그니까 그/ 한 팀당 몇 경기 씩 남은거야 지금",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03131.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03132",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 아 그거 뭐지? 아는 와이프 그/ 드라마에서 그/ 은행 얘기여가지고 b/ 봤는데 막 지점+ 지점이 (이렇게)/(일케) 있으면 막/ 지점 따로 막/ 있어가지고 지점장이랑",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03132.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03133",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "n/ 누가 해 줬어?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03133.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03134",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "한번은 같이 밥을 먹었고 불편하게.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03134.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03135",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 아. 번호가 하나씩 없어지는 거야?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03135.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03136",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "다른 애들이랑 똑같이 시작해도 실패를 하게 돼도",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03136.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03137",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "누구냐고? b/ 누구냐고 말해도 모르잖아. l/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03137.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03138",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "b/ 아 근데 저번에 우리 이거 레이 사고 나서도 올랐잖아 그게 다 잡히는 거야?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03138.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03139",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그/ 월급을 갖고 꼭 뭐 모으고 이게 아니라 애들 그 주변에 어떤 (이렇게)/(이케) 경제적으로 뛰어난 사람들 보면 투자",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03139.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03140",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "소식은 들었어요.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03140.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03141",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "다이소를 한번 가보자.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03141.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03142",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "응 꽃 폈대. 유채꽃.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03142.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03143",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 하루(종일)/(쟁일) 교육 들어?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03143.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03144",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "너무 극과극을 달리는 경우가 많아",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03144.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03145",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아 전 (물론)/(볼론) 그 위안부에 대해서 아주 일본이 우리에게 반성을 해야 한다는 그런 입장입니다. 당연한 거고 앞으로도 이제 그 관련해서도 만약 기회가 된다면 이제 활동을 좀 하고 싶은 생각입니다. 네네.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03145.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03146",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아/ 근데 들어주는 거랑은 다르게 b/ 거기는 다 처음보는 사이니까 말을 먼저 걸어야 하는데.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03146.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03147",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 우리한테 아 니네 되게 돈 많은 사람들이라고 b/ 그 갑부라고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03147.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03148",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 약간 원주 사람들은 인심이 후하구나. 이래",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03148.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03149",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "최종 수정일을 보내자. 우리가 안 보냈을 뿐 완료는 어제 했다.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03149.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03150",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "안쓰러울 때가 좀 많더라고 혼자서 막 b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03150.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03151",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "내가 어제 (5.5)/(오 쩜 오) 닭갈비를 먹으면서",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03151.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03152",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그냥 진짜 환상 속의 얘기? (그냥)/(걍) 얘기로만 듣던 그런 거잖아 족보는. 그래서 설마 족보대로 똑같이 나오겠어? 해서 안 봤거든 나는 그 족보를? 나왔더라고. 그래갖고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03152.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03153",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그 이미지 처리로 b/ 우리 아버지가 취미가 물고기 기르는+ 기르는 거잖아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03153.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03154",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 물론 내가 못하+ 뭔가 잘하거나 그랬던 것도 아니지만은 그래도 b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03154.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03155",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아. 인생에서",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03155.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03156",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아니 그쪽+ 그쪽+ (그쪽에)/(쪽에) 그 아래쪽에 으+ 그 냇가랑 아파트 생긴다 그러지 않았나? (목)/(목) 같은게 만들어진다고 했었잖아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03156.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03157",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어 근데 같은 회사고 (그러니까)/(그까*) 그렇게 고급+ 고급형이랑 약간의 보급형? 나눠놨는데 b/ 근데 난 디스커버리도 괜찮고 그게 (6천만 원)/(육천만 원) 정도?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03157.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03158",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그거 맨날 먹으면은 맛있나?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03158.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03159",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 영화 제목을",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03159.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03160",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "뭐 시집 간 친구들 말고. 만나긴 하지만은 b/ 이제 시집 간 친구들 빼고 뭐 시집 안 간 친구들 중에서.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03160.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03161",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "구입하는 것도 있고 아니면은",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03161.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03162",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "봉명동 쪽으로 돌기로 했다고?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03162.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03163",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "의류학과 애들은 뽑는다던가",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03163.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03164",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "b/ 지금 역사적으로 알고 있는 진실과 맞물려지는지 저는 궁금합니다. 왜냐하면 영화에서 봤을 때 민주화 운동은 항상 바른 거고 정당한 건데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03164.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03165",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 커피숍 빈 가게도 많자나 거기. 빈가게 되게 많던데?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03165.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03166",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "됐어 농담이고 음/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03166.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03167",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(우붓)/(우붓)도 좋았어. (우붓)/(우붓) 나름대로의 그런 자연환경이",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03167.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03168",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아이/ 근데 너무 솔직히말해서 정글 차이 아니었냐",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03168.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03169",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아니면 포끝 어때?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03169.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03170",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "대충 (10만 원)/(십만 원)에서.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03170.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03171",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 경쟁률이 올라가잖아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03171.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03172",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "본+ 옛날 학생 때랑 틀리게 이렇게 많이 사람들이 회식문화도 많이 강요도 하고 또 본의 아니게 내가 생각하는 거 하고 다르게 많이 살+ 살게 되더라고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03172.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03173",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "마셔야 되긴 하는데 일단 그거는 고려 해보도록 하지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03173.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03174",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "내가 원하는 총들을 고르고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03174.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03175",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "우리도 시험이 족보가 돌았던 시험이 있어. 나는",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03175.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03176",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "뭐/ 대회 경력도 있으면 좋고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03176.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03177",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그러니까 너무 천국 l/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03177.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03178",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "생활과 정치 아/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03178.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03179",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "진짜 질병을 앓으시는 분들인가?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03179.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03180",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "나 자취하면 l/ 뭐/ 어/ 원+ 원룸이 빌라가 좋을까 오피스텔이 좋을까",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03180.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03181",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 이제 그러다보니까 (4일)/(사 일)차 b/ 그때 나도 이제 좀 한국 그런 음식이 먹고 싶은거야 그 찾아가지고 갔지 점심에 한국 한인식당 메뉴 파는데로 근데.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03181.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03182",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어 나만 좀 b/ 축구로 다져진 이제 탄탄한 허벅지 땜에 그런 줄 알았지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03182.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03183",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "거+ 그 부위에 힘줄줄 알게되면 무게가 올라가",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03183.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03184",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그래서 손녀딸이 어디 학교를 가가지고 지금 변호사를 하고 있네 이런 말을 되게 많이 하셔. 조사는 조사 하는 것도 되게 오래 걸린단 말야? 기본 b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03184.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03185",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "음/ 치매활동 아니+ 치매 걸리신 어르신 들한테.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03185.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03186",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "서로 이제 의지하면서 b/ 네 지내면서 얼+ 크게 어려움은 없었는데 이제",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03186.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03187",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 니가 바람 피는 꿈 꿨어. 어떻게 생각해?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03187.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03188",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(유튜브)/(유투브) 채널인데 거기다가 대고 뭘 한대. 그걸 보고 계속 스마트스토어 (네이버 팜)/(네이버팜) 같은 거",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03188.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03189",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "은근 (OT)/(오티)나 새터 안 가는 사람 많더라고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03189.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03190",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "운동 종류를?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03190.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03191",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "네. 저는 이제 개인적으로 n/ 한국사 그 검정 시험에 그 관심이 있는데 제가 (1급)/(일 급)을 이제 취득하고 싶거든요. 혹시 팁이라던지 좀 노하우가 있을까요?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03191.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03192",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그래도 그거라도 (넣어야지)/(느야지) 뭐 아무것도 없잖아 지금.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03192.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03193",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 네. 신한대 떴는데 오늘 아까 (페이스북)/(페북) 보니까 그 분이 수원대도 수원대 편입도 붙었더라고요.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03193.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03194",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "나는 그 스카이캐슬 드라마를 여자친구 때문에 b/ 이/ 반 강제로 소리를 들으면서 봤지만",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03194.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03195",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 한문이 있었어?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03195.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03196",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "b/ 아 그거는 저기 연비 아이+ 연금 오른 거는 우리 그냥 수입이야 우리 수입이 올라서 오른 거고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03196.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03197",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이틀을 있었잖아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03197.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03198",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어. 아니 아니야. (4월)/(사 월) 며칠까지 무료 취소 가능하다고 써있었어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03198.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03199",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "일본 쪽은 생각을 안 했었던 쪽이라서.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03199.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03200",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "좋았지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03200.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03201",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 아니. 짜증이 자꾸 이렇게 쌓이잖아?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03201.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03202",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(10명)/(열 명).",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03202.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03203",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "갑자기 (닿는)/(다는) 거야 머리가. 그래서 어떻게 된 일인가 싶었는데 부모님이 자기 발 위에다가 애기를 올려 놓은 거야.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03203.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03204",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(8시)/(여덟 시). 오늘 그/ 형이랑 다 연락했어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03204.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03205",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 악덕업주는 아니었나봐. 자기는 망했지만 돈은 준거 보니까.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03205.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03206",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그래가지고 뭐 나 같은 경우는 이렇게 여행지 가서 방방 뜨는 스타일 아니+ 아니니까 이제 조용히 그 가이드가 이제 가자는대로 많이 따라다녔거든",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03206.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03207",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "엄청 미심쩍은 표정으로 l/ b/ 나에게 그걸 돌려주면서 어쨌든 그 (6만 원)/(육만 원) 결제하고 b/ 전자담배 그거까지 사서 b/ 와서 이제 행복.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03207.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03208",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이렇게 잘 안믿으니까 원래 얘기를 잘 안해주고 원래는 도망을 갈라고 했단 말이야 근데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03208.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03209",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이제 신청만 하면 되는데 시+ 신청이 (25일날)/(이십 오 일)이야. (2월)/(이 월) (25일날)/(이십 오 일).",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03209.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03210",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "음/ 위선병이라고 선을 까는 그런 이제 케이블을 까는 이제 그런 담당을 했습니다. 네. 아무래도 이제 혹한기나 또 기타 이제",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03210.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03211",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 약간 혼내고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03211.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03212",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(2학년)/(이 학년)",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03212.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03213",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "답이 없어 그. 내가 b/ 나도 잘 모르니까 b/ 내가 뭘 잘 모르고 뭘 어떻게 질문을 해야 되는지를 일목요연하게 묻지를 못하잖아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03213.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03214",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "또 사업을 할려다 보니까 사람이 또 되게 중요한데.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03214.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03215",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "침대에서 있다가 아 이건 아닌거 같애서 나는 그냥 혼자 b/ (이렇게)/(이케) 나갔지 밖에 핫스팟 에그 들고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03215.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03216",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "사람들 또 구할라고 거기에 테러가 일어났다 막 이러는데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03216.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03217",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "간거지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03217.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03218",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 b/ 그거 (8만 원)/(팔만 원)짜리 꽃을 왜 사주지 싶은데. 그거 바나나같이 지금 다 썩었잖아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03218.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03219",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "여행을 다니면서 일을 하는 거였으니까.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03219.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03220",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "응. 부여가 쉽긴 하지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03220.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03221",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "난 근데 외제차가 좋긴 한데 좀 뭐지/ 보험료가 되게 비싸대매 그래서 그게 걱정돼. 근데 정확히 나는 뭐 사실 얼마가 나오는지는 몰라.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03221.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03222",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "너도 따라와 우리 부+ 부장한테 얘기해줄게. b/ 아 근데 이것도 친구랑 가야 재밌는 거지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03222.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03223",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "난 학교가 없어. l/ 나 내일부터 충원이야",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03223.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03224",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "저승에 와서",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03224.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03225",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "나머지 때 일단은 알바를 구해보고 있으+ 있으면 그 기간 중에",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03225.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03226",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "모든걸 나보다 훨씬 잘 다뤘어. l/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03226.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03227",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이 운동이라고 하기에는.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03227.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03228",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "바로 패스시켜주는 반면에",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03228.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03229",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그 장비 한번 빌리는데 얼만데?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03229.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03230",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "맞아. 대학교는 확실히 다르나 봐.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03230.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03231",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "데+ (걔들)/(갸들) 봉사활동을 다시 채워야된대 (14)/(열 네)+ (14시간)/(열 네 시간)을 채워야된대요.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03231.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03232",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "다른 사람 한 거 아니야? 진짜 나 (맨체스터 시티)/(멘시티)는 한번도 한+ 좋아한 적 없는데?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03232.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03233",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "오늘 아마도 밥이랑 어묵국이랑 미트볼 새우덮밥.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03233.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03234",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "응 양쪽에+ 양쪽에 다 묻었어 왼쪽으로 한번 오른쪽으로 한번 먹었나 봐.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03234.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03235",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "꿈을 먼저 잡아 놓으면",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03235.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03236",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "조폭이니까 행동 조심하고 b/ 크게 떠들지 말고 조용히 먹다 가라고 b/ 그런 썰이 있었어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03236.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03237",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "니 아들이니까 너도 하면 안될까?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03237.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03238",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "주변에.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03238.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03239",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그래 난 별로 안고파. 나 원래 안 먹고 나올려고 했는데 엄마가 이따가 알바할 때 배고프면 안 되니까 몇 숟갈 떠먹고 가라해가지고 두 번 먹고 온 거야.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03239.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03240",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "응응 그치",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03240.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03241",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "태워달라고 했는데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03241.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03242",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "내가 어제 자면서 유튜브를 봤는데 그 은근히 불편해",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03242.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03243",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "응. 근데 방콕은 숙소가 되게 좋다 싸고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03243.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03244",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "혹시 일본 유학은 아직 늦진 않으신 것 같은데 혹시 자금적인 여유가 된다면 혹시 그 좀 미래에라도 좀 음/ 생각이 있으신 지",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03244.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03245",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "b/ 아니. b/ 사실 b/ 그 (미팅)/(미팅)이 날짜가 너무 뒤로 잡혀가지고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03245.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03246",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이 창업해서",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03246.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03247",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그래서 이번에 취업 못하면은 b/ 내 목표를",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03247.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03248",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(Good will hunting)/(굿 윌 헌팅) 내가 (Good will hunting)/(굿 윌 헌팅)인가? 어/ 내가 옛날에+ 옛날에 봐가지고 한 (3년)/(삼 년) 전에 봤나?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03248.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03249",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아/ 도+ 나는 상향을 쓰고 싶긴 한데 마음은 그랬다가 내가 그래도 (조금)/(쪼끔) 자신 있는 건 내신인데",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03249.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03250",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "사회복지사 같은거.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03250.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03251",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "l/ 그럴 리가. 어머님한테 전화 했어?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03251.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03252",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "따른 거도 알아보기만 했었는데 아직 뭐 어떻게 가야지하고 계획 해놓은 건 없거든.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03252.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03253",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그런 기회란 게 있잖아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03253.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03254",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아/ b/ 난 지금 새터가 너무 긴장 돼.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03254.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03255",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "했던 말 또 하시는 거. 그리고 (Tom Much Information)/(티엠아이)가 진짜 많으셔 노인 분들이. b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03255.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03256",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "또 뭐에 차이가 있는 건데? 그 두 가지는?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03256.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03257",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그런 내부적으로는 엄청 문제가 많다고 그러더라고 또 얼마 전에 그 교수 랩실 박사 (1명)/(한 명)이",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03257.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03258",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 네 그때는 대전이 직할시였거든요. 네.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03258.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03259",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그랬는데 그쪽 변에 (이제)/(인제) 냇가가 생기는 게 아니라 아예 아파트(로)/(루) u/ 으로 들어서는 거지. u/ 아파트가 더 많아지겠지.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03259.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03260",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "진짜 괜찮겠지 근데 아쉬워",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03260.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03261",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "하체는 아무리 힘들어도 해",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03261.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03262",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 그거 있고 한자+ 한자 있고. 응.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03262.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03263",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "한국 사람이 생활하기에 입맛도 좋고",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03263.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03264",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "게다가 또 다른 일이 있었거든? 우리는 일단은 선배를 만나면은",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03264.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03265",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "만나가지고 (들어보니깐)/(들어보니까네).",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03265.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03266",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어/ 인싸야. 우리 엄마 인싸 단어도 알아. (그래가지고)/(해지고*) 동묘 갔다 온다니까 되게 재밌겠다고 했어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03266.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03267",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "할인을 받지 못하면 l/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03267.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03268",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아시아인이면은 다 약간 눈빛부터 달라. 좀 적대시하는 그런 느낌? 그래서 나는 b/ (블라디보스톡)/(블라디보스톡)은 b/ 좋긴 했는데 b/ 그닥 그렇게 다시 가고 싶지는 않은 여행지인 거 같애. 걔네 태도 때문에 응.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03268.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03269",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "뭐 그때 이후로 다른 예비역 선배들이랑 친해졌으니까",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03269.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03270",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그래서 관장님한테도 물어보니까 그냥 뭐/ 그/ 요가는 이제 없고 뭐/ 재활 쪽으로 뭐/ 그/ 관장님이랑 그/ 이젠 트레이너분이 (이제)/(제) 하신다고 그냥 그것만 된 거 같애.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03270.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03271",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "뼈 하나를 그 뼈를 맞추라는 것도 아니야. b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03271.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03272",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "(1년)/(일 년)이라도 젊고 싶다.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03272.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03273",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "엊그제 우리 엊그저껜가 거기",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03273.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03274",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "왜 점장 중에 뽑아서 본사로 대려가?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03274.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03275",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "디자이너가 (거기)/(글)로 넘어갔어. 그+ (거기로)/(글론*) 아 (아니다)/(아이다) (아니다)/(아이다) (셀린느)/(셀린느) 디자이넌가? 하여튼 넘어가가지고 b/ 느낌이 약간 좀 센린느 같애.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03275.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03276",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "일반적인 책 있잖아. 독서 그냥",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03276.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03277",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 생각하고 실습실로 이동을 할려면",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03277.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03278",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그 애기가 기자를 피해서 도망가는",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03278.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03279",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그래 그 럭키 보고 아 럭키 아직 모르잖아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03279.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03280",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "우리가 앞으로는 컴퓨터 교육이 되게 중요해질 거 같애 내 생각엔",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03280.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03281",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "대략적인 얼굴 설+ 설명?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03281.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03282",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "근데 읽다 보면은 살짝씩 (조금)/(쪼끔)씩 있으니까 아 얘는 지금 서울권에서 사는 앤가보다 이런 것만 (만)/(만) 알고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03282.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03283",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "경영학과에 간 이유가 어떤 이유로 가+ 가신건지 좀 한 번 알고 싶은데 괜찮을까요?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03283.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03284",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "진짜 자랑은 친한 친구? b/ 그런 애들한테만 해야되고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03284.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03285",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "왜 소름이 끼치지? b/ 웃음을 참으니까 소름이 돋네.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03285.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03286",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그래가지고 수강신청 b/ 수강신청 우리는",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03286.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03287",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "b/ 따라갈 수 없어. 미국 자본주의 그 그래픽은 정말로.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03287.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03288",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그런데가 더 넘어져도 그렇고 타기도 그렇고 위험하다고는 들었거든",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03288.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03289",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "앙리랑 하고 있다 앙리랑 도서관 가서 하는 거 그거밖에 안해? 그러면?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03289.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03290",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "거짓말한 거야 나한테?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03290.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03291",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아 근데 신발 딱히/ 내가 아디다스 밖에 안신어가지고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03291.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03292",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "내가 이때까지 모의고사 할 때 등수 매겼을 때 내가 다 (1등)/(일 등)을 했어 이때까지. 예비반에서.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03292.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03293",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "지금은 뭐해 그 오빠?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03293.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03294",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그 TV 프로가 있는 거야. 그 클립만 조금 봤는데, b/ 그래서 그걸 찾아보+ 찾아서 정주행해야겠다고 결심했어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03294.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03295",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어쨌든 이렇게 회의가 마치고 b/ 내려왔는데, 뭘 너무 먹고 싶은 거야. 터미널 같은 데였단 말이야.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03295.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03296",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그렇게 여+ 여러가지 경험해 보는 거지 뭐.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03296.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03297",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 왜. 나 방콕+ 방콕을 찾을려고 한 게 아니라 괌이라고 쳤는데 (여기)/(요기)에 방콕이 나왔어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03297.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03298",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "아이코스?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03298.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03299",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "헬스장이 춥+ 헬스장이 춥지는 않잖아?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03299.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03300",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "그거 아니 (리버풀)/(리버풀)이랑 경쟁을 하는데 왜 맨+ 그게 뭔 무슨 상관이야? (첼시)/(첼시) 대 (맨체스터 시티)/(맨시티)야?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03300.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03301",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "소프트웨어 연계?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03301.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03302",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "이게 그룹이 짜지는 거야 이제 소수 인원이면 그 소수 인원 그룹으로 짜지는데 b/",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03302.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03303",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "o/ 앞부분이 재밌는데, 앞부분이 진짜 재밌는데.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03303.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03304",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "어 그래서 안 받은지 (3)/(삼), (4년)/(사 년) 돼서 이번에도 안 받겠지 하고 갔는데 (5만 원)/(오만 원)해서 난 (5만 원)/(오만 원)도 너무 행복했어.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03304.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03305",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "밥 두 숟갈밖에 안 먹었다구.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03305.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03306",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "음 이 사교육이나 이런 교육 쪽이 b/ 많이 좀",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03306.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03307",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "화 하긴 한데 b/ 좀 부족하다는 느낌?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03307.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03308",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "저/ 아/ 약간 책임이 있어. 그/ b/ 뭐/ 교학팀이나 행정실 이렇게 보면 b/ 완전 신입이나 말단 b/ 그/ 사원?",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03308.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03309",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "뭐 걔 만나자고 해도 b/ 거절을 많이 하고 또 뭐 b/ 걔가 옛날에는 근데 친구였는데 b/ 좀",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03309.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03310",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "간식 주고.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03310.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03311",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "만약에 그렇게 재밌지 않으면",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03311.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03312",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "음/ 그냥 무조건 오르지 건보료 오르고 자동차세 오르고 b/ 아 대신에 우리 지금 경차 그 환급 못 받아.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03312.pcm"
+    },
+    {
+      "id": "kspon/eval_other/KsponSpeech_E03313",
+      "dataset": "kspon-eval_other",
+      "lang": "Korean",
+      "raw_reference": "너 얼굴을 가+ 너 얼굴 가리면 대박 나 진짜로.",
+      "source_path": "KsponSpeech_eval/eval_other/KsponSpeech_E03313.pcm"
+    }
+  ],
+  "manifest_digest": "917dc49a4373bd162a8f051b0ee8b3bb45c286a17d16d3ba3046cd6992b7346c",
+  "textnorm": {
+    "textnorm_version": "asr-tn-v1.3.0",
+    "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+    "numeric_backend_version": "num2words 0.5.14"
+  }
+}

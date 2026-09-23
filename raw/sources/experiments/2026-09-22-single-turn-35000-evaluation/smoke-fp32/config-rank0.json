@@ -1,0 +1,40 @@
+{
+  "protocol": "single-turn-asr-v1",
+  "checkpoint": "/soundai/Model/VAPASR/hf-approved-qwen-v1-e10-n2/checkpoint-35000",
+  "checkpoint_weights": {
+    "model.safetensors": {
+      "size": 4837811880,
+      "mtime_ns": 1790042049055238000
+    }
+  },
+  "checkpoint_config_sha256": "6a2d1586a23afab0c9e90789611dba30bbdf6c6fe43723c6230902e5599fe7ca",
+  "manifest_digest": "7600a740694f623746543a527e1aaa3c256374a5a982e2c18c631097c068c616",
+  "utterances": 16,
+  "deltas": [
+    2,
+    4
+  ],
+  "tail_s": 1.0,
+  "leading_silence_s": 0,
+  "next_bias": 0,
+  "dtype": "float32",
+  "tf32": false,
+  "max_flush_rounds": 8,
+  "textnorm": {
+    "textnorm_version": "asr-tn-v1.3.0",
+    "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+    "numeric_backend_version": "num2words 0.5.14"
+  },
+  "code": {
+    "experiments/eval_single_turn_asr.py": "096fb29f2e2e63e811000f9a16f96e04bc4aa22897635683ba2d1e9eaa273423",
+    "vapasr/hf/batch_decode.py": "32a34cee790f48d9ba8660824085f6a9c4866ca0d1b599712e89dd5866f6d4c6",
+    "vapasr/data/single_turn_eval.py": "8fbb8a38216554854b0aa64d001e7fe269597fb89a07bd38fad45a7e11168a9c",
+    "vapasr/hf/modeling_vapasr.py": "65635a8a68436c510c259260d235520eae890ea7cc0b1a6f452ccb143a6e2eca",
+    "vapasr/features/online.py": "7a03e58de3b80a4d8ef495c6fbb7cb20e05c8d1993027a314094bfb5691732dd"
+  },
+  "world_size": 2,
+  "limit_per_set": 4,
+  "batch_size": 16,
+  "encoder_batch_size": 1,
+  "cpu_threads": 4
+}

@@ -1,0 +1,2967 @@
+{
+  "checkpoint": "/soundai/Model/VAPASR/hf-approved-qwen-v1-e10-n2-snapshots/checkpoint-34500",
+  "label": "checkpoint-34500 (checkpoint-33000 unavailable)",
+  "selection": "nearest durations, IDs as tie-breaker",
+  "delay_chunks": 2,
+  "chunk_s": 0.08,
+  "samples": [
+    {
+      "split": "dev-clean",
+      "id": "ls-dev-clean-2277-149874-00188",
+      "lang": "English",
+      "duration_s": 22.013,
+      "reference": "narrow board walks extended out passing here a house and there a store at far intervals eventually ending on the open prairie it gave an imposing appearance to most of the wholesale houses whose offices were upon the ground floor and in plain view of the street these vast buildings what were they",
+      "hypothesis": "Narrow, board walks extended out, passing here a house and there a store, at far intervals. Eventually, ending on the open prairie.It gave an imposing appearance to most of the whole sealhouses. Whose offices were upon the ground floor in in-flight of the street,These vast buildings what were they?",
+      "metric": {
+        "name": "WER",
+        "value": 0.09433962264150944,
+        "S": 4,
+        "D": 1,
+        "I": 0,
+        "N": 53
+      },
+      "stats": {
+        "K": 275,
+        "audio_s": 22.0,
+        "tokens": 66,
+        "tok_per_chunk": 0.24,
+        "forced": 0,
+        "flush_rounds": 1,
+        "tick_p50_ms": 51.71799659729004,
+        "tick_p99_ms": 114.1226291656492,
+        "realtime_factor": 0.734
+      },
+      "audio": "audio/dev-clean-ls-dev-clean-2277-149874-00188.wav",
+      "plot": "plots/dev-clean-ls-dev-clean-2277-149874-00188.svg",
+      "emissions": [
+        {
+          "chunk": 17,
+          "time_s": 1.44,
+          "pieces": [
+            "N",
+            "arrow",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 134.21
+        },
+        {
+          "chunk": 21,
+          "time_s": 1.76,
+          "pieces": [
+            "Ġboard"
+          ],
+          "forced": false,
+          "tick_ms": 80.38
+        },
+        {
+          "chunk": 25,
+          "time_s": 2.08,
+          "pieces": [
+            "Ġwalks"
+          ],
+          "forced": false,
+          "tick_ms": 83.56
+        },
+        {
+          "chunk": 30,
+          "time_s": 2.48,
+          "pieces": [
+            "Ġextended"
+          ],
+          "forced": false,
+          "tick_ms": 79.54
+        },
+        {
+          "chunk": 36,
+          "time_s": 2.96,
+          "pieces": [
+            "Ġout",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 105.31
+        },
+        {
+          "chunk": 41,
+          "time_s": 3.36,
+          "pieces": [
+            "Ġpassing"
+          ],
+          "forced": false,
+          "tick_ms": 77.74
+        },
+        {
+          "chunk": 44,
+          "time_s": 3.6,
+          "pieces": [
+            "Ġhere"
+          ],
+          "forced": false,
+          "tick_ms": 79.0
+        },
+        {
+          "chunk": 45,
+          "time_s": 3.68,
+          "pieces": [
+            "Ġa"
+          ],
+          "forced": false,
+          "tick_ms": 77.59
+        },
+        {
+          "chunk": 51,
+          "time_s": 4.16,
+          "pieces": [
+            "Ġhouse"
+          ],
+          "forced": false,
+          "tick_ms": 78.05
+        },
+        {
+          "chunk": 54,
+          "time_s": 4.4,
+          "pieces": [
+            "Ġand"
+          ],
+          "forced": false,
+          "tick_ms": 81.38
+        },
+        {
+          "chunk": 56,
+          "time_s": 4.56,
+          "pieces": [
+            "Ġthere"
+          ],
+          "forced": false,
+          "tick_ms": 77.65
+        },
+        {
+          "chunk": 57,
+          "time_s": 4.64,
+          "pieces": [
+            "Ġa"
+          ],
+          "forced": false,
+          "tick_ms": 77.54
+        },
+        {
+          "chunk": 63,
+          "time_s": 5.12,
+          "pieces": [
+            "Ġstore",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 101.07
+        },
+        {
+          "chunk": 68,
+          "time_s": 5.52,
+          "pieces": [
+            "Ġat"
+          ],
+          "forced": false,
+          "tick_ms": 76.05
+        },
+        {
+          "chunk": 72,
+          "time_s": 5.84,
+          "pieces": [
+            "Ġfar"
+          ],
+          "forced": false,
+          "tick_ms": 76.87
+        },
+        {
+          "chunk": 80,
+          "time_s": 6.48,
+          "pieces": [
+            "Ġintervals",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 100.59
+        },
+        {
+          "chunk": 88,
+          "time_s": 7.12,
+          "pieces": [
+            "ĠEventually",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 99.47
+        },
+        {
+          "chunk": 94,
+          "time_s": 7.6,
+          "pieces": [
+            "Ġending"
+          ],
+          "forced": false,
+          "tick_ms": 75.18
+        },
+        {
+          "chunk": 95,
+          "time_s": 7.68,
+          "pieces": [
+            "Ġon"
+          ],
+          "forced": false,
+          "tick_ms": 74.45
+        },
+        {
+          "chunk": 97,
+          "time_s": 7.84,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 76.35
+        },
+        {
+          "chunk": 100,
+          "time_s": 8.08,
+          "pieces": [
+            "Ġopen"
+          ],
+          "forced": false,
+          "tick_ms": 75.77
+        },
+        {
+          "chunk": 107,
+          "time_s": 8.64,
+          "pieces": [
+            "Ġpr",
+            "airie",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 131.32
+        },
+        {
+          "chunk": 131,
+          "time_s": 10.56,
+          "pieces": [
+            "It"
+          ],
+          "forced": false,
+          "tick_ms": 77.69
+        },
+        {
+          "chunk": 133,
+          "time_s": 10.72,
+          "pieces": [
+            "Ġgave"
+          ],
+          "forced": false,
+          "tick_ms": 84.99
+        },
+        {
+          "chunk": 134,
+          "time_s": 10.8,
+          "pieces": [
+            "Ġan"
+          ],
+          "forced": false,
+          "tick_ms": 76.66
+        },
+        {
+          "chunk": 141,
+          "time_s": 11.36,
+          "pieces": [
+            "Ġimposing"
+          ],
+          "forced": false,
+          "tick_ms": 76.89
+        },
+        {
+          "chunk": 148,
+          "time_s": 11.92,
+          "pieces": [
+            "Ġappearance"
+          ],
+          "forced": false,
+          "tick_ms": 86.76
+        },
+        {
+          "chunk": 149,
+          "time_s": 12.0,
+          "pieces": [
+            "Ġto"
+          ],
+          "forced": false,
+          "tick_ms": 80.08
+        },
+        {
+          "chunk": 153,
+          "time_s": 12.32,
+          "pieces": [
+            "Ġmost"
+          ],
+          "forced": false,
+          "tick_ms": 80.46
+        },
+        {
+          "chunk": 154,
+          "time_s": 12.4,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 81.45
+        },
+        {
+          "chunk": 155,
+          "time_s": 12.48,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 81.49
+        },
+        {
+          "chunk": 157,
+          "time_s": 12.64,
+          "pieces": [
+            "Ġwhole"
+          ],
+          "forced": false,
+          "tick_ms": 78.02
+        },
+        {
+          "chunk": 168,
+          "time_s": 13.52,
+          "pieces": [
+            "Ġse",
+            "al",
+            "houses",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 162.28
+        },
+        {
+          "chunk": 173,
+          "time_s": 13.92,
+          "pieces": [
+            "ĠWh",
+            "ose"
+          ],
+          "forced": false,
+          "tick_ms": 104.98
+        },
+        {
+          "chunk": 180,
+          "time_s": 14.48,
+          "pieces": [
+            "Ġoffices"
+          ],
+          "forced": false,
+          "tick_ms": 78.76
+        },
+        {
+          "chunk": 182,
+          "time_s": 14.64,
+          "pieces": [
+            "Ġwere"
+          ],
+          "forced": false,
+          "tick_ms": 108.08
+        },
+        {
+          "chunk": 186,
+          "time_s": 14.96,
+          "pieces": [
+            "Ġupon"
+          ],
+          "forced": false,
+          "tick_ms": 77.35
+        },
+        {
+          "chunk": 187,
+          "time_s": 15.04,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 77.31
+        },
+        {
+          "chunk": 191,
+          "time_s": 15.36,
+          "pieces": [
+            "Ġground"
+          ],
+          "forced": false,
+          "tick_ms": 80.05
+        },
+        {
+          "chunk": 195,
+          "time_s": 15.68,
+          "pieces": [
+            "Ġfloor"
+          ],
+          "forced": false,
+          "tick_ms": 76.11
+        },
+        {
+          "chunk": 197,
+          "time_s": 15.84,
+          "pieces": [
+            "Ġin"
+          ],
+          "forced": false,
+          "tick_ms": 75.16
+        },
+        {
+          "chunk": 206,
+          "time_s": 16.56,
+          "pieces": [
+            "Ġin",
+            "-flight"
+          ],
+          "forced": false,
+          "tick_ms": 100.49
+        },
+        {
+          "chunk": 208,
+          "time_s": 16.72,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 75.6
+        },
+        {
+          "chunk": 209,
+          "time_s": 16.8,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 75.48
+        },
+        {
+          "chunk": 215,
+          "time_s": 17.28,
+          "pieces": [
+            "Ġstreet",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 106.09
+        },
+        {
+          "chunk": 246,
+          "time_s": 19.76,
+          "pieces": [
+            "These"
+          ],
+          "forced": false,
+          "tick_ms": 77.99
+        },
+        {
+          "chunk": 251,
+          "time_s": 20.16,
+          "pieces": [
+            "Ġvast"
+          ],
+          "forced": false,
+          "tick_ms": 76.44
+        },
+        {
+          "chunk": 258,
+          "time_s": 20.72,
+          "pieces": [
+            "Ġbuildings"
+          ],
+          "forced": false,
+          "tick_ms": 75.87
+        },
+        {
+          "chunk": 264,
+          "time_s": 21.2,
+          "pieces": [
+            "Ġwhat"
+          ],
+          "forced": false,
+          "tick_ms": 76.75
+        },
+        {
+          "chunk": 266,
+          "time_s": 21.36,
+          "pieces": [
+            "Ġwere"
+          ],
+          "forced": false,
+          "tick_ms": 75.66
+        },
+        {
+          "chunk": 271,
+          "time_s": 21.76,
+          "pieces": [
+            "Ġthey",
+            "?"
+          ],
+          "forced": false,
+          "tick_ms": 101.08
+        }
+      ]
+    },
+    {
+      "split": "dev-clean",
+      "id": "ls-dev-clean-1462-170138-00020",
+      "lang": "English",
+      "duration_s": 33.989,
+      "reference": "myself i always knew she had it in her do you know alexander mainhall looked with perplexity up into the top of the hansom and rubbed his pink cheek with his gloved finger do you know i sometimes think of taking to criticism seriously myself when they entered the stage box on the left the first act was well under way the scene being the interior of a cabin in the south of ireland as they sat down a burst of applause drew alexander's attention to the stage",
+      "hypothesis": "My self, I always knew she had it in her,Do you know? Alexander, Menhall looked with perplexity up into the top of the handsome, and rubbed his pink cheek with his gloved finger. Do you know? I sometimes think of taking to criticism seriously, myself,When they entered the stage box on the left, the first act was well underway. The scene being the interior of a cabin in the south of Ireland.As they sat down, a burst of a applause drew Alexander's attention to this stage.",
+      "metric": {
+        "name": "WER",
+        "value": 0.09090909090909091,
+        "S": 5,
+        "D": 1,
+        "I": 2,
+        "N": 88
+      },
+      "stats": {
+        "K": 425,
+        "audio_s": 34.0,
+        "tokens": 107,
+        "tok_per_chunk": 0.252,
+        "forced": 0,
+        "flush_rounds": 1,
+        "tick_p50_ms": 50.96697807312012,
+        "tick_p99_ms": 102.79192924499512,
+        "realtime_factor": 0.714
+      },
+      "audio": "audio/dev-clean-ls-dev-clean-1462-170138-00020.wav",
+      "plot": "plots/dev-clean-ls-dev-clean-1462-170138-00020.svg",
+      "emissions": [
+        {
+          "chunk": 15,
+          "time_s": 1.28,
+          "pieces": [
+            "My"
+          ],
+          "forced": false,
+          "tick_ms": 73.74
+        },
+        {
+          "chunk": 20,
+          "time_s": 1.68,
+          "pieces": [
+            "Ġself",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 99.87
+        },
+        {
+          "chunk": 22,
+          "time_s": 1.84,
+          "pieces": [
+            "ĠI"
+          ],
+          "forced": false,
+          "tick_ms": 75.18
+        },
+        {
+          "chunk": 26,
+          "time_s": 2.16,
+          "pieces": [
+            "Ġalways"
+          ],
+          "forced": false,
+          "tick_ms": 76.02
+        },
+        {
+          "chunk": 28,
+          "time_s": 2.32,
+          "pieces": [
+            "Ġknew"
+          ],
+          "forced": false,
+          "tick_ms": 75.34
+        },
+        {
+          "chunk": 30,
+          "time_s": 2.48,
+          "pieces": [
+            "Ġshe"
+          ],
+          "forced": false,
+          "tick_ms": 75.38
+        },
+        {
+          "chunk": 33,
+          "time_s": 2.72,
+          "pieces": [
+            "Ġhad"
+          ],
+          "forced": false,
+          "tick_ms": 74.53
+        },
+        {
+          "chunk": 34,
+          "time_s": 2.8,
+          "pieces": [
+            "Ġit"
+          ],
+          "forced": false,
+          "tick_ms": 74.86
+        },
+        {
+          "chunk": 36,
+          "time_s": 2.96,
+          "pieces": [
+            "Ġin"
+          ],
+          "forced": false,
+          "tick_ms": 75.12
+        },
+        {
+          "chunk": 38,
+          "time_s": 3.12,
+          "pieces": [
+            "Ġher",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 105.64
+        },
+        {
+          "chunk": 63,
+          "time_s": 5.12,
+          "pieces": [
+            "Do"
+          ],
+          "forced": false,
+          "tick_ms": 76.29
+        },
+        {
+          "chunk": 64,
+          "time_s": 5.2,
+          "pieces": [
+            "Ġyou"
+          ],
+          "forced": false,
+          "tick_ms": 76.2
+        },
+        {
+          "chunk": 67,
+          "time_s": 5.44,
+          "pieces": [
+            "Ġknow",
+            "?"
+          ],
+          "forced": false,
+          "tick_ms": 101.56
+        },
+        {
+          "chunk": 77,
+          "time_s": 6.24,
+          "pieces": [
+            "ĠAlexander",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 101.26
+        },
+        {
+          "chunk": 91,
+          "time_s": 7.36,
+          "pieces": [
+            "ĠMen",
+            "hall"
+          ],
+          "forced": false,
+          "tick_ms": 103.03
+        },
+        {
+          "chunk": 94,
+          "time_s": 7.6,
+          "pieces": [
+            "Ġlooked"
+          ],
+          "forced": false,
+          "tick_ms": 77.44
+        },
+        {
+          "chunk": 96,
+          "time_s": 7.76,
+          "pieces": [
+            "Ġwith"
+          ],
+          "forced": false,
+          "tick_ms": 77.83
+        },
+        {
+          "chunk": 105,
+          "time_s": 8.48,
+          "pieces": [
+            "Ġperplex",
+            "ity"
+          ],
+          "forced": false,
+          "tick_ms": 103.81
+        },
+        {
+          "chunk": 107,
+          "time_s": 8.64,
+          "pieces": [
+            "Ġup"
+          ],
+          "forced": false,
+          "tick_ms": 78.59
+        },
+        {
+          "chunk": 111,
+          "time_s": 8.96,
+          "pieces": [
+            "Ġinto"
+          ],
+          "forced": false,
+          "tick_ms": 76.1
+        },
+        {
+          "chunk": 112,
+          "time_s": 9.04,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 76.0
+        },
+        {
+          "chunk": 117,
+          "time_s": 9.44,
+          "pieces": [
+            "Ġtop"
+          ],
+          "forced": false,
+          "tick_ms": 76.48
+        },
+        {
+          "chunk": 118,
+          "time_s": 9.52,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 76.62
+        },
+        {
+          "chunk": 119,
+          "time_s": 9.6,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 76.57
+        },
+        {
+          "chunk": 126,
+          "time_s": 10.16,
+          "pieces": [
+            "Ġhandsome",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 102.7
+        },
+        {
+          "chunk": 133,
+          "time_s": 10.72,
+          "pieces": [
+            "Ġand"
+          ],
+          "forced": false,
+          "tick_ms": 76.33
+        },
+        {
+          "chunk": 136,
+          "time_s": 10.96,
+          "pieces": [
+            "Ġrubbed"
+          ],
+          "forced": false,
+          "tick_ms": 76.74
+        },
+        {
+          "chunk": 138,
+          "time_s": 11.12,
+          "pieces": [
+            "Ġhis"
+          ],
+          "forced": false,
+          "tick_ms": 77.03
+        },
+        {
+          "chunk": 143,
+          "time_s": 11.52,
+          "pieces": [
+            "Ġpink"
+          ],
+          "forced": false,
+          "tick_ms": 76.7
+        },
+        {
+          "chunk": 146,
+          "time_s": 11.76,
+          "pieces": [
+            "Ġcheek"
+          ],
+          "forced": false,
+          "tick_ms": 76.2
+        },
+        {
+          "chunk": 148,
+          "time_s": 11.92,
+          "pieces": [
+            "Ġwith"
+          ],
+          "forced": false,
+          "tick_ms": 77.05
+        },
+        {
+          "chunk": 150,
+          "time_s": 12.08,
+          "pieces": [
+            "Ġhis"
+          ],
+          "forced": false,
+          "tick_ms": 77.18
+        },
+        {
+          "chunk": 154,
+          "time_s": 12.4,
+          "pieces": [
+            "Ġglo",
+            "ved"
+          ],
+          "forced": false,
+          "tick_ms": 102.82
+        },
+        {
+          "chunk": 160,
+          "time_s": 12.88,
+          "pieces": [
+            "Ġfinger",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 102.48
+        },
+        {
+          "chunk": 170,
+          "time_s": 13.68,
+          "pieces": [
+            "ĠDo"
+          ],
+          "forced": false,
+          "tick_ms": 76.08
+        },
+        {
+          "chunk": 171,
+          "time_s": 13.76,
+          "pieces": [
+            "Ġyou"
+          ],
+          "forced": false,
+          "tick_ms": 75.93
+        },
+        {
+          "chunk": 175,
+          "time_s": 14.08,
+          "pieces": [
+            "Ġknow",
+            "?"
+          ],
+          "forced": false,
+          "tick_ms": 101.73
+        },
+        {
+          "chunk": 179,
+          "time_s": 14.4,
+          "pieces": [
+            "ĠI"
+          ],
+          "forced": false,
+          "tick_ms": 76.23
+        },
+        {
+          "chunk": 186,
+          "time_s": 14.96,
+          "pieces": [
+            "Ġsometimes"
+          ],
+          "forced": false,
+          "tick_ms": 76.04
+        },
+        {
+          "chunk": 190,
+          "time_s": 15.28,
+          "pieces": [
+            "Ġthink"
+          ],
+          "forced": false,
+          "tick_ms": 76.81
+        },
+        {
+          "chunk": 191,
+          "time_s": 15.36,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 77.65
+        },
+        {
+          "chunk": 196,
+          "time_s": 15.76,
+          "pieces": [
+            "Ġtaking"
+          ],
+          "forced": false,
+          "tick_ms": 76.97
+        },
+        {
+          "chunk": 197,
+          "time_s": 15.84,
+          "pieces": [
+            "Ġto"
+          ],
+          "forced": false,
+          "tick_ms": 76.16
+        },
+        {
+          "chunk": 204,
+          "time_s": 16.4,
+          "pieces": [
+            "Ġcriticism"
+          ],
+          "forced": false,
+          "tick_ms": 77.52
+        },
+        {
+          "chunk": 211,
+          "time_s": 16.96,
+          "pieces": [
+            "Ġseriously",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 102.23
+        },
+        {
+          "chunk": 219,
+          "time_s": 17.6,
+          "pieces": [
+            "Ġmyself",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 101.78
+        },
+        {
+          "chunk": 242,
+          "time_s": 19.44,
+          "pieces": [
+            "When"
+          ],
+          "forced": false,
+          "tick_ms": 75.07
+        },
+        {
+          "chunk": 243,
+          "time_s": 19.52,
+          "pieces": [
+            "Ġthey"
+          ],
+          "forced": false,
+          "tick_ms": 75.39
+        },
+        {
+          "chunk": 247,
+          "time_s": 19.84,
+          "pieces": [
+            "Ġentered"
+          ],
+          "forced": false,
+          "tick_ms": 76.28
+        },
+        {
+          "chunk": 248,
+          "time_s": 19.92,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 76.22
+        },
+        {
+          "chunk": 254,
+          "time_s": 20.4,
+          "pieces": [
+            "Ġstage"
+          ],
+          "forced": false,
+          "tick_ms": 75.0
+        },
+        {
+          "chunk": 258,
+          "time_s": 20.72,
+          "pieces": [
+            "Ġbox"
+          ],
+          "forced": false,
+          "tick_ms": 75.21
+        },
+        {
+          "chunk": 261,
+          "time_s": 20.96,
+          "pieces": [
+            "Ġon",
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 108.78
+        },
+        {
+          "chunk": 267,
+          "time_s": 21.44,
+          "pieces": [
+            "Ġleft",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 101.34
+        },
+        {
+          "chunk": 270,
+          "time_s": 21.68,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 74.63
+        },
+        {
+          "chunk": 274,
+          "time_s": 22.0,
+          "pieces": [
+            "Ġfirst"
+          ],
+          "forced": false,
+          "tick_ms": 74.94
+        },
+        {
+          "chunk": 278,
+          "time_s": 22.32,
+          "pieces": [
+            "Ġact"
+          ],
+          "forced": false,
+          "tick_ms": 75.51
+        },
+        {
+          "chunk": 280,
+          "time_s": 22.48,
+          "pieces": [
+            "Ġwas"
+          ],
+          "forced": false,
+          "tick_ms": 75.34
+        },
+        {
+          "chunk": 283,
+          "time_s": 22.72,
+          "pieces": [
+            "Ġwell"
+          ],
+          "forced": false,
+          "tick_ms": 75.65
+        },
+        {
+          "chunk": 292,
+          "time_s": 23.44,
+          "pieces": [
+            "Ġunderway",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 100.49
+        },
+        {
+          "chunk": 295,
+          "time_s": 23.68,
+          "pieces": [
+            "ĠThe"
+          ],
+          "forced": false,
+          "tick_ms": 75.77
+        },
+        {
+          "chunk": 300,
+          "time_s": 24.08,
+          "pieces": [
+            "Ġscene"
+          ],
+          "forced": false,
+          "tick_ms": 76.22
+        },
+        {
+          "chunk": 303,
+          "time_s": 24.32,
+          "pieces": [
+            "Ġbeing"
+          ],
+          "forced": false,
+          "tick_ms": 76.84
+        },
+        {
+          "chunk": 305,
+          "time_s": 24.48,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 75.83
+        },
+        {
+          "chunk": 311,
+          "time_s": 24.96,
+          "pieces": [
+            "Ġinterior"
+          ],
+          "forced": false,
+          "tick_ms": 73.48
+        },
+        {
+          "chunk": 313,
+          "time_s": 25.12,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 71.77
+        },
+        {
+          "chunk": 314,
+          "time_s": 25.2,
+          "pieces": [
+            "Ġa"
+          ],
+          "forced": false,
+          "tick_ms": 75.06
+        },
+        {
+          "chunk": 320,
+          "time_s": 25.68,
+          "pieces": [
+            "Ġcabin"
+          ],
+          "forced": false,
+          "tick_ms": 74.0
+        },
+        {
+          "chunk": 321,
+          "time_s": 25.76,
+          "pieces": [
+            "Ġin"
+          ],
+          "forced": false,
+          "tick_ms": 74.75
+        },
+        {
+          "chunk": 322,
+          "time_s": 25.84,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 74.0
+        },
+        {
+          "chunk": 326,
+          "time_s": 26.16,
+          "pieces": [
+            "Ġsouth"
+          ],
+          "forced": false,
+          "tick_ms": 74.4
+        },
+        {
+          "chunk": 327,
+          "time_s": 26.24,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 74.22
+        },
+        {
+          "chunk": 334,
+          "time_s": 26.8,
+          "pieces": [
+            "ĠIreland",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 99.24
+        },
+        {
+          "chunk": 366,
+          "time_s": 29.36,
+          "pieces": [
+            "As"
+          ],
+          "forced": false,
+          "tick_ms": 73.71
+        },
+        {
+          "chunk": 367,
+          "time_s": 29.44,
+          "pieces": [
+            "Ġthey"
+          ],
+          "forced": false,
+          "tick_ms": 73.48
+        },
+        {
+          "chunk": 371,
+          "time_s": 29.76,
+          "pieces": [
+            "Ġsat"
+          ],
+          "forced": false,
+          "tick_ms": 74.48
+        },
+        {
+          "chunk": 376,
+          "time_s": 30.16,
+          "pieces": [
+            "Ġdown",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 99.18
+        },
+        {
+          "chunk": 377,
+          "time_s": 30.24,
+          "pieces": [
+            "Ġa"
+          ],
+          "forced": false,
+          "tick_ms": 75.48
+        },
+        {
+          "chunk": 382,
+          "time_s": 30.64,
+          "pieces": [
+            "Ġburst"
+          ],
+          "forced": false,
+          "tick_ms": 75.75
+        },
+        {
+          "chunk": 383,
+          "time_s": 30.72,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 81.54
+        },
+        {
+          "chunk": 384,
+          "time_s": 30.8,
+          "pieces": [
+            "Ġa"
+          ],
+          "forced": false,
+          "tick_ms": 77.34
+        },
+        {
+          "chunk": 391,
+          "time_s": 31.36,
+          "pieces": [
+            "Ġapplause"
+          ],
+          "forced": false,
+          "tick_ms": 74.62
+        },
+        {
+          "chunk": 394,
+          "time_s": 31.6,
+          "pieces": [
+            "Ġdrew"
+          ],
+          "forced": false,
+          "tick_ms": 75.7
+        },
+        {
+          "chunk": 402,
+          "time_s": 32.24,
+          "pieces": [
+            "ĠAlexander",
+            "'s"
+          ],
+          "forced": false,
+          "tick_ms": 102.55
+        },
+        {
+          "chunk": 409,
+          "time_s": 32.8,
+          "pieces": [
+            "Ġattention"
+          ],
+          "forced": false,
+          "tick_ms": 75.56
+        },
+        {
+          "chunk": 410,
+          "time_s": 32.88,
+          "pieces": [
+            "Ġto"
+          ],
+          "forced": false,
+          "tick_ms": 77.59
+        },
+        {
+          "chunk": 412,
+          "time_s": 33.04,
+          "pieces": [
+            "Ġthis"
+          ],
+          "forced": false,
+          "tick_ms": 76.83
+        },
+        {
+          "chunk": 419,
+          "time_s": 33.6,
+          "pieces": [
+            "Ġstage",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 101.17
+        }
+      ]
+    },
+    {
+      "split": "dev-other",
+      "id": "ls-dev-other-3663-172528-00237",
+      "lang": "English",
+      "duration_s": 22.055,
+      "reference": "this being so as he was a fellow of much humour we used often to laugh together about the great credit he had gained i therefore dismounted at once got my fowling piece ready and at a very long range brought two of them down with a single ball",
+      "hypothesis": "This being so, as he was a fellow of much humor, we used often to laugh together. About the great credit he had gained,I therefore dismounted at once, got my fowling, peace ready, and at a very long range, brought two of them down with a single ball,",
+      "metric": {
+        "name": "WER",
+        "value": 0.04081632653061224,
+        "S": 2,
+        "D": 0,
+        "I": 0,
+        "N": 49
+      },
+      "stats": {
+        "K": 276,
+        "audio_s": 22.08,
+        "tokens": 61,
+        "tok_per_chunk": 0.221,
+        "forced": 0,
+        "flush_rounds": 1,
+        "tick_p50_ms": 51.83148384094238,
+        "tick_p99_ms": 105.11881113052368,
+        "realtime_factor": 0.714
+      },
+      "audio": "audio/dev-other-ls-dev-other-3663-172528-00237.wav",
+      "plot": "plots/dev-other-ls-dev-other-3663-172528-00237.svg",
+      "emissions": [
+        {
+          "chunk": 14,
+          "time_s": 1.2,
+          "pieces": [
+            "This"
+          ],
+          "forced": false,
+          "tick_ms": 80.21
+        },
+        {
+          "chunk": 18,
+          "time_s": 1.52,
+          "pieces": [
+            "Ġbeing"
+          ],
+          "forced": false,
+          "tick_ms": 80.02
+        },
+        {
+          "chunk": 24,
+          "time_s": 2.0,
+          "pieces": [
+            "Ġso",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 105.34
+        },
+        {
+          "chunk": 32,
+          "time_s": 2.64,
+          "pieces": [
+            "Ġas"
+          ],
+          "forced": false,
+          "tick_ms": 79.44
+        },
+        {
+          "chunk": 33,
+          "time_s": 2.72,
+          "pieces": [
+            "Ġhe"
+          ],
+          "forced": false,
+          "tick_ms": 79.36
+        },
+        {
+          "chunk": 36,
+          "time_s": 2.96,
+          "pieces": [
+            "Ġwas"
+          ],
+          "forced": false,
+          "tick_ms": 76.77
+        },
+        {
+          "chunk": 37,
+          "time_s": 3.04,
+          "pieces": [
+            "Ġa"
+          ],
+          "forced": false,
+          "tick_ms": 77.43
+        },
+        {
+          "chunk": 43,
+          "time_s": 3.52,
+          "pieces": [
+            "Ġfellow"
+          ],
+          "forced": false,
+          "tick_ms": 76.88
+        },
+        {
+          "chunk": 46,
+          "time_s": 3.76,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 77.34
+        },
+        {
+          "chunk": 50,
+          "time_s": 4.08,
+          "pieces": [
+            "Ġmuch"
+          ],
+          "forced": false,
+          "tick_ms": 77.84
+        },
+        {
+          "chunk": 58,
+          "time_s": 4.72,
+          "pieces": [
+            "Ġhumor",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 103.92
+        },
+        {
+          "chunk": 63,
+          "time_s": 5.12,
+          "pieces": [
+            "Ġwe"
+          ],
+          "forced": false,
+          "tick_ms": 75.51
+        },
+        {
+          "chunk": 70,
+          "time_s": 5.68,
+          "pieces": [
+            "Ġused"
+          ],
+          "forced": false,
+          "tick_ms": 76.37
+        },
+        {
+          "chunk": 76,
+          "time_s": 6.16,
+          "pieces": [
+            "Ġoften"
+          ],
+          "forced": false,
+          "tick_ms": 76.18
+        },
+        {
+          "chunk": 78,
+          "time_s": 6.32,
+          "pieces": [
+            "Ġto"
+          ],
+          "forced": false,
+          "tick_ms": 76.28
+        },
+        {
+          "chunk": 83,
+          "time_s": 6.72,
+          "pieces": [
+            "Ġlaugh"
+          ],
+          "forced": false,
+          "tick_ms": 75.45
+        },
+        {
+          "chunk": 90,
+          "time_s": 7.28,
+          "pieces": [
+            "Ġtogether",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 101.55
+        },
+        {
+          "chunk": 103,
+          "time_s": 8.32,
+          "pieces": [
+            "ĠAbout"
+          ],
+          "forced": false,
+          "tick_ms": 76.1
+        },
+        {
+          "chunk": 104,
+          "time_s": 8.4,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 76.52
+        },
+        {
+          "chunk": 109,
+          "time_s": 8.8,
+          "pieces": [
+            "Ġgreat"
+          ],
+          "forced": false,
+          "tick_ms": 77.96
+        },
+        {
+          "chunk": 114,
+          "time_s": 9.2,
+          "pieces": [
+            "Ġcredit"
+          ],
+          "forced": false,
+          "tick_ms": 77.95
+        },
+        {
+          "chunk": 115,
+          "time_s": 9.28,
+          "pieces": [
+            "Ġhe"
+          ],
+          "forced": false,
+          "tick_ms": 79.42
+        },
+        {
+          "chunk": 119,
+          "time_s": 9.6,
+          "pieces": [
+            "Ġhad"
+          ],
+          "forced": false,
+          "tick_ms": 79.94
+        },
+        {
+          "chunk": 124,
+          "time_s": 10.0,
+          "pieces": [
+            "Ġgained",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 106.45
+        },
+        {
+          "chunk": 139,
+          "time_s": 11.2,
+          "pieces": [
+            "I"
+          ],
+          "forced": false,
+          "tick_ms": 80.45
+        },
+        {
+          "chunk": 146,
+          "time_s": 11.76,
+          "pieces": [
+            "Ġtherefore"
+          ],
+          "forced": false,
+          "tick_ms": 80.39
+        },
+        {
+          "chunk": 155,
+          "time_s": 12.48,
+          "pieces": [
+            "Ġdis",
+            "mounted"
+          ],
+          "forced": false,
+          "tick_ms": 105.05
+        },
+        {
+          "chunk": 157,
+          "time_s": 12.64,
+          "pieces": [
+            "Ġat"
+          ],
+          "forced": false,
+          "tick_ms": 78.58
+        },
+        {
+          "chunk": 163,
+          "time_s": 13.12,
+          "pieces": [
+            "Ġonce",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 100.68
+        },
+        {
+          "chunk": 173,
+          "time_s": 13.92,
+          "pieces": [
+            "Ġgot"
+          ],
+          "forced": false,
+          "tick_ms": 75.11
+        },
+        {
+          "chunk": 176,
+          "time_s": 14.16,
+          "pieces": [
+            "Ġmy"
+          ],
+          "forced": false,
+          "tick_ms": 75.81
+        },
+        {
+          "chunk": 187,
+          "time_s": 15.04,
+          "pieces": [
+            "Ġf",
+            "ow",
+            "ling",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 151.03
+        },
+        {
+          "chunk": 194,
+          "time_s": 15.6,
+          "pieces": [
+            "Ġpeace"
+          ],
+          "forced": false,
+          "tick_ms": 76.56
+        },
+        {
+          "chunk": 201,
+          "time_s": 16.16,
+          "pieces": [
+            "Ġready",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 100.62
+        },
+        {
+          "chunk": 209,
+          "time_s": 16.8,
+          "pieces": [
+            "Ġand"
+          ],
+          "forced": false,
+          "tick_ms": 75.66
+        },
+        {
+          "chunk": 211,
+          "time_s": 16.96,
+          "pieces": [
+            "Ġat"
+          ],
+          "forced": false,
+          "tick_ms": 74.91
+        },
+        {
+          "chunk": 212,
+          "time_s": 17.04,
+          "pieces": [
+            "Ġa"
+          ],
+          "forced": false,
+          "tick_ms": 74.35
+        },
+        {
+          "chunk": 217,
+          "time_s": 17.44,
+          "pieces": [
+            "Ġvery"
+          ],
+          "forced": false,
+          "tick_ms": 74.21
+        },
+        {
+          "chunk": 222,
+          "time_s": 17.84,
+          "pieces": [
+            "Ġlong"
+          ],
+          "forced": false,
+          "tick_ms": 74.09
+        },
+        {
+          "chunk": 230,
+          "time_s": 18.48,
+          "pieces": [
+            "Ġrange",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 99.04
+        },
+        {
+          "chunk": 240,
+          "time_s": 19.28,
+          "pieces": [
+            "Ġbrought"
+          ],
+          "forced": false,
+          "tick_ms": 74.59
+        },
+        {
+          "chunk": 244,
+          "time_s": 19.6,
+          "pieces": [
+            "Ġtwo"
+          ],
+          "forced": false,
+          "tick_ms": 75.54
+        },
+        {
+          "chunk": 246,
+          "time_s": 19.76,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 75.81
+        },
+        {
+          "chunk": 249,
+          "time_s": 20.0,
+          "pieces": [
+            "Ġthem"
+          ],
+          "forced": false,
+          "tick_ms": 76.36
+        },
+        {
+          "chunk": 254,
+          "time_s": 20.4,
+          "pieces": [
+            "Ġdown"
+          ],
+          "forced": false,
+          "tick_ms": 75.96
+        },
+        {
+          "chunk": 256,
+          "time_s": 20.56,
+          "pieces": [
+            "Ġwith"
+          ],
+          "forced": false,
+          "tick_ms": 76.75
+        },
+        {
+          "chunk": 257,
+          "time_s": 20.64,
+          "pieces": [
+            "Ġa"
+          ],
+          "forced": false,
+          "tick_ms": 76.37
+        },
+        {
+          "chunk": 263,
+          "time_s": 21.12,
+          "pieces": [
+            "Ġsingle"
+          ],
+          "forced": false,
+          "tick_ms": 76.39
+        },
+        {
+          "chunk": 270,
+          "time_s": 21.68,
+          "pieces": [
+            "Ġball",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 101.03
+        }
+      ]
+    },
+    {
+      "split": "dev-other",
+      "id": "ls-dev-other-4323-55228-00302",
+      "lang": "English",
+      "duration_s": 33.982,
+      "reference": "in the hall above aunt hannah was crying into william's gray linen duster that hung on the hall rack aunt hannah's handkerchief was on the floor back at hillside then very gradually it dawned over them that there was after all something strange and unexplained in it all as if to make sure that she was here like this he drew her even closer bertram was so thankful that he did have one arm that was usable why of of course stammered billy i couldn't help thinking that maybe you had found out you didn't want me",
+      "hypothesis": "In the hall above, Aunt Hannah was crying into William's gray linen duster that hung on the hall rack. Aunt Hannah's handkerchief was on the floor back at Hellside,Then, very gradually, it dawned over them that their was after all, something strange and unexplained in all.As if to make sure that she was here like this, he drew her even closer, Bertram was so thankful that he did have one arm that was usable.Why, oh, of course. Stammered Billy. I couldn't help thinking that. Maybe you had found out you didn't. Want me.",
+      "metric": {
+        "name": "WER",
+        "value": 0.041237113402061855,
+        "S": 3,
+        "D": 1,
+        "I": 0,
+        "N": 97
+      },
+      "stats": {
+        "K": 425,
+        "audio_s": 34.0,
+        "tokens": 126,
+        "tok_per_chunk": 0.296,
+        "forced": 0,
+        "flush_rounds": 1,
+        "tick_p50_ms": 52.42323875427246,
+        "tick_p99_ms": 107.24177360534667,
+        "realtime_factor": 0.741
+      },
+      "audio": "audio/dev-other-ls-dev-other-4323-55228-00302.wav",
+      "plot": "plots/dev-other-ls-dev-other-4323-55228-00302.svg",
+      "emissions": [
+        {
+          "chunk": 21,
+          "time_s": 1.76,
+          "pieces": [
+            "In"
+          ],
+          "forced": false,
+          "tick_ms": 76.76
+        },
+        {
+          "chunk": 22,
+          "time_s": 1.84,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 76.74
+        },
+        {
+          "chunk": 25,
+          "time_s": 2.08,
+          "pieces": [
+            "Ġhall"
+          ],
+          "forced": false,
+          "tick_ms": 76.94
+        },
+        {
+          "chunk": 29,
+          "time_s": 2.4,
+          "pieces": [
+            "Ġabove",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 101.58
+        },
+        {
+          "chunk": 30,
+          "time_s": 2.48,
+          "pieces": [
+            "ĠAunt"
+          ],
+          "forced": false,
+          "tick_ms": 78.48
+        },
+        {
+          "chunk": 35,
+          "time_s": 2.88,
+          "pieces": [
+            "ĠHannah"
+          ],
+          "forced": false,
+          "tick_ms": 74.3
+        },
+        {
+          "chunk": 37,
+          "time_s": 3.04,
+          "pieces": [
+            "Ġwas"
+          ],
+          "forced": false,
+          "tick_ms": 76.36
+        },
+        {
+          "chunk": 42,
+          "time_s": 3.44,
+          "pieces": [
+            "Ġcrying"
+          ],
+          "forced": false,
+          "tick_ms": 75.5
+        },
+        {
+          "chunk": 44,
+          "time_s": 3.6,
+          "pieces": [
+            "Ġinto"
+          ],
+          "forced": false,
+          "tick_ms": 74.49
+        },
+        {
+          "chunk": 48,
+          "time_s": 3.92,
+          "pieces": [
+            "ĠWilliam",
+            "'s"
+          ],
+          "forced": false,
+          "tick_ms": 98.93
+        },
+        {
+          "chunk": 52,
+          "time_s": 4.24,
+          "pieces": [
+            "Ġgray"
+          ],
+          "forced": false,
+          "tick_ms": 75.1
+        },
+        {
+          "chunk": 55,
+          "time_s": 4.48,
+          "pieces": [
+            "Ġlinen"
+          ],
+          "forced": false,
+          "tick_ms": 75.88
+        },
+        {
+          "chunk": 59,
+          "time_s": 4.8,
+          "pieces": [
+            "Ġd",
+            "uster"
+          ],
+          "forced": false,
+          "tick_ms": 101.33
+        },
+        {
+          "chunk": 60,
+          "time_s": 4.88,
+          "pieces": [
+            "Ġthat"
+          ],
+          "forced": false,
+          "tick_ms": 76.74
+        },
+        {
+          "chunk": 64,
+          "time_s": 5.2,
+          "pieces": [
+            "Ġhung"
+          ],
+          "forced": false,
+          "tick_ms": 76.85
+        },
+        {
+          "chunk": 65,
+          "time_s": 5.28,
+          "pieces": [
+            "Ġon"
+          ],
+          "forced": false,
+          "tick_ms": 76.78
+        },
+        {
+          "chunk": 66,
+          "time_s": 5.36,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 76.73
+        },
+        {
+          "chunk": 69,
+          "time_s": 5.6,
+          "pieces": [
+            "Ġhall"
+          ],
+          "forced": false,
+          "tick_ms": 76.21
+        },
+        {
+          "chunk": 73,
+          "time_s": 5.92,
+          "pieces": [
+            "Ġrack",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 100.01
+        },
+        {
+          "chunk": 79,
+          "time_s": 6.4,
+          "pieces": [
+            "ĠAunt"
+          ],
+          "forced": false,
+          "tick_ms": 78.21
+        },
+        {
+          "chunk": 83,
+          "time_s": 6.72,
+          "pieces": [
+            "ĠHannah",
+            "'s"
+          ],
+          "forced": false,
+          "tick_ms": 107.57
+        },
+        {
+          "chunk": 89,
+          "time_s": 7.2,
+          "pieces": [
+            "Ġhand",
+            "ker",
+            "chief"
+          ],
+          "forced": false,
+          "tick_ms": 131.18
+        },
+        {
+          "chunk": 90,
+          "time_s": 7.28,
+          "pieces": [
+            "Ġwas"
+          ],
+          "forced": false,
+          "tick_ms": 78.79
+        },
+        {
+          "chunk": 91,
+          "time_s": 7.36,
+          "pieces": [
+            "Ġon"
+          ],
+          "forced": false,
+          "tick_ms": 78.73
+        },
+        {
+          "chunk": 92,
+          "time_s": 7.44,
+          "pieces": [
+            "Ġthe"
+          ],
+          "forced": false,
+          "tick_ms": 78.85
+        },
+        {
+          "chunk": 95,
+          "time_s": 7.68,
+          "pieces": [
+            "Ġfloor"
+          ],
+          "forced": false,
+          "tick_ms": 78.95
+        },
+        {
+          "chunk": 98,
+          "time_s": 7.92,
+          "pieces": [
+            "Ġback"
+          ],
+          "forced": false,
+          "tick_ms": 79.18
+        },
+        {
+          "chunk": 99,
+          "time_s": 8.0,
+          "pieces": [
+            "Ġat"
+          ],
+          "forced": false,
+          "tick_ms": 78.55
+        },
+        {
+          "chunk": 105,
+          "time_s": 8.48,
+          "pieces": [
+            "ĠHell",
+            "side",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 131.89
+        },
+        {
+          "chunk": 134,
+          "time_s": 10.8,
+          "pieces": [
+            "Then",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 105.4
+        },
+        {
+          "chunk": 139,
+          "time_s": 11.2,
+          "pieces": [
+            "Ġvery"
+          ],
+          "forced": false,
+          "tick_ms": 80.51
+        },
+        {
+          "chunk": 147,
+          "time_s": 11.84,
+          "pieces": [
+            "Ġgradually",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 104.72
+        },
+        {
+          "chunk": 149,
+          "time_s": 12.0,
+          "pieces": [
+            "Ġit"
+          ],
+          "forced": false,
+          "tick_ms": 77.14
+        },
+        {
+          "chunk": 153,
+          "time_s": 12.32,
+          "pieces": [
+            "Ġdawn",
+            "ed"
+          ],
+          "forced": false,
+          "tick_ms": 103.98
+        },
+        {
+          "chunk": 155,
+          "time_s": 12.48,
+          "pieces": [
+            "Ġover"
+          ],
+          "forced": false,
+          "tick_ms": 78.71
+        },
+        {
+          "chunk": 157,
+          "time_s": 12.64,
+          "pieces": [
+            "Ġthem"
+          ],
+          "forced": false,
+          "tick_ms": 79.6
+        },
+        {
+          "chunk": 159,
+          "time_s": 12.8,
+          "pieces": [
+            "Ġthat"
+          ],
+          "forced": false,
+          "tick_ms": 79.77
+        },
+        {
+          "chunk": 160,
+          "time_s": 12.88,
+          "pieces": [
+            "Ġtheir"
+          ],
+          "forced": false,
+          "tick_ms": 80.27
+        },
+        {
+          "chunk": 165,
+          "time_s": 13.28,
+          "pieces": [
+            "Ġwas"
+          ],
+          "forced": false,
+          "tick_ms": 77.81
+        },
+        {
+          "chunk": 169,
+          "time_s": 13.6,
+          "pieces": [
+            "Ġafter"
+          ],
+          "forced": false,
+          "tick_ms": 78.35
+        },
+        {
+          "chunk": 173,
+          "time_s": 13.92,
+          "pieces": [
+            "Ġall",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 100.67
+        },
+        {
+          "chunk": 181,
+          "time_s": 14.56,
+          "pieces": [
+            "Ġsomething"
+          ],
+          "forced": false,
+          "tick_ms": 75.36
+        },
+        {
+          "chunk": 187,
+          "time_s": 15.04,
+          "pieces": [
+            "Ġstrange"
+          ],
+          "forced": false,
+          "tick_ms": 75.27
+        },
+        {
+          "chunk": 188,
+          "time_s": 15.12,
+          "pieces": [
+            "Ġand"
+          ],
+          "forced": false,
+          "tick_ms": 75.1
+        },
+        {
+          "chunk": 195,
+          "time_s": 15.68,
+          "pieces": [
+            "Ġun",
+            "explained"
+          ],
+          "forced": false,
+          "tick_ms": 100.38
+        },
+        {
+          "chunk": 197,
+          "time_s": 15.84,
+          "pieces": [
+            "Ġin"
+          ],
+          "forced": false,
+          "tick_ms": 75.69
+        },
+        {
+          "chunk": 201,
+          "time_s": 16.16,
+          "pieces": [
+            "Ġall",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 100.52
+        },
+        {
+          "chunk": 223,
+          "time_s": 17.92,
+          "pieces": [
+            "As"
+          ],
+          "forced": false,
+          "tick_ms": 78.94
+        },
+        {
+          "chunk": 225,
+          "time_s": 18.08,
+          "pieces": [
+            "Ġif"
+          ],
+          "forced": false,
+          "tick_ms": 75.89
+        },
+        {
+          "chunk": 226,
+          "time_s": 18.16,
+          "pieces": [
+            "Ġto"
+          ],
+          "forced": false,
+          "tick_ms": 76.9
+        },
+        {
+          "chunk": 228,
+          "time_s": 18.32,
+          "pieces": [
+            "Ġmake"
+          ],
+          "forced": false,
+          "tick_ms": 76.11
+        },
+        {
+          "chunk": 231,
+          "time_s": 18.56,
+          "pieces": [
+            "Ġsure"
+          ],
+          "forced": false,
+          "tick_ms": 76.96
+        },
+        {
+          "chunk": 233,
+          "time_s": 18.72,
+          "pieces": [
+            "Ġthat"
+          ],
+          "forced": false,
+          "tick_ms": 76.97
+        },
+        {
+          "chunk": 235,
+          "time_s": 18.88,
+          "pieces": [
+            "Ġshe"
+          ],
+          "forced": false,
+          "tick_ms": 77.13
+        },
+        {
+          "chunk": 240,
+          "time_s": 19.28,
+          "pieces": [
+            "Ġwas"
+          ],
+          "forced": false,
+          "tick_ms": 76.66
+        },
+        {
+          "chunk": 243,
+          "time_s": 19.52,
+          "pieces": [
+            "Ġhere"
+          ],
+          "forced": false,
+          "tick_ms": 76.58
+        },
+        {
+          "chunk": 247,
+          "time_s": 19.84,
+          "pieces": [
+            "Ġlike"
+          ],
+          "forced": false,
+          "tick_ms": 77.71
+        },
+        {
+          "chunk": 251,
+          "time_s": 20.16,
+          "pieces": [
+            "Ġthis",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 104.38
+        },
+        {
+          "chunk": 252,
+          "time_s": 20.24,
+          "pieces": [
+            "Ġhe"
+          ],
+          "forced": false,
+          "tick_ms": 80.0
+        },
+        {
+          "chunk": 254,
+          "time_s": 20.4,
+          "pieces": [
+            "Ġdrew"
+          ],
+          "forced": false,
+          "tick_ms": 80.56
+        },
+        {
+          "chunk": 255,
+          "time_s": 20.48,
+          "pieces": [
+            "Ġher"
+          ],
+          "forced": false,
+          "tick_ms": 80.49
+        },
+        {
+          "chunk": 259,
+          "time_s": 20.8,
+          "pieces": [
+            "Ġeven"
+          ],
+          "forced": false,
+          "tick_ms": 78.33
+        },
+        {
+          "chunk": 264,
+          "time_s": 21.2,
+          "pieces": [
+            "Ġcloser",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 104.75
+        },
+        {
+          "chunk": 272,
+          "time_s": 21.84,
+          "pieces": [
+            "ĠBer",
+            "tram"
+          ],
+          "forced": false,
+          "tick_ms": 105.55
+        },
+        {
+          "chunk": 273,
+          "time_s": 21.92,
+          "pieces": [
+            "Ġwas"
+          ],
+          "forced": false,
+          "tick_ms": 78.96
+        },
+        {
+          "chunk": 277,
+          "time_s": 22.24,
+          "pieces": [
+            "Ġso"
+          ],
+          "forced": false,
+          "tick_ms": 78.88
+        },
+        {
+          "chunk": 282,
+          "time_s": 22.64,
+          "pieces": [
+            "Ġthankful"
+          ],
+          "forced": false,
+          "tick_ms": 79.06
+        },
+        {
+          "chunk": 283,
+          "time_s": 22.72,
+          "pieces": [
+            "Ġthat"
+          ],
+          "forced": false,
+          "tick_ms": 78.79
+        },
+        {
+          "chunk": 284,
+          "time_s": 22.8,
+          "pieces": [
+            "Ġhe"
+          ],
+          "forced": false,
+          "tick_ms": 78.24
+        },
+        {
+          "chunk": 287,
+          "time_s": 23.04,
+          "pieces": [
+            "Ġdid"
+          ],
+          "forced": false,
+          "tick_ms": 78.55
+        },
+        {
+          "chunk": 289,
+          "time_s": 23.2,
+          "pieces": [
+            "Ġhave"
+          ],
+          "forced": false,
+          "tick_ms": 78.02
+        },
+        {
+          "chunk": 292,
+          "time_s": 23.44,
+          "pieces": [
+            "Ġone"
+          ],
+          "forced": false,
+          "tick_ms": 78.59
+        },
+        {
+          "chunk": 295,
+          "time_s": 23.68,
+          "pieces": [
+            "Ġarm"
+          ],
+          "forced": false,
+          "tick_ms": 77.81
+        },
+        {
+          "chunk": 296,
+          "time_s": 23.76,
+          "pieces": [
+            "Ġthat"
+          ],
+          "forced": false,
+          "tick_ms": 79.1
+        },
+        {
+          "chunk": 298,
+          "time_s": 23.92,
+          "pieces": [
+            "Ġwas"
+          ],
+          "forced": false,
+          "tick_ms": 78.91
+        },
+        {
+          "chunk": 303,
+          "time_s": 24.32,
+          "pieces": [
+            "Ġusable",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 103.81
+        },
+        {
+          "chunk": 324,
+          "time_s": 26.0,
+          "pieces": [
+            "Why",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 101.23
+        },
+        {
+          "chunk": 327,
+          "time_s": 26.24,
+          "pieces": [
+            "Ġoh",
+            ","
+          ],
+          "forced": false,
+          "tick_ms": 101.88
+        },
+        {
+          "chunk": 334,
+          "time_s": 26.8,
+          "pieces": [
+            "Ġof"
+          ],
+          "forced": false,
+          "tick_ms": 80.2
+        },
+        {
+          "chunk": 341,
+          "time_s": 27.36,
+          "pieces": [
+            "Ġcourse",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 106.19
+        },
+        {
+          "chunk": 350,
+          "time_s": 28.08,
+          "pieces": [
+            "ĠSt",
+            "ammer",
+            "ed"
+          ],
+          "forced": false,
+          "tick_ms": 127.67
+        },
+        {
+          "chunk": 354,
+          "time_s": 28.4,
+          "pieces": [
+            "ĠBilly",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 103.6
+        },
+        {
+          "chunk": 359,
+          "time_s": 28.8,
+          "pieces": [
+            "ĠI"
+          ],
+          "forced": false,
+          "tick_ms": 75.93
+        },
+        {
+          "chunk": 363,
+          "time_s": 29.12,
+          "pieces": [
+            "Ġcouldn",
+            "'t"
+          ],
+          "forced": false,
+          "tick_ms": 100.77
+        },
+        {
+          "chunk": 366,
+          "time_s": 29.36,
+          "pieces": [
+            "Ġhelp"
+          ],
+          "forced": false,
+          "tick_ms": 76.05
+        },
+        {
+          "chunk": 372,
+          "time_s": 29.84,
+          "pieces": [
+            "Ġthinking"
+          ],
+          "forced": false,
+          "tick_ms": 76.71
+        },
+        {
+          "chunk": 374,
+          "time_s": 30.0,
+          "pieces": [
+            "Ġthat",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 104.18
+        },
+        {
+          "chunk": 382,
+          "time_s": 30.64,
+          "pieces": [
+            "ĠMaybe"
+          ],
+          "forced": false,
+          "tick_ms": 76.95
+        },
+        {
+          "chunk": 385,
+          "time_s": 30.88,
+          "pieces": [
+            "Ġyou"
+          ],
+          "forced": false,
+          "tick_ms": 76.86
+        },
+        {
+          "chunk": 387,
+          "time_s": 31.04,
+          "pieces": [
+            "Ġhad"
+          ],
+          "forced": false,
+          "tick_ms": 77.66
+        },
+        {
+          "chunk": 391,
+          "time_s": 31.36,
+          "pieces": [
+            "Ġfound"
+          ],
+          "forced": false,
+          "tick_ms": 78.53
+        },
+        {
+          "chunk": 394,
+          "time_s": 31.6,
+          "pieces": [
+            "Ġout"
+          ],
+          "forced": false,
+          "tick_ms": 76.34
+        },
+        {
+          "chunk": 397,
+          "time_s": 31.84,
+          "pieces": [
+            "Ġyou"
+          ],
+          "forced": false,
+          "tick_ms": 76.4
+        },
+        {
+          "chunk": 408,
+          "time_s": 32.72,
+          "pieces": [
+            "Ġdidn",
+            "'t",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 126.18
+        },
+        {
+          "chunk": 413,
+          "time_s": 33.12,
+          "pieces": [
+            "ĠWant"
+          ],
+          "forced": false,
+          "tick_ms": 74.79
+        },
+        {
+          "chunk": 417,
+          "time_s": 33.44,
+          "pieces": [
+            "Ġme",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 99.23
+        }
+      ]
+    },
+    {
+      "split": "kspon-dev",
+      "id": "ks-dev-utt-KsponSpeech_622061",
+      "lang": "Korean",
+      "duration_s": 4.0,
+      "reference": "맞아 근데 뭔가 꽂혔어",
+      "hypothesis": "맞아. 근데 뭔가 꽂혔어.",
+      "metric": {
+        "name": "CER",
+        "value": 0.0,
+        "S": 0,
+        "D": 0,
+        "I": 0,
+        "N": 9
+      },
+      "stats": {
+        "K": 50,
+        "audio_s": 4.0,
+        "tokens": 16,
+        "tok_per_chunk": 0.32,
+        "forced": 0,
+        "flush_rounds": 1,
+        "tick_p50_ms": 51.116943359375,
+        "tick_p99_ms": 180.05568981170643,
+        "realtime_factor": 0.74
+      },
+      "audio": "audio/kspon-dev-ks-dev-utt-KsponSpeech_622061.wav",
+      "plot": "plots/kspon-dev-ks-dev-utt-KsponSpeech_622061.svg",
+      "emissions": [
+        {
+          "chunk": 13,
+          "time_s": 1.12,
+          "pieces": [
+            "ë§ŀ",
+            "ìķĦ",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 127.42
+        },
+        {
+          "chunk": 33,
+          "time_s": 2.72,
+          "pieces": [
+            "Ġê·",
+            "¼",
+            "ëį°"
+          ],
+          "forced": false,
+          "tick_ms": 126.86
+        },
+        {
+          "chunk": 36,
+          "time_s": 2.96,
+          "pieces": [
+            "Ġë",
+            "Ń",
+            "Ķ",
+            "ê°Ģ"
+          ],
+          "forced": false,
+          "tick_ms": 153.13
+        },
+        {
+          "chunk": 44,
+          "time_s": 3.6,
+          "pieces": [
+            "Ġê",
+            "½",
+            "Ĥ",
+            "íĺĶ",
+            "ìĸ´",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 205.92
+        }
+      ]
+    },
+    {
+      "split": "kspon-dev",
+      "id": "ks-dev-utt-KsponSpeech_620766",
+      "lang": "Korean",
+      "duration_s": 7.999,
+      "reference": "올해 또 혹신가는 또 형들이 반겨주겠지 또",
+      "hypothesis": "어릴 때 복싱 가면 또 병들이 또 반겨주겠지 또.",
+      "metric": {
+        "name": "CER",
+        "value": 0.47058823529411764,
+        "S": 7,
+        "D": 0,
+        "I": 1,
+        "N": 17
+      },
+      "stats": {
+        "K": 100,
+        "audio_s": 8.0,
+        "tokens": 20,
+        "tok_per_chunk": 0.2,
+        "forced": 0,
+        "flush_rounds": 1,
+        "tick_p50_ms": 51.35083198547363,
+        "tick_p99_ms": 132.23076343536388,
+        "realtime_factor": 0.707
+      },
+      "audio": "audio/kspon-dev-ks-dev-utt-KsponSpeech_620766.wav",
+      "plot": "plots/kspon-dev-ks-dev-utt-KsponSpeech_620766.svg",
+      "emissions": [
+        {
+          "chunk": 18,
+          "time_s": 1.52,
+          "pieces": [
+            "ìĸ´",
+            "ë¦´"
+          ],
+          "forced": false,
+          "tick_ms": 102.58
+        },
+        {
+          "chunk": 19,
+          "time_s": 1.6,
+          "pieces": [
+            "ĠëķĮ"
+          ],
+          "forced": false,
+          "tick_ms": 77.51
+        },
+        {
+          "chunk": 30,
+          "time_s": 2.48,
+          "pieces": [
+            "Ġë³",
+            "µ",
+            "ìĭ±"
+          ],
+          "forced": false,
+          "tick_ms": 127.85
+        },
+        {
+          "chunk": 34,
+          "time_s": 2.8,
+          "pieces": [
+            "Ġê°Ģ",
+            "ë©´"
+          ],
+          "forced": false,
+          "tick_ms": 103.96
+        },
+        {
+          "chunk": 38,
+          "time_s": 3.12,
+          "pieces": [
+            "ĠëĺĲ"
+          ],
+          "forced": false,
+          "tick_ms": 75.78
+        },
+        {
+          "chunk": 58,
+          "time_s": 4.72,
+          "pieces": [
+            "Ġë³",
+            "ĳ",
+            "ëĵ¤ìĿ´",
+            "ĠëĺĲ"
+          ],
+          "forced": false,
+          "tick_ms": 153.14
+        },
+        {
+          "chunk": 63,
+          "time_s": 5.12,
+          "pieces": [
+            "Ġë°ĺ",
+            "ê²¨"
+          ],
+          "forced": false,
+          "tick_ms": 101.96
+        },
+        {
+          "chunk": 68,
+          "time_s": 5.52,
+          "pieces": [
+            "ì£¼",
+            "ê²ł",
+            "ì§Ģ"
+          ],
+          "forced": false,
+          "tick_ms": 132.02
+        },
+        {
+          "chunk": 70,
+          "time_s": 5.68,
+          "pieces": [
+            "ĠëĺĲ",
+            "."
+          ],
+          "forced": false,
+          "tick_ms": 107.12
+        }
+      ]
+    }
+  ]
+}

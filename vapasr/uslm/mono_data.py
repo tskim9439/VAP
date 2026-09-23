@@ -19,7 +19,7 @@ from ..probe.data import FeatureIndex
 from .interleave_data import add_specials, specials_of, bad_utterance, _read_jsonl, CHUNK_S
 
 MAN = os.environ.get("MXC_DATA_MANIFEST_DIR", os.environ.get("DATA_MANIFEST_DIR", "/tmp")); FEAT = os.environ.get("MXC_DATA_FEATURE_CACHE_DIR", os.environ.get("DATA_FEATURE_CACHE_DIR", "/tmp"))
-LANG_OF = {"librispeech": "English", "ls": "English", "kspon": "Korean", "ks": "Korean", "swbd": "English", "mnsc": "English", "nikl": "Korean", "vp": "English", "voxpopuli": "English", "yd": "English", "yodas": "English", "ah71": "Korean", "aihub71631": "Korean", "ahbc": "Korean", "aihubbc": "Korean", "aihub": "Korean"}
+LANG_OF = {"librispeech": "English", "ls": "English", "kspon": "Korean", "ks": "Korean", "swbd": "English", "mnsc": "English", "nikl": "Korean", "vp": "English", "voxpopuli": "English", "yd": "English", "yodas": "English", "ah71": "Korean", "aihub71631": "Korean", "ahbc": "Korean", "aihubbc": "Korean", "aihub": "Korean", "approved-en": "English", "approved-ko": "Korean"}
 def lang_of(name: str) -> str:
     """manifest 이름(또는 id 접두어) → 언어. 이름에 '-' 가 든 코퍼스(aihub-bc-train)도 맞도록 가장 긴 접두어로 판정한다(67126: 'aihub' KeyError)."""
     for k in sorted(LANG_OF, key=len, reverse=True):
@@ -53,27 +53,37 @@ def _load_json_retry(path, tries=10, wait=2.0):
 
 class MonoStreamDataset(Dataset):
     def __init__(self, manifests: List[str], tok, encoder: str = "nemotron-c0", mode: str = "stream", subsets: Optional[List[str]] = None,
-                 delays=(2, 3, 4, 6), max_per_chunk: int = 0, max_items: Optional[int] = None, seed: int = 0, qc: bool = True, align_root: Optional[str] = None, online: bool = True):
+                 delays=(2, 3, 4, 6), max_per_chunk: int = 0, max_items: Optional[int] = None, seed: int = 0, qc: bool = True,
+                 align_root: Optional[str] = None, manifest_root: Optional[str] = None, online: bool = True):
         """online=True(기본): 특징 캐시 없이 manifest 의 오디오를 조립해 돌려준다(K = round(duration·12.5)). False: 특징 캐시(index.jsonl) 경로."""
         self.tok = tok; self.sp_ids = add_specials(tok); self.sp = specials_of(self.sp_ids); self.delays = tuple(delays); self.M = max_per_chunk; self.online = online
         self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>"); self._pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]
         self.items: List[dict] = []; self.dropped = 0; self.no_align = 0; self.align_dirs: Dict[str, str] = {}
         class _Rows:                                        # online: manifest 행이 특징 index 역할(id → frames·subset·mode·segments)
-            def __init__(self, name):
+            def __init__(self, root, name):
                 self.rows = {r["id"]: dict(frames=frames_for(r["duration_s"]), subset=r["subset"], mode=r["mode"], duration_s=r["duration_s"],
                                            segments=[dict(path=s["path"], offset_s=s["offset_s"], silence_before_s=s["silence_before_s"], dur_s=s["dur_s"],
                                                           **({"src_offset_s": s["src_offset_s"]} if s.get("src_offset_s") is not None else {})) for s in r["segments"]])   # src_offset_s(긴 원본 안 위치) 를 빠뜨리면 71631 발화가 대화 첫머리 오디오로 조립된다(D2 까지의 버그, 2026-09-10)
-                             for r in read_streams(os.path.join(MAN, name))}; self.frame_hz = 1 / CHUNK_S
+                             for r in read_streams(os.path.join(root, name))}; self.frame_hz = 1 / CHUNK_S
+        manifest_root = manifest_root or MAN
         for name in manifests:
-            fi = _Rows(name) if online else FeatureIndex(FEAT, encoder, name); assert abs(fi.frame_hz - 1 / CHUNK_S) < 1e-6, f"{encoder} frame_hz {fi.frame_hz} != 12.5"
+            fi = _Rows(manifest_root, name) if online else FeatureIndex(FEAT, encoder, name); assert abs(fi.frame_hz - 1 / CHUNK_S) < 1e-6, f"{encoder} frame_hz {fi.frame_hz} != 12.5"
             # 정렬 루트: 명시 > align2(선행 공백 규약, 2026-09-05) > align. 서버 산출물은 지우지 않으므로 새 규약은 새 루트에 쌓인다.
             cands = [align_root] if align_root else ([os.environ["VAPASR_ALIGN_ROOT"]] if os.environ.get("VAPASR_ALIGN_ROOT") else []) + [os.path.join(MAN, "align-asr-tn-v1"), os.path.join(MAN, "align2"), os.path.join(MAN, "align")]
             adir = next((os.path.join(c, name) for c in cands if os.path.isdir(os.path.join(c, name))), os.path.join(cands[-1], name)); self.align_dirs[name] = adir
             # asr-tn-v1.0.0 관문: 정렬 산출물의 textnorm fingerprint 가 없거나(동결 전 align2/align) 코드와 다르면 실패. 재현은 VAPASR_ALLOW_LEGACY_TN=1
             from ..data.textnorm import check_fingerprint
-            fpp = os.path.join(adir, "fingerprint.json"); check_fingerprint(_load_json_retry(fpp) if os.path.exists(fpp) else None, f"dataset {name} ← {adir}")
+            fpp = os.path.join(adir, "fingerprint.json"); tpp = os.path.join(adir, "target-policy.json")
+            if os.path.exists(tpp):
+                policy = _load_json_retry(tpp)
+                if (policy.get("schema") != "qwen-verbatim-training-target-v1"
+                        or policy.get("normalization") != "none"
+                        or not policy.get("approval_fingerprint")):
+                    raise RuntimeError(f"dataset {name}: invalid Qwen-verbatim target policy")
+            else:
+                check_fingerprint(_load_json_retry(fpp) if os.path.exists(fpp) else None, f"dataset {name} ← {adir}")
             from ..data.schema import check_cards, tokenizer_sha256                 # 데이터 카드(dataset.json / align.json) 관문: major·tokenizer 불일치는 VAPASR_STRICT_SCHEMA=1 이면 실패, 아니면 경고
-            check_cards(os.path.join(MAN, name), adir, f"dataset {name}", tokenizer_json_sha=tokenizer_sha256(tok))
+            check_cards(os.path.join(manifest_root, name), adir, f"dataset {name}", tokenizer_json_sha=tokenizer_sha256(tok))
             # 항목 캐시: 정렬 jsonl 수만 개를 매 프로세스가 읽으면 Lustre 에서 수십 분 걸린다(8-rank DDP 면 ×8). 한 번 만들어 _items.json.gz 에 저장하고
             # (정렬 파일 수가 같으면) 재사용한다. 모든 mode·subset 을 담고 메모리에서 거른다.
             import gzip

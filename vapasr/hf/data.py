@@ -6,13 +6,23 @@ import torch
 from torch.utils.data import DataLoader
 from ..uslm.mono_data import MonoStreamDataset, BucketBatchSampler, collate_streams
 
+
+def proportional_order(counts):
+    """Smooth deterministic schedule containing each named batch exactly once."""
+    positions = [((j + .5) / n, name)
+                 for name, n in counts.items() if n > 0 for j in range(n)]
+    return [name for _, name in sorted(positions)]
+
 class RoundRobinLoader:
     """여러 (이름 → DataLoader) 를 라운드로빈으로 돈다. 한 셋이 먼저 끝나면 그 셋은 새 epoch 순열로 이어서 낸다(모든 셋이 같은 수의 배치를 내지 않아도 step 수 = 합).
     Trainer 가 요구하는 것: __len__(epoch 당 step 수), __iter__, set_epoch(rank 간 동일한 셔플)."""
-    def __init__(self, datasets: Dict[str, MonoStreamDataset], bs_of, seed: int = 0, rank: int = 0, world: int = 1, num_workers: int = 4, drop_last: bool = True):
+    def __init__(self, datasets: Dict[str, MonoStreamDataset], bs_of, seed: int = 0, rank: int = 0, world: int = 1,
+                 num_workers: int = 4, drop_last: bool = True, schedule: str = "balanced"):
+        if schedule not in ("balanced", "proportional"):
+            raise ValueError(f"unknown language schedule: {schedule}")
         self.names = list(datasets); self.samplers = {m: BucketBatchSampler(ds, min(bs_of(m), len(ds)), seed=seed, drop_last=drop_last, rank=rank, world=world) for m, ds in datasets.items()}
         self.loaders = {m: DataLoader(ds, batch_sampler=self.samplers[m], num_workers=num_workers, collate_fn=collate_streams, persistent_workers=False) for m, ds in datasets.items()}
-        self.epoch = 0; self._n = sum(len(s) for s in self.samplers.values())
+        self.epoch = 0; self._n = sum(len(s) for s in self.samplers.values()); self.schedule = schedule
     def set_epoch(self, e: int): self.epoch = e
     def __len__(self): return self._n
     def _cycle(self, m, ep0):
@@ -22,6 +32,14 @@ class RoundRobinLoader:
             for b in self.loaders[m]: yield b
             ep += 1
     def __iter__(self):
+        if self.schedule == "proportional":
+            # Exactly one pass over every rank-local batch. Midpoints produce a
+            # smooth deterministic interleave without cycling the smaller set.
+            for sampler in self.samplers.values(): sampler.set_epoch(self.epoch)
+            its = {m: iter(loader) for m, loader in self.loaders.items()}
+            for m in proportional_order({m: len(self.samplers[m]) for m in self.names}):
+                yield next(its[m])
+            return
         its = [self._cycle(m, self.epoch) for m in self.names]
         for i in range(self._n): yield next(its[i % len(its)])
     @property

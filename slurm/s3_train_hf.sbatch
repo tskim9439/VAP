@@ -1,5 +1,5 @@
 #!/bin/bash
-# Stage 2/3 학습(HF Trainer 판, experiments/s3_train_hf.py) — 다중 노드 DDP, thinker full FT + 온라인 Nemotron + Liger. 선점·시간 제한 시 저장 후 requeue(Trainer checkpoint-<step>/ 재개).
+# Stage 2/3 학습(HF Trainer 판, experiments/s3_train_hf.py) — 다중 노드 DDP, thinker full FT + 온라인 Nemotron encoder 해동(기본) + Liger. 선점·시간 제한 시 저장 후 requeue(Trainer checkpoint-<step>/ 재개).
 #   제출:  sbatch --export=ALL,RUN=C,TRAIN=librispeech-960:kspon-full,EPOCHS=30,EVAL_EVERY=1000,SAVE_EVERY=500,LR=1e-4,WARMUP=500 slurm/s2_train.sbatch
 #          이어서 다른 run 을 체인할 때는 --dependency=afterok:<jobid> (afterany 는 선행 run 이 실패해도 시작한다) + INIT_CKPT=…/s1-<RUN>/ckpt-last.pt
 #          NCCL 초기화에서 SIGSEGV 가 잦은 노드는 --exclude=slurmmxch200v5-hpc-52 처럼 뺀다(66007: 4 회 중 3 회 hpc-52)
@@ -28,9 +28,29 @@ MXC_CONDA_DIR=${CONDA_OVERRIDE:-$MXC_CONDA_DIR}; source "$MXC_CONDA_DIR/etc/prof
 # conda env 를 노드 로컬 디스크로(NFS import 지연 회피: 프로세스 시작→학습까지 16–25 분이 대부분 import). 노드마다 병렬, 이미 있으면 몇 초. LOCAL_ENV= 로 끄기
 export VAPASR_LOCAL_ENV=${LOCAL_ENV-/tmp/sa_tskim/vapasr-env}
 if [ -n "$VAPASR_LOCAL_ENV" ]; then
-  t0=$(date +%s); srun --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 bash scripts/stage-env-local.sh 2>&1 | grep -vE "^cp: .*File exists" | sed "s/^/  [stage] /"
-  if [ -x "$VAPASR_LOCAL_ENV/bin/python" ]; then export PATH="$VAPASR_LOCAL_ENV/bin:$PATH" CONDA_PREFIX="$VAPASR_LOCAL_ENV" TMPDIR="$(dirname "$VAPASR_LOCAL_ENV")/tmp" VAPASR_STAGE_DIR="$(dirname "$VAPASR_LOCAL_ENV")/vapasr-stage"; mkdir -p "$TMPDIR" "$VAPASR_STAGE_DIR"; echo "[$(date '+%T')] 로컬 env 사용 $VAPASR_LOCAL_ENV ($(( $(date +%s) - t0 )) s)"
-  else echo "!! 로컬 env 준비 실패 → NFS env 로 진행"; VAPASR_LOCAL_ENV=""; fi
+  t0=$(date +%s)
+  # sbatch wrapper가 명시적인 변수만 전달하므로, step에서는 batch shell이
+  # .env·conda로 구성한 현재 환경을 명시적으로 전달한다. /bin/bash 절대 경로는
+  # PATH가 없는 Slurm step에서 execve("bash")가 실패하는 것을 막는다(job 73917).
+  if srun --export=ALL --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 \
+      /bin/bash scripts/stage-env-local.sh 2>&1 \
+      | grep -vE "^cp: .*File exists" | sed "s/^/  [stage] /"; then
+    # batch node 하나가 아니라 배정된 모든 노드에 로컬 env가 있어야 사용한다.
+    if srun --export=ALL --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 \
+        /usr/bin/test -x "$VAPASR_LOCAL_ENV/bin/python"; then
+      export PATH="$VAPASR_LOCAL_ENV/bin:$PATH" CONDA_PREFIX="$VAPASR_LOCAL_ENV" \
+        TMPDIR="$(dirname "$VAPASR_LOCAL_ENV")/tmp" \
+        VAPASR_STAGE_DIR="$(dirname "$VAPASR_LOCAL_ENV")/vapasr-stage"
+      mkdir -p "$TMPDIR" "$VAPASR_STAGE_DIR"
+      echo "[$(date '+%T')] 로컬 env 사용 $VAPASR_LOCAL_ENV ($(( $(date +%s) - t0 )) s)"
+    else
+      echo "!! 일부 노드에 로컬 env 없음 → 전체 NFS env 로 진행"
+      VAPASR_LOCAL_ENV=""
+    fi
+  else
+    echo "!! 로컬 env 준비 실패 → 전체 NFS env 로 진행"
+    VAPASR_LOCAL_ENV=""
+  fi
 fi
 export MXC_CKPT_EXP_DIR=$ROOT
 export MXC_DATA_MANIFEST_DIR=${MAN_IN:-$MXC_DATA_MANIFEST_DIR} VAPASR_ALIGN_ROOT=${ALIGN_ROOT:-${MAN_IN:-$MXC_DATA_MANIFEST_DIR}/align-asr-tn-v1}
@@ -51,8 +71,17 @@ INIT=${INIT:-}; INIT_ADAPTER=${INIT_ADAPTER:-$ROOT/uslm/s1-adapter-distill/adapt
 [ -n "$INIT" ] && [ ! -e "$INIT" ] && { echo "!! INIT 없음: $INIT"; exit 1; }
 # 선행 run 이 끝나지 않았는데(DONE 없음) afterany 로 시작되면 중간 ckpt 로 학습해 버린다. INIT_REQUIRE_DONE=0 이면 무시
 [ -n "$INIT" ] && [ "${INIT_REQUIRE_DONE:-1}" = 1 ] && [ ! -f "$(dirname "$INIT")/DONE" ] && [ ! -f "$INIT/../DONE" ] && { echo "!! INIT 의 run 이 미완료(DONE 없음): $INIT — INIT_REQUIRE_DONE=0 으로 강제 가능"; exit 1; }
+# encoder는 기본 해동. ablation에서만 TRAIN_ENCODER=0으로 명시적으로 동결한다.
+TRAIN_ENCODER=${TRAIN_ENCODER:-1}
+case "$TRAIN_ENCODER" in
+  1) LR_ENCODER=${LR_ENCODER:-1e-5}; ENCODER_ARGS="--train-encoder --lr-encoder $LR_ENCODER" ;;
+  0) ENCODER_ARGS="--freeze-encoder" ;;
+  *) echo "!! TRAIN_ENCODER는 1 또는 0이어야 함: $TRAIN_ENCODER"; exit 1 ;;
+esac
 # 주의: srun bash -c "…" 안에 들어가므로 COMMON 에 줄바꿈이 있으면 두 번째 줄이 별개 명령이 되어 인자가 잘린다(job 65955: --full-ft·--lr 등 누락 → LoRA 로 실행됨)
-COMMON="--out-dir $OUT --train $TRAIN --epochs $EPOCHS --bs-en $BS_EN --bs-ko $BS_KO --next-weight 0.3 --next-weight-ko 0.15 --eval-every $EVAL_EVERY --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every $SAVE_EVERY --warmup $WARMUP --lr $LR --lr-adapter $LR_ADAPTER --resume auto ${INIT:+--init $INIT} ${INIT_ADAPTER:+--init-adapter $INIT_ADAPTER} ${TRAIN_ENCODER:+--train-encoder} ${LR_ENCODER:+--lr-encoder $LR_ENCODER} ${DEV_EXTRA:+--dev-extra $DEV_EXTRA} ${EXTRA_ARGS:-}"
+COMMON="--out-dir $OUT --train $TRAIN --epochs $EPOCHS --bs-en $BS_EN --bs-ko $BS_KO --next-weight 0.3 --next-weight-ko 0.15 --eval-every $EVAL_EVERY --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every $SAVE_EVERY --warmup $WARMUP --lr $LR --lr-adapter $LR_ADAPTER --resume auto ${INIT:+--init $INIT} ${INIT_ADAPTER:+--init-adapter $INIT_ADAPTER} $ENCODER_ARGS ${DEV_EXTRA:+--dev-extra $DEV_EXTRA} ${EXTRA_ARGS:-}"
+COMMON="$COMMON ${TRAIN_MAN_ROOT:+--train-man-root $TRAIN_MAN_ROOT} ${TRAIN_ALIGN_ROOT:+--train-align-root $TRAIN_ALIGN_ROOT}"
+COMMON="$COMMON ${LANGUAGE_SCHEDULE:+--language-schedule $LANGUAGE_SCHEDULE}"
 # ── 선점·시간 제한: PREEMPT 파일(공유 FS) → 모든 rank 가 다음 step 경계에서 감지(all_reduce) → rank 0 저장 → 종료 → requeue
 rm -f "$OUT/PREEMPT"
 on_preempt() { echo "[$(date '+%T')] 신호 수신 → PREEMPT 표시, 저장 대기"; touch "$OUT/PREEMPT"; wait "$PID"; echo "requeue $SLURM_JOB_ID"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }
@@ -63,8 +92,8 @@ MASTER=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1); PORT=$((200
 # rendezvous 주소는 호스트명이 아니라 첫 노드(= 이 배치 스크립트가 도는 노드)의 eth0 IPv4 로 — 호스트명이 IPoIB 로 풀리면 keep-alive/TCPStore 가 막힌다
 MASTER_IP=$(ip -4 -o addr show "${NCCL_SOCKET_IFNAME}" 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n 1); [ -n "$MASTER_IP" ] || MASTER_IP=$MASTER
 echo "[$(date '+%T')] torchrun × $SLURM_NNODES 노드 (rdzv $MASTER=$MASTER_IP:$PORT): $COMMON $EXTRA"
-srun --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 --kill-on-bad-exit=1 \
-  bash -c "torchrun --nnodes=$SLURM_NNODES --nproc_per_node=8 --node_rank=\$SLURM_NODEID --rdzv_backend=c10d --rdzv_endpoint=$MASTER_IP:$PORT --rdzv_id=$SLURM_JOB_ID experiments/s3_train_hf.py $ARGS" &
+srun --export=ALL --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 --kill-on-bad-exit=1 \
+  /bin/bash -c "torchrun --nnodes=$SLURM_NNODES --nproc_per_node=8 --node_rank=\$SLURM_NODEID --rdzv_backend=c10d --rdzv_endpoint=$MASTER_IP:$PORT --rdzv_id=$SLURM_JOB_ID experiments/s3_train_hf.py $ARGS" &
 PID=$!; wait "$PID"; RC=$?
 if [ "$RC" -eq 0 ] && [ -f "$OUT/DONE" ]; then echo "[$(date '+%T')] 학습 완료 → DONE"
 elif [ "$RC" -eq 0 ]; then echo "[$(date '+%T')] 미완료 종료(선점 저장 등) → requeue"; scontrol requeue "$SLURM_JOB_ID"

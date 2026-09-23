@@ -1,0 +1,57 @@
+/tmp/sa_tskim-vapasr-env-local/lib/python3.11/site-packages/torch/backends/__init__.py:46: UserWarning: Please use the new API settings to control TF32 behavior, such as torch.backends.cudnn.conv.fp32_precision = 'tf32' or torch.backends.cuda.matmul.fp32_precision = 'ieee'. Old settings, e.g, torch.backends.cuda.matmul.allow_tf32 = True, torch.backends.cudnn.allow_tf32 = True, allowTF32CuDNN() and allowTF32CuBLAS() will be deprecated after Pytorch 2.9. Please see https://pytorch.org/docs/main/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:80.)
+  self.setter(val)
+START rank=1 total=5623 remaining=5623 deltas=[6]
+OneLogger: Setting error_handling_strategy to DISABLE_QUIETLY_AND_REPORT_METRIC_ERROR for rank (rank=0) with OneLogger disabled. To override: explicitly set error_handling_strategy parameter.
+Final configuration contains 0 exporter(s)
+No exporters were provided. This means that no telemetry data will be collected.
+nemotron encoder 학습: 서브샘플링 Triton 커널 끔(fuse_triton=False)
+The tokenizer you are loading from '/soundai/Model/VAPASR/hf-approved-qwen-v1-e10-n2/checkpoint-35000' with an incorrect regex pattern: https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/discussions/84#69121093e8b480e709447d5e. This will lead to incorrect tokenization. You should set the `fix_mistral_regex=True` flag when loading this tokenizer to fix this issue.
+PARITY rank=1 lang=Korean delta=6 samples=2 PASS
+PROGRESS rank=1 predictions=128/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=7.3 decode_s=3.9 elapsed_s=16.8 peak_gpu_gb=7.17
+PROGRESS rank=1 predictions=256/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=6.6 decode_s=3.5 elapsed_s=27.0 peak_gpu_gb=7.47
+PROGRESS rank=1 predictions=384/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=5.9 decode_s=4.5 elapsed_s=37.4 peak_gpu_gb=7.79
+PROGRESS rank=1 predictions=512/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=5.9 decode_s=4.5 elapsed_s=47.9 peak_gpu_gb=7.83
+PROGRESS rank=1 predictions=640/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=5.9 decode_s=5.3 elapsed_s=59.3 peak_gpu_gb=8.22
+PROGRESS rank=1 predictions=768/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=5.7 decode_s=5.7 elapsed_s=70.9 peak_gpu_gb=8.45
+PROGRESS rank=1 predictions=896/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=6.2 decode_s=6.9 elapsed_s=84.0 peak_gpu_gb=9.14
+PROGRESS rank=1 predictions=1024/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=5.8 decode_s=7.7 elapsed_s=97.6 peak_gpu_gb=9.77
+PROGRESS rank=1 predictions=1152/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=6.0 decode_s=9.1 elapsed_s=112.7 peak_gpu_gb=10.72
+PROGRESS rank=1 predictions=1280/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=5.9 decode_s=12.8 elapsed_s=131.5 peak_gpu_gb=12.46
+PROGRESS rank=1 predictions=1408/5623 dataset=kspon-eval_clean delta=6 batch=128 encode_s=6.5 decode_s=17.7 elapsed_s=155.8 peak_gpu_gb=15.16
+PROGRESS rank=1 predictions=1500/5623 dataset=kspon-eval_clean delta=6 batch=92 encode_s=4.7 decode_s=33.4 elapsed_s=194.1 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=1628/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=5.8 decode_s=3.8 elapsed_s=203.9 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=1756/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=5.4 decode_s=4.7 elapsed_s=214.1 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=1884/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=5.8 decode_s=5.7 elapsed_s=225.8 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=2012/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=5.7 decode_s=6.5 elapsed_s=238.0 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=2140/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=5.5 decode_s=7.7 elapsed_s=251.4 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=2268/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=5.9 decode_s=9.2 elapsed_s=266.7 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=2396/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=5.7 decode_s=10.5 elapsed_s=283.0 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=2524/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=5.9 decode_s=13.4 elapsed_s=302.4 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=2652/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=5.8 decode_s=17.1 elapsed_s=325.4 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=2780/5623 dataset=kspon-eval_other delta=6 batch=128 encode_s=6.2 decode_s=22.2 elapsed_s=354.0 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=2843/5623 dataset=kspon-eval_other delta=6 batch=63 encode_s=3.0 decode_s=32.4 elapsed_s=389.5 peak_gpu_gb=18.70
+PARITY rank=1 lang=English delta=6 samples=2 PASS
+PROGRESS rank=1 predictions=2971/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=5.7 decode_s=6.3 elapsed_s=411.8 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=3099/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=5.9 decode_s=7.5 elapsed_s=425.4 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=3227/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=5.8 decode_s=8.6 elapsed_s=439.9 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=3355/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=5.7 decode_s=9.8 elapsed_s=455.6 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=3483/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=6.0 decode_s=11.4 elapsed_s=473.2 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=3611/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=6.0 decode_s=13.5 elapsed_s=492.8 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=3739/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=6.2 decode_s=15.9 elapsed_s=515.0 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=3867/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=6.2 decode_s=19.1 elapsed_s=540.4 peak_gpu_gb=18.70
+PROGRESS rank=1 predictions=3995/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=6.2 decode_s=25.3 elapsed_s=572.0 peak_gpu_gb=19.15
+PROGRESS rank=1 predictions=4123/5623 dataset=librispeech-test-clean delta=6 batch=128 encode_s=6.4 decode_s=37.6 elapsed_s=616.1 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=4153/5623 dataset=librispeech-test-clean delta=6 batch=30 encode_s=1.6 decode_s=56.6 elapsed_s=674.6 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=4281/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.4 decode_s=6.4 elapsed_s=687.6 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=4409/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.3 decode_s=6.9 elapsed_s=701.0 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=4537/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.0 decode_s=8.2 elapsed_s=715.4 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=4665/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.1 decode_s=9.4 elapsed_s=731.0 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=4793/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.5 decode_s=10.6 elapsed_s=748.2 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=4921/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.4 decode_s=11.5 elapsed_s=766.3 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=5049/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.4 decode_s=12.9 elapsed_s=785.7 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=5177/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.4 decode_s=15.5 elapsed_s=807.7 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=5305/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.5 decode_s=18.1 elapsed_s=832.4 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=5433/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.5 decode_s=21.5 elapsed_s=860.5 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=5561/5623 dataset=librispeech-test-other delta=6 batch=128 encode_s=6.4 decode_s=27.9 elapsed_s=894.9 peak_gpu_gb=25.62
+PROGRESS rank=1 predictions=5623/5623 dataset=librispeech-test-other delta=6 batch=62 encode_s=3.2 decode_s=60.3 elapsed_s=964.0 peak_gpu_gb=25.62
+DONE rank=1 predictions=5623
