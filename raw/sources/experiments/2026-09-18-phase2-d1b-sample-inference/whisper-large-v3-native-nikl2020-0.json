@@ -1,0 +1,22 @@
+{
+  "model": "openai/whisper-large-v3",
+  "revision": "06f233fe06e710322aca913c1bc4249a0d71fce1",
+  "audio": "/soundai/users/tskim/VAPKT-data/eval/p2-D1b-restart-listen-v1/windows/nikl2020-0.wav",
+  "audio_sha256": "610d574a648c7a3d5af17bdbcc3371dc739673838df8ed7c8920ab5a4b8789f6",
+  "language": "korean",
+  "task": "transcribe",
+  "decoding_mode": "native-long-form",
+  "chunk_length_s": null,
+  "stride_length_s": null,
+  "raw_text": "남편은 어떻게 만났어요?",
+  "chunks": null,
+  "loaded_s": 1.85,
+  "inference_s": 1.622,
+  "torch": "2.9.0+cu128",
+  "reference": "남편분은 어떻게 만나셨어요 어 정말 오래됐다 남편 만난 지 우리가 스물여덟 살 때 만났으니까 몇 년 됐지 심 십 칠 년 됐나 그 십칠 년 어떻게 만났느냐 하면 내가 인제 스물세 살 때부터 교회 생활을 시작했더라 시작했거든요 그서 인제 나는 결혼할 생각이 없었어요 ▯",
+  "reference_normalized": "남편분은어떻게만나셨어요어정말오래됐다남편만난지우리가스물여덟살때만났으니까몇년됐지심십칠년됐나그십칠년어떻게만났느냐하면내가인제스물세살때부터교회생활을시작했더라시작했거든요그서인제나는결혼할생각이없었어요",
+  "hypothesis_normalized": "남편은어떻게만났어요",
+  "cer": 0.9038461538461539,
+  "cer_errors": 94,
+  "cer_reference_characters": 104
+}

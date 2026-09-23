@@ -1,0 +1,236 @@
+{
+ "model": "/soundai/Model/VAPASR/p2-D1b-restart/final",
+ "delay": 4,
+ "tol": 0.4,
+ "constrain": true,
+ "sets": {
+  "nikl2020": {
+   "tag": "heldout",
+   "meta": {
+    "path": "_nikl2020.proxy.dialogues.jsonl",
+    "dialogues": 100,
+    "tokens_from": "proxy",
+    "proxied_utts": 38568,
+    "windows": 410,
+    "stats": {
+     "dialogues": 100,
+     "windows": 410,
+     "skipped_untranscribed": 0,
+     "skipped_unaligned": 0,
+     "skipped_sparse": 6,
+     "no_start": 7882,
+     "windows_with_mask": 81,
+     "random_start": 0
+    }
+   },
+   "summary": {
+    "windows": 1,
+    "unit": "cer",
+    "lane_rate": 1.0385,
+    "mapped_rate": 1.0385,
+    "lane_acc_mapped": 0.6,
+    "pooled_rate": 0.125,
+    "onset_p": 0.045,
+    "onset_r": 0.5,
+    "eot_p": 0.0,
+    "eot_r": 0.0,
+    "lane_acc": 0.6,
+    "spurious_segments": 7,
+    "act_acc": 0.8687,
+    "act_f1": 0.4444,
+    "latency_mean": 0.3481,
+    "latency_p50": 0.4487,
+    "latency_match": 0.777,
+    "forced": 0,
+    "stray_eot": 0,
+    "implicit": 0,
+    "unclosed": 0,
+    "ms_per_chunk": 65.8
+   },
+   "windows": [
+    {
+     "name": "nikl2020-0",
+     "conv": "nikl2020:SDRW2000001298",
+     "t0": 0.0,
+     "L": 35.003,
+     "speakers": 2,
+     "episodes": 2,
+     "unit": "cer",
+     "lane_rate": 1.0384615384615385,
+     "mapped_rate": 1.0384615384615385,
+     "pooled_rate": 0.125,
+     "n_ref_units": 104,
+     "lane_map": {
+      "1": 1,
+      "2": 2
+     },
+     "onset": {
+      "hit": 1,
+      "hyp": 22,
+      "ref": 2
+     },
+     "eot": {
+      "hit": 0,
+      "hyp": 22,
+      "ref": 1
+     },
+     "lane": {
+      "ok": 9,
+      "bad": 6,
+      "spurious": 7,
+      "ok_mapped": 9
+     },
+     "act_acc": 0.8687214611872146,
+     "act_f1": 0.4444444444444444,
+     "latency": {
+      "mean": 0.3480826766840467,
+      "p50": 0.44865142857142715,
+      "n": 73,
+      "n_ref_tokens": 94
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 8,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 174,
+      "sec": 34.7,
+      "ms_per_chunk": 65.8
+     }
+    }
+   ],
+   "sec": 53
+  },
+  "chime6": {
+   "tag": "heldout",
+   "meta": {
+    "path": "_chime6.proxy.dialogues.jsonl",
+    "dialogues": 2,
+    "tokens_from": "proxy",
+    "proxied_utts": 6644,
+    "windows": 145,
+    "stats": {
+     "dialogues": 2,
+     "windows": 145,
+     "skipped_untranscribed": 0,
+     "skipped_unaligned": 0,
+     "skipped_sparse": 62,
+     "no_start": 1397,
+     "windows_with_mask": 44,
+     "random_start": 0
+    }
+   },
+   "summary": {
+    "windows": 1,
+    "unit": "wer",
+    "lane_rate": 1.5,
+    "mapped_rate": 1.5,
+    "lane_acc_mapped": 0.5,
+    "pooled_rate": 1.5,
+    "onset_p": 0.4,
+    "onset_r": 0.5,
+    "eot_p": 0.4,
+    "eot_r": 0.667,
+    "lane_acc": 0.5,
+    "spurious_segments": 1,
+    "act_acc": 0.9672,
+    "act_f1": 0.3404,
+    "latency_mean": -0.865,
+    "latency_p50": -0.865,
+    "latency_match": 0.2,
+    "forced": 0,
+    "stray_eot": 0,
+    "implicit": 0,
+    "unclosed": 0,
+    "ms_per_chunk": 58.1
+   },
+   "windows": [
+    {
+     "name": "chime6-0",
+     "conv": "chime6:S09",
+     "t0": 4490.0,
+     "L": 25.222,
+     "speakers": 2,
+     "episodes": 4,
+     "unit": "wer",
+     "lane_rate": 1.5,
+     "mapped_rate": 1.5,
+     "pooled_rate": 1.5,
+     "n_ref_units": 8,
+     "lane_map": {
+      "1": 1,
+      "2": 2,
+      "3": 3
+     },
+     "onset": {
+      "hit": 2,
+      "hyp": 5,
+      "ref": 4
+     },
+     "eot": {
+      "hit": 2,
+      "hyp": 5,
+      "ref": 3
+     },
+     "lane": {
+      "ok": 2,
+      "bad": 2,
+      "spurious": 1,
+      "ok_mapped": 2
+     },
+     "act_acc": 0.9671957671957672,
+     "act_f1": 0.3404255319148936,
+     "latency": {
+      "mean": -0.8649999999999451,
+      "p50": -0.8649999999999451,
+      "n": 2,
+      "n_ref_tokens": 10
+     },
+     "decode": {
+      "forced": 0,
+      "rounds": 3,
+      "stray_eot": 0,
+      "implicit": 0,
+      "text_no_lane": 0,
+      "unclosed": 0,
+      "reopen": 0,
+      "act_closed": 0,
+      "n_emits": 38,
+      "sec": 19.0,
+      "ms_per_chunk": 58.1
+     }
+    }
+   ],
+   "sec": 21
+  }
+ },
+ "args": {
+  "model": "/soundai/Model/VAPASR/p2-D1b-restart/final",
+  "data": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "sets": "nikl2020:heldout:1,chime6:heldout:1",
+  "out": "/soundai/users/tskim/VAPKT-data/eval/p2-D1b-restart-listen-v1",
+  "delay": 4,
+  "R": 6,
+  "window": [
+   20.0,
+   40.0
+  ],
+  "hop": 10.0,
+  "seed": 7,
+  "tol": 0.4,
+  "mono_cache": "/soundai/users/tskim/VAPKT-data/data/phase2/mono",
+  "gpu": null,
+  "min_speakers": 2,
+  "max_tries": 40,
+  "runaway_cap": null,
+  "no_constrain": false,
+  "act_close_chunks": 6,
+  "act_thr": 0.3,
+  "onset_thr": 0.35,
+  "delay_onset": 2
+ }
+}
