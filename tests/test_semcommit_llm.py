@@ -365,7 +365,7 @@ def test_build_prompt_kinds_and_gptoss_final_channel():
     tok = CharTok("<|start|>assistant")
     g = sc.LLM(None, "gptoss", device="cuda", tokenizer=tok)
     assert g.build_prompt([{"role": "user", "content": "hi"}]).endswith("<|start|>assistant<|channel|>final<|message|>")
-    assert tok.kwargs == {"reasoning_effort": "low"} and g.max_memory == sc.GPTOSS_MAX_MEMORY
+    assert tok.kwargs == {"reasoning_effort": "low"} and g.max_memory is None and g.gpu_layers == 18   # explicit layer placement is the gptoss default (rack4 OOM with device_map=auto)
     assert g.eos_ids() == [1, 7, 8, 9]                              # tokenizer eos + harmony <|return|>/<|end|>/<|call|>
     assert sc.LLM(None, "gptoss", device="cpu", tokenizer=CharTok()).max_memory is None
     already = "<|start|>assistant<|channel|>final<|message|>"
