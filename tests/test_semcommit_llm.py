@@ -171,8 +171,10 @@ def test_grade_truth_table_korean():
     assert _g(ok, "UNOBSERVED")[0] == "A"                                     # stream end still eligible
     assert _g(ok, "REVISION") == ("N", "C_revision", False)
     assert _g({"exaone35": W, "qwen3": W}) == ("N", "B_all_wait", False)
-    assert _g(ok, disfl="filler") == ("N", "disfl_filler", False)
-    assert _g({"exaone35": W, "qwen3": W}, "REVISION", disfl="reparandum")[1] == "C_revision+B_all_wait+disfl_reparandum"
+    assert _g(ok, disfl="filler") == ("B", "disflA_filler", False)                 # Stage-A-only conflict → masked
+    assert _g(ok, disfl="tag_filler") == ("N", "disfl_tag_filler", False)           # human transcript marker → hard negative
+    assert _g({"exaone35": W, "qwen3": W}, "REVISION", disfl="reparandum")[1] == "C_revision+B_all_wait"          # Stage A span: not an N reason
+    assert _g({"exaone35": W, "qwen3": W}, "REVISION", disfl="tag_rep")[1] == "C_revision+B_all_wait+disfl_tag_rep"
     assert _g({"exaone35": S, "qwen3": W}) == ("B", "B_disagree", False)
     assert _g({"exaone35": S, "qwen3": U})[0] == "B" and _g({"exaone35": W, "qwen3": U})[0] == "B"
     assert _g({"exaone35": U, "qwen3": U}) == ("B", "B_uncertain", False)
@@ -508,7 +510,7 @@ def test_build_labels_grades_and_stats():
     assert k1[5]["C"] == {"relation": "STABLE", "type": "NEW_UNIT"} and k1[5]["B_margin"]["qwen3"] == 2.0
     assert k1[8]["C"] == {"relation": "UNOBSERVED", "type": ""}
     e1 = {x["after_word"]: x for x in labels[2]["candidates"]}
-    assert e1[2]["why"] == "C_revision+disfl_reparandum" and labels[0]["turn_end"] is True
+    assert e1[2]["why"] == "C_revision" and labels[0]["turn_end"] is True           # Stage A reparandum is not an N reason
     assert st["streams"] == {"total": 4, "labeled": 3, "stageA_missing": 1}
     assert st["by_lang"]["Korean"]["A"] == 2 and st["by_lang"]["Korean"]["B"] == 1
     assert st["by_lang"]["Korean"]["future_unobserved_A"] == 1

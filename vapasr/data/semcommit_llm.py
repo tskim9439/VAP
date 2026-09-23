@@ -655,7 +655,8 @@ def disfluency_conflict(i, stage_a=None, tags=None):
 def grade(candidate, lang, judges=None, strict=True, tiebreak_judge=None, c_mask_types=C_MASK_TYPES):
     """Grade one candidate → (grade, why, resolved_by_judge).
     candidate: {stageA: bool, B: {judge: SAFE|WAIT|UNCERTAIN}, C: {relation, type}, disfluency: reason|None}.
-    N iff C == REVISION with a type outside c_mask_types, all primary judges WAIT, or a disfluency conflict. A iff Stage A
+    N iff C == REVISION with a type outside c_mask_types, all primary judges WAIT, or a disfluency conflict from a human
+    transcript tag (reason 'tag_*'; a Stage-A-only conflict grades B 'disflA_*'). A iff Stage A
     candidate, all primary judges SAFE, C ∈ {STABLE, UNOBSERVED} and no conflict. Otherwise B (incl. REVISION of a masked
     type: 'C_revision_masked:<type>'; relation None/'MISSING' = no Stage C decision). A primary-judge disagreement that
     the tie-break judge resolves is recorded (resolved_by_judge) but stays B under strict; strict=False lets a resolved
@@ -667,14 +668,21 @@ def grade(candidate, lang, judges=None, strict=True, tiebreak_judge=None, c_mask
     rel = None if rel == "MISSING" else rel
     dec = [B.get(j) for j in judges]
     present = [d for d in dec if d is not None]
+    # Disfluency conflicts: a human transcript marker (Kspon '/', '+', '*' → reason 'tag_*') is trusted → hard negative N.
+    # A conflict that comes only from Stage A's own spans (fillers/repetitions/repairs) is not: on the rack4 smoke Qwen3-8B
+    # marked content words ('같애', '있잖아', '소주밤이라') as fillers, which would turn a correct boundary into a trained
+    # negative. Such candidates are masked (B) instead (precision-first without teaching false negatives).
+    disfl = candidate.get("disfluency")
     n_why = (["C_revision"] if rel == "REVISION" and ctype not in c_mask_types else []) + (["B_all_wait"] if dec and all(d == "WAIT" for d in dec) else []) \
-        + ([f"disfl_{candidate['disfluency']}"] if candidate.get("disfluency") else [])
+        + ([f"disfl_{disfl}"] if disfl and str(disfl).startswith("tag_") else [])
     disagree = len(set(present)) > 1
     resolved = bool(disagree and tb and tb not in judges and B.get(tb) in present)
     if n_why:
         return "N", "+".join(n_why), resolved
     if not candidate.get("stageA", True):
         return "B", "not_stageA", resolved
+    if disfl:                                   # Stage-A-only disfluency conflict (see above) → mask
+        return "B", f"disflA_{disfl}", resolved
     safe = bool(dec) and all(d == "SAFE" for d in dec)
     if not strict and not safe:
         votes = present + ([B[tb]] if resolved else [])
