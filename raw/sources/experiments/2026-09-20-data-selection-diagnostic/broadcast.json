@@ -1,0 +1,133 @@
+{
+  "labels": [
+    {
+      "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/02.라벨링데이터/TL_한-러_음성전사_예능오락.zip",
+      "member": "/vr_m_001_370_049_0348.json",
+      "json_sha256": "187953863421202e9a08a0977ba6c38f5fa94f1cebc3dc3cf70b9b706d4ebfb6",
+      "pron": "네, 네, 네.",
+      "spell": "네.",
+      "work": "(네, 네, 네)/(네). ~~",
+      "reproduced_target": "네 네 네"
+    },
+    {
+      "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/02.라벨링데이터/TL_한-스_음성전사_예능오락.zip",
+      "member": "/vr_m_001_370_049_0348.json",
+      "json_sha256": "187953863421202e9a08a0977ba6c38f5fa94f1cebc3dc3cf70b9b706d4ebfb6",
+      "pron": "네, 네, 네.",
+      "spell": "네.",
+      "work": "(네, 네, 네)/(네). ~~",
+      "reproduced_target": "네 네 네"
+    },
+    {
+      "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/02.라벨링데이터/TL_한-영(미국)_음성전사_예능오락.zip",
+      "member": "/vr_m_001_370_049_0348.json",
+      "json_sha256": "187953863421202e9a08a0977ba6c38f5fa94f1cebc3dc3cf70b9b706d4ebfb6",
+      "pron": "네, 네, 네.",
+      "spell": "네.",
+      "work": "(네, 네, 네)/(네). ~~",
+      "reproduced_target": "네 네 네"
+    }
+  ],
+  "audio_variants": [
+    {
+      "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_예능오락.zip",
+      "member": "/vr_m_001_370_049_0348.wav",
+      "bytes_sha256": "54e97828725f48e419936058bd70b3fae7e9c9c9c7b9cc258128531fdd176a73",
+      "native_waveform_sha256": "4b8a54a0bfe94fbdb01542ade1855813f3bda2fd9f918666d9425c35717fd06d",
+      "sr": 48000,
+      "channels": 2,
+      "frames": 14064
+    },
+    {
+      "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-영(미국)_한국어음성_예능오락.zip",
+      "member": "/vr_m_001_370_049_0348.wav",
+      "bytes_sha256": "54e97828725f48e419936058bd70b3fae7e9c9c9c7b9cc258128531fdd176a73",
+      "native_waveform_sha256": "4b8a54a0bfe94fbdb01542ade1855813f3bda2fd9f918666d9425c35717fd06d",
+      "sr": 48000,
+      "channels": 2,
+      "frames": 14064
+    }
+  ],
+  "scanned_label_zips": 21,
+  "scanned_audio_zips": 14,
+  "manifest_matches": [
+    {
+      "parent_id": "ahbc-train-vr_m_001_370_049_0348",
+      "segment": {
+        "utt_id": "vr_m_001_370_049_0348",
+        "path": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_예능오락.zip::vr_m_001_370_049_0348.wav",
+        "silence_before_s": 0.639,
+        "offset_s": 0.639,
+        "dur_s": 1.758,
+        "text": "네 네 네",
+        "lexical_text": "네 네 네",
+        "raw_text": "네.",
+        "display_source": "none"
+      }
+    }
+  ],
+  "current_tn": {
+    "textnorm_version": "asr-tn-v1.3.0",
+    "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+    "numeric_backend_version": "num2words 0.5.14"
+  },
+  "manifest_stats": {
+    "name": "aihub-bc-train",
+    "corpus": "aihubbc",
+    "rows": 448867,
+    "seed": 0,
+    "target_s": 25.0,
+    "textnorm_version": "asr-tn-v1.3.0",
+    "fingerprint": {
+      "textnorm_version": "asr-tn-v1.3.0",
+      "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+      "numeric_backend_version": "num2words 0.5.14",
+      "tokenizer_json_sha256": "66915f2a66d1e6688e8672cd3df1c74c23c658689fab9798706d62a4a490f447",
+      "source_transcript_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifest_sha256": "92241f51023976aeda3b795440995a2f6e64820770a2fbd7866e0be06b323c8f",
+      "quarantined_ids_sha256": "c4172a246784928368bd03ec8840f1ab11d77c091881817ea27502768ad05ddd",
+      "created_from_git_commit": null
+    },
+    "quarantined": 3132,
+    "display_source_counts": {
+      "none": 448867
+    },
+    "text_fields": {
+      "text": "lexical_text 와 동일(하위 호환)",
+      "lexical_text": "asr-tn-v1.0.0 학습·정렬 타깃",
+      "raw_text": "원문 보존",
+      "display_source": "none = display label 없음"
+    },
+    "subsets": {
+      "train": {
+        "utts": 448867,
+        "utt_hours": 578.18,
+        "rows": 451999,
+        "genre_연예공연": 94500,
+        "kept": 448867,
+        "quarantined": 3132,
+        "genre_영화드라마": 35902,
+        "genre_예능오락": 120279,
+        "genre_인터뷰": 62140,
+        "genre_교양": 77867,
+        "genre_다큐": 61311,
+        "streams": 448867,
+        "stream_hours": 740.24,
+        "stream_len_pct": {
+          "5": 2.19,
+          "50": 5.41,
+          "95": 11.18
+        },
+        "utts_per_stream_pct": {
+          "5": 1.0,
+          "50": 1.0,
+          "95": 1.0
+        }
+      }
+    }
+  },
+  "all_targets_match": true,
+  "all_spell_match": true,
+  "audio_variant_hashes": 1,
+  "training_eligible": false
+}

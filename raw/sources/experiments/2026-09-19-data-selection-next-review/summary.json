@@ -1,0 +1,188 @@
+{
+  "complete": true,
+  "rows": 32,
+  "audio_files": 40,
+  "groups": {
+    "NIKL 2024 경계": 8,
+    "NIKL 2025 경계": 8,
+    "VoxPopuli 전사·잘림": 8,
+    "방송 다른 채널": 4,
+    "방송 동일 채널": 2,
+    "AMI 동일 채널 대조": 2
+  },
+  "sources": {
+    "nikl-1000": 16,
+    "voxpopuli-train": 8,
+    "aihub-bc-train": 6,
+    "ami": 2
+  },
+  "selection": "duration_quantiles_within_purpose_group",
+  "original_input_sha256": "a1944bb360b6f10ae950f2693ae782a374f79d25c6b47e01163cd81149561872",
+  "subset_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+  "exports_sha256": "0047cc3e3753847eae95282f5b8cfffc2a1e6892cc5d424bda84f366650425d0",
+  "script_sha256": "76724063eb0e561cd9497c3b8faf020e041f86c91d62c597711869e06c045612",
+  "audio": [
+    {
+      "path": "audio/07ee14c844deacb220e1c112f34aabff2f0357d55f2a9e76689711007b699e64.wav",
+      "waveform_sha256": "66f49aae8af83da5e0b200c772265537a9dae16a3964f939459c029995df85f4"
+    },
+    {
+      "path": "audio/9a560197f8d34ca582731619474261ba8c2010b4d6a908a021f15b309277f4b2.wav",
+      "waveform_sha256": "0b1e581297ddab78fd0db3987401af0976c332acb4a8489f3dd6173a3856cea6"
+    },
+    {
+      "path": "audio/f375dbf09b831db572281e9277617af5b69a90a6935cc1e12bd6f16c8bb6cb4a.wav",
+      "waveform_sha256": "d22c2769950dbc22c54ab50267cae2bcb0dbfd34da87191436b3496b8a581b8c"
+    },
+    {
+      "path": "audio/15091dfb715e97e149b3c20233894f9170e10d623d781e6af5c5a6fd8da005c2.wav",
+      "waveform_sha256": "95ff20e0d6a671a6bb22d15dbb6f6790647eeb6a50ae4f947e7ea268ede21b6a"
+    },
+    {
+      "path": "audio/026eebeb8570ff10c9aa32e490f0dcc8e1958d0eeb263f96683209379f60ff38.wav",
+      "waveform_sha256": "de4f1550e432027d2911dfcbec331f8ce8a4a7473ff144018c9504eacb392c69"
+    },
+    {
+      "path": "audio/73b97a0ca526e317f51adf23c8bf41b153e4ad2b052943c15b00f28e6cd3d40c.wav",
+      "waveform_sha256": "1543733dd0f99abe22dce2a703a66d0bf8577a3d08705ca930926af163d9439e"
+    },
+    {
+      "path": "audio/2fa1eb647832524d50b6802c750c55fcb7fa88232b0d013cbbe9253a02e6fadd.wav",
+      "waveform_sha256": "6e531cb625e7263b40d4376d8a3bf448c35cae65d389400a68660c629860d906"
+    },
+    {
+      "path": "audio/8f8147cd167ad9362246f01118b15da6269373732ec6b2457512c50346b1e481.wav",
+      "waveform_sha256": "2e23f75c641cea5c2aeecf35349799417956bad6447a1de9b48cc0a4544d9a53"
+    },
+    {
+      "path": "audio/f0ba688f5f7ff32da8dcc800878184e48eefd3c8fc10f758d975223f94dd596f.wav",
+      "waveform_sha256": "1d17a8521be8d3d0b33123f2b6b2207a8c2483e352756981fa72247792056fb8"
+    },
+    {
+      "path": "audio/91b904cba0731409defcf743fc54f613c907af84852e39f4cf55e4ceba772981.wav",
+      "waveform_sha256": "2320df7a78da88af292c9f1e8efc05f795be8d7f7c868b5c3a33ac80f353a001"
+    },
+    {
+      "path": "audio/ac85a7ddf40e4b223ff4203d359a240b25c071238ba5bdd9bfa310e1fb0c33ca.wav",
+      "waveform_sha256": "01b59220ddf92c8b25b59c61a2f4393dc3e6f54667c48f035dce33a02dab8566"
+    },
+    {
+      "path": "audio/0028d92804ba4bfdc149b676f3d64e94afc49626da54e3b15a8d04c6b320dac1.wav",
+      "waveform_sha256": "bb8e95c03762f4ccb15d299550964393e8a2187f23ad0f6c618771b96b13de29"
+    },
+    {
+      "path": "audio/0c02360de392c1c7dd7a87d8cbe57125e10a0fda84af27591395304a45385295.wav",
+      "waveform_sha256": "a8a58923897345ac93a0d2b502b2bf9aaad04bdbad848491b33a29042f97fbd8"
+    },
+    {
+      "path": "audio/3acd32f7576c32a4daf3634d2822e6c109659d4a30db527b3be6a269a0ecb762.wav",
+      "waveform_sha256": "da798808d5392d371cd0fd2daa554cef105a675982ed5c68843e1e6a42c8206c"
+    },
+    {
+      "path": "audio/e38f0e1a30f243c2730e3d14c19b40b52dac912fe9d3107d50092a508e799166.wav",
+      "waveform_sha256": "cf59c78ec1acd532f0f4ae107fcb1338b3584b94fee36731fe98d96d5d576761"
+    },
+    {
+      "path": "audio/77bd223b7fb9cdcc04ff0ea4175f0eb0446767ab3524aef695cc3918f7a3442a.wav",
+      "waveform_sha256": "100feed4f819a3669c7c90450ee2a123ddf206b1ba9209f1e9f7611b44120c32"
+    },
+    {
+      "path": "audio/1b83be4a89e148263143d2124b315371a2951b33bf599e01cef5eef8a053f694.wav",
+      "waveform_sha256": "ecb450380490e7862e9ee6d68b6c7f070c76b30b7b4e7912241b1f3e30b27d63"
+    },
+    {
+      "path": "audio/d26cb370b1c82f6b2d8f4a43e61913d1d041acd18496bc17d2fd88cf9b643b31.wav",
+      "waveform_sha256": "74059d49f8c96700194b48080d88205bbf0b937596817ffc178b732f6ef2a28f"
+    },
+    {
+      "path": "audio/6950334887131b5433325783b492798642b2e0a73ce484a2644efbeffd1eccd6.wav",
+      "waveform_sha256": "f9b12ee46e397d96bc1517f3ac8f5f99d91647b9de91dcc8b65d710e067cd676"
+    },
+    {
+      "path": "audio/229b394621ad23cd36b13eeb0e15007caaaab7e3d4dc7e76b974da757f3f91d7.wav",
+      "waveform_sha256": "6b95df7a3309c2029d833daf1675d1553de5c8930a1214f04e11001b443b1318"
+    },
+    {
+      "path": "audio/fb7bec2b278afbda66c7b8aebc58c5d38d7d5edda1c53ef35b356e5045e4280d.wav",
+      "waveform_sha256": "03eae6acc96ac4d7a8d9253015ee6b6a982b17a266179c5610ec48904454cfce"
+    },
+    {
+      "path": "audio/bf069539ab748e2df2cace535c41747e13f5dd98a4819602f0ba0a8b3fc3ae49.wav",
+      "waveform_sha256": "bbf33a6518c533d541a16251865619aaa67f57d531d14d60dc82e042da6b19b5"
+    },
+    {
+      "path": "audio/1e89980c2b50a6485ea142bdd957b21f26474c608dc943c3b789b75e7d9e247d.wav",
+      "waveform_sha256": "2848b23823348761bd3f83cc79d23580aeb9786acc11b5d2754dae2d9b2a02a8"
+    },
+    {
+      "path": "audio/69440214fe8bea387d540376ee1b8befd0a6b0496fad2ed753bd50de43d6edeb.wav",
+      "waveform_sha256": "6154872565405e84cd997c1c6d29152a77887aa61058b5c59860a0cf6bfc6157"
+    },
+    {
+      "path": "audio/4107b019185e28ea5b958933f005c96cef56df3f0ac6cea1599d4b4af64c2f32.wav",
+      "waveform_sha256": "6a1007516678d6778a404a587b90d877710bc5f0e7680ff0c3005950405bac6c"
+    },
+    {
+      "path": "audio/4107b019185e28ea5b958933f005c96cef56df3f0ac6cea1599d4b4af64c2f32-ch1.wav",
+      "waveform_sha256": "8b6f8f0a555b3638af295c02c218cf7376b4cc9d08430ebda522e80b49a15218"
+    },
+    {
+      "path": "audio/587480f639806a9a5640b9da7dc7d4eec5e2a9a9d9006c26d3baa1be16f0c4b6.wav",
+      "waveform_sha256": "624e3f5c87e18074850f475f55a42ea6809063648b60476d8244653fc68e043f"
+    },
+    {
+      "path": "audio/587480f639806a9a5640b9da7dc7d4eec5e2a9a9d9006c26d3baa1be16f0c4b6-ch1.wav",
+      "waveform_sha256": "e0bc15706d89186de4b2ca0dab3faa761792a9f5562abc3008e7c13f07de6d4b"
+    },
+    {
+      "path": "audio/4caa6798b9f088fa825ae1329f9d908cd5fccd053cf06313a7d13b4bc92a2426.wav",
+      "waveform_sha256": "0c09ebf4e38bed916d6bfcb7f5d9b9a475826b68bfaef9799b185f847422dcb9"
+    },
+    {
+      "path": "audio/4caa6798b9f088fa825ae1329f9d908cd5fccd053cf06313a7d13b4bc92a2426-ch1.wav",
+      "waveform_sha256": "29bf99565ed934098c837ac8e703e2bdbb693518f1065b8515e7f89109409db6"
+    },
+    {
+      "path": "audio/97b4f243ae8b6512a0fa3c445849e6a07ea8dad2b2919da7c5dbc648912e5c0f.wav",
+      "waveform_sha256": "4329b90caa9bc0a8cbb64147d9c605b50caa30e3779b0e2492292858fa0aecf3"
+    },
+    {
+      "path": "audio/97b4f243ae8b6512a0fa3c445849e6a07ea8dad2b2919da7c5dbc648912e5c0f-ch1.wav",
+      "waveform_sha256": "d318f5d78e26b3031896b800dc9215fc186754eb647c8bd636eb08ad1591e96e"
+    },
+    {
+      "path": "audio/60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad.wav",
+      "waveform_sha256": "51a768b05313472daca190287b9152093fc24648f9b018731e5798073a703b8e"
+    },
+    {
+      "path": "audio/60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad-ch1.wav",
+      "waveform_sha256": "51a768b05313472daca190287b9152093fc24648f9b018731e5798073a703b8e"
+    },
+    {
+      "path": "audio/f3ba81c3afdcbb24322b8ff654eb4fd1d19c5bbeac3fe0a442ff04ef02db9dfa.wav",
+      "waveform_sha256": "df7a0c46897613665f00f9ecf91cc48cdd314c10992fa39ded88a8beaca5e545"
+    },
+    {
+      "path": "audio/f3ba81c3afdcbb24322b8ff654eb4fd1d19c5bbeac3fe0a442ff04ef02db9dfa-ch1.wav",
+      "waveform_sha256": "df7a0c46897613665f00f9ecf91cc48cdd314c10992fa39ded88a8beaca5e545"
+    },
+    {
+      "path": "audio/4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7.wav",
+      "waveform_sha256": "691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29"
+    },
+    {
+      "path": "audio/4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7-ch1.wav",
+      "waveform_sha256": "691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29"
+    },
+    {
+      "path": "audio/702afed4a6260ef76c4f373436438e78d0fc6ffdd5c35bfc0a2fe5c16d43a35a.wav",
+      "waveform_sha256": "cc545511348dd1313d3cb28629cb786b015efd87140e59a264294a8ef40e1420"
+    },
+    {
+      "path": "audio/702afed4a6260ef76c4f373436438e78d0fc6ffdd5c35bfc0a2fe5c16d43a35a-ch1.wav",
+      "waveform_sha256": "cc545511348dd1313d3cb28629cb786b015efd87140e59a264294a8ef40e1420"
+    }
+  ],
+  "training_eligible": 0,
+  "purpose": "additional_listening_not_training_approval"
+}

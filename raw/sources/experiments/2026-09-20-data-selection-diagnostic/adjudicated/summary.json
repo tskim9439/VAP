@@ -1,0 +1,189 @@
+{
+  "scope": "stratified pilot only, not population pass rate",
+  "training_eligible": 0,
+  "input_sha256": "a1944bb360b6f10ae950f2693ae782a374f79d25c6b47e01163cd81149561872",
+  "implementation_sha256": "38fd432fad1b2252975d3633e1d8536852979a458ad2bcf1f265c93eb42fbf78",
+  "source_holds": {},
+  "human_review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+  "human_review_applied": 32,
+  "sources": {
+    "aihub-bc-train": {
+      "REVIEW": 42,
+      "AGREEMENT_CANDIDATE": 4,
+      "QUARANTINE": 2
+    },
+    "aihub134-1": {
+      "REVIEW": 44,
+      "AGREEMENT_CANDIDATE": 12
+    },
+    "aihub134-2": {
+      "REVIEW": 46,
+      "CORRECTION_REVIEW": 4,
+      "AGREEMENT_CANDIDATE": 6
+    },
+    "aihub71631": {
+      "QUARANTINE": 24,
+      "REVIEW": 49,
+      "CORRECTION_REVIEW": 2,
+      "AGREEMENT_CANDIDATE": 4
+    },
+    "ami": {
+      "REVIEW": 73,
+      "AGREEMENT_CANDIDATE": 7,
+      "QUARANTINE": 1,
+      "CORRECTION_REVIEW": 1
+    },
+    "icsi": {
+      "AGREEMENT_CANDIDATE": 8,
+      "QUARANTINE": 11,
+      "REVIEW": 22,
+      "CORRECTION_REVIEW": 2
+    },
+    "kspon-full": {
+      "AGREEMENT_CANDIDATE": 4,
+      "REVIEW": 18,
+      "CORRECTION_REVIEW": 2
+    },
+    "librispeech-960": {
+      "AGREEMENT_CANDIDATE": 20,
+      "CORRECTION_REVIEW": 1,
+      "REVIEW": 4
+    },
+    "nikl-1000": {
+      "REVIEW": 144,
+      "QUARANTINE": 76,
+      "AGREEMENT_CANDIDATE": 26,
+      "CORRECTION_REVIEW": 2
+    },
+    "notsofar": {
+      "REVIEW": 18,
+      "AGREEMENT_CANDIDATE": 10,
+      "CORRECTION_REVIEW": 1
+    },
+    "otoSpeech": {
+      "REVIEW": 46,
+      "AGREEMENT_CANDIDATE": 16,
+      "QUARANTINE": 2,
+      "CORRECTION_REVIEW": 2
+    },
+    "swbd-train": {
+      "CORRECTION_REVIEW": 6,
+      "REVIEW": 13,
+      "AGREEMENT_CANDIDATE": 5
+    },
+    "voxpopuli-train": {
+      "AGREEMENT_CANDIDATE": 9,
+      "REVIEW": 31,
+      "QUARANTINE": 6,
+      "CORRECTION_REVIEW": 2
+    },
+    "yodas-en129": {
+      "AGREEMENT_CANDIDATE": 17,
+      "REVIEW": 41
+    }
+  },
+  "reasons": {
+    "aihub-bc-train": {
+      "label_audio_duration_mismatch": 22,
+      "multichannel_without_explicit_channel_mapping": 22,
+      "dual_teacher_agrees_not_gold": 4,
+      "teacher_disagreement": 20,
+      "human_note_requires_interpretation": 2,
+      "human_text_fail": 2
+    },
+    "aihub134-1": {
+      "teacher_disagreement": 20,
+      "clipping_above_1pct": 24,
+      "dual_teacher_agrees_not_gold": 12
+    },
+    "aihub134-2": {
+      "clipping_above_1pct": 24,
+      "teacher_disagreement": 22,
+      "teachers_agree_against_reference_no_relabel": 4,
+      "dual_teacher_agrees_not_gold": 6
+    },
+    "aihub71631": {
+      "audio_decode_failed": 24,
+      "teacher_disagreement": 25,
+      "teachers_agree_against_reference_no_relabel": 2,
+      "dual_teacher_agrees_not_gold": 4,
+      "clipping_above_1pct": 23,
+      "empty_teacher_hypothesis": 1
+    },
+    "ami": {
+      "clipping_above_1pct": 24,
+      "multichannel_without_explicit_channel_mapping": 25,
+      "teacher_disagreement": 22,
+      "long_form_requires_review": 3,
+      "dual_teacher_agrees_not_gold": 7,
+      "human_speaker_fail": 1,
+      "human_text_fail": 1,
+      "human_timing_fail": 1,
+      "human_note_requires_interpretation": 1,
+      "teachers_agree_against_reference_no_relabel": 1
+    },
+    "icsi": {
+      "dual_teacher_agrees_not_gold": 8,
+      "audio_decode_failed": 11,
+      "teacher_disagreement": 22,
+      "teachers_agree_against_reference_no_relabel": 2
+    },
+    "kspon-full": {
+      "dual_teacher_agrees_not_gold": 4,
+      "teacher_disagreement": 18,
+      "teachers_agree_against_reference_no_relabel": 2
+    },
+    "librispeech-960": {
+      "dual_teacher_agrees_not_gold": 20,
+      "teachers_agree_against_reference_no_relabel": 1,
+      "teacher_disagreement": 3,
+      "clipping_above_1pct": 1
+    },
+    "nikl-1000": {
+      "human_note_requires_interpretation": 7,
+      "label_audio_duration_mismatch": 73,
+      "teacher_disagreement": 51,
+      "audio_decode_failed": 74,
+      "clipping_above_1pct": 28,
+      "human_text_fail": 2,
+      "human_timing_fail": 1,
+      "dual_teacher_agrees_not_gold": 26,
+      "teachers_agree_against_reference_no_relabel": 2
+    },
+    "notsofar": {
+      "teacher_disagreement": 13,
+      "dual_teacher_agrees_not_gold": 10,
+      "clipping_above_1pct": 5,
+      "teachers_agree_against_reference_no_relabel": 1
+    },
+    "otoSpeech": {
+      "clipping_above_1pct": 32,
+      "dual_teacher_agrees_not_gold": 16,
+      "audio_decode_failed": 2,
+      "teacher_disagreement": 13,
+      "teachers_agree_against_reference_no_relabel": 2,
+      "long_form_requires_review": 1
+    },
+    "swbd-train": {
+      "teachers_agree_against_reference_no_relabel": 6,
+      "teacher_disagreement": 13,
+      "dual_teacher_agrees_not_gold": 5
+    },
+    "voxpopuli-train": {
+      "dual_teacher_agrees_not_gold": 9,
+      "teacher_disagreement": 12,
+      "label_audio_duration_mismatch": 19,
+      "human_speaker_fail": 2,
+      "human_text_fail": 6,
+      "human_timing_fail": 3,
+      "teachers_agree_against_reference_no_relabel": 2
+    },
+    "yodas-en129": {
+      "dual_teacher_agrees_not_gold": 17,
+      "label_audio_duration_mismatch": 16,
+      "teacher_disagreement": 6,
+      "clipping_above_1pct": 18,
+      "long_form_requires_review": 2
+    }
+  }
+}

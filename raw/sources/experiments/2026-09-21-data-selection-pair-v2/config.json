@@ -1,0 +1,16 @@
+{
+  "policy": {
+    "version": "asr-pair-select-v2",
+    "max_pair_error": 0.05,
+    "reference_agreement_required": false,
+    "preserve_v1_safety_holds": true,
+    "preferred_target": "qwen_raw",
+    "tn_scope": "comparison_only",
+    "phase2_turn_approval": false
+  },
+  "source": "/soundai/users/tskim/VAPKT-data/data/selection/auto-v0.5-full-20260920",
+  "source_summary_sha256": "53b691202c8962079c9b34e13748658fe55df1d0a558bcf1f4b372469b26ceef",
+  "prepare_sha256": "556aae37485f2687b54201c316b534528bf9e665f92f75598736677a7227dca1",
+  "code_sha256": "7343d59f9624d67f5e3bbf3a7ba993de5f1a7d5588f9308ffb29bf23fb85613e",
+  "policy_code_sha256": "2f299a1b2697e9c9b02c6cad963862f2287c80a8658627732cbfe2885cb5bbe0"
+}

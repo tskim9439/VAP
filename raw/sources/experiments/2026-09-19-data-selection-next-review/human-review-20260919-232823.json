@@ -1,0 +1,358 @@
+{
+  "reviewed_at": "2026-09-19T14:28:23.414Z",
+  "training_eligible": false,
+  "rows": [
+    {
+      "key": "07ee14c844deacb220e1c112f34aabff2f0357d55f2a9e76689711007b699e64",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "fail",
+        "timing": "fail",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "경계가 잘린것인지 들리기에는 '소치' 로 들림."
+    },
+    {
+      "key": "9a560197f8d34ca582731619474261ba8c2010b4d6a908a021f15b309277f4b2",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "f375dbf09b831db572281e9277617af5b69a90a6935cc1e12bd6f16c8bb6cb4a",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "whisper-v2 가 가장 어법상 올바름"
+    },
+    {
+      "key": "15091dfb715e97e149b3c20233894f9170e10d623d781e6af5c5a6fd8da005c2",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "ASR 모델들이 전사 한 것이 정확함"
+    },
+    {
+      "key": "026eebeb8570ff10c9aa32e490f0dcc8e1958d0eeb263f96683209379f60ff38",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "73b97a0ca526e317f51adf23c8bf41b153e4ad2b052943c15b00f28e6cd3d40c",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "2fa1eb647832524d50b6802c750c55fcb7fa88232b0d013cbbe9253a02e6fadd",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "ASR 모델이 전사한 내용이 정확해보임"
+    },
+    {
+      "key": "8f8147cd167ad9362246f01118b15da6269373732ec6b2457512c50346b1e481",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "f0ba688f5f7ff32da8dcc800878184e48eefd3c8fc10f758d975223f94dd596f",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "91b904cba0731409defcf743fc54f613c907af84852e39f4cf55e4ceba772981",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "음원은 사투리인데 어법상 ASR 모델이 맞음"
+    },
+    {
+      "key": "ac85a7ddf40e4b223ff4203d359a240b25c071238ba5bdd9bfa310e1fb0c33ca",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "whisper-v2 만 어법상 틀림"
+    },
+    {
+      "key": "0028d92804ba4bfdc149b676f3d64e94afc49626da54e3b15a8d04c6b320dac1",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "끝에 '다'는 들림"
+    },
+    {
+      "key": "0c02360de392c1c7dd7a87d8cbe57125e10a0fda84af27591395304a45385295",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "3acd32f7576c32a4daf3634d2822e6c109659d4a30db527b3be6a269a0ecb762",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "'삼 주' '3 주' 가 다름. ASR 모델의 전사 방법이 선호 됨"
+    },
+    {
+      "key": "e38f0e1a30f243c2730e3d14c19b40b52dac912fe9d3107d50092a508e799166",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "77bd223b7fb9cdcc04ff0ea4175f0eb0446767ab3524aef695cc3918f7a3442a",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "ASR 모델이 더 명확함"
+    },
+    {
+      "key": "1b83be4a89e148263143d2124b315371a2951b33bf599e01cef5eef8a053f694",
+      "source": "voxpopuli-train",
+      "labels": {
+        "text": "fail",
+        "timing": "fail",
+        "speaker": "fail",
+        "turn": "unreviewed"
+      },
+      "note": "'so much' 만 들림"
+    },
+    {
+      "key": "d26cb370b1c82f6b2d8f4a43e61913d1d041acd18496bc17d2fd88cf9b643b31",
+      "source": "voxpopuli-train",
+      "labels": {
+        "text": "fail",
+        "timing": "fail",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "처음에 'and' 가 들림"
+    },
+    {
+      "key": "6950334887131b5433325783b492798642b2e0a73ce484a2644efbeffd1eccd6",
+      "source": "voxpopuli-train",
+      "labels": {
+        "text": "fail",
+        "timing": "fail",
+        "speaker": "fail",
+        "turn": "unreviewed"
+      },
+      "note": "들리기에는 'Let's' 로 들림"
+    },
+    {
+      "key": "229b394621ad23cd36b13eeb0e15007caaaab7e3d4dc7e76b974da757f3f91d7",
+      "source": "voxpopuli-train",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "fb7bec2b278afbda66c7b8aebc58c5d38d7d5edda1c53ef35b356e5045e4280d",
+      "source": "voxpopuli-train",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "**attending** ministers and commissioners 으로 ASR 모델의 결과가 맞음"
+    },
+    {
+      "key": "bf069539ab748e2df2cace535c41747e13f5dd98a4819602f0ba0a8b3fc3ae49",
+      "source": "voxpopuli-train",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "ASR 모델의 결과가 명확하고 이 방식을 선호함"
+    },
+    {
+      "key": "1e89980c2b50a6485ea142bdd957b21f26474c608dc943c3b789b75e7d9e247d",
+      "source": "voxpopuli-train",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "69440214fe8bea387d540376ee1b8befd0a6b0496fad2ed753bd50de43d6edeb",
+      "source": "voxpopuli-train",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "ASR 모델의 전사 내용이 정확함"
+    },
+    {
+      "key": "4107b019185e28ea5b958933f005c96cef56df3f0ac6cea1599d4b4af64c2f32",
+      "source": "aihub-bc-train",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "587480f639806a9a5640b9da7dc7d4eec5e2a9a9d9006c26d3baa1be16f0c4b6",
+      "source": "aihub-bc-train",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "4caa6798b9f088fa825ae1329f9d908cd5fccd053cf06313a7d13b4bc92a2426",
+      "source": "aihub-bc-train",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "처음 '의연', '기현' 이 애매모호 함"
+    },
+    {
+      "key": "97b4f243ae8b6512a0fa3c445849e6a07ea8dad2b2919da7c5dbc648912e5c0f",
+      "source": "aihub-bc-train",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "ASR 전사가 더 정확함"
+    },
+    {
+      "key": "60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad",
+      "source": "aihub-bc-train",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "'네 네' 로 들리고, 그냥 '네' 도 상관 없어 보임"
+    },
+    {
+      "key": "f3ba81c3afdcbb24322b8ff654eb4fd1d19c5bbeac3fe0a442ff04ef02db9dfa",
+      "source": "aihub-bc-train",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "사람 이름이 셋다 납득 됨"
+    },
+    {
+      "key": "4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7",
+      "source": "ami",
+      "labels": {
+        "text": "fail",
+        "timing": "fail",
+        "speaker": "fail",
+        "turn": "unreviewed"
+      },
+      "note": "음원에서 아무것도 들리지 않음"
+    },
+    {
+      "key": "702afed4a6260ef76c4f373436438e78d0fc6ffdd5c35bfc0a2fe5c16d43a35a",
+      "source": "ami",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "ASR 방식을 더 선호 함"
+    }
+  ]
+}

@@ -1,0 +1,241 @@
+{
+  "rows": [
+    {
+      "key": "1b83be4a89e148263143d2124b315371a2951b33bf599e01cef5eef8a053f694",
+      "utt_id": "20130611-0900-PLENARY-5-en_20130611-11:10:26_5",
+      "annotation": {
+        "session_id": "20130611-0900-PLENARY-5",
+        "id_": "en_20130611-11:10:26_5",
+        "original_text": "getting so much.",
+        "normed_text": "getting so much.",
+        "start_time": "4144.1243",
+        "end_time": "4145.0842",
+        "vad": "[[4144.1243, 4144.884175]]",
+        "speaker_id": "4531",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          4144.1243,
+          4144.884175
+        ]
+      ],
+      "expected_frames": 12158,
+      "actual_frames": 12158,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": false,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "getting so much",
+      "normalized_teachers": {
+        "qwen": "so much",
+        "whisper-v2": "so much",
+        "whisper-v3": "so much"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    {
+      "key": "d26cb370b1c82f6b2d8f4a43e61913d1d041acd18496bc17d2fd88cf9b643b31",
+      "utt_id": "20110511-0900-PLENARY-2-en_20110511-10:15:44_19",
+      "annotation": {
+        "session_id": "20110511-0900-PLENARY-2",
+        "id_": "en_20110511-10:15:44_19",
+        "original_text": "I understand that too.",
+        "normed_text": "i understand that too.",
+        "start_time": "4241.148",
+        "end_time": "4242.808",
+        "vad": "[[4241.148, 4242.6079375]]",
+        "speaker_id": "94301",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          4241.148,
+          4242.6079375
+        ]
+      ],
+      "expected_frames": 23359,
+      "actual_frames": 23359,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": true,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "i understand that too",
+      "normalized_teachers": {
+        "qwen": "i understand that too",
+        "whisper-v2": "and i understand that too",
+        "whisper-v3": "and i understand that too"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    {
+      "key": "6950334887131b5433325783b492798642b2e0a73ce484a2644efbeffd1eccd6",
+      "utt_id": "20090423-0900-PLENARY-3-en_20090423-09:23:18_9",
+      "annotation": {
+        "session_id": "20090423-0900-PLENARY-3",
+        "id_": "en_20090423-09:23:18_9",
+        "original_text": "Let us keep this in perspective.",
+        "normed_text": "let us keep this in perspective.",
+        "start_time": "1392.8388",
+        "end_time": "1394.8187",
+        "vad": "[[1392.8388, 1394.6186125000002]]",
+        "speaker_id": "4382",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          1392.8388,
+          1394.6186125000002
+        ]
+      ],
+      "expected_frames": 28477,
+      "actual_frames": 28477,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": false,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "let us keep this in perspective",
+      "normalized_teachers": {
+        "qwen": "let's keep this in perspective",
+        "whisper-v2": "let's keep this in perspective",
+        "whisper-v3": "let's keep this in perspective"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    {
+      "key": "fb7bec2b278afbda66c7b8aebc58c5d38d7d5edda1c53ef35b356e5045e4280d",
+      "utt_id": "20101006-0900-PLENARY-11-en_20101006-18:23:16_8",
+      "annotation": {
+        "session_id": "20101006-0900-PLENARY-11",
+        "id_": "en_20101006-18:23:16_8",
+        "original_text": "That is the sense of urgency of the Nagoya Summit and that is the sense of urgency I expect from the ministers and commissioners who attend.",
+        "normed_text": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from the ministers and commissioners who attend.",
+        "start_time": "1837.440019",
+        "end_time": "1847.5792999999999",
+        "vad": "[[1837.440019, 1847.379269]]",
+        "speaker_id": "96940",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          1837.440019,
+          1847.379269
+        ]
+      ],
+      "expected_frames": 159028,
+      "actual_frames": 159028,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": false,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from the ministers and commissioners who attend",
+      "normalized_teachers": {
+        "qwen": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from attending ministers and commissioners",
+        "whisper-v2": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from attending ministers and commissioners",
+        "whisper-v3": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from attending ministers and commissioners"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    {
+      "key": "bf069539ab748e2df2cace535c41747e13f5dd98a4819602f0ba0a8b3fc3ae49",
+      "utt_id": "20180702-0900-PLENARY-en_20180702-19:51:21_7",
+      "annotation": {
+        "session_id": "20180702-0900-PLENARY",
+        "id_": "en_20180702-19:51:21_7",
+        "original_text": "The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.",
+        "normed_text": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general.",
+        "start_time": "10262.202099999999",
+        "end_time": "10285.116999999998",
+        "vad": "[[10262.202099999999, 10278.580974999999]]",
+        "speaker_id": "189391",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          10262.202099999999,
+          10278.580974999999
+        ]
+      ],
+      "expected_frames": 262062,
+      "actual_frames": 262062,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": true,
+        "whisper-v2": true,
+        "whisper-v3": true
+      },
+      "normalized_ref": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general",
+      "normalized_teachers": {
+        "qwen": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general",
+        "whisper-v2": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general",
+        "whisper-v3": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    {
+      "key": "69440214fe8bea387d540376ee1b8befd0a6b0496fad2ed753bd50de43d6edeb",
+      "utt_id": "20160509-0900-PLENARY-14-en_20160509-21:50:41_3",
+      "annotation": {
+        "session_id": "20160509-0900-PLENARY-14",
+        "id_": "en_20160509-21:50:41_3",
+        "original_text": "In a country where approximately half of the population lives on the coastline, and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, that it achieves its purpose, and that no fraud with EU funds takes place on the ground.",
+        "normed_text": "in a country where approximately half of the population lives on the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent that it achieves its purpose and that no fraud with eu funds takes place on the ground.",
+        "start_time": "965.514204",
+        "end_time": "1001.492",
+        "vad": "[[965.514204, 994.170829]]",
+        "speaker_id": "124802",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          965.514204,
+          994.170829
+        ]
+      ],
+      "expected_frames": 458506,
+      "actual_frames": 458506,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": false,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "in a country where approximately half of the population lives on the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent that it achieves its purpose and that no fraud with eu funds takes place on the ground",
+      "normalized_teachers": {
+        "qwen": "in a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent achieves its purpose and no fraud with eu funds is is happening on the ground",
+        "whisper-v2": "in a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent achieves its purpose and no fraud with eu funds is happening on the ground thank you",
+        "whisper-v3": "in a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent achieves its purpose and no fraud with eu funds is happening on the ground thank you"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    }
+  ],
+  "search_roots": [
+    "/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli",
+    "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/EN/TRAIN/OPEN/voxpopuli",
+    "/soundai/DB/raw/voxpopuli"
+  ],
+  "search_max_depth": 4,
+  "examined_files": 111,
+  "search_errors": [
+    {
+      "root": "/soundai/DB/raw/voxpopuli",
+      "status": "absent"
+    }
+  ],
+  "original_session_files": [],
+  "scope": "known dataset roots only; not proof of global absence"
+}

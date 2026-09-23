@@ -1,0 +1,103 @@
+{
+  "agents": {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3
+  },
+  "segment": {
+    "{http://nite.sourceforge.net/}id": "ES2010d.sync.39",
+    "channel": "0",
+    "transcriber_start": "234.102",
+    "transcriber_end": "234.834"
+  },
+  "nearby_words": [
+    {
+      "text": "Right",
+      "{http://nite.sourceforge.net/}id": "ES2010d.A.words194",
+      "starttime": "234.28",
+      "endtime": "234.64"
+    },
+    {
+      "text": ".",
+      "{http://nite.sourceforge.net/}id": "ES2010d.A.words195",
+      "starttime": "234.64",
+      "endtime": "234.64",
+      "punc": "true"
+    }
+  ],
+  "channel_mapping_matches": true,
+  "crop_qc_hash_matches": true,
+  "annotation_zip_sha256": "b56e5babb2496b8795deeeda7e71178d7fbc9963f94276cf2a3f4b56ebbc9f9d",
+  "meetings_xml_sha256": "8ab6cdcf03ed863e839418f31c7380392397a2eed892d73b9bc1b438c7ec520a",
+  "segments_sha256": "70f5dd686e9a7cca280cdba85d63ebdc920e9fb37013e13a8726b4647d2dd160",
+  "words_sha256": "db7383e53c2cfeea647126f88bf7a856da951c10593d3ca81b2d7fe4d88136be",
+  "files": [
+    {
+      "path": "audio/ami-original.wav",
+      "label": "기존 crop 원음",
+      "duration_s": 0.732,
+      "rms": 0.0033307996012099553,
+      "peak": 0.02215576171875,
+      "waveform_sha256": "691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29"
+    },
+    {
+      "path": "audio/ami-gain.wav",
+      "label": "진단용 증폭 crop",
+      "duration_s": 0.732,
+      "rms": 0.013260152067200257,
+      "peak": 0.08820367604494095,
+      "waveform_sha256": "45677b34be059d0787a6452678e252ff058627f7de6d68bbeb65b04e0bfb8050",
+      "gain_db": 12.0
+    },
+    {
+      "path": "audio/ami-context-A.wav",
+      "label": "앞뒤 2초 문맥: agent A, Headset-0",
+      "duration_s": 4.732,
+      "rms": 0.0013280553948158017,
+      "peak": 0.02215576171875,
+      "waveform_sha256": "dcf8105b16a74292871ac569cbcb3a09e05032fd9f6bce072f2d15b84db4d853",
+      "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-0.wav",
+      "source_start_s": 232.102,
+      "focus_start_s": 2.0,
+      "focus_end_s": 2.7319999999999993
+    },
+    {
+      "path": "audio/ami-context-B.wav",
+      "label": "앞뒤 2초 문맥: agent B, Headset-1",
+      "duration_s": 4.732,
+      "rms": 0.00043770730711206583,
+      "peak": 0.003021240234375,
+      "waveform_sha256": "8c1369d5dddace159e7cadd253feb1abc682c6805321e00b05c32a75e305143f",
+      "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-1.wav",
+      "source_start_s": 232.102,
+      "focus_start_s": 2.0,
+      "focus_end_s": 2.7319999999999993
+    },
+    {
+      "path": "audio/ami-context-C.wav",
+      "label": "앞뒤 2초 문맥: agent C, Headset-2",
+      "duration_s": 4.732,
+      "rms": 0.00420671931409371,
+      "peak": 0.0587158203125,
+      "waveform_sha256": "b6669c020af72bed6880708e16d334b95dca550cb7caddb71dbd24de43320a79",
+      "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-2.wav",
+      "source_start_s": 232.102,
+      "focus_start_s": 2.0,
+      "focus_end_s": 2.7319999999999993
+    },
+    {
+      "path": "audio/ami-context-D.wav",
+      "label": "앞뒤 2초 문맥: agent D, Headset-3",
+      "duration_s": 4.732,
+      "rms": 0.0059093600338947965,
+      "peak": 0.067657470703125,
+      "waveform_sha256": "6db5dc70be98c44bb3cd15c0372e4829844458cf718762552dde765d48263123",
+      "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-3.wav",
+      "source_start_s": 232.102,
+      "focus_start_s": 2.0,
+      "focus_end_s": 2.7319999999999993
+    }
+  ],
+  "training_eligible": false
+}

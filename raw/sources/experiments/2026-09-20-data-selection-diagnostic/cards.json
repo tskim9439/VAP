@@ -1,0 +1,801 @@
+[
+  {
+    "key": "60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad",
+    "source": "aihub-bc-train",
+    "utt_id": "vr_m_001_370_049_0348",
+    "files": [
+      {
+        "path": "audio/broadcast-original.wav",
+        "label": "기존 원음 그대로",
+        "duration_s": 0.293,
+        "rms": 0.04885615514912138,
+        "peak": 0.18709003925323486,
+        "waveform_sha256": "51a768b05313472daca190287b9152093fc24648f9b018731e5798073a703b8e"
+      }
+    ],
+    "target": "네 네 네",
+    "raw_text": "네.",
+    "human": {
+      "binding": "17be2a6bb2809244cccdaa395bf19a05c5d19736220d696680db2159d3c41b84",
+      "waveform_sha256": "51a768b05313472daca190287b9152093fc24648f9b018731e5798073a703b8e",
+      "review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+      "manifest_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+      "reviewed_at": "2026-09-19T14:28:23.414Z",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "'네 네' 로 들리고, 그냥 '네' 도 상관 없어 보임",
+      "training_eligible": false
+    },
+    "evidence": {
+      "labels": [
+        {
+          "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/02.라벨링데이터/TL_한-러_음성전사_예능오락.zip",
+          "member": "/vr_m_001_370_049_0348.json",
+          "json_sha256": "187953863421202e9a08a0977ba6c38f5fa94f1cebc3dc3cf70b9b706d4ebfb6",
+          "pron": "네, 네, 네.",
+          "spell": "네.",
+          "work": "(네, 네, 네)/(네). ~~",
+          "reproduced_target": "네 네 네"
+        },
+        {
+          "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/02.라벨링데이터/TL_한-스_음성전사_예능오락.zip",
+          "member": "/vr_m_001_370_049_0348.json",
+          "json_sha256": "187953863421202e9a08a0977ba6c38f5fa94f1cebc3dc3cf70b9b706d4ebfb6",
+          "pron": "네, 네, 네.",
+          "spell": "네.",
+          "work": "(네, 네, 네)/(네). ~~",
+          "reproduced_target": "네 네 네"
+        },
+        {
+          "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/02.라벨링데이터/TL_한-영(미국)_음성전사_예능오락.zip",
+          "member": "/vr_m_001_370_049_0348.json",
+          "json_sha256": "187953863421202e9a08a0977ba6c38f5fa94f1cebc3dc3cf70b9b706d4ebfb6",
+          "pron": "네, 네, 네.",
+          "spell": "네.",
+          "work": "(네, 네, 네)/(네). ~~",
+          "reproduced_target": "네 네 네"
+        }
+      ],
+      "audio_variants": [
+        {
+          "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_예능오락.zip",
+          "member": "/vr_m_001_370_049_0348.wav",
+          "bytes_sha256": "54e97828725f48e419936058bd70b3fae7e9c9c9c7b9cc258128531fdd176a73",
+          "native_waveform_sha256": "4b8a54a0bfe94fbdb01542ade1855813f3bda2fd9f918666d9425c35717fd06d",
+          "sr": 48000,
+          "channels": 2,
+          "frames": 14064
+        },
+        {
+          "zip": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-영(미국)_한국어음성_예능오락.zip",
+          "member": "/vr_m_001_370_049_0348.wav",
+          "bytes_sha256": "54e97828725f48e419936058bd70b3fae7e9c9c9c7b9cc258128531fdd176a73",
+          "native_waveform_sha256": "4b8a54a0bfe94fbdb01542ade1855813f3bda2fd9f918666d9425c35717fd06d",
+          "sr": 48000,
+          "channels": 2,
+          "frames": 14064
+        }
+      ],
+      "scanned_label_zips": 21,
+      "scanned_audio_zips": 14,
+      "manifest_matches": [
+        {
+          "parent_id": "ahbc-train-vr_m_001_370_049_0348",
+          "segment": {
+            "utt_id": "vr_m_001_370_049_0348",
+            "path": "/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_예능오락.zip::vr_m_001_370_049_0348.wav",
+            "silence_before_s": 0.639,
+            "offset_s": 0.639,
+            "dur_s": 1.758,
+            "text": "네 네 네",
+            "lexical_text": "네 네 네",
+            "raw_text": "네.",
+            "display_source": "none"
+          }
+        }
+      ],
+      "current_tn": {
+        "textnorm_version": "asr-tn-v1.3.0",
+        "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+        "numeric_backend_version": "num2words 0.5.14"
+      },
+      "manifest_stats": {
+        "name": "aihub-bc-train",
+        "corpus": "aihubbc",
+        "rows": 448867,
+        "seed": 0,
+        "target_s": 25.0,
+        "textnorm_version": "asr-tn-v1.3.0",
+        "fingerprint": {
+          "textnorm_version": "asr-tn-v1.3.0",
+          "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+          "numeric_backend_version": "num2words 0.5.14",
+          "tokenizer_json_sha256": "66915f2a66d1e6688e8672cd3df1c74c23c658689fab9798706d62a4a490f447",
+          "source_transcript_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "manifest_sha256": "92241f51023976aeda3b795440995a2f6e64820770a2fbd7866e0be06b323c8f",
+          "quarantined_ids_sha256": "c4172a246784928368bd03ec8840f1ab11d77c091881817ea27502768ad05ddd",
+          "created_from_git_commit": null
+        },
+        "quarantined": 3132,
+        "display_source_counts": {
+          "none": 448867
+        },
+        "text_fields": {
+          "text": "lexical_text 와 동일(하위 호환)",
+          "lexical_text": "asr-tn-v1.0.0 학습·정렬 타깃",
+          "raw_text": "원문 보존",
+          "display_source": "none = display label 없음"
+        },
+        "subsets": {
+          "train": {
+            "utts": 448867,
+            "utt_hours": 578.18,
+            "rows": 451999,
+            "genre_연예공연": 94500,
+            "kept": 448867,
+            "quarantined": 3132,
+            "genre_영화드라마": 35902,
+            "genre_예능오락": 120279,
+            "genre_인터뷰": 62140,
+            "genre_교양": 77867,
+            "genre_다큐": 61311,
+            "streams": 448867,
+            "stream_hours": 740.24,
+            "stream_len_pct": {
+              "5": 2.19,
+              "50": 5.41,
+              "95": 11.18
+            },
+            "utts_per_stream_pct": {
+              "5": 1.0,
+              "50": 1.0,
+              "95": 1.0
+            }
+          }
+        }
+      },
+      "all_targets_match": true,
+      "all_spell_match": true,
+      "audio_variant_hashes": 1,
+      "training_eligible": false
+    },
+    "teachers": {
+      "qwen": "네네.",
+      "whisper-v2": " 네네",
+      "whisper-v3": " 네."
+    }
+  },
+  {
+    "key": "4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7",
+    "source": "ami",
+    "utt_id": "A_00018",
+    "files": [
+      {
+        "path": "audio/ami-original.wav",
+        "label": "기존 crop 원음",
+        "duration_s": 0.732,
+        "rms": 0.0033307996012099553,
+        "peak": 0.02215576171875,
+        "waveform_sha256": "691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29"
+      },
+      {
+        "path": "audio/ami-gain.wav",
+        "label": "진단용 증폭 crop",
+        "duration_s": 0.732,
+        "rms": 0.013260152067200257,
+        "peak": 0.08820367604494095,
+        "waveform_sha256": "45677b34be059d0787a6452678e252ff058627f7de6d68bbeb65b04e0bfb8050",
+        "gain_db": 12.0
+      },
+      {
+        "path": "audio/ami-context-A.wav",
+        "label": "앞뒤 2초 문맥: agent A, Headset-0",
+        "duration_s": 4.732,
+        "rms": 0.0013280553948158017,
+        "peak": 0.02215576171875,
+        "waveform_sha256": "dcf8105b16a74292871ac569cbcb3a09e05032fd9f6bce072f2d15b84db4d853",
+        "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-0.wav",
+        "source_start_s": 232.102,
+        "focus_start_s": 2.0,
+        "focus_end_s": 2.7319999999999993
+      },
+      {
+        "path": "audio/ami-context-B.wav",
+        "label": "앞뒤 2초 문맥: agent B, Headset-1",
+        "duration_s": 4.732,
+        "rms": 0.00043770730711206583,
+        "peak": 0.003021240234375,
+        "waveform_sha256": "8c1369d5dddace159e7cadd253feb1abc682c6805321e00b05c32a75e305143f",
+        "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-1.wav",
+        "source_start_s": 232.102,
+        "focus_start_s": 2.0,
+        "focus_end_s": 2.7319999999999993
+      },
+      {
+        "path": "audio/ami-context-C.wav",
+        "label": "앞뒤 2초 문맥: agent C, Headset-2",
+        "duration_s": 4.732,
+        "rms": 0.00420671931409371,
+        "peak": 0.0587158203125,
+        "waveform_sha256": "b6669c020af72bed6880708e16d334b95dca550cb7caddb71dbd24de43320a79",
+        "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-2.wav",
+        "source_start_s": 232.102,
+        "focus_start_s": 2.0,
+        "focus_end_s": 2.7319999999999993
+      },
+      {
+        "path": "audio/ami-context-D.wav",
+        "label": "앞뒤 2초 문맥: agent D, Headset-3",
+        "duration_s": 4.732,
+        "rms": 0.0059093600338947965,
+        "peak": 0.067657470703125,
+        "waveform_sha256": "6db5dc70be98c44bb3cd15c0372e4829844458cf718762552dde765d48263123",
+        "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-3.wav",
+        "source_start_s": 232.102,
+        "focus_start_s": 2.0,
+        "focus_end_s": 2.7319999999999993
+      }
+    ],
+    "target": "right",
+    "raw_text": "Right",
+    "human": {
+      "binding": "02f38d529fce7909dcd706c9c983db9d241aaab0b992016382011a318bcb5c5d",
+      "waveform_sha256": "691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29",
+      "review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+      "manifest_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+      "reviewed_at": "2026-09-19T14:28:23.414Z",
+      "labels": {
+        "text": "fail",
+        "timing": "fail",
+        "speaker": "fail",
+        "turn": "unreviewed"
+      },
+      "note": "음원에서 아무것도 들리지 않음",
+      "training_eligible": false
+    },
+    "evidence": {
+      "agents": {
+        "A": 0,
+        "B": 1,
+        "C": 2,
+        "D": 3
+      },
+      "segment": {
+        "{http://nite.sourceforge.net/}id": "ES2010d.sync.39",
+        "channel": "0",
+        "transcriber_start": "234.102",
+        "transcriber_end": "234.834"
+      },
+      "nearby_words": [
+        {
+          "text": "Right",
+          "{http://nite.sourceforge.net/}id": "ES2010d.A.words194",
+          "starttime": "234.28",
+          "endtime": "234.64"
+        },
+        {
+          "text": ".",
+          "{http://nite.sourceforge.net/}id": "ES2010d.A.words195",
+          "starttime": "234.64",
+          "endtime": "234.64",
+          "punc": "true"
+        }
+      ],
+      "channel_mapping_matches": true,
+      "crop_qc_hash_matches": true,
+      "annotation_zip_sha256": "b56e5babb2496b8795deeeda7e71178d7fbc9963f94276cf2a3f4b56ebbc9f9d",
+      "meetings_xml_sha256": "8ab6cdcf03ed863e839418f31c7380392397a2eed892d73b9bc1b438c7ec520a",
+      "segments_sha256": "70f5dd686e9a7cca280cdba85d63ebdc920e9fb37013e13a8726b4647d2dd160",
+      "words_sha256": "db7383e53c2cfeea647126f88bf7a856da951c10593d3ca81b2d7fe4d88136be",
+      "files": [
+        {
+          "path": "audio/ami-original.wav",
+          "label": "기존 crop 원음",
+          "duration_s": 0.732,
+          "rms": 0.0033307996012099553,
+          "peak": 0.02215576171875,
+          "waveform_sha256": "691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29"
+        },
+        {
+          "path": "audio/ami-gain.wav",
+          "label": "진단용 증폭 crop",
+          "duration_s": 0.732,
+          "rms": 0.013260152067200257,
+          "peak": 0.08820367604494095,
+          "waveform_sha256": "45677b34be059d0787a6452678e252ff058627f7de6d68bbeb65b04e0bfb8050",
+          "gain_db": 12.0
+        },
+        {
+          "path": "audio/ami-context-A.wav",
+          "label": "앞뒤 2초 문맥: agent A, Headset-0",
+          "duration_s": 4.732,
+          "rms": 0.0013280553948158017,
+          "peak": 0.02215576171875,
+          "waveform_sha256": "dcf8105b16a74292871ac569cbcb3a09e05032fd9f6bce072f2d15b84db4d853",
+          "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-0.wav",
+          "source_start_s": 232.102,
+          "focus_start_s": 2.0,
+          "focus_end_s": 2.7319999999999993
+        },
+        {
+          "path": "audio/ami-context-B.wav",
+          "label": "앞뒤 2초 문맥: agent B, Headset-1",
+          "duration_s": 4.732,
+          "rms": 0.00043770730711206583,
+          "peak": 0.003021240234375,
+          "waveform_sha256": "8c1369d5dddace159e7cadd253feb1abc682c6805321e00b05c32a75e305143f",
+          "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-1.wav",
+          "source_start_s": 232.102,
+          "focus_start_s": 2.0,
+          "focus_end_s": 2.7319999999999993
+        },
+        {
+          "path": "audio/ami-context-C.wav",
+          "label": "앞뒤 2초 문맥: agent C, Headset-2",
+          "duration_s": 4.732,
+          "rms": 0.00420671931409371,
+          "peak": 0.0587158203125,
+          "waveform_sha256": "b6669c020af72bed6880708e16d334b95dca550cb7caddb71dbd24de43320a79",
+          "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-2.wav",
+          "source_start_s": 232.102,
+          "focus_start_s": 2.0,
+          "focus_end_s": 2.7319999999999993
+        },
+        {
+          "path": "audio/ami-context-D.wav",
+          "label": "앞뒤 2초 문맥: agent D, Headset-3",
+          "duration_s": 4.732,
+          "rms": 0.0059093600338947965,
+          "peak": 0.067657470703125,
+          "waveform_sha256": "6db5dc70be98c44bb3cd15c0372e4829844458cf718762552dde765d48263123",
+          "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-3.wav",
+          "source_start_s": 232.102,
+          "focus_start_s": 2.0,
+          "focus_end_s": 2.7319999999999993
+        }
+      ],
+      "training_eligible": false
+    },
+    "teachers": {
+      "qwen": "Right.",
+      "whisper-v2": " Right.",
+      "whisper-v3": " Right."
+    }
+  },
+  {
+    "key": "1b83be4a89e148263143d2124b315371a2951b33bf599e01cef5eef8a053f694",
+    "source": "voxpopuli-train",
+    "utt_id": "20130611-0900-PLENARY-5-en_20130611-11:10:26_5",
+    "files": [
+      {
+        "path": "audio/vox-1b83be4a89e1.wav",
+        "label": "배포 crop 원음",
+        "duration_s": 0.759875,
+        "rms": 0.044036729707128144,
+        "peak": 0.2186279296875,
+        "waveform_sha256": "ecb450380490e7862e9ee6d68b6c7f070c76b30b7b4e7912241b1f3e30b27d63"
+      }
+    ],
+    "target": "getting so much",
+    "raw_text": "getting so much.",
+    "human": {
+      "binding": "e79e2d77e1c53aaec4c0c12fdccaf6ddf986c2c0777502855c84d60796119948",
+      "waveform_sha256": "ecb450380490e7862e9ee6d68b6c7f070c76b30b7b4e7912241b1f3e30b27d63",
+      "review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+      "manifest_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+      "reviewed_at": "2026-09-19T14:28:23.414Z",
+      "labels": {
+        "text": "fail",
+        "timing": "fail",
+        "speaker": "fail",
+        "turn": "unreviewed"
+      },
+      "note": "'so much' 만 들림",
+      "training_eligible": false
+    },
+    "evidence": {
+      "annotation": {
+        "session_id": "20130611-0900-PLENARY-5",
+        "id_": "en_20130611-11:10:26_5",
+        "original_text": "getting so much.",
+        "normed_text": "getting so much.",
+        "start_time": "4144.1243",
+        "end_time": "4145.0842",
+        "vad": "[[4144.1243, 4144.884175]]",
+        "speaker_id": "4531",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          4144.1243,
+          4144.884175
+        ]
+      ],
+      "expected_frames": 12158,
+      "actual_frames": 12158,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": false,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "getting so much",
+      "normalized_teachers": {
+        "qwen": "so much",
+        "whisper-v2": "so much",
+        "whisper-v3": "so much"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    "teachers": {
+      "qwen": "So much.",
+      "whisper-v2": " so much.",
+      "whisper-v3": " so much"
+    }
+  },
+  {
+    "key": "d26cb370b1c82f6b2d8f4a43e61913d1d041acd18496bc17d2fd88cf9b643b31",
+    "source": "voxpopuli-train",
+    "utt_id": "20110511-0900-PLENARY-2-en_20110511-10:15:44_19",
+    "files": [
+      {
+        "path": "audio/vox-d26cb370b1c8.wav",
+        "label": "배포 crop 원음",
+        "duration_s": 1.4599375,
+        "rms": 0.054394350765776874,
+        "peak": 0.272308349609375,
+        "waveform_sha256": "74059d49f8c96700194b48080d88205bbf0b937596817ffc178b732f6ef2a28f"
+      }
+    ],
+    "target": "i understand that too",
+    "raw_text": "I understand that too.",
+    "human": {
+      "binding": "ad70e5f4162dc33f336f6f971b1f9b524ca5a83a76068b9fb8f781ecd0ae0c87",
+      "waveform_sha256": "74059d49f8c96700194b48080d88205bbf0b937596817ffc178b732f6ef2a28f",
+      "review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+      "manifest_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+      "reviewed_at": "2026-09-19T14:28:23.414Z",
+      "labels": {
+        "text": "fail",
+        "timing": "fail",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "처음에 'and' 가 들림",
+      "training_eligible": false
+    },
+    "evidence": {
+      "annotation": {
+        "session_id": "20110511-0900-PLENARY-2",
+        "id_": "en_20110511-10:15:44_19",
+        "original_text": "I understand that too.",
+        "normed_text": "i understand that too.",
+        "start_time": "4241.148",
+        "end_time": "4242.808",
+        "vad": "[[4241.148, 4242.6079375]]",
+        "speaker_id": "94301",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          4241.148,
+          4242.6079375
+        ]
+      ],
+      "expected_frames": 23359,
+      "actual_frames": 23359,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": true,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "i understand that too",
+      "normalized_teachers": {
+        "qwen": "i understand that too",
+        "whisper-v2": "and i understand that too",
+        "whisper-v3": "and i understand that too"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    "teachers": {
+      "qwen": "I understand that too.",
+      "whisper-v2": " and I understand that too.",
+      "whisper-v3": " And I understand that too."
+    }
+  },
+  {
+    "key": "6950334887131b5433325783b492798642b2e0a73ce484a2644efbeffd1eccd6",
+    "source": "voxpopuli-train",
+    "utt_id": "20090423-0900-PLENARY-3-en_20090423-09:23:18_9",
+    "files": [
+      {
+        "path": "audio/vox-695033488713.wav",
+        "label": "배포 crop 원음",
+        "duration_s": 1.7798125,
+        "rms": 0.013551651550510965,
+        "peak": 0.190155029296875,
+        "waveform_sha256": "f9b12ee46e397d96bc1517f3ac8f5f99d91647b9de91dcc8b65d710e067cd676"
+      }
+    ],
+    "target": "let us keep this in perspective",
+    "raw_text": "Let us keep this in perspective.",
+    "human": {
+      "binding": "bdb10503be40f47934ed33a954b6fd82b1529b034cb463021c58a5be6bb0e46c",
+      "waveform_sha256": "f9b12ee46e397d96bc1517f3ac8f5f99d91647b9de91dcc8b65d710e067cd676",
+      "review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+      "manifest_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+      "reviewed_at": "2026-09-19T14:28:23.414Z",
+      "labels": {
+        "text": "fail",
+        "timing": "fail",
+        "speaker": "fail",
+        "turn": "unreviewed"
+      },
+      "note": "들리기에는 'Let's' 로 들림",
+      "training_eligible": false
+    },
+    "evidence": {
+      "annotation": {
+        "session_id": "20090423-0900-PLENARY-3",
+        "id_": "en_20090423-09:23:18_9",
+        "original_text": "Let us keep this in perspective.",
+        "normed_text": "let us keep this in perspective.",
+        "start_time": "1392.8388",
+        "end_time": "1394.8187",
+        "vad": "[[1392.8388, 1394.6186125000002]]",
+        "speaker_id": "4382",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          1392.8388,
+          1394.6186125000002
+        ]
+      ],
+      "expected_frames": 28477,
+      "actual_frames": 28477,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": false,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "let us keep this in perspective",
+      "normalized_teachers": {
+        "qwen": "let's keep this in perspective",
+        "whisper-v2": "let's keep this in perspective",
+        "whisper-v3": "let's keep this in perspective"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    "teachers": {
+      "qwen": "Let's keep this in perspective.",
+      "whisper-v2": " Let's keep this in perspective.",
+      "whisper-v3": " Let's keep this in perspective."
+    }
+  },
+  {
+    "key": "fb7bec2b278afbda66c7b8aebc58c5d38d7d5edda1c53ef35b356e5045e4280d",
+    "source": "voxpopuli-train",
+    "utt_id": "20101006-0900-PLENARY-11-en_20101006-18:23:16_8",
+    "files": [
+      {
+        "path": "audio/vox-fb7bec2b278a.wav",
+        "label": "배포 crop 원음",
+        "duration_s": 9.93925,
+        "rms": 0.03913611990074412,
+        "peak": 0.436859130859375,
+        "waveform_sha256": "03eae6acc96ac4d7a8d9253015ee6b6a982b17a266179c5610ec48904454cfce"
+      }
+    ],
+    "target": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from the ministers and commissioners who attend",
+    "raw_text": "That is the sense of urgency of the Nagoya Summit and that is the sense of urgency I expect from the ministers and commissioners who attend.",
+    "human": {
+      "binding": "c4370748665e7e4697c4f0ba2725d518698a674dad215d2a2fd3e3ff12334023",
+      "waveform_sha256": "03eae6acc96ac4d7a8d9253015ee6b6a982b17a266179c5610ec48904454cfce",
+      "review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+      "manifest_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+      "reviewed_at": "2026-09-19T14:28:23.414Z",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "**attending** ministers and commissioners 으로 ASR 모델의 결과가 맞음",
+      "training_eligible": false
+    },
+    "evidence": {
+      "annotation": {
+        "session_id": "20101006-0900-PLENARY-11",
+        "id_": "en_20101006-18:23:16_8",
+        "original_text": "That is the sense of urgency of the Nagoya Summit and that is the sense of urgency I expect from the ministers and commissioners who attend.",
+        "normed_text": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from the ministers and commissioners who attend.",
+        "start_time": "1837.440019",
+        "end_time": "1847.5792999999999",
+        "vad": "[[1837.440019, 1847.379269]]",
+        "speaker_id": "96940",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          1837.440019,
+          1847.379269
+        ]
+      ],
+      "expected_frames": 159028,
+      "actual_frames": 159028,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": false,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from the ministers and commissioners who attend",
+      "normalized_teachers": {
+        "qwen": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from attending ministers and commissioners",
+        "whisper-v2": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from attending ministers and commissioners",
+        "whisper-v3": "that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from attending ministers and commissioners"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    "teachers": {
+      "qwen": "That is the sense of urgency of the Nagoya Summit, and that is the sense of urgency I expect from attending ministers and commissioners.",
+      "whisper-v2": " That is the sense of urgency of the Nagoya Summit. And that is the sense of urgency I expect from attending ministers and commissioners.",
+      "whisper-v3": " That is the sense of urgency of the Nagoya summit. And that is the sense of urgency I expect from attending ministers and commissioners."
+    }
+  },
+  {
+    "key": "bf069539ab748e2df2cace535c41747e13f5dd98a4819602f0ba0a8b3fc3ae49",
+    "source": "voxpopuli-train",
+    "utt_id": "20180702-0900-PLENARY-en_20180702-19:51:21_7",
+    "files": [
+      {
+        "path": "audio/vox-bf069539ab74.wav",
+        "label": "배포 crop 원음",
+        "duration_s": 16.378875,
+        "rms": 0.07100993204651584,
+        "peak": 0.586151123046875,
+        "waveform_sha256": "bbf33a6518c533d541a16251865619aaa67f57d531d14d60dc82e042da6b19b5"
+      }
+    ],
+    "target": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general",
+    "raw_text": "The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.",
+    "human": {
+      "binding": "81abd5f374b847fa2c1d70599e90cf9f5dbd13c830449e6edc216453583f3cf8",
+      "waveform_sha256": "bbf33a6518c533d541a16251865619aaa67f57d531d14d60dc82e042da6b19b5",
+      "review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+      "manifest_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+      "reviewed_at": "2026-09-19T14:28:23.414Z",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "ASR 모델의 결과가 명확하고 이 방식을 선호함",
+      "training_eligible": false
+    },
+    "evidence": {
+      "annotation": {
+        "session_id": "20180702-0900-PLENARY",
+        "id_": "en_20180702-19:51:21_7",
+        "original_text": "The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.",
+        "normed_text": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general.",
+        "start_time": "10262.202099999999",
+        "end_time": "10285.116999999998",
+        "vad": "[[10262.202099999999, 10278.580974999999]]",
+        "speaker_id": "189391",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          10262.202099999999,
+          10278.580974999999
+        ]
+      ],
+      "expected_frames": 262062,
+      "actual_frames": 262062,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": true,
+        "whisper-v2": true,
+        "whisper-v3": true
+      },
+      "normalized_ref": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general",
+      "normalized_teachers": {
+        "qwen": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general",
+        "whisper-v2": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general",
+        "whisper-v3": "the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    "teachers": {
+      "qwen": "The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment, and in society in general.",
+      "whisper-v2": " The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.",
+      "whisper-v3": " The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general."
+    }
+  },
+  {
+    "key": "69440214fe8bea387d540376ee1b8befd0a6b0496fad2ed753bd50de43d6edeb",
+    "source": "voxpopuli-train",
+    "utt_id": "20160509-0900-PLENARY-14-en_20160509-21:50:41_3",
+    "files": [
+      {
+        "path": "audio/vox-69440214fe8b.wav",
+        "label": "배포 crop 원음",
+        "duration_s": 28.656625,
+        "rms": 0.06907392173860054,
+        "peak": 0.742645263671875,
+        "waveform_sha256": "6154872565405e84cd997c1c6d29152a77887aa61058b5c59860a0cf6bfc6157"
+      }
+    ],
+    "target": "in a country where approximately half of the population lives on the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent that it achieves its purpose and that no fraud with eu funds takes place on the ground",
+    "raw_text": "In a country where approximately half of the population lives on the coastline, and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, that it achieves its purpose, and that no fraud with EU funds takes place on the ground.",
+    "human": {
+      "binding": "59501af3bf146025190f273719b9f61feab4259871438f7a5b54a7ffe17669c9",
+      "waveform_sha256": "6154872565405e84cd997c1c6d29152a77887aa61058b5c59860a0cf6bfc6157",
+      "review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+      "manifest_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+      "reviewed_at": "2026-09-19T14:28:23.414Z",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "ASR 모델의 전사 내용이 정확함",
+      "training_eligible": false
+    },
+    "evidence": {
+      "annotation": {
+        "session_id": "20160509-0900-PLENARY-14",
+        "id_": "en_20160509-21:50:41_3",
+        "original_text": "In a country where approximately half of the population lives on the coastline, and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, that it achieves its purpose, and that no fraud with EU funds takes place on the ground.",
+        "normed_text": "in a country where approximately half of the population lives on the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent that it achieves its purpose and that no fraud with eu funds takes place on the ground.",
+        "start_time": "965.514204",
+        "end_time": "1001.492",
+        "vad": "[[965.514204, 994.170829]]",
+        "speaker_id": "124802",
+        "split": "train"
+      },
+      "vad_segments": [
+        [
+          965.514204,
+          994.170829
+        ]
+      ],
+      "expected_frames": 458506,
+      "actual_frames": 458506,
+      "annotation_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+      "same_lexical": {
+        "qwen": false,
+        "whisper-v2": false,
+        "whisper-v3": false
+      },
+      "normalized_ref": "in a country where approximately half of the population lives on the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent that it achieves its purpose and that no fraud with eu funds takes place on the ground",
+      "normalized_teachers": {
+        "qwen": "in a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent achieves its purpose and no fraud with eu funds is is happening on the ground",
+        "whisper-v2": "in a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent achieves its purpose and no fraud with eu funds is happening on the ground thank you",
+        "whisper-v3": "in a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent achieves its purpose and no fraud with eu funds is happening on the ground thank you"
+      },
+      "original_session_candidates": [],
+      "training_eligible": false
+    },
+    "teachers": {
+      "qwen": "In a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, achieves its purpose, and no fraud with EU funds is is happening on the ground.",
+      "whisper-v2": " In a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, achieves its purpose, and no fraud with EU funds is happening on the ground. Thank you.",
+      "whisper-v3": " In a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, achieves its purpose, and no fraud with EU funds is happening on the ground. Thank you."
+    }
+  }
+]

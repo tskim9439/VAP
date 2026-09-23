@@ -1,0 +1,84 @@
+{
+  "csv": "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/EN/TRAIN/OPEN/Multitask-National-Speech-Corpus-v1/Multitask-National-Speech-Corpus-v1_train_tn.csv",
+  "csv_sha256": "2edcc2ec27f0011a401104d92563574ba1e2d60760c8139050f39ddb11681c11",
+  "manifest": "/soundai/users/tskim/VAPKT-data/data/manifests/mnsc-1000/streams.jsonl",
+  "manifest_sha256": "7e61d8c8dae60f0a22cf2f34374a559b7e9202367e86e793945a1b4ca7387c4f",
+  "directory": "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/EN/TRAIN/OPEN/Multitask-National-Speech-Corpus-v1/ASR-PART1-Train",
+  "listed_wav_files": 185346,
+  "scope": "filename availability and label conflicts only; not full audio decoding",
+  "manifest_counts": {
+    "missing_at_declared_path": 68047,
+    "listed_on_disk": 6168
+  },
+  "manifest_hours": {
+    "missing_at_declared_path": 99.3540588888885,
+    "listed_on_disk": 9.05677444444445
+  },
+  "csv_counts": {
+    "part1_rows": 2258301,
+    "repeated_id_rows": 2181201,
+    "target_differs_from_first_rows": 2177644
+  },
+  "unique_part1_ids": 77100,
+  "ids_with_conflicting_targets": 77100,
+  "ids_with_different_paths": 0,
+  "examples": [
+    {
+      "uid": "train-00000-of-00771-0",
+      "first_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-0.wav",
+      "next_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-0.wav",
+      "first_target": "she meets prince thing siegfried and they fall in love",
+      "next_target": "don't you get disappointed though when it doesn't happen"
+    },
+    {
+      "uid": "train-00000-of-00771-1",
+      "first_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-1.wav",
+      "next_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-1.wav",
+      "first_target": "no matter what everyone else says or how much they judge",
+      "next_target": "i have even received customised orders such as a fishing rod and a jackpot machine"
+    },
+    {
+      "uid": "train-00000-of-00771-2",
+      "first_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-2.wav",
+      "next_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-2.wav",
+      "first_target": "i don't think should be the only way",
+      "next_target": "a comma can change the meaning of a sentence entirely"
+    },
+    {
+      "uid": "train-00000-of-00771-3",
+      "first_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-3.wav",
+      "next_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-3.wav",
+      "first_target": "and how effective are these methods in preparing children for primary school",
+      "next_target": "rising college debt has been a widely discussed matter"
+    },
+    {
+      "uid": "train-00000-of-00771-4",
+      "first_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-4.wav",
+      "next_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-4.wav",
+      "first_target": "standard operating procedures were followed to evacuate riders safely from the lower section of the ride",
+      "next_target": "electric utilities in developed countries would see soaring demand after years of stagnating growth"
+    },
+    {
+      "uid": "train-00000-of-00771-5",
+      "first_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-5.wav",
+      "next_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-5.wav",
+      "first_target": "he pointed out that contributions from reserves are already largest contributor to revenues",
+      "next_target": "a democracy can produce good governance only if people who can best run the office step forward"
+    },
+    {
+      "uid": "train-00000-of-00771-6",
+      "first_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-6.wav",
+      "next_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-6.wav",
+      "first_target": "",
+      "next_target": "it's a gentle reminder to property market players"
+    },
+    {
+      "uid": "train-00000-of-00771-7",
+      "first_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-7.wav",
+      "next_path": "Multitask-National-Speech-Corpus-v1/ASR-PART1-Train/train-00000-of-00771-7.wav",
+      "first_target": "the criminal paid a heavy price for his crime",
+      "next_target": "also evolving impression that many singaporean authors also focus on certain genres"
+    }
+  ],
+  "decision": "HOLD_MNSC_UNTIL_SOURCE_MAPPING_VALIDATED"
+}

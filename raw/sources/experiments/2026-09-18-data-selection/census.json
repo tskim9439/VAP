@@ -1,0 +1,302 @@
+{
+  "version": "data-selection-v0.1",
+  "split_sha256": "fdd211a7875ea9c18858dee1ae15421c1d79260b537dca2eebba7d5ab2113961",
+  "sources": {
+    "librispeech-960": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/manifests/librispeech-960/streams.jsonl",
+      "sha256": "37278b44a27fd8db16f599959cae1331e5f861f8f69f099c3dea3d3fcf9a2b36",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 281241,
+        "stratum_regular": 205064,
+        "stratum_long": 75467,
+        "stratum_short": 710
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 961.054
+      },
+      "reasons": {},
+      "pilot_n": 48
+    },
+    "kspon-full": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/manifests/kspon-full/streams.jsonl",
+      "sha256": "5030b6f3551f5ef5b9f4b34f66fa19801c19088d87f0149892a6be992537598d",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 619932,
+        "stratum_regular": 487764,
+        "stratum_short": 102752,
+        "stratum_long": 29416
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 964.941
+      },
+      "reasons": {},
+      "pilot_n": 48
+    },
+    "swbd-train": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/manifests/swbd-train/streams.jsonl",
+      "sha256": "d3b2e59f95c90431c9092ef700a8855550a41ac44867e91a38009bfb08e5268f",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 179427,
+        "stratum_short": 60878,
+        "stratum_regular": 118470,
+        "stratum_long": 79
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 225.276
+      },
+      "reasons": {},
+      "pilot_n": 48
+    },
+    "mnsc-1000": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/manifests/mnsc-1000/streams.jsonl",
+      "sha256": "7e61d8c8dae60f0a22cf2f34374a559b7e9202367e86e793945a1b4ca7387c4f",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 74215,
+        "stratum_regular": 74135,
+        "stratum_long": 6,
+        "stratum_short": 74
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 108.411
+      },
+      "reasons": {},
+      "pilot_n": 38
+    },
+    "nikl-1000": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/manifests/nikl-1000/streams.jsonl",
+      "sha256": "6124f2dfc73b229f7099fb8e55e1ea887a062155891d7f0ee7666b0f9046d3d6",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 1249471,
+        "stratum_regular": 827563,
+        "stratum_short": 421778,
+        "stratum_long": 130
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 1000.127
+      },
+      "reasons": {},
+      "pilot_n": 48
+    },
+    "voxpopuli-train": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/manifests/voxpopuli-train/streams.jsonl",
+      "sha256": "3b62a5c5c10d633509c18b47556fb8188e08157446485b7d33d008448790f81d",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 177422,
+        "stratum_long": 36532,
+        "stratum_regular": 136851,
+        "stratum_short": 4039
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 520.512
+      },
+      "reasons": {},
+      "pilot_n": 48
+    },
+    "yodas-en129": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/manifests/yodas-en129/streams.jsonl",
+      "sha256": "dedac04f1e1d982a399c4493c0f20806a73e93ed3c74752d81879b5dce34486e",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 133853,
+        "stratum_long": 24286,
+        "stratum_regular": 83288,
+        "stratum_short": 26279
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 333.782
+      },
+      "reasons": {},
+      "pilot_n": 48
+    },
+    "aihub-bc-train": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/manifests/aihub-bc-train/streams.jsonl",
+      "sha256": "92241f51023976aeda3b795440995a2f6e64820770a2fbd7866e0be06b323c8f",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 448867,
+        "stratum_regular": 357274,
+        "stratum_short": 89034,
+        "stratum_long": 2559
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 578.183
+      },
+      "reasons": {},
+      "pilot_n": 48
+    },
+    "aihub71631": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/phase2/aihub71631.dialogues.jsonl",
+      "sha256": "617b6f91ae6c611f02df579c00522a1850ba49172187c7468ca061e32e82c684",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 216954,
+        "stratum_overlap": 54566,
+        "stratum_short": 123876,
+        "stratum_regular": 38028,
+        "stratum_long": 484,
+        "QUARANTINE_METADATA": 3236,
+        "HELDOUT": 18341
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 148.976,
+        "QUARANTINE_METADATA": 4.627,
+        "HELDOUT": 10.53
+      },
+      "reasons": {
+        "empty_target": 2822,
+        "upstream_flags": 2822,
+        "outside_parent_timeline": 658
+      },
+      "pilot_n": 64
+    },
+    "aihub134-1": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/phase2/aihub134-1.dialogues.jsonl",
+      "sha256": "01fdb66e8ed32836759caeebfa9e0158d23531079235c3e893c5edffb03ce0df",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 337837,
+        "stratum_short": 184499,
+        "stratum_overlap": 86843,
+        "stratum_regular": 65235,
+        "QUARANTINE_METADATA": 45523,
+        "stratum_long": 1260,
+        "HELDOUT": 43420
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 242.079,
+        "QUARANTINE_METADATA": 35.222,
+        "HELDOUT": 32.31
+      },
+      "reasons": {
+        "empty_target": 5306,
+        "upstream_flags": 5306,
+        "missing_crop_declared": 46020
+      },
+      "pilot_n": 64
+    },
+    "aihub134-2": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/phase2/aihub134-2.dialogues.jsonl",
+      "sha256": "507001822072b2450c4b9928623c83b95a2d9631b9e56318102dc3f1aa68dc50",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 359792,
+        "stratum_short": 250920,
+        "stratum_regular": 60515,
+        "stratum_overlap": 48281,
+        "QUARANTINE_METADATA": 57524,
+        "HELDOUT": 60348,
+        "stratum_long": 76
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 175.188,
+        "QUARANTINE_METADATA": 29.171,
+        "HELDOUT": 32.38
+      },
+      "reasons": {
+        "empty_target": 5824,
+        "upstream_flags": 5824,
+        "missing_crop_declared": 60494
+      },
+      "pilot_n": 64
+    },
+    "otoSpeech": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/phase2/otoSpeech.dialogues.jsonl",
+      "sha256": "62ce36bc67992d9302d093821cd186daba43f8b7766c5f94fa2b55ee6c6a3056",
+      "counts": {
+        "HELDOUT": 8164,
+        "PENDING_AUDIO_TEACHERS": 78313,
+        "stratum_short": 46336,
+        "stratum_regular": 22260,
+        "stratum_long": 593,
+        "stratum_overlap": 9124,
+        "QUARANTINE_METADATA": 416
+      },
+      "hours": {
+        "HELDOUT": 6.973,
+        "PENDING_AUDIO_TEACHERS": 63.145,
+        "QUARANTINE_METADATA": 0.931
+      },
+      "reasons": {
+        "empty_target": 484,
+        "upstream_flags": 484
+      },
+      "pilot_n": 64
+    },
+    "ami": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/phase2/ami.dialogues.jsonl",
+      "sha256": "11b776ce7eb16367a9f2fbd56ac22b456c3d4f7f937244c7f9a5fe597e993b4e",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 74144,
+        "stratum_short": 38548,
+        "stratum_regular": 5273,
+        "stratum_overlap": 29416,
+        "stratum_long": 907,
+        "QUARANTINE_METADATA": 39,
+        "HELDOUT": 9295
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 89.075,
+        "QUARANTINE_METADATA": 0.162,
+        "HELDOUT": 11.432
+      },
+      "reasons": {
+        "empty_target": 38,
+        "upstream_flags": 38,
+        "outside_parent_timeline": 4
+      },
+      "pilot_n": 64
+    },
+    "notsofar": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/phase2/notsofar.dialogues.jsonl",
+      "sha256": "67360b3d4902dfc4cb6152928a48376b13b8d302d38c3634bd03245e662037b4",
+      "counts": {
+        "HELDOUT": 37452,
+        "PENDING_AUDIO_TEACHERS": 17193,
+        "stratum_regular": 968,
+        "stratum_short": 11154,
+        "stratum_overlap": 5071,
+        "QUARANTINE_METADATA": 5
+      },
+      "hours": {
+        "HELDOUT": 21.926,
+        "PENDING_AUDIO_TEACHERS": 9.458,
+        "QUARANTINE_METADATA": 0.001
+      },
+      "reasons": {
+        "empty_target": 15,
+        "upstream_flags": 15
+      },
+      "pilot_n": 48
+    },
+    "icsi": {
+      "path": "/soundai/users/tskim/VAPKT-data/data/phase2/icsi.dialogues.jsonl",
+      "sha256": "137698c9fb6e730c0359baab4644061f630ec1e57a850e2498ee0540e4455df8",
+      "counts": {
+        "PENDING_AUDIO_TEACHERS": 90303,
+        "stratum_overlap": 18829,
+        "stratum_short": 52063,
+        "QUARANTINE_METADATA": 4494,
+        "stratum_regular": 19384,
+        "HELDOUT": 7380,
+        "stratum_long": 27
+      },
+      "hours": {
+        "PENDING_AUDIO_TEACHERS": 56.674,
+        "QUARANTINE_METADATA": 1.215,
+        "HELDOUT": 4.846
+      },
+      "reasons": {
+        "empty_target": 4806,
+        "upstream_flags": 4806,
+        "outside_parent_timeline": 1
+      },
+      "pilot_n": 64
+    }
+  },
+  "excluded_catalog": [
+    "aihub71631-train (use Phase 2 original)",
+    "librispeech-100 / kspon-100 (subsets)",
+    "all dev/test/eval, nikl2020, chime6, turnbench"
+  ],
+  "scope": "existing unrefined manifests, not entire original DB",
+  "training_eligible": 0,
+  "per_stratum": 16,
+  "complete": true,
+  "pilot_sha256": "ead49c49526c8d2dec3113cde287baaf65d443a13215fe9490432080eb8a9e48",
+  "implementation_sha256": "5938117bac81ce58ab67eb95e4aa980c82f4b49333f307d20a1e338fbbb0eec1"
+}

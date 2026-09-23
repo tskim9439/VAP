@@ -1,0 +1,68 @@
+{
+  "input_sha256": "ead49c49526c8d2dec3113cde287baaf65d443a13215fe9490432080eb8a9e48",
+  "teacher": "qwen",
+  "model": "/soundai/Model/Qwen3-ASR-0.6B",
+  "model_hashes": {
+    "chat_template.json": "75a8cfca24f00de72d796fbfed6858fc9614ef3dabd8696684cc3bc03a9c58ff",
+    "config.json": "76d3ae4601ce939830b2517f4a6cadb86cc51316c3900af6b020b051c21a478c",
+    "generation_config.json": "1da527824d81e07118facff437e03f2e24a23311e3bdeb2368973fe77e5f275c",
+    "model.safetensors": "79d6cbd4c98c7bbffe9db2edac07f56cd6637d0d5944b27f6c2b8353840323ea",
+    "preprocessor_config.json": "45e120a4eda2c20c5d7f2ea9354e63536bf35e27aa573fb7cdf78017b378770d",
+    "tokenizer_config.json": "4942d005604266809309cabc9f4e9cb89ce855d59b14681fdc0e1cc62ea26c4c",
+    "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+  },
+  "code": {
+    "experiments/selection_teachers.py": "1166cf3444d1c6a5441a9d5b87a740da0f408b57d15c5c429809068c73a9c797",
+    "vapasr/data/__init__.py": "5e23d3afccbc06c7725dac1535b8efb84005b1aa80503539e4c6151d0a1aa023",
+    "vapasr/data/aihub.py": "5d98e909f1b4d1090b10a2fa67cf81ca823c86be968e6a19fbe616d98b799a65",
+    "vapasr/data/archive.py": "541e4cc13e1dd0d4b726199debee831d230cb1b89871dd2fb66d34357cb1fefe",
+    "vapasr/data/baseline_eval.py": "13e258098e4775cf2ca395fc95556abf3e1bdb46c71dd8cb2926f1cf8791bada",
+    "vapasr/data/conversation.py": "c492c1df5fd9f5f0b58e8c09c62385366623c1051d93bca70b1c4a3a3b53a1c3",
+    "vapasr/data/corpora.py": "820f082f609b499fd0ed0e6272da15fc15bb1c1a4209853fac8f19093a725e80",
+    "vapasr/data/dataset.py": "ac5634f04cf433b28c39634c8bba500478b360cb53c74a52dba2dbb2e951c5fc",
+    "vapasr/data/dialogue.py": "1cb6a29c4225e76f27f2dce25dd742a0e2d3069e1650fd9b4f71a402c31e2105",
+    "vapasr/data/dialogue_corpora.py": "ed07afa31365ef0361d71c709c47e2960c122caaa10dd5b30b1cbb66357b4229",
+    "vapasr/data/dialogue_dataset.py": "37bdd766063744c3f46a866333ca592ba113b6db2ff4c0310003b24b1a432a68",
+    "vapasr/data/dialogue_interleave.py": "6abb18d839b4ce14f4d692087265dbd8e08b18d643c6a5ad07f242d081f77287",
+    "vapasr/data/dialogue_mix.py": "e7397ff15c0e1f56bafb351138d2302a5f05e88356247052f0d91908a10a9738",
+    "vapasr/data/dialogue_refine.py": "043ca9e4b3c0a3c876cf419bd940f4bf11b83b61b6471d1ccd0ccba0ebfd2f51",
+    "vapasr/data/dialogue_stitch.py": "e7b9323efcb84d223663b4dd4a8e0661fc5344a5b309e10622aeeecff409816e",
+    "vapasr/data/dialogue_tokens.py": "a68de4df2b7f3ec2047c38a65225d0693be29316501cc015c0bd77e2900423f9",
+    "vapasr/data/eot_soft.py": "85432aadc0c08939def2b3ad2284de324d4489d46a449f2d52014557e950e1f6",
+    "vapasr/data/interleave.py": "358c85b74b5a3369c5ef3b0582fbe14a8b9a4419fa07a3c532d744351a7cc05a",
+    "vapasr/data/kspon.py": "057dc54fefafffb29ff0734e3b01135c512e16d02c428b88f200db211073f1ec",
+    "vapasr/data/lane_alloc.py": "d1d82c7209aa74afa3c700e1efb0d5b0eb01e76a2cfdad12407a8f4c5cd8d346",
+    "vapasr/data/nikl.py": "f8ba53e6eb03d4736d3b5722a6850f88119e50e5db6c36ea3faf28ac5083ca7d",
+    "vapasr/data/schema.py": "dfc116f331280f4816c45b92bf8ca11c45b8756f6e81a1f1d444f360149fb4f5",
+    "vapasr/data/selection.py": "5f6711e8fabe2ef6edf4328c32fbc9ed3e72afe2891c974f219afa69052d3fc8",
+    "vapasr/data/selection_audio.py": "6b6a5b45454cd0e4429f9956528b68147c8bdb965acfd1fdde06050714d640ad",
+    "vapasr/data/streams.py": "e90d06c5702f649e3f10323acf982698dd5f1d44ad80da8a2223c87274cc8a6e",
+    "vapasr/data/targets.py": "33efeadf4c590d590475927e51a74801885dbd66bb35547553ae73936bd0147f",
+    "vapasr/data/textnorm.py": "d981a9df1187778a5f9531cbb6794012d5988ecb6673fae0e67203993c77b1d5",
+    "vapasr/data/vad.py": "b53a162aa87df66838d651c9f9fb3137257ade991db0d3a1d8dad27d7e4e73a4",
+    "vapasr/data/voxpopuli.py": "8857daa724e937b634172267ea2fa40222d5d08b95e0f05e5f25a1d65634b62b",
+    "vapasr/data/yodas.py": "17412c21a78acac2294febeb1c66adf5b475d51293af48ba266020a54c87fc9b"
+  },
+  "tn": {
+    "textnorm_version": "asr-tn-v1.3.0",
+    "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+    "numeric_backend_version": "num2words 0.5.14"
+  },
+  "packages": {
+    "torch": "2.9.0",
+    "transformers": "4.57.6",
+    "qwen-asr": "0.0.6",
+    "num2words": "0.5.14",
+    "soundfile": "0.14.0"
+  },
+  "decoding": {
+    "batch": 128,
+    "qwen_max_new_tokens": 448,
+    "whisper_max_length": 448,
+    "whisper_condition_on_prev_tokens": false,
+    "timestamps": "whisper_long_only",
+    "language": "manifest",
+    "task": "transcribe",
+    "prompt": null
+  }
+}

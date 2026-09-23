@@ -1,0 +1,23 @@
+{
+  "scope": "stratified pilot only, not population pass rate",
+  "training_eligible": 0,
+  "input_sha256": "b169a726238df2e13f77597cc64c674aa1c8c1f1bf9621981fa6d56d73c249c1",
+  "implementation_sha256": "2dc4a9587fc1bbf495d7e60ecddce23a752e4db02ee55f042ce772b29841428d",
+  "source_holds": {},
+  "sources": {
+    "nikl-1000": {
+      "AGREEMENT_CANDIDATE": 247,
+      "REVIEW": 345,
+      "CORRECTION_REVIEW": 32,
+      "QUARANTINE": 1
+    }
+  },
+  "reasons": {
+    "nikl-1000": {
+      "dual_teacher_agrees_not_gold": 247,
+      "teacher_disagreement": 345,
+      "teachers_agree_against_reference_no_relabel": 32,
+      "human_text_review_hold": 1
+    }
+  }
+}

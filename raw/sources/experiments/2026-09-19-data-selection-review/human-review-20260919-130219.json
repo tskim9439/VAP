@@ -1,0 +1,182 @@
+{
+  "reviewed_at": "2026-09-19T04:02:19.073Z",
+  "training_eligible": false,
+  "rows": [
+    {
+      "key": "ad0e170b1f67d80861568cd26c6330ebf8d1664e1949ae8fa4431fedca8847b6",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "966744d42c8f334241650bd7bb92e2edf12290875bb76a1a7044d269ee0e8cea",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "bb587cbda9e0a7aaed91bf253d2791b2b3eea16c47fe73a1163a15273939dc0b",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "2e5f3a5776f8ca83b14622ba20e57ddf2e802f8effb4b2f13118f5cbab20c524",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "fail",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "현재 타깃이 발음열 적으로는 정확하지만 의미론 적으로는 qwen 결과과 알맞음"
+    },
+    {
+      "key": "6858ab7a3f0c69818b1a172c333648f5018c2aa0b95983590ddc4511659b5881",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "\n현재 타깃이 맞고 qwen 이 틀림"
+    },
+    {
+      "key": "442aaba9dadbe9f216d1ac3c2e541ca69a3ceaaab2c047b394af9ad93082ec64",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": "현재 타깃이 옮음"
+    },
+    {
+      "key": "6fac2c12b634a55613a44880775f39f1709455869fc960dacb868179fc07e28c",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "uncertain"
+      },
+      "note": ""
+    },
+    {
+      "key": "cc4950e4454897b5f58136e90ff3d8c54ce74490d743f2e8df5d3bbea4cc9d77",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "f06eb5099e6deb9aec0e244c06aca70fcb79d8d2881d6eea443b1ab4659e71a2",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "9cde11531bf9705ad388ddb05c9d48bf4bce09c462154d5ef50590ac9517cee2",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "uncertain"
+      },
+      "note": ""
+    },
+    {
+      "key": "b7746976cd7abf09bfcc777ad9c9dbd05a0001abb22335829f3389851d875e80",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "pass"
+      },
+      "note": "발음 상 현재 타깃이 맞지만 문법상 Qwen 이 옮음"
+    },
+    {
+      "key": "50c76aba8bb1b8d508ea87bb2d10f9514a48e9d46dfd8f5eca8c21e6a5919910",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "pass"
+      },
+      "note": ""
+    },
+    {
+      "key": "9510a736e0971e7e034d2c0924e552da23cc7c5e24f6193707e4022c9b5cdc56",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "unreviewed"
+      },
+      "note": ""
+    },
+    {
+      "key": "339f2489f0c5d6a14f43ef961c3c564b6948a84541f63d9cc645f198c4cea972",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "pass"
+      },
+      "note": ""
+    },
+    {
+      "key": "2b459d909dba727d9a99b01527ce96ffc283e0191248a5961e8c5e233d97c639",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "pass"
+      },
+      "note": "현재 타깃이 옳음"
+    },
+    {
+      "key": "45600674ab6f1b659733be6fee2ffacfac68fc32130fa106d3f4ed17ddef6088",
+      "source": "nikl-1000",
+      "labels": {
+        "text": "pass",
+        "timing": "pass",
+        "speaker": "pass",
+        "turn": "pass"
+      },
+      "note": ""
+    }
+  ]
+}

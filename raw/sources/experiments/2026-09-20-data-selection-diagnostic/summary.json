@@ -1,0 +1,133 @@
+{
+  "complete": true,
+  "cards": 8,
+  "assets": [
+    {
+      "path": "audio/broadcast-original.wav",
+      "label": "기존 원음 그대로",
+      "duration_s": 0.293,
+      "rms": 0.04885615514912138,
+      "peak": 0.18709003925323486,
+      "waveform_sha256": "51a768b05313472daca190287b9152093fc24648f9b018731e5798073a703b8e"
+    },
+    {
+      "path": "audio/ami-original.wav",
+      "label": "기존 crop 원음",
+      "duration_s": 0.732,
+      "rms": 0.0033307996012099553,
+      "peak": 0.02215576171875,
+      "waveform_sha256": "691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29"
+    },
+    {
+      "path": "audio/ami-gain.wav",
+      "label": "진단용 증폭 crop",
+      "duration_s": 0.732,
+      "rms": 0.013260152067200257,
+      "peak": 0.08820367604494095,
+      "waveform_sha256": "45677b34be059d0787a6452678e252ff058627f7de6d68bbeb65b04e0bfb8050",
+      "gain_db": 12.0
+    },
+    {
+      "path": "audio/ami-context-A.wav",
+      "label": "앞뒤 2초 문맥: agent A, Headset-0",
+      "duration_s": 4.732,
+      "rms": 0.0013280553948158017,
+      "peak": 0.02215576171875,
+      "waveform_sha256": "dcf8105b16a74292871ac569cbcb3a09e05032fd9f6bce072f2d15b84db4d853",
+      "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-0.wav",
+      "source_start_s": 232.102,
+      "focus_start_s": 2.0,
+      "focus_end_s": 2.7319999999999993
+    },
+    {
+      "path": "audio/ami-context-B.wav",
+      "label": "앞뒤 2초 문맥: agent B, Headset-1",
+      "duration_s": 4.732,
+      "rms": 0.00043770730711206583,
+      "peak": 0.003021240234375,
+      "waveform_sha256": "8c1369d5dddace159e7cadd253feb1abc682c6805321e00b05c32a75e305143f",
+      "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-1.wav",
+      "source_start_s": 232.102,
+      "focus_start_s": 2.0,
+      "focus_end_s": 2.7319999999999993
+    },
+    {
+      "path": "audio/ami-context-C.wav",
+      "label": "앞뒤 2초 문맥: agent C, Headset-2",
+      "duration_s": 4.732,
+      "rms": 0.00420671931409371,
+      "peak": 0.0587158203125,
+      "waveform_sha256": "b6669c020af72bed6880708e16d334b95dca550cb7caddb71dbd24de43320a79",
+      "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-2.wav",
+      "source_start_s": 232.102,
+      "focus_start_s": 2.0,
+      "focus_end_s": 2.7319999999999993
+    },
+    {
+      "path": "audio/ami-context-D.wav",
+      "label": "앞뒤 2초 문맥: agent D, Headset-3",
+      "duration_s": 4.732,
+      "rms": 0.0059093600338947965,
+      "peak": 0.067657470703125,
+      "waveform_sha256": "6db5dc70be98c44bb3cd15c0372e4829844458cf718762552dde765d48263123",
+      "source_path": "/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-3.wav",
+      "source_start_s": 232.102,
+      "focus_start_s": 2.0,
+      "focus_end_s": 2.7319999999999993
+    },
+    {
+      "path": "audio/vox-1b83be4a89e1.wav",
+      "label": "배포 crop 원음",
+      "duration_s": 0.759875,
+      "rms": 0.044036729707128144,
+      "peak": 0.2186279296875,
+      "waveform_sha256": "ecb450380490e7862e9ee6d68b6c7f070c76b30b7b4e7912241b1f3e30b27d63"
+    },
+    {
+      "path": "audio/vox-d26cb370b1c8.wav",
+      "label": "배포 crop 원음",
+      "duration_s": 1.4599375,
+      "rms": 0.054394350765776874,
+      "peak": 0.272308349609375,
+      "waveform_sha256": "74059d49f8c96700194b48080d88205bbf0b937596817ffc178b732f6ef2a28f"
+    },
+    {
+      "path": "audio/vox-695033488713.wav",
+      "label": "배포 crop 원음",
+      "duration_s": 1.7798125,
+      "rms": 0.013551651550510965,
+      "peak": 0.190155029296875,
+      "waveform_sha256": "f9b12ee46e397d96bc1517f3ac8f5f99d91647b9de91dcc8b65d710e067cd676"
+    },
+    {
+      "path": "audio/vox-fb7bec2b278a.wav",
+      "label": "배포 crop 원음",
+      "duration_s": 9.93925,
+      "rms": 0.03913611990074412,
+      "peak": 0.436859130859375,
+      "waveform_sha256": "03eae6acc96ac4d7a8d9253015ee6b6a982b17a266179c5610ec48904454cfce"
+    },
+    {
+      "path": "audio/vox-bf069539ab74.wav",
+      "label": "배포 crop 원음",
+      "duration_s": 16.378875,
+      "rms": 0.07100993204651584,
+      "peak": 0.586151123046875,
+      "waveform_sha256": "bbf33a6518c533d541a16251865619aaa67f57d531d14d60dc82e042da6b19b5"
+    },
+    {
+      "path": "audio/vox-69440214fe8b.wav",
+      "label": "배포 crop 원음",
+      "duration_s": 28.656625,
+      "rms": 0.06907392173860054,
+      "peak": 0.742645263671875,
+      "waveform_sha256": "6154872565405e84cd997c1c6d29152a77887aa61058b5c59860a0cf6bfc6157"
+    }
+  ],
+  "training_eligible": 0,
+  "human_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+  "review_manifest_sha256": "8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35",
+  "script_sha256": "1ad308bd938de627d857f7e3aa7ad3d70bf270f8665d824a29843d42b390cecc",
+  "gpu_used": 0,
+  "overlay_sha256": "d5b5f52006abf6b2deba35a8769b1ca4e0f939631500e256e49b46755225a4ee"
+}

@@ -1,0 +1,27 @@
+{
+  "complete": true,
+  "counts": {
+    "VAD_CONCAT_MATCH": 177422
+  },
+  "frame_difference": {
+    "0": 177422
+  },
+  "segment_count": {
+    "1": 176368,
+    "2": 847,
+    "3": 163,
+    "4": 27,
+    "6": 3,
+    "5": 9,
+    "8": 2,
+    "7": 1,
+    "9": 2
+  },
+  "annotations_sha256": "0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42",
+  "candidates_sha256": "bbcc0123c1b03e7652ef7ee18a10e7b70090635525f29e632e607cd2d8e36d6c",
+  "qc_sha256": "d30079d9d04f15c3e7ad2083f891cdf42a175609aeb9ea207e93e28085a3e84f",
+  "script_sha256": "3b75893c0a5c19ae29e30e4998b477c66965f634af645dadf9c175f06f2b827a",
+  "official_code": "https://github.com/facebookresearch/voxpopuli/blob/main/voxpopuli/get_asr_data.py",
+  "training_eligible": 0,
+  "applied_changes": 0
+}

@@ -1,0 +1,286 @@
+{
+  "complete": true,
+  "mode": "automatic_smoke",
+  "per_source": 128,
+  "policy": {
+    "version": "asr-auto-select-v1",
+    "max_duration_s": 30.0,
+    "low_rms": 0.005,
+    "max_error": 0.05,
+    "short_units": 4,
+    "auto_relabel": false,
+    "audit_budget": 40,
+    "phase2_turn_approval": false
+  },
+  "census_sha256": "7c3c8facd092e010be292c69bf2047e1feb1d9a5ab42d04a7f4825dff369034b",
+  "human_review_sha256": "d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac",
+  "repair_evidence_sha256": "e2a1557985a53636feb970e50bd47c552fbf927bb12ef9493c870966fe1a0dd9",
+  "channel_sha256": "4f3305d6774e268ab7db51f2da26c760597a0e6c04d7aa49b2488c93049e391c",
+  "prepare_code_sha256": "88d8130a3a7d4ba65ef0626cf7cf79fe7c7b54b8b9ed7a650dadc156413b3ba3",
+  "policy_code_sha256": "1a311848f01c12b5c911ffa17e5121705081b0e1f02dc8f97596be737f070d0a",
+  "sources": {
+    "librispeech-960": {
+      "counts": {
+        "READY_TEACHERS": 281240,
+        "HOLD_AUDIO": 1
+      },
+      "audio_h": {
+        "READY_TEACHERS": 961.0528484027662,
+        "HOLD_AUDIO": 0.00155
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "5d6c883d46985e30e5250c27905e9790a083de7a47deb8c9f228d525ad3c90fd",
+      "qc_sha256": "11a6f68735a4468a4dbdc742fb5adbfa97011e6e808f80e574f4fb1bdab8494c"
+    },
+    "kspon-full": {
+      "counts": {
+        "READY_TEACHERS": 614015,
+        "HOLD_LOW_LEVEL": 5422,
+        "HOLD_LONG": 495
+      },
+      "audio_h": {
+        "READY_TEACHERS": 957.2673043055551,
+        "HOLD_LOW_LEVEL": 3.480936006944436,
+        "HOLD_LONG": 4.192806666666665
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "c0f59cc4bf3482a5996e8e2870a3181bcda30b15e341f1abe8c35296a81fdeeb",
+      "qc_sha256": "594294c45744bc3d456bd862edcbcc51252b653adc2e2a7bb16da42e2ee0e964"
+    },
+    "swbd-train": {
+      "counts": {
+        "READY_TEACHERS": 163511,
+        "HOLD_LOW_LEVEL": 15916
+      },
+      "audio_h": {
+        "READY_TEACHERS": 217.59114343749616,
+        "HOLD_LOW_LEVEL": 7.616232604166691
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "d489091dc0f5d346a99730792ea02d705cc4b9404a82017b761ef4721a8e5646",
+      "qc_sha256": "280432d6ceb4a337094724efad2fd80962717d93f2a273edc4d93d24aae9bddb"
+    },
+    "mnsc-1000": {
+      "state": "HOLD_SOURCE",
+      "note": "existing_source_integrity_hold"
+    },
+    "nikl-1000": {
+      "counts": {
+        "READY_TEACHERS": 818901,
+        "HOLD_LOW_LEVEL": 10786,
+        "HOLD_AUDIO": 418631,
+        "EXCLUDE_ASR_PAIR": 858,
+        "HOLD_HUMAN": 9,
+        "HOLD_TECHNICAL": 285,
+        "HOLD_METADATA": 1
+      },
+      "audio_h": {
+        "READY_TEACHERS": 590.707540434063,
+        "HOLD_LOW_LEVEL": 5.156889322916653,
+        "HOLD_AUDIO": 451.6420159027762,
+        "EXCLUDE_ASR_PAIR": 0.0,
+        "HOLD_HUMAN": 0.017534184027777778,
+        "HOLD_TECHNICAL": 0.0,
+        "HOLD_METADATA": 0.00195
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "9754ab16ff68a48cd7a2dde0206d74e47578186016fe2d35a56cd0a323c9679f",
+      "qc_sha256": "e5421dd333a36032874411dfc099ba3962653f13a568b6ce74c00bc9d29dba0a"
+    },
+    "voxpopuli-train": {
+      "counts": {
+        "READY_TEACHERS": 176054,
+        "HOLD_LONG": 1344,
+        "HOLD_LOW_LEVEL": 18,
+        "HOLD_HUMAN": 6
+      },
+      "audio_h": {
+        "READY_TEACHERS": 494.0222368055562,
+        "HOLD_LONG": 13.178024965277755,
+        "HOLD_LOW_LEVEL": 0.017605520833333336,
+        "HOLD_HUMAN": 0.016381770833333333
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "bbcc0123c1b03e7652ef7ee18a10e7b70090635525f29e632e607cd2d8e36d6c",
+      "qc_sha256": "d30079d9d04f15c3e7ad2083f891cdf42a175609aeb9ea207e93e28085a3e84f"
+    },
+    "yodas-en129": {
+      "counts": {
+        "READY_TEACHERS": 124816,
+        "HOLD_LONG": 8523,
+        "HOLD_LOW_LEVEL": 452,
+        "HOLD_AUDIO": 62
+      },
+      "audio_h": {
+        "READY_TEACHERS": 246.59682616318202,
+        "HOLD_LONG": 86.50404958333361,
+        "HOLD_LOW_LEVEL": 0.5504221874999996,
+        "HOLD_AUDIO": 0.11752269097222222
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "e4adc43d4c2c5df465af743d4a3df46bcea73fe089fff51fbc79abdfc8de78e5",
+      "qc_sha256": "59b2d7c51c72bce2dc4cd046fc8538ba1988c0d64435dd7c2fe478dddd15c852"
+    },
+    "aihub-bc-train": {
+      "counts": {
+        "READY_TEACHERS": 445711,
+        "HOLD_LOW_LEVEL": 194,
+        "HOLD_LONG": 21,
+        "HOLD_CHANNEL": 2937,
+        "HOLD_HUMAN": 4
+      },
+      "audio_h": {
+        "READY_TEACHERS": 563.096420277789,
+        "HOLD_LOW_LEVEL": 0.12428527777777779,
+        "HOLD_LONG": 0.2376583333333333,
+        "HOLD_CHANNEL": 2.3196766666666657,
+        "HOLD_HUMAN": 0.0028452777777777777
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "188bda65e478d452e1034a44b7bc851ea9ce12765ab8231ea86eca8a829faa71",
+      "qc_sha256": "dcd88fe665f030527a8040f883118d947e24b1494807cb0494bb6d93eb077737"
+    },
+    "aihub71631": {
+      "counts": {
+        "READY_TEACHERS": 209287,
+        "HOLD_LOW_LEVEL": 7430,
+        "EXCLUDE_ASR_PAIR": 202,
+        "HOLD_AUDIO": 26,
+        "HOLD_TECHNICAL": 7,
+        "HOLD_LONG": 2
+      },
+      "audio_h": {
+        "READY_TEACHERS": 145.2464550000008,
+        "HOLD_LOW_LEVEL": 3.4959416666666336,
+        "EXCLUDE_ASR_PAIR": 0.0,
+        "HOLD_AUDIO": 0.028338888888888896,
+        "HOLD_TECHNICAL": 0.0,
+        "HOLD_LONG": 0.01810833333333333
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "490efb94d7ad3efc4470217d43469367352efc899b804af7eb3d608bb20e3e4f",
+      "qc_sha256": "6cc2a108d61e30685902d07efc167113bcee824b559c6bda3bd82da342a34c60"
+    },
+    "aihub134-1": {
+      "counts": {
+        "READY_TEACHERS": 334830,
+        "HOLD_LOW_LEVEL": 2681,
+        "HOLD_AUDIO": 324,
+        "HOLD_LONG": 2
+      },
+      "audio_h": {
+        "READY_TEACHERS": 240.86520211805947,
+        "HOLD_LOW_LEVEL": 0.8315639062500044,
+        "HOLD_AUDIO": 0.3658916319444443,
+        "HOLD_LONG": 0.016738888888888886
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "1841eaa264e8fdab022a0af118e201890fc26bbeaf1bde89438cf0ed46c79636",
+      "qc_sha256": "df639fbdf72542c4b7dad06ca1c47edd31fce75be1df2388d82ce82f757a7b8e"
+    },
+    "aihub134-2": {
+      "counts": {
+        "READY_TEACHERS": 354175,
+        "HOLD_LOW_LEVEL": 5316,
+        "HOLD_AUDIO": 296,
+        "HOLD_LONG": 5
+      },
+      "audio_h": {
+        "READY_TEACHERS": 173.81151979166316,
+        "HOLD_LOW_LEVEL": 1.1623500868055607,
+        "HOLD_AUDIO": 0.1657222222222222,
+        "HOLD_LONG": 0.048358333333333337
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "288b78239d0259b0565869f4b85a5516dd6cf1756e2e09bf8a69f440720be6b7",
+      "qc_sha256": "0e585058169451cda0a26924a17d79b532d22f0daa663a5ccc8ce521eaf4b4bc"
+    },
+    "otoSpeech": {
+      "counts": {
+        "READY_TEACHERS": 76700,
+        "HOLD_AUDIO": 1353,
+        "HOLD_LONG": 142,
+        "HOLD_LOW_LEVEL": 116,
+        "HOLD_TECHNICAL": 2
+      },
+      "audio_h": {
+        "READY_TEACHERS": 60.52321527778139,
+        "HOLD_AUDIO": 0.8125252777777761,
+        "HOLD_LONG": 1.7833008333333324,
+        "HOLD_LOW_LEVEL": 0.026095277777777776,
+        "HOLD_TECHNICAL": 0.0
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "d79b8bf408b6b888353b54160a60b42850945a1eba9b7fb97c164d36cfd1a20d",
+      "qc_sha256": "4c6e1aa7930c39e932b2d01d26e7f12bf68aabbf23f58ee8c931ba1ed7ca737c"
+    },
+    "ami": {
+      "counts": {
+        "HOLD_LOW_LEVEL": 12504,
+        "READY_TEACHERS": 60374,
+        "HOLD_LONG": 1092,
+        "HOLD_AUDIO": 172,
+        "HOLD_HUMAN": 2
+      },
+      "audio_h": {
+        "HOLD_LOW_LEVEL": 6.9104094444444275,
+        "READY_TEACHERS": 69.76211463541655,
+        "HOLD_LONG": 12.131756944444442,
+        "HOLD_AUDIO": 0.2627205555555555,
+        "HOLD_HUMAN": 0.008438888888888888
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "d2c0987e270ec972d8fab21a93453c3d5af69e007b00f2f41c6118ce790d4753",
+      "qc_sha256": "26133fb2626aeb541e01fb6728d75819ffdbd4d7fcc7afb12fef7c811106fcd1"
+    },
+    "notsofar": {
+      "counts": {
+        "READY_TEACHERS": 16634,
+        "HOLD_LOW_LEVEL": 554,
+        "HOLD_AUDIO": 5
+      },
+      "audio_h": {
+        "READY_TEACHERS": 9.364640277777823,
+        "HOLD_LOW_LEVEL": 0.08890194444444448,
+        "HOLD_AUDIO": 0.004480555555555555
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "6a4e2d09dcc413048df370090f45446acd755b56859593b9cf2b833ba949efb1",
+      "qc_sha256": "9b308ba1427f19527fece95d370925ccf1de24a2ec947fb71092a9548809e756"
+    },
+    "icsi": {
+      "counts": {
+        "READY_TEACHERS": 81557,
+        "HOLD_LOW_LEVEL": 8728,
+        "HOLD_TECHNICAL": 11,
+        "HOLD_LONG": 7
+      },
+      "audio_h": {
+        "READY_TEACHERS": 53.408207777777996,
+        "HOLD_LOW_LEVEL": 3.1364883333333458,
+        "HOLD_TECHNICAL": 0.0,
+        "HOLD_LONG": 0.09598361111111112
+      },
+      "selected_smoke": 128,
+      "candidates_sha256": "2a784473b396f0834200fdc947a06b0657c009332617e9e4963287403322f809",
+      "qc_sha256": "c7813e1287bd120a396349a136c38c922aad873c840059041340660caacb597a"
+    }
+  },
+  "shards": [
+    {
+      "path": "inputs/part-00000.jsonl",
+      "rows": 896,
+      "sha256": "ddc6e49e5f67e836b54237db5aeb8015b6a07d359732d07fb954b709c34c12f7",
+      "audio_h": 1.201690659722223
+    },
+    {
+      "path": "inputs/part-00001.jsonl",
+      "rows": 896,
+      "sha256": "f8ca2d500d8c29790b9acd7df42f7cd00b79f71d630d60cff2cb730dcab2d5ea",
+      "audio_h": 1.0638713715277783
+    }
+  ],
+  "training_eligible": 0,
+  "selected_rows": 1792,
+  "preflight_sha256": "c6436dcafee9d3af6048df024d5fbe6de7e83ae49a9aee240688fd3fe3074474"
+}

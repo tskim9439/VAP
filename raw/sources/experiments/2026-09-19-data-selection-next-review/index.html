@@ -1,0 +1,917 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>데이터 선별 청취 검수</title>
+<style>body{max-width:1100px;margin:30px auto;padding:0 16px;font-family:system-ui;background:#f5f6f8;color:#16202b}article{background:white;padding:20px;margin:20px 0;border:1px solid #cbd5e1;border-radius:10px}audio{width:100%}textarea{display:block;width:95%;margin-top:15px;height:60px}pre{white-space:pre-wrap;word-break:break-all}header{position:sticky;top:0;background:#f5f6f8;padding:12px 0;border-bottom:1px solid #bbb}button,input,select{padding:8px}h2{font-size:17px}</style>
+<h1>데이터 선별: 청취 검수</h1><p>층화 표본이며 DB 통과율 추정용이 아닙니다. 교사 합의 ≠ 정답. 경계 에너지 ≠ VAD. 독립 crop만으로 의미론적 EOT를 승인하지 마세요. 원문·학습 타깃은 바뀌지 않습니다.</p>
+<section style="background:#fff4d6;padding:16px"><h2>이번 검수: 미해결 사례 32개</h2>
+<p>NIKL 2024/25 각 8개: 전사가 실제 발음과 맞는지, 첫·끝 음절이 잘렸는지 확인합니다.
+0.4초 길이 차이는 알려져 있지만, 청취만으로 앞뒤 padding이나 원대화 기준점을 확정하지 않습니다.</p>
+<p>VoxPopuli 8개: VAD 연결 파일입니다. 전사 누락·잘림을 확인하되 원래 휴지·턴이 보존됐다고 판단하지 않습니다.</p>
+<p>방송 6개·AMI 2개: 두 채널을 듣고 내용·화자가 같은지, 어느 채널이 더 명료한지 메모해 주세요.
+채널 차이가 화자 분리라는 뜻은 아닙니다.</p>
+<p><b>전사 / 경계·잘림 / 채널·화자만 평가</b>하고 턴 근거는 미검수로 두세요.
+말을 자연스럽게 고친 교사 문장보다 실제 들리는 발음·반복을 우선합니다.
+새로고침 전 검수 JSON을 내려받아 주세요. 이 표본은 전체 DB 승인이나 품질 비율 추정용이 아닙니다.</p></section><header>검색 <input id="search" placeholder="DB·문장·경고 유형"><button onclick="download()">검수 JSON 내려받기</button><span id="count"></span><p>입력은 새로고침하면 사라집니다. 종료 전에 JSON을 내려받아 주세요.</p></header>
+<article data-key="07ee14c844deacb220e1c112f34aabff2f0357d55f2a9e76689711007b699e64" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2400001610.1.1.223</h2>
+<p>2024 | AUDIO_REVIEW | label_audio_duration_mismatch | short · 주석 길이 0.541s / 원음 0.9410625s</p>
+<p><b>원문:</b> 무서웠지.</p><p><b>현재 타깃:</b> 무서웠지</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/07ee14c844deacb220e1c112f34aabff2f0357d55f2a9e76689711007b699e64.wav"></audio></div><p><b>Qwen</b>: 서치</p><p><b>Whisper-v2</b>:  소치</p><p><b>Whisper-v3</b>:  서치.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;66f49aae8af83da5e0b200c772265537a9dae16a3964f939459c029995df85f4&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 0.9410625,
+    &quot;duration_s&quot;: 0.9410625,
+    &quot;rms&quot;: 0.01544114420323612,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2024_PCM_v1.0/NIKL_DIALOGUE_2024_PCM_v1.0/SDRW2400001610/SDRW2400001610.1.1.223.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="9a560197f8d34ca582731619474261ba8c2010b4d6a908a021f15b309277f4b2" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2400000892.1.1.47</h2>
+<p>2024 | AUDIO_REVIEW | label_audio_duration_mismatch | short · 주석 길이 1.648s / 원음 2.048375s</p>
+<p><b>원문:</b> 마음이 많이 안 좋더라구.</p><p><b>현재 타깃:</b> 마음이 많이 안 좋더라구</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/9a560197f8d34ca582731619474261ba8c2010b4d6a908a021f15b309277f4b2.wav"></audio></div><p><b>Qwen</b>: 마음이 많이 안 좋더라고.</p><p><b>Whisper-v2</b>:  마음이 많이 안 좋더라고</p><p><b>Whisper-v3</b>:  마음이 많이 안 좋더라고.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;0b1e581297ddab78fd0db3987401af0976c332acb4a8489f3dd6173a3856cea6&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 2.048375,
+    &quot;duration_s&quot;: 2.048375,
+    &quot;rms&quot;: 0.028110186196439967,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2024_PCM_v1.0/NIKL_DIALOGUE_2024_PCM_v1.0/SDRW2400000892/SDRW2400000892.1.1.47.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="f375dbf09b831db572281e9277617af5b69a90a6935cc1e12bd6f16c8bb6cb4a" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2400002454.1.1.105</h2>
+<p>2024 | AUDIO_REVIEW | label_audio_duration_mismatch | regular · 주석 길이 3.589s / 원음 3.9895s</p>
+<p><b>원문:</b> 대학을 -갈- 가야 되나 뭐~ 안 못 가나 했는데</p><p><b>현재 타깃:</b> 대학을 갈 가야 되나 뭐 안 못 가나 했는데</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/f375dbf09b831db572281e9277617af5b69a90a6935cc1e12bd6f16c8bb6cb4a.wav"></audio></div><p><b>Qwen</b>: 대학을 갈 가야 되나? 안 못 가나 했는데.</p><p><b>Whisper-v2</b>:  대학을 가야 되나? 안 못 가나? 했는데</p><p><b>Whisper-v3</b>:  대학을 갈 가야 되나 못 가나 했는데</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;d22c2769950dbc22c54ab50267cae2bcb0dbfd34da87191436b3496b8a581b8c&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 3.9895,
+    &quot;duration_s&quot;: 3.9895,
+    &quot;rms&quot;: 0.01920403296384681,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2024_PCM_v1.0/NIKL_DIALOGUE_2024_PCM_v1.0/SDRW2400002454/SDRW2400002454.1.1.105.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="15091dfb715e97e149b3c20233894f9170e10d623d781e6af5c5a6fd8da005c2" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2400002059.1.1.122</h2>
+<p>2024 | AUDIO_REVIEW | label_audio_duration_mismatch | regular · 주석 길이 5.071s / 원음 5.470625s</p>
+<p><b>원문:</b> 그때 어~ 스트레쓰를 받기보다는 그 자체를 쫌 즐기니까</p><p><b>현재 타깃:</b> 그때 어 스트레쓰를 받기보다는 그 자체를 쫌 즐기니까</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/15091dfb715e97e149b3c20233894f9170e10d623d781e6af5c5a6fd8da005c2.wav"></audio></div><p><b>Qwen</b>: 그때 스트레스를 받기보다는 그 자체를 좀 즐기니까.</p><p><b>Whisper-v2</b>:  그때 스트레스를 받기보다는 그 자체를 좀 즐기니까</p><p><b>Whisper-v3</b>:  그때 스트레스를 받기보다는 그 자체를 좀 즐기니까</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;95ff20e0d6a671a6bb22d15dbb6f6790647eeb6a50ae4f947e7ea268ede21b6a&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 5.470625,
+    &quot;duration_s&quot;: 5.470625,
+    &quot;rms&quot;: 0.03225300742688573,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2024_PCM_v1.0/NIKL_DIALOGUE_2024_PCM_v1.0/SDRW2400002059/SDRW2400002059.1.1.122.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="026eebeb8570ff10c9aa32e490f0dcc8e1958d0eeb263f96683209379f60ff38" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2400001734.1.1.233</h2>
+<p>2024 | AUDIO_OK_TEXT_PENDING | none | regular · 주석 길이 9.050s / 원음 9.4501875s</p>
+<p><b>원문:</b> 제가 인도네시아 갔을 때 그~ 아들과 딸이 아빠 오면 아빠 오면 새우튀김이 그렇게 먹고 싶다고.</p><p><b>현재 타깃:</b> 제가 인도네시아 갔을 때 그 아들과 딸이 아빠 오면 아빠 오면 새우튀김이 그렇게 먹고 싶다고</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/026eebeb8570ff10c9aa32e490f0dcc8e1958d0eeb263f96683209379f60ff38.wav"></audio></div><p><b>Qwen</b>: 제가 인도네시아 갔을 때 그 아들과 딸이 아빠 오면 아빠 오면 새우튀김이 그렇게 먹고 싶다고.</p><p><b>Whisper-v2</b>:  제가 인도네시아 갔을 때 아들과 딸이 아빠 오면 새우튀김이 그렇게 먹고 싶다고</p><p><b>Whisper-v3</b>:  제가 인도네시아 갔을 때 아들과 딸이 아빠 오면 새우튀김이 그렇게 먹고 싶다고</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;de4f1550e432027d2911dfcbec331f8ce8a4a7473ff144018c9504eacb392c69&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 9.4501875,
+    &quot;duration_s&quot;: 9.4501875,
+    &quot;rms&quot;: 0.017336231688926538,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: []
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2024_PCM_v1.0/NIKL_DIALOGUE_2024_PCM_v1.0/SDRW2400001734/SDRW2400001734.1.1.233.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="73b97a0ca526e317f51adf23c8bf41b153e4ad2b052943c15b00f28e6cd3d40c" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2400001166.1.1.87</h2>
+<p>2024 | AUDIO_OK_TEXT_PENDING | none | regular · 주석 길이 9.441s / 원음 9.841s</p>
+<p><b>원문:</b> 맞아 나는 진짜 자가 격리하는 동안 막 하나도 안 아팠단 사람도 있고 엄청 아팠단 사람도 있다길래</p><p><b>현재 타깃:</b> 맞아 나는 진짜 자가 격리하는 동안 막 하나도 안 아팠단 사람도 있고 엄청 아팠단 사람도 있다길래</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/73b97a0ca526e317f51adf23c8bf41b153e4ad2b052943c15b00f28e6cd3d40c.wav"></audio></div><p><b>Qwen</b>: 맞아 나는 진짜 자가격리하는 동안 막 하나도 안 아팠던 사람도 있고 엄청 아팠던 사람도 있다길래.</p><p><b>Whisper-v2</b>:  맞아 나는 진짜 자가격리 하는 동안 막 하나도 안 아팠다는 사람도 있고 엄청 아팠던 사람도 있다길래</p><p><b>Whisper-v3</b>:  맞아 나는 진짜 자가 격리하는 동안 하나도 안 아팠다는 사람도 있고 엄청 아팠던 사람도 있다길래</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;1543733dd0f99abe22dce2a703a66d0bf8577a3d08705ca930926af163d9439e&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 9.841,
+    &quot;duration_s&quot;: 9.841,
+    &quot;rms&quot;: 0.031127176855406873,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: []
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2024_PCM_v1.0/NIKL_DIALOGUE_2024_PCM_v1.0/SDRW2400001166/SDRW2400001166.1.1.87.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="2fa1eb647832524d50b6802c750c55fcb7fa88232b0d013cbbe9253a02e6fadd" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2400000381.1.1.83</h2>
+<p>2024 | AUDIO_OK_TEXT_PENDING | none | long · 주석 길이 16.941s / 원음 17.340625s</p>
+<p><b>원문:</b> 나는 쎄븐틴 보면서 -세- 솔직히 쎄븐틴 컨텐츠 전에는 콘써트 비하인드나 어~ 음악중심 비하인드 무대 비하인드 활동 비하인드 같은 그런 사생활 같은 부분만 짜집기 해서 올리는 경우가 있었는데</p><p><b>현재 타깃:</b> 나는 쎄븐틴 보면서 세 솔직히 쎄븐틴 컨텐츠 전에는 콘써트 비하인드나 어 음악중심 비하인드 무대 비하인드 활동 비하인드 같은 그런 사생활 같은 부분만 짜집기 해서 올리는 경우가 있었는데</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/2fa1eb647832524d50b6802c750c55fcb7fa88232b0d013cbbe9253a02e6fadd.wav"></audio></div><p><b>Qwen</b>: 나는 세븐틴 보면서 솔직히 세븐틴 컨텐츠 전에는 콘서트 비하인드나 어 음악 중심 비하인드 무대 비하인드 활동 비하인드 같은 그런 사생활 같은 부분만 짜집기에서 올리는 경우가 있었는데.</p><p><b>Whisper-v2</b>:  나는 세븐틴 보면서 솔직히 세븐틴 컨텐츠 전에는 콘서트 비하인드나 음악중심 비하인드, 무대 비하인드, 활동 비하인드 같은 그런 사생활 같은 부분만 짜집게 해서 올리는 경우가 있었는데</p><p><b>Whisper-v3</b>:  나는 세븐틴 보면서 솔직히 세븐틴 컨텐츠 전에는 콘서트 비하인드나 음악중심 비하인드, 무대 비하인드, 활동 비하인드 같은 그런 사생활 같은 부분만 짜집기해서 올리는 경우가 있었는데</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;6e531cb625e7263b40d4376d8a3bf448c35cae65d389400a68660c629860d906&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 17.340625,
+    &quot;duration_s&quot;: 17.340625,
+    &quot;rms&quot;: 0.03204443926717074,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: []
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2024_PCM_v1.0/NIKL_DIALOGUE_2024_PCM_v1.0/SDRW2400000381/SDRW2400000381.1.1.83.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="8f8147cd167ad9362246f01118b15da6269373732ec6b2457512c50346b1e481" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2400002322.1.1.26</h2>
+<p>2024 | AUDIO_OK_TEXT_PENDING | none | long · 주석 길이 19.107s / 원음 19.50725s</p>
+<p><b>원문:</b> 결국에는 모든 것은 그거를 가지고 이익을 추구하려는 사람들이 계속 개발을 해나가기 때문에 그거를 원래 금주령 이런 것도 법으로 못하게 해도 숨어서 만드는 사람들이 있듯이 에이아이도 더 이상 이렇게 가면은 지구가 멸망할지도 모르겠다라고 생각해 가주고</p><p><b>현재 타깃:</b> 결국에는 모든 것은 그거를 가지고 이익을 추구하려는 사람들이 계속 개발을 해나가기 때문에 그거를 원래 금주령 이런 것도 법으로 못하게 해도 숨어서 만드는 사람들이 있듯이 에이아이도 더 이상 이렇게 가면은 지구가 멸망할지도 모르겠다라고 생각해 가주고</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/8f8147cd167ad9362246f01118b15da6269373732ec6b2457512c50346b1e481.wav"></audio></div><p><b>Qwen</b>: 결국에는 모든 것은 그걸 가지고 이익을 추구하려는 사람들이 계속 개발을 해나가기 때문에 그걸 원래 금주령 이런 것도 법으로 못하게 해도 숨어서 만드는 사람들이 있듯이 AI도 더 이상 이렇게 가면은 지구가 밀망하지도 모르겠다라고 생각해 가지고.</p><p><b>Whisper-v2</b>:  결국에는 모든 것은 그거를 가지고 이익을 추구하려는 사람들이 계속 개발을 해나가기 때문에 그거를 원래 금주령 이런 것도 법으로 못하게 해도 숨어서 만드는 사람들이 있듯이 AI도 더 이상 이렇게 가면은 지구가 멸망할지도 모르겠다라고 생각해 가지고</p><p><b>Whisper-v3</b>:  결국에는 모든 것은 그거를 가지고 이익을 추구하려는 사람들이 계속 개발을 해나가기 때문에 그거를 원래 금주령 이런 것도 법으로 못하게 해도 숨어서 만드는 사람들이 있듯이 AI도 더 이상 이렇게 가면은 지구가 멸망할지도 모르겠다라고 생각해 가지고,</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;2e23f75c641cea5c2aeecf35349799417956bad6447a1de9b48cc0a4544d9a53&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 19.50725,
+    &quot;duration_s&quot;: 19.50725,
+    &quot;rms&quot;: 0.04517544935127732,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: []
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2024_PCM_v1.0/NIKL_DIALOGUE_2024_PCM_v1.0/SDRW2400002322/SDRW2400002322.1.1.26.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="f0ba688f5f7ff32da8dcc800878184e48eefd3c8fc10f758d975223f94dd596f" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2500000604.1.1.56</h2>
+<p>2025 | AUDIO_REVIEW | label_audio_duration_mismatch | short · 주석 길이 0.632s / 원음 1.0315625s</p>
+<p><b>원문:</b> 있는데</p><p><b>현재 타깃:</b> 있는데</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/f0ba688f5f7ff32da8dcc800878184e48eefd3c8fc10f758d975223f94dd596f.wav"></audio></div><p><b>Qwen</b>: 있는데.</p><p><b>Whisper-v2</b>:  있는데</p><p><b>Whisper-v3</b>:  있는데</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;1d17a8521be8d3d0b33123f2b6b2207a8c2483e352756981fa72247792056fb8&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 1.0315625,
+    &quot;duration_s&quot;: 1.0315625,
+    &quot;rms&quot;: 0.02278818292879785,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2025_v1.0_PCM/PCM/SDRW2500000604/SDRW2500000604.1.1.56.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="91b904cba0731409defcf743fc54f613c907af84852e39f4cf55e4ceba772981" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2500001822.1.1.141</h2>
+<p>2025 | AUDIO_REVIEW | label_audio_duration_mismatch | short · 주석 길이 1.507s / 원음 1.9075s</p>
+<p><b>원문:</b> 퇴직허고 나니까</p><p><b>현재 타깃:</b> 퇴직허고 나니까</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/91b904cba0731409defcf743fc54f613c907af84852e39f4cf55e4ceba772981.wav"></audio></div><p><b>Qwen</b>: 퇴직하고 나니까.</p><p><b>Whisper-v2</b>:  퇴직하고 나니까</p><p><b>Whisper-v3</b>:  퇴직하고 나니까</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;2320df7a78da88af292c9f1e8efc05f795be8d7f7c868b5c3a33ac80f353a001&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 1.9075,
+    &quot;duration_s&quot;: 1.9075,
+    &quot;rms&quot;: 0.05600097889882165,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2025_v1.0_PCM/PCM/SDRW2500001822/SDRW2500001822.1.1.141.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="ac85a7ddf40e4b223ff4203d359a240b25c071238ba5bdd9bfa310e1fb0c33ca" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2500000204.1.1.143</h2>
+<p>2025 | AUDIO_REVIEW | label_audio_duration_mismatch | short · 주석 길이 1.989s / 원음 2.3888125s</p>
+<p><b>원문:</b> 드리니 퇴근해서 와서 드리니까</p><p><b>현재 타깃:</b> 드리니 퇴근해서 와서 드리니까</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/ac85a7ddf40e4b223ff4203d359a240b25c071238ba5bdd9bfa310e1fb0c33ca.wav"></audio></div><p><b>Qwen</b>: 들이니 최근에서 와서 드리니까.</p><p><b>Whisper-v2</b>:  최근에 와서 들으니까</p><p><b>Whisper-v3</b>:  드리니 최근에서 와서 드리니까.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;01b59220ddf92c8b25b59c61a2f4393dc3e6f54667c48f035dce33a02dab8566&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 2.3888125,
+    &quot;duration_s&quot;: 2.3888125,
+    &quot;rms&quot;: 0.014773312823770696,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2025_v1.0_PCM/PCM/SDRW2500000204/SDRW2500000204.1.1.143.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="0028d92804ba4bfdc149b676f3d64e94afc49626da54e3b15a8d04c6b320dac1" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2500000325.1.1.130</h2>
+<p>2025 | AUDIO_REVIEW | label_audio_duration_mismatch | regular · 주석 길이 2.826s / 원음 3.225625s</p>
+<p><b>원문:</b> 저도 최근에 벚꽃 보고 왔거든요. -다-</p><p><b>현재 타깃:</b> 저도 최근에 벚꽃 보고 왔거든요 다</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/0028d92804ba4bfdc149b676f3d64e94afc49626da54e3b15a8d04c6b320dac1.wav"></audio></div><p><b>Qwen</b>: 저도 최근에 벚꽃 보고 왔거든요. 다</p><p><b>Whisper-v2</b>:  저도 최근에 벚꽃 보고 왔거든요.</p><p><b>Whisper-v3</b>:  저도 최근에 벚꽃 보고 왔거든요.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;bb8e95c03762f4ccb15d299550964393e8a2187f23ad0f6c618771b96b13de29&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 3.225625,
+    &quot;duration_s&quot;: 3.225625,
+    &quot;rms&quot;: 0.020950639465210457,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2025_v1.0_PCM/PCM/SDRW2500000325/SDRW2500000325.1.1.130.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="0c02360de392c1c7dd7a87d8cbe57125e10a0fda84af27591395304a45385295" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2500002182.1.1.84</h2>
+<p>2025 | AUDIO_REVIEW | label_audio_duration_mismatch | regular · 주석 길이 5.991s / 원음 6.3905625s</p>
+<p><b>원문:</b> 물론 지금 당장은 이제 결혼 생각이 전혀 없지만은 혹시라는 가정으로 생각을 해 보면은</p><p><b>현재 타깃:</b> 물론 지금 당장은 이제 결혼 생각이 전혀 없지만은 혹시라는 가정으로 생각을 해 보면은</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/0c02360de392c1c7dd7a87d8cbe57125e10a0fda84af27591395304a45385295.wav"></audio></div><p><b>Qwen</b>: 물론 지금 당장은 이제 결혼 생각이 전혀 없지만은 혹시라는 가정으로 생각을 해보면은.</p><p><b>Whisper-v2</b>:  물론 지금 당장은 결혼 생각이 전혀 없지만 혹시라는 가정으로 생각을 해보면</p><p><b>Whisper-v3</b>:  물론 지금 당장은 이제 결혼 생각이 전혀 없지만은 혹시라는 가정으로 생각을 해보면은,</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;a8a58923897345ac93a0d2b502b2bf9aaad04bdbad848491b33a29042f97fbd8&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 6.3905625,
+    &quot;duration_s&quot;: 6.3905625,
+    &quot;rms&quot;: 0.03815168466347519,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2025_v1.0_PCM/PCM/SDRW2500002182/SDRW2500002182.1.1.84.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="3acd32f7576c32a4daf3634d2822e6c109659d4a30db527b3be6a269a0ecb762" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2500000108.1.1.16</h2>
+<p>2025 | AUDIO_OK_TEXT_PENDING | none | regular · 주석 길이 8.441s / 원음 8.8410625s</p>
+<p><b>원문:</b> 음~ 저는 최근에 갔다 왔던 데가 제일 기억에 남고 한 삼 주 전에 후쿠오카를 다녀왔는데</p><p><b>현재 타깃:</b> 음 저는 최근에 갔다 왔던 데가 제일 기억에 남고 한 삼 주 전에 후쿠오카를 다녀왔는데</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/3acd32f7576c32a4daf3634d2822e6c109659d4a30db527b3be6a269a0ecb762.wav"></audio></div><p><b>Qwen</b>: 음 저는 최근에 갔다 왔던데가 제일 기억에 남고 한 3주 전에 후쿠오카를 다녀왔는데.</p><p><b>Whisper-v2</b>:  저는 최근에 갔다 왔던 곳이 제일 기억에 남고, 한 3주 전에 후쿠오카를 다녀왔는데,</p><p><b>Whisper-v3</b>:  저는 최근에 갔다왔던 데가 제일 기억에 남고 한 3주 전에 후쿠오카를 다녀왔는데</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;da798808d5392d371cd0fd2daa554cef105a675982ed5c68843e1e6a42c8206c&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 8.8410625,
+    &quot;duration_s&quot;: 8.8410625,
+    &quot;rms&quot;: 0.013622087242942754,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: []
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2025_v1.0_PCM/PCM/SDRW2500000108/SDRW2500000108.1.1.16.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="e38f0e1a30f243c2730e3d14c19b40b52dac912fe9d3107d50092a508e799166" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2500002122.1.1.117</h2>
+<p>2025 | AUDIO_OK_TEXT_PENDING | none | regular · 주석 길이 10.939s / 원음 11.3385625s</p>
+<p><b>원문:</b> 여자아이가 남자애랑 만나서 이케 되게 약간 따뜻하게 동화같이 노는 그런 애니메이션인데 저는 그걸 좋아해 가지고 또 쿠팡플레이로 계속 돌려 보기도 하는 거 같고</p><p><b>현재 타깃:</b> 여자아이가 남자애랑 만나서 이케 되게 약간 따뜻하게 동화같이 노는 그런 애니메이션인데 저는 그걸 좋아해 가지고 또 쿠팡플레이로 계속 돌려 보기도 하는 거 같고</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/e38f0e1a30f243c2730e3d14c19b40b52dac912fe9d3107d50092a508e799166.wav"></audio></div><p><b>Qwen</b>: 여자 아이가 남자 아이랑 만나서 이렇게 되게 약간 따뜻하게 동화 같이 노는 그런 애니메이션인데 저는 그걸 좋아해서 또 쿠팡 플레이를 계속 돌려보기도 하는 것 같고.</p><p><b>Whisper-v2</b>:  여자아이가 남자애랑 만나서 따뜻하게 동화같이 노는 애니메이션인데 저는 그걸 좋아해서 쿠팡플레이로 계속 돌려보기도 하는 것 같고</p><p><b>Whisper-v3</b>:  여자아이가 남자아이랑 만나서 따뜻하게 동화같이 노는 애니메이션인데 저는 그걸 좋아해서 쿠팡플레이를 계속 돌려보기도 하는 것 같고</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;cf59c78ec1acd532f0f4ae107fcb1338b3584b94fee36731fe98d96d5d576761&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 11.3385625,
+    &quot;duration_s&quot;: 11.3385625,
+    &quot;rms&quot;: 0.049371858711774866,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: []
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2025_v1.0_PCM/PCM/SDRW2500002122/SDRW2500002122.1.1.117.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="77bd223b7fb9cdcc04ff0ea4175f0eb0446767ab3524aef695cc3918f7a3442a" data-source="nikl-1000">
+<h2>nikl-1000 / SDRW2500001946.1.1.173</h2>
+<p>2025 | AUDIO_OK_TEXT_PENDING | none | long · 주석 길이 18.618s / 원음 19.01825s</p>
+<p><b>원문:</b> 사실은 이~ -스- 우리나라같이 자원도 부족하고 이~ 맨파워 중심으로 인제 이~ 인력과 기술력으로 이~ 성장해 온 나라에서 사실은 인구가 줄어든다라는 것은 되게 쫌 위기적인 제 당연히 싸인인 거 같애 가지구</p><p><b>현재 타깃:</b> 사실은 이 스 우리나라같이 자원도 부족하고 이 맨파워 중심으로 인제 이 인력과 기술력으로 이 성장해 온 나라에서 사실은 인구가 줄어든다라는 것은 되게 쫌 위기적인 제 당연히 싸인인 거 같애 가지구</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/77bd223b7fb9cdcc04ff0ea4175f0eb0446767ab3524aef695cc3918f7a3442a.wav"></audio></div><p><b>Qwen</b>: 사실은 이 우리나라 같이 자원도 부족하고 이 멤파워 중심으로 이제 인력과 기술력으로 이 성장해 온 나라에서 사실은 인구가 줄어든다라는 것은 되게 좀 위기적인 이제 당연히 사인인 것 같아 가지고.</p><p><b>Whisper-v2</b>:  사실은 우리나라 같이 자원도 부족하고 맨파워 중심으로 인력과 기술력으로 성장해온 나라에서 사실은 인구가 줄어든다는 것은 되게 좀 위기적인 당연히 사인인 것 같아가지고</p><p><b>Whisper-v3</b>:  사실은 우리나라같이 자원도 부족하고 맨파워 중심으로 인력과 기술력으로 성장해온 나라에서 사실은 인구가 줄어든다는 것은 되게 위기적인 사인인 것 같아서요.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;100feed4f819a3669c7c90450ee2a123ddf206b1ba9209f1e9f7611b44120c32&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 19.01825,
+    &quot;duration_s&quot;: 19.01825,
+    &quot;rms&quot;: 0.048778966642248275,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: []
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0,
+    &quot;last_rms&quot;: 0.0,
+    &quot;first_zero_fraction&quot;: 1.0,
+    &quot;last_zero_fraction&quot;: 1.0
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/nikl/NIKL_DIALOGUE_2025_v1.0_PCM/PCM/SDRW2500001946/SDRW2500001946.1.1.173.pcm&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="1b83be4a89e148263143d2124b315371a2951b33bf599e01cef5eef8a053f694" data-source="voxpopuli-train">
+<h2>voxpopuli-train / 20130611-0900-PLENARY-5-en_20130611-11:10:26_5</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch | short · 주석 길이 0.960s / 원음 0.759875s</p>
+<p><b>원문:</b> getting so much.</p><p><b>현재 타깃:</b> getting so much</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/1b83be4a89e148263143d2124b315371a2951b33bf599e01cef5eef8a053f694.wav"></audio></div><p><b>Qwen</b>: So much.</p><p><b>Whisper-v2</b>:  so much.</p><p><b>Whisper-v3</b>:  so much</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;ecb450380490e7862e9ee6d68b6c7f070c76b30b7b4e7912241b1f3e30b27d63&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 0.759875,
+    &quot;duration_s&quot;: 0.759875,
+    &quot;rms&quot;: 0.044036729707128144,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.04724587788927765,
+    &quot;last_rms&quot;: 0.018884350240821916,
+    &quot;first_zero_fraction&quot;: 0.000625,
+    &quot;last_zero_fraction&quot;: 0.0021875
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli/train_part_2.tar::train_part_2/20130611-0900-PLENARY-5-en_20130611-11:10:26_5.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="d26cb370b1c82f6b2d8f4a43e61913d1d041acd18496bc17d2fd88cf9b643b31" data-source="voxpopuli-train">
+<h2>voxpopuli-train / 20110511-0900-PLENARY-2-en_20110511-10:15:44_19</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch | short · 주석 길이 1.660s / 원음 1.4599375s</p>
+<p><b>원문:</b> I understand that too.</p><p><b>현재 타깃:</b> i understand that too</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/d26cb370b1c82f6b2d8f4a43e61913d1d041acd18496bc17d2fd88cf9b643b31.wav"></audio></div><p><b>Qwen</b>: I understand that too.</p><p><b>Whisper-v2</b>:  and I understand that too.</p><p><b>Whisper-v3</b>:  And I understand that too.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;74059d49f8c96700194b48080d88205bbf0b937596817ffc178b732f6ef2a28f&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 1.4599375,
+    &quot;duration_s&quot;: 1.4599375,
+    &quot;rms&quot;: 0.054394350765776874,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.07303476086147878,
+    &quot;last_rms&quot;: 0.024128507965263193,
+    &quot;first_zero_fraction&quot;: 0.0003125,
+    &quot;last_zero_fraction&quot;: 0.0028125
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli/train_part_32.tar::train_part_32/20110511-0900-PLENARY-2-en_20110511-10:15:44_19.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="6950334887131b5433325783b492798642b2e0a73ce484a2644efbeffd1eccd6" data-source="voxpopuli-train">
+<h2>voxpopuli-train / 20090423-0900-PLENARY-3-en_20090423-09:23:18_9</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch | short · 주석 길이 1.980s / 원음 1.7798125s</p>
+<p><b>원문:</b> Let us keep this in perspective.</p><p><b>현재 타깃:</b> let us keep this in perspective</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/6950334887131b5433325783b492798642b2e0a73ce484a2644efbeffd1eccd6.wav"></audio></div><p><b>Qwen</b>: Let&#x27;s keep this in perspective.</p><p><b>Whisper-v2</b>:  Let&#x27;s keep this in perspective.</p><p><b>Whisper-v3</b>:  Let&#x27;s keep this in perspective.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;f9b12ee46e397d96bc1517f3ac8f5f99d91647b9de91dcc8b65d710e067cd676&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 1.7798125,
+    &quot;duration_s&quot;: 1.7798125,
+    &quot;rms&quot;: 0.013551651550510965,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.005286199912743499,
+    &quot;last_rms&quot;: 0.0046857532584567724,
+    &quot;first_zero_fraction&quot;: 0.0025,
+    &quot;last_zero_fraction&quot;: 0.00375
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli/train_part_20.tar::train_part_20/20090423-0900-PLENARY-3-en_20090423-09:23:18_9.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="229b394621ad23cd36b13eeb0e15007caaaab7e3d4dc7e76b974da757f3f91d7" data-source="voxpopuli-train">
+<h2>voxpopuli-train / 20151126-0900-PLENARY-5-en_20151126-11:18:31_6</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch | regular · 주석 길이 3.399s / 원음 3.1994375s</p>
+<p><b>원문:</b> Patience is the sign of strength and confidence.</p><p><b>현재 타깃:</b> patience is the sign of strength and confidence</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/229b394621ad23cd36b13eeb0e15007caaaab7e3d4dc7e76b974da757f3f91d7.wav"></audio></div><p><b>Qwen</b>: Patience is the sign of strength and confidence.</p><p><b>Whisper-v2</b>:  Patience is the sign of strength and confidence.</p><p><b>Whisper-v3</b>:  Patience is the sign of strength and confidence.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;6b95df7a3309c2029d833daf1675d1553de5c8930a1214f04e11001b443b1318&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 3.1994375,
+    &quot;duration_s&quot;: 3.1994375,
+    &quot;rms&quot;: 0.023029046707030567,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0019584198795184154,
+    &quot;last_rms&quot;: 0.003500020975450265,
+    &quot;first_zero_fraction&quot;: 0.0028125,
+    &quot;last_zero_fraction&quot;: 0.005
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli/train_part_9.tar::train_part_9/20151126-0900-PLENARY-5-en_20151126-11:18:31_6.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="fb7bec2b278afbda66c7b8aebc58c5d38d7d5edda1c53ef35b356e5045e4280d" data-source="voxpopuli-train">
+<h2>voxpopuli-train / 20101006-0900-PLENARY-11-en_20101006-18:23:16_8</h2>
+<p>all | AUDIO_OK_TEXT_PENDING | none | regular · 주석 길이 10.139s / 원음 9.93925s</p>
+<p><b>원문:</b> That is the sense of urgency of the Nagoya Summit and that is the sense of urgency I expect from the ministers and commissioners who attend.</p><p><b>현재 타깃:</b> that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from the ministers and commissioners who attend</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/fb7bec2b278afbda66c7b8aebc58c5d38d7d5edda1c53ef35b356e5045e4280d.wav"></audio></div><p><b>Qwen</b>: That is the sense of urgency of the Nagoya Summit, and that is the sense of urgency I expect from attending ministers and commissioners.</p><p><b>Whisper-v2</b>:  That is the sense of urgency of the Nagoya Summit. And that is the sense of urgency I expect from attending ministers and commissioners.</p><p><b>Whisper-v3</b>:  That is the sense of urgency of the Nagoya summit. And that is the sense of urgency I expect from attending ministers and commissioners.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;03eae6acc96ac4d7a8d9253015ee6b6a982b17a266179c5610ec48904454cfce&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 9.93925,
+    &quot;duration_s&quot;: 9.93925,
+    &quot;rms&quot;: 0.03913611990074412,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: []
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.004185243016123848,
+    &quot;last_rms&quot;: 0.00312933360561442,
+    &quot;first_zero_fraction&quot;: 0.0046875,
+    &quot;last_zero_fraction&quot;: 0.0040625
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli/train_part_7.tar::train_part_7/20101006-0900-PLENARY-11-en_20101006-18:23:16_8.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="bf069539ab748e2df2cace535c41747e13f5dd98a4819602f0ba0a8b3fc3ae49" data-source="voxpopuli-train">
+<h2>voxpopuli-train / 20180702-0900-PLENARY-en_20180702-19:51:21_7</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch | long · 주석 길이 22.915s / 원음 16.378875s</p>
+<p><b>원문:</b> The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.</p><p><b>현재 타깃:</b> the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/bf069539ab748e2df2cace535c41747e13f5dd98a4819602f0ba0a8b3fc3ae49.wav"></audio></div><p><b>Qwen</b>: The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment, and in society in general.</p><p><b>Whisper-v2</b>:  The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.</p><p><b>Whisper-v3</b>:  The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;bbf33a6518c533d541a16251865619aaa67f57d531d14d60dc82e042da6b19b5&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 16.378875,
+    &quot;duration_s&quot;: 16.378875,
+    &quot;rms&quot;: 0.07100993204651584,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.010218234770066625,
+    &quot;last_rms&quot;: 0.014433602701582475,
+    &quot;first_zero_fraction&quot;: 0.0025,
+    &quot;last_zero_fraction&quot;: 0.0078125
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli/train_part_4.tar::train_part_4/20180702-0900-PLENARY-en_20180702-19:51:21_7.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="1e89980c2b50a6485ea142bdd957b21f26474c608dc943c3b789b75e7d9e247d" data-source="voxpopuli-train">
+<h2>voxpopuli-train / 20181004-0900-PLENARY-en_20181004-10:44:57_7</h2>
+<p>all | AUDIO_OK_TEXT_PENDING | none | long · 주석 길이 21.020s / 원음 20.82s</p>
+<p><b>원문:</b> we are now close to finalising the joint partnership priorities which will be the first document of this kind between the eu and belarus an important building block in our relations setting the strategic frame for our cooperation in the coming years and in which human rights and freedom of media issues play an important role.</p><p><b>현재 타깃:</b> we are now close to finalising the joint partnership priorities which will be the first document of this kind between the eu and belarus an important building block in our relations setting the strategic frame for our cooperation in the coming years and in which human rights and freedom of media issues play an important role</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/1e89980c2b50a6485ea142bdd957b21f26474c608dc943c3b789b75e7d9e247d.wav"></audio></div><p><b>Qwen</b>: We are now close to finalising the joint partnership priorities, which will be the first document of this kind between the EU and Belarus, an important building block in our relations, setting the strategic frame for our cooperation in the coming years, and of course, in which human rights and the freedom of media issues play an important role.</p><p><b>Whisper-v2</b>:  We are now close to finalizing the joint partnership priorities, which will be the first document of this kind between the EU and Belarus, an important building blocks in our relations setting the strategic frame for our cooperation in the coming years, and of course in which human rights and the freedom of media issues play an important role.</p><p><b>Whisper-v3</b>:  We are now close to finalizing the joint partnership priorities, which will be the first document of this kind between the EU and Belarus, and important building blocks in our relations, setting the strategic frame for our cooperation in the coming years, and of course in which human rights and the freedom of media issues play an important role.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;2848b23823348761bd3f83cc79d23580aeb9786acc11b5d2754dae2d9b2a02a8&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 20.82,
+    &quot;duration_s&quot;: 20.82,
+    &quot;rms&quot;: 0.02159004624323866,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: []
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0011386753126390234,
+    &quot;last_rms&quot;: 0.003432435982901351,
+    &quot;first_zero_fraction&quot;: 0.01,
+    &quot;last_zero_fraction&quot;: 0.0153125
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli/train_part_35.tar::train_part_35/20181004-0900-PLENARY-en_20181004-10:44:57_7.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="69440214fe8bea387d540376ee1b8befd0a6b0496fad2ed753bd50de43d6edeb" data-source="voxpopuli-train">
+<h2>voxpopuli-train / 20160509-0900-PLENARY-14-en_20160509-21:50:41_3</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch | long · 주석 길이 35.978s / 원음 28.656625s</p>
+<p><b>원문:</b> In a country where approximately half of the population lives on the coastline, and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, that it achieves its purpose, and that no fraud with EU funds takes place on the ground.</p><p><b>현재 타깃:</b> in a country where approximately half of the population lives on the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent that it achieves its purpose and that no fraud with eu funds takes place on the ground</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/69440214fe8bea387d540376ee1b8befd0a6b0496fad2ed753bd50de43d6edeb.wav"></audio></div><p><b>Qwen</b>: In a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, achieves its purpose, and no fraud with EU funds is is happening on the ground.</p><p><b>Whisper-v2</b>:  In a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, achieves its purpose, and no fraud with EU funds is happening on the ground. Thank you.</p><p><b>Whisper-v3</b>:  In a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, achieves its purpose, and no fraud with EU funds is happening on the ground. Thank you.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;6154872565405e84cd997c1c6d29152a77887aa61058b5c59860a0cf6bfc6157&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 1,
+    &quot;source_duration_s&quot;: 28.656625,
+    &quot;duration_s&quot;: 28.656625,
+    &quot;rms&quot;: 0.06907392173860054,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0007994942965251138,
+    &quot;last_rms&quot;: 0.0374019620137617,
+    &quot;first_zero_fraction&quot;: 0.0159375,
+    &quot;last_zero_fraction&quot;: 0.001875
+  }
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/users/tskim/VAPKT-data/data/audio/voxpopuli/train_part_6.tar::train_part_6/20160509-0900-PLENARY-14-en_20160509-21:50:41_3.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="4107b019185e28ea5b958933f005c96cef56df3f0ac6cea1599d4b4af64c2f32" data-source="aihub-bc-train">
+<h2>aihub-bc-train / vr_m_001_370_095_0661</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch+multichannel_without_explicit_channel_mapping | short · 주석 길이 1.716s / 원음 0.286s</p>
+<p><b>원문:</b> 네.</p><p><b>현재 타깃:</b> 네</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/4107b019185e28ea5b958933f005c96cef56df3f0ac6cea1599d4b4af64c2f32.wav"></audio></div><div>진단용 채널 1 — 교사 입력 아님<br><audio controls preload="none" src="audio/4107b019185e28ea5b958933f005c96cef56df3f0ac6cea1599d4b4af64c2f32-ch1.wav"></audio></div><p><b>Qwen</b>: 네.</p><p><b>Whisper-v2</b>:  날씨였습니다.</p><p><b>Whisper-v3</b>:  네.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;6a1007516678d6778a404a587b90d877710bc5f0e7680ff0c3005950405bac6c&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 48000,
+    &quot;original_channels&quot;: 2,
+    &quot;source_duration_s&quot;: 0.286,
+    &quot;duration_s&quot;: 0.286,
+    &quot;rms&quot;: 0.03482726521526625,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;multichannel_without_explicit_channel_mapping&quot;,
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.03954575531998638,
+    &quot;last_rms&quot;: 0.02760905515788396,
+    &quot;first_zero_fraction&quot;: 0.0,
+    &quot;last_zero_fraction&quot;: 0.0
+  },
+  &quot;channel_0_1_max_abs_diff&quot;: 0.03138311207294464,
+  &quot;channel_0_1_corr&quot;: 0.9785815160816123
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_예능오락.zip::vr_m_001_370_095_0661.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="587480f639806a9a5640b9da7dc7d4eec5e2a9a9d9006c26d3baa1be16f0c4b6" data-source="aihub-bc-train">
+<h2>aihub-bc-train / et_m_002_001_300_0722</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch+multichannel_without_explicit_channel_mapping | regular · 주석 길이 7.440s / 원음 1.24s</p>
+<p><b>원문:</b> 발이 묶여있잖아요.</p><p><b>현재 타깃:</b> 발이 묶여있잖아요</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/587480f639806a9a5640b9da7dc7d4eec5e2a9a9d9006c26d3baa1be16f0c4b6.wav"></audio></div><div>진단용 채널 1 — 교사 입력 아님<br><audio controls preload="none" src="audio/587480f639806a9a5640b9da7dc7d4eec5e2a9a9d9006c26d3baa1be16f0c4b6-ch1.wav"></audio></div><p><b>Qwen</b>: 발이 묶여 있잖아요.</p><p><b>Whisper-v2</b>:  발이 묶여 있잖아요.</p><p><b>Whisper-v3</b>:  발이 묶여있잖아요</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;624e3f5c87e18074850f475f55a42ea6809063648b60476d8244653fc68e043f&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 48000,
+    &quot;original_channels&quot;: 2,
+    &quot;source_duration_s&quot;: 1.24,
+    &quot;duration_s&quot;: 1.24,
+    &quot;rms&quot;: 0.0317489796776379,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;multichannel_without_explicit_channel_mapping&quot;,
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.011918242441644055,
+    &quot;last_rms&quot;: 0.02130256320244056,
+    &quot;first_zero_fraction&quot;: 0.0,
+    &quot;last_zero_fraction&quot;: 0.0
+  },
+  &quot;channel_0_1_max_abs_diff&quot;: 0.0949535146355629,
+  &quot;channel_0_1_corr&quot;: 0.8344988126785385
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_연예공연.zip::et_m_002_001_300_0722.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="4caa6798b9f088fa825ae1329f9d908cd5fccd053cf06313a7d13b4bc92a2426" data-source="aihub-bc-train">
+<h2>aihub-bc-train / md_c_014_006_024_0065</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch+multichannel_without_explicit_channel_mapping | regular · 주석 길이 14.498s / 원음 2.63s</p>
+<p><b>원문:</b> 의연이 배고프다니까, 닭볶음탕.</p><p><b>현재 타깃:</b> 의연이 배고프다니까 닭볶음탕</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/4caa6798b9f088fa825ae1329f9d908cd5fccd053cf06313a7d13b4bc92a2426.wav"></audio></div><div>진단용 채널 1 — 교사 입력 아님<br><audio controls preload="none" src="audio/4caa6798b9f088fa825ae1329f9d908cd5fccd053cf06313a7d13b4bc92a2426-ch1.wav"></audio></div><p><b>Qwen</b>: 기현이 배고프다니까 닭볶음탕.</p><p><b>Whisper-v2</b>:  기현이 배고프다니까 닭볶음탕</p><p><b>Whisper-v3</b>:  유현이 배고프다니까 닭볶음탕</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;0c09ebf4e38bed916d6bfcb7f5d9b9a475826b68bfaef9799b185f847422dcb9&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 44100,
+    &quot;original_channels&quot;: 2,
+    &quot;source_duration_s&quot;: 2.63,
+    &quot;duration_s&quot;: 2.63,
+    &quot;rms&quot;: 0.02183284759287844,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;multichannel_without_explicit_channel_mapping&quot;,
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.015305021141561043,
+    &quot;last_rms&quot;: 0.019844889263120523,
+    &quot;first_zero_fraction&quot;: 0.0,
+    &quot;last_zero_fraction&quot;: 0.0
+  },
+  &quot;channel_0_1_max_abs_diff&quot;: 0.030133601278066635,
+  &quot;channel_0_1_corr&quot;: 0.9614570695506134
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_영화드라마.zip::md_c_014_006_024_0065.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="97b4f243ae8b6512a0fa3c445849e6a07ea8dad2b2919da7c5dbc648912e5c0f" data-source="aihub-bc-train">
+<h2>aihub-bc-train / vr_m_001_370_110_0775</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch+multichannel_without_explicit_channel_mapping | long · 주석 길이 34.440s / 원음 5.74s</p>
+<p><b>원문:</b> 이렇게 놓고 난 다음에 안 쪽에서 한 번 이렇게 부셔주고요.</p><p><b>현재 타깃:</b> 이렇게 놓고 난 다음에 안 쪽에서 한 번 이렇게 부셔주고요</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/97b4f243ae8b6512a0fa3c445849e6a07ea8dad2b2919da7c5dbc648912e5c0f.wav"></audio></div><div>진단용 채널 1 — 교사 입력 아님<br><audio controls preload="none" src="audio/97b4f243ae8b6512a0fa3c445849e6a07ea8dad2b2919da7c5dbc648912e5c0f-ch1.wav"></audio></div><p><b>Qwen</b>: 이렇게 놓고 난 다음에 안쪽에서 한번 이렇게 부숴주고요.</p><p><b>Whisper-v2</b>:  이렇게 놓고 난 다음에 안쪽에서 한번 이렇게 부숴주고요.</p><p><b>Whisper-v3</b>:  이렇게 놓고 난 다음에 안쪽에서 한번 이렇게 부서주고요</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;4329b90caa9bc0a8cbb64147d9c605b50caa30e3779b0e2492292858fa0aecf3&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 48000,
+    &quot;original_channels&quot;: 2,
+    &quot;source_duration_s&quot;: 5.74,
+    &quot;duration_s&quot;: 5.74,
+    &quot;rms&quot;: 0.023424388714568405,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;multichannel_without_explicit_channel_mapping&quot;,
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.01430063304588792,
+    &quot;last_rms&quot;: 0.011159695391047547,
+    &quot;first_zero_fraction&quot;: 0.0,
+    &quot;last_zero_fraction&quot;: 0.0
+  },
+  &quot;channel_0_1_max_abs_diff&quot;: 0.04968222975730896,
+  &quot;channel_0_1_corr&quot;: 0.9234558019990128
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_예능오락.zip::vr_m_001_370_110_0775.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad" data-source="aihub-bc-train">
+<h2>aihub-bc-train / vr_m_001_370_049_0348</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch+multichannel_without_explicit_channel_mapping | short · 주석 길이 1.758s / 원음 0.293s</p>
+<p><b>원문:</b> 네.</p><p><b>현재 타깃:</b> 네 네 네</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad.wav"></audio></div><div>진단용 채널 1 — 교사 입력 아님<br><audio controls preload="none" src="audio/60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad-ch1.wav"></audio></div><p><b>Qwen</b>: 네네.</p><p><b>Whisper-v2</b>:  네네</p><p><b>Whisper-v3</b>:  네.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;51a768b05313472daca190287b9152093fc24648f9b018731e5798073a703b8e&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 48000,
+    &quot;original_channels&quot;: 2,
+    &quot;source_duration_s&quot;: 0.293,
+    &quot;duration_s&quot;: 0.293,
+    &quot;rms&quot;: 0.04885615514912138,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;multichannel_without_explicit_channel_mapping&quot;,
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.04579118872232445,
+    &quot;last_rms&quot;: 0.058799091214823004,
+    &quot;first_zero_fraction&quot;: 0.0,
+    &quot;last_zero_fraction&quot;: 0.0
+  },
+  &quot;channel_0_1_max_abs_diff&quot;: 0.0,
+  &quot;channel_0_1_corr&quot;: 1.0
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_예능오락.zip::vr_m_001_370_049_0348.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="f3ba81c3afdcbb24322b8ff654eb4fd1d19c5bbeac3fe0a442ff04ef02db9dfa" data-source="aihub-bc-train">
+<h2>aihub-bc-train / md_c_014_001_042_0101</h2>
+<p>all | AUDIO_REVIEW | label_audio_duration_mismatch+multichannel_without_explicit_channel_mapping | regular · 주석 길이 8.710s / 원음 1.58s</p>
+<p><b>원문:</b> 정의연, 개 너무하네?</p><p><b>현재 타깃:</b> 정의연 개 너무하네</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/f3ba81c3afdcbb24322b8ff654eb4fd1d19c5bbeac3fe0a442ff04ef02db9dfa.wav"></audio></div><div>진단용 채널 1 — 교사 입력 아님<br><audio controls preload="none" src="audio/f3ba81c3afdcbb24322b8ff654eb4fd1d19c5bbeac3fe0a442ff04ef02db9dfa-ch1.wav"></audio></div><p><b>Qwen</b>: 정우연 걔 너무하네.</p><p><b>Whisper-v2</b>:  정우현 개너무하네</p><p><b>Whisper-v3</b>:  정우현 개너무하네</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;df7a0c46897613665f00f9ecf91cc48cdd314c10992fa39ded88a8beaca5e545&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 44100,
+    &quot;original_channels&quot;: 2,
+    &quot;source_duration_s&quot;: 1.58,
+    &quot;duration_s&quot;: 1.58,
+    &quot;rms&quot;: 0.028638037660565212,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;multichannel_without_explicit_channel_mapping&quot;,
+      &quot;label_audio_duration_mismatch&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.026706010231160423,
+    &quot;last_rms&quot;: 0.028423858090528397,
+    &quot;first_zero_fraction&quot;: 0.0,
+    &quot;last_zero_fraction&quot;: 0.0
+  },
+  &quot;channel_0_1_max_abs_diff&quot;: 0.0,
+  &quot;channel_0_1_corr&quot;: 1.0
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_영화드라마.zip::md_c_014_001_042_0101.wav&#x27;, &#x27;offset_s&#x27;: None, &#x27;duration_s&#x27;: None}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7" data-source="ami">
+<h2>ami / A_00018</h2>
+<p>all | AUDIO_REVIEW | multichannel_without_explicit_channel_mapping | short · 주석 길이 0.732s / 원음 0.732s</p>
+<p><b>원문:</b> Right</p><p><b>현재 타깃:</b> right</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7.wav"></audio></div><div>진단용 채널 1 — 교사 입력 아님<br><audio controls preload="none" src="audio/4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7-ch1.wav"></audio></div><p><b>Qwen</b>: Right.</p><p><b>Whisper-v2</b>:  Right.</p><p><b>Whisper-v3</b>:  Right.</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 2,
+    &quot;source_duration_s&quot;: 969.221375,
+    &quot;duration_s&quot;: 0.732,
+    &quot;rms&quot;: 0.0033307996012099553,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;multichannel_without_explicit_channel_mapping&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.0006325053356993038,
+    &quot;last_rms&quot;: 0.0001606680568756873,
+    &quot;first_zero_fraction&quot;: 0.0240625,
+    &quot;last_zero_fraction&quot;: 0.071875
+  },
+  &quot;channel_0_1_max_abs_diff&quot;: 0.0,
+  &quot;channel_0_1_corr&quot;: 0.9999999999999999
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-0.wav&#x27;, &#x27;offset_s&#x27;: 234.102, &#x27;duration_s&#x27;: 0.7319999999999993}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article>
+<article data-key="702afed4a6260ef76c4f373436438e78d0fc6ffdd5c35bfc0a2fe5c16d43a35a" data-source="ami">
+<h2>ami / A_00078</h2>
+<p>all | AUDIO_REVIEW | multichannel_without_explicit_channel_mapping | long · 주석 길이 29.648s / 원음 29.648s</p>
+<p><b>원문:</b> Okay Now we&#x27;re gonna talk about the project process um and whether or not we&#x27;re satisfied with the whole process and the result Um did we have a lot of room for creativity Did we have a lot of room for individual leadership um teamwork and the means meaning the technology that we used to produce our little guy there and if we found any new ideas Now question is how do we do this</p><p><b>현재 타깃:</b> okay now we&#x27;re gonna talk about the project process um and whether or not we&#x27;re satisfied with the whole process and the result um did we have a lot of room for creativity did we have a lot of room for individual leadership um teamwork and the means meaning the technology that we used to produce our little guy there and if we found any new ideas now question is how do we do this</p><div>현재 QC/교사 입력 채널<br><audio controls preload="none" src="audio/702afed4a6260ef76c4f373436438e78d0fc6ffdd5c35bfc0a2fe5c16d43a35a.wav"></audio></div><div>진단용 채널 1 — 교사 입력 아님<br><audio controls preload="none" src="audio/702afed4a6260ef76c4f373436438e78d0fc6ffdd5c35bfc0a2fe5c16d43a35a-ch1.wav"></audio></div><p><b>Qwen</b>: Okay. Now we&#x27;re going to talk about the project process, and whether or not we&#x27;re satisfied with the whole process and the result. Did we have a lot of room for creativity? Did we have a lot of room for individual leadership, teamwork, and the means meaning technology that we used, to produce our little guide there, and if we found any new ideas. Now question is, how do we do this?</p><p><b>Whisper-v2</b>:  Okay. Now we&#x27;re going to talk about the project process and whether or not we&#x27;re satisfied with the whole process and the result. Did we have a lot of room for creativity? Did we have a lot of room for individual leadership, teamwork, and the means, meaning technology that we used to produce our little guy there? And if we found any new ideas. Now, the question is, how do we do this?</p><p><b>Whisper-v3</b>:  OK. Now we&#x27;re going to talk about the project process and whether or not we&#x27;re satisfied with the whole process and the result. Did we have a lot of room for creativity? Did we have a lot of room for individual leadership, teamwork, and the means, meaning technology that we used to produce our little guy there? And if we found any new ideas. Now, the question is, how do we do this?</p>
+<details><summary>진단값·원본 경로</summary><pre>{
+  &quot;training_eligible&quot;: false,
+  &quot;audio&quot;: {
+    &quot;sha256&quot;: &quot;cc545511348dd1313d3cb28629cb786b015efd87140e59a264294a8ef40e1420&quot;,
+    &quot;sample_rate&quot;: 16000,
+    &quot;original_sample_rate&quot;: 16000,
+    &quot;original_channels&quot;: 2,
+    &quot;source_duration_s&quot;: 969.221375,
+    &quot;duration_s&quot;: 29.648,
+    &quot;rms&quot;: 0.007407610161514146,
+    &quot;clipping_ratio&quot;: 0.0,
+    &quot;discarded_trailing_pcm_byte&quot;: false,
+    &quot;review&quot;: [
+      &quot;multichannel_without_explicit_channel_mapping&quot;
+    ]
+  },
+  &quot;edge_200ms&quot;: {
+    &quot;first_rms&quot;: 0.007129923089875935,
+    &quot;last_rms&quot;: 0.0003857464427954724,
+    &quot;first_zero_fraction&quot;: 0.0246875,
+    &quot;last_zero_fraction&quot;: 0.0340625
+  },
+  &quot;channel_0_1_max_abs_diff&quot;: 0.0,
+  &quot;channel_0_1_corr&quot;: 0.9999999999999999
+}</pre><p>{&#x27;path&#x27;: &#x27;/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-0.wav&#x27;, &#x27;offset_s&#x27;: 669.568, &#x27;duration_s&#x27;: 29.648000000000025}</p></details>
+<div><label>전사 <select data-axis="text"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>경계/잘림 <select data-axis="timing"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>채널/화자 <select data-axis="speaker"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> <label>턴 근거 <select data-axis="turn"><option value="unreviewed">미검수</option><option value="pass">확인됨</option><option value="fail">문제 있음</option><option value="uncertain">판단 보류</option></select></label> </div><textarea placeholder="청취 메모: 누락 단어, 시작/끝 잘림, 다른 화자, 확실하지 않은 이유"></textarea></article><script>
+const cards=[...document.querySelectorAll('article')];
+document.querySelector('#search').oninput=e=>{cards.forEach(c=>c.hidden=!c.textContent.toLowerCase().includes(e.target.value.toLowerCase()));};
+function download(){const rows=cards.map(c=>({key:c.dataset.key,source:c.dataset.source,labels:Object.fromEntries([...c.querySelectorAll('select')].map(s=>[s.dataset.axis,s.value])),note:c.querySelector('textarea').value}));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({reviewed_at:new Date().toISOString(),training_eligible:false,rows},null,2)],{type:'application/json'}));a.download='human-review-v03.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+document.querySelector('#count').textContent=' '+cards.length+' 표본';
+</script></html>

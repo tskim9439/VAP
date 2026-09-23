@@ -1,0 +1,55 @@
+{
+  "reviewed_at": "2026-09-19T15:37:16.202Z",
+  "training_eligible": false,
+  "purpose": "diagnostic-followup-v04",
+  "rows": [
+    {
+      "key": "60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad",
+      "resolution": "unreviewed",
+      "heard_text": "네 네",
+      "note": ""
+    },
+    {
+      "key": "4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7",
+      "resolution": "unreviewed",
+      "heard_text": "great",
+      "note": ""
+    },
+    {
+      "key": "1b83be4a89e148263143d2124b315371a2951b33bf599e01cef5eef8a053f694",
+      "resolution": "unreviewed",
+      "heard_text": "",
+      "note": ""
+    },
+    {
+      "key": "d26cb370b1c82f6b2d8f4a43e61913d1d041acd18496bc17d2fd88cf9b643b31",
+      "resolution": "unreviewed",
+      "heard_text": "And i understand that too",
+      "note": ""
+    },
+    {
+      "key": "6950334887131b5433325783b492798642b2e0a73ce484a2644efbeffd1eccd6",
+      "resolution": "unreviewed",
+      "heard_text": "let's keep this perspective",
+      "note": ""
+    },
+    {
+      "key": "fb7bec2b278afbda66c7b8aebc58c5d38d7d5edda1c53ef35b356e5045e4280d",
+      "resolution": "unreviewed",
+      "heard_text": "",
+      "note": ""
+    },
+    {
+      "key": "bf069539ab748e2df2cace535c41747e13f5dd98a4819602f0ba0a8b3fc3ae49",
+      "resolution": "unreviewed",
+      "heard_text": "",
+      "note": ""
+    },
+    {
+      "key": "69440214fe8bea387d540376ee1b8befd0a6b0496fad2ed753bd50de43d6edeb",
+      "resolution": "unreviewed",
+      "heard_text": "",
+      "note": ""
+    }
+  ]
+}

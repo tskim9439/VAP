@@ -1,0 +1,27 @@
+{
+  "complete": true,
+  "total": 3657,
+  "sources": {
+    "aihub-bc-train": {
+      "DISTINCT_CHANNELS_REVIEW": 2939,
+      "IDENTICAL_CHANNELS": 394
+    },
+    "ami": {
+      "IDENTICAL_CHANNELS": 324
+    }
+  },
+  "fingerprints": {
+    "aihub-bc-train": {
+      "candidates_sha256": "188bda65e478d452e1034a44b7bc851ea9ce12765ab8231ea86eca8a829faa71",
+      "qc_sha256": "dcd88fe665f030527a8040f883118d947e24b1494807cb0494bb6d93eb077737"
+    },
+    "ami": {
+      "candidates_sha256": "d2c0987e270ec972d8fab21a93453c3d5af69e007b00f2f41c6118ce790d4753",
+      "qc_sha256": "26133fb2626aeb541e01fb6728d75819ffdbd4d7fcc7afb12fef7c811106fcd1"
+    }
+  },
+  "script_sha256": "78c43b46b56e07f9772883b93a9d168522ed6a01598aeb5751e34efb1d907c55",
+  "output_sha256": "4f3305d6774e268ab7db51f2da26c760597a0e6c04d7aa49b2488c93049e391c",
+  "training_eligible": 0,
+  "applied_changes": 0
+}

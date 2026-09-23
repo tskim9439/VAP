@@ -1,0 +1,42 @@
+{
+  "complete": true,
+  "evidence": {
+    "recipe": "nikl-explicit-session-48000-v1",
+    "sessions": [
+      "SDRW2200000598",
+      "SDRW2200000635"
+    ],
+    "human_sha256": "4fa57def437c7c09413b7f647eef139b824325bd56a80ac5f026b8ff8135bbea",
+    "probe_sha256": "c73d615d00e6a19d5197568eb2f8d905acbead988907e98c6467786002014bc9",
+    "candidate_sha256": "9754ab16ff68a48cd7a2dde0206d74e47578186016fe2d35a56cd0a323c9679f",
+    "annotation_hashes": {
+      "/soundai/DB/raw/nikl/NIKL_DIALOGUE_2022_v1.0_JSON/NIKL_DIALOGUE_2022_v1.0/SDRW2200000598.json": "0af69b0e4fcd3190dea8a5903ad5258cbaa96bddab1443e6a2bbe3145e3b5857",
+      "/soundai/DB/raw/nikl/NIKL_DIALOGUE_2022_v1.0_JSON/NIKL_DIALOGUE_2022_v1.0/SDRW2200000635.json": "d83e41c9a0f472b815c002f76c7bd985179f959fe8d1861394eebefe30ba5981"
+    },
+    "script_sha256": "708d564e8527f178de328ed8c2d2825922fdaa30569780272f584ae83a14c5c0",
+    "decode_sha256": "6b6a5b45454cd0e4429f9956528b68147c8bdb965acfd1fdde06050714d640ad",
+    "soxr_version": "1.1.0",
+    "training_eligible": false
+  },
+  "evidence_sha256": "e2a1557985a53636feb970e50bd47c552fbf927bb12ef9493c870966fe1a0dd9",
+  "counts": {
+    "CONSISTENT_WITH_REVIEWED_48K_SESSION": 681
+  },
+  "per_session": {
+    "SDRW2200000598": {
+      "CONSISTENT_WITH_REVIEWED_48K_SESSION": 347
+    },
+    "SDRW2200000635": {
+      "CONSISTENT_WITH_REVIEWED_48K_SESSION": 334
+    }
+  },
+  "unannotated_files": {
+    "SDRW2200000598": [],
+    "SDRW2200000635": []
+  },
+  "existing_candidates": 625,
+  "repaired_rows": 625,
+  "training_eligible": 0,
+  "repaired_sha256": "b169a726238df2e13f77597cc64c674aa1c8c1f1bf9621981fa6d56d73c249c1",
+  "original_manifest_unchanged": true
+}

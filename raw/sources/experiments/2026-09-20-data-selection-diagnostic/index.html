@@ -1,0 +1,655 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>후속 원인 진단</title><style>body{max-width:980px;margin:24px auto;font-family:system-ui;padding:16px}article{border:1px solid #aaa;border-radius:8px;padding:18px;margin:22px 0}audio,textarea{width:100%}textarea{height:60px;margin:8px 0}pre{white-space:pre-wrap;word-break:break-all}button{padding:12px}</style><h1>후속 원인 진단: 8개 사례</h1><p>원본·전사는 변경하지 않았습니다. 먼저 후보 문장을 보지 않고 듣고, 이후 근거를 펼쳐 주세요. 증폭 사본은 진단용입니다. 다른 Headset은 다른 화자/누설음을 포함할 수 있습니다. VoxPopuli는 배포 crop이며 원래 문맥 복원이 아닙니다. 표시 선호는 실제 단어 정정과 구분해 메모해 주세요. 기존 실패 판정은 자동 해제하지 않습니다.</p><button onclick="download()">진단 JSON 저장</button><p>입력은 새로고침하면 사라집니다. 저장 후 파일을 전달해 주세요.</p><article data-key="60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad"><h2>aihub-bc-train / vr_m_001_370_049_0348</h2><p>기존 원음 그대로 · 0.293s</p><audio controls preload="none" src="audio/broadcast-original.wav"></audio><p>먼저 실제 들리는 내용을 적어 주세요. 문맥에서 대상 구간은 AMI의 경우 2.000초부터입니다.</p><textarea class="heard" placeholder="들은 내용 / 들리지 않음 / 판단 불가"></textarea><details><summary>기존 타깃·교사·진단 근거 보기</summary><pre>{
+  &quot;key&quot;: &quot;60fdfbb81765fde57dcc8527398104015db2231308959532a6baf1b62a3d4bad&quot;,
+  &quot;source&quot;: &quot;aihub-bc-train&quot;,
+  &quot;utt_id&quot;: &quot;vr_m_001_370_049_0348&quot;,
+  &quot;target&quot;: &quot;네 네 네&quot;,
+  &quot;raw_text&quot;: &quot;네.&quot;,
+  &quot;human&quot;: {
+    &quot;binding&quot;: &quot;17be2a6bb2809244cccdaa395bf19a05c5d19736220d696680db2159d3c41b84&quot;,
+    &quot;waveform_sha256&quot;: &quot;51a768b05313472daca190287b9152093fc24648f9b018731e5798073a703b8e&quot;,
+    &quot;review_sha256&quot;: &quot;d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac&quot;,
+    &quot;manifest_sha256&quot;: &quot;8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35&quot;,
+    &quot;reviewed_at&quot;: &quot;2026-09-19T14:28:23.414Z&quot;,
+    &quot;labels&quot;: {
+      &quot;text&quot;: &quot;fail&quot;,
+      &quot;timing&quot;: &quot;pass&quot;,
+      &quot;speaker&quot;: &quot;pass&quot;,
+      &quot;turn&quot;: &quot;unreviewed&quot;
+    },
+    &quot;note&quot;: &quot;&#x27;네 네&#x27; 로 들리고, 그냥 &#x27;네&#x27; 도 상관 없어 보임&quot;,
+    &quot;training_eligible&quot;: false
+  },
+  &quot;evidence&quot;: {
+    &quot;labels&quot;: [
+      {
+        &quot;zip&quot;: &quot;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/02.라벨링데이터/TL_한-러_음성전사_예능오락.zip&quot;,
+        &quot;member&quot;: &quot;/vr_m_001_370_049_0348.json&quot;,
+        &quot;json_sha256&quot;: &quot;187953863421202e9a08a0977ba6c38f5fa94f1cebc3dc3cf70b9b706d4ebfb6&quot;,
+        &quot;pron&quot;: &quot;네, 네, 네.&quot;,
+        &quot;spell&quot;: &quot;네.&quot;,
+        &quot;work&quot;: &quot;(네, 네, 네)/(네). ~~&quot;,
+        &quot;reproduced_target&quot;: &quot;네 네 네&quot;
+      },
+      {
+        &quot;zip&quot;: &quot;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/02.라벨링데이터/TL_한-스_음성전사_예능오락.zip&quot;,
+        &quot;member&quot;: &quot;/vr_m_001_370_049_0348.json&quot;,
+        &quot;json_sha256&quot;: &quot;187953863421202e9a08a0977ba6c38f5fa94f1cebc3dc3cf70b9b706d4ebfb6&quot;,
+        &quot;pron&quot;: &quot;네, 네, 네.&quot;,
+        &quot;spell&quot;: &quot;네.&quot;,
+        &quot;work&quot;: &quot;(네, 네, 네)/(네). ~~&quot;,
+        &quot;reproduced_target&quot;: &quot;네 네 네&quot;
+      },
+      {
+        &quot;zip&quot;: &quot;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/02.라벨링데이터/TL_한-영(미국)_음성전사_예능오락.zip&quot;,
+        &quot;member&quot;: &quot;/vr_m_001_370_049_0348.json&quot;,
+        &quot;json_sha256&quot;: &quot;187953863421202e9a08a0977ba6c38f5fa94f1cebc3dc3cf70b9b706d4ebfb6&quot;,
+        &quot;pron&quot;: &quot;네, 네, 네.&quot;,
+        &quot;spell&quot;: &quot;네.&quot;,
+        &quot;work&quot;: &quot;(네, 네, 네)/(네). ~~&quot;,
+        &quot;reproduced_target&quot;: &quot;네 네 네&quot;
+      }
+    ],
+    &quot;audio_variants&quot;: [
+      {
+        &quot;zip&quot;: &quot;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_예능오락.zip&quot;,
+        &quot;member&quot;: &quot;/vr_m_001_370_049_0348.wav&quot;,
+        &quot;bytes_sha256&quot;: &quot;54e97828725f48e419936058bd70b3fae7e9c9c9c7b9cc258128531fdd176a73&quot;,
+        &quot;native_waveform_sha256&quot;: &quot;4b8a54a0bfe94fbdb01542ade1855813f3bda2fd9f918666d9425c35717fd06d&quot;,
+        &quot;sr&quot;: 48000,
+        &quot;channels&quot;: 2,
+        &quot;frames&quot;: 14064
+      },
+      {
+        &quot;zip&quot;: &quot;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-영(미국)_한국어음성_예능오락.zip&quot;,
+        &quot;member&quot;: &quot;/vr_m_001_370_049_0348.wav&quot;,
+        &quot;bytes_sha256&quot;: &quot;54e97828725f48e419936058bd70b3fae7e9c9c9c7b9cc258128531fdd176a73&quot;,
+        &quot;native_waveform_sha256&quot;: &quot;4b8a54a0bfe94fbdb01542ade1855813f3bda2fd9f918666d9425c35717fd06d&quot;,
+        &quot;sr&quot;: 48000,
+        &quot;channels&quot;: 2,
+        &quot;frames&quot;: 14064
+      }
+    ],
+    &quot;scanned_label_zips&quot;: 21,
+    &quot;scanned_audio_zips&quot;: 14,
+    &quot;manifest_matches&quot;: [
+      {
+        &quot;parent_id&quot;: &quot;ahbc-train-vr_m_001_370_049_0348&quot;,
+        &quot;segment&quot;: {
+          &quot;utt_id&quot;: &quot;vr_m_001_370_049_0348&quot;,
+          &quot;path&quot;: &quot;/soundai/DB/raw/aihub/031.방송콘텐츠 한국어-영어 통·번역 음성 데이터/01-1.정식개방데이터/Training/01.원천데이터/TS_한-러_한국어음성_예능오락.zip::vr_m_001_370_049_0348.wav&quot;,
+          &quot;silence_before_s&quot;: 0.639,
+          &quot;offset_s&quot;: 0.639,
+          &quot;dur_s&quot;: 1.758,
+          &quot;text&quot;: &quot;네 네 네&quot;,
+          &quot;lexical_text&quot;: &quot;네 네 네&quot;,
+          &quot;raw_text&quot;: &quot;네.&quot;,
+          &quot;display_source&quot;: &quot;none&quot;
+        }
+      }
+    ],
+    &quot;current_tn&quot;: {
+      &quot;textnorm_version&quot;: &quot;asr-tn-v1.3.0&quot;,
+      &quot;textnorm_sha256&quot;: &quot;cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5&quot;,
+      &quot;numeric_backend_version&quot;: &quot;num2words 0.5.14&quot;
+    },
+    &quot;manifest_stats&quot;: {
+      &quot;name&quot;: &quot;aihub-bc-train&quot;,
+      &quot;corpus&quot;: &quot;aihubbc&quot;,
+      &quot;rows&quot;: 448867,
+      &quot;seed&quot;: 0,
+      &quot;target_s&quot;: 25.0,
+      &quot;textnorm_version&quot;: &quot;asr-tn-v1.3.0&quot;,
+      &quot;fingerprint&quot;: {
+        &quot;textnorm_version&quot;: &quot;asr-tn-v1.3.0&quot;,
+        &quot;textnorm_sha256&quot;: &quot;cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5&quot;,
+        &quot;numeric_backend_version&quot;: &quot;num2words 0.5.14&quot;,
+        &quot;tokenizer_json_sha256&quot;: &quot;66915f2a66d1e6688e8672cd3df1c74c23c658689fab9798706d62a4a490f447&quot;,
+        &quot;source_transcript_sha256&quot;: &quot;e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855&quot;,
+        &quot;manifest_sha256&quot;: &quot;92241f51023976aeda3b795440995a2f6e64820770a2fbd7866e0be06b323c8f&quot;,
+        &quot;quarantined_ids_sha256&quot;: &quot;c4172a246784928368bd03ec8840f1ab11d77c091881817ea27502768ad05ddd&quot;,
+        &quot;created_from_git_commit&quot;: null
+      },
+      &quot;quarantined&quot;: 3132,
+      &quot;display_source_counts&quot;: {
+        &quot;none&quot;: 448867
+      },
+      &quot;text_fields&quot;: {
+        &quot;text&quot;: &quot;lexical_text 와 동일(하위 호환)&quot;,
+        &quot;lexical_text&quot;: &quot;asr-tn-v1.0.0 학습·정렬 타깃&quot;,
+        &quot;raw_text&quot;: &quot;원문 보존&quot;,
+        &quot;display_source&quot;: &quot;none = display label 없음&quot;
+      },
+      &quot;subsets&quot;: {
+        &quot;train&quot;: {
+          &quot;utts&quot;: 448867,
+          &quot;utt_hours&quot;: 578.18,
+          &quot;rows&quot;: 451999,
+          &quot;genre_연예공연&quot;: 94500,
+          &quot;kept&quot;: 448867,
+          &quot;quarantined&quot;: 3132,
+          &quot;genre_영화드라마&quot;: 35902,
+          &quot;genre_예능오락&quot;: 120279,
+          &quot;genre_인터뷰&quot;: 62140,
+          &quot;genre_교양&quot;: 77867,
+          &quot;genre_다큐&quot;: 61311,
+          &quot;streams&quot;: 448867,
+          &quot;stream_hours&quot;: 740.24,
+          &quot;stream_len_pct&quot;: {
+            &quot;5&quot;: 2.19,
+            &quot;50&quot;: 5.41,
+            &quot;95&quot;: 11.18
+          },
+          &quot;utts_per_stream_pct&quot;: {
+            &quot;5&quot;: 1.0,
+            &quot;50&quot;: 1.0,
+            &quot;95&quot;: 1.0
+          }
+        }
+      }
+    },
+    &quot;all_targets_match&quot;: true,
+    &quot;all_spell_match&quot;: true,
+    &quot;audio_variant_hashes&quot;: 1,
+    &quot;training_eligible&quot;: false
+  },
+  &quot;teachers&quot;: {
+    &quot;qwen&quot;: &quot;네네.&quot;,
+    &quot;whisper-v2&quot;: &quot; 네네&quot;,
+    &quot;whisper-v3&quot;: &quot; 네.&quot;
+  }
+}</pre></details><select><option value="unreviewed">미검수</option><option value="resolved">문제 원인/정정문 확인</option><option value="uncertain">판단 보류</option></select><textarea class="note" placeholder="원인, 정확한 정정문, 채널·위치에 대한 메모"></textarea></article><article data-key="4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7"><h2>ami / A_00018</h2><p>기존 crop 원음 · 0.732s</p><audio controls preload="none" src="audio/ami-original.wav"></audio><p>진단용 증폭 crop · 0.732s</p><audio controls preload="none" src="audio/ami-gain.wav"></audio><p>앞뒤 2초 문맥: agent A, Headset-0 · 4.732s</p><audio controls preload="none" src="audio/ami-context-A.wav"></audio><p>앞뒤 2초 문맥: agent B, Headset-1 · 4.732s</p><audio controls preload="none" src="audio/ami-context-B.wav"></audio><p>앞뒤 2초 문맥: agent C, Headset-2 · 4.732s</p><audio controls preload="none" src="audio/ami-context-C.wav"></audio><p>앞뒤 2초 문맥: agent D, Headset-3 · 4.732s</p><audio controls preload="none" src="audio/ami-context-D.wav"></audio><p>먼저 실제 들리는 내용을 적어 주세요. 문맥에서 대상 구간은 AMI의 경우 2.000초부터입니다.</p><textarea class="heard" placeholder="들은 내용 / 들리지 않음 / 판단 불가"></textarea><details><summary>기존 타깃·교사·진단 근거 보기</summary><pre>{
+  &quot;key&quot;: &quot;4f5518ca7c04e22d64c82e7531ea64e7c3cb9d22349541c271bb95a8b933b8a7&quot;,
+  &quot;source&quot;: &quot;ami&quot;,
+  &quot;utt_id&quot;: &quot;A_00018&quot;,
+  &quot;target&quot;: &quot;right&quot;,
+  &quot;raw_text&quot;: &quot;Right&quot;,
+  &quot;human&quot;: {
+    &quot;binding&quot;: &quot;02f38d529fce7909dcd706c9c983db9d241aaab0b992016382011a318bcb5c5d&quot;,
+    &quot;waveform_sha256&quot;: &quot;691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29&quot;,
+    &quot;review_sha256&quot;: &quot;d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac&quot;,
+    &quot;manifest_sha256&quot;: &quot;8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35&quot;,
+    &quot;reviewed_at&quot;: &quot;2026-09-19T14:28:23.414Z&quot;,
+    &quot;labels&quot;: {
+      &quot;text&quot;: &quot;fail&quot;,
+      &quot;timing&quot;: &quot;fail&quot;,
+      &quot;speaker&quot;: &quot;fail&quot;,
+      &quot;turn&quot;: &quot;unreviewed&quot;
+    },
+    &quot;note&quot;: &quot;음원에서 아무것도 들리지 않음&quot;,
+    &quot;training_eligible&quot;: false
+  },
+  &quot;evidence&quot;: {
+    &quot;agents&quot;: {
+      &quot;A&quot;: 0,
+      &quot;B&quot;: 1,
+      &quot;C&quot;: 2,
+      &quot;D&quot;: 3
+    },
+    &quot;segment&quot;: {
+      &quot;{http://nite.sourceforge.net/}id&quot;: &quot;ES2010d.sync.39&quot;,
+      &quot;channel&quot;: &quot;0&quot;,
+      &quot;transcriber_start&quot;: &quot;234.102&quot;,
+      &quot;transcriber_end&quot;: &quot;234.834&quot;
+    },
+    &quot;nearby_words&quot;: [
+      {
+        &quot;text&quot;: &quot;Right&quot;,
+        &quot;{http://nite.sourceforge.net/}id&quot;: &quot;ES2010d.A.words194&quot;,
+        &quot;starttime&quot;: &quot;234.28&quot;,
+        &quot;endtime&quot;: &quot;234.64&quot;
+      },
+      {
+        &quot;text&quot;: &quot;.&quot;,
+        &quot;{http://nite.sourceforge.net/}id&quot;: &quot;ES2010d.A.words195&quot;,
+        &quot;starttime&quot;: &quot;234.64&quot;,
+        &quot;endtime&quot;: &quot;234.64&quot;,
+        &quot;punc&quot;: &quot;true&quot;
+      }
+    ],
+    &quot;channel_mapping_matches&quot;: true,
+    &quot;crop_qc_hash_matches&quot;: true,
+    &quot;annotation_zip_sha256&quot;: &quot;b56e5babb2496b8795deeeda7e71178d7fbc9963f94276cf2a3f4b56ebbc9f9d&quot;,
+    &quot;meetings_xml_sha256&quot;: &quot;8ab6cdcf03ed863e839418f31c7380392397a2eed892d73b9bc1b438c7ec520a&quot;,
+    &quot;segments_sha256&quot;: &quot;70f5dd686e9a7cca280cdba85d63ebdc920e9fb37013e13a8726b4647d2dd160&quot;,
+    &quot;words_sha256&quot;: &quot;db7383e53c2cfeea647126f88bf7a856da951c10593d3ca81b2d7fe4d88136be&quot;,
+    &quot;files&quot;: [
+      {
+        &quot;path&quot;: &quot;audio/ami-original.wav&quot;,
+        &quot;label&quot;: &quot;기존 crop 원음&quot;,
+        &quot;duration_s&quot;: 0.732,
+        &quot;rms&quot;: 0.0033307996012099553,
+        &quot;peak&quot;: 0.02215576171875,
+        &quot;waveform_sha256&quot;: &quot;691e73421b818b36481d0d61512a67dcf133bf68ed65bdc931e062d7f1486c29&quot;
+      },
+      {
+        &quot;path&quot;: &quot;audio/ami-gain.wav&quot;,
+        &quot;label&quot;: &quot;진단용 증폭 crop&quot;,
+        &quot;duration_s&quot;: 0.732,
+        &quot;rms&quot;: 0.013260152067200257,
+        &quot;peak&quot;: 0.08820367604494095,
+        &quot;waveform_sha256&quot;: &quot;45677b34be059d0787a6452678e252ff058627f7de6d68bbeb65b04e0bfb8050&quot;,
+        &quot;gain_db&quot;: 12.0
+      },
+      {
+        &quot;path&quot;: &quot;audio/ami-context-A.wav&quot;,
+        &quot;label&quot;: &quot;앞뒤 2초 문맥: agent A, Headset-0&quot;,
+        &quot;duration_s&quot;: 4.732,
+        &quot;rms&quot;: 0.0013280553948158017,
+        &quot;peak&quot;: 0.02215576171875,
+        &quot;waveform_sha256&quot;: &quot;dcf8105b16a74292871ac569cbcb3a09e05032fd9f6bce072f2d15b84db4d853&quot;,
+        &quot;source_path&quot;: &quot;/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-0.wav&quot;,
+        &quot;source_start_s&quot;: 232.102,
+        &quot;focus_start_s&quot;: 2.0,
+        &quot;focus_end_s&quot;: 2.7319999999999993
+      },
+      {
+        &quot;path&quot;: &quot;audio/ami-context-B.wav&quot;,
+        &quot;label&quot;: &quot;앞뒤 2초 문맥: agent B, Headset-1&quot;,
+        &quot;duration_s&quot;: 4.732,
+        &quot;rms&quot;: 0.00043770730711206583,
+        &quot;peak&quot;: 0.003021240234375,
+        &quot;waveform_sha256&quot;: &quot;8c1369d5dddace159e7cadd253feb1abc682c6805321e00b05c32a75e305143f&quot;,
+        &quot;source_path&quot;: &quot;/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-1.wav&quot;,
+        &quot;source_start_s&quot;: 232.102,
+        &quot;focus_start_s&quot;: 2.0,
+        &quot;focus_end_s&quot;: 2.7319999999999993
+      },
+      {
+        &quot;path&quot;: &quot;audio/ami-context-C.wav&quot;,
+        &quot;label&quot;: &quot;앞뒤 2초 문맥: agent C, Headset-2&quot;,
+        &quot;duration_s&quot;: 4.732,
+        &quot;rms&quot;: 0.00420671931409371,
+        &quot;peak&quot;: 0.0587158203125,
+        &quot;waveform_sha256&quot;: &quot;b6669c020af72bed6880708e16d334b95dca550cb7caddb71dbd24de43320a79&quot;,
+        &quot;source_path&quot;: &quot;/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-2.wav&quot;,
+        &quot;source_start_s&quot;: 232.102,
+        &quot;focus_start_s&quot;: 2.0,
+        &quot;focus_end_s&quot;: 2.7319999999999993
+      },
+      {
+        &quot;path&quot;: &quot;audio/ami-context-D.wav&quot;,
+        &quot;label&quot;: &quot;앞뒤 2초 문맥: agent D, Headset-3&quot;,
+        &quot;duration_s&quot;: 4.732,
+        &quot;rms&quot;: 0.0059093600338947965,
+        &quot;peak&quot;: 0.067657470703125,
+        &quot;waveform_sha256&quot;: &quot;6db5dc70be98c44bb3cd15c0372e4829844458cf718762552dde765d48263123&quot;,
+        &quot;source_path&quot;: &quot;/soundai/DB/raw/ami/ES2010d/ES2010d.Headset-3.wav&quot;,
+        &quot;source_start_s&quot;: 232.102,
+        &quot;focus_start_s&quot;: 2.0,
+        &quot;focus_end_s&quot;: 2.7319999999999993
+      }
+    ],
+    &quot;training_eligible&quot;: false
+  },
+  &quot;teachers&quot;: {
+    &quot;qwen&quot;: &quot;Right.&quot;,
+    &quot;whisper-v2&quot;: &quot; Right.&quot;,
+    &quot;whisper-v3&quot;: &quot; Right.&quot;
+  }
+}</pre></details><select><option value="unreviewed">미검수</option><option value="resolved">문제 원인/정정문 확인</option><option value="uncertain">판단 보류</option></select><textarea class="note" placeholder="원인, 정확한 정정문, 채널·위치에 대한 메모"></textarea></article><article data-key="1b83be4a89e148263143d2124b315371a2951b33bf599e01cef5eef8a053f694"><h2>voxpopuli-train / 20130611-0900-PLENARY-5-en_20130611-11:10:26_5</h2><p>배포 crop 원음 · 0.760s</p><audio controls preload="none" src="audio/vox-1b83be4a89e1.wav"></audio><p>먼저 실제 들리는 내용을 적어 주세요. 문맥에서 대상 구간은 AMI의 경우 2.000초부터입니다.</p><textarea class="heard" placeholder="들은 내용 / 들리지 않음 / 판단 불가"></textarea><details><summary>기존 타깃·교사·진단 근거 보기</summary><pre>{
+  &quot;key&quot;: &quot;1b83be4a89e148263143d2124b315371a2951b33bf599e01cef5eef8a053f694&quot;,
+  &quot;source&quot;: &quot;voxpopuli-train&quot;,
+  &quot;utt_id&quot;: &quot;20130611-0900-PLENARY-5-en_20130611-11:10:26_5&quot;,
+  &quot;target&quot;: &quot;getting so much&quot;,
+  &quot;raw_text&quot;: &quot;getting so much.&quot;,
+  &quot;human&quot;: {
+    &quot;binding&quot;: &quot;e79e2d77e1c53aaec4c0c12fdccaf6ddf986c2c0777502855c84d60796119948&quot;,
+    &quot;waveform_sha256&quot;: &quot;ecb450380490e7862e9ee6d68b6c7f070c76b30b7b4e7912241b1f3e30b27d63&quot;,
+    &quot;review_sha256&quot;: &quot;d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac&quot;,
+    &quot;manifest_sha256&quot;: &quot;8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35&quot;,
+    &quot;reviewed_at&quot;: &quot;2026-09-19T14:28:23.414Z&quot;,
+    &quot;labels&quot;: {
+      &quot;text&quot;: &quot;fail&quot;,
+      &quot;timing&quot;: &quot;fail&quot;,
+      &quot;speaker&quot;: &quot;fail&quot;,
+      &quot;turn&quot;: &quot;unreviewed&quot;
+    },
+    &quot;note&quot;: &quot;&#x27;so much&#x27; 만 들림&quot;,
+    &quot;training_eligible&quot;: false
+  },
+  &quot;evidence&quot;: {
+    &quot;annotation&quot;: {
+      &quot;session_id&quot;: &quot;20130611-0900-PLENARY-5&quot;,
+      &quot;id_&quot;: &quot;en_20130611-11:10:26_5&quot;,
+      &quot;original_text&quot;: &quot;getting so much.&quot;,
+      &quot;normed_text&quot;: &quot;getting so much.&quot;,
+      &quot;start_time&quot;: &quot;4144.1243&quot;,
+      &quot;end_time&quot;: &quot;4145.0842&quot;,
+      &quot;vad&quot;: &quot;[[4144.1243, 4144.884175]]&quot;,
+      &quot;speaker_id&quot;: &quot;4531&quot;,
+      &quot;split&quot;: &quot;train&quot;
+    },
+    &quot;vad_segments&quot;: [
+      [
+        4144.1243,
+        4144.884175
+      ]
+    ],
+    &quot;expected_frames&quot;: 12158,
+    &quot;actual_frames&quot;: 12158,
+    &quot;annotation_sha256&quot;: &quot;0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42&quot;,
+    &quot;same_lexical&quot;: {
+      &quot;qwen&quot;: false,
+      &quot;whisper-v2&quot;: false,
+      &quot;whisper-v3&quot;: false
+    },
+    &quot;normalized_ref&quot;: &quot;getting so much&quot;,
+    &quot;normalized_teachers&quot;: {
+      &quot;qwen&quot;: &quot;so much&quot;,
+      &quot;whisper-v2&quot;: &quot;so much&quot;,
+      &quot;whisper-v3&quot;: &quot;so much&quot;
+    },
+    &quot;original_session_candidates&quot;: [],
+    &quot;training_eligible&quot;: false
+  },
+  &quot;teachers&quot;: {
+    &quot;qwen&quot;: &quot;So much.&quot;,
+    &quot;whisper-v2&quot;: &quot; so much.&quot;,
+    &quot;whisper-v3&quot;: &quot; so much&quot;
+  }
+}</pre></details><select><option value="unreviewed">미검수</option><option value="resolved">문제 원인/정정문 확인</option><option value="uncertain">판단 보류</option></select><textarea class="note" placeholder="원인, 정확한 정정문, 채널·위치에 대한 메모"></textarea></article><article data-key="d26cb370b1c82f6b2d8f4a43e61913d1d041acd18496bc17d2fd88cf9b643b31"><h2>voxpopuli-train / 20110511-0900-PLENARY-2-en_20110511-10:15:44_19</h2><p>배포 crop 원음 · 1.460s</p><audio controls preload="none" src="audio/vox-d26cb370b1c8.wav"></audio><p>먼저 실제 들리는 내용을 적어 주세요. 문맥에서 대상 구간은 AMI의 경우 2.000초부터입니다.</p><textarea class="heard" placeholder="들은 내용 / 들리지 않음 / 판단 불가"></textarea><details><summary>기존 타깃·교사·진단 근거 보기</summary><pre>{
+  &quot;key&quot;: &quot;d26cb370b1c82f6b2d8f4a43e61913d1d041acd18496bc17d2fd88cf9b643b31&quot;,
+  &quot;source&quot;: &quot;voxpopuli-train&quot;,
+  &quot;utt_id&quot;: &quot;20110511-0900-PLENARY-2-en_20110511-10:15:44_19&quot;,
+  &quot;target&quot;: &quot;i understand that too&quot;,
+  &quot;raw_text&quot;: &quot;I understand that too.&quot;,
+  &quot;human&quot;: {
+    &quot;binding&quot;: &quot;ad70e5f4162dc33f336f6f971b1f9b524ca5a83a76068b9fb8f781ecd0ae0c87&quot;,
+    &quot;waveform_sha256&quot;: &quot;74059d49f8c96700194b48080d88205bbf0b937596817ffc178b732f6ef2a28f&quot;,
+    &quot;review_sha256&quot;: &quot;d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac&quot;,
+    &quot;manifest_sha256&quot;: &quot;8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35&quot;,
+    &quot;reviewed_at&quot;: &quot;2026-09-19T14:28:23.414Z&quot;,
+    &quot;labels&quot;: {
+      &quot;text&quot;: &quot;fail&quot;,
+      &quot;timing&quot;: &quot;fail&quot;,
+      &quot;speaker&quot;: &quot;pass&quot;,
+      &quot;turn&quot;: &quot;unreviewed&quot;
+    },
+    &quot;note&quot;: &quot;처음에 &#x27;and&#x27; 가 들림&quot;,
+    &quot;training_eligible&quot;: false
+  },
+  &quot;evidence&quot;: {
+    &quot;annotation&quot;: {
+      &quot;session_id&quot;: &quot;20110511-0900-PLENARY-2&quot;,
+      &quot;id_&quot;: &quot;en_20110511-10:15:44_19&quot;,
+      &quot;original_text&quot;: &quot;I understand that too.&quot;,
+      &quot;normed_text&quot;: &quot;i understand that too.&quot;,
+      &quot;start_time&quot;: &quot;4241.148&quot;,
+      &quot;end_time&quot;: &quot;4242.808&quot;,
+      &quot;vad&quot;: &quot;[[4241.148, 4242.6079375]]&quot;,
+      &quot;speaker_id&quot;: &quot;94301&quot;,
+      &quot;split&quot;: &quot;train&quot;
+    },
+    &quot;vad_segments&quot;: [
+      [
+        4241.148,
+        4242.6079375
+      ]
+    ],
+    &quot;expected_frames&quot;: 23359,
+    &quot;actual_frames&quot;: 23359,
+    &quot;annotation_sha256&quot;: &quot;0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42&quot;,
+    &quot;same_lexical&quot;: {
+      &quot;qwen&quot;: true,
+      &quot;whisper-v2&quot;: false,
+      &quot;whisper-v3&quot;: false
+    },
+    &quot;normalized_ref&quot;: &quot;i understand that too&quot;,
+    &quot;normalized_teachers&quot;: {
+      &quot;qwen&quot;: &quot;i understand that too&quot;,
+      &quot;whisper-v2&quot;: &quot;and i understand that too&quot;,
+      &quot;whisper-v3&quot;: &quot;and i understand that too&quot;
+    },
+    &quot;original_session_candidates&quot;: [],
+    &quot;training_eligible&quot;: false
+  },
+  &quot;teachers&quot;: {
+    &quot;qwen&quot;: &quot;I understand that too.&quot;,
+    &quot;whisper-v2&quot;: &quot; and I understand that too.&quot;,
+    &quot;whisper-v3&quot;: &quot; And I understand that too.&quot;
+  }
+}</pre></details><select><option value="unreviewed">미검수</option><option value="resolved">문제 원인/정정문 확인</option><option value="uncertain">판단 보류</option></select><textarea class="note" placeholder="원인, 정확한 정정문, 채널·위치에 대한 메모"></textarea></article><article data-key="6950334887131b5433325783b492798642b2e0a73ce484a2644efbeffd1eccd6"><h2>voxpopuli-train / 20090423-0900-PLENARY-3-en_20090423-09:23:18_9</h2><p>배포 crop 원음 · 1.780s</p><audio controls preload="none" src="audio/vox-695033488713.wav"></audio><p>먼저 실제 들리는 내용을 적어 주세요. 문맥에서 대상 구간은 AMI의 경우 2.000초부터입니다.</p><textarea class="heard" placeholder="들은 내용 / 들리지 않음 / 판단 불가"></textarea><details><summary>기존 타깃·교사·진단 근거 보기</summary><pre>{
+  &quot;key&quot;: &quot;6950334887131b5433325783b492798642b2e0a73ce484a2644efbeffd1eccd6&quot;,
+  &quot;source&quot;: &quot;voxpopuli-train&quot;,
+  &quot;utt_id&quot;: &quot;20090423-0900-PLENARY-3-en_20090423-09:23:18_9&quot;,
+  &quot;target&quot;: &quot;let us keep this in perspective&quot;,
+  &quot;raw_text&quot;: &quot;Let us keep this in perspective.&quot;,
+  &quot;human&quot;: {
+    &quot;binding&quot;: &quot;bdb10503be40f47934ed33a954b6fd82b1529b034cb463021c58a5be6bb0e46c&quot;,
+    &quot;waveform_sha256&quot;: &quot;f9b12ee46e397d96bc1517f3ac8f5f99d91647b9de91dcc8b65d710e067cd676&quot;,
+    &quot;review_sha256&quot;: &quot;d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac&quot;,
+    &quot;manifest_sha256&quot;: &quot;8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35&quot;,
+    &quot;reviewed_at&quot;: &quot;2026-09-19T14:28:23.414Z&quot;,
+    &quot;labels&quot;: {
+      &quot;text&quot;: &quot;fail&quot;,
+      &quot;timing&quot;: &quot;fail&quot;,
+      &quot;speaker&quot;: &quot;fail&quot;,
+      &quot;turn&quot;: &quot;unreviewed&quot;
+    },
+    &quot;note&quot;: &quot;들리기에는 &#x27;Let&#x27;s&#x27; 로 들림&quot;,
+    &quot;training_eligible&quot;: false
+  },
+  &quot;evidence&quot;: {
+    &quot;annotation&quot;: {
+      &quot;session_id&quot;: &quot;20090423-0900-PLENARY-3&quot;,
+      &quot;id_&quot;: &quot;en_20090423-09:23:18_9&quot;,
+      &quot;original_text&quot;: &quot;Let us keep this in perspective.&quot;,
+      &quot;normed_text&quot;: &quot;let us keep this in perspective.&quot;,
+      &quot;start_time&quot;: &quot;1392.8388&quot;,
+      &quot;end_time&quot;: &quot;1394.8187&quot;,
+      &quot;vad&quot;: &quot;[[1392.8388, 1394.6186125000002]]&quot;,
+      &quot;speaker_id&quot;: &quot;4382&quot;,
+      &quot;split&quot;: &quot;train&quot;
+    },
+    &quot;vad_segments&quot;: [
+      [
+        1392.8388,
+        1394.6186125000002
+      ]
+    ],
+    &quot;expected_frames&quot;: 28477,
+    &quot;actual_frames&quot;: 28477,
+    &quot;annotation_sha256&quot;: &quot;0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42&quot;,
+    &quot;same_lexical&quot;: {
+      &quot;qwen&quot;: false,
+      &quot;whisper-v2&quot;: false,
+      &quot;whisper-v3&quot;: false
+    },
+    &quot;normalized_ref&quot;: &quot;let us keep this in perspective&quot;,
+    &quot;normalized_teachers&quot;: {
+      &quot;qwen&quot;: &quot;let&#x27;s keep this in perspective&quot;,
+      &quot;whisper-v2&quot;: &quot;let&#x27;s keep this in perspective&quot;,
+      &quot;whisper-v3&quot;: &quot;let&#x27;s keep this in perspective&quot;
+    },
+    &quot;original_session_candidates&quot;: [],
+    &quot;training_eligible&quot;: false
+  },
+  &quot;teachers&quot;: {
+    &quot;qwen&quot;: &quot;Let&#x27;s keep this in perspective.&quot;,
+    &quot;whisper-v2&quot;: &quot; Let&#x27;s keep this in perspective.&quot;,
+    &quot;whisper-v3&quot;: &quot; Let&#x27;s keep this in perspective.&quot;
+  }
+}</pre></details><select><option value="unreviewed">미검수</option><option value="resolved">문제 원인/정정문 확인</option><option value="uncertain">판단 보류</option></select><textarea class="note" placeholder="원인, 정확한 정정문, 채널·위치에 대한 메모"></textarea></article><article data-key="fb7bec2b278afbda66c7b8aebc58c5d38d7d5edda1c53ef35b356e5045e4280d"><h2>voxpopuli-train / 20101006-0900-PLENARY-11-en_20101006-18:23:16_8</h2><p>배포 crop 원음 · 9.939s</p><audio controls preload="none" src="audio/vox-fb7bec2b278a.wav"></audio><p>먼저 실제 들리는 내용을 적어 주세요. 문맥에서 대상 구간은 AMI의 경우 2.000초부터입니다.</p><textarea class="heard" placeholder="들은 내용 / 들리지 않음 / 판단 불가"></textarea><details><summary>기존 타깃·교사·진단 근거 보기</summary><pre>{
+  &quot;key&quot;: &quot;fb7bec2b278afbda66c7b8aebc58c5d38d7d5edda1c53ef35b356e5045e4280d&quot;,
+  &quot;source&quot;: &quot;voxpopuli-train&quot;,
+  &quot;utt_id&quot;: &quot;20101006-0900-PLENARY-11-en_20101006-18:23:16_8&quot;,
+  &quot;target&quot;: &quot;that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from the ministers and commissioners who attend&quot;,
+  &quot;raw_text&quot;: &quot;That is the sense of urgency of the Nagoya Summit and that is the sense of urgency I expect from the ministers and commissioners who attend.&quot;,
+  &quot;human&quot;: {
+    &quot;binding&quot;: &quot;c4370748665e7e4697c4f0ba2725d518698a674dad215d2a2fd3e3ff12334023&quot;,
+    &quot;waveform_sha256&quot;: &quot;03eae6acc96ac4d7a8d9253015ee6b6a982b17a266179c5610ec48904454cfce&quot;,
+    &quot;review_sha256&quot;: &quot;d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac&quot;,
+    &quot;manifest_sha256&quot;: &quot;8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35&quot;,
+    &quot;reviewed_at&quot;: &quot;2026-09-19T14:28:23.414Z&quot;,
+    &quot;labels&quot;: {
+      &quot;text&quot;: &quot;fail&quot;,
+      &quot;timing&quot;: &quot;pass&quot;,
+      &quot;speaker&quot;: &quot;pass&quot;,
+      &quot;turn&quot;: &quot;unreviewed&quot;
+    },
+    &quot;note&quot;: &quot;**attending** ministers and commissioners 으로 ASR 모델의 결과가 맞음&quot;,
+    &quot;training_eligible&quot;: false
+  },
+  &quot;evidence&quot;: {
+    &quot;annotation&quot;: {
+      &quot;session_id&quot;: &quot;20101006-0900-PLENARY-11&quot;,
+      &quot;id_&quot;: &quot;en_20101006-18:23:16_8&quot;,
+      &quot;original_text&quot;: &quot;That is the sense of urgency of the Nagoya Summit and that is the sense of urgency I expect from the ministers and commissioners who attend.&quot;,
+      &quot;normed_text&quot;: &quot;that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from the ministers and commissioners who attend.&quot;,
+      &quot;start_time&quot;: &quot;1837.440019&quot;,
+      &quot;end_time&quot;: &quot;1847.5792999999999&quot;,
+      &quot;vad&quot;: &quot;[[1837.440019, 1847.379269]]&quot;,
+      &quot;speaker_id&quot;: &quot;96940&quot;,
+      &quot;split&quot;: &quot;train&quot;
+    },
+    &quot;vad_segments&quot;: [
+      [
+        1837.440019,
+        1847.379269
+      ]
+    ],
+    &quot;expected_frames&quot;: 159028,
+    &quot;actual_frames&quot;: 159028,
+    &quot;annotation_sha256&quot;: &quot;0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42&quot;,
+    &quot;same_lexical&quot;: {
+      &quot;qwen&quot;: false,
+      &quot;whisper-v2&quot;: false,
+      &quot;whisper-v3&quot;: false
+    },
+    &quot;normalized_ref&quot;: &quot;that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from the ministers and commissioners who attend&quot;,
+    &quot;normalized_teachers&quot;: {
+      &quot;qwen&quot;: &quot;that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from attending ministers and commissioners&quot;,
+      &quot;whisper-v2&quot;: &quot;that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from attending ministers and commissioners&quot;,
+      &quot;whisper-v3&quot;: &quot;that is the sense of urgency of the nagoya summit and that is the sense of urgency i expect from attending ministers and commissioners&quot;
+    },
+    &quot;original_session_candidates&quot;: [],
+    &quot;training_eligible&quot;: false
+  },
+  &quot;teachers&quot;: {
+    &quot;qwen&quot;: &quot;That is the sense of urgency of the Nagoya Summit, and that is the sense of urgency I expect from attending ministers and commissioners.&quot;,
+    &quot;whisper-v2&quot;: &quot; That is the sense of urgency of the Nagoya Summit. And that is the sense of urgency I expect from attending ministers and commissioners.&quot;,
+    &quot;whisper-v3&quot;: &quot; That is the sense of urgency of the Nagoya summit. And that is the sense of urgency I expect from attending ministers and commissioners.&quot;
+  }
+}</pre></details><select><option value="unreviewed">미검수</option><option value="resolved">문제 원인/정정문 확인</option><option value="uncertain">판단 보류</option></select><textarea class="note" placeholder="원인, 정확한 정정문, 채널·위치에 대한 메모"></textarea></article><article data-key="bf069539ab748e2df2cace535c41747e13f5dd98a4819602f0ba0a8b3fc3ae49"><h2>voxpopuli-train / 20180702-0900-PLENARY-en_20180702-19:51:21_7</h2><p>배포 crop 원음 · 16.379s</p><audio controls preload="none" src="audio/vox-bf069539ab74.wav"></audio><p>먼저 실제 들리는 내용을 적어 주세요. 문맥에서 대상 구간은 AMI의 경우 2.000초부터입니다.</p><textarea class="heard" placeholder="들은 내용 / 들리지 않음 / 판단 불가"></textarea><details><summary>기존 타깃·교사·진단 근거 보기</summary><pre>{
+  &quot;key&quot;: &quot;bf069539ab748e2df2cace535c41747e13f5dd98a4819602f0ba0a8b3fc3ae49&quot;,
+  &quot;source&quot;: &quot;voxpopuli-train&quot;,
+  &quot;utt_id&quot;: &quot;20180702-0900-PLENARY-en_20180702-19:51:21_7&quot;,
+  &quot;target&quot;: &quot;the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general&quot;,
+  &quot;raw_text&quot;: &quot;The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.&quot;,
+  &quot;human&quot;: {
+    &quot;binding&quot;: &quot;81abd5f374b847fa2c1d70599e90cf9f5dbd13c830449e6edc216453583f3cf8&quot;,
+    &quot;waveform_sha256&quot;: &quot;bbf33a6518c533d541a16251865619aaa67f57d531d14d60dc82e042da6b19b5&quot;,
+    &quot;review_sha256&quot;: &quot;d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac&quot;,
+    &quot;manifest_sha256&quot;: &quot;8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35&quot;,
+    &quot;reviewed_at&quot;: &quot;2026-09-19T14:28:23.414Z&quot;,
+    &quot;labels&quot;: {
+      &quot;text&quot;: &quot;fail&quot;,
+      &quot;timing&quot;: &quot;pass&quot;,
+      &quot;speaker&quot;: &quot;pass&quot;,
+      &quot;turn&quot;: &quot;unreviewed&quot;
+    },
+    &quot;note&quot;: &quot;ASR 모델의 결과가 명확하고 이 방식을 선호함&quot;,
+    &quot;training_eligible&quot;: false
+  },
+  &quot;evidence&quot;: {
+    &quot;annotation&quot;: {
+      &quot;session_id&quot;: &quot;20180702-0900-PLENARY&quot;,
+      &quot;id_&quot;: &quot;en_20180702-19:51:21_7&quot;,
+      &quot;original_text&quot;: &quot;The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.&quot;,
+      &quot;normed_text&quot;: &quot;the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general.&quot;,
+      &quot;start_time&quot;: &quot;10262.202099999999&quot;,
+      &quot;end_time&quot;: &quot;10285.116999999998&quot;,
+      &quot;vad&quot;: &quot;[[10262.202099999999, 10278.580974999999]]&quot;,
+      &quot;speaker_id&quot;: &quot;189391&quot;,
+      &quot;split&quot;: &quot;train&quot;
+    },
+    &quot;vad_segments&quot;: [
+      [
+        10262.202099999999,
+        10278.580974999999
+      ]
+    ],
+    &quot;expected_frames&quot;: 262062,
+    &quot;actual_frames&quot;: 262062,
+    &quot;annotation_sha256&quot;: &quot;0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42&quot;,
+    &quot;same_lexical&quot;: {
+      &quot;qwen&quot;: true,
+      &quot;whisper-v2&quot;: true,
+      &quot;whisper-v3&quot;: true
+    },
+    &quot;normalized_ref&quot;: &quot;the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general&quot;,
+    &quot;normalized_teachers&quot;: {
+      &quot;qwen&quot;: &quot;the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general&quot;,
+      &quot;whisper-v2&quot;: &quot;the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general&quot;,
+      &quot;whisper-v3&quot;: &quot;the ecr is committed to gender equality and the empowerment of women and girls through different means focusing on achieving protection for women and girls from physical and sexual violence as well as giving them opportunities in education employment and in society in general&quot;
+    },
+    &quot;original_session_candidates&quot;: [],
+    &quot;training_eligible&quot;: false
+  },
+  &quot;teachers&quot;: {
+    &quot;qwen&quot;: &quot;The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment, and in society in general.&quot;,
+    &quot;whisper-v2&quot;: &quot; The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.&quot;,
+    &quot;whisper-v3&quot;: &quot; The ECR is committed to gender equality and the empowerment of women and girls through different means, focusing on achieving protection for women and girls from physical and sexual violence, as well as giving them opportunities in education, employment and in society in general.&quot;
+  }
+}</pre></details><select><option value="unreviewed">미검수</option><option value="resolved">문제 원인/정정문 확인</option><option value="uncertain">판단 보류</option></select><textarea class="note" placeholder="원인, 정확한 정정문, 채널·위치에 대한 메모"></textarea></article><article data-key="69440214fe8bea387d540376ee1b8befd0a6b0496fad2ed753bd50de43d6edeb"><h2>voxpopuli-train / 20160509-0900-PLENARY-14-en_20160509-21:50:41_3</h2><p>배포 crop 원음 · 28.657s</p><audio controls preload="none" src="audio/vox-69440214fe8b.wav"></audio><p>먼저 실제 들리는 내용을 적어 주세요. 문맥에서 대상 구간은 AMI의 경우 2.000초부터입니다.</p><textarea class="heard" placeholder="들은 내용 / 들리지 않음 / 판단 불가"></textarea><details><summary>기존 타깃·교사·진단 근거 보기</summary><pre>{
+  &quot;key&quot;: &quot;69440214fe8bea387d540376ee1b8befd0a6b0496fad2ed753bd50de43d6edeb&quot;,
+  &quot;source&quot;: &quot;voxpopuli-train&quot;,
+  &quot;utt_id&quot;: &quot;20160509-0900-PLENARY-14-en_20160509-21:50:41_3&quot;,
+  &quot;target&quot;: &quot;in a country where approximately half of the population lives on the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent that it achieves its purpose and that no fraud with eu funds takes place on the ground&quot;,
+  &quot;raw_text&quot;: &quot;In a country where approximately half of the population lives on the coastline, and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, that it achieves its purpose, and that no fraud with EU funds takes place on the ground.&quot;,
+  &quot;human&quot;: {
+    &quot;binding&quot;: &quot;59501af3bf146025190f273719b9f61feab4259871438f7a5b54a7ffe17669c9&quot;,
+    &quot;waveform_sha256&quot;: &quot;6154872565405e84cd997c1c6d29152a77887aa61058b5c59860a0cf6bfc6157&quot;,
+    &quot;review_sha256&quot;: &quot;d8fa74aa061993f2d7d08d51c3140501abf329f1203719c7fc31e00d6b4250ac&quot;,
+    &quot;manifest_sha256&quot;: &quot;8841f17c451394dafcfe8d84dd8237dfc6fbdd2429d8ef7570435b3efd791d35&quot;,
+    &quot;reviewed_at&quot;: &quot;2026-09-19T14:28:23.414Z&quot;,
+    &quot;labels&quot;: {
+      &quot;text&quot;: &quot;fail&quot;,
+      &quot;timing&quot;: &quot;pass&quot;,
+      &quot;speaker&quot;: &quot;pass&quot;,
+      &quot;turn&quot;: &quot;unreviewed&quot;
+    },
+    &quot;note&quot;: &quot;ASR 모델의 전사 내용이 정확함&quot;,
+    &quot;training_eligible&quot;: false
+  },
+  &quot;evidence&quot;: {
+    &quot;annotation&quot;: {
+      &quot;session_id&quot;: &quot;20160509-0900-PLENARY-14&quot;,
+      &quot;id_&quot;: &quot;en_20160509-21:50:41_3&quot;,
+      &quot;original_text&quot;: &quot;In a country where approximately half of the population lives on the coastline, and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, that it achieves its purpose, and that no fraud with EU funds takes place on the ground.&quot;,
+      &quot;normed_text&quot;: &quot;in a country where approximately half of the population lives on the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent that it achieves its purpose and that no fraud with eu funds takes place on the ground.&quot;,
+      &quot;start_time&quot;: &quot;965.514204&quot;,
+      &quot;end_time&quot;: &quot;1001.492&quot;,
+      &quot;vad&quot;: &quot;[[965.514204, 994.170829]]&quot;,
+      &quot;speaker_id&quot;: &quot;124802&quot;,
+      &quot;split&quot;: &quot;train&quot;
+    },
+    &quot;vad_segments&quot;: [
+      [
+        965.514204,
+        994.170829
+      ]
+    ],
+    &quot;expected_frames&quot;: 458506,
+    &quot;actual_frames&quot;: 458506,
+    &quot;annotation_sha256&quot;: &quot;0ddf294b5c0cca21017d5f5f7623e15a102d9c39b44ebbd23c4d00534d8bbd42&quot;,
+    &quot;same_lexical&quot;: {
+      &quot;qwen&quot;: false,
+      &quot;whisper-v2&quot;: false,
+      &quot;whisper-v3&quot;: false
+    },
+    &quot;normalized_ref&quot;: &quot;in a country where approximately half of the population lives on the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent that it achieves its purpose and that no fraud with eu funds takes place on the ground&quot;,
+    &quot;normalized_teachers&quot;: {
+      &quot;qwen&quot;: &quot;in a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent achieves its purpose and no fraud with eu funds is is happening on the ground&quot;,
+      &quot;whisper-v2&quot;: &quot;in a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent achieves its purpose and no fraud with eu funds is happening on the ground thank you&quot;,
+      &quot;whisper-v3&quot;: &quot;in a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential a key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent achieves its purpose and no fraud with eu funds is happening on the ground thank you&quot;
+    },
+    &quot;original_session_candidates&quot;: [],
+    &quot;training_eligible&quot;: false
+  },
+  &quot;teachers&quot;: {
+    &quot;qwen&quot;: &quot;In a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, achieves its purpose, and no fraud with EU funds is is happening on the ground.&quot;,
+    &quot;whisper-v2&quot;: &quot; In a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element in my opinion will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, achieves its purpose, and no fraud with EU funds is happening on the ground. Thank you.&quot;,
+    &quot;whisper-v3&quot;: &quot; In a country where approximately half of the population lives in the coastline and where the fisheries sector is an essential part of the economy, it is very important to achieve the objective of developing responsible and sustainable fishing activities while ensuring that the sector reaches its full potential. A key element, in my opinion, will be the monitoring of the implementation of these measures in order to make sure that the money is well spent, achieves its purpose, and no fraud with EU funds is happening on the ground. Thank you.&quot;
+  }
+}</pre></details><select><option value="unreviewed">미검수</option><option value="resolved">문제 원인/정정문 확인</option><option value="uncertain">판단 보류</option></select><textarea class="note" placeholder="원인, 정확한 정정문, 채널·위치에 대한 메모"></textarea></article><script>function download(){let rows=[...document.querySelectorAll('article')].map(c=>({key:c.dataset.key,resolution:c.querySelector('select').value,heard_text:c.querySelector('.heard').value,note:c.querySelector('.note').value}));let data={reviewed_at:new Date().toISOString(),training_eligible:false,purpose:'diagnostic-followup-v04',rows};let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='human-diagnostic-v04.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}</script></html>
