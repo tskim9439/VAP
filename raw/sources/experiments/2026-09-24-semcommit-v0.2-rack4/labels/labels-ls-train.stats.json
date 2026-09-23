@@ -1,0 +1,158 @@
+{
+  "B_margin": {
+    "exaone35": {
+      "n": 2661,
+      "p10": 0.3844,
+      "p50": 1.9988
+    },
+    "qwen3": {
+      "n": 2661,
+      "p10": 0.9079,
+      "p50": 4.0
+    }
+  },
+  "C_relation": {
+    "English": {
+      "REVISION": 1510,
+      "STABLE": 796,
+      "UNOBSERVED": 355
+    }
+  },
+  "C_type": {
+    "English": {
+      "REVISION/QUALIFICATION:B": 1130,
+      "REVISION/QUALIFICATION:N": 22,
+      "REVISION/RESTART:N": 77,
+      "REVISION/SELF_REPAIR:N": 281,
+      "STABLE/ADDITIONAL_INFORMATION:A": 180,
+      "STABLE/ADDITIONAL_INFORMATION:B": 409,
+      "STABLE/ADDITIONAL_INFORMATION:N": 11,
+      "STABLE/NEW_UNIT:A": 72,
+      "STABLE/NEW_UNIT:B": 120,
+      "STABLE/NEW_UNIT:N": 4,
+      "UNOBSERVED/-:A": 115,
+      "UNOBSERVED/-:B": 236,
+      "UNOBSERVED/-:N": 4
+    }
+  },
+  "agreement": {
+    "English/qwen3~exaone35": {
+      "agree": 868,
+      "kappa": 0.1166,
+      "n": 2661
+    }
+  },
+  "by_lang": {
+    "English": {
+      "A": 367,
+      "B": 1895,
+      "B_disagree": 1793,
+      "N": 399,
+      "candidates": 2661,
+      "future_unobserved": 355,
+      "future_unobserved_A": 115,
+      "resolved_by_judge": 0,
+      "streams": 398,
+      "words": 29809
+    }
+  },
+  "c_mask_types": [
+    "CONTINUATION",
+    "QUALIFICATION"
+  ],
+  "code_prompt_version": "semcommit-prompt-v0.2+ab90c940",
+  "disfl_negatives": false,
+  "inputs": {
+    "/data4/tskim/semcommit/data/v0/words-ls-train.jsonl": "c8d52d8fff24b23cef09c59a12b2d0f3ac524e74e14250f5d2d8f84c887f459b",
+    "/data4/tskim/semcommit/labels/v0.2/A-ls-train.jsonl": "4fb7d3bbd3edddb297dfe16f30c7484ee2fc4989f2f695261772201a7eee36f0",
+    "/data4/tskim/semcommit/labels/v0.2/B.exaone35-ls-train.jsonl": "0e102f980c193165184f80e96f33e5852c547b062e7752c10074a3ce190ca601",
+    "/data4/tskim/semcommit/labels/v0.2/B.qwen3-ls-train.jsonl": "cb4e41dddf51a6487cae8bbed9880f45d628bfe4300346b6aee0ef7677c50563",
+    "/data4/tskim/semcommit/labels/v0.2/C-ls-train.jsonl": "e34a2817a87e65caefabaec2b7848cf1d8db3c35f8410fdc92060a9272f50ed7"
+  },
+  "judges": {
+    "English": [
+      "qwen3",
+      "exaone35"
+    ],
+    "Korean": [
+      "exaone35",
+      "qwen3"
+    ]
+  },
+  "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+  "provenance": {
+    "/data4/tskim/semcommit/labels/v0.2/A-ls-train.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 400,
+      "stage": "A"
+    },
+    "/data4/tskim/semcommit/labels/v0.2/B.exaone35-ls-train.jsonl": {
+      "judge": "exaone35",
+      "kind": "exaone35",
+      "model_path": "/data4/tskim/OpenSource/EXAONE-3.5-7.8B-Instruct-rev0ff6b5e",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 2661,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.2/B.qwen3-ls-train.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 2661,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.2/C-ls-train.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 2661,
+      "stage": "C"
+    }
+  },
+  "row_status": {
+    "A/qwen3": {
+      "invalid_json": 2,
+      "ok": 398
+    },
+    "B/exaone35": {
+      "ok": 2661
+    },
+    "B/qwen3": {
+      "ok": 2661
+    },
+    "C/qwen3": {
+      "ok": 2661
+    }
+  },
+  "streams": {
+    "labeled": 398,
+    "stageA_invalid_json": 2,
+    "total": 400
+  },
+  "strict": true,
+  "tiebreak_judge": {
+    "Korean": "gptoss"
+  },
+  "tok_mismatch": {},
+  "why": {
+    "English": {
+      "B_all_wait": 41,
+      "B_disagree": 754,
+      "B_disagree+C_revision_masked:QUALIFICATION": 767,
+      "B_uncertain": 2,
+      "B_uncertain+C_revision_masked:QUALIFICATION": 8,
+      "C_revision": 347,
+      "C_revision+B_all_wait": 11,
+      "C_revision_masked:QUALIFICATION": 344,
+      "disflA_filler": 15,
+      "disflA_repetition": 5,
+      "safe+stable": 252,
+      "safe+unobserved": 115
+    }
+  }
+}

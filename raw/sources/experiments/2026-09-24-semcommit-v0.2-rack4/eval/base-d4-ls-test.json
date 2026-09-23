@@ -1,0 +1,835 @@
+{
+  "protocol": "semcommit-eval-v1",
+  "created": "2026-09-23T22:19:45",
+  "selection": {
+    "words": 100,
+    "labels": 100,
+    "words_without_labels": 0,
+    "labels_without_words": 0,
+    "selected": 100
+  },
+  "n_selected": 100,
+  "streams_file": "/data4/tskim/semcommit/eval/v0.2-r1/base-d4-ls-test.streams.jsonl",
+  "decode": {
+    "protocol": "semcommit-eval-v1",
+    "model": "/data4/tskim/semcommit/models/E2-sem-init",
+    "checkpoint_weights": {
+      "model.safetensors": {
+        "size": 4837811880,
+        "mtime_ns": 1790186170465135045
+      }
+    },
+    "checkpoint_config_sha256": "fd2c982228ba8bb89bb216d4705c79025750069b88a0bd92164c7e8e85c12097",
+    "train": {
+      "delays": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "src": [
+        "/data4/tskim/semcommit/models/E2-sem-init/config.json"
+      ]
+    },
+    "delay": 4,
+    "turn_end": true,
+    "hangover_s": 0.48,
+    "pad_delays": [
+      2,
+      3,
+      4,
+      6
+    ],
+    "tail_margin": 2,
+    "pad_tail": true,
+    "no_pad": false,
+    "dtype": "float32",
+    "next_bias": 0.0,
+    "turn_bias": 0.0,
+    "sem_guard": true,
+    "max_flush": 8,
+    "block_turn": false,
+    "path_remap": [],
+    "words": "/data4/tskim/semcommit/data/v0/words-ls-test.jsonl",
+    "words_sha256": "a0e7f9045a0bdaa2ff13551e1d864ed6245e4fc718d5e47d4ab9137f160dfba8",
+    "code": {
+      "experiments/semcommit_eval.py": "22d300a60b683c9f1226ba308281586f67acae4fb8d66e75f9c47fc05c07fe2e",
+      "vapasr/hf/commit_metrics.py": "017c7da05fc523f98ee50ffadede268aac3fd11da5bbfc7fbaaa1784016c00b8",
+      "vapasr/hf/batch_decode.py": "32a34cee790f48d9ba8660824085f6a9c4866ca0d1b599712e89dd5866f6d4c6",
+      "vapasr/hf/modeling_vapasr.py": "429e2fad8a800b9b2d5ed6b351894f966f5b5f5fb8697cb58a784273b97e95ff",
+      "vapasr/data/streams.py": "e90d06c5702f649e3f10323acf982698dd5f1d44ad80da8a2223c87274cc8a6e"
+    }
+  },
+  "scoring": {
+    "early": 1,
+    "lates": [
+      0,
+      2,
+      5
+    ],
+    "primary_late": 2,
+    "hangover_s": 0.48,
+    "turn_end": true,
+    "chunk_s": 0.08,
+    "ref_time": "(a) ref_k=int(word_end/0.08)+delta for P/R/F1; (b) latency vs word_end, hyp_time=(k+1)*0.08",
+    "pcr_raw": "(premature + guard_blocked)/(n_hyp + guard_blocked): sem-guard 가 막은 SEM 발화를 조기 commit 으로 센 PCR"
+  },
+  "configs": {
+    "bias=0": {
+      "mode": "bias",
+      "value": 0.0,
+      "n_streams": 100,
+      "complete": true,
+      "overall": {
+        "streams": 100,
+        "audio_s": 2887.52,
+        "events": {
+          "sem": 0,
+          "turn": 0,
+          "sem_in_flush": 0,
+          "guard_blocked": 0,
+          "sem_per_min": 0.0
+        },
+        "timing": {
+          "ideal_latency_s": {
+            "n": 98,
+            "mean": 0.3649,
+            "p50": 0.367,
+            "p90": 0.3953
+          },
+          "late0": {
+            "hits": 0,
+            "n_hyp": 0,
+            "n_ref": 98,
+            "miss": 98,
+            "false": 0,
+            "b_hits": 0,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null,
+            "precision_excl_B": null,
+            "latency_s": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            },
+            "lag_chunks": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            }
+          },
+          "late2": {
+            "hits": 0,
+            "n_hyp": 0,
+            "n_ref": 98,
+            "miss": 98,
+            "false": 0,
+            "b_hits": 0,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null,
+            "precision_excl_B": null,
+            "latency_s": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            },
+            "lag_chunks": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            }
+          },
+          "late5": {
+            "hits": 0,
+            "n_hyp": 0,
+            "n_ref": 98,
+            "miss": 98,
+            "false": 0,
+            "b_hits": 0,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null,
+            "precision_excl_B": null,
+            "latency_s": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            },
+            "lag_chunks": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            }
+          }
+        },
+        "text": {
+          "n_hyp": 0,
+          "correct": 0,
+          "ambiguous": 0,
+          "duplicate": 0,
+          "premature": 0,
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "precision_excl_B": null,
+          "pcr": null,
+          "pcr_excl_B": null,
+          "guard_blocked": 0,
+          "pcr_raw": null,
+          "pcr_by_category": {
+            "filler": null,
+            "rep": null,
+            "unclear": null,
+            "repair": null,
+            "revision": null,
+            "all_wait": null,
+            "other_n": null,
+            "other_inside": null,
+            "mid_word": null,
+            "no_word": null
+          },
+          "premature_by_category": {
+            "filler": 0,
+            "rep": 0,
+            "unclear": 0,
+            "repair": 0,
+            "revision": 0,
+            "all_wait": 0,
+            "other_n": 0,
+            "other_inside": 0,
+            "mid_word": 0,
+            "no_word": 0
+          },
+          "n_A": 98,
+          "n_B": 405,
+          "n_N": 84,
+          "B_commit_rate": 0.0,
+          "hardneg_commit_rate": 0.0,
+          "hardneg_by_category": {
+            "all_wait": {
+              "n": 4,
+              "committed": 0,
+              "rate": 0.0
+            },
+            "revision": {
+              "n": 80,
+              "committed": 0,
+              "rate": 0.0
+            }
+          }
+        },
+        "asr": {
+          "wer": {
+            "substitutions": 276,
+            "deletions": 45,
+            "insertions": 50,
+            "n_ref": 7044,
+            "n_hyp": 7049,
+            "errors": 371,
+            "rate": 0.05266893810335037
+          }
+        },
+        "turn": {
+          "n_ref": 100,
+          "n_hyp": 0,
+          "early_turn": 0,
+          "in_flush": 0,
+          "late0": {
+            "hits": 0,
+            "n_hyp": 0,
+            "n_ref": 100,
+            "miss": 100,
+            "false": 0,
+            "b_hits": 0,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null,
+            "precision_excl_B": null,
+            "latency_s": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            },
+            "lag_chunks": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            }
+          },
+          "late2": {
+            "hits": 0,
+            "n_hyp": 0,
+            "n_ref": 100,
+            "miss": 100,
+            "false": 0,
+            "b_hits": 0,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null,
+            "precision_excl_B": null,
+            "latency_s": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            },
+            "lag_chunks": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            }
+          },
+          "late5": {
+            "hits": 0,
+            "n_hyp": 0,
+            "n_ref": 100,
+            "miss": 100,
+            "false": 0,
+            "b_hits": 0,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null,
+            "precision_excl_B": null,
+            "latency_s": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            },
+            "lag_chunks": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            }
+          }
+        }
+      },
+      "by_lang": {
+        "English": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 0,
+            "turn": 0,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 0.0
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late2": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late5": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 0,
+            "correct": 0,
+            "ambiguous": 0,
+            "duplicate": 0,
+            "premature": 0,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null,
+            "precision_excl_B": null,
+            "pcr": null,
+            "pcr_excl_B": null,
+            "guard_blocked": 0,
+            "pcr_raw": null,
+            "pcr_by_category": {
+              "filler": null,
+              "rep": null,
+              "unclear": null,
+              "repair": null,
+              "revision": null,
+              "all_wait": null,
+              "other_n": null,
+              "other_inside": null,
+              "mid_word": null,
+              "no_word": null
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 0,
+              "all_wait": 0,
+              "other_n": 0,
+              "other_inside": 0,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.0,
+            "hardneg_commit_rate": 0.0,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 0,
+                "rate": 0.0
+              },
+              "revision": {
+                "n": 80,
+                "committed": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 276,
+              "deletions": 45,
+              "insertions": 50,
+              "n_ref": 7044,
+              "n_hyp": 7049,
+              "errors": 371,
+              "rate": 0.05266893810335037
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 0,
+            "early_turn": 0,
+            "in_flush": 0,
+            "late0": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 100,
+              "miss": 100,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late2": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 100,
+              "miss": 100,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late5": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 100,
+              "miss": 100,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            }
+          }
+        }
+      },
+      "by_set": {
+        "librispeech-test": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 0,
+            "turn": 0,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 0.0
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late2": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late5": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 0,
+            "correct": 0,
+            "ambiguous": 0,
+            "duplicate": 0,
+            "premature": 0,
+            "precision": null,
+            "recall": 0.0,
+            "f1": null,
+            "precision_excl_B": null,
+            "pcr": null,
+            "pcr_excl_B": null,
+            "guard_blocked": 0,
+            "pcr_raw": null,
+            "pcr_by_category": {
+              "filler": null,
+              "rep": null,
+              "unclear": null,
+              "repair": null,
+              "revision": null,
+              "all_wait": null,
+              "other_n": null,
+              "other_inside": null,
+              "mid_word": null,
+              "no_word": null
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 0,
+              "all_wait": 0,
+              "other_n": 0,
+              "other_inside": 0,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.0,
+            "hardneg_commit_rate": 0.0,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 0,
+                "rate": 0.0
+              },
+              "revision": {
+                "n": 80,
+                "committed": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 276,
+              "deletions": 45,
+              "insertions": 50,
+              "n_ref": 7044,
+              "n_hyp": 7049,
+              "errors": 371,
+              "rate": 0.05266893810335037
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 0,
+            "early_turn": 0,
+            "in_flush": 0,
+            "late0": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 100,
+              "miss": 100,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late2": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 100,
+              "miss": 100,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late5": {
+              "hits": 0,
+              "n_hyp": 0,
+              "n_ref": 100,
+              "miss": 100,
+              "false": 0,
+              "b_hits": 0,
+              "precision": null,
+              "recall": 0.0,
+              "f1": null,
+              "precision_excl_B": null,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "pr_curve": {
+    "bias": [
+      {
+        "value": 0.0,
+        "group": "overall",
+        "n_hyp": 0,
+        "sem_per_min": 0.0,
+        "time_precision": null,
+        "time_recall": 0.0,
+        "time_f1": null,
+        "latency_p50_s": null,
+        "text_precision": null,
+        "text_recall": 0.0,
+        "text_f1": null,
+        "pcr": null,
+        "pcr_raw": null,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.0
+      },
+      {
+        "value": 0.0,
+        "group": "English",
+        "n_hyp": 0,
+        "sem_per_min": 0.0,
+        "time_precision": null,
+        "time_recall": 0.0,
+        "time_f1": null,
+        "latency_p50_s": null,
+        "text_precision": null,
+        "text_recall": 0.0,
+        "text_f1": null,
+        "pcr": null,
+        "pcr_raw": null,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.0
+      }
+    ]
+  }
+}

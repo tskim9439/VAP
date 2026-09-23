@@ -1,0 +1,152 @@
+{
+  "B_margin": {
+    "exaone35": {
+      "n": 587,
+      "p10": 0.5481,
+      "p50": 2.0024
+    },
+    "qwen3": {
+      "n": 587,
+      "p10": 1.1149,
+      "p50": 4.25
+    }
+  },
+  "C_relation": {
+    "English": {
+      "REVISION": 304,
+      "STABLE": 188,
+      "UNOBSERVED": 95
+    }
+  },
+  "C_type": {
+    "English": {
+      "REVISION/QUALIFICATION:B": 224,
+      "REVISION/QUALIFICATION:N": 12,
+      "REVISION/RESTART:N": 17,
+      "REVISION/SELF_REPAIR:N": 51,
+      "STABLE/ADDITIONAL_INFORMATION:A": 47,
+      "STABLE/ADDITIONAL_INFORMATION:B": 101,
+      "STABLE/ADDITIONAL_INFORMATION:N": 2,
+      "STABLE/NEW_UNIT:A": 14,
+      "STABLE/NEW_UNIT:B": 24,
+      "UNOBSERVED/-:A": 37,
+      "UNOBSERVED/-:B": 56,
+      "UNOBSERVED/-:N": 2
+    }
+  },
+  "agreement": {
+    "English/qwen3~exaone35": {
+      "agree": 247,
+      "kappa": 0.1583,
+      "n": 587
+    }
+  },
+  "by_lang": {
+    "English": {
+      "A": 98,
+      "B": 405,
+      "B_disagree": 340,
+      "N": 84,
+      "candidates": 587,
+      "future_unobserved": 95,
+      "future_unobserved_A": 37,
+      "resolved_by_judge": 0,
+      "streams": 100,
+      "words": 7044
+    }
+  },
+  "c_mask_types": [
+    "CONTINUATION",
+    "QUALIFICATION"
+  ],
+  "code_prompt_version": "semcommit-prompt-v0.2+ab90c940",
+  "disfl_negatives": false,
+  "inputs": {
+    "/data4/tskim/semcommit/data/v0/words-ls-test.jsonl": "a0e7f9045a0bdaa2ff13551e1d864ed6245e4fc718d5e47d4ab9137f160dfba8",
+    "/data4/tskim/semcommit/labels/v0.2/A-ls-test.jsonl": "67a3c472b7b7f9e97ee3afdc6f593c9cfaa7159e98c79936392a4d6648247526",
+    "/data4/tskim/semcommit/labels/v0.2/B.exaone35-ls-test.jsonl": "297440926e71ff084314e68f1f2dd0248a5d2e02ff9293bd43ee389500e76d92",
+    "/data4/tskim/semcommit/labels/v0.2/B.qwen3-ls-test.jsonl": "671ff1342ff3604becbc312303a014061e6b2f9fef8d9759b88cfa21592f18d9",
+    "/data4/tskim/semcommit/labels/v0.2/C-ls-test.jsonl": "2183803232021ba5319fc16ee796aa96e3d536b4af8d156e6484ae1eaba7960f"
+  },
+  "judges": {
+    "English": [
+      "qwen3",
+      "exaone35"
+    ],
+    "Korean": [
+      "exaone35",
+      "qwen3"
+    ]
+  },
+  "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+  "provenance": {
+    "/data4/tskim/semcommit/labels/v0.2/A-ls-test.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 100,
+      "stage": "A"
+    },
+    "/data4/tskim/semcommit/labels/v0.2/B.exaone35-ls-test.jsonl": {
+      "judge": "exaone35",
+      "kind": "exaone35",
+      "model_path": "/data4/tskim/OpenSource/EXAONE-3.5-7.8B-Instruct-rev0ff6b5e",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 587,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.2/B.qwen3-ls-test.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 587,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.2/C-ls-test.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 587,
+      "stage": "C"
+    }
+  },
+  "row_status": {
+    "A/qwen3": {
+      "ok": 100
+    },
+    "B/exaone35": {
+      "ok": 587
+    },
+    "B/qwen3": {
+      "ok": 587
+    },
+    "C/qwen3": {
+      "ok": 587
+    }
+  },
+  "streams": {
+    "labeled": 100,
+    "total": 100
+  },
+  "strict": true,
+  "tiebreak_judge": {
+    "Korean": "gptoss"
+  },
+  "tok_mismatch": {},
+  "why": {
+    "English": {
+      "B_all_wait": 16,
+      "B_disagree": 180,
+      "B_disagree+C_revision_masked:QUALIFICATION": 120,
+      "C_revision": 63,
+      "C_revision+B_all_wait": 5,
+      "C_revision_masked:QUALIFICATION": 104,
+      "disflA_filler": 1,
+      "safe+stable": 61,
+      "safe+unobserved": 37
+    }
+  }
+}

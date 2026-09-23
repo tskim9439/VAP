@@ -1,0 +1,2513 @@
+{
+ "0": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "Stops mid noun phrase: 'roving guerrilla' needs 'bands'.",
+   "annotator": "Stops inside the noun phrase 'roving guerrilla'; the future word 'bands' finishes the same phrase."
+  },
+  "n": 0,
+  "stream": "ls-test-clean-7729-102255-00620",
+  "after_word": 59,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "B_disagree+C_revision_masked:QUALIFICATION",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "1": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete sentence; the following words start a new sentence",
+   "consumer": "Sentence ends at 'while they were gone'; future starts a new sentence ('at the foot of the mountain ... the path divided')"
+  },
+  "n": 1,
+  "stream": "ls-test-clean-1284-1180-00074",
+  "after_word": 34,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "2": {
+  "verdicts": {
+   "consumer": "UNSURE",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'frankly i cannot always say' may mean 'I can't always tell', but 'say' has no object; the next words start a new unit with 'but'",
+   "annotator": "'frankly i cannot always say' stands as a complete statement; the future opens a new unit with 'but'."
+  },
+  "n": 2,
+  "stream": "ls-test-clean-7176-92135-00602",
+  "after_word": 17,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "B_disagree+C_revision_masked:QUALIFICATION",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "3": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "Ends in '-고 나면', a conditional connective that needs a continuation; incomplete even at stream end",
+   "annotator": "Ends in '-고 나면' (connective demanding continuation); turn ends incomplete, so no SEM_END even at stream end"
+  },
+  "n": 3,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02278",
+  "after_word": 11,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_disagree(resolved:WAIT)",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "gptoss": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "4": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The sentence 'within two minutes of my return on board' is complete and the stream ends there.",
+   "annotator": "The quoted sentence is complete and the stream ends there."
+  },
+  "n": 4,
+  "stream": "ls-test-clean-8455-210777-00679",
+  "after_word": 80,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "5": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete clause; the non-restrictive relative clause after it only adds detail, and the prefix stands without it",
+   "consumer": "'he knew it would take them to the house of the crooked magician' stands alone; the following relative clause only adds detail"
+  },
+  "n": 5,
+  "stream": "ls-test-clean-1284-1180-00074",
+  "after_word": 69,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "6": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "'good' is the first half of 'good bye' in the next words; the boundary splits a word",
+   "annotator": "'good' + future 'bye' makes 'good bye', so the boundary would split a word."
+  },
+  "n": 6,
+  "stream": "ls-test-clean-1580-141084-00123",
+  "after_word": 69,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "C_revision",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "RESTART"
+  },
+  "future_unobserved": false
+ },
+ "7": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'조급해하고 있는 것 같은데' is a softened but complete assertion at stream end",
+   "annotator": "'조급해하고 있는 것 같은데' is a pragmatically complete assessment at turn end (-는데 sentence-final use)"
+  },
+  "n": 7,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00360",
+  "after_word": 15,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "8": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The quote plus 'said sir ferdinando' is complete. The future starts a new sentence.",
+   "annotator": "The quote and its attribution are both finished; the future starts a new sentence ('they of course must...')."
+  },
+  "n": 8,
+  "stream": "ls-test-clean-8455-210777-00684",
+  "after_word": 32,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "C_revision",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "SELF_REPAIR"
+  },
+  "future_unobserved": false
+ },
+ "9": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete statement ending in -잖아 at stream end",
+   "consumer": "'-잖아' ends a complete proposition at stream end"
+  },
+  "n": 9,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02215",
+  "after_word": 4,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "10": {
+  "verdicts": {
+   "consumer": "UNSURE",
+   "annotator": "UNSURE"
+  },
+  "notes": {
+   "consumer": "The sentence goes on with 'too' before 'continued david', so the true boundary is one word later",
+   "annotator": "Clause continues with the sentence-final 'too' ('their courage too'), so the boundary is inside the clause."
+  },
+  "n": 10,
+  "stream": "ls-test-clean-1320-122617-00104",
+  "after_word": 47,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "C_revision",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "SELF_REPAIR"
+  },
+  "future_unobserved": false
+ },
+ "11": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "Complete proposition; '그래서' is a discourse marker that starts the next unit",
+   "annotator": "'얼굴이 너무 이상한 거야' completes the proposition; '그래서' is a discourse marker opening the next unit"
+  },
+  "n": 11,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02074",
+  "after_word": 19,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "12": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'네 맞습니다' is a complete answer at stream end.",
+   "annotator": "A complete confirming answer, and the stream ends."
+  },
+  "n": 12,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02888",
+  "after_word": 1,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "13": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete sentence at stream end",
+   "consumer": "Complete sentence 'please forgive me ... i had turned forty' at stream end"
+  },
+  "n": 13,
+  "stream": "ls-test-clean-8463-294828-00698",
+  "after_word": 66,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "14": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The quote and 'she said...take it off' form a complete sentence; a new sentence follows",
+   "annotator": "Complete sentence; the future starts a new sentence ('the princess certainly was beautiful')."
+  },
+  "n": 14,
+  "stream": "ls-test-clean-7021-85628-00569",
+  "after_word": 19,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "C_revision_masked:QUALIFICATION",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "15": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "Sentence 'bent down and kissed him' is finished at stream end",
+   "annotator": "Sentence 'and bent down and kissed him' complete at stream end"
+  },
+  "n": 15,
+  "stream": "ls-test-clean-7021-85628-00569",
+  "after_word": 85,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "16": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The sentence is complete. The future is a new inverted sentence ('associated with ... were various details').",
+   "annotator": "The sentence is complete; the future is a new inverted sentence ('associated with ... were various details')."
+  },
+  "n": 16,
+  "stream": "ls-test-clean-2300-131720-00179",
+  "after_word": 33,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "17": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "The quoted whisper is complete; the future starts a new unit (the reply 'yes')",
+   "consumer": "The quoted utterance 'you are giving me a chance' is complete; 'yes' is a new reply unit that does not revise it"
+  },
+  "n": 17,
+  "stream": "ls-test-clean-4446-2273-00342",
+  "after_word": 18,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "C_revision",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "SELF_REPAIR"
+  },
+  "future_unobserved": false
+ },
+ "18": {
+  "verdicts": {
+   "consumer": "UNSURE",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "'all was quiet' continues as 'and black in the courtyard of gamewell' (a joined predicate), so the sentence end comes later",
+   "annotator": "'all was quiet' continues as 'and black in the courtyard...', a predicate coordinated inside the same sentence."
+  },
+  "n": 18,
+  "stream": "ls-test-clean-61-70970-00493",
+  "after_word": 45,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "19": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'있으면 좋잖아' is a complete statement",
+   "annotator": "'응 있으면 좋잖아' complete response at turn end"
+  },
+  "n": 19,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02662",
+  "after_word": 2,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "20": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'훈련 다 뺄거야' is a complete statement at stream end.",
+   "annotator": "A complete statement, and the stream ends."
+  },
+  "n": 20,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01049",
+  "after_word": 3,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "21": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete statement (돈 벌어야지) at stream end",
+   "consumer": "'돈 벌어야지' ends a complete statement at stream end"
+  },
+  "n": 21,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01640",
+  "after_word": 3,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_disagree(resolved:WAIT)",
+  "B": {
+   "exaone35": "SAFE",
+   "gptoss": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "22": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "Ends in the connective -고 ('안 하게 되고'), so the meaning is unfinished even at stream end",
+   "annotator": "Ends in the connective -고 ('안 하게 되고'), so no boundary even at stream end."
+  },
+  "n": 22,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01231",
+  "after_word": 7,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_disagree(resolved:WAIT)",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "gptoss": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "23": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "'when i say that i am an italian' is an open when-clause; the main clause 'he begins...' follows",
+   "annotator": "'when i say that i am an italian' is an open when-clause; main clause 'he begins to speak' follows"
+  },
+  "n": 23,
+  "stream": "ls-test-clean-3729-6852-00303",
+  "after_word": 47,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "NEW_UNIT"
+  },
+  "future_unobserved": false
+ },
+ "24": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'거기 진짜 문제 있어' is a complete assertion at stream end.",
+   "annotator": "A complete assertion, and the stream ends."
+  },
+  "n": 24,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01923",
+  "after_word": 3,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "25": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete clause; the future is a new sentence",
+   "consumer": "'he offers to accompany me everywhere' closes the sentence; 'i thank him' starts a new one"
+  },
+  "n": 25,
+  "stream": "ls-test-clean-3729-6852-00303",
+  "after_word": 71,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "26": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "Ends in the reason phrase '이미지 때문에' with no main clause; the meaning is incomplete",
+   "annotator": "Ends with an open reason clause ('이미지 때문에') and no main clause."
+  },
+  "n": 26,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02500",
+  "after_word": 28,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "27": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'이제껏 내가 해왔던 게 아니잖아' is a complete statement",
+   "annotator": "Final clause '이제껏 내가 해왔던 게 아니잖아' is a complete assertion at turn end"
+  },
+  "n": 27,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00219",
+  "after_word": 8,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "28": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "The narrative background '-는데' ('같이 탔는데') is still open and the story goes on with '그 다른 애들도'.",
+   "annotator": "'탔는데' is a narrative background clause setting up what comes next ('그 다른 애들도'). It is not a unit a listener can act on."
+  },
+  "n": 28,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02518",
+  "after_word": 3,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "29": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "The enumeration ends at stream end and the sentence is complete",
+   "consumer": "The enumeration of names ends the sentence at stream end; no open clause"
+  },
+  "n": 29,
+  "stream": "ls-test-clean-8463-294825-00694",
+  "after_word": 55,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "30": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'한번 가보는 것도 괜찮을 거 같애' is a complete recommendation at stream end",
+   "annotator": "'가보는 것도 괜찮을 거 같애' is a complete recommendation at turn end."
+  },
+  "n": 30,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00688",
+  "after_word": 35,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "31": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "'or elsewhere or drowned... it mattered not which' widens 'england' into a list of alternatives, so the same sentence continues and the claim changes",
+   "annotator": "Future 'or elsewhere or drowned upon the voyage it mattered not which' changes the asserted destination 'england' into one of several alternatives"
+  },
+  "n": 31,
+  "stream": "ls-test-clean-8455-210777-00679",
+  "after_word": 9,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "32": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'난 못 해' is a complete statement at stream end.",
+   "annotator": "'난 못 해' is a complete statement, and the stream ends."
+  },
+  "n": 32,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01824",
+  "after_word": 5,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_disagree",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "gptoss": "WAIT",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "33": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "'ah very well' is a pragmatically complete interjection at stream end",
+   "consumer": "'ah very well' is a complete interjection fragment and the stream ends there"
+  },
+  "n": 33,
+  "stream": "ls-test-clean-7127-75946-00573",
+  "after_word": 61,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "34": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "UNSURE"
+  },
+  "notes": {
+   "consumer": "'do you not see the moon slowly rising' is a complete question; 'silvering...' only adds detail",
+   "annotator": "The question is grammatically complete, but the participial 'silvering the topmost branches' continues the same sentence."
+  },
+  "n": 34,
+  "stream": "ls-test-clean-7127-75947-00588",
+  "after_word": 59,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "35": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The reported speech and its frame '그런 얘기를 하는 거야' are complete",
+   "annotator": "Quotation is closed by '그런 얘기를 하는 거야'; complete at turn end"
+  },
+  "n": 35,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00204",
+  "after_word": 9,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_disagree(resolved:WAIT)",
+  "B": {
+   "exaone35": "WAIT",
+   "gptoss": "WAIT",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "36": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'천천히 올리는 거야' is a complete instruction or statement at stream end.",
+   "annotator": "A complete instruction, and the stream ends. The filler '그' is at the start, not at the boundary."
+  },
+  "n": 36,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02164",
+  "after_word": 3,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "37": {
+  "verdicts": {
+   "annotator": "NOT_OK",
+   "consumer": "NOT_OK"
+  },
+  "notes": {
+   "annotator": "Cut mid-phrase: 'in general | terms' continues the same phrase",
+   "consumer": "The phrase is cut mid-phrase: 'in general | terms'. The future continues the same noun phrase (fails rule 1)"
+  },
+  "n": 37,
+  "stream": "ls-test-clean-4507-16021-00354",
+  "after_word": 23,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "B_disagree+C_revision_masked:QUALIFICATION",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "38": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "Ends at the bare topic '난' and the predicate '못 해' follows",
+   "annotator": "Ends on the topic '난'; the predicate '못 해' follows."
+  },
+  "n": 38,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01824",
+  "after_word": 3,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "C_revision",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "gptoss": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "SELF_REPAIR"
+  },
+  "future_unobserved": false
+ },
+ "39": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'silliness is the daughter of wit' ends the sentence",
+   "annotator": "'silliness is the daughter of wit' ends a complete sentence at stream end"
+  },
+  "n": 39,
+  "stream": "ls-test-clean-3729-6852-00306",
+  "after_word": 110,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "40": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "'기억 나는 게' is only a subject clause. The meaning is incomplete even though the turn ends.",
+   "annotator": "'기억 나는 게' is a subject with no predicate. The turn ends with the meaning incomplete."
+  },
+  "n": 40,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01288",
+  "after_word": 3,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_disagree(resolved:WAIT)",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "gptoss": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "41": {
+  "verdicts": {
+   "annotator": "UNSURE",
+   "consumer": "UNSURE"
+  },
+  "notes": {
+   "annotator": "The bare fragment '아 사진' could be a complete recognition or a truncated utterance; ambiguous, so precision first",
+   "consumer": "The bare fragment '아 사진' could be a recognition reply or a cut-off; its pragmatic completeness is ambiguous"
+  },
+  "n": 41,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02030",
+  "after_word": 1,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_disagree(resolved:WAIT)",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "gptoss": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "42": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'you don't seem to realize the position' is complete; 'to morrow is the examination' starts a new sentence",
+   "annotator": "'you don't seem to realize the position' is complete; 'to morrow is the examination' is a new sentence."
+  },
+  "n": 42,
+  "stream": "ls-test-clean-1580-141084-00123",
+  "after_word": 12,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "43": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The main clause is already said; the sentence-final '-려고' is an afterthought giving the purpose, not an open connective",
+   "annotator": "Main clause '모으고 있어' is already stated; '태국 여행 갈려고' is a post-posed purpose clause, so -려고 demands no further continuation at turn end"
+  },
+  "n": 43,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01337",
+  "after_word": 13,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "44": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The sentence ends at 'cook your meals'. The future is a new sentence ('a house smells of smoke').",
+   "annotator": "The sentence is complete; the future starts a new one ('a house smells of smoke')."
+  },
+  "n": 44,
+  "stream": "ls-test-clean-5142-33396-00425",
+  "after_word": 45,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "45": {
+  "verdicts": {
+   "annotator": "NOT_OK",
+   "consumer": "NOT_OK"
+  },
+  "notes": {
+   "annotator": "'had been level | with the dykes' is still open inside the embedded clause under 'imagining'",
+   "consumer": "'had been level | with the dykes' is still open; the future continues the same clause"
+  },
+  "n": 45,
+  "stream": "ls-test-clean-1995-1837-00143",
+  "after_word": 52,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "C_revision_masked:QUALIFICATION",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "46": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "'no breath of air' has no verb; the next word 'stirred' finishes the clause",
+   "annotator": "The subject 'no breath of air' still needs its verb 'stirred'."
+  },
+  "n": 46,
+  "stream": "ls-test-clean-1995-1837-00143",
+  "after_word": 31,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "B_disagree",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "47": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "Complete; the next part '얼굴이 너무 이상한 거야' adds detail and does not cancel it",
+   "annotator": "Future '얼굴이 너무 이상한 거야' specifies (elaborates) rather than retracts the weird-photo claim; then '그래서' starts a new unit"
+  },
+  "n": 47,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02074",
+  "after_word": 15,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "48": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'한번 보자' is a complete proposal at stream end.",
+   "annotator": "A complete proposal ('-보자'), and the stream ends."
+  },
+  "n": 48,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00890",
+  "after_word": 13,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "49": {
+  "verdicts": {
+   "annotator": "UNSURE",
+   "consumer": "UNSURE"
+  },
+  "notes": {
+   "annotator": "'너 지금 운동' has no predicate; it could be an elliptical question or a truncated sentence",
+   "consumer": "'너 지금 운동' may be an elliptical question or an unfinished predicate; the text alone cannot tell"
+  },
+  "n": 49,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02724",
+  "after_word": 2,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_disagree(resolved:WAIT)",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "gptoss": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "50": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'...green is the popular color' is a complete sentence at stream end",
+   "annotator": "Complete sentence ('green is the popular color') at stream end."
+  },
+  "n": 50,
+  "stream": "ls-test-clean-1284-1180-00081",
+  "after_word": 86,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "51": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "The quoted utterance is complete; 'replied montalais' is only a speaker tag and new content follows",
+   "annotator": "Quotation rule: the attribution 'replied montalais' follows, and the quote continues with 'and my opinion...'"
+  },
+  "n": 51,
+  "stream": "ls-test-clean-7127-75947-00591",
+  "after_word": 22,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "NEW_UNIT"
+  },
+  "future_unobserved": false
+ },
+ "52": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'다를 거 아니야' is a complete rhetorical assertion at stream end.",
+   "annotator": "A complete rhetorical assertion ('-거 아니야'), and the stream ends."
+  },
+  "n": 52,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02929",
+  "after_word": 7,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "53": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete sentence; the future is a new sentence",
+   "consumer": "'he started at the thought' is complete; 'he hurried forth' starts a new sentence"
+  },
+  "n": 53,
+  "stream": "ls-test-clean-1995-1837-00143",
+  "after_word": 73,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "NEW_UNIT"
+  },
+  "future_unobserved": false
+ },
+ "54": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'can you lead me to him' is a complete request; a new quotation with its speaker follows",
+   "annotator": "Complete question ('can you lead me to him'); the future is the reply."
+  },
+  "n": 54,
+  "stream": "ls-test-clean-1320-122617-00102",
+  "after_word": 39,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "B_disagree",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "55": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "UNSURE"
+  },
+  "notes": {
+   "consumer": "The same clause continues ('installed in the executive chambers'), so this is not a finished unit",
+   "annotator": "Clause 'a british governor installed' still takes its locative 'in the executive chambers'; unclear whether this is an elaboration or the same clause continuing"
+  },
+  "n": 55,
+  "stream": "ls-test-clean-8455-210777-00679",
+  "after_word": 45,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "56": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The sentence ends at 'frequently death' and the stream ends.",
+   "annotator": "The sentence is complete, and the stream ends."
+  },
+  "n": 56,
+  "stream": "ls-test-clean-7729-102255-00615",
+  "after_word": 74,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "57": {
+  "verdicts": {
+   "annotator": "NOT_OK",
+   "consumer": "NOT_OK"
+  },
+  "notes": {
+   "annotator": "Ends in the connective -지만, which demands continuation; no boundary even at stream end",
+   "consumer": "It ends with the connective '-지만', which demands continuation, so there is no boundary even at stream end"
+  },
+  "n": 57,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01572",
+  "after_word": 15,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "58": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "Ends with the sentence-final '-거든' at stream end; a complete statement",
+   "annotator": "Ends with sentence-final -거든, a complete statement at turn end."
+  },
+  "n": 58,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02587",
+  "after_word": 8,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "59": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'안 좋아할 수도 있어' is a complete statement",
+   "annotator": "Complete statement at turn end"
+  },
+  "n": 59,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01201",
+  "after_word": 7,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "60": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'새로운 경험을 했네' is a complete statement at stream end.",
+   "annotator": "A complete statement, and the stream ends."
+  },
+  "n": 60,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00782",
+  "after_word": 2,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "61": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete statement (객관식이 하나도 없어) at stream end",
+   "consumer": "'객관식이 하나도 없어' is a complete statement at stream end"
+  },
+  "n": 61,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00348",
+  "after_word": 21,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "62": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'아니지 서른 넷이지' is a complete correction and answer at stream end",
+   "annotator": "'아니지 서른 넷이지' is a complete answer; the correction is resolved inside the prefix."
+  },
+  "n": 62,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02475",
+  "after_word": 2,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "63": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "'not be proud nor haughty as the glass cat is' continues the same coordination",
+   "annotator": "Negated predicate is still open: 'not be proud | nor haughty as the glass cat is' continues the same sentence"
+  },
+  "n": 63,
+  "stream": "ls-test-clean-1284-1180-00081",
+  "after_word": 44,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "64": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The question is complete. The future begins a new narrative sentence.",
+   "annotator": "The quoted demand is complete; the future starts a new narrative sentence."
+  },
+  "n": 64,
+  "stream": "ls-test-clean-1580-141084-00127",
+  "after_word": 21,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "C_revision",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "SELF_REPAIR"
+  },
+  "future_unobserved": false
+ },
+ "65": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete statement ending in -단 말이지 at stream end",
+   "consumer": "'-든단 말이지' is sentence-final and complete; the self-repair earlier in the prefix is resolved"
+  },
+  "n": 65,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00307",
+  "after_word": 14,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "66": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "'아 그래서 약간' trails off after a discourse marker and a hedge; nothing has been asserted",
+   "annotator": "'아 그래서 약간' is a discourse marker plus hedge with no proposition, so it is incomplete."
+  },
+  "n": 66,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02218",
+  "after_word": 2,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "disfl_tag_filler",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "gptoss": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "67": {
+  "verdicts": {
+   "consumer": "UNSURE",
+   "annotator": "UNSURE"
+  },
+  "notes": {
+   "consumer": "Repeated '아니' could be a complete 'no' answer or a lead-in to the correction that follows; ambiguous",
+   "annotator": "'아니 아니 아니' could be a complete 'no' answer or discourse-marker 아니 that introduces the next unit (the correction/explanation)"
+  },
+  "n": 67,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02701",
+  "after_word": 2,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "C_revision+B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "SELF_REPAIR"
+  },
+  "future_unobserved": false
+ },
+ "68": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The relative clause closes at 'nearest neighbor' and the stream ends.",
+   "annotator": "The relative clause is closed and the sentence complete; the stream ends."
+  },
+  "n": 68,
+  "stream": "ls-test-clean-1284-1180-00074",
+  "after_word": 80,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "69": {
+  "verdicts": {
+   "annotator": "UNSURE",
+   "consumer": "UNSURE"
+  },
+  "notes": {
+   "annotator": "Plain -는데 (without 요) sets up background for a next event; its completeness is ambiguous",
+   "consumer": "The narrative '연락을 드렸는데' sets up background with '-는데' and likely expects an outcome; completeness is ambiguous at turn end"
+  },
+  "n": 69,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00899",
+  "after_word": 15,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "70": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'사이트 들어가면 알 수 있거든' is complete; the next unit starts with the marker '그래서'",
+   "annotator": "'알 수 있거든' is complete; '그래서' starts the next unit."
+  },
+  "n": 70,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02788",
+  "after_word": 7,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "NEW_UNIT"
+  },
+  "future_unobserved": false
+ },
+ "71": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'이렇게 해야 되잖아' is complete",
+   "annotator": "'성격도 좀 맞고 이렇게 해야 되잖아' is complete at turn end"
+  },
+  "n": 71,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02339",
+  "after_word": 6,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "72": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "The speech tag 'said sir ferdinando' still follows in the same sentence. Quotation rule: no boundary between a quote and its reporting verb.",
+   "annotator": "Cuts between the quote and its reporting clause 'said sir ferdinando', which the embedding/quotation rule forbids. The attribution also identifies a new speaker."
+  },
+  "n": 72,
+  "stream": "ls-test-clean-8455-210777-00684",
+  "after_word": 29,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "C_revision",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "SELF_REPAIR"
+  },
+  "future_unobserved": false
+ },
+ "73": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete clause; the future opens a new unit with discourse 'and'",
+   "consumer": "The independent clause ends at 'sea of tears'; 'and the gentleman remained...' is a new unit (the discourse marker goes to the next unit)"
+  },
+  "n": 73,
+  "stream": "ls-test-clean-5639-40744-00453",
+  "after_word": 76,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "74": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "Ends in the connective -고 ('안 치고'); the meaning is unfinished even at stream end",
+   "annotator": "Ends in the connective -고 ('안 치고'), so no boundary even at stream end."
+  },
+  "n": 74,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00824",
+  "after_word": 11,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "75": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The sentence ends; 'conseil i called' starts a new unit",
+   "annotator": "Sentence ends at 'emotionless man'; 'conseil i called' starts a new unit"
+  },
+  "n": 75,
+  "stream": "ls-test-clean-8463-294828-00699",
+  "after_word": 36,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "NEW_UNIT"
+  },
+  "future_unobserved": false
+ },
+ "76": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'모르는 거 같은데' is a turn-final softened assertion and pragmatically complete (the '-는데요' allowance).",
+   "annotator": "'모르는 거 같은데' ends the turn as a hedged final assertion, like the allowed '-는데요' case. The stream ends."
+  },
+  "n": 76,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02070",
+  "after_word": 8,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_disagree(resolved:WAIT)",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "gptoss": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "77": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete statement (바뀐 거지) at stream end",
+   "consumer": "'하노이라고 바뀐 거지' is a complete statement at stream end"
+  },
+  "n": 77,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01517",
+  "after_word": 17,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "78": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'much i fear his death is decreed' is complete; 'i greatly mourn...' is a new sentence",
+   "annotator": "'his death is decreed' completes the sentence; 'i greatly mourn' is a new unit."
+  },
+  "n": 78,
+  "stream": "ls-test-clean-1320-122617-00102",
+  "after_word": 13,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "79": {
+  "verdicts": {
+   "consumer": "UNSURE",
+   "annotator": "UNSURE"
+  },
+  "notes": {
+   "consumer": "The repair '시험 아니 면접' ends inside the prefix, but '봤는데' is ambiguous: a question (complete) or a background clause (incomplete)",
+   "annotator": "'몇 명씩 봤는데' could be a background -는데 clause setting up more, or a question ('how many at a time?'), so it is genuinely ambiguous"
+  },
+  "n": 79,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02879",
+  "after_word": 8,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "80": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The sentence closes at 'convincing testimonies' and the stream ends.",
+   "annotator": "The sentence is complete, and the stream ends."
+  },
+  "n": 80,
+  "stream": "ls-test-clean-5639-40744-00453",
+  "after_word": 116,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "81": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete quote with attribution; the future is the reply",
+   "consumer": "The quote and attribution 'he said' are complete; the reply 'so it is said anders' is a new unit"
+  },
+  "n": 81,
+  "stream": "ls-test-clean-7021-85628-00570",
+  "after_word": 9,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "B_disagree",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "82": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'뭐 알아서 하겠지' is a complete utterance at stream end",
+   "annotator": "'뭐 알아서 하겠지' is a complete statement at turn end."
+  },
+  "n": 82,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E01291",
+  "after_word": 2,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "83": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The sentence ends at 'their own child'",
+   "annotator": "Complete sentence at stream end"
+  },
+  "n": 83,
+  "stream": "ls-test-clean-5639-40744-00451",
+  "after_word": 75,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "84": {
+  "verdicts": {
+   "consumer": "UNSURE",
+   "annotator": "UNSURE"
+  },
+  "notes": {
+   "consumer": "'he darted like an arrow' is a full clause, but the same sentence goes on with path adjuncts ('through all the halls...'). Ambiguous under the precision-first rule.",
+   "annotator": "'he darted like an arrow' could stand alone, but the same sentence continues with its path ('through all the halls...'). That makes it borderline between added detail and a continuation."
+  },
+  "n": 84,
+  "stream": "ls-test-clean-7021-85628-00570",
+  "after_word": 50,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "B_disagree",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "85": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete sentence; the future starts a new sentence",
+   "consumer": "The sentence ends at 'wild recesses'; 'the dews were suffered...' starts a new sentence"
+  },
+  "n": 85,
+  "stream": "ls-test-clean-1320-122612-00093",
+  "after_word": 40,
+  "set": "ls-test",
+  "grade": "B",
+  "why": "B_disagree+C_revision_masked:QUALIFICATION",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "86": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'when do you intend that the john bright shall start' is a complete question at stream end",
+   "annotator": "Complete question ('when do you intend that the john bright shall start') at stream end."
+  },
+  "n": 86,
+  "stream": "ls-test-clean-8455-210777-00683",
+  "after_word": 77,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "87": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "Complete; the next part repeats '서른 넷이지' as confirmation, not correction",
+   "annotator": "'우리보다 두 살 많지' is complete; future '서른 넷이지' reconfirms rather than corrects, and then '그래서' opens a new unit"
+  },
+  "n": 87,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02268",
+  "after_word": 6,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "88": {
+  "verdicts": {
+   "consumer": "UNSURE",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "The concessive '오긴 왔는데' sets up a 'but...' that never comes. It is unclear whether this is pragmatically complete at turn end.",
+   "annotator": "The '오긴 왔는데' construction sets up a contrast ('did come, but...'). The turn ends with the meaning incomplete."
+  },
+  "n": 88,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02111",
+  "after_word": 13,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "89": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete rhetorical question (그런 거 아니야) at stream end",
+   "consumer": "'그런 거 아니야' is a sentence-final complete proposition at stream end"
+  },
+  "n": 89,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02029",
+  "after_word": 9,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+unobserved",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "90": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'시간이 너무 오래 걸려' is a complete statement; the next words start a new unit after the filler '그'",
+   "annotator": "'시간이 너무 오래 걸려' is complete; the future starts a new unit after the filler '그'."
+  },
+  "n": 90,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00862",
+  "after_word": 7,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "91": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "Complete question; a new parallel question follows",
+   "annotator": "Complete question; future begins a new parallel question"
+  },
+  "n": 91,
+  "stream": "ls-test-clean-4507-16021-00352",
+  "after_word": 8,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "C_revision",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "SELF_REPAIR"
+  },
+  "future_unobserved": false
+ },
+ "92": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "'한예종은' is only a topic. The speaker restarts with '한예종이...'.",
+   "annotator": "A bare topic '한예종은', which the speaker restarts as '한예종이 ...'. This is a restart."
+  },
+  "n": 92,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02569",
+  "after_word": 0,
+  "set": "ks-eval",
+  "grade": "B",
+  "why": "B_uncertain+C_revision_masked:QUALIFICATION",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "qwen3": "UNCERTAIN"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "93": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "Complete sentence; the future is a new quoted utterance",
+   "consumer": "The sentence ends at 'hands outstretched'; the quote 'thank heaven...' is a new unit"
+  },
+  "n": 93,
+  "stream": "ls-test-clean-1580-141084-00125",
+  "after_word": 74,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "NEW_UNIT"
+  },
+  "future_unobserved": false
+ },
+ "94": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "The chapter heading is a complete fragment; the body text starts a new sentence",
+   "annotator": "A chapter heading is a pragmatically complete fragment; the body text starts a new sentence."
+  },
+  "n": 94,
+  "stream": "ls-test-clean-5142-36600-00441",
+  "after_word": 6,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "95": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'안 먹으면 그 안 나와' ends on the main verb, not on the filler; complete",
+   "annotator": "Prefix ends on predicate '안 나와', not on a filler; complete at turn end"
+  },
+  "n": 95,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E00474",
+  "after_word": 9,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "UNOBSERVED",
+   "type": ""
+  },
+  "future_unobserved": true
+ },
+ "96": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'한강 가야 되잖아' is complete. The future is a new unit raising a concern (might not go because it's cold) and does not retract the plan.",
+   "annotator": "'우리 한강 가야 되잖아' is a complete statement. The future is a new unit raising a possible problem. It does not negate the obligation."
+  },
+  "n": 96,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02924",
+  "after_word": 7,
+  "set": "ks-eval",
+  "grade": "N",
+  "why": "B_all_wait",
+  "B": {
+   "exaone35": "WAIT",
+   "qwen3": "WAIT"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "QUALIFICATION"
+  },
+  "future_unobserved": false
+ },
+ "97": {
+  "verdicts": {
+   "annotator": "COMMIT_OK",
+   "consumer": "COMMIT_OK"
+  },
+  "notes": {
+   "annotator": "The acknowledgment '아 네' is complete; the future starts a new unit and does not cancel it",
+   "consumer": "'아 네' is a complete acknowledgment; '아이 그래도 ...' starts a new unit without retracting it"
+  },
+  "n": 97,
+  "stream": "ks-eval_clean-utt-KsponSpeech_E02082",
+  "after_word": 1,
+  "set": "ks-eval",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "ADDITIONAL_INFORMATION"
+  },
+  "future_unobserved": false
+ },
+ "98": {
+  "verdicts": {
+   "consumer": "NOT_OK",
+   "annotator": "NOT_OK"
+  },
+  "notes": {
+   "consumer": "Ends at 'said' before the speaker; the next word 'beth' finishes the attribution",
+   "annotator": "Ends at 'said' before the speaker's name ('beth'), so the sentence is incomplete."
+  },
+  "n": 98,
+  "stream": "ls-test-clean-6829-68771-00532",
+  "after_word": 21,
+  "set": "ls-test",
+  "grade": "N",
+  "why": "C_revision",
+  "B": {
+   "exaone35": "UNCERTAIN",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "REVISION",
+   "type": "RESTART"
+  },
+  "future_unobserved": false
+ },
+ "99": {
+  "verdicts": {
+   "consumer": "COMMIT_OK",
+   "annotator": "COMMIT_OK"
+  },
+  "notes": {
+   "consumer": "'i will report one of them in full' is complete; the reported dialogue starts a new unit",
+   "annotator": "'i will report one of them in full' is complete; future starts the reported conversation (new unit)"
+  },
+  "n": 99,
+  "stream": "ls-test-clean-7021-79740-00559",
+  "after_word": 14,
+  "set": "ls-test",
+  "grade": "A",
+  "why": "safe+stable",
+  "B": {
+   "exaone35": "SAFE",
+   "qwen3": "SAFE"
+  },
+  "C": {
+   "relation": "STABLE",
+   "type": "NEW_UNIT"
+  },
+  "future_unobserved": false
+ }
+}

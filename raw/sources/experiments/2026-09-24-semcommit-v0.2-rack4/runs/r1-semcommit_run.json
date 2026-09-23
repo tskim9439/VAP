@@ -1,0 +1,180 @@
+{
+ "args": {
+  "init": "/data4/tskim/VAPASR/exports/hf-E2-final",
+  "qwen_dir": null,
+  "init_adapter": null,
+  "nemotron_dir": "/data3/tskim/cache/huggingface/hub/models--nvidia--nemotron-3.5-asr-streaming-0.6b/snapshots/1c8deaecc64b91f034d73e08dd8b64625eb3395d",
+  "train_words": [
+   "/data4/tskim/semcommit/data/v0/words-ls-train.jsonl",
+   "/data4/tskim/semcommit/data/v0/words-ks-train.jsonl"
+  ],
+  "train_labels": [
+   "/data4/tskim/semcommit/labels/v0.2/labels-ls-train.jsonl",
+   "/data4/tskim/semcommit/labels/v0.2/labels-ks-train.jsonl"
+  ],
+  "path_map": "",
+  "allow_unlabeled": false,
+  "max_items_en": 0,
+  "max_items_ko": 0,
+  "out_dir": "/data4/tskim/semcommit/runs/v0.2-r1",
+  "max_steps": 0,
+  "epochs": 3.0,
+  "bs_en": 6,
+  "bs_ko": 16,
+  "lr": 3e-05,
+  "lr_adapter": 0.0001,
+  "lr_encoder": 1e-05,
+  "warmup": 50,
+  "wd": 0.01,
+  "delays": "2,3,4,6",
+  "M": 0,
+  "next_weight": 0.3,
+  "next_weight_ko": 0.15,
+  "sem_weight": 1.0,
+  "turn_weight": 1.0,
+  "hardneg_weight": 1.0,
+  "no_turn_end": false,
+  "hangover": 0.48,
+  "tail_margin": 2,
+  "freeze_encoder": true,
+  "grad_ckpt": true,
+  "liger": false,
+  "save_every": 300,
+  "save_total_limit": 0,
+  "log_every": 10,
+  "num_workers": 6,
+  "seed": 0,
+  "language_schedule": "balanced",
+  "resume": "auto",
+  "gpu": "0",
+  "force_resume": false,
+  "allow_missing_lang": false,
+  "no_check_save": false,
+  "check_items": 64,
+  "report_to": "tensorboard",
+  "dry_run": false
+ },
+ "init": "hf /data4/tskim/VAPASR/exports/hf-E2-final",
+ "sp_ids": {
+  "<NEXT_AUDIO>": 151705,
+  "<EMPTY_AUDIO>": 151706,
+  "<SPK_A>": 151707,
+  "<SPK_B>": 151708,
+  "<DELAY_1>": 151709,
+  "<DELAY_2>": 151710,
+  "<DELAY_3>": 151711,
+  "<DELAY_4>": 151712,
+  "<DELAY_5>": 151713,
+  "<DELAY_6>": 151714,
+  "<DELAY_7>": 151715,
+  "<DELAY_8>": 151716,
+  "<SPK_3>": 151717,
+  "<SPK_4>": 151718,
+  "<SPK_5>": 151719,
+  "<SPK_6>": 151720,
+  "<ONSET>": 151721,
+  "<EOT>": 151722,
+  "<SEM_END>": 151723,
+  "<TURN_END>": 151724
+ },
+ "semcommit": {
+  "protocol": "semcommit-train-v0",
+  "turn_end": true,
+  "hangover_s": 0.48,
+  "tail_margin": 2,
+  "pad_tail": true,
+  "M": 0,
+  "delays": [
+   2,
+   3,
+   4,
+   6
+  ],
+  "sem_weight": 1.0,
+  "turn_weight": 1.0,
+  "hardneg_weight": 1.0,
+  "next_weight": 0.3,
+  "next_weight_ko": 0.15,
+  "allow_unlabeled": false,
+  "max_items_en": 0,
+  "max_items_ko": 0,
+  "seed": 0,
+  "sem_ids": {
+   "<SEM_END>": 151723,
+   "<TURN_END>": 151724
+  },
+  "words_sha256": [
+   "c8d52d8fff24b23cef09c59a12b2d0f3ac524e74e14250f5d2d8f84c887f459b",
+   "0ae549fb3f7fc9cb6f6fcf8c74858adad781ae1c34e274c93c1ab2fc8be9592d"
+  ],
+  "labels_sha256": [
+   "69201cb66c1b42844f84d29718e02b79351b92c67828a3d447772de7430e7bcf",
+   "a8d378a35c8fac29767e7cbab6d47cebf1150d39c0829af443afa9905757f25b"
+  ],
+  "vocab_sha256": "7ff580166307987b8872b2e883163c2b0559c96ef17e394d1f95fce7546a07c1"
+ },
+ "resume_from": null,
+ "resume_fingerprint_diff": [],
+ "trainable_m": 600.249344,
+ "encoder_saved": true,
+ "train_streams": {
+  "en": 398,
+  "ko": 1977
+ },
+ "sets": {
+  "en": {
+   "words_rows": 400,
+   "labeled": 398,
+   "tok_check": 32,
+   "skipped_unlabeled": 2,
+   "labels_without_words": 0,
+   "padded": 239,
+   "pad_chunks": 414,
+   "sem": 367,
+   "turn": 398,
+   "B": 1895,
+   "N": 399,
+   "words_tokens": 32895,
+   "decision_on_event": 240,
+   "decision_on_event_items": 240,
+   "items": 398
+  },
+  "ko": {
+   "words_rows": 2000,
+   "labeled": 1977,
+   "tok_check": 32,
+   "skipped_unlabeled": 23,
+   "labels_without_words": 0,
+   "padded": 62,
+   "pad_chunks": 98,
+   "sem": 712,
+   "turn": 1977,
+   "B": 2175,
+   "N": 368,
+   "words_tokens": 46497,
+   "decision_on_event": 1122,
+   "decision_on_event_items": 1122,
+   "items": 1977
+  }
+ },
+ "excluded": {
+  "en": {},
+  "ko": {}
+ },
+ "check": {
+  "en": {
+   "n": 64,
+   "bad": 0,
+   "examples": [],
+   "decision_on_event": 240
+  },
+  "ko": {
+   "n": 64,
+   "bad": 0,
+   "examples": [],
+   "decision_on_event": 1122
+  }
+ },
+ "steps_per_epoch": 189,
+ "started": "2026-09-23 21:54:15"
+}

@@ -1,0 +1,24 @@
+{
+  "id": "ks-eval_clean-utt-KsponSpeech_E02651",
+  "match": true,
+  "stream_decode": [
+    [
+      13,
+      139772
+    ],
+    [
+      13,
+      26698
+    ]
+  ],
+  "decode_rows": [
+    [
+      13,
+      139772
+    ],
+    [
+      13,
+      26698
+    ]
+  ]
+}

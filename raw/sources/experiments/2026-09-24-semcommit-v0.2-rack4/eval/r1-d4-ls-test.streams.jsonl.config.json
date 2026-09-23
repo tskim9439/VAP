@@ -1,0 +1,57 @@
+{
+  "protocol": "semcommit-eval-v1",
+  "model": "/data4/tskim/semcommit/runs/v0.2-r1/final",
+  "checkpoint_weights": {
+    "model.safetensors": {
+      "size": 4837811880,
+      "mtime_ns": 1790200780448863621
+    }
+  },
+  "checkpoint_config_sha256": "6431ab4e11960f2b5b1fcd3984d16886d02c3e68aad9c136d59f3f0ee68571ae",
+  "train": {
+    "turn_end": true,
+    "hangover_s": 0.48,
+    "tail_margin": 2,
+    "M": 0,
+    "delays": [
+      2,
+      3,
+      4,
+      6
+    ],
+    "pad_tail": true,
+    "src": [
+      "/data4/tskim/semcommit/runs/v0.2-r1/results.json",
+      "/data4/tskim/semcommit/runs/v0.2-r1/final/config.json",
+      "/data4/tskim/semcommit/runs/v0.2-r1/final/config.json:semcommit"
+    ]
+  },
+  "delay": 4,
+  "turn_end": true,
+  "hangover_s": 0.48,
+  "pad_delays": [
+    2,
+    3,
+    4,
+    6
+  ],
+  "tail_margin": 2,
+  "pad_tail": true,
+  "no_pad": false,
+  "dtype": "float32",
+  "next_bias": 0.0,
+  "turn_bias": 0.0,
+  "sem_guard": true,
+  "max_flush": 8,
+  "block_turn": false,
+  "path_remap": [],
+  "words": "/data4/tskim/semcommit/data/v0/words-ls-test.jsonl",
+  "words_sha256": "a0e7f9045a0bdaa2ff13551e1d864ed6245e4fc718d5e47d4ab9137f160dfba8",
+  "code": {
+    "experiments/semcommit_eval.py": "22d300a60b683c9f1226ba308281586f67acae4fb8d66e75f9c47fc05c07fe2e",
+    "vapasr/hf/commit_metrics.py": "017c7da05fc523f98ee50ffadede268aac3fd11da5bbfc7fbaaa1784016c00b8",
+    "vapasr/hf/batch_decode.py": "32a34cee790f48d9ba8660824085f6a9c4866ca0d1b599712e89dd5866f6d4c6",
+    "vapasr/hf/modeling_vapasr.py": "429e2fad8a800b9b2d5ed6b351894f966f5b5f5fb8697cb58a784273b97e95ff",
+    "vapasr/data/streams.py": "e90d06c5702f649e3f10323acf982698dd5f1d44ad80da8a2223c87274cc8a6e"
+  }
+}

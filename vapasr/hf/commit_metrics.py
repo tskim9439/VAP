@@ -371,3 +371,26 @@ def pr_point(summary: Optional[dict], late: int = 2) -> dict:
     return dict(n_hyp=t["n_hyp"], sem_per_min=summary["events"]["sem_per_min"], time_precision=w.get("precision"), time_recall=w.get("recall"), time_f1=w.get("f1"),
                 latency_p50_s=(w.get("latency_s") or {}).get("p50"), text_precision=t["precision"], text_recall=t["recall"], text_f1=t["f1"], pcr=t["pcr"],
                 pcr_raw=t.get("pcr_raw"), guard_blocked=t.get("guard_blocked", 0), hardneg_commit_rate=t["hardneg_commit_rate"])
+
+# ───────────────────────────── 독립 참조: 구두점 전사(LibriSpeech-PC) ─────────────────────────────
+# LLM 라벨(A/B/N)과 무관한 EN 교차 점검. SEM_END 는 구두점 경계가 아니지만(계획 §3) 낭독체에서 문장 끝(. ? !)은 거의 늘 완결·안정 단위라,
+# 커밋이 문장 끝에 놓인 비율(P_pc)·문장 끝을 커밋한 비율(R_pc)이 라벨 재현율 한계(예: A 가 문장 끝의 18 %)를 드러낸다.
+_PC_TRAIL = re.compile(r"([^\w']+)$")
+
+def pc_punct_after(words: Sequence[dict], pnc_text: str, norm: Callable[[str], str] = norm_word) -> Dict[int, str]:
+    """참조 단어 i → 그 뒤 구두점 범주 SENT(. ? !) · CLAUSE(, ; :) · NONE. pnc_text 토큰을 참조 단어에 align_pairs 로 정렬(정렬 안 된 참조 단어는 없음)."""
+    ws = sorted(words, key=lambda w: int(w["i"])); toks = pnc_text.split(); out: Dict[int, str] = {}
+    for i, j in align_pairs([norm(w["text"]) for w in ws], [norm(t) for t in toks]):
+        if i is None or j is None: continue
+        m = _PC_TRAIL.search(toks[j]); p = m.group(1) if m else ""
+        out[int(ws[i]["i"])] = "SENT" if re.search(r"[.?!]", p) else ("CLAUSE" if re.search(r"[,;:]", p) else "NONE")
+    return out
+
+def pc_commit_counts(words: Sequence[dict], pnc_text: str, hyp_words: Sequence[str], events: Sequence[dict], ref_k: Optional[Sequence[int]] = None,
+                     K: Optional[int] = None, norm: Callable[[str], str] = norm_word) -> dict:
+    """<SEM_END> 이벤트(서로 다른 참조 위치, map_events 사상)의 구두점 범주 카운트 + 문장 끝 수·커밋된 문장 끝 수(합산 가능). 첫 단어 전(−1)은 NONE."""
+    pa = pc_punct_after(words, pnc_text, norm); ws = sorted(words, key=lambda w: int(w["i"]))
+    pos = set(map_events([w["text"] for w in ws], hyp_words, events, ref_k, K, norm))
+    cats = [pa.get(p, "NONE") for p in pos]
+    return dict(commits=len(pos), SENT=cats.count("SENT"), CLAUSE=cats.count("CLAUSE"), NONE=cats.count("NONE"),
+                n_sent=sum(v == "SENT" for v in pa.values()), sent_hit=sum(1 for p in pos if pa.get(p) == "SENT"))

@@ -473,3 +473,15 @@ def test_run_prefetch_is_bounded(monkeypatch):
         wp, lp, md = Path(td) / "w.jsonl", Path(td) / "l.jsonl", Path(td) / "model"; md.mkdir(); _dump(wp, words); _dump(lp, labels)
         rep = cli.main(["--model", str(md), "--words", str(wp), "--labels", str(lp), "--batch-size", "1", "--io-workers", "2", "--prefetch", "2", "--out", str(Path(td) / "r.json")])
     assert len(loads) == len(encs) == 12 and sorted(loads) == sorted(words) and peak[0] <= 3 and rep["configs"]["bias=0"]["complete"]
+
+def test_pc_punct_after_and_commit_counts():
+    """구두점 전사 정렬: 대소문자·구두점 무시 정렬, 전사에 없는 단어는 빠짐, 커밋 위치별 SENT/CLAUSE/NONE 과 문장 끝 재현."""
+    words = [dict(i=i, text=w, end_time=0.5 * (i + 1)) for i, w in enumerate("i went home then i slept well".split())]
+    pa = cm.pc_punct_after(words, "I went home, then I slept well.")
+    assert pa == {0: "NONE", 1: "NONE", 2: "CLAUSE", 3: "NONE", 4: "NONE", 5: "NONE", 6: "SENT"}
+    assert cm.pc_punct_after(words[:3] + [dict(i=3, text="uh", end_time=2.0)], "I went home.") == {0: "NONE", 1: "NONE", 2: "SENT"}
+    hyp = "i went home then i slept well".split()
+    ev = [dict(id=SEM, k=10, after=2), dict(id=SEM, k=20, after=6), dict(id=SEM, k=21, after=6)]      # 같은 위치 중복은 한 번
+    c = cm.pc_commit_counts(words, "I went home, then I slept well.", hyp, ev)
+    assert c == dict(commits=2, SENT=1, CLAUSE=1, NONE=0, n_sent=1, sent_hit=1)
+    assert cm.pc_commit_counts(words, "I went home, then I slept well.", hyp, [])["commits"] == 0

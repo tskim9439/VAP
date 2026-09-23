@@ -1,0 +1,258 @@
+{
+ "/data4/tskim/semcommit/eval/v0.2-r1/oracle-d4-ls-test.streams.jsonl": {
+  "configs": {
+   "oracle": {
+    "commits": 92,
+    "SENT": 63,
+    "CLAUSE": 12,
+    "NONE": 17,
+    "n_sent": 353,
+    "sent_hit": 63,
+    "streams": 92,
+    "P_pc": 0.6848,
+    "R_pc": 0.1785
+   }
+  },
+  "skipped_no_pc": 8
+ },
+ "/data4/tskim/semcommit/eval/v0.2-r1/base-d4-ls-test.streams.jsonl": {
+  "configs": {
+   "bias=0": {
+    "commits": 0,
+    "SENT": 0,
+    "CLAUSE": 0,
+    "NONE": 0,
+    "n_sent": 353,
+    "sent_hit": 0,
+    "streams": 92,
+    "P_pc": null,
+    "R_pc": 0.0
+   }
+  },
+  "skipped_no_pc": 8
+ },
+ "/data4/tskim/semcommit/eval/v0.2-r1/r1-d4-ls-test.streams.jsonl": {
+  "configs": {
+   "bias=-1": {
+    "commits": 21,
+    "SENT": 13,
+    "CLAUSE": 4,
+    "NONE": 4,
+    "n_sent": 353,
+    "sent_hit": 13,
+    "streams": 92,
+    "P_pc": 0.619,
+    "R_pc": 0.0368
+   },
+   "bias=-2": {
+    "commits": 8,
+    "SENT": 7,
+    "CLAUSE": 0,
+    "NONE": 1,
+    "n_sent": 353,
+    "sent_hit": 7,
+    "streams": 92,
+    "P_pc": 0.875,
+    "R_pc": 0.0198
+   },
+   "bias=0": {
+    "commits": 53,
+    "SENT": 33,
+    "CLAUSE": 13,
+    "NONE": 7,
+    "n_sent": 353,
+    "sent_hit": 33,
+    "streams": 92,
+    "P_pc": 0.6226,
+    "R_pc": 0.0935
+   },
+   "bias=1": {
+    "commits": 108,
+    "SENT": 68,
+    "CLAUSE": 27,
+    "NONE": 13,
+    "n_sent": 353,
+    "sent_hit": 68,
+    "streams": 92,
+    "P_pc": 0.6296,
+    "R_pc": 0.1926
+   },
+   "bias=2": {
+    "commits": 170,
+    "SENT": 89,
+    "CLAUSE": 53,
+    "NONE": 28,
+    "n_sent": 353,
+    "sent_hit": 89,
+    "streams": 92,
+    "P_pc": 0.5235,
+    "R_pc": 0.2521
+   },
+   "theta=0.2": {
+    "commits": 127,
+    "SENT": 77,
+    "CLAUSE": 34,
+    "NONE": 16,
+    "n_sent": 353,
+    "sent_hit": 77,
+    "streams": 92,
+    "P_pc": 0.6063,
+    "R_pc": 0.2181
+   },
+   "theta=0.35": {
+    "commits": 83,
+    "SENT": 55,
+    "CLAUSE": 20,
+    "NONE": 8,
+    "n_sent": 353,
+    "sent_hit": 55,
+    "streams": 92,
+    "P_pc": 0.6627,
+    "R_pc": 0.1558
+   },
+   "theta=0.5": {
+    "commits": 53,
+    "SENT": 33,
+    "CLAUSE": 13,
+    "NONE": 7,
+    "n_sent": 353,
+    "sent_hit": 33,
+    "streams": 92,
+    "P_pc": 0.6226,
+    "R_pc": 0.0935
+   }
+  },
+  "skipped_no_pc": 8
+ },
+ "/data4/tskim/semcommit/eval/v0.2-r2/r2-d4-ls-test.streams.jsonl": {
+  "configs": {
+   "bias=-1": {
+    "commits": 28,
+    "SENT": 21,
+    "CLAUSE": 5,
+    "NONE": 2,
+    "n_sent": 353,
+    "sent_hit": 21,
+    "streams": 92,
+    "P_pc": 0.75,
+    "R_pc": 0.0595
+   },
+   "bias=-2": {
+    "commits": 12,
+    "SENT": 10,
+    "CLAUSE": 1,
+    "NONE": 1,
+    "n_sent": 353,
+    "sent_hit": 10,
+    "streams": 92,
+    "P_pc": 0.8333,
+    "R_pc": 0.0283
+   },
+   "bias=0": {
+    "commits": 60,
+    "SENT": 40,
+    "CLAUSE": 14,
+    "NONE": 6,
+    "n_sent": 353,
+    "sent_hit": 40,
+    "streams": 92,
+    "P_pc": 0.6667,
+    "R_pc": 0.1133
+   },
+   "bias=1": {
+    "commits": 102,
+    "SENT": 61,
+    "CLAUSE": 28,
+    "NONE": 13,
+    "n_sent": 353,
+    "sent_hit": 61,
+    "streams": 92,
+    "P_pc": 0.598,
+    "R_pc": 0.1728
+   },
+   "bias=2": {
+    "commits": 195,
+    "SENT": 105,
+    "CLAUSE": 52,
+    "NONE": 38,
+    "n_sent": 353,
+    "sent_hit": 105,
+    "streams": 92,
+    "P_pc": 0.5385,
+    "R_pc": 0.2975
+   },
+   "theta=0.2": {
+    "commits": 127,
+    "SENT": 76,
+    "CLAUSE": 35,
+    "NONE": 16,
+    "n_sent": 353,
+    "sent_hit": 76,
+    "streams": 92,
+    "P_pc": 0.5984,
+    "R_pc": 0.2153
+   },
+   "theta=0.35": {
+    "commits": 85,
+    "SENT": 52,
+    "CLAUSE": 23,
+    "NONE": 10,
+    "n_sent": 353,
+    "sent_hit": 52,
+    "streams": 92,
+    "P_pc": 0.6118,
+    "R_pc": 0.1473
+   },
+   "theta=0.5": {
+    "commits": 57,
+    "SENT": 37,
+    "CLAUSE": 14,
+    "NONE": 6,
+    "n_sent": 353,
+    "sent_hit": 37,
+    "streams": 92,
+    "P_pc": 0.6491,
+    "R_pc": 0.1048
+   }
+  },
+  "skipped_no_pc": 8
+ },
+ "/data4/tskim/semcommit/eval/v0.2-r1/r1-d2-ls-test.streams.jsonl": {
+  "configs": {
+   "bias=-1": {
+    "commits": 20,
+    "SENT": 14,
+    "CLAUSE": 2,
+    "NONE": 4,
+    "n_sent": 353,
+    "sent_hit": 14,
+    "streams": 92,
+    "P_pc": 0.7,
+    "R_pc": 0.0397
+   },
+   "bias=0": {
+    "commits": 45,
+    "SENT": 29,
+    "CLAUSE": 8,
+    "NONE": 8,
+    "n_sent": 353,
+    "sent_hit": 29,
+    "streams": 92,
+    "P_pc": 0.6444,
+    "R_pc": 0.0822
+   },
+   "bias=1": {
+    "commits": 77,
+    "SENT": 43,
+    "CLAUSE": 21,
+    "NONE": 13,
+    "n_sent": 353,
+    "sent_hit": 43,
+    "streams": 92,
+    "P_pc": 0.5584,
+    "R_pc": 0.1218
+   }
+  },
+  "skipped_no_pc": 8
+ }
+}

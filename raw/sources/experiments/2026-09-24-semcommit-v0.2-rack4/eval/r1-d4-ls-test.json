@@ -1,0 +1,6108 @@
+{
+  "protocol": "semcommit-eval-v1",
+  "created": "2026-09-23T22:16:06",
+  "selection": {
+    "words": 100,
+    "labels": 100,
+    "words_without_labels": 0,
+    "labels_without_words": 0,
+    "selected": 100
+  },
+  "n_selected": 100,
+  "streams_file": "/data4/tskim/semcommit/eval/v0.2-r1/r1-d4-ls-test.streams.jsonl",
+  "decode": {
+    "protocol": "semcommit-eval-v1",
+    "model": "/data4/tskim/semcommit/runs/v0.2-r1/final",
+    "checkpoint_weights": {
+      "model.safetensors": {
+        "size": 4837811880,
+        "mtime_ns": 1790200780448863621
+      }
+    },
+    "checkpoint_config_sha256": "6431ab4e11960f2b5b1fcd3984d16886d02c3e68aad9c136d59f3f0ee68571ae",
+    "train": {
+      "turn_end": true,
+      "hangover_s": 0.48,
+      "tail_margin": 2,
+      "M": 0,
+      "delays": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "pad_tail": true,
+      "src": [
+        "/data4/tskim/semcommit/runs/v0.2-r1/results.json",
+        "/data4/tskim/semcommit/runs/v0.2-r1/final/config.json",
+        "/data4/tskim/semcommit/runs/v0.2-r1/final/config.json:semcommit"
+      ]
+    },
+    "delay": 4,
+    "turn_end": true,
+    "hangover_s": 0.48,
+    "pad_delays": [
+      2,
+      3,
+      4,
+      6
+    ],
+    "tail_margin": 2,
+    "pad_tail": true,
+    "no_pad": false,
+    "dtype": "float32",
+    "next_bias": 0.0,
+    "turn_bias": 0.0,
+    "sem_guard": true,
+    "max_flush": 8,
+    "block_turn": false,
+    "path_remap": [],
+    "words": "/data4/tskim/semcommit/data/v0/words-ls-test.jsonl",
+    "words_sha256": "a0e7f9045a0bdaa2ff13551e1d864ed6245e4fc718d5e47d4ab9137f160dfba8",
+    "code": {
+      "experiments/semcommit_eval.py": "22d300a60b683c9f1226ba308281586f67acae4fb8d66e75f9c47fc05c07fe2e",
+      "vapasr/hf/commit_metrics.py": "017c7da05fc523f98ee50ffadede268aac3fd11da5bbfc7fbaaa1784016c00b8",
+      "vapasr/hf/batch_decode.py": "32a34cee790f48d9ba8660824085f6a9c4866ca0d1b599712e89dd5866f6d4c6",
+      "vapasr/hf/modeling_vapasr.py": "429e2fad8a800b9b2d5ed6b351894f966f5b5f5fb8697cb58a784273b97e95ff",
+      "vapasr/data/streams.py": "e90d06c5702f649e3f10323acf982698dd5f1d44ad80da8a2223c87274cc8a6e"
+    }
+  },
+  "scoring": {
+    "early": 1,
+    "lates": [
+      0,
+      2,
+      5
+    ],
+    "primary_late": 2,
+    "hangover_s": 0.48,
+    "turn_end": true,
+    "chunk_s": 0.08,
+    "ref_time": "(a) ref_k=int(word_end/0.08)+delta for P/R/F1; (b) latency vs word_end, hyp_time=(k+1)*0.08",
+    "pcr_raw": "(premature + guard_blocked)/(n_hyp + guard_blocked): sem-guard 가 막은 SEM 발화를 조기 commit 으로 센 PCR"
+  },
+  "configs": {
+    "bias=-1": {
+      "mode": "bias",
+      "value": -1.0,
+      "n_streams": 100,
+      "complete": true,
+      "overall": {
+        "streams": 100,
+        "audio_s": 2887.52,
+        "events": {
+          "sem": 23,
+          "turn": 72,
+          "sem_in_flush": 0,
+          "guard_blocked": 0,
+          "sem_per_min": 0.4779187676622153
+        },
+        "timing": {
+          "ideal_latency_s": {
+            "n": 98,
+            "mean": 0.3649,
+            "p50": 0.367,
+            "p90": 0.3953
+          },
+          "late0": {
+            "hits": 4,
+            "n_hyp": 23,
+            "n_ref": 98,
+            "miss": 94,
+            "false": 7,
+            "b_hits": 12,
+            "precision": 0.17391304347826086,
+            "recall": 0.04081632653061224,
+            "f1": 0.06611570247933884,
+            "precision_excl_B": 0.36363636363636365,
+            "latency_s": {
+              "n": 4,
+              "mean": 0.327,
+              "p50": 0.322,
+              "p90": 0.3463
+            },
+            "lag_chunks": {
+              "n": 4,
+              "mean": -0.5,
+              "p50": -0.5,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 4,
+            "n_hyp": 23,
+            "n_ref": 98,
+            "miss": 94,
+            "false": 7,
+            "b_hits": 12,
+            "precision": 0.17391304347826086,
+            "recall": 0.04081632653061224,
+            "f1": 0.06611570247933884,
+            "precision_excl_B": 0.36363636363636365,
+            "latency_s": {
+              "n": 4,
+              "mean": 0.327,
+              "p50": 0.322,
+              "p90": 0.3463
+            },
+            "lag_chunks": {
+              "n": 4,
+              "mean": -0.5,
+              "p50": -0.5,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 4,
+            "n_hyp": 23,
+            "n_ref": 98,
+            "miss": 94,
+            "false": 6,
+            "b_hits": 13,
+            "precision": 0.17391304347826086,
+            "recall": 0.04081632653061224,
+            "f1": 0.06611570247933884,
+            "precision_excl_B": 0.4,
+            "latency_s": {
+              "n": 4,
+              "mean": 0.327,
+              "p50": 0.322,
+              "p90": 0.3463
+            },
+            "lag_chunks": {
+              "n": 4,
+              "mean": -0.5,
+              "p50": -0.5,
+              "p90": 0.0
+            }
+          }
+        },
+        "text": {
+          "n_hyp": 23,
+          "correct": 4,
+          "ambiguous": 12,
+          "duplicate": 0,
+          "premature": 7,
+          "precision": 0.17391304347826086,
+          "recall": 0.04081632653061224,
+          "f1": 0.06611570247933884,
+          "precision_excl_B": 0.36363636363636365,
+          "pcr": 0.30434782608695654,
+          "pcr_excl_B": 0.6363636363636364,
+          "guard_blocked": 0,
+          "pcr_raw": 0.30434782608695654,
+          "pcr_by_category": {
+            "filler": 0.0,
+            "rep": 0.0,
+            "unclear": 0.0,
+            "repair": 0.0,
+            "revision": 0.08695652173913043,
+            "all_wait": 0.0,
+            "other_n": 0.0,
+            "other_inside": 0.21739130434782608,
+            "mid_word": 0.0,
+            "no_word": 0.0
+          },
+          "premature_by_category": {
+            "filler": 0,
+            "rep": 0,
+            "unclear": 0,
+            "repair": 0,
+            "revision": 2,
+            "all_wait": 0,
+            "other_n": 0,
+            "other_inside": 5,
+            "mid_word": 0,
+            "no_word": 0
+          },
+          "n_A": 98,
+          "n_B": 405,
+          "n_N": 84,
+          "B_commit_rate": 0.02962962962962963,
+          "hardneg_commit_rate": 0.023809523809523808,
+          "hardneg_by_category": {
+            "all_wait": {
+              "n": 4,
+              "committed": 0,
+              "rate": 0.0
+            },
+            "revision": {
+              "n": 80,
+              "committed": 2,
+              "rate": 0.025
+            }
+          }
+        },
+        "asr": {
+          "wer": {
+            "substitutions": 251,
+            "deletions": 27,
+            "insertions": 49,
+            "n_ref": 7044,
+            "n_hyp": 7066,
+            "errors": 327,
+            "rate": 0.046422487223168656
+          }
+        },
+        "turn": {
+          "n_ref": 100,
+          "n_hyp": 72,
+          "early_turn": 25,
+          "in_flush": 0,
+          "late0": {
+            "hits": 44,
+            "n_hyp": 72,
+            "n_ref": 100,
+            "miss": 56,
+            "false": 28,
+            "b_hits": 0,
+            "precision": 0.6111111111111112,
+            "recall": 0.44,
+            "f1": 0.5116279069767442,
+            "precision_excl_B": 0.6111111111111112,
+            "latency_s": {
+              "n": 44,
+              "mean": 0.5007,
+              "p50": 0.4985,
+              "p90": 0.5485
+            },
+            "lag_chunks": {
+              "n": 44,
+              "mean": -0.3864,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 47,
+            "n_hyp": 72,
+            "n_ref": 100,
+            "miss": 53,
+            "false": 25,
+            "b_hits": 0,
+            "precision": 0.6527777777777778,
+            "recall": 0.47,
+            "f1": 0.5465116279069767,
+            "precision_excl_B": 0.6527777777777778,
+            "latency_s": {
+              "n": 47,
+              "mean": 0.5082,
+              "p50": 0.501,
+              "p90": 0.5554
+            },
+            "lag_chunks": {
+              "n": 47,
+              "mean": -0.2766,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 47,
+            "n_hyp": 72,
+            "n_ref": 100,
+            "miss": 53,
+            "false": 25,
+            "b_hits": 0,
+            "precision": 0.6527777777777778,
+            "recall": 0.47,
+            "f1": 0.5465116279069767,
+            "precision_excl_B": 0.6527777777777778,
+            "latency_s": {
+              "n": 47,
+              "mean": 0.5082,
+              "p50": 0.501,
+              "p90": 0.5554
+            },
+            "lag_chunks": {
+              "n": 47,
+              "mean": -0.2766,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        }
+      },
+      "by_lang": {
+        "English": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 23,
+            "turn": 72,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 0.4779187676622153
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 4,
+              "n_hyp": 23,
+              "n_ref": 98,
+              "miss": 94,
+              "false": 7,
+              "b_hits": 12,
+              "precision": 0.17391304347826086,
+              "recall": 0.04081632653061224,
+              "f1": 0.06611570247933884,
+              "precision_excl_B": 0.36363636363636365,
+              "latency_s": {
+                "n": 4,
+                "mean": 0.327,
+                "p50": 0.322,
+                "p90": 0.3463
+              },
+              "lag_chunks": {
+                "n": 4,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 4,
+              "n_hyp": 23,
+              "n_ref": 98,
+              "miss": 94,
+              "false": 7,
+              "b_hits": 12,
+              "precision": 0.17391304347826086,
+              "recall": 0.04081632653061224,
+              "f1": 0.06611570247933884,
+              "precision_excl_B": 0.36363636363636365,
+              "latency_s": {
+                "n": 4,
+                "mean": 0.327,
+                "p50": 0.322,
+                "p90": 0.3463
+              },
+              "lag_chunks": {
+                "n": 4,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 4,
+              "n_hyp": 23,
+              "n_ref": 98,
+              "miss": 94,
+              "false": 6,
+              "b_hits": 13,
+              "precision": 0.17391304347826086,
+              "recall": 0.04081632653061224,
+              "f1": 0.06611570247933884,
+              "precision_excl_B": 0.4,
+              "latency_s": {
+                "n": 4,
+                "mean": 0.327,
+                "p50": 0.322,
+                "p90": 0.3463
+              },
+              "lag_chunks": {
+                "n": 4,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 23,
+            "correct": 4,
+            "ambiguous": 12,
+            "duplicate": 0,
+            "premature": 7,
+            "precision": 0.17391304347826086,
+            "recall": 0.04081632653061224,
+            "f1": 0.06611570247933884,
+            "precision_excl_B": 0.36363636363636365,
+            "pcr": 0.30434782608695654,
+            "pcr_excl_B": 0.6363636363636364,
+            "guard_blocked": 0,
+            "pcr_raw": 0.30434782608695654,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.08695652173913043,
+              "all_wait": 0.0,
+              "other_n": 0.0,
+              "other_inside": 0.21739130434782608,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 2,
+              "all_wait": 0,
+              "other_n": 0,
+              "other_inside": 5,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.02962962962962963,
+            "hardneg_commit_rate": 0.023809523809523808,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 0,
+                "rate": 0.0
+              },
+              "revision": {
+                "n": 80,
+                "committed": 2,
+                "rate": 0.025
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 251,
+              "deletions": 27,
+              "insertions": 49,
+              "n_ref": 7044,
+              "n_hyp": 7066,
+              "errors": 327,
+              "rate": 0.046422487223168656
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 72,
+            "early_turn": 25,
+            "in_flush": 0,
+            "late0": {
+              "hits": 44,
+              "n_hyp": 72,
+              "n_ref": 100,
+              "miss": 56,
+              "false": 28,
+              "b_hits": 0,
+              "precision": 0.6111111111111112,
+              "recall": 0.44,
+              "f1": 0.5116279069767442,
+              "precision_excl_B": 0.6111111111111112,
+              "latency_s": {
+                "n": 44,
+                "mean": 0.5007,
+                "p50": 0.4985,
+                "p90": 0.5485
+              },
+              "lag_chunks": {
+                "n": 44,
+                "mean": -0.3864,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 47,
+              "n_hyp": 72,
+              "n_ref": 100,
+              "miss": 53,
+              "false": 25,
+              "b_hits": 0,
+              "precision": 0.6527777777777778,
+              "recall": 0.47,
+              "f1": 0.5465116279069767,
+              "precision_excl_B": 0.6527777777777778,
+              "latency_s": {
+                "n": 47,
+                "mean": 0.5082,
+                "p50": 0.501,
+                "p90": 0.5554
+              },
+              "lag_chunks": {
+                "n": 47,
+                "mean": -0.2766,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 47,
+              "n_hyp": 72,
+              "n_ref": 100,
+              "miss": 53,
+              "false": 25,
+              "b_hits": 0,
+              "precision": 0.6527777777777778,
+              "recall": 0.47,
+              "f1": 0.5465116279069767,
+              "precision_excl_B": 0.6527777777777778,
+              "latency_s": {
+                "n": 47,
+                "mean": 0.5082,
+                "p50": 0.501,
+                "p90": 0.5554
+              },
+              "lag_chunks": {
+                "n": 47,
+                "mean": -0.2766,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      },
+      "by_set": {
+        "librispeech-test": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 23,
+            "turn": 72,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 0.4779187676622153
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 4,
+              "n_hyp": 23,
+              "n_ref": 98,
+              "miss": 94,
+              "false": 7,
+              "b_hits": 12,
+              "precision": 0.17391304347826086,
+              "recall": 0.04081632653061224,
+              "f1": 0.06611570247933884,
+              "precision_excl_B": 0.36363636363636365,
+              "latency_s": {
+                "n": 4,
+                "mean": 0.327,
+                "p50": 0.322,
+                "p90": 0.3463
+              },
+              "lag_chunks": {
+                "n": 4,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 4,
+              "n_hyp": 23,
+              "n_ref": 98,
+              "miss": 94,
+              "false": 7,
+              "b_hits": 12,
+              "precision": 0.17391304347826086,
+              "recall": 0.04081632653061224,
+              "f1": 0.06611570247933884,
+              "precision_excl_B": 0.36363636363636365,
+              "latency_s": {
+                "n": 4,
+                "mean": 0.327,
+                "p50": 0.322,
+                "p90": 0.3463
+              },
+              "lag_chunks": {
+                "n": 4,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 4,
+              "n_hyp": 23,
+              "n_ref": 98,
+              "miss": 94,
+              "false": 6,
+              "b_hits": 13,
+              "precision": 0.17391304347826086,
+              "recall": 0.04081632653061224,
+              "f1": 0.06611570247933884,
+              "precision_excl_B": 0.4,
+              "latency_s": {
+                "n": 4,
+                "mean": 0.327,
+                "p50": 0.322,
+                "p90": 0.3463
+              },
+              "lag_chunks": {
+                "n": 4,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 23,
+            "correct": 4,
+            "ambiguous": 12,
+            "duplicate": 0,
+            "premature": 7,
+            "precision": 0.17391304347826086,
+            "recall": 0.04081632653061224,
+            "f1": 0.06611570247933884,
+            "precision_excl_B": 0.36363636363636365,
+            "pcr": 0.30434782608695654,
+            "pcr_excl_B": 0.6363636363636364,
+            "guard_blocked": 0,
+            "pcr_raw": 0.30434782608695654,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.08695652173913043,
+              "all_wait": 0.0,
+              "other_n": 0.0,
+              "other_inside": 0.21739130434782608,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 2,
+              "all_wait": 0,
+              "other_n": 0,
+              "other_inside": 5,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.02962962962962963,
+            "hardneg_commit_rate": 0.023809523809523808,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 0,
+                "rate": 0.0
+              },
+              "revision": {
+                "n": 80,
+                "committed": 2,
+                "rate": 0.025
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 251,
+              "deletions": 27,
+              "insertions": 49,
+              "n_ref": 7044,
+              "n_hyp": 7066,
+              "errors": 327,
+              "rate": 0.046422487223168656
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 72,
+            "early_turn": 25,
+            "in_flush": 0,
+            "late0": {
+              "hits": 44,
+              "n_hyp": 72,
+              "n_ref": 100,
+              "miss": 56,
+              "false": 28,
+              "b_hits": 0,
+              "precision": 0.6111111111111112,
+              "recall": 0.44,
+              "f1": 0.5116279069767442,
+              "precision_excl_B": 0.6111111111111112,
+              "latency_s": {
+                "n": 44,
+                "mean": 0.5007,
+                "p50": 0.4985,
+                "p90": 0.5485
+              },
+              "lag_chunks": {
+                "n": 44,
+                "mean": -0.3864,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 47,
+              "n_hyp": 72,
+              "n_ref": 100,
+              "miss": 53,
+              "false": 25,
+              "b_hits": 0,
+              "precision": 0.6527777777777778,
+              "recall": 0.47,
+              "f1": 0.5465116279069767,
+              "precision_excl_B": 0.6527777777777778,
+              "latency_s": {
+                "n": 47,
+                "mean": 0.5082,
+                "p50": 0.501,
+                "p90": 0.5554
+              },
+              "lag_chunks": {
+                "n": 47,
+                "mean": -0.2766,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 47,
+              "n_hyp": 72,
+              "n_ref": 100,
+              "miss": 53,
+              "false": 25,
+              "b_hits": 0,
+              "precision": 0.6527777777777778,
+              "recall": 0.47,
+              "f1": 0.5465116279069767,
+              "precision_excl_B": 0.6527777777777778,
+              "latency_s": {
+                "n": 47,
+                "mean": 0.5082,
+                "p50": 0.501,
+                "p90": 0.5554
+              },
+              "lag_chunks": {
+                "n": 47,
+                "mean": -0.2766,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "bias=-2": {
+      "mode": "bias",
+      "value": -2.0,
+      "n_streams": 100,
+      "complete": true,
+      "overall": {
+        "streams": 100,
+        "audio_s": 2887.52,
+        "events": {
+          "sem": 8,
+          "turn": 69,
+          "sem_in_flush": 0,
+          "guard_blocked": 0,
+          "sem_per_min": 0.16623261483903143
+        },
+        "timing": {
+          "ideal_latency_s": {
+            "n": 98,
+            "mean": 0.3649,
+            "p50": 0.367,
+            "p90": 0.3953
+          },
+          "late0": {
+            "hits": 0,
+            "n_hyp": 8,
+            "n_ref": 98,
+            "miss": 98,
+            "false": 2,
+            "b_hits": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "precision_excl_B": 0.0,
+            "latency_s": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            },
+            "lag_chunks": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            }
+          },
+          "late2": {
+            "hits": 0,
+            "n_hyp": 8,
+            "n_ref": 98,
+            "miss": 98,
+            "false": 2,
+            "b_hits": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "precision_excl_B": 0.0,
+            "latency_s": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            },
+            "lag_chunks": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            }
+          },
+          "late5": {
+            "hits": 0,
+            "n_hyp": 8,
+            "n_ref": 98,
+            "miss": 98,
+            "false": 2,
+            "b_hits": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "precision_excl_B": 0.0,
+            "latency_s": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            },
+            "lag_chunks": {
+              "n": 0,
+              "mean": null,
+              "p50": null,
+              "p90": null
+            }
+          }
+        },
+        "text": {
+          "n_hyp": 8,
+          "correct": 0,
+          "ambiguous": 6,
+          "duplicate": 0,
+          "premature": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "precision_excl_B": 0.0,
+          "pcr": 0.25,
+          "pcr_excl_B": 1.0,
+          "guard_blocked": 0,
+          "pcr_raw": 0.25,
+          "pcr_by_category": {
+            "filler": 0.0,
+            "rep": 0.0,
+            "unclear": 0.0,
+            "repair": 0.0,
+            "revision": 0.125,
+            "all_wait": 0.0,
+            "other_n": 0.0,
+            "other_inside": 0.125,
+            "mid_word": 0.0,
+            "no_word": 0.0
+          },
+          "premature_by_category": {
+            "filler": 0,
+            "rep": 0,
+            "unclear": 0,
+            "repair": 0,
+            "revision": 1,
+            "all_wait": 0,
+            "other_n": 0,
+            "other_inside": 1,
+            "mid_word": 0,
+            "no_word": 0
+          },
+          "n_A": 98,
+          "n_B": 405,
+          "n_N": 84,
+          "B_commit_rate": 0.014814814814814815,
+          "hardneg_commit_rate": 0.011904761904761904,
+          "hardneg_by_category": {
+            "all_wait": {
+              "n": 4,
+              "committed": 0,
+              "rate": 0.0
+            },
+            "revision": {
+              "n": 80,
+              "committed": 1,
+              "rate": 0.0125
+            }
+          }
+        },
+        "asr": {
+          "wer": {
+            "substitutions": 251,
+            "deletions": 27,
+            "insertions": 49,
+            "n_ref": 7044,
+            "n_hyp": 7066,
+            "errors": 327,
+            "rate": 0.046422487223168656
+          }
+        },
+        "turn": {
+          "n_ref": 100,
+          "n_hyp": 69,
+          "early_turn": 24,
+          "in_flush": 0,
+          "late0": {
+            "hits": 42,
+            "n_hyp": 69,
+            "n_ref": 100,
+            "miss": 58,
+            "false": 27,
+            "b_hits": 0,
+            "precision": 0.6086956521739131,
+            "recall": 0.42,
+            "f1": 0.4970414201183433,
+            "precision_excl_B": 0.6086956521739131,
+            "latency_s": {
+              "n": 42,
+              "mean": 0.4984,
+              "p50": 0.4955,
+              "p90": 0.5443
+            },
+            "lag_chunks": {
+              "n": 42,
+              "mean": -0.4048,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 45,
+            "n_hyp": 69,
+            "n_ref": 100,
+            "miss": 55,
+            "false": 24,
+            "b_hits": 0,
+            "precision": 0.6521739130434783,
+            "recall": 0.45,
+            "f1": 0.5325443786982249,
+            "precision_excl_B": 0.6521739130434783,
+            "latency_s": {
+              "n": 45,
+              "mean": 0.5064,
+              "p50": 0.499,
+              "p90": 0.5534
+            },
+            "lag_chunks": {
+              "n": 45,
+              "mean": -0.2889,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 45,
+            "n_hyp": 69,
+            "n_ref": 100,
+            "miss": 55,
+            "false": 24,
+            "b_hits": 0,
+            "precision": 0.6521739130434783,
+            "recall": 0.45,
+            "f1": 0.5325443786982249,
+            "precision_excl_B": 0.6521739130434783,
+            "latency_s": {
+              "n": 45,
+              "mean": 0.5064,
+              "p50": 0.499,
+              "p90": 0.5534
+            },
+            "lag_chunks": {
+              "n": 45,
+              "mean": -0.2889,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        }
+      },
+      "by_lang": {
+        "English": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 8,
+            "turn": 69,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 0.16623261483903143
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 0,
+              "n_hyp": 8,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 2,
+              "b_hits": 6,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "precision_excl_B": 0.0,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late2": {
+              "hits": 0,
+              "n_hyp": 8,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 2,
+              "b_hits": 6,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "precision_excl_B": 0.0,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late5": {
+              "hits": 0,
+              "n_hyp": 8,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 2,
+              "b_hits": 6,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "precision_excl_B": 0.0,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 8,
+            "correct": 0,
+            "ambiguous": 6,
+            "duplicate": 0,
+            "premature": 2,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "precision_excl_B": 0.0,
+            "pcr": 0.25,
+            "pcr_excl_B": 1.0,
+            "guard_blocked": 0,
+            "pcr_raw": 0.25,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.125,
+              "all_wait": 0.0,
+              "other_n": 0.0,
+              "other_inside": 0.125,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 1,
+              "all_wait": 0,
+              "other_n": 0,
+              "other_inside": 1,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.014814814814814815,
+            "hardneg_commit_rate": 0.011904761904761904,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 0,
+                "rate": 0.0
+              },
+              "revision": {
+                "n": 80,
+                "committed": 1,
+                "rate": 0.0125
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 251,
+              "deletions": 27,
+              "insertions": 49,
+              "n_ref": 7044,
+              "n_hyp": 7066,
+              "errors": 327,
+              "rate": 0.046422487223168656
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 69,
+            "early_turn": 24,
+            "in_flush": 0,
+            "late0": {
+              "hits": 42,
+              "n_hyp": 69,
+              "n_ref": 100,
+              "miss": 58,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6086956521739131,
+              "recall": 0.42,
+              "f1": 0.4970414201183433,
+              "precision_excl_B": 0.6086956521739131,
+              "latency_s": {
+                "n": 42,
+                "mean": 0.4984,
+                "p50": 0.4955,
+                "p90": 0.5443
+              },
+              "lag_chunks": {
+                "n": 42,
+                "mean": -0.4048,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 45,
+              "n_hyp": 69,
+              "n_ref": 100,
+              "miss": 55,
+              "false": 24,
+              "b_hits": 0,
+              "precision": 0.6521739130434783,
+              "recall": 0.45,
+              "f1": 0.5325443786982249,
+              "precision_excl_B": 0.6521739130434783,
+              "latency_s": {
+                "n": 45,
+                "mean": 0.5064,
+                "p50": 0.499,
+                "p90": 0.5534
+              },
+              "lag_chunks": {
+                "n": 45,
+                "mean": -0.2889,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 45,
+              "n_hyp": 69,
+              "n_ref": 100,
+              "miss": 55,
+              "false": 24,
+              "b_hits": 0,
+              "precision": 0.6521739130434783,
+              "recall": 0.45,
+              "f1": 0.5325443786982249,
+              "precision_excl_B": 0.6521739130434783,
+              "latency_s": {
+                "n": 45,
+                "mean": 0.5064,
+                "p50": 0.499,
+                "p90": 0.5534
+              },
+              "lag_chunks": {
+                "n": 45,
+                "mean": -0.2889,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      },
+      "by_set": {
+        "librispeech-test": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 8,
+            "turn": 69,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 0.16623261483903143
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 0,
+              "n_hyp": 8,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 2,
+              "b_hits": 6,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "precision_excl_B": 0.0,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late2": {
+              "hits": 0,
+              "n_hyp": 8,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 2,
+              "b_hits": 6,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "precision_excl_B": 0.0,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            },
+            "late5": {
+              "hits": 0,
+              "n_hyp": 8,
+              "n_ref": 98,
+              "miss": 98,
+              "false": 2,
+              "b_hits": 6,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "precision_excl_B": 0.0,
+              "latency_s": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              },
+              "lag_chunks": {
+                "n": 0,
+                "mean": null,
+                "p50": null,
+                "p90": null
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 8,
+            "correct": 0,
+            "ambiguous": 6,
+            "duplicate": 0,
+            "premature": 2,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "precision_excl_B": 0.0,
+            "pcr": 0.25,
+            "pcr_excl_B": 1.0,
+            "guard_blocked": 0,
+            "pcr_raw": 0.25,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.125,
+              "all_wait": 0.0,
+              "other_n": 0.0,
+              "other_inside": 0.125,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 1,
+              "all_wait": 0,
+              "other_n": 0,
+              "other_inside": 1,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.014814814814814815,
+            "hardneg_commit_rate": 0.011904761904761904,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 0,
+                "rate": 0.0
+              },
+              "revision": {
+                "n": 80,
+                "committed": 1,
+                "rate": 0.0125
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 251,
+              "deletions": 27,
+              "insertions": 49,
+              "n_ref": 7044,
+              "n_hyp": 7066,
+              "errors": 327,
+              "rate": 0.046422487223168656
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 69,
+            "early_turn": 24,
+            "in_flush": 0,
+            "late0": {
+              "hits": 42,
+              "n_hyp": 69,
+              "n_ref": 100,
+              "miss": 58,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6086956521739131,
+              "recall": 0.42,
+              "f1": 0.4970414201183433,
+              "precision_excl_B": 0.6086956521739131,
+              "latency_s": {
+                "n": 42,
+                "mean": 0.4984,
+                "p50": 0.4955,
+                "p90": 0.5443
+              },
+              "lag_chunks": {
+                "n": 42,
+                "mean": -0.4048,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 45,
+              "n_hyp": 69,
+              "n_ref": 100,
+              "miss": 55,
+              "false": 24,
+              "b_hits": 0,
+              "precision": 0.6521739130434783,
+              "recall": 0.45,
+              "f1": 0.5325443786982249,
+              "precision_excl_B": 0.6521739130434783,
+              "latency_s": {
+                "n": 45,
+                "mean": 0.5064,
+                "p50": 0.499,
+                "p90": 0.5534
+              },
+              "lag_chunks": {
+                "n": 45,
+                "mean": -0.2889,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 45,
+              "n_hyp": 69,
+              "n_ref": 100,
+              "miss": 55,
+              "false": 24,
+              "b_hits": 0,
+              "precision": 0.6521739130434783,
+              "recall": 0.45,
+              "f1": 0.5325443786982249,
+              "precision_excl_B": 0.6521739130434783,
+              "latency_s": {
+                "n": 45,
+                "mean": 0.5064,
+                "p50": 0.499,
+                "p90": 0.5534
+              },
+              "lag_chunks": {
+                "n": 45,
+                "mean": -0.2889,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "bias=0": {
+      "mode": "bias",
+      "value": 0.0,
+      "n_streams": 100,
+      "complete": true,
+      "overall": {
+        "streams": 100,
+        "audio_s": 2887.52,
+        "events": {
+          "sem": 56,
+          "turn": 77,
+          "sem_in_flush": 0,
+          "guard_blocked": 0,
+          "sem_per_min": 1.16362830387322
+        },
+        "timing": {
+          "ideal_latency_s": {
+            "n": 98,
+            "mean": 0.3649,
+            "p50": 0.367,
+            "p90": 0.3953
+          },
+          "late0": {
+            "hits": 12,
+            "n_hyp": 56,
+            "n_ref": 98,
+            "miss": 86,
+            "false": 23,
+            "b_hits": 21,
+            "precision": 0.21428571428571427,
+            "recall": 0.12244897959183673,
+            "f1": 0.15584415584415584,
+            "precision_excl_B": 0.34285714285714286,
+            "latency_s": {
+              "n": 12,
+              "mean": 0.3294,
+              "p50": 0.322,
+              "p90": 0.3685
+            },
+            "lag_chunks": {
+              "n": 12,
+              "mean": -0.5,
+              "p50": -0.5,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 13,
+            "n_hyp": 56,
+            "n_ref": 98,
+            "miss": 85,
+            "false": 19,
+            "b_hits": 24,
+            "precision": 0.23214285714285715,
+            "recall": 0.1326530612244898,
+            "f1": 0.16883116883116886,
+            "precision_excl_B": 0.40625,
+            "latency_s": {
+              "n": 13,
+              "mean": 0.3355,
+              "p50": 0.326,
+              "p90": 0.382
+            },
+            "lag_chunks": {
+              "n": 13,
+              "mean": -0.3846,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 13,
+            "n_hyp": 56,
+            "n_ref": 98,
+            "miss": 85,
+            "false": 18,
+            "b_hits": 25,
+            "precision": 0.23214285714285715,
+            "recall": 0.1326530612244898,
+            "f1": 0.16883116883116886,
+            "precision_excl_B": 0.41935483870967744,
+            "latency_s": {
+              "n": 13,
+              "mean": 0.3355,
+              "p50": 0.326,
+              "p90": 0.382
+            },
+            "lag_chunks": {
+              "n": 13,
+              "mean": -0.3846,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        },
+        "text": {
+          "n_hyp": 56,
+          "correct": 13,
+          "ambiguous": 24,
+          "duplicate": 0,
+          "premature": 19,
+          "precision": 0.23214285714285715,
+          "recall": 0.1326530612244898,
+          "f1": 0.16883116883116886,
+          "precision_excl_B": 0.40625,
+          "pcr": 0.3392857142857143,
+          "pcr_excl_B": 0.59375,
+          "guard_blocked": 0,
+          "pcr_raw": 0.3392857142857143,
+          "pcr_by_category": {
+            "filler": 0.0,
+            "rep": 0.0,
+            "unclear": 0.0,
+            "repair": 0.0,
+            "revision": 0.05357142857142857,
+            "all_wait": 0.03571428571428571,
+            "other_n": 0.0,
+            "other_inside": 0.25,
+            "mid_word": 0.0,
+            "no_word": 0.0
+          },
+          "premature_by_category": {
+            "filler": 0,
+            "rep": 0,
+            "unclear": 0,
+            "repair": 0,
+            "revision": 3,
+            "all_wait": 2,
+            "other_n": 0,
+            "other_inside": 14,
+            "mid_word": 0,
+            "no_word": 0
+          },
+          "n_A": 98,
+          "n_B": 405,
+          "n_N": 84,
+          "B_commit_rate": 0.05925925925925926,
+          "hardneg_commit_rate": 0.05952380952380952,
+          "hardneg_by_category": {
+            "all_wait": {
+              "n": 4,
+              "committed": 2,
+              "rate": 0.5
+            },
+            "revision": {
+              "n": 80,
+              "committed": 3,
+              "rate": 0.0375
+            }
+          }
+        },
+        "asr": {
+          "wer": {
+            "substitutions": 255,
+            "deletions": 25,
+            "insertions": 50,
+            "n_ref": 7044,
+            "n_hyp": 7069,
+            "errors": 330,
+            "rate": 0.046848381601362864
+          }
+        },
+        "turn": {
+          "n_ref": 100,
+          "n_hyp": 77,
+          "early_turn": 27,
+          "in_flush": 0,
+          "late0": {
+            "hits": 47,
+            "n_hyp": 77,
+            "n_ref": 100,
+            "miss": 53,
+            "false": 30,
+            "b_hits": 0,
+            "precision": 0.6103896103896104,
+            "recall": 0.47,
+            "f1": 0.5310734463276836,
+            "precision_excl_B": 0.6103896103896104,
+            "latency_s": {
+              "n": 47,
+              "mean": 0.4996,
+              "p50": 0.498,
+              "p90": 0.5432
+            },
+            "lag_chunks": {
+              "n": 47,
+              "mean": -0.4043,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 50,
+            "n_hyp": 77,
+            "n_ref": 100,
+            "miss": 50,
+            "false": 27,
+            "b_hits": 0,
+            "precision": 0.6493506493506493,
+            "recall": 0.5,
+            "f1": 0.5649717514124294,
+            "precision_excl_B": 0.6493506493506493,
+            "latency_s": {
+              "n": 50,
+              "mean": 0.5067,
+              "p50": 0.5,
+              "p90": 0.5514
+            },
+            "lag_chunks": {
+              "n": 50,
+              "mean": -0.3,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 50,
+            "n_hyp": 77,
+            "n_ref": 100,
+            "miss": 50,
+            "false": 27,
+            "b_hits": 0,
+            "precision": 0.6493506493506493,
+            "recall": 0.5,
+            "f1": 0.5649717514124294,
+            "precision_excl_B": 0.6493506493506493,
+            "latency_s": {
+              "n": 50,
+              "mean": 0.5067,
+              "p50": 0.5,
+              "p90": 0.5514
+            },
+            "lag_chunks": {
+              "n": 50,
+              "mean": -0.3,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        }
+      },
+      "by_lang": {
+        "English": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 56,
+            "turn": 77,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 1.16362830387322
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 12,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 86,
+              "false": 23,
+              "b_hits": 21,
+              "precision": 0.21428571428571427,
+              "recall": 0.12244897959183673,
+              "f1": 0.15584415584415584,
+              "precision_excl_B": 0.34285714285714286,
+              "latency_s": {
+                "n": 12,
+                "mean": 0.3294,
+                "p50": 0.322,
+                "p90": 0.3685
+              },
+              "lag_chunks": {
+                "n": 12,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 13,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 85,
+              "false": 19,
+              "b_hits": 24,
+              "precision": 0.23214285714285715,
+              "recall": 0.1326530612244898,
+              "f1": 0.16883116883116886,
+              "precision_excl_B": 0.40625,
+              "latency_s": {
+                "n": 13,
+                "mean": 0.3355,
+                "p50": 0.326,
+                "p90": 0.382
+              },
+              "lag_chunks": {
+                "n": 13,
+                "mean": -0.3846,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 13,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 85,
+              "false": 18,
+              "b_hits": 25,
+              "precision": 0.23214285714285715,
+              "recall": 0.1326530612244898,
+              "f1": 0.16883116883116886,
+              "precision_excl_B": 0.41935483870967744,
+              "latency_s": {
+                "n": 13,
+                "mean": 0.3355,
+                "p50": 0.326,
+                "p90": 0.382
+              },
+              "lag_chunks": {
+                "n": 13,
+                "mean": -0.3846,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 56,
+            "correct": 13,
+            "ambiguous": 24,
+            "duplicate": 0,
+            "premature": 19,
+            "precision": 0.23214285714285715,
+            "recall": 0.1326530612244898,
+            "f1": 0.16883116883116886,
+            "precision_excl_B": 0.40625,
+            "pcr": 0.3392857142857143,
+            "pcr_excl_B": 0.59375,
+            "guard_blocked": 0,
+            "pcr_raw": 0.3392857142857143,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.05357142857142857,
+              "all_wait": 0.03571428571428571,
+              "other_n": 0.0,
+              "other_inside": 0.25,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 3,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 14,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.05925925925925926,
+            "hardneg_commit_rate": 0.05952380952380952,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 3,
+                "rate": 0.0375
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 255,
+              "deletions": 25,
+              "insertions": 50,
+              "n_ref": 7044,
+              "n_hyp": 7069,
+              "errors": 330,
+              "rate": 0.046848381601362864
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 77,
+            "early_turn": 27,
+            "in_flush": 0,
+            "late0": {
+              "hits": 47,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 53,
+              "false": 30,
+              "b_hits": 0,
+              "precision": 0.6103896103896104,
+              "recall": 0.47,
+              "f1": 0.5310734463276836,
+              "precision_excl_B": 0.6103896103896104,
+              "latency_s": {
+                "n": 47,
+                "mean": 0.4996,
+                "p50": 0.498,
+                "p90": 0.5432
+              },
+              "lag_chunks": {
+                "n": 47,
+                "mean": -0.4043,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 50,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 50,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6493506493506493,
+              "recall": 0.5,
+              "f1": 0.5649717514124294,
+              "precision_excl_B": 0.6493506493506493,
+              "latency_s": {
+                "n": 50,
+                "mean": 0.5067,
+                "p50": 0.5,
+                "p90": 0.5514
+              },
+              "lag_chunks": {
+                "n": 50,
+                "mean": -0.3,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 50,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 50,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6493506493506493,
+              "recall": 0.5,
+              "f1": 0.5649717514124294,
+              "precision_excl_B": 0.6493506493506493,
+              "latency_s": {
+                "n": 50,
+                "mean": 0.5067,
+                "p50": 0.5,
+                "p90": 0.5514
+              },
+              "lag_chunks": {
+                "n": 50,
+                "mean": -0.3,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      },
+      "by_set": {
+        "librispeech-test": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 56,
+            "turn": 77,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 1.16362830387322
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 12,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 86,
+              "false": 23,
+              "b_hits": 21,
+              "precision": 0.21428571428571427,
+              "recall": 0.12244897959183673,
+              "f1": 0.15584415584415584,
+              "precision_excl_B": 0.34285714285714286,
+              "latency_s": {
+                "n": 12,
+                "mean": 0.3294,
+                "p50": 0.322,
+                "p90": 0.3685
+              },
+              "lag_chunks": {
+                "n": 12,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 13,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 85,
+              "false": 19,
+              "b_hits": 24,
+              "precision": 0.23214285714285715,
+              "recall": 0.1326530612244898,
+              "f1": 0.16883116883116886,
+              "precision_excl_B": 0.40625,
+              "latency_s": {
+                "n": 13,
+                "mean": 0.3355,
+                "p50": 0.326,
+                "p90": 0.382
+              },
+              "lag_chunks": {
+                "n": 13,
+                "mean": -0.3846,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 13,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 85,
+              "false": 18,
+              "b_hits": 25,
+              "precision": 0.23214285714285715,
+              "recall": 0.1326530612244898,
+              "f1": 0.16883116883116886,
+              "precision_excl_B": 0.41935483870967744,
+              "latency_s": {
+                "n": 13,
+                "mean": 0.3355,
+                "p50": 0.326,
+                "p90": 0.382
+              },
+              "lag_chunks": {
+                "n": 13,
+                "mean": -0.3846,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 56,
+            "correct": 13,
+            "ambiguous": 24,
+            "duplicate": 0,
+            "premature": 19,
+            "precision": 0.23214285714285715,
+            "recall": 0.1326530612244898,
+            "f1": 0.16883116883116886,
+            "precision_excl_B": 0.40625,
+            "pcr": 0.3392857142857143,
+            "pcr_excl_B": 0.59375,
+            "guard_blocked": 0,
+            "pcr_raw": 0.3392857142857143,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.05357142857142857,
+              "all_wait": 0.03571428571428571,
+              "other_n": 0.0,
+              "other_inside": 0.25,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 3,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 14,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.05925925925925926,
+            "hardneg_commit_rate": 0.05952380952380952,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 3,
+                "rate": 0.0375
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 255,
+              "deletions": 25,
+              "insertions": 50,
+              "n_ref": 7044,
+              "n_hyp": 7069,
+              "errors": 330,
+              "rate": 0.046848381601362864
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 77,
+            "early_turn": 27,
+            "in_flush": 0,
+            "late0": {
+              "hits": 47,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 53,
+              "false": 30,
+              "b_hits": 0,
+              "precision": 0.6103896103896104,
+              "recall": 0.47,
+              "f1": 0.5310734463276836,
+              "precision_excl_B": 0.6103896103896104,
+              "latency_s": {
+                "n": 47,
+                "mean": 0.4996,
+                "p50": 0.498,
+                "p90": 0.5432
+              },
+              "lag_chunks": {
+                "n": 47,
+                "mean": -0.4043,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 50,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 50,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6493506493506493,
+              "recall": 0.5,
+              "f1": 0.5649717514124294,
+              "precision_excl_B": 0.6493506493506493,
+              "latency_s": {
+                "n": 50,
+                "mean": 0.5067,
+                "p50": 0.5,
+                "p90": 0.5514
+              },
+              "lag_chunks": {
+                "n": 50,
+                "mean": -0.3,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 50,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 50,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6493506493506493,
+              "recall": 0.5,
+              "f1": 0.5649717514124294,
+              "precision_excl_B": 0.6493506493506493,
+              "latency_s": {
+                "n": 50,
+                "mean": 0.5067,
+                "p50": 0.5,
+                "p90": 0.5514
+              },
+              "lag_chunks": {
+                "n": 50,
+                "mean": -0.3,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "bias=1": {
+      "mode": "bias",
+      "value": 1.0,
+      "n_streams": 100,
+      "complete": true,
+      "overall": {
+        "streams": 100,
+        "audio_s": 2887.52,
+        "events": {
+          "sem": 119,
+          "turn": 91,
+          "sem_in_flush": 0,
+          "guard_blocked": 0,
+          "sem_per_min": 2.4727101457305922
+        },
+        "timing": {
+          "ideal_latency_s": {
+            "n": 98,
+            "mean": 0.3649,
+            "p50": 0.367,
+            "p90": 0.3953
+          },
+          "late0": {
+            "hits": 16,
+            "n_hyp": 119,
+            "n_ref": 98,
+            "miss": 82,
+            "false": 54,
+            "b_hits": 49,
+            "precision": 0.13445378151260504,
+            "recall": 0.16326530612244897,
+            "f1": 0.14746543778801843,
+            "precision_excl_B": 0.22857142857142856,
+            "latency_s": {
+              "n": 16,
+              "mean": 0.3406,
+              "p50": 0.3325,
+              "p90": 0.379
+            },
+            "lag_chunks": {
+              "n": 16,
+              "mean": -0.375,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 18,
+            "n_hyp": 119,
+            "n_ref": 98,
+            "miss": 80,
+            "false": 46,
+            "b_hits": 55,
+            "precision": 0.15126050420168066,
+            "recall": 0.1836734693877551,
+            "f1": 0.16589861751152074,
+            "precision_excl_B": 0.28125,
+            "latency_s": {
+              "n": 18,
+              "mean": 0.3496,
+              "p50": 0.344,
+              "p90": 0.3999
+            },
+            "lag_chunks": {
+              "n": 18,
+              "mean": -0.2222,
+              "p50": 0.0,
+              "p90": 0.3
+            }
+          },
+          "late5": {
+            "hits": 18,
+            "n_hyp": 119,
+            "n_ref": 98,
+            "miss": 80,
+            "false": 43,
+            "b_hits": 58,
+            "precision": 0.15126050420168066,
+            "recall": 0.1836734693877551,
+            "f1": 0.16589861751152074,
+            "precision_excl_B": 0.29508196721311475,
+            "latency_s": {
+              "n": 18,
+              "mean": 0.3496,
+              "p50": 0.344,
+              "p90": 0.3999
+            },
+            "lag_chunks": {
+              "n": 18,
+              "mean": -0.2222,
+              "p50": 0.0,
+              "p90": 0.3
+            }
+          }
+        },
+        "text": {
+          "n_hyp": 119,
+          "correct": 18,
+          "ambiguous": 55,
+          "duplicate": 0,
+          "premature": 46,
+          "precision": 0.15126050420168066,
+          "recall": 0.1836734693877551,
+          "f1": 0.16589861751152074,
+          "precision_excl_B": 0.28125,
+          "pcr": 0.3865546218487395,
+          "pcr_excl_B": 0.71875,
+          "guard_blocked": 0,
+          "pcr_raw": 0.3865546218487395,
+          "pcr_by_category": {
+            "filler": 0.0,
+            "rep": 0.0,
+            "unclear": 0.0,
+            "repair": 0.0,
+            "revision": 0.04201680672268908,
+            "all_wait": 0.01680672268907563,
+            "other_n": 0.0,
+            "other_inside": 0.3277310924369748,
+            "mid_word": 0.0,
+            "no_word": 0.0
+          },
+          "premature_by_category": {
+            "filler": 0,
+            "rep": 0,
+            "unclear": 0,
+            "repair": 0,
+            "revision": 5,
+            "all_wait": 2,
+            "other_n": 0,
+            "other_inside": 39,
+            "mid_word": 0,
+            "no_word": 0
+          },
+          "n_A": 98,
+          "n_B": 405,
+          "n_N": 84,
+          "B_commit_rate": 0.13580246913580246,
+          "hardneg_commit_rate": 0.08333333333333333,
+          "hardneg_by_category": {
+            "all_wait": {
+              "n": 4,
+              "committed": 2,
+              "rate": 0.5
+            },
+            "revision": {
+              "n": 80,
+              "committed": 5,
+              "rate": 0.0625
+            }
+          }
+        },
+        "asr": {
+          "wer": {
+            "substitutions": 254,
+            "deletions": 25,
+            "insertions": 51,
+            "n_ref": 7044,
+            "n_hyp": 7070,
+            "errors": 330,
+            "rate": 0.046848381601362864
+          }
+        },
+        "turn": {
+          "n_ref": 100,
+          "n_hyp": 91,
+          "early_turn": 37,
+          "in_flush": 0,
+          "late0": {
+            "hits": 51,
+            "n_hyp": 91,
+            "n_ref": 100,
+            "miss": 49,
+            "false": 40,
+            "b_hits": 0,
+            "precision": 0.5604395604395604,
+            "recall": 0.51,
+            "f1": 0.5340314136125655,
+            "precision_excl_B": 0.5604395604395604,
+            "latency_s": {
+              "n": 51,
+              "mean": 0.5021,
+              "p50": 0.501,
+              "p90": 0.545
+            },
+            "lag_chunks": {
+              "n": 51,
+              "mean": -0.3725,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 54,
+            "n_hyp": 91,
+            "n_ref": 100,
+            "miss": 46,
+            "false": 37,
+            "b_hits": 0,
+            "precision": 0.5934065934065934,
+            "recall": 0.54,
+            "f1": 0.5654450261780104,
+            "precision_excl_B": 0.5934065934065934,
+            "latency_s": {
+              "n": 54,
+              "mean": 0.5086,
+              "p50": 0.505,
+              "p90": 0.5507
+            },
+            "lag_chunks": {
+              "n": 54,
+              "mean": -0.2778,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 54,
+            "n_hyp": 91,
+            "n_ref": 100,
+            "miss": 46,
+            "false": 37,
+            "b_hits": 0,
+            "precision": 0.5934065934065934,
+            "recall": 0.54,
+            "f1": 0.5654450261780104,
+            "precision_excl_B": 0.5934065934065934,
+            "latency_s": {
+              "n": 54,
+              "mean": 0.5086,
+              "p50": 0.505,
+              "p90": 0.5507
+            },
+            "lag_chunks": {
+              "n": 54,
+              "mean": -0.2778,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        }
+      },
+      "by_lang": {
+        "English": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 119,
+            "turn": 91,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 2.4727101457305922
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 16,
+              "n_hyp": 119,
+              "n_ref": 98,
+              "miss": 82,
+              "false": 54,
+              "b_hits": 49,
+              "precision": 0.13445378151260504,
+              "recall": 0.16326530612244897,
+              "f1": 0.14746543778801843,
+              "precision_excl_B": 0.22857142857142856,
+              "latency_s": {
+                "n": 16,
+                "mean": 0.3406,
+                "p50": 0.3325,
+                "p90": 0.379
+              },
+              "lag_chunks": {
+                "n": 16,
+                "mean": -0.375,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 18,
+              "n_hyp": 119,
+              "n_ref": 98,
+              "miss": 80,
+              "false": 46,
+              "b_hits": 55,
+              "precision": 0.15126050420168066,
+              "recall": 0.1836734693877551,
+              "f1": 0.16589861751152074,
+              "precision_excl_B": 0.28125,
+              "latency_s": {
+                "n": 18,
+                "mean": 0.3496,
+                "p50": 0.344,
+                "p90": 0.3999
+              },
+              "lag_chunks": {
+                "n": 18,
+                "mean": -0.2222,
+                "p50": 0.0,
+                "p90": 0.3
+              }
+            },
+            "late5": {
+              "hits": 18,
+              "n_hyp": 119,
+              "n_ref": 98,
+              "miss": 80,
+              "false": 43,
+              "b_hits": 58,
+              "precision": 0.15126050420168066,
+              "recall": 0.1836734693877551,
+              "f1": 0.16589861751152074,
+              "precision_excl_B": 0.29508196721311475,
+              "latency_s": {
+                "n": 18,
+                "mean": 0.3496,
+                "p50": 0.344,
+                "p90": 0.3999
+              },
+              "lag_chunks": {
+                "n": 18,
+                "mean": -0.2222,
+                "p50": 0.0,
+                "p90": 0.3
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 119,
+            "correct": 18,
+            "ambiguous": 55,
+            "duplicate": 0,
+            "premature": 46,
+            "precision": 0.15126050420168066,
+            "recall": 0.1836734693877551,
+            "f1": 0.16589861751152074,
+            "precision_excl_B": 0.28125,
+            "pcr": 0.3865546218487395,
+            "pcr_excl_B": 0.71875,
+            "guard_blocked": 0,
+            "pcr_raw": 0.3865546218487395,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.04201680672268908,
+              "all_wait": 0.01680672268907563,
+              "other_n": 0.0,
+              "other_inside": 0.3277310924369748,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 5,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 39,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.13580246913580246,
+            "hardneg_commit_rate": 0.08333333333333333,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 5,
+                "rate": 0.0625
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 254,
+              "deletions": 25,
+              "insertions": 51,
+              "n_ref": 7044,
+              "n_hyp": 7070,
+              "errors": 330,
+              "rate": 0.046848381601362864
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 91,
+            "early_turn": 37,
+            "in_flush": 0,
+            "late0": {
+              "hits": 51,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 49,
+              "false": 40,
+              "b_hits": 0,
+              "precision": 0.5604395604395604,
+              "recall": 0.51,
+              "f1": 0.5340314136125655,
+              "precision_excl_B": 0.5604395604395604,
+              "latency_s": {
+                "n": 51,
+                "mean": 0.5021,
+                "p50": 0.501,
+                "p90": 0.545
+              },
+              "lag_chunks": {
+                "n": 51,
+                "mean": -0.3725,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 54,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 46,
+              "false": 37,
+              "b_hits": 0,
+              "precision": 0.5934065934065934,
+              "recall": 0.54,
+              "f1": 0.5654450261780104,
+              "precision_excl_B": 0.5934065934065934,
+              "latency_s": {
+                "n": 54,
+                "mean": 0.5086,
+                "p50": 0.505,
+                "p90": 0.5507
+              },
+              "lag_chunks": {
+                "n": 54,
+                "mean": -0.2778,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 54,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 46,
+              "false": 37,
+              "b_hits": 0,
+              "precision": 0.5934065934065934,
+              "recall": 0.54,
+              "f1": 0.5654450261780104,
+              "precision_excl_B": 0.5934065934065934,
+              "latency_s": {
+                "n": 54,
+                "mean": 0.5086,
+                "p50": 0.505,
+                "p90": 0.5507
+              },
+              "lag_chunks": {
+                "n": 54,
+                "mean": -0.2778,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      },
+      "by_set": {
+        "librispeech-test": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 119,
+            "turn": 91,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 2.4727101457305922
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 16,
+              "n_hyp": 119,
+              "n_ref": 98,
+              "miss": 82,
+              "false": 54,
+              "b_hits": 49,
+              "precision": 0.13445378151260504,
+              "recall": 0.16326530612244897,
+              "f1": 0.14746543778801843,
+              "precision_excl_B": 0.22857142857142856,
+              "latency_s": {
+                "n": 16,
+                "mean": 0.3406,
+                "p50": 0.3325,
+                "p90": 0.379
+              },
+              "lag_chunks": {
+                "n": 16,
+                "mean": -0.375,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 18,
+              "n_hyp": 119,
+              "n_ref": 98,
+              "miss": 80,
+              "false": 46,
+              "b_hits": 55,
+              "precision": 0.15126050420168066,
+              "recall": 0.1836734693877551,
+              "f1": 0.16589861751152074,
+              "precision_excl_B": 0.28125,
+              "latency_s": {
+                "n": 18,
+                "mean": 0.3496,
+                "p50": 0.344,
+                "p90": 0.3999
+              },
+              "lag_chunks": {
+                "n": 18,
+                "mean": -0.2222,
+                "p50": 0.0,
+                "p90": 0.3
+              }
+            },
+            "late5": {
+              "hits": 18,
+              "n_hyp": 119,
+              "n_ref": 98,
+              "miss": 80,
+              "false": 43,
+              "b_hits": 58,
+              "precision": 0.15126050420168066,
+              "recall": 0.1836734693877551,
+              "f1": 0.16589861751152074,
+              "precision_excl_B": 0.29508196721311475,
+              "latency_s": {
+                "n": 18,
+                "mean": 0.3496,
+                "p50": 0.344,
+                "p90": 0.3999
+              },
+              "lag_chunks": {
+                "n": 18,
+                "mean": -0.2222,
+                "p50": 0.0,
+                "p90": 0.3
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 119,
+            "correct": 18,
+            "ambiguous": 55,
+            "duplicate": 0,
+            "premature": 46,
+            "precision": 0.15126050420168066,
+            "recall": 0.1836734693877551,
+            "f1": 0.16589861751152074,
+            "precision_excl_B": 0.28125,
+            "pcr": 0.3865546218487395,
+            "pcr_excl_B": 0.71875,
+            "guard_blocked": 0,
+            "pcr_raw": 0.3865546218487395,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.04201680672268908,
+              "all_wait": 0.01680672268907563,
+              "other_n": 0.0,
+              "other_inside": 0.3277310924369748,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 5,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 39,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.13580246913580246,
+            "hardneg_commit_rate": 0.08333333333333333,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 5,
+                "rate": 0.0625
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 254,
+              "deletions": 25,
+              "insertions": 51,
+              "n_ref": 7044,
+              "n_hyp": 7070,
+              "errors": 330,
+              "rate": 0.046848381601362864
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 91,
+            "early_turn": 37,
+            "in_flush": 0,
+            "late0": {
+              "hits": 51,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 49,
+              "false": 40,
+              "b_hits": 0,
+              "precision": 0.5604395604395604,
+              "recall": 0.51,
+              "f1": 0.5340314136125655,
+              "precision_excl_B": 0.5604395604395604,
+              "latency_s": {
+                "n": 51,
+                "mean": 0.5021,
+                "p50": 0.501,
+                "p90": 0.545
+              },
+              "lag_chunks": {
+                "n": 51,
+                "mean": -0.3725,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 54,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 46,
+              "false": 37,
+              "b_hits": 0,
+              "precision": 0.5934065934065934,
+              "recall": 0.54,
+              "f1": 0.5654450261780104,
+              "precision_excl_B": 0.5934065934065934,
+              "latency_s": {
+                "n": 54,
+                "mean": 0.5086,
+                "p50": 0.505,
+                "p90": 0.5507
+              },
+              "lag_chunks": {
+                "n": 54,
+                "mean": -0.2778,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 54,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 46,
+              "false": 37,
+              "b_hits": 0,
+              "precision": 0.5934065934065934,
+              "recall": 0.54,
+              "f1": 0.5654450261780104,
+              "precision_excl_B": 0.5934065934065934,
+              "latency_s": {
+                "n": 54,
+                "mean": 0.5086,
+                "p50": 0.505,
+                "p90": 0.5507
+              },
+              "lag_chunks": {
+                "n": 54,
+                "mean": -0.2778,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "bias=2": {
+      "mode": "bias",
+      "value": 2.0,
+      "n_streams": 100,
+      "complete": true,
+      "overall": {
+        "streams": 100,
+        "audio_s": 2887.52,
+        "events": {
+          "sem": 185,
+          "turn": 96,
+          "sem_in_flush": 0,
+          "guard_blocked": 0,
+          "sem_per_min": 3.8441292181526014
+        },
+        "timing": {
+          "ideal_latency_s": {
+            "n": 98,
+            "mean": 0.3649,
+            "p50": 0.367,
+            "p90": 0.3953
+          },
+          "late0": {
+            "hits": 26,
+            "n_hyp": 185,
+            "n_ref": 98,
+            "miss": 72,
+            "false": 86,
+            "b_hits": 73,
+            "precision": 0.14054054054054055,
+            "recall": 0.2653061224489796,
+            "f1": 0.1837455830388693,
+            "precision_excl_B": 0.23214285714285715,
+            "latency_s": {
+              "n": 26,
+              "mean": 0.3407,
+              "p50": 0.341,
+              "p90": 0.3775
+            },
+            "lag_chunks": {
+              "n": 26,
+              "mean": -0.3077,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 28,
+            "n_hyp": 185,
+            "n_ref": 98,
+            "miss": 70,
+            "false": 77,
+            "b_hits": 80,
+            "precision": 0.15135135135135136,
+            "recall": 0.2857142857142857,
+            "f1": 0.19787985865724383,
+            "precision_excl_B": 0.26666666666666666,
+            "latency_s": {
+              "n": 28,
+              "mean": 0.3465,
+              "p50": 0.3465,
+              "p90": 0.3883
+            },
+            "lag_chunks": {
+              "n": 28,
+              "mean": -0.2143,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 28,
+            "n_hyp": 185,
+            "n_ref": 98,
+            "miss": 70,
+            "false": 72,
+            "b_hits": 85,
+            "precision": 0.15135135135135136,
+            "recall": 0.2857142857142857,
+            "f1": 0.19787985865724383,
+            "precision_excl_B": 0.28,
+            "latency_s": {
+              "n": 28,
+              "mean": 0.3465,
+              "p50": 0.3465,
+              "p90": 0.3883
+            },
+            "lag_chunks": {
+              "n": 28,
+              "mean": -0.2143,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        },
+        "text": {
+          "n_hyp": 185,
+          "correct": 28,
+          "ambiguous": 80,
+          "duplicate": 0,
+          "premature": 77,
+          "precision": 0.15135135135135136,
+          "recall": 0.2857142857142857,
+          "f1": 0.19787985865724383,
+          "precision_excl_B": 0.26666666666666666,
+          "pcr": 0.41621621621621624,
+          "pcr_excl_B": 0.7333333333333333,
+          "guard_blocked": 0,
+          "pcr_raw": 0.41621621621621624,
+          "pcr_by_category": {
+            "filler": 0.0,
+            "rep": 0.0,
+            "unclear": 0.0,
+            "repair": 0.0,
+            "revision": 0.03783783783783784,
+            "all_wait": 0.010810810810810811,
+            "other_n": 0.0,
+            "other_inside": 0.3675675675675676,
+            "mid_word": 0.0,
+            "no_word": 0.0
+          },
+          "premature_by_category": {
+            "filler": 0,
+            "rep": 0,
+            "unclear": 0,
+            "repair": 0,
+            "revision": 7,
+            "all_wait": 2,
+            "other_n": 0,
+            "other_inside": 68,
+            "mid_word": 0,
+            "no_word": 0
+          },
+          "n_A": 98,
+          "n_B": 405,
+          "n_N": 84,
+          "B_commit_rate": 0.19753086419753085,
+          "hardneg_commit_rate": 0.10714285714285714,
+          "hardneg_by_category": {
+            "all_wait": {
+              "n": 4,
+              "committed": 2,
+              "rate": 0.5
+            },
+            "revision": {
+              "n": 80,
+              "committed": 7,
+              "rate": 0.0875
+            }
+          }
+        },
+        "asr": {
+          "wer": {
+            "substitutions": 255,
+            "deletions": 24,
+            "insertions": 49,
+            "n_ref": 7044,
+            "n_hyp": 7069,
+            "errors": 328,
+            "rate": 0.04656445201590006
+          }
+        },
+        "turn": {
+          "n_ref": 100,
+          "n_hyp": 96,
+          "early_turn": 41,
+          "in_flush": 0,
+          "late0": {
+            "hits": 53,
+            "n_hyp": 96,
+            "n_ref": 100,
+            "miss": 47,
+            "false": 43,
+            "b_hits": 0,
+            "precision": 0.5520833333333334,
+            "recall": 0.53,
+            "f1": 0.5408163265306124,
+            "precision_excl_B": 0.5520833333333334,
+            "latency_s": {
+              "n": 53,
+              "mean": 0.5029,
+              "p50": 0.505,
+              "p90": 0.5444
+            },
+            "lag_chunks": {
+              "n": 53,
+              "mean": -0.3585,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 55,
+            "n_hyp": 96,
+            "n_ref": 100,
+            "miss": 45,
+            "false": 41,
+            "b_hits": 0,
+            "precision": 0.5729166666666666,
+            "recall": 0.55,
+            "f1": 0.5612244897959183,
+            "precision_excl_B": 0.5729166666666666,
+            "latency_s": {
+              "n": 55,
+              "mean": 0.5071,
+              "p50": 0.505,
+              "p90": 0.5484
+            },
+            "lag_chunks": {
+              "n": 55,
+              "mean": -0.2909,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 55,
+            "n_hyp": 96,
+            "n_ref": 100,
+            "miss": 45,
+            "false": 41,
+            "b_hits": 0,
+            "precision": 0.5729166666666666,
+            "recall": 0.55,
+            "f1": 0.5612244897959183,
+            "precision_excl_B": 0.5729166666666666,
+            "latency_s": {
+              "n": 55,
+              "mean": 0.5071,
+              "p50": 0.505,
+              "p90": 0.5484
+            },
+            "lag_chunks": {
+              "n": 55,
+              "mean": -0.2909,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        }
+      },
+      "by_lang": {
+        "English": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 185,
+            "turn": 96,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 3.8441292181526014
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 26,
+              "n_hyp": 185,
+              "n_ref": 98,
+              "miss": 72,
+              "false": 86,
+              "b_hits": 73,
+              "precision": 0.14054054054054055,
+              "recall": 0.2653061224489796,
+              "f1": 0.1837455830388693,
+              "precision_excl_B": 0.23214285714285715,
+              "latency_s": {
+                "n": 26,
+                "mean": 0.3407,
+                "p50": 0.341,
+                "p90": 0.3775
+              },
+              "lag_chunks": {
+                "n": 26,
+                "mean": -0.3077,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 28,
+              "n_hyp": 185,
+              "n_ref": 98,
+              "miss": 70,
+              "false": 77,
+              "b_hits": 80,
+              "precision": 0.15135135135135136,
+              "recall": 0.2857142857142857,
+              "f1": 0.19787985865724383,
+              "precision_excl_B": 0.26666666666666666,
+              "latency_s": {
+                "n": 28,
+                "mean": 0.3465,
+                "p50": 0.3465,
+                "p90": 0.3883
+              },
+              "lag_chunks": {
+                "n": 28,
+                "mean": -0.2143,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 28,
+              "n_hyp": 185,
+              "n_ref": 98,
+              "miss": 70,
+              "false": 72,
+              "b_hits": 85,
+              "precision": 0.15135135135135136,
+              "recall": 0.2857142857142857,
+              "f1": 0.19787985865724383,
+              "precision_excl_B": 0.28,
+              "latency_s": {
+                "n": 28,
+                "mean": 0.3465,
+                "p50": 0.3465,
+                "p90": 0.3883
+              },
+              "lag_chunks": {
+                "n": 28,
+                "mean": -0.2143,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 185,
+            "correct": 28,
+            "ambiguous": 80,
+            "duplicate": 0,
+            "premature": 77,
+            "precision": 0.15135135135135136,
+            "recall": 0.2857142857142857,
+            "f1": 0.19787985865724383,
+            "precision_excl_B": 0.26666666666666666,
+            "pcr": 0.41621621621621624,
+            "pcr_excl_B": 0.7333333333333333,
+            "guard_blocked": 0,
+            "pcr_raw": 0.41621621621621624,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.03783783783783784,
+              "all_wait": 0.010810810810810811,
+              "other_n": 0.0,
+              "other_inside": 0.3675675675675676,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 7,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 68,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.19753086419753085,
+            "hardneg_commit_rate": 0.10714285714285714,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 7,
+                "rate": 0.0875
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 255,
+              "deletions": 24,
+              "insertions": 49,
+              "n_ref": 7044,
+              "n_hyp": 7069,
+              "errors": 328,
+              "rate": 0.04656445201590006
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 96,
+            "early_turn": 41,
+            "in_flush": 0,
+            "late0": {
+              "hits": 53,
+              "n_hyp": 96,
+              "n_ref": 100,
+              "miss": 47,
+              "false": 43,
+              "b_hits": 0,
+              "precision": 0.5520833333333334,
+              "recall": 0.53,
+              "f1": 0.5408163265306124,
+              "precision_excl_B": 0.5520833333333334,
+              "latency_s": {
+                "n": 53,
+                "mean": 0.5029,
+                "p50": 0.505,
+                "p90": 0.5444
+              },
+              "lag_chunks": {
+                "n": 53,
+                "mean": -0.3585,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 55,
+              "n_hyp": 96,
+              "n_ref": 100,
+              "miss": 45,
+              "false": 41,
+              "b_hits": 0,
+              "precision": 0.5729166666666666,
+              "recall": 0.55,
+              "f1": 0.5612244897959183,
+              "precision_excl_B": 0.5729166666666666,
+              "latency_s": {
+                "n": 55,
+                "mean": 0.5071,
+                "p50": 0.505,
+                "p90": 0.5484
+              },
+              "lag_chunks": {
+                "n": 55,
+                "mean": -0.2909,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 55,
+              "n_hyp": 96,
+              "n_ref": 100,
+              "miss": 45,
+              "false": 41,
+              "b_hits": 0,
+              "precision": 0.5729166666666666,
+              "recall": 0.55,
+              "f1": 0.5612244897959183,
+              "precision_excl_B": 0.5729166666666666,
+              "latency_s": {
+                "n": 55,
+                "mean": 0.5071,
+                "p50": 0.505,
+                "p90": 0.5484
+              },
+              "lag_chunks": {
+                "n": 55,
+                "mean": -0.2909,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      },
+      "by_set": {
+        "librispeech-test": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 185,
+            "turn": 96,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 3.8441292181526014
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 26,
+              "n_hyp": 185,
+              "n_ref": 98,
+              "miss": 72,
+              "false": 86,
+              "b_hits": 73,
+              "precision": 0.14054054054054055,
+              "recall": 0.2653061224489796,
+              "f1": 0.1837455830388693,
+              "precision_excl_B": 0.23214285714285715,
+              "latency_s": {
+                "n": 26,
+                "mean": 0.3407,
+                "p50": 0.341,
+                "p90": 0.3775
+              },
+              "lag_chunks": {
+                "n": 26,
+                "mean": -0.3077,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 28,
+              "n_hyp": 185,
+              "n_ref": 98,
+              "miss": 70,
+              "false": 77,
+              "b_hits": 80,
+              "precision": 0.15135135135135136,
+              "recall": 0.2857142857142857,
+              "f1": 0.19787985865724383,
+              "precision_excl_B": 0.26666666666666666,
+              "latency_s": {
+                "n": 28,
+                "mean": 0.3465,
+                "p50": 0.3465,
+                "p90": 0.3883
+              },
+              "lag_chunks": {
+                "n": 28,
+                "mean": -0.2143,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 28,
+              "n_hyp": 185,
+              "n_ref": 98,
+              "miss": 70,
+              "false": 72,
+              "b_hits": 85,
+              "precision": 0.15135135135135136,
+              "recall": 0.2857142857142857,
+              "f1": 0.19787985865724383,
+              "precision_excl_B": 0.28,
+              "latency_s": {
+                "n": 28,
+                "mean": 0.3465,
+                "p50": 0.3465,
+                "p90": 0.3883
+              },
+              "lag_chunks": {
+                "n": 28,
+                "mean": -0.2143,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 185,
+            "correct": 28,
+            "ambiguous": 80,
+            "duplicate": 0,
+            "premature": 77,
+            "precision": 0.15135135135135136,
+            "recall": 0.2857142857142857,
+            "f1": 0.19787985865724383,
+            "precision_excl_B": 0.26666666666666666,
+            "pcr": 0.41621621621621624,
+            "pcr_excl_B": 0.7333333333333333,
+            "guard_blocked": 0,
+            "pcr_raw": 0.41621621621621624,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.03783783783783784,
+              "all_wait": 0.010810810810810811,
+              "other_n": 0.0,
+              "other_inside": 0.3675675675675676,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 7,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 68,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.19753086419753085,
+            "hardneg_commit_rate": 0.10714285714285714,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 7,
+                "rate": 0.0875
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 255,
+              "deletions": 24,
+              "insertions": 49,
+              "n_ref": 7044,
+              "n_hyp": 7069,
+              "errors": 328,
+              "rate": 0.04656445201590006
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 96,
+            "early_turn": 41,
+            "in_flush": 0,
+            "late0": {
+              "hits": 53,
+              "n_hyp": 96,
+              "n_ref": 100,
+              "miss": 47,
+              "false": 43,
+              "b_hits": 0,
+              "precision": 0.5520833333333334,
+              "recall": 0.53,
+              "f1": 0.5408163265306124,
+              "precision_excl_B": 0.5520833333333334,
+              "latency_s": {
+                "n": 53,
+                "mean": 0.5029,
+                "p50": 0.505,
+                "p90": 0.5444
+              },
+              "lag_chunks": {
+                "n": 53,
+                "mean": -0.3585,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 55,
+              "n_hyp": 96,
+              "n_ref": 100,
+              "miss": 45,
+              "false": 41,
+              "b_hits": 0,
+              "precision": 0.5729166666666666,
+              "recall": 0.55,
+              "f1": 0.5612244897959183,
+              "precision_excl_B": 0.5729166666666666,
+              "latency_s": {
+                "n": 55,
+                "mean": 0.5071,
+                "p50": 0.505,
+                "p90": 0.5484
+              },
+              "lag_chunks": {
+                "n": 55,
+                "mean": -0.2909,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 55,
+              "n_hyp": 96,
+              "n_ref": 100,
+              "miss": 45,
+              "false": 41,
+              "b_hits": 0,
+              "precision": 0.5729166666666666,
+              "recall": 0.55,
+              "f1": 0.5612244897959183,
+              "precision_excl_B": 0.5729166666666666,
+              "latency_s": {
+                "n": 55,
+                "mean": 0.5071,
+                "p50": 0.505,
+                "p90": 0.5484
+              },
+              "lag_chunks": {
+                "n": 55,
+                "mean": -0.2909,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "theta=0.2": {
+      "mode": "threshold",
+      "value": 0.2,
+      "n_streams": 100,
+      "complete": true,
+      "overall": {
+        "streams": 100,
+        "audio_s": 2887.52,
+        "events": {
+          "sem": 140,
+          "turn": 91,
+          "sem_in_flush": 0,
+          "guard_blocked": 0,
+          "sem_per_min": 2.9090707596830496
+        },
+        "timing": {
+          "ideal_latency_s": {
+            "n": 98,
+            "mean": 0.3649,
+            "p50": 0.367,
+            "p90": 0.3953
+          },
+          "late0": {
+            "hits": 18,
+            "n_hyp": 140,
+            "n_ref": 98,
+            "miss": 80,
+            "false": 65,
+            "b_hits": 57,
+            "precision": 0.12857142857142856,
+            "recall": 0.1836734693877551,
+            "f1": 0.15126050420168066,
+            "precision_excl_B": 0.21686746987951808,
+            "latency_s": {
+              "n": 18,
+              "mean": 0.3397,
+              "p50": 0.3325,
+              "p90": 0.3766
+            },
+            "lag_chunks": {
+              "n": 18,
+              "mean": -0.3889,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 20,
+            "n_hyp": 140,
+            "n_ref": 98,
+            "miss": 78,
+            "false": 57,
+            "b_hits": 63,
+            "precision": 0.14285714285714285,
+            "recall": 0.20408163265306123,
+            "f1": 0.1680672268907563,
+            "precision_excl_B": 0.2597402597402597,
+            "latency_s": {
+              "n": 20,
+              "mean": 0.3479,
+              "p50": 0.341,
+              "p90": 0.3973
+            },
+            "lag_chunks": {
+              "n": 20,
+              "mean": -0.25,
+              "p50": 0.0,
+              "p90": 0.1
+            }
+          },
+          "late5": {
+            "hits": 20,
+            "n_hyp": 140,
+            "n_ref": 98,
+            "miss": 78,
+            "false": 54,
+            "b_hits": 66,
+            "precision": 0.14285714285714285,
+            "recall": 0.20408163265306123,
+            "f1": 0.1680672268907563,
+            "precision_excl_B": 0.2702702702702703,
+            "latency_s": {
+              "n": 20,
+              "mean": 0.3479,
+              "p50": 0.341,
+              "p90": 0.3973
+            },
+            "lag_chunks": {
+              "n": 20,
+              "mean": -0.25,
+              "p50": 0.0,
+              "p90": 0.1
+            }
+          }
+        },
+        "text": {
+          "n_hyp": 140,
+          "correct": 20,
+          "ambiguous": 63,
+          "duplicate": 0,
+          "premature": 57,
+          "precision": 0.14285714285714285,
+          "recall": 0.20408163265306123,
+          "f1": 0.1680672268907563,
+          "precision_excl_B": 0.2597402597402597,
+          "pcr": 0.40714285714285714,
+          "pcr_excl_B": 0.7402597402597403,
+          "guard_blocked": 0,
+          "pcr_raw": 0.40714285714285714,
+          "pcr_by_category": {
+            "filler": 0.0,
+            "rep": 0.0,
+            "unclear": 0.0,
+            "repair": 0.0,
+            "revision": 0.04285714285714286,
+            "all_wait": 0.014285714285714285,
+            "other_n": 0.0,
+            "other_inside": 0.35,
+            "mid_word": 0.0,
+            "no_word": 0.0
+          },
+          "premature_by_category": {
+            "filler": 0,
+            "rep": 0,
+            "unclear": 0,
+            "repair": 0,
+            "revision": 6,
+            "all_wait": 2,
+            "other_n": 0,
+            "other_inside": 49,
+            "mid_word": 0,
+            "no_word": 0
+          },
+          "n_A": 98,
+          "n_B": 405,
+          "n_N": 84,
+          "B_commit_rate": 0.15555555555555556,
+          "hardneg_commit_rate": 0.09523809523809523,
+          "hardneg_by_category": {
+            "all_wait": {
+              "n": 4,
+              "committed": 2,
+              "rate": 0.5
+            },
+            "revision": {
+              "n": 80,
+              "committed": 6,
+              "rate": 0.075
+            }
+          }
+        },
+        "asr": {
+          "wer": {
+            "substitutions": 256,
+            "deletions": 24,
+            "insertions": 49,
+            "n_ref": 7044,
+            "n_hyp": 7069,
+            "errors": 329,
+            "rate": 0.04670641680863146
+          }
+        },
+        "turn": {
+          "n_ref": 100,
+          "n_hyp": 91,
+          "early_turn": 37,
+          "in_flush": 0,
+          "late0": {
+            "hits": 51,
+            "n_hyp": 91,
+            "n_ref": 100,
+            "miss": 49,
+            "false": 40,
+            "b_hits": 0,
+            "precision": 0.5604395604395604,
+            "recall": 0.51,
+            "f1": 0.5340314136125655,
+            "precision_excl_B": 0.5604395604395604,
+            "latency_s": {
+              "n": 51,
+              "mean": 0.502,
+              "p50": 0.501,
+              "p90": 0.545
+            },
+            "lag_chunks": {
+              "n": 51,
+              "mean": -0.3725,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 54,
+            "n_hyp": 91,
+            "n_ref": 100,
+            "miss": 46,
+            "false": 37,
+            "b_hits": 0,
+            "precision": 0.5934065934065934,
+            "recall": 0.54,
+            "f1": 0.5654450261780104,
+            "precision_excl_B": 0.5934065934065934,
+            "latency_s": {
+              "n": 54,
+              "mean": 0.5084,
+              "p50": 0.505,
+              "p90": 0.5507
+            },
+            "lag_chunks": {
+              "n": 54,
+              "mean": -0.2778,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 54,
+            "n_hyp": 91,
+            "n_ref": 100,
+            "miss": 46,
+            "false": 37,
+            "b_hits": 0,
+            "precision": 0.5934065934065934,
+            "recall": 0.54,
+            "f1": 0.5654450261780104,
+            "precision_excl_B": 0.5934065934065934,
+            "latency_s": {
+              "n": 54,
+              "mean": 0.5084,
+              "p50": 0.505,
+              "p90": 0.5507
+            },
+            "lag_chunks": {
+              "n": 54,
+              "mean": -0.2778,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        }
+      },
+      "by_lang": {
+        "English": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 140,
+            "turn": 91,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 2.9090707596830496
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 18,
+              "n_hyp": 140,
+              "n_ref": 98,
+              "miss": 80,
+              "false": 65,
+              "b_hits": 57,
+              "precision": 0.12857142857142856,
+              "recall": 0.1836734693877551,
+              "f1": 0.15126050420168066,
+              "precision_excl_B": 0.21686746987951808,
+              "latency_s": {
+                "n": 18,
+                "mean": 0.3397,
+                "p50": 0.3325,
+                "p90": 0.3766
+              },
+              "lag_chunks": {
+                "n": 18,
+                "mean": -0.3889,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 20,
+              "n_hyp": 140,
+              "n_ref": 98,
+              "miss": 78,
+              "false": 57,
+              "b_hits": 63,
+              "precision": 0.14285714285714285,
+              "recall": 0.20408163265306123,
+              "f1": 0.1680672268907563,
+              "precision_excl_B": 0.2597402597402597,
+              "latency_s": {
+                "n": 20,
+                "mean": 0.3479,
+                "p50": 0.341,
+                "p90": 0.3973
+              },
+              "lag_chunks": {
+                "n": 20,
+                "mean": -0.25,
+                "p50": 0.0,
+                "p90": 0.1
+              }
+            },
+            "late5": {
+              "hits": 20,
+              "n_hyp": 140,
+              "n_ref": 98,
+              "miss": 78,
+              "false": 54,
+              "b_hits": 66,
+              "precision": 0.14285714285714285,
+              "recall": 0.20408163265306123,
+              "f1": 0.1680672268907563,
+              "precision_excl_B": 0.2702702702702703,
+              "latency_s": {
+                "n": 20,
+                "mean": 0.3479,
+                "p50": 0.341,
+                "p90": 0.3973
+              },
+              "lag_chunks": {
+                "n": 20,
+                "mean": -0.25,
+                "p50": 0.0,
+                "p90": 0.1
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 140,
+            "correct": 20,
+            "ambiguous": 63,
+            "duplicate": 0,
+            "premature": 57,
+            "precision": 0.14285714285714285,
+            "recall": 0.20408163265306123,
+            "f1": 0.1680672268907563,
+            "precision_excl_B": 0.2597402597402597,
+            "pcr": 0.40714285714285714,
+            "pcr_excl_B": 0.7402597402597403,
+            "guard_blocked": 0,
+            "pcr_raw": 0.40714285714285714,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.04285714285714286,
+              "all_wait": 0.014285714285714285,
+              "other_n": 0.0,
+              "other_inside": 0.35,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 6,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 49,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.15555555555555556,
+            "hardneg_commit_rate": 0.09523809523809523,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 6,
+                "rate": 0.075
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 256,
+              "deletions": 24,
+              "insertions": 49,
+              "n_ref": 7044,
+              "n_hyp": 7069,
+              "errors": 329,
+              "rate": 0.04670641680863146
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 91,
+            "early_turn": 37,
+            "in_flush": 0,
+            "late0": {
+              "hits": 51,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 49,
+              "false": 40,
+              "b_hits": 0,
+              "precision": 0.5604395604395604,
+              "recall": 0.51,
+              "f1": 0.5340314136125655,
+              "precision_excl_B": 0.5604395604395604,
+              "latency_s": {
+                "n": 51,
+                "mean": 0.502,
+                "p50": 0.501,
+                "p90": 0.545
+              },
+              "lag_chunks": {
+                "n": 51,
+                "mean": -0.3725,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 54,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 46,
+              "false": 37,
+              "b_hits": 0,
+              "precision": 0.5934065934065934,
+              "recall": 0.54,
+              "f1": 0.5654450261780104,
+              "precision_excl_B": 0.5934065934065934,
+              "latency_s": {
+                "n": 54,
+                "mean": 0.5084,
+                "p50": 0.505,
+                "p90": 0.5507
+              },
+              "lag_chunks": {
+                "n": 54,
+                "mean": -0.2778,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 54,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 46,
+              "false": 37,
+              "b_hits": 0,
+              "precision": 0.5934065934065934,
+              "recall": 0.54,
+              "f1": 0.5654450261780104,
+              "precision_excl_B": 0.5934065934065934,
+              "latency_s": {
+                "n": 54,
+                "mean": 0.5084,
+                "p50": 0.505,
+                "p90": 0.5507
+              },
+              "lag_chunks": {
+                "n": 54,
+                "mean": -0.2778,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      },
+      "by_set": {
+        "librispeech-test": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 140,
+            "turn": 91,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 2.9090707596830496
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 18,
+              "n_hyp": 140,
+              "n_ref": 98,
+              "miss": 80,
+              "false": 65,
+              "b_hits": 57,
+              "precision": 0.12857142857142856,
+              "recall": 0.1836734693877551,
+              "f1": 0.15126050420168066,
+              "precision_excl_B": 0.21686746987951808,
+              "latency_s": {
+                "n": 18,
+                "mean": 0.3397,
+                "p50": 0.3325,
+                "p90": 0.3766
+              },
+              "lag_chunks": {
+                "n": 18,
+                "mean": -0.3889,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 20,
+              "n_hyp": 140,
+              "n_ref": 98,
+              "miss": 78,
+              "false": 57,
+              "b_hits": 63,
+              "precision": 0.14285714285714285,
+              "recall": 0.20408163265306123,
+              "f1": 0.1680672268907563,
+              "precision_excl_B": 0.2597402597402597,
+              "latency_s": {
+                "n": 20,
+                "mean": 0.3479,
+                "p50": 0.341,
+                "p90": 0.3973
+              },
+              "lag_chunks": {
+                "n": 20,
+                "mean": -0.25,
+                "p50": 0.0,
+                "p90": 0.1
+              }
+            },
+            "late5": {
+              "hits": 20,
+              "n_hyp": 140,
+              "n_ref": 98,
+              "miss": 78,
+              "false": 54,
+              "b_hits": 66,
+              "precision": 0.14285714285714285,
+              "recall": 0.20408163265306123,
+              "f1": 0.1680672268907563,
+              "precision_excl_B": 0.2702702702702703,
+              "latency_s": {
+                "n": 20,
+                "mean": 0.3479,
+                "p50": 0.341,
+                "p90": 0.3973
+              },
+              "lag_chunks": {
+                "n": 20,
+                "mean": -0.25,
+                "p50": 0.0,
+                "p90": 0.1
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 140,
+            "correct": 20,
+            "ambiguous": 63,
+            "duplicate": 0,
+            "premature": 57,
+            "precision": 0.14285714285714285,
+            "recall": 0.20408163265306123,
+            "f1": 0.1680672268907563,
+            "precision_excl_B": 0.2597402597402597,
+            "pcr": 0.40714285714285714,
+            "pcr_excl_B": 0.7402597402597403,
+            "guard_blocked": 0,
+            "pcr_raw": 0.40714285714285714,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.04285714285714286,
+              "all_wait": 0.014285714285714285,
+              "other_n": 0.0,
+              "other_inside": 0.35,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 6,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 49,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.15555555555555556,
+            "hardneg_commit_rate": 0.09523809523809523,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 6,
+                "rate": 0.075
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 256,
+              "deletions": 24,
+              "insertions": 49,
+              "n_ref": 7044,
+              "n_hyp": 7069,
+              "errors": 329,
+              "rate": 0.04670641680863146
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 91,
+            "early_turn": 37,
+            "in_flush": 0,
+            "late0": {
+              "hits": 51,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 49,
+              "false": 40,
+              "b_hits": 0,
+              "precision": 0.5604395604395604,
+              "recall": 0.51,
+              "f1": 0.5340314136125655,
+              "precision_excl_B": 0.5604395604395604,
+              "latency_s": {
+                "n": 51,
+                "mean": 0.502,
+                "p50": 0.501,
+                "p90": 0.545
+              },
+              "lag_chunks": {
+                "n": 51,
+                "mean": -0.3725,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 54,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 46,
+              "false": 37,
+              "b_hits": 0,
+              "precision": 0.5934065934065934,
+              "recall": 0.54,
+              "f1": 0.5654450261780104,
+              "precision_excl_B": 0.5934065934065934,
+              "latency_s": {
+                "n": 54,
+                "mean": 0.5084,
+                "p50": 0.505,
+                "p90": 0.5507
+              },
+              "lag_chunks": {
+                "n": 54,
+                "mean": -0.2778,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 54,
+              "n_hyp": 91,
+              "n_ref": 100,
+              "miss": 46,
+              "false": 37,
+              "b_hits": 0,
+              "precision": 0.5934065934065934,
+              "recall": 0.54,
+              "f1": 0.5654450261780104,
+              "precision_excl_B": 0.5934065934065934,
+              "latency_s": {
+                "n": 54,
+                "mean": 0.5084,
+                "p50": 0.505,
+                "p90": 0.5507
+              },
+              "lag_chunks": {
+                "n": 54,
+                "mean": -0.2778,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "theta=0.35": {
+      "mode": "threshold",
+      "value": 0.35,
+      "n_streams": 100,
+      "complete": true,
+      "overall": {
+        "streams": 100,
+        "audio_s": 2887.52,
+        "events": {
+          "sem": 89,
+          "turn": 85,
+          "sem_in_flush": 0,
+          "guard_blocked": 0,
+          "sem_per_min": 1.8493378400842246
+        },
+        "timing": {
+          "ideal_latency_s": {
+            "n": 98,
+            "mean": 0.3649,
+            "p50": 0.367,
+            "p90": 0.3953
+          },
+          "late0": {
+            "hits": 14,
+            "n_hyp": 89,
+            "n_ref": 98,
+            "miss": 84,
+            "false": 36,
+            "b_hits": 39,
+            "precision": 0.15730337078651685,
+            "recall": 0.14285714285714285,
+            "f1": 0.14973262032085563,
+            "precision_excl_B": 0.28,
+            "latency_s": {
+              "n": 14,
+              "mean": 0.3344,
+              "p50": 0.329,
+              "p90": 0.3721
+            },
+            "lag_chunks": {
+              "n": 14,
+              "mean": -0.4286,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 15,
+            "n_hyp": 89,
+            "n_ref": 98,
+            "miss": 83,
+            "false": 31,
+            "b_hits": 43,
+            "precision": 0.16853932584269662,
+            "recall": 0.15306122448979592,
+            "f1": 0.16042780748663102,
+            "precision_excl_B": 0.32608695652173914,
+            "latency_s": {
+              "n": 15,
+              "mean": 0.3393,
+              "p50": 0.332,
+              "p90": 0.3802
+            },
+            "lag_chunks": {
+              "n": 15,
+              "mean": -0.3333,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 15,
+            "n_hyp": 89,
+            "n_ref": 98,
+            "miss": 83,
+            "false": 28,
+            "b_hits": 46,
+            "precision": 0.16853932584269662,
+            "recall": 0.15306122448979592,
+            "f1": 0.16042780748663102,
+            "precision_excl_B": 0.3488372093023256,
+            "latency_s": {
+              "n": 15,
+              "mean": 0.3393,
+              "p50": 0.332,
+              "p90": 0.3802
+            },
+            "lag_chunks": {
+              "n": 15,
+              "mean": -0.3333,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        },
+        "text": {
+          "n_hyp": 89,
+          "correct": 15,
+          "ambiguous": 44,
+          "duplicate": 0,
+          "premature": 30,
+          "precision": 0.16853932584269662,
+          "recall": 0.15306122448979592,
+          "f1": 0.16042780748663102,
+          "precision_excl_B": 0.3333333333333333,
+          "pcr": 0.33707865168539325,
+          "pcr_excl_B": 0.6666666666666666,
+          "guard_blocked": 0,
+          "pcr_raw": 0.33707865168539325,
+          "pcr_by_category": {
+            "filler": 0.0,
+            "rep": 0.0,
+            "unclear": 0.0,
+            "repair": 0.0,
+            "revision": 0.0449438202247191,
+            "all_wait": 0.02247191011235955,
+            "other_n": 0.0,
+            "other_inside": 0.2696629213483146,
+            "mid_word": 0.0,
+            "no_word": 0.0
+          },
+          "premature_by_category": {
+            "filler": 0,
+            "rep": 0,
+            "unclear": 0,
+            "repair": 0,
+            "revision": 4,
+            "all_wait": 2,
+            "other_n": 0,
+            "other_inside": 24,
+            "mid_word": 0,
+            "no_word": 0
+          },
+          "n_A": 98,
+          "n_B": 405,
+          "n_N": 84,
+          "B_commit_rate": 0.10864197530864197,
+          "hardneg_commit_rate": 0.07142857142857142,
+          "hardneg_by_category": {
+            "all_wait": {
+              "n": 4,
+              "committed": 2,
+              "rate": 0.5
+            },
+            "revision": {
+              "n": 80,
+              "committed": 4,
+              "rate": 0.05
+            }
+          }
+        },
+        "asr": {
+          "wer": {
+            "substitutions": 254,
+            "deletions": 25,
+            "insertions": 51,
+            "n_ref": 7044,
+            "n_hyp": 7070,
+            "errors": 330,
+            "rate": 0.046848381601362864
+          }
+        },
+        "turn": {
+          "n_ref": 100,
+          "n_hyp": 85,
+          "early_turn": 33,
+          "in_flush": 0,
+          "late0": {
+            "hits": 49,
+            "n_hyp": 85,
+            "n_ref": 100,
+            "miss": 51,
+            "false": 36,
+            "b_hits": 0,
+            "precision": 0.5764705882352941,
+            "recall": 0.49,
+            "f1": 0.5297297297297296,
+            "precision_excl_B": 0.5764705882352941,
+            "latency_s": {
+              "n": 49,
+              "mean": 0.5024,
+              "p50": 0.501,
+              "p90": 0.5426
+            },
+            "lag_chunks": {
+              "n": 49,
+              "mean": -0.3673,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 52,
+            "n_hyp": 85,
+            "n_ref": 100,
+            "miss": 48,
+            "false": 33,
+            "b_hits": 0,
+            "precision": 0.611764705882353,
+            "recall": 0.52,
+            "f1": 0.5621621621621622,
+            "precision_excl_B": 0.611764705882353,
+            "latency_s": {
+              "n": 52,
+              "mean": 0.5091,
+              "p50": 0.505,
+              "p90": 0.5509
+            },
+            "lag_chunks": {
+              "n": 52,
+              "mean": -0.2692,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 52,
+            "n_hyp": 85,
+            "n_ref": 100,
+            "miss": 48,
+            "false": 33,
+            "b_hits": 0,
+            "precision": 0.611764705882353,
+            "recall": 0.52,
+            "f1": 0.5621621621621622,
+            "precision_excl_B": 0.611764705882353,
+            "latency_s": {
+              "n": 52,
+              "mean": 0.5091,
+              "p50": 0.505,
+              "p90": 0.5509
+            },
+            "lag_chunks": {
+              "n": 52,
+              "mean": -0.2692,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        }
+      },
+      "by_lang": {
+        "English": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 89,
+            "turn": 85,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 1.8493378400842246
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 14,
+              "n_hyp": 89,
+              "n_ref": 98,
+              "miss": 84,
+              "false": 36,
+              "b_hits": 39,
+              "precision": 0.15730337078651685,
+              "recall": 0.14285714285714285,
+              "f1": 0.14973262032085563,
+              "precision_excl_B": 0.28,
+              "latency_s": {
+                "n": 14,
+                "mean": 0.3344,
+                "p50": 0.329,
+                "p90": 0.3721
+              },
+              "lag_chunks": {
+                "n": 14,
+                "mean": -0.4286,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 15,
+              "n_hyp": 89,
+              "n_ref": 98,
+              "miss": 83,
+              "false": 31,
+              "b_hits": 43,
+              "precision": 0.16853932584269662,
+              "recall": 0.15306122448979592,
+              "f1": 0.16042780748663102,
+              "precision_excl_B": 0.32608695652173914,
+              "latency_s": {
+                "n": 15,
+                "mean": 0.3393,
+                "p50": 0.332,
+                "p90": 0.3802
+              },
+              "lag_chunks": {
+                "n": 15,
+                "mean": -0.3333,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 15,
+              "n_hyp": 89,
+              "n_ref": 98,
+              "miss": 83,
+              "false": 28,
+              "b_hits": 46,
+              "precision": 0.16853932584269662,
+              "recall": 0.15306122448979592,
+              "f1": 0.16042780748663102,
+              "precision_excl_B": 0.3488372093023256,
+              "latency_s": {
+                "n": 15,
+                "mean": 0.3393,
+                "p50": 0.332,
+                "p90": 0.3802
+              },
+              "lag_chunks": {
+                "n": 15,
+                "mean": -0.3333,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 89,
+            "correct": 15,
+            "ambiguous": 44,
+            "duplicate": 0,
+            "premature": 30,
+            "precision": 0.16853932584269662,
+            "recall": 0.15306122448979592,
+            "f1": 0.16042780748663102,
+            "precision_excl_B": 0.3333333333333333,
+            "pcr": 0.33707865168539325,
+            "pcr_excl_B": 0.6666666666666666,
+            "guard_blocked": 0,
+            "pcr_raw": 0.33707865168539325,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.0449438202247191,
+              "all_wait": 0.02247191011235955,
+              "other_n": 0.0,
+              "other_inside": 0.2696629213483146,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 4,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 24,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.10864197530864197,
+            "hardneg_commit_rate": 0.07142857142857142,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 4,
+                "rate": 0.05
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 254,
+              "deletions": 25,
+              "insertions": 51,
+              "n_ref": 7044,
+              "n_hyp": 7070,
+              "errors": 330,
+              "rate": 0.046848381601362864
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 85,
+            "early_turn": 33,
+            "in_flush": 0,
+            "late0": {
+              "hits": 49,
+              "n_hyp": 85,
+              "n_ref": 100,
+              "miss": 51,
+              "false": 36,
+              "b_hits": 0,
+              "precision": 0.5764705882352941,
+              "recall": 0.49,
+              "f1": 0.5297297297297296,
+              "precision_excl_B": 0.5764705882352941,
+              "latency_s": {
+                "n": 49,
+                "mean": 0.5024,
+                "p50": 0.501,
+                "p90": 0.5426
+              },
+              "lag_chunks": {
+                "n": 49,
+                "mean": -0.3673,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 52,
+              "n_hyp": 85,
+              "n_ref": 100,
+              "miss": 48,
+              "false": 33,
+              "b_hits": 0,
+              "precision": 0.611764705882353,
+              "recall": 0.52,
+              "f1": 0.5621621621621622,
+              "precision_excl_B": 0.611764705882353,
+              "latency_s": {
+                "n": 52,
+                "mean": 0.5091,
+                "p50": 0.505,
+                "p90": 0.5509
+              },
+              "lag_chunks": {
+                "n": 52,
+                "mean": -0.2692,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 52,
+              "n_hyp": 85,
+              "n_ref": 100,
+              "miss": 48,
+              "false": 33,
+              "b_hits": 0,
+              "precision": 0.611764705882353,
+              "recall": 0.52,
+              "f1": 0.5621621621621622,
+              "precision_excl_B": 0.611764705882353,
+              "latency_s": {
+                "n": 52,
+                "mean": 0.5091,
+                "p50": 0.505,
+                "p90": 0.5509
+              },
+              "lag_chunks": {
+                "n": 52,
+                "mean": -0.2692,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      },
+      "by_set": {
+        "librispeech-test": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 89,
+            "turn": 85,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 1.8493378400842246
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 14,
+              "n_hyp": 89,
+              "n_ref": 98,
+              "miss": 84,
+              "false": 36,
+              "b_hits": 39,
+              "precision": 0.15730337078651685,
+              "recall": 0.14285714285714285,
+              "f1": 0.14973262032085563,
+              "precision_excl_B": 0.28,
+              "latency_s": {
+                "n": 14,
+                "mean": 0.3344,
+                "p50": 0.329,
+                "p90": 0.3721
+              },
+              "lag_chunks": {
+                "n": 14,
+                "mean": -0.4286,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 15,
+              "n_hyp": 89,
+              "n_ref": 98,
+              "miss": 83,
+              "false": 31,
+              "b_hits": 43,
+              "precision": 0.16853932584269662,
+              "recall": 0.15306122448979592,
+              "f1": 0.16042780748663102,
+              "precision_excl_B": 0.32608695652173914,
+              "latency_s": {
+                "n": 15,
+                "mean": 0.3393,
+                "p50": 0.332,
+                "p90": 0.3802
+              },
+              "lag_chunks": {
+                "n": 15,
+                "mean": -0.3333,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 15,
+              "n_hyp": 89,
+              "n_ref": 98,
+              "miss": 83,
+              "false": 28,
+              "b_hits": 46,
+              "precision": 0.16853932584269662,
+              "recall": 0.15306122448979592,
+              "f1": 0.16042780748663102,
+              "precision_excl_B": 0.3488372093023256,
+              "latency_s": {
+                "n": 15,
+                "mean": 0.3393,
+                "p50": 0.332,
+                "p90": 0.3802
+              },
+              "lag_chunks": {
+                "n": 15,
+                "mean": -0.3333,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 89,
+            "correct": 15,
+            "ambiguous": 44,
+            "duplicate": 0,
+            "premature": 30,
+            "precision": 0.16853932584269662,
+            "recall": 0.15306122448979592,
+            "f1": 0.16042780748663102,
+            "precision_excl_B": 0.3333333333333333,
+            "pcr": 0.33707865168539325,
+            "pcr_excl_B": 0.6666666666666666,
+            "guard_blocked": 0,
+            "pcr_raw": 0.33707865168539325,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.0449438202247191,
+              "all_wait": 0.02247191011235955,
+              "other_n": 0.0,
+              "other_inside": 0.2696629213483146,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 4,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 24,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.10864197530864197,
+            "hardneg_commit_rate": 0.07142857142857142,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 4,
+                "rate": 0.05
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 254,
+              "deletions": 25,
+              "insertions": 51,
+              "n_ref": 7044,
+              "n_hyp": 7070,
+              "errors": 330,
+              "rate": 0.046848381601362864
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 85,
+            "early_turn": 33,
+            "in_flush": 0,
+            "late0": {
+              "hits": 49,
+              "n_hyp": 85,
+              "n_ref": 100,
+              "miss": 51,
+              "false": 36,
+              "b_hits": 0,
+              "precision": 0.5764705882352941,
+              "recall": 0.49,
+              "f1": 0.5297297297297296,
+              "precision_excl_B": 0.5764705882352941,
+              "latency_s": {
+                "n": 49,
+                "mean": 0.5024,
+                "p50": 0.501,
+                "p90": 0.5426
+              },
+              "lag_chunks": {
+                "n": 49,
+                "mean": -0.3673,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 52,
+              "n_hyp": 85,
+              "n_ref": 100,
+              "miss": 48,
+              "false": 33,
+              "b_hits": 0,
+              "precision": 0.611764705882353,
+              "recall": 0.52,
+              "f1": 0.5621621621621622,
+              "precision_excl_B": 0.611764705882353,
+              "latency_s": {
+                "n": 52,
+                "mean": 0.5091,
+                "p50": 0.505,
+                "p90": 0.5509
+              },
+              "lag_chunks": {
+                "n": 52,
+                "mean": -0.2692,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 52,
+              "n_hyp": 85,
+              "n_ref": 100,
+              "miss": 48,
+              "false": 33,
+              "b_hits": 0,
+              "precision": 0.611764705882353,
+              "recall": 0.52,
+              "f1": 0.5621621621621622,
+              "precision_excl_B": 0.611764705882353,
+              "latency_s": {
+                "n": 52,
+                "mean": 0.5091,
+                "p50": 0.505,
+                "p90": 0.5509
+              },
+              "lag_chunks": {
+                "n": 52,
+                "mean": -0.2692,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "theta=0.5": {
+      "mode": "threshold",
+      "value": 0.5,
+      "n_streams": 100,
+      "complete": true,
+      "overall": {
+        "streams": 100,
+        "audio_s": 2887.52,
+        "events": {
+          "sem": 56,
+          "turn": 77,
+          "sem_in_flush": 0,
+          "guard_blocked": 0,
+          "sem_per_min": 1.16362830387322
+        },
+        "timing": {
+          "ideal_latency_s": {
+            "n": 98,
+            "mean": 0.3649,
+            "p50": 0.367,
+            "p90": 0.3953
+          },
+          "late0": {
+            "hits": 12,
+            "n_hyp": 56,
+            "n_ref": 98,
+            "miss": 86,
+            "false": 23,
+            "b_hits": 21,
+            "precision": 0.21428571428571427,
+            "recall": 0.12244897959183673,
+            "f1": 0.15584415584415584,
+            "precision_excl_B": 0.34285714285714286,
+            "latency_s": {
+              "n": 12,
+              "mean": 0.3294,
+              "p50": 0.322,
+              "p90": 0.3685
+            },
+            "lag_chunks": {
+              "n": 12,
+              "mean": -0.5,
+              "p50": -0.5,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 13,
+            "n_hyp": 56,
+            "n_ref": 98,
+            "miss": 85,
+            "false": 19,
+            "b_hits": 24,
+            "precision": 0.23214285714285715,
+            "recall": 0.1326530612244898,
+            "f1": 0.16883116883116886,
+            "precision_excl_B": 0.40625,
+            "latency_s": {
+              "n": 13,
+              "mean": 0.3355,
+              "p50": 0.326,
+              "p90": 0.382
+            },
+            "lag_chunks": {
+              "n": 13,
+              "mean": -0.3846,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 13,
+            "n_hyp": 56,
+            "n_ref": 98,
+            "miss": 85,
+            "false": 18,
+            "b_hits": 25,
+            "precision": 0.23214285714285715,
+            "recall": 0.1326530612244898,
+            "f1": 0.16883116883116886,
+            "precision_excl_B": 0.41935483870967744,
+            "latency_s": {
+              "n": 13,
+              "mean": 0.3355,
+              "p50": 0.326,
+              "p90": 0.382
+            },
+            "lag_chunks": {
+              "n": 13,
+              "mean": -0.3846,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        },
+        "text": {
+          "n_hyp": 56,
+          "correct": 13,
+          "ambiguous": 24,
+          "duplicate": 0,
+          "premature": 19,
+          "precision": 0.23214285714285715,
+          "recall": 0.1326530612244898,
+          "f1": 0.16883116883116886,
+          "precision_excl_B": 0.40625,
+          "pcr": 0.3392857142857143,
+          "pcr_excl_B": 0.59375,
+          "guard_blocked": 0,
+          "pcr_raw": 0.3392857142857143,
+          "pcr_by_category": {
+            "filler": 0.0,
+            "rep": 0.0,
+            "unclear": 0.0,
+            "repair": 0.0,
+            "revision": 0.05357142857142857,
+            "all_wait": 0.03571428571428571,
+            "other_n": 0.0,
+            "other_inside": 0.25,
+            "mid_word": 0.0,
+            "no_word": 0.0
+          },
+          "premature_by_category": {
+            "filler": 0,
+            "rep": 0,
+            "unclear": 0,
+            "repair": 0,
+            "revision": 3,
+            "all_wait": 2,
+            "other_n": 0,
+            "other_inside": 14,
+            "mid_word": 0,
+            "no_word": 0
+          },
+          "n_A": 98,
+          "n_B": 405,
+          "n_N": 84,
+          "B_commit_rate": 0.05925925925925926,
+          "hardneg_commit_rate": 0.05952380952380952,
+          "hardneg_by_category": {
+            "all_wait": {
+              "n": 4,
+              "committed": 2,
+              "rate": 0.5
+            },
+            "revision": {
+              "n": 80,
+              "committed": 3,
+              "rate": 0.0375
+            }
+          }
+        },
+        "asr": {
+          "wer": {
+            "substitutions": 255,
+            "deletions": 25,
+            "insertions": 50,
+            "n_ref": 7044,
+            "n_hyp": 7069,
+            "errors": 330,
+            "rate": 0.046848381601362864
+          }
+        },
+        "turn": {
+          "n_ref": 100,
+          "n_hyp": 77,
+          "early_turn": 27,
+          "in_flush": 0,
+          "late0": {
+            "hits": 47,
+            "n_hyp": 77,
+            "n_ref": 100,
+            "miss": 53,
+            "false": 30,
+            "b_hits": 0,
+            "precision": 0.6103896103896104,
+            "recall": 0.47,
+            "f1": 0.5310734463276836,
+            "precision_excl_B": 0.6103896103896104,
+            "latency_s": {
+              "n": 47,
+              "mean": 0.4996,
+              "p50": 0.498,
+              "p90": 0.5432
+            },
+            "lag_chunks": {
+              "n": 47,
+              "mean": -0.4043,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late2": {
+            "hits": 50,
+            "n_hyp": 77,
+            "n_ref": 100,
+            "miss": 50,
+            "false": 27,
+            "b_hits": 0,
+            "precision": 0.6493506493506493,
+            "recall": 0.5,
+            "f1": 0.5649717514124294,
+            "precision_excl_B": 0.6493506493506493,
+            "latency_s": {
+              "n": 50,
+              "mean": 0.5067,
+              "p50": 0.5,
+              "p90": 0.5514
+            },
+            "lag_chunks": {
+              "n": 50,
+              "mean": -0.3,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          },
+          "late5": {
+            "hits": 50,
+            "n_hyp": 77,
+            "n_ref": 100,
+            "miss": 50,
+            "false": 27,
+            "b_hits": 0,
+            "precision": 0.6493506493506493,
+            "recall": 0.5,
+            "f1": 0.5649717514124294,
+            "precision_excl_B": 0.6493506493506493,
+            "latency_s": {
+              "n": 50,
+              "mean": 0.5067,
+              "p50": 0.5,
+              "p90": 0.5514
+            },
+            "lag_chunks": {
+              "n": 50,
+              "mean": -0.3,
+              "p50": 0.0,
+              "p90": 0.0
+            }
+          }
+        }
+      },
+      "by_lang": {
+        "English": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 56,
+            "turn": 77,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 1.16362830387322
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 12,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 86,
+              "false": 23,
+              "b_hits": 21,
+              "precision": 0.21428571428571427,
+              "recall": 0.12244897959183673,
+              "f1": 0.15584415584415584,
+              "precision_excl_B": 0.34285714285714286,
+              "latency_s": {
+                "n": 12,
+                "mean": 0.3294,
+                "p50": 0.322,
+                "p90": 0.3685
+              },
+              "lag_chunks": {
+                "n": 12,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 13,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 85,
+              "false": 19,
+              "b_hits": 24,
+              "precision": 0.23214285714285715,
+              "recall": 0.1326530612244898,
+              "f1": 0.16883116883116886,
+              "precision_excl_B": 0.40625,
+              "latency_s": {
+                "n": 13,
+                "mean": 0.3355,
+                "p50": 0.326,
+                "p90": 0.382
+              },
+              "lag_chunks": {
+                "n": 13,
+                "mean": -0.3846,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 13,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 85,
+              "false": 18,
+              "b_hits": 25,
+              "precision": 0.23214285714285715,
+              "recall": 0.1326530612244898,
+              "f1": 0.16883116883116886,
+              "precision_excl_B": 0.41935483870967744,
+              "latency_s": {
+                "n": 13,
+                "mean": 0.3355,
+                "p50": 0.326,
+                "p90": 0.382
+              },
+              "lag_chunks": {
+                "n": 13,
+                "mean": -0.3846,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 56,
+            "correct": 13,
+            "ambiguous": 24,
+            "duplicate": 0,
+            "premature": 19,
+            "precision": 0.23214285714285715,
+            "recall": 0.1326530612244898,
+            "f1": 0.16883116883116886,
+            "precision_excl_B": 0.40625,
+            "pcr": 0.3392857142857143,
+            "pcr_excl_B": 0.59375,
+            "guard_blocked": 0,
+            "pcr_raw": 0.3392857142857143,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.05357142857142857,
+              "all_wait": 0.03571428571428571,
+              "other_n": 0.0,
+              "other_inside": 0.25,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 3,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 14,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.05925925925925926,
+            "hardneg_commit_rate": 0.05952380952380952,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 3,
+                "rate": 0.0375
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 255,
+              "deletions": 25,
+              "insertions": 50,
+              "n_ref": 7044,
+              "n_hyp": 7069,
+              "errors": 330,
+              "rate": 0.046848381601362864
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 77,
+            "early_turn": 27,
+            "in_flush": 0,
+            "late0": {
+              "hits": 47,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 53,
+              "false": 30,
+              "b_hits": 0,
+              "precision": 0.6103896103896104,
+              "recall": 0.47,
+              "f1": 0.5310734463276836,
+              "precision_excl_B": 0.6103896103896104,
+              "latency_s": {
+                "n": 47,
+                "mean": 0.4996,
+                "p50": 0.498,
+                "p90": 0.5432
+              },
+              "lag_chunks": {
+                "n": 47,
+                "mean": -0.4043,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 50,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 50,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6493506493506493,
+              "recall": 0.5,
+              "f1": 0.5649717514124294,
+              "precision_excl_B": 0.6493506493506493,
+              "latency_s": {
+                "n": 50,
+                "mean": 0.5067,
+                "p50": 0.5,
+                "p90": 0.5514
+              },
+              "lag_chunks": {
+                "n": 50,
+                "mean": -0.3,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 50,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 50,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6493506493506493,
+              "recall": 0.5,
+              "f1": 0.5649717514124294,
+              "precision_excl_B": 0.6493506493506493,
+              "latency_s": {
+                "n": 50,
+                "mean": 0.5067,
+                "p50": 0.5,
+                "p90": 0.5514
+              },
+              "lag_chunks": {
+                "n": 50,
+                "mean": -0.3,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      },
+      "by_set": {
+        "librispeech-test": {
+          "streams": 100,
+          "audio_s": 2887.52,
+          "events": {
+            "sem": 56,
+            "turn": 77,
+            "sem_in_flush": 0,
+            "guard_blocked": 0,
+            "sem_per_min": 1.16362830387322
+          },
+          "timing": {
+            "ideal_latency_s": {
+              "n": 98,
+              "mean": 0.3649,
+              "p50": 0.367,
+              "p90": 0.3953
+            },
+            "late0": {
+              "hits": 12,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 86,
+              "false": 23,
+              "b_hits": 21,
+              "precision": 0.21428571428571427,
+              "recall": 0.12244897959183673,
+              "f1": 0.15584415584415584,
+              "precision_excl_B": 0.34285714285714286,
+              "latency_s": {
+                "n": 12,
+                "mean": 0.3294,
+                "p50": 0.322,
+                "p90": 0.3685
+              },
+              "lag_chunks": {
+                "n": 12,
+                "mean": -0.5,
+                "p50": -0.5,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 13,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 85,
+              "false": 19,
+              "b_hits": 24,
+              "precision": 0.23214285714285715,
+              "recall": 0.1326530612244898,
+              "f1": 0.16883116883116886,
+              "precision_excl_B": 0.40625,
+              "latency_s": {
+                "n": 13,
+                "mean": 0.3355,
+                "p50": 0.326,
+                "p90": 0.382
+              },
+              "lag_chunks": {
+                "n": 13,
+                "mean": -0.3846,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 13,
+              "n_hyp": 56,
+              "n_ref": 98,
+              "miss": 85,
+              "false": 18,
+              "b_hits": 25,
+              "precision": 0.23214285714285715,
+              "recall": 0.1326530612244898,
+              "f1": 0.16883116883116886,
+              "precision_excl_B": 0.41935483870967744,
+              "latency_s": {
+                "n": 13,
+                "mean": 0.3355,
+                "p50": 0.326,
+                "p90": 0.382
+              },
+              "lag_chunks": {
+                "n": 13,
+                "mean": -0.3846,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          },
+          "text": {
+            "n_hyp": 56,
+            "correct": 13,
+            "ambiguous": 24,
+            "duplicate": 0,
+            "premature": 19,
+            "precision": 0.23214285714285715,
+            "recall": 0.1326530612244898,
+            "f1": 0.16883116883116886,
+            "precision_excl_B": 0.40625,
+            "pcr": 0.3392857142857143,
+            "pcr_excl_B": 0.59375,
+            "guard_blocked": 0,
+            "pcr_raw": 0.3392857142857143,
+            "pcr_by_category": {
+              "filler": 0.0,
+              "rep": 0.0,
+              "unclear": 0.0,
+              "repair": 0.0,
+              "revision": 0.05357142857142857,
+              "all_wait": 0.03571428571428571,
+              "other_n": 0.0,
+              "other_inside": 0.25,
+              "mid_word": 0.0,
+              "no_word": 0.0
+            },
+            "premature_by_category": {
+              "filler": 0,
+              "rep": 0,
+              "unclear": 0,
+              "repair": 0,
+              "revision": 3,
+              "all_wait": 2,
+              "other_n": 0,
+              "other_inside": 14,
+              "mid_word": 0,
+              "no_word": 0
+            },
+            "n_A": 98,
+            "n_B": 405,
+            "n_N": 84,
+            "B_commit_rate": 0.05925925925925926,
+            "hardneg_commit_rate": 0.05952380952380952,
+            "hardneg_by_category": {
+              "all_wait": {
+                "n": 4,
+                "committed": 2,
+                "rate": 0.5
+              },
+              "revision": {
+                "n": 80,
+                "committed": 3,
+                "rate": 0.0375
+              }
+            }
+          },
+          "asr": {
+            "wer": {
+              "substitutions": 255,
+              "deletions": 25,
+              "insertions": 50,
+              "n_ref": 7044,
+              "n_hyp": 7069,
+              "errors": 330,
+              "rate": 0.046848381601362864
+            }
+          },
+          "turn": {
+            "n_ref": 100,
+            "n_hyp": 77,
+            "early_turn": 27,
+            "in_flush": 0,
+            "late0": {
+              "hits": 47,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 53,
+              "false": 30,
+              "b_hits": 0,
+              "precision": 0.6103896103896104,
+              "recall": 0.47,
+              "f1": 0.5310734463276836,
+              "precision_excl_B": 0.6103896103896104,
+              "latency_s": {
+                "n": 47,
+                "mean": 0.4996,
+                "p50": 0.498,
+                "p90": 0.5432
+              },
+              "lag_chunks": {
+                "n": 47,
+                "mean": -0.4043,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late2": {
+              "hits": 50,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 50,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6493506493506493,
+              "recall": 0.5,
+              "f1": 0.5649717514124294,
+              "precision_excl_B": 0.6493506493506493,
+              "latency_s": {
+                "n": 50,
+                "mean": 0.5067,
+                "p50": 0.5,
+                "p90": 0.5514
+              },
+              "lag_chunks": {
+                "n": 50,
+                "mean": -0.3,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            },
+            "late5": {
+              "hits": 50,
+              "n_hyp": 77,
+              "n_ref": 100,
+              "miss": 50,
+              "false": 27,
+              "b_hits": 0,
+              "precision": 0.6493506493506493,
+              "recall": 0.5,
+              "f1": 0.5649717514124294,
+              "precision_excl_B": 0.6493506493506493,
+              "latency_s": {
+                "n": 50,
+                "mean": 0.5067,
+                "p50": 0.5,
+                "p90": 0.5514
+              },
+              "lag_chunks": {
+                "n": 50,
+                "mean": -0.3,
+                "p50": 0.0,
+                "p90": 0.0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "pr_curve": {
+    "bias": [
+      {
+        "value": -2.0,
+        "group": "overall",
+        "n_hyp": 8,
+        "sem_per_min": 0.16623261483903143,
+        "time_precision": 0.0,
+        "time_recall": 0.0,
+        "time_f1": 0.0,
+        "latency_p50_s": null,
+        "text_precision": 0.0,
+        "text_recall": 0.0,
+        "text_f1": 0.0,
+        "pcr": 0.25,
+        "pcr_raw": 0.25,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.011904761904761904
+      },
+      {
+        "value": -2.0,
+        "group": "English",
+        "n_hyp": 8,
+        "sem_per_min": 0.16623261483903143,
+        "time_precision": 0.0,
+        "time_recall": 0.0,
+        "time_f1": 0.0,
+        "latency_p50_s": null,
+        "text_precision": 0.0,
+        "text_recall": 0.0,
+        "text_f1": 0.0,
+        "pcr": 0.25,
+        "pcr_raw": 0.25,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.011904761904761904
+      },
+      {
+        "value": -1.0,
+        "group": "overall",
+        "n_hyp": 23,
+        "sem_per_min": 0.4779187676622153,
+        "time_precision": 0.17391304347826086,
+        "time_recall": 0.04081632653061224,
+        "time_f1": 0.06611570247933884,
+        "latency_p50_s": 0.322,
+        "text_precision": 0.17391304347826086,
+        "text_recall": 0.04081632653061224,
+        "text_f1": 0.06611570247933884,
+        "pcr": 0.30434782608695654,
+        "pcr_raw": 0.30434782608695654,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.023809523809523808
+      },
+      {
+        "value": -1.0,
+        "group": "English",
+        "n_hyp": 23,
+        "sem_per_min": 0.4779187676622153,
+        "time_precision": 0.17391304347826086,
+        "time_recall": 0.04081632653061224,
+        "time_f1": 0.06611570247933884,
+        "latency_p50_s": 0.322,
+        "text_precision": 0.17391304347826086,
+        "text_recall": 0.04081632653061224,
+        "text_f1": 0.06611570247933884,
+        "pcr": 0.30434782608695654,
+        "pcr_raw": 0.30434782608695654,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.023809523809523808
+      },
+      {
+        "value": 0.0,
+        "group": "overall",
+        "n_hyp": 56,
+        "sem_per_min": 1.16362830387322,
+        "time_precision": 0.23214285714285715,
+        "time_recall": 0.1326530612244898,
+        "time_f1": 0.16883116883116886,
+        "latency_p50_s": 0.326,
+        "text_precision": 0.23214285714285715,
+        "text_recall": 0.1326530612244898,
+        "text_f1": 0.16883116883116886,
+        "pcr": 0.3392857142857143,
+        "pcr_raw": 0.3392857142857143,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.05952380952380952
+      },
+      {
+        "value": 0.0,
+        "group": "English",
+        "n_hyp": 56,
+        "sem_per_min": 1.16362830387322,
+        "time_precision": 0.23214285714285715,
+        "time_recall": 0.1326530612244898,
+        "time_f1": 0.16883116883116886,
+        "latency_p50_s": 0.326,
+        "text_precision": 0.23214285714285715,
+        "text_recall": 0.1326530612244898,
+        "text_f1": 0.16883116883116886,
+        "pcr": 0.3392857142857143,
+        "pcr_raw": 0.3392857142857143,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.05952380952380952
+      },
+      {
+        "value": 1.0,
+        "group": "overall",
+        "n_hyp": 119,
+        "sem_per_min": 2.4727101457305922,
+        "time_precision": 0.15126050420168066,
+        "time_recall": 0.1836734693877551,
+        "time_f1": 0.16589861751152074,
+        "latency_p50_s": 0.344,
+        "text_precision": 0.15126050420168066,
+        "text_recall": 0.1836734693877551,
+        "text_f1": 0.16589861751152074,
+        "pcr": 0.3865546218487395,
+        "pcr_raw": 0.3865546218487395,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.08333333333333333
+      },
+      {
+        "value": 1.0,
+        "group": "English",
+        "n_hyp": 119,
+        "sem_per_min": 2.4727101457305922,
+        "time_precision": 0.15126050420168066,
+        "time_recall": 0.1836734693877551,
+        "time_f1": 0.16589861751152074,
+        "latency_p50_s": 0.344,
+        "text_precision": 0.15126050420168066,
+        "text_recall": 0.1836734693877551,
+        "text_f1": 0.16589861751152074,
+        "pcr": 0.3865546218487395,
+        "pcr_raw": 0.3865546218487395,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.08333333333333333
+      },
+      {
+        "value": 2.0,
+        "group": "overall",
+        "n_hyp": 185,
+        "sem_per_min": 3.8441292181526014,
+        "time_precision": 0.15135135135135136,
+        "time_recall": 0.2857142857142857,
+        "time_f1": 0.19787985865724383,
+        "latency_p50_s": 0.3465,
+        "text_precision": 0.15135135135135136,
+        "text_recall": 0.2857142857142857,
+        "text_f1": 0.19787985865724383,
+        "pcr": 0.41621621621621624,
+        "pcr_raw": 0.41621621621621624,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.10714285714285714
+      },
+      {
+        "value": 2.0,
+        "group": "English",
+        "n_hyp": 185,
+        "sem_per_min": 3.8441292181526014,
+        "time_precision": 0.15135135135135136,
+        "time_recall": 0.2857142857142857,
+        "time_f1": 0.19787985865724383,
+        "latency_p50_s": 0.3465,
+        "text_precision": 0.15135135135135136,
+        "text_recall": 0.2857142857142857,
+        "text_f1": 0.19787985865724383,
+        "pcr": 0.41621621621621624,
+        "pcr_raw": 0.41621621621621624,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.10714285714285714
+      }
+    ],
+    "threshold": [
+      {
+        "value": 0.2,
+        "group": "overall",
+        "n_hyp": 140,
+        "sem_per_min": 2.9090707596830496,
+        "time_precision": 0.14285714285714285,
+        "time_recall": 0.20408163265306123,
+        "time_f1": 0.1680672268907563,
+        "latency_p50_s": 0.341,
+        "text_precision": 0.14285714285714285,
+        "text_recall": 0.20408163265306123,
+        "text_f1": 0.1680672268907563,
+        "pcr": 0.40714285714285714,
+        "pcr_raw": 0.40714285714285714,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.09523809523809523
+      },
+      {
+        "value": 0.2,
+        "group": "English",
+        "n_hyp": 140,
+        "sem_per_min": 2.9090707596830496,
+        "time_precision": 0.14285714285714285,
+        "time_recall": 0.20408163265306123,
+        "time_f1": 0.1680672268907563,
+        "latency_p50_s": 0.341,
+        "text_precision": 0.14285714285714285,
+        "text_recall": 0.20408163265306123,
+        "text_f1": 0.1680672268907563,
+        "pcr": 0.40714285714285714,
+        "pcr_raw": 0.40714285714285714,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.09523809523809523
+      },
+      {
+        "value": 0.35,
+        "group": "overall",
+        "n_hyp": 89,
+        "sem_per_min": 1.8493378400842246,
+        "time_precision": 0.16853932584269662,
+        "time_recall": 0.15306122448979592,
+        "time_f1": 0.16042780748663102,
+        "latency_p50_s": 0.332,
+        "text_precision": 0.16853932584269662,
+        "text_recall": 0.15306122448979592,
+        "text_f1": 0.16042780748663102,
+        "pcr": 0.33707865168539325,
+        "pcr_raw": 0.33707865168539325,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.07142857142857142
+      },
+      {
+        "value": 0.35,
+        "group": "English",
+        "n_hyp": 89,
+        "sem_per_min": 1.8493378400842246,
+        "time_precision": 0.16853932584269662,
+        "time_recall": 0.15306122448979592,
+        "time_f1": 0.16042780748663102,
+        "latency_p50_s": 0.332,
+        "text_precision": 0.16853932584269662,
+        "text_recall": 0.15306122448979592,
+        "text_f1": 0.16042780748663102,
+        "pcr": 0.33707865168539325,
+        "pcr_raw": 0.33707865168539325,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.07142857142857142
+      },
+      {
+        "value": 0.5,
+        "group": "overall",
+        "n_hyp": 56,
+        "sem_per_min": 1.16362830387322,
+        "time_precision": 0.23214285714285715,
+        "time_recall": 0.1326530612244898,
+        "time_f1": 0.16883116883116886,
+        "latency_p50_s": 0.326,
+        "text_precision": 0.23214285714285715,
+        "text_recall": 0.1326530612244898,
+        "text_f1": 0.16883116883116886,
+        "pcr": 0.3392857142857143,
+        "pcr_raw": 0.3392857142857143,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.05952380952380952
+      },
+      {
+        "value": 0.5,
+        "group": "English",
+        "n_hyp": 56,
+        "sem_per_min": 1.16362830387322,
+        "time_precision": 0.23214285714285715,
+        "time_recall": 0.1326530612244898,
+        "time_f1": 0.16883116883116886,
+        "latency_p50_s": 0.326,
+        "text_precision": 0.23214285714285715,
+        "text_recall": 0.1326530612244898,
+        "text_f1": 0.16883116883116886,
+        "pcr": 0.3392857142857143,
+        "pcr_raw": 0.3392857142857143,
+        "guard_blocked": 0,
+        "hardneg_commit_rate": 0.05952380952380952
+      }
+    ]
+  }
+}
