@@ -415,8 +415,12 @@ class LLM:
         self.path, self.kind, self.device_name, self.dtype = (str(path) if path else None), kind, device, dtype
         self.template_kwargs = dict(KINDS[kind]["template_kwargs"])
         self.trust_remote_code = KINDS[kind]["trust_remote_code"]
+        # gptoss on one A100-40GB: MXFP4 is dequantized to bf16 (~42 GB) under triton 3.2, and device_map='auto' plans with the
+        # packed size and OOMs mid-dequant (rack4 smoke 2026-09-23). Default = explicit placement: the first N decoder layers
+        # (+embed/norm/lm_head) on the GPU, the rest on CPU (N=18 measured 34.5 GiB peak). --max-memory still selects 'auto'.
+        self.gpu_layers = None
         if max_memory is None and kind == "gptoss" and str(device).startswith("cuda"):
-            max_memory = dict(GPTOSS_MAX_MEMORY)
+            self.gpu_layers = int(os.environ.get("SEMCOMMIT_GPTOSS_GPU_LAYERS", "18"))
         self.max_memory = max_memory
         if tokenizer is None:
             from transformers import AutoTokenizer
@@ -435,8 +439,15 @@ class LLM:
             from transformers import AutoModelForCausalLM
             kw = dict(dtype=getattr(torch, self.dtype), trust_remote_code=self.trust_remote_code,
                       local_files_only=True, low_cpu_mem_usage=True)
-            kw.update(dict(device_map="auto", max_memory=self.max_memory) if self.max_memory
-                      else dict(device_map={"": "cuda:0" if self.device_name == "cuda" else self.device_name}))
+            if self.gpu_layers is not None:
+                import json as _json
+                nl = int(_json.load(open(os.path.join(self.path, "config.json")))["num_hidden_layers"])
+                dm = {"model.embed_tokens": 0, "model.norm": 0, "model.rotary_emb": 0, "lm_head": 0}
+                dm.update({f"model.layers.{i}": (0 if i < self.gpu_layers else "cpu") for i in range(nl)})
+                kw.update(device_map=dm)
+            else:
+                kw.update(dict(device_map="auto", max_memory=self.max_memory) if self.max_memory
+                          else dict(device_map={"": "cuda:0" if self.device_name == "cuda" else self.device_name}))
             self._model = AutoModelForCausalLM.from_pretrained(self.path, **kw).eval()
         return self._model
 
@@ -488,7 +499,7 @@ class LLM:
                     chat_template_sha256=digest(tpl) if tpl is not None else None,
                     config_sha256=hashlib.sha256(cfg.read_bytes()).hexdigest() if cfg and cfg.exists() else None,
                     weights={q.name: q.stat().st_size for q in sorted(p.glob("*.safetensors"))} if p and p.is_dir() else {},
-                    max_memory={str(k): v for k, v in (self.max_memory or {}).items()}, packages=pk)
+                    max_memory={str(k): v for k, v in (self.max_memory or {}).items()}, gpu_layers=self.gpu_layers, packages=pk)
 
     def generation_config(self, max_new_tokens):
         return dict(do_sample=False, num_beams=1, temperature=None, top_p=None, top_k=None,
