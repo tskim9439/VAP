@@ -9,7 +9,7 @@ import pytest
 import torch
 
 from vapasr.hf import commit_metrics as cm
-from vapasr.hf.commit_metrics import (SEM_END_ID as SEM, TURN_END_ID as TURN, aggregate, align_pairs, emit_time, events_from_emits, finalize, map_events, match_optimal,
+from vapasr.hf.commit_metrics import (SEM_END_ID as SEM, EOT_ID as TURN, aggregate, align_pairs, emit_time, events_from_emits, finalize, map_events, match_optimal,
                                       oracle_hyp, ref_chunk, score_stream, split_hyp, text_position_metrics, timing_metrics, turn_metrics, train_pad_K, eval_audio_duration, turn_ref_chunk,
                                       eval_audio_len, edit_counts, turn_flag)
 
@@ -308,7 +308,7 @@ def test_cli_score_only_rejects_changed_padding():
         wp, lp, out = Path(td) / "w.jsonl", Path(td) / "l.jsonl", Path(td) / "report.json"
         dump = lambda path, rows: path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows.values()))
         dump(wp, words); dump(lp, labels)
-        rep = cli.main(["--words", str(wp), "--labels", str(lp), "--delay", "4", "--pad-delays", "2", "4", "--oracle", "--out", str(out)])
+        rep = cli.main(["--words", str(wp), "--labels", str(lp), "--delay", "4", "--pad-delays", "2", "4", "--oracle", "--turn-end", "--out", str(out)])   # 턴 종료는 선택(기본 끔)
         assert rep["decode"]["pad_delays"] == [2, 4] and rep["decode"]["turn_end"] is True and rep["configs"]["oracle"]["overall"]["turn"]["late0"]["recall"] == 1.0
         labels["en1"]["turn_end"] = False; dump(lp, labels)
         with pytest.raises(AssertionError, match="K'"): cli.main(["--words", str(wp), "--labels", str(lp), "--score-only", "--out", str(out)])
@@ -337,8 +337,11 @@ def test_resolve_settings_from_training_config():
         (fin / "config.json").write_text(json.dumps(dict(delays=[2, 4], semcommit=dict(M=2))))
         with pytest.raises(AssertionError, match="M"): cli.resolve_settings(_args(cli, fin))
         empty = Path(td) / "bare" / "m"; empty.mkdir(parents=True)
-        a = cli.resolve_settings(_args(cli, empty, "--delay", "8")); assert (a.turn_end, a.hangover_s, a.tail_margin, a.pad, a.train) == (True, 0.48, 2, [2, 3, 4, 6, 8], {})
-        o = cli.resolve_settings(cli.parse_args(["--oracle", "--words", "w", "--labels", "l", "--out", "r", "--delay", "8"])); assert o.pad == [2, 3, 4, 6, 8] and o.turn_end is True
+        a = cli.resolve_settings(_args(cli, empty, "--delay", "8")); assert (a.turn_end, a.hangover_s, a.tail_margin, a.pad, a.train) == (False, 0.48, 2, [2, 3, 4, 6, 8], {})   # 학습 기본 = <SEM_END> 만
+        o = cli.resolve_settings(cli.parse_args(["--oracle", "--words", "w", "--labels", "l", "--out", "r", "--delay", "8"])); assert o.pad == [2, 3, 4, 6, 8] and o.turn_end is False
+        new = Path(td) / "new"; nf = new / "final"; nf.mkdir(parents=True)                                       # semcommit_train v1 인자(dest turn_end)
+        (new / "run.json").write_text(json.dumps(dict(args=dict(turn_end=True, hangover=0.48, tail_margin=2, M=0, delays="2,3,4,6"))))
+        assert cli.resolve_settings(_args(cli, nf)).turn_end is True
 
 # ───────────────────────────── 가짜 모델 디코드 ─────────────────────────────
 def _fake_model(V=12, D=16, cap=4, speech=None):
@@ -371,6 +374,34 @@ def test_decode_rows_bias_threshold_guard_trace():
     ng = cli.decode_rows(m, [f], [0], [dict(mode="bias", value=1.0)], sem_id=S, turn_id=T, sem_guard=False, cache=[])[0]
     assert ng.emitted == [(0, 1), (0, S), (0, S), (0, S)] and ng.forced == 1                     # 가드 끄면 runaway_cap(4) 까지 SEM 반복
     assert cm.events_from_emits(st[1].emitted, S) == [0]
+
+def test_decode_rows_without_turn_token():
+    """<SEM_END> 만 학습한 모델(turn_id=None): 턴 토큰 없이 디코드, trace 의 p(턴) = 0, 턴 이벤트 없음 — 결과는 턴 토큰이 있을 때와 같다(이 가짜 모델은 턴을 안 낸다)."""
+    cli = _cli(); m, f, S, T = _fake_model()
+    pol = [dict(mode="bias", value=1.0), dict(mode="threshold", value=0.3)]
+    st = cli.decode_rows(m, [f] * 2, [0, 0], pol, sem_id=S, turn_id=None, cache=[]); ref = cli.decode_rows(m, [f] * 2, [0, 0], pol, sem_id=S, turn_id=T, cache=[])
+    assert [s.emitted for s in st] == [s.emitted for s in ref] and all(pt == 0.0 for s in st for _, _, pt in s.trace)
+    assert cm.events_from_emits(st[0].emitted, None) == [] and cm.split_hyp(st[0].emitted, is_text=lambda t: t != S, word_start=lambda t: True, decode=str, event_ids=(S, None))["events"][0]["id"] == S
+
+def test_check_sem_ids_turn_token_from_registry():
+    """턴 종료 id = config.sem_registry 의 학습 이벤트: SEM 만 → None(--turn-end 거부), mono 턴 → <EOT> 151722, v0.2 → <TURN_END> 151724. 차단된 턴 토큰은 거부."""
+    from vapasr.data.semcommit_tokens import add_semantic_specials
+    cli = _cli()
+    class Tok:
+        def __init__(s): s.v = {}
+        def add_tokens(s, toks, special_tokens=True):
+            for t in toks: s.v.setdefault(t, 151705 + len(s.v))
+        def convert_tokens_to_ids(s, t): return s.v.get(t, 3)
+    def model(reg, blocked=(0,)):
+        return SimpleNamespace(config=SimpleNamespace(sp_ids={}, sem_registry=reg, lanes=0), get_input_embeddings=lambda: SimpleNamespace(weight=torch.zeros(151936, 1)),
+                               blocked=torch.tensor(list(blocked)))
+    tok = Tok(); add_semantic_specials(tok)
+    assert cli.check_sem_ids(model({"<SEM_END>": SEM}), tok) == (SEM, None)
+    with pytest.raises(AssertionError, match="턴 종료 토큰을 학습하지"): cli.check_sem_ids(model({"<SEM_END>": SEM}), tok, turn_end=True)
+    assert cli.check_sem_ids(model({"<SEM_END>": SEM, "<EOT>": TURN}), tok, turn_end=True) == (SEM, TURN) == (151723, 151722)
+    with pytest.raises(AssertionError, match="차단"): cli.check_sem_ids(model({"<SEM_END>": SEM, "<EOT>": TURN}, blocked=[TURN]), tok, turn_end=True)
+    old = Tok(); add_semantic_specials(old); old.add_tokens(["<TURN_END>"])                          # v0.2 체크포인트 tokenizer
+    assert cli.check_sem_ids(model({"<SEM_END>": SEM, "<TURN_END>": cm.LEGACY_TURN_END_ID}), old, turn_end=True) == (SEM, 151724)
 
 def test_guard_blocked_counts_premature_sem_before_text():
     """발화 청크 argmax 가 텍스트 전 SEM(p=0.7): 가드 끄면 no_word 조기 commit, 가드 켜면 방출은 없지만 guard_blocked 로 세고 pcr_raw 가 조기 commit 으로 센다."""
@@ -457,7 +488,7 @@ def test_run_loop_with_fake_model(monkeypatch):
         assert r0["emitted"][:3] == [[0, 1], [0, S], [1, 1]] and r0["trace"]["steps"] == len(r0["trace"]["k"]) and abs(r0["trace"]["p_sem"][1] - 0.4) < 1e-4
         e2 = [r for r in recs if r["id"] == "en2"]; assert {r["K"] for r in e2} == {55} and (69760, 55) in encs                  # 인코더·채점 K = words K(55), 길이에서 다시 유도한 54 가 아님
         assert {p["value"] for p in rep["pr_curve"]["bias"]} == {0.0, 1.0} and {p["group"] for p in rep["pr_curve"]["threshold"]} == {"overall", "English", "Korean"}
-        assert rep["decode"]["turn_end"] is True and rep["decode"]["train"] == {} and rep["decode"]["checkpoint_weights"] == {}  # 학습 설정 모름 → 학습 기본(TURN 켬)
+        assert rep["decode"]["turn_end"] is False and rep["decode"]["train"] == {} and rep["decode"]["checkpoint_weights"] == {}  # 학습 설정 모름 → 학습 기본(<SEM_END> 만)
         cli.main(args); assert len(streams.read_text().splitlines()) == 9                                                           # 이어하기: 새로 쓴 행 없음
         (md / "model.safetensors").write_bytes(b"new weights")                                                                     # 같은 경로에 다시 저장된 체크포인트
         with pytest.raises(AssertionError, match="checkpoint_weights"): cli.main(args + ["--sem-bias", "0", "1", "2"])

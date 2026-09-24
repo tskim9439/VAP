@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Semantic commit(<SEM_END>/<TURN_END>) 스트리밍 디코드·평가 — 계획 §24 v0 (지표: vapasr/hf/commit_metrics.py).
+"""Semantic commit(<SEM_END>, 선택적 턴 종료) 스트리밍 디코드·평가 — 계획 §24 (지표: vapasr/hf/commit_metrics.py).
+턴 종료 토큰은 체크포인트의 config.sem_registry 에서 정한다: 새 모델은 <EOT>(--turn-end 로 학습했을 때만), v0.2 체크포인트는 <TURN_END>, 없으면 턴 평가 없음.
 
 words.jsonl 세그먼트로 스트림 오디오를 온라인 조립(vapasr.data.streams.assemble_stream)하되 학습(SemCommitDataset)과 같은 길이·청크 수로 끝 무음을 늘리고
 (K' = max(K, max_δ∈학습 δ∪{평가 δ} 마지막 방출 청크 + tail_margin), TURN 이면 k_turn 포함 — commit_metrics.eval_audio_len; 안 늘린 행은 words K 를 그대로 인코더에),
@@ -9,7 +10,7 @@ Nemotron 특징은 스트림당 1 회 인코드한 뒤, 디코드 설정(행) = 
   평가 δ 가 학습 δ 목록에 없으면 멈춘다(--allow-untrained-delay).
   bias 모드      : logits[<SEM_END>] += b 후 argmax (b 스윕 = PR 곡선)
   threshold 모드 : p(<SEM_END>) ≥ θ 이면 <SEM_END>, 아니면 <SEM_END> 를 뺀 argmax
-  둘 다 매 결정 step 의 p(<SEM_END>)·p(<TURN_END>)(blocked 제외 softmax, 편향 전)를 기록(trace)한다.
+  둘 다 매 결정 step 의 p(<SEM_END>)·p(턴 종료)(blocked 제외 softmax, 편향 전; 턴 토큰이 없으면 0)를 기록(trace)한다.
   sem-guard(기본 켬): 직전 <SEM_END> 이후(또는 스트림 시작 이후) 텍스트 토큰이 없으면 <SEM_END> 금지 — 빈 commit·SEM 폭주 방지(학습 시퀀스에 없는 패턴).
     가드가 막은 발화(bias 모드: 가드 전 argmax=SEM, threshold 모드: p(SEM) ≥ θ)는 행마다 guard_blocked 로 세고, 보고서 text.pcr_raw 가 조기 commit 으로 센다.
 디코드 규약(청크당 오디오 임베딩 1 개 → greedy → <NEXT_AUDIO> 로 청크 종료, runaway_cap, <EMPTY_AUDIO> flush)은 batch_decode/stream_decode 와 같다
@@ -30,15 +31,15 @@ from pathlib import Path
 if __name__ == "__main__" and "--gpu" in sys.argv[:-1]:                          # vapasr.hf 가 torch 를 import 하기 전에 GPU 를 고정(s3_train_hf 와 같은 방식)
     os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[sys.argv.index("--gpu") + 1]
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from vapasr.hf.commit_metrics import (CHUNK_S, EARLY, HANGOVER_S, LATES, SEM_END_ID, SEM_SPECIALS, TURN_END_ID, aggregate, events_from_emits,
+from vapasr.hf.commit_metrics import (CHUNK_S, EARLY, EOT_ID, HANGOVER_S, LATES, LEGACY_TURN_END_ID, SEM_END_ID, SEM_SPECIALS, aggregate, events_from_emits,
                                       eval_audio_len, oracle_hyp, pr_point, score_stream, split_hyp, turn_flag)
 
-PROTOCOL = "semcommit-eval-v1"
+PROTOCOL = "semcommit-eval-v2"                                                   # v2: 턴 종료 토큰 = config.sem_registry(<EOT> | v0.2 <TURN_END> | 없음)
 ROOT = Path(__file__).resolve().parents[1]
 CODE_FILES = ("experiments/semcommit_eval.py", "vapasr/hf/commit_metrics.py", "vapasr/hf/batch_decode.py", "vapasr/hf/modeling_vapasr.py", "vapasr/data/streams.py")
 MXC_PREFIX = "/soundai/databricks_build_managed/1baf7241-0193-4ef8-a79a-b892a4cc792f/"
 DEFAULT_PAD_DELAYS = (2, 3, 4, 6)                                                 # experiments/semcommit_train.py --delays 기본(모델이 있으면 config.delays 를 쓴다)
-TRAIN_DEFAULTS = dict(turn_end=True, hangover_s=HANGOVER_S, tail_margin=2)          # semcommit_train 기본(--no-turn-end 없음·--hangover 0.48·--tail-margin 2)
+TRAIN_DEFAULTS = dict(turn_end=False, hangover_s=HANGOVER_S, tail_margin=2)         # semcommit_train 기본(<SEM_END> 만·--hangover 0.48·--tail-margin 2); v0.2 는 config.semcommit 의 turn_end=True 로 복원
 
 # ───────────────────────────── I/O ─────────────────────────────
 def read_jsonl(path):
@@ -100,7 +101,8 @@ def train_params(model_path):
     for q in (p / "run.json", p / "results.json", p.parent / "run.json", p.parent / "results.json"):
         args = (_load_json(q) or {}).get("args") if q.exists() else None
         if not isinstance(args, dict): continue
-        if "no_turn_end" in args: out["turn_end"] = not args["no_turn_end"]
+        if "turn_end" in args: out["turn_end"] = bool(args["turn_end"])                            # semcommit_train v1(--turn-end/--no-turn-end → dest turn_end)
+        elif "no_turn_end" in args: out["turn_end"] = not args["no_turn_end"]                     # v0.2 인자
         for k, v in (("hangover", "hangover_s"), ("tail_margin", "tail_margin"), ("M", "M")):
             if args.get(k) is not None: out[v] = args[k]
         if args.get("delays"): out["delays"] = [int(x) for x in (args["delays"].split(",") if isinstance(args["delays"], str) else args["delays"]) if str(x).strip()]
@@ -189,7 +191,7 @@ class RowState:
             self.advance = True; return "next", 0
         self.emitted.append((self.k, tid)); self.n += 1; return "text", tid
 
-def decode_rows(model, feats, prefix, policies, *, sem_id=SEM_END_ID, turn_id=TURN_END_ID, next_bias=0.0, turn_bias=0.0, max_flush_rounds=None,
+def decode_rows(model, feats, prefix, policies, *, sem_id=SEM_END_ID, turn_id=None, next_bias=0.0, turn_bias=0.0, max_flush_rounds=None,
                 sem_guard=True, trace=True, cache=None):
     """feats: 행별 (1,K,D) 인코더 출력(같은 스트림을 여러 행이 공유 가능), prefix: 공통 prefix id(한 언어·δ), policies: 행별 dict(mode='bias'|'threshold', value).
     → 행별 RowState(emitted [(k, tid)], forced, flush_rounds, guard_blocked, trace [(k, p_sem, p_turn)]).
@@ -210,8 +212,9 @@ def decode_rows(model, feats, prefix, policies, *, sem_id=SEM_END_ID, turn_id=TU
             h = model.thinker.model(inputs_embeds=x, past_key_values=cache, use_cache=True).last_hidden_state
             logits = model.thinker.lm_head(h[:, -1]).float()
             logits[:, model.blocked] = -torch.inf; logits[:, model.next_audio] -= next_bias
-            lp = torch.log_softmax(logits, -1); p_sem = lp[:, sem_id].exp(); p_turn = lp[:, turn_id].exp()
-            logits[:, sem_id] += bias; logits[:, turn_id] += turn_bias
+            lp = torch.log_softmax(logits, -1); p_sem = lp[:, sem_id].exp(); p_turn = lp[:, turn_id].exp() if turn_id is not None else torch.zeros_like(p_sem)
+            logits[:, sem_id] += bias
+            if turn_id is not None: logits[:, turn_id] += turn_bias
             if sem_guard:
                 g = torch.tensor([not s.text_since_sem for s in states], device=dev)
                 gblk = (g & torch.where(thr, p_sem >= theta, logits.argmax(-1) == sem_id)).tolist(); logits[g, sem_id] = -torch.inf
@@ -233,7 +236,7 @@ def decode_rows(model, feats, prefix, policies, *, sem_id=SEM_END_ID, turn_id=TU
 
 def tokenizer_fns(tok, sem_id, turn_id):
     """split_hyp 에 넘길 (is_text, word_start, decode). 텍스트 = 특수/추가 토큰이 아닌 id, 단어 시작 = byte-BPE 조각이 공백(Ġ)으로 시작."""
-    special = set(tok.all_special_ids) | set(getattr(tok, "added_tokens_decoder", {}) or {}) | {sem_id, turn_id}
+    special = set(tok.all_special_ids) | set(getattr(tok, "added_tokens_decoder", {}) or {}) | ({sem_id, turn_id} - {None})
     cache = {}
     def piece(t):
         if t not in cache: cache[t] = tok.convert_ids_to_tokens(int(t)) or ""
@@ -266,21 +269,25 @@ def load_sem_model(path, encoder, dtype, device):
     return model, tok
 
 def check_sem_ids(model, tok, turn_end=False, allow_other_ids=False):
-    """<SEM_END>/<TURN_END> 를 Phase1+Phase2 뒤에 붙여(이미 있으면 그대로) id 를 전역 계약·config.sp_ids 와 대조, decode 차단 목록에 없는지 확인."""
+    """<SEM_END> 를 Phase1+Phase2 뒤에 붙여(이미 있으면 그대로) id 를 전역 계약·config 와 대조, decode 차단 목록에 없는지 확인 → (sem_id, turn_id|None).
+    턴 종료 id = config.sem_registry 가 학습 이벤트로 가진 것(<EOT>; v0.2 체크포인트는 <TURN_END>), 없으면 None(SEM 만 학습 — --turn-end 불가)."""
     from vapasr.uslm.interleave_data import SPECIAL_TOKENS as P1
     from vapasr.data.dialogue_tokens import PHASE2_SPECIALS as P2, FROZEN_REGISTRY
+    from vapasr.data.semcommit_tokens import sem_ids_of
     tok.add_tokens(P1 + P2 + SEM_SPECIALS, special_tokens=True)
     ids = {t: tok.convert_tokens_to_ids(t) for t in P1 + P2 + SEM_SPECIALS}
     bad = {t: (ids[t], v) for t, v in FROZEN_REGISTRY.items() if ids[t] != v}; assert not bad, f"Phase1/2 id 불일치: {bad}"
     bad = {t: (ids[t], v) for t, v in model.config.sp_ids.items() if t in ids and ids[t] != v}; assert not bad, f"tokenizer vs config.sp_ids 불일치: {bad}"
-    sem, turn = ids["<SEM_END>"], ids["<TURN_END>"]
     reg = getattr(model.config, "sem_registry", None) or {}                        # add_semantic_tokens 로 만든 체크포인트는 config.sem_registry 를 가진다
-    assert all(ids[t] == v for t, v in reg.items()), f"tokenizer vs config.sem_registry 불일치: {reg} vs {sem}/{turn}"
+    assert all(tok.convert_tokens_to_ids(t) == v for t, v in reg.items()), f"tokenizer vs config.sem_registry 불일치: {reg}"
     if not reg: print("주의: config.sem_registry 없음 — SEM 토큰으로 학습한 체크포인트가 맞는지 확인", flush=True)
-    if not allow_other_ids: assert (sem, turn) == (SEM_END_ID, TURN_END_ID), f"SEM/TURN id {sem}/{turn} ≠ 계약 {SEM_END_ID}/{TURN_END_ID}"
-    assert max(sem, turn) < model.get_input_embeddings().weight.shape[0], "임베딩에 SEM 행 없음"
+    sem = ids["<SEM_END>"]; turn = sem_ids_of(reg)[1] if reg else None
+    if not allow_other_ids:
+        assert sem == SEM_END_ID and turn in (None, EOT_ID, LEGACY_TURN_END_ID), f"SEM/턴 id {sem}/{turn} ≠ 계약 {SEM_END_ID}/({EOT_ID} | v0.2 {LEGACY_TURN_END_ID})"
+    assert not (turn_end and turn is None), "--turn-end 인데 이 모델은 턴 종료 토큰을 학습하지 않았다(<SEM_END> 만) — --no-turn-end 로 평가"
+    assert max(sem, turn or 0) < model.get_input_embeddings().weight.shape[0], "임베딩에 SEM 행 없음"
     blocked = set(model.blocked.tolist()); assert sem not in blocked, "<SEM_END> 가 decode 차단 목록에 있음"
-    assert not (turn_end and turn in blocked), "<TURN_END> 가 decode 차단 목록에 있음(--turn-end)"
+    assert not (turn_end and turn in blocked), "턴 종료 토큰이 decode 차단 목록에 있음(--turn-end)"
     assert model.config.lanes == 0, "mono 모델 전용"
     return sem, turn
 
@@ -295,7 +302,7 @@ def decode_config(a):
                 turn_bias=a.turn_bias, sem_guard=not a.no_sem_guard, max_flush=a.max_flush, block_turn=a.block_turn, path_remap=list(a.path_remap or []),
                 words=os.path.abspath(a.words), words_sha256=sha256_file(a.words), code={f: sha256_file(ROOT / f) for f in CODE_FILES if (ROOT / f).exists()})
 
-def make_record(wrow, cfg, delta, K, dur, emitted, hyp, forced=0, flush_rounds=0, trace=None, trace_min_p=0.0, sem_id=SEM_END_ID, turn_id=TURN_END_ID, pad_delays=None,
+def make_record(wrow, cfg, delta, K, dur, emitted, hyp, forced=0, flush_rounds=0, trace=None, trace_min_p=0.0, sem_id=SEM_END_ID, turn_id=EOT_ID, pad_delays=None,
                 guard_blocked=0):
     rec = dict(id=wrow["id"], set=wrow.get("set"), lang=wrow["lang"], config=cfg, delta=delta, K=K, K0=wrow.get("K"), duration_s=round(dur, 3), pad_delays=pad_delays, event_ids=[sem_id, turn_id],
                words_digest=row_digest(wrow), emitted=[[int(k), int(t)] for k, t in emitted], sem_k=events_from_emits(emitted, sem_id), turn_k=events_from_emits(emitted, turn_id),
@@ -332,7 +339,7 @@ def run(a):
     assert f"<DELAY_{a.delay}>" in model.config.sp_ids, f"<DELAY_{a.delay}> 없음"
     trained = [int(d) for d in (getattr(model.config, "delays", None) or [])]
     assert not trained or a.delay in trained or a.allow_untrained_delay, f"평가 δ={a.delay} 가 model.config.delays {trained} 에 없음 — 의도했다면 --allow-untrained-delay"
-    if a.block_turn: model.blocked = torch.unique(torch.cat([model.blocked, torch.tensor([turn_id], device=model.blocked.device)]))
+    if a.block_turn and turn_id is not None: model.blocked = torch.unique(torch.cat([model.blocked, torch.tensor([turn_id], device=model.blocked.device)]))
     print(f"pad: δ{a.pad} tail_margin {a.tail_margin} pad_tail {a.pad_tail} turn {a.turn_end} hangover {a.hangover_s} → 늘린 스트림 "
           f"{sum(L[s][1] > int(words[s].get('K') or 0) for s in ids)}/{len(ids)} [학습 설정 {a.train or '모름'}]", flush=True)
     remaps = parse_remaps(a.path_remap); dev = next(model.parameters()).device
@@ -403,7 +410,7 @@ def build_report(a):
     assert not k_bad, f"기록 K' ≠ 현재 words/labels 로 계산한 K' {len(k_bad)}/{len(recs)} 행, 예 (id, 기록, 지금) {k_bad[:3]} — labels.turn_end 등이 바뀌었으면 다시 디코드하세요"
     by_cfg = {}
     for r in recs:
-        sem_id, turn_id = r.get("event_ids") or (SEM_END_ID, TURN_END_ID)
+        sem_id, turn_id = r.get("event_ids") or (SEM_END_ID, None)
         r["metrics"] = score_stream(words[r["id"]], labels.get(r["id"]), dict(emitted=r["emitted"], **r["hyp"]), r["delta"], r["K"], early=a.early, lates=a.lates,
                                     eval_turn=dc["turn_end"], hangover_s=dc["hangover_s"], sem_id=sem_id, turn_id=turn_id, guard_blocked=r.get("guard_blocked", 0))
         by_cfg.setdefault(r["config"]["name"], dict(config=r["config"], recs=[]))["recs"].append(r)
@@ -436,14 +443,14 @@ def parse_args(argv=None):
     p.add_argument("--words", required=True); p.add_argument("--labels", required=True)
     p.add_argument("--delay", type=int, default=4); p.add_argument("--sem-bias", type=float, nargs="*", default=[0.0], help="bias 모드: logits[<SEM_END>] += b 스윕")
     p.add_argument("--theta", type=float, nargs="*", default=[], help="threshold 모드: p(<SEM_END>) ≥ θ 이면 방출 (스윕)")
-    p.add_argument("--turn-end", dest="turn_end", action="store_true", help="TURN_END 평가(TURN 지표 + 패딩에 k_turn 포함). 기본: 학습 설정(없으면 켬)")
-    p.add_argument("--no-turn-end", dest="turn_end", action="store_false", help="TURN_END 평가·패딩 끔(--no-turn-end 로 학습한 모델)")
+    p.add_argument("--turn-end", dest="turn_end", action="store_true", help="턴 종료 평가(턴 지표 + 패딩에 k_turn 포함; 턴 토큰을 학습한 모델만). 기본: 학습 설정(없으면 끔)")
+    p.add_argument("--no-turn-end", dest="turn_end", action="store_false", help="턴 종료 평가·패딩 끔(<SEM_END> 만 학습한 모델의 기본)")
     p.add_argument("--hangover-s", type=float, default=None, help=f"기본: 학습 설정(없으면 {HANGOVER_S})")
     p.add_argument("--pad-delays", type=int, nargs="+", default=None, help="패딩 기준 학습 δ 목록(기본: 체크포인트 config.delays/학습 인자, oracle·모름은 2 3 4 6) — 평가 δ 는 늘 포함")
     p.add_argument("--tail-margin", type=int, default=None, help="기본: 학습 --tail-margin(없으면 2)"); p.add_argument("--no-pad", action="store_true", help="원래 길이로(학습과 다름 — 진단용)")
     p.add_argument("--allow-train-mismatch", action="store_true", help="--turn-end/--hangover-s/--tail-margin/--pad-delays 가 학습 설정과 달라도 진행")
     p.add_argument("--allow-untrained-delay", action="store_true", help="평가 δ 가 학습 δ 목록에 없어도 진행")
-    p.add_argument("--turn-bias", type=float, default=0.0); p.add_argument("--block-turn", action="store_true", help="<TURN_END> 방출 금지")
+    p.add_argument("--turn-bias", type=float, default=0.0); p.add_argument("--block-turn", action="store_true", help="턴 종료 토큰 방출 금지")
     p.add_argument("--next-bias", type=float, default=0.0); p.add_argument("--no-sem-guard", action="store_true", help="빈 commit(<SEM_END> 연속·텍스트 전) 허용")
     p.add_argument("--gpu", type=int, default=None); p.add_argument("--dtype", choices=["float32", "bfloat16"], default="float32")
     p.add_argument("--batch-size", type=int, default=16, help="디코드 행(스트림×설정) 수"); p.add_argument("--io-workers", type=int, default=8)

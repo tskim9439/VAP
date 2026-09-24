@@ -1,4 +1,4 @@
-"""Semantic commit v0 학습 데이터셋 — Phase 1 mono 스트림에 <SEM_END>/<TURN_END> 를 끼우고 B/N 결정 위치를 표시한다
+"""Semantic commit 학습 데이터셋 — Phase 1 mono 스트림에 <SEM_END>(와 선택적으로 턴 종료 <EOT>)를 끼우고 B/N 결정 위치를 표시한다
 (raw/inbox/streaming_asr_semantic_commit_plan.md §21 시퀀스 · §23 등급).
 
 입력(모듈 간 공용 형식, 스트림당 한 줄):
@@ -7,7 +7,8 @@
   labels.jsonl {id, lang, candidates:[{after_word, grade 'A'|'B'|'N', why, ...}], turn_end}
 시퀀스 = Phase 1 mono(vapasr/uslm/mono_data.build_mono_sequence, 같은 prefix·<DELAY_d>) + 이벤트:
   <SEM_END>  A 후보 단어 i 의 마지막 토큰 바로 뒤, 같은 청크. 시각 = 그 토큰 시각 → 같은 버킷, 청크 안 (t, spk) 안정 정렬이 목록 순서를 지킨다(text < SEM < TURN).
-  <TURN_END> 스트림 끝 1 회(v0 = 발화 끝 proxy, 선택). 명시 청크 이벤트: k_turn = max(마지막 단어/SEM 방출 청크, int((t_last + hangover_s)/0.08)).
+  턴 종료  스트림 끝 1 회(발화 끝 proxy, 선택 — 기본 끔: Phase 1 은 <SEM_END> 만). 토큰은 Phase 2 와 같은 <EOT>(v0.2 의 <TURN_END> 는 폐기).
+             명시 청크 이벤트: k_turn = max(마지막 단어/SEM 방출 청크, int((t_last + hangover_s)/0.08)).
              스트림을 무음으로 늘려 K' = max(K, k_turn(δmax) + tail_margin) → TURN 은 실제(무음) 오디오 위에서 <NEXT_AUDIO> 와 경쟁하고 <EMPTY_AUDIO> flush 에는 절대 안 간다.
   B 후보 → SEM 없음 + 결정 위치 라벨 -100.  N 후보 → SEM 없음 + 결정 위치 pos_weight = hardneg_weight(기본 1.0; NEXT 의 0.3/0.15 대신).
   결정 위치 = 단어 마지막 토큰 **다음 원소**의 시퀀스 index. 모델은 h[pos-1](= 그 토큰)로 labels[pos] 를 예측하므로 '단어를 낸 직후의 결정' 이다.
@@ -24,17 +25,17 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np, torch
 from torch.utils.data import Dataset
 from .interleave import InterleaveStats, Specials
-from .semcommit_tokens import SEM_SPECIALS, BASE_VOCAB, add_semantic_specials, assert_frozen_semantic
+from .semcommit_tokens import SEM_SPECIALS, BASE_VOCAB, TURN_TOKEN, add_semantic_specials, assert_frozen_semantic
 from ..uslm.interleave_data import specials_of, CHUNK_S
 from ..uslm.mono_data import build_mono_sequence, collate_streams
 
 SR = 16000
 
 def check_sem_ids(ids: Dict[str, int]) -> None:
-    """SEM/TURN 이 Phase 2 registry 를 밀어내지 않았는지(가짜 tokenizer 에도 적용되는 구조 검사): TURN = SEM+1, 둘 다 모든 Phase 1/2 id 보다 뒤.
-    실제 Qwen tokenizer(<NEXT_AUDIO> = BASE_VOCAB)면 semcommit_tokens.assert_frozen_semantic 로 동결 id(151723/151724 등)까지 대조한다."""
-    s, t = ids["<SEM_END>"], ids["<TURN_END>"]
-    assert t == s + 1 and s > max(v for k, v in ids.items() if k not in SEM_SPECIALS), f"SEM/TURN id 순서 위반: {ids}"
+    """SEM 이 Phase 2 registry 를 밀어내지 않았는지(가짜 tokenizer 에도 적용되는 구조 검사): SEM 이 모든 Phase 1/2 id 보다 뒤, 턴 종료 <EOT> 는 Phase 2 registry 안.
+    실제 Qwen tokenizer(<NEXT_AUDIO> = BASE_VOCAB)면 semcommit_tokens.assert_frozen_semantic 로 동결 id(<EOT> 151722, <SEM_END> 151723 등)까지 대조한다."""
+    s = ids["<SEM_END>"]
+    assert s > max(v for k, v in ids.items() if k not in SEM_SPECIALS) and TURN_TOKEN in ids and ids[TURN_TOKEN] < s, f"SEM/턴 종료 id 순서 위반: {ids}"
     if ids.get("<NEXT_AUDIO>") == BASE_VOCAB: assert_frozen_semantic(ids)
 
 def add_semcommit_specials(tok) -> Dict[str, int]:
@@ -191,7 +192,7 @@ def _read_jsonl(path: str):
         for line in f:
             if line.strip(): yield json.loads(line)
 
-FP_PROTOCOL = "semcommit-train-v0"
+FP_PROTOCOL = "semcommit-train-v1"                                                         # v1: 턴 종료 = <EOT>(선택, 기본 끔), <TURN_END> 폐기
 def sha256_file(path: str) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -227,17 +228,18 @@ def checkpoint_fingerprint_diff(ckpt_dir: str, cur: dict) -> List[str]:
 class SemCommitDataset(Dataset):
     """words.jsonl + labels.jsonl(id 로 짝) → Phase 1 mono 시퀀스 + SEM/TURN + B/N 결정 위치. __getitem__ 은 MonoStreamDataset 과 같은 키 + pos_weight·이벤트 통계.
     online=True: segments 로 assemble_stream(패딩된 duration 까지 끝 무음 합성). online=False: 같은 길이의 0 파형(시퀀스 검사·CPU 드라이런 전용 — 학습 금지).
+    turn_end: 턴 종료 <EOT> 를 함께 학습(기본 False — Phase 1 은 <SEM_END> 만).
     langs: 언어 필터(스크립트가 EN/KO 셋을 나눌 때). path_map: segment path 접두어 치환 {old: new}. pad_tail: TURN 이 없어도 마지막 방출이 flush 에 안 가게 늘린다.
     짝 통계(stats): words_rows(언어 필터 뒤 words 행) · labeled(그중 labels 짝이 있는 행) · labels_without_words(어느 words 행과도 짝이 없는 label id — 다른 셋·표본의 labels)
       · dup_label_rows · decision_on_event(B/N 결정 위치가 TURN 타깃에 떨어지는 (항목, δ) 수) / decision_on_event_items. bad['lang_mismatch'] = label.lang ≠ words.lang(제외).
     tok_check: 앞쪽 words 행 이만큼을 이 tokenizer 로 다시 단어 분할(semcommit_words.split_words — words 빌더와 같은 함수)해 단어 text·[a,b) 가 같은지 본다.
       다르면 ValueError(words.jsonl 의 토큰 id 가 이 tokenizer 에서 다른 단어가 된다). tokenizer 에 convert_ids_to_tokens 가 없으면(가짜) 건너뛰고 stats['tok_check_skipped']."""
-    def __init__(self, words_jsonl, labels_jsonl, tok, sp_ids: Optional[Dict[str, int]] = None, delays=(2, 3, 4, 6), turn_end: bool = True,
+    def __init__(self, words_jsonl, labels_jsonl, tok, sp_ids: Optional[Dict[str, int]] = None, delays=(2, 3, 4, 6), turn_end: bool = False,
                  hangover_s: float = 0.48, hardneg_weight: float = 1.0, max_items: Optional[int] = None, seed: int = 0, online: bool = True,
                  allow_unlabeled: bool = False, max_per_chunk: int = 0, langs: Optional[Sequence[str]] = None, path_map: Optional[Dict[str, str]] = None,
                  tail_margin: int = 2, pad_tail: bool = True, max_audio_retries: int = 8, tok_check: int = 32):
         self.tok = tok; self.sp_ids = dict(sp_ids) if sp_ids is not None else add_semcommit_specials(tok); check_sem_ids(self.sp_ids)
-        self.sp = specials_of(self.sp_ids); self.sem_id, self.turn_id = self.sp_ids["<SEM_END>"], self.sp_ids["<TURN_END>"]
+        self.sp = specials_of(self.sp_ids); self.sem_id, self.turn_id = self.sp_ids["<SEM_END>"], self.sp_ids[TURN_TOKEN]
         self.delays = tuple(int(d) for d in delays); self.M = max_per_chunk; self.online = online; self.turn_end = turn_end; self.hangover_s = hangover_s
         self.hardneg_weight = hardneg_weight; self.max_audio_retries = max_audio_retries
         self.audio_pad = tok.convert_tokens_to_ids("<|audio_pad|>"); self._pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]

@@ -1,4 +1,5 @@
-"""Semantic commit(<SEM_END>/<TURN_END>) 평가 지표 — 계획 §24 (raw/inbox/streaming_asr_semantic_commit_plan.md) v0.
+"""Semantic commit(<SEM_END>, 선택적 턴 종료) 평가 지표 — 계획 §24 (raw/inbox/streaming_asr_semantic_commit_plan.md).
+턴 종료 토큰: 새 모델은 Phase 2 와 같은 <EOT>(151722, --turn-end 로 학습했을 때만), v0.2 체크포인트는 <TURN_END>(151724) — 평가 행의 event_ids 가 어느 쪽인지 기록한다.
 
 입력: 스트리밍 디코드 방출 [(chunk k, token id)] + words.jsonl 행(참조 단어·종료 시각·태그) + labels.jsonl 행(후보 경계 등급 A/B/N).
 시각 규약 — 둘 다 보고한다:
@@ -8,7 +9,7 @@
 텍스트 위치: 가설 단어(이벤트 사이 디코드 토큰) ↔ 참조 단어 편집 정렬(align_pairs: 편집 수 최소 중 일치 최대 DP 하나 — rapidfuzz 유무와 무관) → 가설 <SEM_END> 를 '참조 단어 i 뒤' 로 사상.
   A 경계 = 정답, B = 애매(오류로 세지 않고 따로), N 경계(REVISION·all-WAIT·disfluency)·경계 아닌 단위 내부·단어 조각 사이 = 조기 commit(PCR), 범주별.
   가설이 참조 단어를 빠뜨린(deletion) 자리 바로 뒤 이벤트는, 빠진 단어의 ref_k ≤ 이벤트 청크이면 그 단어 뒤로 본다(이상적 직렬화라면 이미 나왔을 단어).
-TURN_END: 참조 k_turn = max(int(t_last/0.08)+δ, int((t_last+hangover)/0.08)) (v0 계약), 지연은 t_last(마지막 단어 끝) 기준.
+턴 종료: 참조 k_turn = max(int(t_last/0.08)+δ, int((t_last+hangover)/0.08)) (v0 계약), 지연은 t_last(마지막 단어 끝) 기준. turn_id=None 이면 턴 이벤트를 세지 않는다.
   labels 행에 turn_end 가 없으면 True(turn_flag — SemCommitDataset.build_semcommit_tokens·패딩과 같은 기본).
 sem-guard 가 막은 <SEM_END>(guard_blocked, 디코더가 센다)는 text.pcr_raw 에서 조기 commit 으로 센다(pcr 은 실제 방출만).
 WER/CER: textnorm score_en/score_ko (이벤트 토큰은 디코드 전에 뺀다 — textnorm._TAG 는 <...> 를 공백으로 바꾸므로 단어 중간 이벤트가 남아 있으면 단어가 쪼개진다).
@@ -19,8 +20,10 @@ from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 import numpy as np
 
 CHUNK_S = 0.08
-SEM_END_ID, TURN_END_ID = 151723, 151724                  # Phase1(151705–151716)+Phase2(151717–151722) 뒤에 add_tokens — 전역 계약
-SEM_SPECIALS = ["<SEM_END>", "<TURN_END>"]
+SEM_END_ID = 151723                                        # Phase1(151705–151716)+Phase2(151717–151722) 뒤에 add_tokens — 전역 계약
+EOT_ID = 151722                                            # 턴 종료 = Phase 2 <EOT>(FROZEN_REGISTRY) — mono 에서는 --turn-end 로 학습했을 때만
+LEGACY_TURN_END_ID = 151724                                # v0.2 <TURN_END>(폐기) — 옛 평가 행·체크포인트 채점용
+SEM_SPECIALS = ["<SEM_END>"]
 EARLY, LATES, HANGOVER_S = 1, (0, 2, 5), 0.48
 PCR_CATEGORIES = ("filler", "rep", "unclear", "repair", "revision", "all_wait", "other_n", "other_inside", "mid_word", "no_word")
 _EPS = 1e-6
@@ -62,8 +65,9 @@ def eval_audio_len(wrow: dict, delays: Sequence[int], has_turn: bool, hangover_s
 def eval_audio_duration(wrow: dict, delays: Sequence[int], has_turn: bool, hangover_s: float = HANGOVER_S, tail_margin: int = 2, pad_tail: bool = True) -> float:
     return eval_audio_len(wrow, delays, has_turn, hangover_s, tail_margin, pad_tail)[0]
 
-def events_from_emits(emitted: Iterable[Tuple[int, int]], tid: int, K: Optional[int] = None, times: bool = False) -> list:
-    """방출 [(k, tid)] 에서 tid 이벤트의 청크 번호(K 가 있으면 flush 는 K 로 자름) 또는 times=True 면 시각 (k+1)·0.08."""
+def events_from_emits(emitted: Iterable[Tuple[int, int]], tid: Optional[int], K: Optional[int] = None, times: bool = False) -> list:
+    """방출 [(k, tid)] 에서 tid 이벤트의 청크 번호(K 가 있으면 flush 는 K 로 자름) 또는 times=True 면 시각 (k+1)·0.08. tid=None 이면 빈 목록."""
+    if tid is None: return []
     ks = [int(k) for k, t in emitted if int(t) == tid]
     if times: return [emit_time(k, K) for k in ks]
     return ks if K is None else [min(k, K) for k in ks]
@@ -163,11 +167,11 @@ def asr_counts(ref_text: str, hyp_text: str, lang: str) -> dict:
 
 # ───────────────────────────── 가설 단어·이벤트 ─────────────────────────────
 def split_hyp(emitted: Iterable[Tuple[int, int]], *, is_text: Callable[[int], bool], word_start: Callable[[int], bool], decode: Callable[[List[int]], str],
-              event_ids: Sequence[int] = (SEM_END_ID, TURN_END_ID)) -> dict:
+              event_ids: Sequence[Optional[int]] = (SEM_END_ID, EOT_ID)) -> dict:
     """방출 [(k, tid)] → dict(words=[가설 단어], events=[dict(id, k, after, mid_word)]).
     단어 경계: 첫 텍스트 토큰 또는 word_start(tid)(Qwen byte-BPE: 바이트가 0x20 으로 시작 = 'Ġ'). 이벤트·텍스트 아닌 토큰(<NEXT_AUDIO> 등 is_text=False)은 단어를 끊지 않는다.
     after = 이벤트 직전 텍스트 토큰이 속한 가설 단어 번호(−1: 단어 전), mid_word = 이벤트 뒤 첫 텍스트 토큰이 같은 단어를 잇는다(조각 사이 commit)."""
-    ev_ids = {int(e) for e in event_ids}; words, cur, events, pend = [], [], [], []
+    ev_ids = {int(e) for e in event_ids if e is not None}; words, cur, events, pend = [], [], [], []
     for k, t in emitted:
         k, t = int(k), int(t)
         if t in ev_ids:
@@ -282,7 +286,7 @@ def turn_metrics(turn_k: Sequence[int], K: int, words: Sequence[dict], turn_end:
     return out
 
 def score_stream(wrow: dict, lrow: Optional[dict], hyp: dict, delta: int, K: int, *, early: int = EARLY, lates: Sequence[int] = LATES, eval_turn: bool = False,
-                 hangover_s: float = HANGOVER_S, sem_id: int = SEM_END_ID, turn_id: int = TURN_END_ID, norm: Callable[[str], str] = norm_word, guard_blocked: int = 0) -> dict:
+                 hangover_s: float = HANGOVER_S, sem_id: int = SEM_END_ID, turn_id: Optional[int] = EOT_ID, norm: Callable[[str], str] = norm_word, guard_blocked: int = 0) -> dict:
     """스트림 하나의 지표(합산 가능한 카운트·목록). hyp = dict(emitted=[[k, tid]], words=[가설 단어], events=split_hyp 이벤트, text=이벤트 뺀 디코드 텍스트).
     guard_blocked = 디코더 sem-guard 가 막은 <SEM_END> 발화 수(방출 안 됨) → events·text 에 기록, finalize 의 pcr_raw 가 조기 commit 으로 센다."""
     words = sorted(wrow["words"], key=lambda w: int(w["i"])); cands = (lrow or {}).get("candidates", []); lang = wrow.get("lang") or (lrow or {}).get("lang")
@@ -293,13 +297,15 @@ def score_stream(wrow: dict, lrow: Optional[dict], hyp: dict, delta: int, K: int
              text=dict(text_position_metrics(words, cands, hyp["words"], [e for e in hyp["events"] if int(e["id"]) == sem_id], ref_k, K, norm), guard_blocked=int(guard_blocked)),
              asr=asr_counts(wrow.get("text") or " ".join(w["text"] for w in words), hyp.get("text", ""), lang))
     m["events"]["guard_blocked"] = int(guard_blocked)
-    if eval_turn: m["turn"] = turn_metrics(turn_k, K, words, turn_flag(lrow), delta, hangover_s, early, lates)
+    if eval_turn:
+        assert turn_id is not None, "eval_turn 인데 턴 종료 토큰이 없다(SEM 만 학습한 모델)"
+        m["turn"] = turn_metrics(turn_k, K, words, turn_flag(lrow), delta, hangover_s, early, lates)
     return m
 
 def oracle_hyp(wrow: dict, lrow: Optional[dict], delta: int, K: int, *, eval_turn: bool = False, hangover_s: float = HANGOVER_S,
-               sem_id: int = SEM_END_ID, turn_id: int = TURN_END_ID) -> dict:
+               sem_id: int = SEM_END_ID, turn_id: Optional[int] = EOT_ID) -> dict:
     """참조 직렬화(v0 계약)를 그대로 낸 가설 — 지표 상한 점검용(정밀도·재현율 1, PCR 0, 지연 = 이상 지연, WER 0).
-    토큰은 min(K, int(t/0.08)+δ) 청크(시간순 = 목록순), A 경계의 <SEM_END> 는 그 단어 마지막 토큰 바로 뒤(같은 청크), <TURN_END> 는 맨 뒤 k_turn."""
+    토큰은 min(K, int(t/0.08)+δ) 청크(시간순 = 목록순), A 경계의 <SEM_END> 는 그 단어 마지막 토큰 바로 뒤(같은 청크), eval_turn 이면 턴 종료 토큰이 맨 뒤 k_turn."""
     words = sorted(wrow["words"], key=lambda w: int(w["i"])); toks = wrow["tokens"]
     A = {int(c["after_word"]) for c in (lrow or {}).get("candidates", []) if _grade(c) == "A"}
     emitted, events = [], []

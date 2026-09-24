@@ -81,7 +81,7 @@ def sample_stats(rows, infos) -> dict:
     return dict(streams=len(rows), words=sum(nw), tokens=sum(len(r["tokens"]) for r in rows), hours=round(sum(durs) / 3600, 3),
                 duration_s=dict(mean=round(sum(durs) / max(1, len(durs)), 3), **_q(durs)), words_per_stream=_q(nw),
                 segments_per_stream=_q([len(r["segments"]) for r in rows]),
-                speech_tail_s=_q([r["duration_s"] - r["words"][-1]["end_time"] for r in rows]),   # 스트림 끝 − 마지막 단어 끝 (TURN_END hangover 설계용)
+                speech_tail_s=_q([r["duration_s"] - r["words"][-1]["end_time"] for r in rows]),   # 스트림 끝 − 마지막 단어 끝 (턴 종료 hangover 설계용)
                 langs=dict(Counter(r["lang"] for r in rows)), tags={t: tags[t] for t in TAGS}, words_with_any_tag=sum(1 for r in rows for w in r["words"] if w["tags"]),
                 seg_assign=dict(seg_assign), tag_notes=dict(notes), pnc_text=sum(1 for r in rows if "pnc_text" in r),
                 pnc_ratio=dict(n=len(ratios), **_q(ratios)) if ratios else None)

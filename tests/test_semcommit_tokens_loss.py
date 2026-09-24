@@ -1,15 +1,16 @@
-"""semantic commit M1 — 토큰 registry(Phase1→Phase2→SEM 순서, 151723/151724), add_semantic_tokens(새 행만 초기화·idempotent·차단 목록),
+"""semantic commit M1 — 토큰 registry(Phase1→Phase2→SEM 순서, <SEM_END> 151723; 턴 종료 = Phase 2 <EOT> 151722, v0.2 <TURN_END> 151724 는 읽기 전용),
+add_semantic_tokens(새 행만 초기화·idempotent·차단 목록·mono 턴 <EOT> 선택),
 soft_ce 이벤트 가중·위치 덮어쓰기·SEM 통계, forward pos_weight 연결, load_tokenizer 재로드, trainer 로그. 모델·tokenizer 다운로드 없이 CPU 에서 수 초."""
 import json, types
 import pytest, torch, torch.nn as nn, torch.nn.functional as F
-from vapasr.data.semcommit_tokens import (SEM_SPECIALS, SEM_REGISTRY, ALL_SEM_SPECIALS, add_semantic_specials, assert_frozen_semantic, sem_ids_of,
-                                          init_rows_mean_noise, semantic_blocked_ids, new_special_rows)
+from vapasr.data.semcommit_tokens import (SEM_SPECIALS, SEM_REGISTRY, ALL_SEM_SPECIALS, TURN_TOKEN, LEGACY_TURN_TOKEN, add_semantic_specials, assert_frozen_semantic,
+                                          sem_ids_of, init_rows_mean_noise, semantic_blocked_ids, new_special_rows)
 from vapasr.data.dialogue_tokens import FROZEN_REGISTRY, PHASE2_SPECIALS
 from vapasr.uslm.interleave_data import SPECIAL_TOKENS as PHASE1_SPECIALS, add_specials
 from vapasr.hf.p2_losses import soft_ce
 
 V, D, BASE = 151936, 8, 151705
-SEM, TURN = 151723, 151724
+SEM, TURN, LEGACY_TURN = 151723, 151722, 151724                                           # TURN = <EOT>
 
 class FakeTok:
     """HF add_tokens 흉내: 처음 보는 토큰만 순서대로 len(tok) id 를 받는다(Qwen3-ASR 기본 길이 151705)."""
@@ -25,15 +26,17 @@ class FakeTok:
 # ── registry
 def test_registry_order_and_ids():
     tok = FakeTok(); ids = add_semantic_specials(tok)
-    assert list(ids) == PHASE1_SPECIALS + PHASE2_SPECIALS + SEM_SPECIALS and len(tok) == BASE + 20
-    assert {k: ids[k] for k in FROZEN_REGISTRY} == FROZEN_REGISTRY and {k: ids[k] for k in SEM_SPECIALS} == SEM_REGISTRY == {"<SEM_END>": SEM, "<TURN_END>": TURN}
-    assert_frozen_semantic(ids); assert sem_ids_of(ids) == (SEM, TURN) and sem_ids_of(SEM_REGISTRY) == (SEM, TURN)
-    assert add_semantic_specials(tok) == ids and len(tok) == BASE + 20                     # 반복 호출은 no-op
+    assert list(ids) == PHASE1_SPECIALS + PHASE2_SPECIALS + SEM_SPECIALS and len(tok) == BASE + 19 and "<TURN_END>" not in tok.vocab   # <TURN_END> 폐기
+    assert {k: ids[k] for k in FROZEN_REGISTRY} == FROZEN_REGISTRY and {k: ids[k] for k in SEM_SPECIALS} == SEM_REGISTRY == {"<SEM_END>": SEM} and ids[TURN_TOKEN] == TURN
+    assert_frozen_semantic(ids)
+    assert sem_ids_of(SEM_REGISTRY) == (SEM, None) and sem_ids_of({"<SEM_END>": SEM, TURN_TOKEN: TURN}) == (SEM, TURN)   # 턴 = registry 가 학습 이벤트로 가진 <EOT>
+    assert sem_ids_of({"<SEM_END>": SEM, LEGACY_TURN_TOKEN: LEGACY_TURN}) == (SEM, LEGACY_TURN)                     # v0.2 체크포인트
+    assert add_semantic_specials(tok) == ids and len(tok) == BASE + 19                     # 반복 호출은 no-op
     t1 = FakeTok(); add_specials(t1); assert add_semantic_specials(t1) == ids                # Phase 1 tokenizer 에 이어 붙여도 같은 id
     t2 = FakeTok(); add_specials(t2); t2.add_tokens(SEM_SPECIALS, special_tokens=True)       # 함정: Phase 1 뒤에 SEM 만 붙이면 <SPK_3>/<SPK_4> id 를 뺏는다
     assert t2.convert_tokens_to_ids("<SEM_END>") == FROZEN_REGISTRY["<SPK_3>"]
     with pytest.raises(AssertionError): assert_frozen_semantic(add_semantic_specials(t2))
-    assert ALL_SEM_SPECIALS[-2:] == SEM_SPECIALS
+    assert ALL_SEM_SPECIALS[-1:] == SEM_SPECIALS
 
 def test_init_rows_only_new_and_blocked_helper():
     torch.manual_seed(0); W = torch.randn(40, 4); W0 = W.clone()
@@ -43,10 +46,11 @@ def test_init_rows_only_new_and_blocked_helper():
     W2 = W0.clone(); init_rows_mean_noise(W2, [31, 33], upto=30, seed=5); assert torch.equal(W, W2)   # 같은 seed → 결정적
     assert init_rows_mean_noise(W2, [], upto=30) == [] and torch.equal(W, W2)
     ids = add_semantic_specials(FakeTok())
-    b0 = semantic_blocked_ids([5, 151706, SEM], ids, lanes=0); assert SEM not in b0 and TURN not in b0 and set(range(151717, 151723)) <= set(b0) and {5, 151706} <= set(b0)
+    b0 = semantic_blocked_ids([5, 151706, SEM], ids, lanes=0); assert SEM not in b0 and set(range(151717, 151723)) <= set(b0) and {5, 151706} <= set(b0)   # <EOT> 도 예약 → 차단
+    bt = semantic_blocked_ids([5, 151706, SEM, TURN], ids, lanes=0, turn=True); assert SEM not in bt and TURN not in bt and set(range(151717, 151722)) <= set(bt)   # mono 턴 = <EOT> 차단 해제
     b2 = semantic_blocked_ids([5, 151706], ids, lanes=6); assert b2 == [5, 151706]
     assert semantic_blocked_ids([5], ids, lanes=0, block_reserved_phase2=False) == [5]
-    assert new_special_rows(ids, {k: ids[k] for k in PHASE1_SPECIALS}) == list(range(151717, 151725))
+    assert new_special_rows(ids, {k: ids[k] for k in PHASE1_SPECIALS}) == list(range(151717, 151724))
     with pytest.raises(AssertionError): new_special_rows(ids, {"<NEXT_AUDIO>": 999})
 
 # ── 작은 가짜 모델 (Qwen 없이 VapAsrForStreamingASR 를 만든다: thinker 는 embedding + Linear + tied lm_head)
@@ -69,13 +73,13 @@ def test_add_semantic_tokens_mono_new_rows_idempotent_blocked():
     m, tok = tiny_model(); W = m.get_input_embeddings().weight; W0 = W.detach().clone()
     assert m.thinker.lm_head.weight is W                                                     # tied
     ids = m.add_semantic_tokens(tok, seed=0)
-    new = list(range(151717, 151725)); keep = torch.ones(V, dtype=torch.bool); keep[new] = False
+    new = list(range(151717, 151724)); keep = torch.ones(V, dtype=torch.bool); keep[new] = False
     assert torch.equal(W.detach()[keep], W0[keep])                                          # Phase 1 행·기본 어휘는 그대로
     mu = W0[:BASE].mean(0); assert all((W.detach()[r] - mu).abs().max() < 0.2 for r in new) and not torch.equal(W.detach()[SEM], W0[SEM])
     c = m.config; assert c.sem_registry == SEM_REGISTRY and c.sp_ids == ids and m.sp_ids == ids and c.lanes == 0 and c.phase2_registry == {}
     assert c.sem_reserved == PHASE2_SPECIALS                                                 # mono: Phase 2 이름은 예약만(→ Phase 2 확장 때 재초기화 대상)
     assert c.special_tokens == PHASE1_SPECIALS + PHASE2_SPECIALS + SEM_SPECIALS
-    assert set(range(151717, 151723)) <= set(c.blocked_ids) and SEM not in c.blocked_ids and TURN not in c.blocked_ids and 7 in c.blocked_ids
+    assert set(range(151717, 151723)) <= set(c.blocked_ids) and SEM not in c.blocked_ids and TURN in c.blocked_ids and 7 in c.blocked_ids   # SEM 만: <EOT> 는 예약·차단
     assert m.blocked.tolist() == c.blocked_ids
     snap = (W.detach().clone(), json.dumps(c.to_dict(), sort_keys=True, default=str))
     assert m.add_semantic_tokens(tok, seed=123) == ids                                       # 다른 seed 로 다시 불러도 아무 행도 바뀌지 않는다
@@ -84,7 +88,7 @@ def test_add_semantic_tokens_mono_new_rows_idempotent_blocked():
     with torch.no_grad(): W[res] -= 3.0                                                      # 예약 행이 학습 중 full-vocab softmax 음성으로 밀려난 상황 흉내
     Wt = W.detach().clone(); m.add_phase2_tokens(tok, seed=0)                                # mono sem → Phase 2 확장: 예약 행 재초기화 + 차단 해제
     assert not (set(res) & set(m.config.blocked_ids)) and m.config.sem_reserved == [] and m.config.lanes == 6
-    kr = torch.ones(V, dtype=torch.bool); kr[res] = False; assert torch.equal(W.detach()[kr], Wt[kr])      # SEM/TURN·Phase 1·기본 어휘 행은 그대로
+    kr = torch.ones(V, dtype=torch.bool); kr[res] = False; assert torch.equal(W.detach()[kr], Wt[kr])      # SEM·Phase 1·기본 어휘 행은 그대로
     assert all((W.detach()[r] - mu).abs().max() < 0.2 for r in res)                          # 예약 행은 다시 평균+잡음
     m2, tok2 = tiny_model(); m2.add_phase2_tokens(tok2, seed=0); assert torch.equal(W.detach()[res], m2.get_input_embeddings().weight.detach()[res])   # E2 → Phase 2 경로와 같은 값
     W3 = W.detach().clone(); m.add_semantic_tokens(tok); assert torch.equal(W.detach(), W3) and m.config.sem_reserved == []   # Phase 2 뒤 재호출: 예약 표시 없음·행 불변
@@ -92,8 +96,14 @@ def test_add_semantic_tokens_mono_new_rows_idempotent_blocked():
 def test_add_semantic_tokens_on_phase2_model_keeps_phase2_rows():
     m, tok = tiny_model(); m.add_phase2_tokens(tok); W = m.get_input_embeddings().weight; W0 = W.detach().clone(); b0 = list(m.config.blocked_ids)
     ids = m.add_semantic_tokens(tok)
-    keep = torch.ones(V, dtype=torch.bool); keep[[SEM, TURN]] = False; assert torch.equal(W.detach()[keep], W0[keep])
+    keep = torch.ones(V, dtype=torch.bool); keep[[SEM]] = False; assert torch.equal(W.detach()[keep], W0[keep])
     assert m.config.lanes == 6 and m.config.blocked_ids == b0 and m.config.sem_registry == SEM_REGISTRY and m.config.phase2_registry["<EOT>"] == ids["<EOT>"] and m.config.sem_reserved == []
+    with pytest.raises(AssertionError, match="mono 전용"): m.add_semantic_tokens(tok, turn=True)            # Phase 2 는 <EOT> 를 이미 phase2_registry 로 학습
+
+def test_add_semantic_tokens_mono_turn_uses_eot():
+    m, tok = tiny_model(); ids = m.add_semantic_tokens(tok, turn=True); c = m.config
+    assert c.sem_registry == {"<SEM_END>": SEM, TURN_TOKEN: TURN} and ids[TURN_TOKEN] == TURN and "<TURN_END>" not in tok.vocab
+    assert TURN not in c.blocked_ids and SEM not in c.blocked_ids and set(range(151717, 151722)) <= set(c.blocked_ids) and TURN_TOKEN not in c.sem_reserved
 
 def test_add_semantic_tokens_rejects_wrong_tokenizer():
     m, _ = tiny_model()
@@ -134,7 +144,7 @@ def test_soft_ce_defaults_unchanged():
 # ── forward 연결
 def _batch(sp):
     NEXT = sp["<NEXT_AUDIO>"]; L = 9
-    ids = torch.tensor([[1, 0, 50, 60, SEM, NEXT, 0, 70, TURN], [1, 0, 80, NEXT, 0, 90, NEXT, 0, 0]])
+    ids = torch.tensor([[1, 0, 50, 60, SEM, NEXT, 0, 70, TURN], [1, 0, 80, NEXT, 0, 90, NEXT, 0, 0]])          # TURN = <EOT>(mono 턴 종료)
     is_audio = torch.tensor([[0, 1, 0, 0, 0, 0, 1, 0, 0], [0, 1, 0, 0, 1, 0, 0, 1, 0]], dtype=torch.bool)
     chunk_of = torch.tensor([[-1, 0, -1, -1, -1, -1, 1, -1, -1], [-1, 0, -1, -1, 1, -1, -1, 2, -1]])
     labels = ids.clone(); labels[is_audio] = -100; labels[:, 0] = -100; labels[1, 8] = -100
@@ -144,10 +154,10 @@ def _batch(sp):
 
 def test_forward_sem_weights_and_pos_weight():
     m, tok = tiny_model(sem_weight=2.0, turn_weight=1.5); x, pw = _batch(m.config.sp_ids)
-    with pytest.raises(AssertionError, match="sem_registry"): m(**x)                         # SEM/TURN 라벨인데 add_semantic_tokens 를 빠뜨림 → 평문 학습 대신 실패
+    with pytest.raises(AssertionError, match="sem_registry"): m(**x)                         # SEM 라벨인데 add_semantic_tokens 를 빠뜨림 → 평문 학습 대신 실패
     xp = dict(x); xp["labels"] = x["labels"].clone(); xp["labels"][0, 4] = -100; xp["labels"][0, 8] = -100
     base = m(**xp); assert base.loss_sem is None and base.n_sem is None and base.sem_fp is None             # sem_registry 없음 + SEM/TURN 라벨 없음 → 기존 경로
-    m.add_semantic_tokens(tok); m.eval(); NEXT = m.config.sp_ids["<NEXT_AUDIO>"]
+    m.add_semantic_tokens(tok, turn=True); m.eval(); NEXT = m.config.sp_ids["<NEXT_AUDIO>"]
     out = m(**x, pos_weight=pw, next_weight=0.3)
     with torch.no_grad():
         h = m.thinker.model(inputs_embeds=m.build(x["feats"], x["ids"], x["is_audio"], x["chunk_of"])).last_hidden_state
@@ -176,12 +186,15 @@ def test_load_tokenizer_semantic(tmp_path, monkeypatch):
     monkeypatch.setattr(transformers.AutoTokenizer, "from_pretrained", lambda *a, **k: FakeTok())
     ids = add_semantic_specials(FakeTok())
     _write_cfg(tmp_path / "sem", sp_ids=ids, sem_registry=dict(SEM_REGISTRY)); tok = load_tokenizer(str(tmp_path / "sem"))
-    assert tok.convert_tokens_to_ids("<SEM_END>") == SEM and tok.convert_tokens_to_ids("<TURN_END>") == TURN and len(tok) == BASE + 20
+    assert tok.convert_tokens_to_ids("<SEM_END>") == SEM and "<TURN_END>" not in tok.vocab and len(tok) == BASE + 19
+    _write_cfg(tmp_path / "semturn", sp_ids=ids, sem_registry={"<SEM_END>": SEM, TURN_TOKEN: TURN}); assert load_tokenizer(str(tmp_path / "semturn")).convert_tokens_to_ids(TURN_TOKEN) == TURN
+    _write_cfg(tmp_path / "v02", sp_ids=ids, sem_registry={"<SEM_END>": SEM, LEGACY_TURN_TOKEN: LEGACY_TURN})     # v0.2 체크포인트(tokenizer 파일 없음) → <TURN_END> 를 다시 붙인다
+    t02 = load_tokenizer(str(tmp_path / "v02")); assert t02.convert_tokens_to_ids(LEGACY_TURN_TOKEN) == LEGACY_TURN and len(t02) == BASE + 20
     p2 = {n: FROZEN_REGISTRY[n] for n in ["<SPK_A>", "<SPK_B>", "<SPK_3>", "<SPK_4>", "<SPK_5>", "<SPK_6>", "<ONSET>", "<EOT>"]}
     _write_cfg(tmp_path / "p2sem", sp_ids=ids, phase2_registry=p2, sem_registry=dict(SEM_REGISTRY)); assert load_tokenizer(str(tmp_path / "p2sem")).convert_tokens_to_ids("<SEM_END>") == SEM
     _write_cfg(tmp_path / "p1", sp_ids={k: ids[k] for k in PHASE1_SPECIALS}); t1 = load_tokenizer(str(tmp_path / "p1"))   # 기존 Phase 1 산출물은 그대로
     assert len(t1) == BASE + 12 and "<SEM_END>" not in t1.vocab
-    _write_cfg(tmp_path / "bad", sp_ids=ids, sem_registry={"<SEM_END>": 151717, "<TURN_END>": 151718})
+    _write_cfg(tmp_path / "bad", sp_ids=ids, sem_registry={"<SEM_END>": 151717})
     with pytest.raises(AssertionError): load_tokenizer(str(tmp_path / "bad"))
 
 # ── trainer compute_loss/log (transformers.Trainer 를 import 할 수 있는 환경에서만)

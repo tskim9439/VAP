@@ -30,7 +30,7 @@ class VapAsrOutput(ModelOutput):
     act_acc: Optional[float] = None
     n_soft: Optional[int] = None
     loss_sem: Optional[float] = None        # semantic commit: <SEM_END> 타깃 위치 평균 CE (배치에 SEM 이 없으면 None)
-    loss_turn: Optional[float] = None       # <TURN_END> 타깃 위치 평균 CE (없으면 None)
+    loss_turn: Optional[float] = None       # 턴 종료(mono <EOT>, v0.2 <TURN_END>) 타깃 위치 평균 CE (없으면 None)
     top1_sem: Optional[float] = None        # <SEM_END> 타깃 위치 top-1 정확도 (없으면 None)
     n_sem: Optional[int] = None
     sem_fp: Optional[float] = None          # SEM 이 타깃이 아닌 라벨 위치 중 argmax=SEM 비율 (조기·오확정 경향)
@@ -88,7 +88,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
         """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight.
         Phase 2(config.lanes>0): labels_alt/soft_w 가 있으면 EOT 후보 위치의 label 을 (labels: w, labels_alt: 1−w) 두 점 분포로 학습(정본 §5.2),
         activity (B,K,R)·activity_mask (B,K) 가 있으면 audio 위치 hidden 으로 lane 활동 BCE 를 더한다(정본 §6). EOT 위치 가중 config.eot_weight.
-        semantic commit(config.sem_registry 가 있으면, lanes 와 무관): <SEM_END>/<TURN_END> 타깃 가중 config.sem_weight/turn_weight,
+        semantic commit(config.sem_registry 가 있으면, lanes 와 무관): <SEM_END> 타깃 가중 config.sem_weight, mono 턴 종료(<EOT>; v0.2 는 <TURN_END>)를 함께 학습하면 turn_weight,
         pos_weight (B,L) 은 labels 와 같은 인덱싱의 위치별 가중 덮어쓰기(0 = 기본, >0 = 그 값; hard negative 결정 위치). 덮어쓰기는 SEM/TURN 가중보다 우선하므로
         결정 위치가 이벤트 타깃에 떨어지지 않게 하는 것은 데이터셋 책임이다."""
         if wav is not None: feats = self.encode(wav, wav_len, K)
@@ -99,10 +99,14 @@ class VapAsrForStreamingASR(PreTrainedModel):
         alt = labels_alt[:, 1:][sel] if labels_alt is not None else None; w = soft_w[:, 1:][sel] if soft_w is not None else None
         eot_id = self.config.phase2_registry.get("<EOT>", -1) if self.config.lanes > 0 else -1
         tag_ids = torch.tensor([v for k, v in self.config.phase2_registry.items() if k != "<EOT>"], device=logits.device, dtype=torch.long) if self.config.lanes > 0 and getattr(self.config, "tag_weight", 1.0) != 1.0 else None
-        sem = getattr(self.config, "sem_registry", None) or {}; sem_id, turn_id = sem.get("<SEM_END>", -1), sem.get("<TURN_END>", -1)
-        if not sem:                                                                   # semcommit 데이터셋(토큰을 스스로 추가)만 쓰고 add_semantic_tokens 를 빠뜨리면 SEM/TURN 이 평문 text(가중 1, 초기화 없음)로 조용히 학습된다
-            from ..data.semcommit_tokens import SEM_REGISTRY
-            assert not torch.isin(t, torch.tensor(list(SEM_REGISTRY.values()), device=t.device)).any(), "labels 에 <SEM_END>/<TURN_END> 가 있는데 config.sem_registry 가 비어 있음 — model.add_semantic_tokens(tok) 먼저"
+        sem = getattr(self.config, "sem_registry", None) or {}
+        if sem:
+            from ..data.semcommit_tokens import sem_ids_of
+            sem_id, turn_id = sem_ids_of(sem); turn_id = -1 if turn_id is None else turn_id
+        else:                                                                         # semcommit 데이터셋(토큰을 스스로 추가)만 쓰고 add_semantic_tokens 를 빠뜨리면 SEM 이 평문 text(가중 1, 초기화 없음)로 조용히 학습된다
+            from ..data.semcommit_tokens import SEM_REGISTRY, LEGACY_TURN_ID
+            sem_id = turn_id = -1
+            assert not torch.isin(t, torch.tensor(list(SEM_REGISTRY.values()) + [LEGACY_TURN_ID], device=t.device)).any(), "labels 에 <SEM_END> 가 있는데 config.sem_registry 가 비어 있음 — model.add_semantic_tokens(tok) 먼저"
         evt = {i: float(getattr(self.config, k, 1.0)) for i, k in ((sem_id, "sem_weight"), (turn_id, "turn_weight")) if i >= 0} or None
         pw = pos_weight[:, 1:][sel] if pos_weight is not None else None
         loss, st = soft_ce(logits, t, alt, w, self.next_audio, nw, eot_id=eot_id, eot_weight=self.config.eot_weight if eot_id >= 0 else 1.0, tag_ids=tag_ids, tag_weight=getattr(self.config, "tag_weight", 1.0),
@@ -143,22 +147,24 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if self.act_head is None: self.act_head = nn.Sequential(nn.Linear(self.config.hidden_size, self.config.act_hidden), nn.GELU(), nn.Linear(self.config.act_hidden, R)).to(W.device)
         return ids
 
-    def add_semantic_tokens(self, tok, seed: int = 0, block_reserved_phase2: bool = True, check_frozen: bool = True) -> Dict[str, int]:
-        """semantic commit 토큰(<SEM_END>, <TURN_END>)을 더한다(add_phase2_tokens 와 같은 방식, vapasr/data/semcommit_tokens.py).
-        tokenizer 에 Phase 1 + Phase 2 + SEM 을 이 순서로 추가 → SEM=151723, TURN=151724 (check_frozen: 동결 id 대조 — 실제 Qwen tokenizer 에서만 의미).
+    def add_semantic_tokens(self, tok, seed: int = 0, block_reserved_phase2: bool = True, check_frozen: bool = True, turn: bool = False) -> Dict[str, int]:
+        """semantic commit 토큰 <SEM_END> 를 더한다(add_phase2_tokens 와 같은 방식, vapasr/data/semcommit_tokens.py).
+        tokenizer 에 Phase 1 + Phase 2 + SEM 을 이 순서로 추가 → SEM=151723 (check_frozen: 동결 id 대조 — 실제 Qwen tokenizer 에서만 의미).
         config.sp_ids 에 없던 행만 mean(W[:기본 어휘]) + 0.02·randn(seed) 으로 초기화(기존 Phase 1/2 행은 그대로). mono(lanes=0) 에서는 Phase 2 id 가 예약만 되므로
-        block_reserved_phase2 면 decode 차단 목록에 넣는다(학습되지 않은 행 방출 방지). SEM/TURN 은 차단하지 않는다. 반복 호출해도 결과가 같다(idempotent).
+        block_reserved_phase2 면 decode 차단 목록에 넣는다(학습되지 않은 행 방출 방지). SEM 은 차단하지 않는다. 반복 호출해도 결과가 같다(idempotent).
+        turn(mono 전용): 턴 종료를 <EOT>(Phase 2 와 같은 토큰)로 함께 학습 → config.sem_registry 에 <EOT> 를 넣고 차단·예약에서 뺀다(<TURN_END> 는 폐기).
         mono 에서 이번에 예약만 한 Phase 2 이름은 config.sem_reserved 에 적는다 → 나중에 add_phase2_tokens 가 그 행을 다시 초기화한다."""
-        from ..data.semcommit_tokens import add_semantic_specials, assert_frozen_semantic, init_rows_mean_noise, semantic_blocked_ids, new_special_rows, PHASE2_SPECIALS, SEM_SPECIALS, BASE_VOCAB
+        from ..data.semcommit_tokens import add_semantic_specials, assert_frozen_semantic, init_rows_mean_noise, semantic_blocked_ids, new_special_rows, PHASE2_SPECIALS, SEM_SPECIALS, BASE_VOCAB, TURN_TOKEN
+        assert not (turn and self.config.lanes > 0), "turn 은 mono 전용 — Phase 2 모델은 <EOT> 를 phase2_registry 로 이미 학습한다"
         ids = add_semantic_specials(tok)
         if check_frozen: assert_frozen_semantic(ids)
         W = self.get_input_embeddings().weight; assert max(ids.values()) < W.shape[0], f"임베딩 여유 행 없음: max id {max(ids.values())} ≥ rows {W.shape[0]}"
         init_rows_mean_noise(W, new_special_rows(ids, self.config.sp_ids), upto=min(BASE_VOCAB, min(ids.values())), seed=seed)
         old_res = set(getattr(self.config, "sem_reserved", None) or [])
-        self.config.sem_reserved = [n for n in PHASE2_SPECIALS if n not in self.config.sp_ids or n in old_res] if self.config.lanes == 0 else []
+        self.config.sem_reserved = [n for n in PHASE2_SPECIALS if (n not in self.config.sp_ids or n in old_res) and not (turn and n == TURN_TOKEN)] if self.config.lanes == 0 else []
         self.config.sp_ids.update(ids); self.config.special_tokens = list(dict.fromkeys(self.config.special_tokens + PHASE2_SPECIALS + SEM_SPECIALS)); self.sp_ids = dict(self.config.sp_ids)
-        self.config.sem_registry = {n: ids[n] for n in SEM_SPECIALS}
-        self.config.blocked_ids = semantic_blocked_ids(self.config.blocked_ids, ids, self.config.lanes, block_reserved_phase2); self.blocked = torch.tensor(self.config.blocked_ids, dtype=torch.long, device=W.device)
+        self.config.sem_registry = {n: ids[n] for n in SEM_SPECIALS + ([TURN_TOKEN] if turn else [])}
+        self.config.blocked_ids = semantic_blocked_ids(self.config.blocked_ids, ids, self.config.lanes, block_reserved_phase2, turn=turn); self.blocked = torch.tensor(self.config.blocked_ids, dtype=torch.long, device=W.device)
         return ids
 
     # ── 스트리밍 디코드 (mono_model.stream_decode 와 동일)

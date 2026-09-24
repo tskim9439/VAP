@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Semantic commit v0 — Phase 1 mono 스트림에 <SEM_END>/<TURN_END> 를 끼워 단일 GPU 로 학습한다 (raw/inbox/streaming_asr_semantic_commit_plan.md §21·§23).
+"""Semantic commit — Phase 1 mono 스트림에 <SEM_END> 를 끼워 단일 GPU 로 학습한다 (raw/inbox/streaming_asr_semantic_commit_plan.md §21·§23).
+턴 종료는 Phase 2 의 <EOT> 로 통일(<TURN_END> 폐기, 2026-09-24): 기본은 <SEM_END> 만, --turn-end 면 mono 에서도 <EOT> 를 발화 끝 proxy 로 함께 학습한다.
 
   python experiments/semcommit_train.py --init <HF vapasr 디렉토리> --qwen-dir /data4/.../Qwen3-ASR-0.6B --nemotron-dir <*.nemo 가 든 디렉토리> \\
       --train-words en.words.jsonl,ko.words.jsonl --train-labels en.labels.jsonl,ko.labels.jsonl --out-dir /data3/tskim/semcommit/v0-smoke --max-steps 300 --gpu 0
@@ -7,7 +8,7 @@
   --dry-run   : 모델 없이 tokenizer + 데이터셋만 만들어 시퀀스 불변식(SEM 위치·TURN flush 밖·B/N 결정 위치)을 검사하고 샘플 하나를 찍고 끝난다(CPU).
 데이터: vapasr/data/semcommit_dataset.SemCommitDataset(words.jsonl + labels.jsonl, id 로 짝). --train-words/--train-labels 는 반복 또는 쉼표 목록(같은 순서)이며
   행의 lang 으로 EN/KO 셋을 나눠 VapAsrTrainer 라운드로빈(언어별 배치 bs-en/bs-ko, collate_semcommit)으로 번갈아 낸다.
-손실: soft_ce 의 NEXT=next_weight(EN 0.3 / KO 0.15)·SEM=--sem-weight·TURN=--turn-weight·결정 위치 pos_weight(N 후보 = --hardneg-weight). 모델 쪽
+손실: soft_ce 의 NEXT=next_weight(EN 0.3 / KO 0.15)·SEM=--sem-weight·턴 종료(--turn-end 일 때)=--turn-weight·결정 위치 pos_weight(N 후보 = --hardneg-weight). 모델 쪽
   add_semantic_tokens / forward(pos_weight=) 가 있어야 한다(없으면 시작 전에 멈춘다 — pos_weight 가 조용히 버려지는 것을 막는다).
 인코더: 기본 동결(--freeze-encoder). HF init 의 config.encoder_trainable=True 여도 실제로 requires_grad 를 끄고 encoder_saved=True 로 체크포인트에 함께 저장한다
   (2026-09-17 D1 사고 — 동결 인코더를 저장에서 빼면 재로드 때 .nemo 원본이 붙는다; _keys_to_ignore_on_save 에 기대지 않는다).
@@ -36,7 +37,11 @@ ap.add_argument("--warmup", type=int, default=100); ap.add_argument("--wd", type
 ap.add_argument("--delays", default="2,3,4,6"); ap.add_argument("--M", type=int, default=0, help="청크당 텍스트 한도 — v0 는 0 만(SEM 이 단어와 같은 청크)")
 ap.add_argument("--next-weight", type=float, default=0.3); ap.add_argument("--next-weight-ko", type=float, default=0.15)
 ap.add_argument("--sem-weight", type=float, default=1.0); ap.add_argument("--turn-weight", type=float, default=1.0); ap.add_argument("--hardneg-weight", type=float, default=1.0)
-ap.add_argument("--no-turn-end", action="store_true", help="<TURN_END> 없이 SEM 만"); ap.add_argument("--hangover", type=float, default=0.48, help="TURN 청크 = max(마지막 방출, int((t_last+hangover)/0.08))")
+tg_g = ap.add_mutually_exclusive_group()
+tg_g.add_argument("--turn-end", dest="turn_end", action="store_true", help="턴 종료 <EOT> 도 함께 학습(mono 발화 끝 proxy) — 기본 끔: Phase 1 은 <SEM_END> 만")
+tg_g.add_argument("--no-turn-end", dest="turn_end", action="store_false", help="(기본) <SEM_END> 만")
+ap.set_defaults(turn_end=False)
+ap.add_argument("--hangover", type=float, default=0.48, help="--turn-end 일 때 턴 종료 청크 = max(마지막 방출, int((t_last+hangover)/0.08))")
 ap.add_argument("--tail-margin", type=int, default=2, help="K' = max(K, 마지막 이벤트 청크(δmax) + margin)")
 enc_g = ap.add_mutually_exclusive_group()
 enc_g.add_argument("--freeze-encoder", dest="freeze_encoder", action="store_true", help="인코더 동결(기본)"); enc_g.add_argument("--train-encoder", dest="freeze_encoder", action="store_false")
@@ -63,7 +68,7 @@ _cache_root = os.path.join(os.environ.get("VAPASR_LOCAL_CACHE", "/tmp"), f"vapas
 for k_, d_ in (("TRITON_CACHE_DIR", "triton"), ("TORCHINDUCTOR_CACHE_DIR", "inductor")): os.environ.setdefault(k_, os.path.join(_cache_root, d_)); os.makedirs(os.environ[k_], exist_ok=True)
 import torch
 from vapasr.data.semcommit_dataset import SemCommitDataset, add_semcommit_specials, semcommit_fingerprint, checkpoint_fingerprint_diff
-from vapasr.data.semcommit_tokens import SEM_SPECIALS
+from vapasr.data.semcommit_tokens import SEM_SPECIALS, TURN_TOKEN
 def log(*s): print(*s, flush=True)
 torch.manual_seed(a.seed); random.seed(a.seed); torch.backends.cuda.matmul.allow_tf32 = True
 out = a.out_dir; os.makedirs(out, exist_ok=True)
@@ -96,17 +101,19 @@ else:
         if a.init_adapter:
             st0 = torch.load(a.init_adapter, map_location="cpu"); model.adapter.load_state_dict(st0["adapter"] if "adapter" in st0 else st0["state"]); src += f" + adapter {a.init_adapter}"
     old_sp = dict(model.config.sp_ids)
-    ret = model.add_semantic_tokens(tok)                                                      # Phase1+Phase2+SEM 을 tokenizer 에 붙이고 새 행 초기화·config 갱신(모델 모듈)
+    ret = model.add_semantic_tokens(tok, turn=a.turn_end)                                     # Phase1+Phase2+SEM 을 tokenizer 에 붙이고 새 행 초기화·config 갱신(모델 모듈)
     cfg = model.config; cfg.sem_weight, cfg.turn_weight = a.sem_weight, a.turn_weight; cfg.hardneg_weight = a.hardneg_weight
     cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, [int(x) for x in a.delays.split(",")]
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
     assert not bad, f"tokenizer 특수 토큰 id 가 config 와 다름: {bad}"
 sp_ids = add_semcommit_specials(tok)                                                          # 이미 있으면 그대로(모델이 붙인 것과 같은 순서) — 순서·동결 id 대조
-log(f"tokenizer ← {src} · <SEM_END>={sp_ids['<SEM_END>']} <TURN_END>={sp_ids['<TURN_END>']} · {time.time() - t0:.0f}s")
+EVENTS = SEM_SPECIALS + ([TURN_TOKEN] if a.turn_end else [])                                # 학습하는 이벤트 토큰 = config.sem_registry
+log(f"tokenizer ← {src} · <SEM_END>={sp_ids['<SEM_END>']} · 턴 종료 {f'{TURN_TOKEN}={sp_ids[TURN_TOKEN]}' if a.turn_end else '학습 안 함'} · {time.time() - t0:.0f}s")
 if model is not None:
     assert sp_ids["<SEM_END>"] < model.get_input_embeddings().weight.shape[0], "임베딩 행이 SEM id 보다 적다"
-    reg = dict(getattr(model.config, "sem_registry", None) or {})                             # forward 가 SEM/TURN 가중·통계에 쓰는 id — 없으면 sem/turn_weight 가 조용히 무시된다
-    assert reg == {k: sp_ids[k] for k in SEM_SPECIALS} and all(model.config.sp_ids.get(k) == sp_ids[k] for k in SEM_SPECIALS), f"config.sem_registry/sp_ids 불일치: {reg} (add_semantic_tokens → {ret})"
+    reg = dict(getattr(model.config, "sem_registry", None) or {})                             # forward 가 SEM(·턴) 가중·통계에 쓰는 id — 없으면 sem/turn_weight 가 조용히 무시된다
+    assert reg == {k: sp_ids[k] for k in EVENTS} and all(model.config.sp_ids.get(k) == sp_ids[k] for k in EVENTS), f"config.sem_registry/sp_ids 불일치: {reg} (add_semantic_tokens → {ret})"
+    assert (sp_ids[TURN_TOKEN] in model.config.blocked_ids) != a.turn_end, f"{TURN_TOKEN} decode 차단 상태가 --turn-end 와 맞지 않음"
     # 인코더: 동결이면 HF init 의 encoder_trainable=True 도 실제로 끈다 + 체크포인트에 함께 저장(D1 교훈, p2_train_hf.py 와 같은 처리)
     init_had_encoder = bool(cfg.encoder_trainable or getattr(cfg, "encoder_saved", False))
     if a.freeze_encoder:
@@ -133,7 +140,7 @@ assert len(W) == len(L), f"--train-words {len(W)} 개 ≠ --train-labels {len(L)
 pmap = dict(x.split("=", 1) for x in a.path_map.split(",") if x)
 delays = tuple(int(x) for x in a.delays.split(",")); train_sets = {}
 for key, lang, cap in (("en", "English", a.max_items_en), ("ko", "Korean", a.max_items_ko)):
-    ds = SemCommitDataset(W, L, tok, sp_ids, delays=delays, turn_end=not a.no_turn_end, hangover_s=a.hangover, hardneg_weight=a.hardneg_weight, max_items=cap or None,
+    ds = SemCommitDataset(W, L, tok, sp_ids, delays=delays, turn_end=a.turn_end, hangover_s=a.hangover, hardneg_weight=a.hardneg_weight, max_items=cap or None,
                           seed=a.seed, online=True, allow_unlabeled=a.allow_unlabeled, max_per_chunk=a.M, langs=[lang], path_map=pmap, tail_margin=a.tail_margin)
     nw_, nl_ = ds.stats["words_rows"], ds.stats["labeled"]
     log(f"  {key}: words 행 {nw_} · labels 짝 {nl_} ({nl_ / max(1, nw_):.1%}) · {len(ds)} 스트림 · stats {dict(ds.stats)} · 제외 {dict(ds.bad)}")
@@ -150,9 +157,9 @@ for key, ds in train_sets.items():                                              
     check[key] = dict(n=n, bad=len(bad), examples=bad[:5], decision_on_event=ds.stats["decision_on_event"])
     log(f"  check {key}: {n} 항목 × δ{list(ds.delays)} → 불일치 {len(bad)} {bad[:3]} · 결정 위치 = TURN 타깃(유지) {ds.stats['decision_on_event']} (항목 {ds.stats['decision_on_event_items']})")
 assert all(v["bad"] == 0 for v in check.values()), f"시퀀스 불변식 위반: {check}"
-fp = semcommit_fingerprint(W, L, tok, turn_end=not a.no_turn_end, hangover_s=a.hangover, tail_margin=a.tail_margin, pad_tail=True, M=a.M, delays=list(delays),
+fp = semcommit_fingerprint(W, L, tok, turn_end=a.turn_end, turn_token=TURN_TOKEN if a.turn_end else None, hangover_s=a.hangover, tail_margin=a.tail_margin, pad_tail=True, M=a.M, delays=list(delays),
                            sem_weight=a.sem_weight, turn_weight=a.turn_weight, hardneg_weight=a.hardneg_weight, next_weight=a.next_weight, next_weight_ko=a.next_weight_ko,
-                           allow_unlabeled=a.allow_unlabeled, max_items_en=a.max_items_en, max_items_ko=a.max_items_ko, seed=a.seed, sem_ids={k: sp_ids[k] for k in SEM_SPECIALS})
+                           allow_unlabeled=a.allow_unlabeled, max_items_en=a.max_items_en, max_items_ko=a.max_items_ko, seed=a.seed, sem_ids={k: sp_ids[k] for k in EVENTS})
 log(f"  지문: words {[x[:12] for x in fp['words_sha256']]} labels {[x[:12] for x in fp['labels_sha256']]} vocab {(fp['vocab_sha256'] or '')[:12]}")
 if a.dry_run:
     ds = next(iter(train_sets.values())); s = ds.sequence(0, max(ds.delays)); it = ds.items[0]; P = len(ds.prefix(it["lang"], max(ds.delays)))

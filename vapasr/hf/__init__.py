@@ -26,9 +26,11 @@ def load_tokenizer(path: str):
         sp = add_phase2_specials(tok)
         want = {**cfg.get("sp_ids", {}), **cfg["phase2_registry"]}
     else: want = cfg.get("sp_ids", sp)
-    if cfg.get("sem_registry"):                                                      # semantic commit 산출물: Phase 2 예약 + <SEM_END>/<TURN_END> 를 이 순서로 붙이고 대조
-        from ..data.semcommit_tokens import add_semantic_specials
+    if cfg.get("sem_registry"):                                                      # semantic commit 산출물: Phase 2 예약 + <SEM_END> 를 이 순서로 붙이고 대조
+        from ..data.semcommit_tokens import add_semantic_specials, LEGACY_TURN_TOKEN
         sp = add_semantic_specials(tok); want = {**want, **cfg["sem_registry"]}
+        if LEGACY_TURN_TOKEN in cfg["sem_registry"]:                                   # v0.2 체크포인트: <TURN_END>(151724)는 SEM 바로 뒤 — tokenizer 파일이 없으면 여기서 붙인다
+            tok.add_tokens([LEGACY_TURN_TOKEN], special_tokens=True); sp[LEGACY_TURN_TOKEN] = tok.convert_tokens_to_ids(LEGACY_TURN_TOKEN)
     bad = {k: (sp.get(k), v) for k, v in want.items() if sp.get(k) != v}
     assert not bad, f"tokenizer 특수 토큰 id 가 config 와 다름: {bad}"
     return tok

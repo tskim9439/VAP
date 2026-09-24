@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Semantic commit 뷰어 데이터 묶음 — semcommit_eval.py 스트림 jsonl(모델·설정별 방출·trace)에서 스트림을 골라, 오디오(평가와 같은 조립·패딩, MP3 base64)·참조 단어·후보 등급·
-모델 설정별 가설 단어 시각/<SEM_END> 위치 분류/<TURN_END>·p(SEM)/p(TURN) trace 를 한 JSON 으로 만든다. 보고서 요약(설정별 지표·PC 대조·라벨 통계·블라인드 점검)도 같이 싣는다.
+모델 설정별 가설 단어 시각/<SEM_END> 위치 분류/턴 종료(평가 행 event_ids 의 턴 토큰: <EOT>, v0.2 <TURN_END>)·p(SEM)/p(턴) trace 를 한 JSON 으로 만든다. 보고서 요약(설정별 지표·PC 대조·라벨 통계·블라인드 점검)도 같이 싣는다.
 
   python experiments/semcommit_viewer_bundle.py --tokenizer runs/v0.2-r1/final \\
       --set English=words-ls-test.jsonl,labels-ls-test.jsonl --set Korean=words-ks-eval.jsonl,labels-ks-eval.jsonl \\
@@ -15,13 +15,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from vapasr.hf.commit_metrics import (CHUNK_S, SEM_END_ID, TURN_END_ID, emit_time, map_events, pc_punct_after, ref_chunk)
+from vapasr.hf.commit_metrics import (CHUNK_S, EOT_ID, LEGACY_TURN_END_ID, SEM_END_ID, emit_time, map_events, pc_punct_after, ref_chunk)
+
+EVENT_IDS = {SEM_END_ID, EOT_ID, LEGACY_TURN_END_ID}                     # 텍스트가 아닌 이벤트 토큰(새 모델 <EOT>·v0.2 <TURN_END> 모두)
 
 SR = 16000
 
 
 def tok_fns(tok):
-    special = set(tok.all_special_ids) | set(getattr(tok, "added_tokens_decoder", {}) or {}) | {SEM_END_ID, TURN_END_ID}
+    special = set(tok.all_special_ids) | set(getattr(tok, "added_tokens_decoder", {}) or {}) | EVENT_IDS
     cache = {}
     def piece(t):
         if t not in cache: cache[t] = tok.convert_ids_to_tokens(int(t)) or ""
@@ -34,7 +36,7 @@ def hyp_word_chunks(emitted, is_text, word_start, decode):
     words, cur, kl = [], [], None
     for k, t in emitted:
         k, t = int(k), int(t)
-        if t in (SEM_END_ID, TURN_END_ID) or not is_text(t): continue
+        if t in EVENT_IDS or not is_text(t): continue
         if cur and word_start(t): words.append((decode(cur).strip(), kl)); cur = []
         cur.append(t); kl = k
     if cur: words.append((decode(cur).strip(), kl))
@@ -121,7 +123,8 @@ def main():
                             if p in seen: c = "dup"
                             seen.add(p)
                         sem.append([int(e["k"]), int(e["after"]), int(p), c, pa.get(p, "")])
-                    turn = [int(k) for k, t in r["emitted"] if int(t) == TURN_END_ID]
+                    turn_tid = (r.get("event_ids") or [SEM_END_ID, None])[1]
+                    turn = [int(k) for k, t in r["emitted"] if turn_tid is not None and int(t) == int(turn_tid)]
                     asr = r["metrics"]["asr"]; err = {m: [v["errors"], v["n_ref"]] for m, v in asr.items() if isinstance(v, dict) and "errors" in v}
                     m = dict(K=K, delta=d, words=[[x, k] for x, k in hw], sem=sem, turn=turn, err=err, text=r["hyp"]["text"])
                     if cfg == a.main_config and r.get("trace"): m["p_sem"], m["p_turn"] = trace_by_chunk(r["trace"], K)

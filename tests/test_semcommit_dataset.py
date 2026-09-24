@@ -1,4 +1,5 @@
-"""semcommit_dataset — 가짜 tokenizer·합성 행으로 버킷팅 래퍼·SEM/TURN 배치·B/N 결정 위치·패딩·collate 를 검사(CPU, 오디오 없이; pcm 조립만 합성 파일)."""
+"""semcommit_dataset — 가짜 tokenizer·합성 행으로 버킷팅 래퍼·SEM/턴 종료 배치·B/N 결정 위치·패딩·collate 를 검사(CPU, 오디오 없이; pcm 조립만 합성 파일).
+데이터셋 기본은 <SEM_END> 만(turn_end=False). 턴 종료를 켜면 토큰은 Phase 2 <EOT> — 아래 SEM/TURN 상수는 순수 함수용 가짜 id."""
 import json, random
 import numpy as np, pytest, torch
 from vapasr.data.interleave import build_interleaved, Specials
@@ -93,7 +94,8 @@ def test_sem_right_after_last_token_same_chunk(delay):
 def test_turn_chunk_padding_and_never_in_flush(tmp_path, delay):
     row = make_row(); wp, lp = tmp_path / "w.jsonl", tmp_path / "l.jsonl"
     wp.write_text(json.dumps(row) + "\n"); lp.write_text(json.dumps(make_labels()) + "\n")
-    ds = SemCommitDataset(str(wp), str(lp), FakeTok(), delays=(2, 3, 4, 6), online=False)
+    ds = SemCommitDataset(str(wp), str(lp), FakeTok(), delays=(2, 3, 4, 6), online=False, turn_end=True)
+    assert ds.turn_id == ds.sp_ids["<EOT>"] and ds.turn_id < ds.sem_id                        # 턴 종료 = Phase 2 <EOT>
     it = ds.items[0]; t_last = 2.30; want_max = max(int(t_last / 0.08) + 6, int((t_last + 0.48) / 0.08))
     assert it["K0"] == row["K"] and it["K"] == max(row["K"], want_max + 2) and it["K"] > it["K0"] and abs(it["duration_s"] - it["K"] * 0.08) < 1e-9
     s = ds.sequence(0, delay); k_turn = max(int(t_last / 0.08) + delay, int((t_last + 0.48) / 0.08))
@@ -154,7 +156,7 @@ def test_dataset_item_prefix_and_collate(tmp_path):
     wp, lp = tmp_path / "w.jsonl", tmp_path / "l.jsonl"
     wp.write_text("".join(json.dumps(r) + "\n" for r in rows))
     lp.write_text(json.dumps(make_labels("ls-1")) + "\n" + json.dumps(make_labels("ls-2", cands=((0, "N"), (2, "A")))) + "\n")
-    tok = FakeTok(); ds = SemCommitDataset(str(wp), str(lp), tok, delays=(4,), online=False, hardneg_weight=2.0)
+    tok = FakeTok(); ds = SemCommitDataset(str(wp), str(lp), tok, delays=(4,), online=False, hardneg_weight=2.0, turn_end=True)
     pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n")["input_ids"] + tok("language English<asr_text>")["input_ids"] + [tok.v["<DELAY_4>"]]
     assert ds.prefix("English", 4) == pre
     xs = [ds[0], ds[1]]
@@ -185,7 +187,8 @@ def test_audio_failure_falls_back_to_neighbor(tmp_path):
     ds = SemCommitDataset(str(wp), str(lp), FakeTok(), delays=(2,), online=True, seed=0)
     i_bad = [i for i, it in enumerate(ds.items) if it["id"] == "ls-1"][0]
     if i_bad == len(ds) - 1: ds.items = ds.items[::-1]; i_bad = 0                            # 이웃(i+1)이 정상 항목이 되게
-    x = ds[i_bad]; assert x["id"] == "ls-2" and x["wav"].shape[0] == x["K"] * 1280
+    x = ds[i_bad]; it2 = next(it for it in ds.items if it["id"] == "ls-2")
+    assert x["id"] == "ls-2" and x["K"] == it2["K"] and x["wav"].shape[0] == int(round(it2["duration_s"] * 16000))   # 안 늘린 항목은 원래 길이·manifest K(학습·평가 공통 규약)
 
 def test_max_per_chunk_padding_uses_simulated_last_chunk():
     toks = [(i, 1.0) for i in range(12)] + [(99, 0.0, 0)]                               # 동일 시각 12 토큰 + 명시 이벤트, M=2 → 이월 6 청크
@@ -196,7 +199,7 @@ def test_max_per_chunk_padding_uses_simulated_last_chunk():
 
 def test_add_semcommit_specials_appends_after_phase2():
     tok = FakeTok(base=151705); ids = add_semcommit_specials(tok)
-    assert ids["<NEXT_AUDIO>"] == 151705 and ids["<EOT>"] == 151722 and ids["<SEM_END>"] == 151723 and ids["<TURN_END>"] == 151724
+    assert ids["<NEXT_AUDIO>"] == 151705 and ids["<EOT>"] == 151722 and ids["<SEM_END>"] == 151723 and "<TURN_END>" not in ids and "<TURN_END>" not in tok.v
     assert list(ids) == SPECIAL_TOKENS + PHASE2_SPECIALS + SEM_SPECIALS
 
 def test_round_robin_loader_alternates_languages_with_pos_weight(tmp_path):
@@ -227,7 +230,7 @@ def test_last_word_B_or_N_keeps_turn_target(g):
 def test_dataset_counts_decision_on_turn_and_checks(tmp_path):
     row = make_row(); last = len(row["words"]) - 1; wp, lp = tmp_path / "w.jsonl", tmp_path / "l.jsonl"
     wp.write_text(json.dumps(row) + "\n"); lp.write_text(json.dumps(make_labels(cands=((1, "A"), (last, "B")))) + "\n")
-    ds = SemCommitDataset(str(wp), str(lp), FakeTok(), delays=(2, 3, 4, 6), online=False)
+    ds = SemCommitDataset(str(wp), str(lp), FakeTok(), delays=(2, 3, 4, 6), online=False, turn_end=True)
     assert ds.stats["decision_on_event"] == 1 and ds.stats["decision_on_event_items"] == 1                  # δ=6 만
     assert all(ds.target_problems(0, d) == [] for d in ds.delays)
     ds.delays = (6,); x = ds[0]; assert x["n_decision_on_event"] == 1 and x["n_B"] == 0 and collate_semcommit([x])["n_decision_on_event"] == 1
@@ -301,10 +304,21 @@ def test_random_rows_pass_target_problems(tmp_path):
         labs.append(make_labels(f"r-{n}", cands=[(i, rng.choice("ABN")) for i in range(len(ws)) if rng.random() < 0.6], turn_end=rng.random() < 0.8))
     wp, lp = tmp_path / "w.jsonl", tmp_path / "l.jsonl"
     wp.write_text("".join(json.dumps(r) + "\n" for r in rows)); lp.write_text("".join(json.dumps(r) + "\n" for r in labs))
-    ds = SemCommitDataset(str(wp), str(lp), FakeTok(), online=False, hardneg_weight=2.0)
+    ds = SemCommitDataset(str(wp), str(lp), FakeTok(), online=False, hardneg_weight=2.0, turn_end=True)
     assert len(ds) == 60 and not ds.bad
     got = 0
     for i in range(len(ds)):
         for d in ds.delays:
             assert ds.target_problems(i, d) == [], (ds.items[i]["id"], d, ds.target_problems(i, d)); got += ds.sequence(i, d)["n_decision_on_event"]
     assert got == ds.stats["decision_on_event"] > 0
+
+
+def test_default_is_sem_only_no_turn_token(tmp_path):
+    """Phase 1 기본 = <SEM_END> 만: 턴 이벤트·<EOT> 라벨 없음, 마지막 B/N 결정 위치는 평소처럼 가림/가중(TURN 에 떨어지지 않음), 패딩은 pad_tail 로만."""
+    row = make_row(); last = len(row["words"]) - 1; wp, lp = tmp_path / "w.jsonl", tmp_path / "l.jsonl"
+    wp.write_text(json.dumps(row) + "\n"); lp.write_text(json.dumps(make_labels(cands=((1, "A"), (last, "B")))) + "\n")
+    ds = SemCommitDataset(str(wp), str(lp), FakeTok(), delays=(2, 3, 4, 6), online=False)
+    assert not ds.turn_end and ds.stats["turn"] == 0 and ds.stats["decision_on_event"] == 0 and ds.stats["sem"] == 1
+    for d in ds.delays:
+        s = ds.sequence(0, d); assert s["n_turn"] == 0 and ds.turn_id not in s["ids"] and s["n_B"] == 1 and ds.target_problems(0, d) == []
+    it = ds.items[0]; assert it["K"] == max(row["K"], int(2.30 / 0.08) + 6 + 2)            # 마지막 방출(δ=6) + tail_margin

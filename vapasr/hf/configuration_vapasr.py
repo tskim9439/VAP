@@ -28,7 +28,7 @@ class VapAsrConfig(PretrainedConfig):
         self.blocked_ids = list(blocked_ids or []); self.audio_pad_id = audio_pad_id; self.prefix_ids = list(prefix_ids or [])   # 디코드에 tokenizer 없이도 쓰도록 id 를 보관
         self.lanes, self.act_weight, self.act_hidden, self.eot_weight, self.tag_weight = lanes, act_weight, act_hidden, eot_weight, tag_weight   # Phase 2: lanes>0 이면 활동 헤드(R 행)·EOT soft CE·EOT 가중
         self.phase2_registry = dict(phase2_registry or {})                                                          # Phase 2 토큰 id 동결(<SPK_3..6>, <ONSET>, <EOT>)
-        self.sem_registry = dict(sem_registry or {})                                                                # semantic commit: {<SEM_END>: 151723, <TURN_END>: 151724} (비어 있으면 끔 — 기존 체크포인트)
+        self.sem_registry = dict(sem_registry or {})                                                                # semantic commit 으로 학습한 이벤트 토큰: {<SEM_END>: 151723}(+ mono 턴 종료 <EOT>: 151722; v0.2 는 <TURN_END>: 151724). 비어 있으면 끔
         self.sem_weight, self.turn_weight = sem_weight, turn_weight                                                  # SEM/TURN 타깃 위치 CE 가중(lanes 와 무관, NEXT 가중과 같은 규약)
         self.sem_reserved = list(sem_reserved or [])                                                                # mono semcommit 이 예약만 한 Phase 2 이름 — add_phase2_tokens 가 이 행을 다시 초기화하고 비운다
         super().__init__(**kw)
