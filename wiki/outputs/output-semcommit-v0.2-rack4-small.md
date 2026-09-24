@@ -10,6 +10,8 @@ related: [output-phase1-report]
 
 # Semantic commit v0.2 — rack4 소규모 실행
 
+**입문자용 보고서**: https://claude.ai/artifact/9qW2rzzNoeWDQrdVGVKzn9 — 모델·데이터·라벨링·학습·평가·결과를 처음 보는 사람 기준으로 풀어 쓴 판(수치는 이 페이지와 원자료로 교차 검증).
+
 **뷰어**: https://claude.ai/artifact/WtqWnzpgXedbtHrpNCYJYC — 평가 스트림 30 개(영어 12 · 한국어 18, 오류 유형별 선택)의 오디오, 참조 단어·교사 후보(A/B/N)·LibriSpeech-PC 문장 끝, 모델·설정별 가설 단어와 `<SEM_END>`(분류별 색·참조 단어 끝→방출 지연 연결선)·`<TURN_END>`, p(SEM)/p(TURN) 궤적, 설정별 지표·P–R 산점도. 생성: `experiments/semcommit_viewer_bundle.py --html experiments/semcommit_viewer.template.html`.
 
 ## 질문
@@ -22,7 +24,7 @@ related: [output-phase1-report]
 - **ASR 가드레일 통과**: E2+토큰(학습 없음) 대비 EN WER 5.27 → 4.68 %(r1)·4.90 %(r2), KO CER 12.72 → 12.80 %(r1)·12.72 %(r2) (δ4).
 - **SEM 성능**: KO F1 0.56(P 0.46, B 제외 0.66, R 0.71, 지연 p50 0.35 s), EN F1 0.17(r1)·0.23(r2). KO 는 참조 A 의 90 % 가 발화 끝이라 사실상 '발화 끝 commit' 성능이다(중간 A 재현 2/9).
 - **병목은 라벨**: 작은 교사 둘의 B 판정 일치도 κ = 0.12–0.21. EN 에서 LibriSpeech-PC 문장 끝 353 개 중 **A 는 63(18 %)**, B(마스크) 201 개. 모델은 라벨 분포를 그대로 재현한다(문장 끝 비율 P_pc: 모델 0.62–0.67 ≈ A 라벨 자체 0.68).
-- **추가로 드러난 문제**: (1) N(hard negative) 은 블라인드 점검에서 절반이 좋은 경계, (2) Stage A 가 짧은 KO 발화의 끝(명백히 완결)을 후보로 안 냄, (3) `<TURN_END>` 가 EN 학습 스트림 길이(24–34 s)를 외워 22–26 s 에 조기 발사, (4) gpt-oss-20b 는 final 채널 로그확률 판정에서 97 % WAIT — EN 판정자로 못 씀.
+- **추가로 드러난 문제**: (1) N(hard negative) 은 블라인드 점검에서 절반이 좋은 경계, (2) Stage A 가 짧은 KO 발화의 끝(명백히 완결)을 후보로 안 냄, (3) `<TURN_END>` 가 EN 학습 스트림 길이(24–34 s)에 기댄 것으로 보인다(살펴본 조기 발사 8 건이 모두 22–26 s, 비교 실험은 안 함), (4) gpt-oss-20b 는 final 채널 로그확률 판정에서 97 % WAIT — EN 판정자로 못 씀.
 
 ## 1. 설정
 - **데이터**(`experiments/semcommit_build_words.py`, forced-align manifest 로 단어 시각):
@@ -39,7 +41,7 @@ related: [output-phase1-report]
   Qwen3-8B(bf16, thinking 끔) = Stage A(JSON 생성)·B·C, EXAONE-3.5-7.8B-Instruct(원격 코드 rev 0ff6b5e — 최신 코드는 transformers v5 전용) = Stage B(KO·EN),
   gpt-oss-20b(MXFP4→bf16, 앞 18 층 GPU) = KO tie-break(진단용, strict 등급이라 라벨 영향 없음). Stage B/C 는 라벨 토큰 로그확률로 결정적 채점.
   프롬프트 v0.2(`semcommit-prompt-v0.2+ab90c940`): Stage A 경계를 `[번호, 단어]` 쌍으로 받아 ±4 보정, Stage C REVISION 을 좁힘.
-- **등급**: A = 두 판정자 SAFE ∧ C 가 REVISION 아님 → `<SEM_END>`, B = 불일치 등 → 결정 위치 마스크, N = C REVISION(SELF_REPAIR·RESTART)·전원 WAIT → 결정 위치 가중 1.0.
+- **등급**: A = 두 판정자 SAFE ∧ C 가 REVISION 아님 → `<SEM_END>`, B = 불일치 등 → 결정 위치 마스크, N = C REVISION(SELF_REPAIR·RESTART)·전원 WAIT·사람 전사 disfluency 표지(`/` `+` `*`, ks-train N 368 중 70) → 결정 위치 가중 1.0.
   C 의 QUALIFICATION·CONTINUATION 판정은 마스크(`--c-mask-types`) — Qwen3 가 QUALIFICATION 을 과다 판정(ls-test 236/587, 검토상 대부분 오판).
 - **학습**(`experiments/semcommit_train.py`): E2 초기화, 인코더 동결(저장), lr thinker 3e-5·adapter 1e-4, 3 epoch 567 step(EN 배치 6 / KO 16, 언어 균형), δ ∈ {2,3,4,6}, 5.3 분·GPU 23 GB.
   r1 = 기본(N 결정 위치 가중 1.0), r2 = `--hardneg-weight 0`(N 위치도 일반 NEXT 가중 0.3/0.15 — 마스크가 아니라 상향 가중만 끔).
@@ -67,7 +69,7 @@ related: [output-phase1-report]
   | ks-eval N | 10 | **4** | 4 | 2 |
   | B (두 셋) | 20 | 8 | 8 | 4 |
 
-  A 오판은 열린 종속절("when i say that i am an italian ‖ he begins"), 같은 문장 등위("all was quiet ‖ and black"), 인용 뒤 발화 표지("… ‖ said sir ferdinando"),
+  A 오판은 열린 종속절("when i say that i am an italian ‖ he begins"), 같은 문장 등위("all was quiet ‖ and black"), 같은 문장 이어짐("she would not be proud ‖ nor haughty"),
   열린 연결어미("탔는데 ‖ 그 다른 애들도", "이미지 때문에" 로 끝난 발화). N 오판은 Stage C 가 다음 문장을 SELF_REPAIR 로 본 경우("you are giving me a chance ‖ yes alexander")와
   전원 WAIT 인 완결 문장("그 근데 가는 데 시간이 너무 오래 걸려 ‖ 그 코엑스랑…").
 
@@ -90,7 +92,7 @@ related: [output-phase1-report]
 | r1 | bias 0 | 137 | 0.46 | 0.66 | 0.71 | 0.56 | 0.35 s | 0.21 | 0.74 / 0.85 (68) | 12.80 % |
 | r1 | bias −2 | 89 | 0.54 | 0.74 | 0.54 | 0.54 | 0.35 s | 0.17 | 0.72 / 0.82 (67) | 12.80 % |
 | r2 | bias 0 | 149 | 0.45 | 0.64 | 0.75 | 0.56 | 0.34 s | 0.23 | 0.71 / 0.83 (74) | 12.72 % |
-| r2 | θ 0.5 | 142 | 0.46 | 0.65 | 0.74 | 0.57 | 0.35 s | 0.22 | 0.70 / 0.82 (74) | 12.72 % |
+| r2 | θ 0.5 | 142 | 0.46 | 0.65 | 0.74 | 0.57 | 0.34 s | 0.22 | 0.70 / 0.82 (74) | 12.72 % |
 | r1 δ2 | bias 0 | 115 | 0.45 | 0.62 | 0.58 | 0.51 | 0.20 s | 0.24 | 0.77 / 0.85 (60) | 15.98 % |
 
 - KO r1 bias 0 재현율: 발화 끝 A 64/80(0.80), 중간 A 2/9. EN r1 bias 0: 발화 끝 10/37, 중간 3/61.
