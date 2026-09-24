@@ -828,6 +828,25 @@ def test_label_probs_features_and_grade_v3():
     assert sc.grade_v3(sc.candidate_features(s, 5, {"qwen3": b["qwen3"]}, None, ("qwen3", "exaone35")), "English")[1] == "missing:exaone35,C"
 
 
+def test_response_unit_branch_and_threshold_fallback():
+    W = lambda toks: [dict(i=i, text=x.rstrip("."), end_time=0.3 * (i + 1), tags=["punct_final"] if x.endswith(".") else []) for i, x in enumerate(toks)]
+    ko = W(["아", "네.", "저는", "좋아요."])
+    assert sc.response_unit(ko, 1, "Korean") and not sc.response_unit(ko, 3, "Korean")          # 대답어만의 단위 + 뒤에 말 / 스트림 끝은 일반 문장 끝
+    assert not sc.response_unit(W(["네."]), 0, "Korean")                                         # 대답어만으로 끝난 발화 = 확정(일반 구두점 가지)
+    assert not sc.response_unit(W(["그건", "아니야.", "다시"]), 1, "Korean")                     # 단위에 대답어 아닌 말
+    assert sc.response_unit(W(["좋아.", "네.", "그럼"]), 1, "Korean")                             # 단위 = 앞 구두점 뒤부터
+    en = W(["No.", "I", "think", "so."])
+    assert sc.response_unit(en, 0, "English") and not sc.response_unit(en, 0, "Korean") and not sc.response_unit(en, 0, None)
+    f = sc.candidate_features(dict(id="k", lang="Korean", words=ko), 1, {}, None, ("exaone35",))
+    assert f["resp_head"] and f["punct"] and sc.branch_of(f) == "punct_resp"
+    f = dict(f, p_safe={"exaone35": 0.9}, p_safe_mean=0.9, p_rev=0.0)
+    assert sc.branch_of(dict(f, resp_head=False)) == "punct" and sc.branch_of(dict(f, punct=False, resp_head=False)) == "other"
+    old = {"Korean": {"punct": {"p_safe": 0.0, "p_rev": 1.01}, "other": None}}                  # v0.3 / v0.3.1 임계값 파일: punct_resp 키 없음 → 구두점 임계값
+    assert sc.grade_v3(f, "Korean", old) == ("A", "v3_punct_resp")
+    assert sc.grade_v3(f, "Korean", {"Korean": dict(old["Korean"], punct_resp=None)}) == ("B", "v3_punct_resp+off")
+    assert sc.grade_v3(f, "Korean") == ("B", "v3_punct_resp+off") and sc.grade_v3(f, "English") == ("A", "v3_punct_resp")   # 기본 = v0.3.2 조정값
+
+
 def test_build_labels_v3_pipeline():
     s = _two_seg(); streams = [s, KO1, KO2]
     a = sc.run_stage_a(FakeLLM(), streams, "qwen3")

@@ -954,11 +954,11 @@ def _tok_bad(r):
 
 
 RECIPE_V3 = "semcommit-recipe-v0.3"
-# gold v1 dev-half tuning with a per-branch precision floor 0.90 (labels v0.3.1; Qwen3-8B + EXAONE-3.5-7.8B judges, Qwen3-8B Stage C):
-# punctuated sentence ends are A; no threshold lifts the other branch to 0.90 on its own (English dev 0.40 at best) → off (None).
-# Re-tune for other teachers (semcommit_gold.py tune).
-V3_THRESHOLDS = {"English": {"punct": {"p_safe": 0.0, "p_rev": 1.01}, "other": None},
-                 "Korean": {"punct": {"p_safe": 0.0, "p_rev": 1.01}, "other": None}}
+# gold v1 dev-half tuning with a per-branch precision floor 0.90 (labels v0.3.2; Qwen3-8B + EXAONE-3.5-7.8B judges, Qwen3-8B Stage C):
+# punctuated sentence ends are A; a Korean reply-word unit before more speech (punct_resp: gold dev 0 COMMIT / 8 NO) and the other branch
+# (no threshold reaches 0.90 on its own, English dev 0.40 at best) are off (None). Re-tune for other teachers (semcommit_gold.py tune).
+V3_THRESHOLDS = {"English": {"punct": {"p_safe": 0.0, "p_rev": 1.01}, "punct_resp": {"p_safe": 0.0, "p_rev": 1.01}, "other": None},
+                 "Korean": {"punct": {"p_safe": 0.0, "p_rev": 1.01}, "punct_resp": None, "other": None}}
 
 
 def label_probs(logprobs):
@@ -985,16 +985,38 @@ def candidate_features(stream, i, b_rows_by_judge, c_row, judges, sources=(), st
         prev = 0.0
     else:
         pr = label_probs(c_row.get("logprobs")); prev = None if pr is None else round(pr.get("REVISION", 0.0), 6)
-    tags = stream["words"][i].get("tags") or []
-    return dict(p_safe=ps, p_safe_mean=mean, p_rev=prev, punct="punct_final" in tags,
+    tags = stream["words"][i].get("tags") or []; punct = "punct_final" in tags
+    return dict(p_safe=ps, p_safe_mean=mean, p_rev=prev, punct=punct, resp_head=punct and response_unit(stream["words"], i, stream.get("lang")),
                 disfluency=disfluency_reason(i, stage_a_out, [w.get("tags") or [] for w in stream["words"]]), sources=list(sources))
+
+
+# Answer particles / backchannels (gold v1 convention: a reply word opening a longer turn is NO, alone at the end it is COMMIT).
+RESPONSE_TOKENS = {"Korean": frozenset("네 예 응 어 음 아 아니 아니야 아니요 아뇨 맞아 맞아요 맞지 그렇지 그렇죠 그래 그래요 그치 그쵸 아니지".split()),
+                   "English": frozenset("yeah yes no okay ok right oh well sure yep nope uh-huh mm-hmm mhm".split())}
+
+
+def response_unit(words, i, lang):
+    """True when word i ends a punctuated unit made only of reply words (words after the previous punct_final, up to i) and
+    speech follows in the stream — e.g. `네. 저는 …` (gold v1: NO), while a stream-final `네.` stays a normal sentence end."""
+    toks = RESPONSE_TOKENS.get(lang)
+    if not toks or i >= len(words) - 1:
+        return False
+    j = i - 1
+    while j >= 0 and "punct_final" not in (words[j].get("tags") or []):
+        j -= 1
+    unit = [re.sub(r"[^\w'-]", "", str(w["text"]).lower()) for w in words[j + 1:i + 1]]
+    return bool(unit) and all(u in toks for u in unit)
+
+
+def branch_of(f):
+    """v0.3 grading branch: punct_resp (reply-word unit before more speech), punct (other punctuated sentence ends), other."""
+    return "punct_resp" if f.get("resp_head") else "punct" if f["punct"] else "other"
 
 
 def grade_v3(f, lang, thresholds=None):
     """Recipe v0.3 grade from candidate_features → (grade, why). N only from human transcript disfluency tags (gold v1: LLM-made
     N was 42–68 % correct); a Stage-A-only disfluency conflict or any missing score → B; A when the branch's thresholds hold
-    (punct branch for punctuated sentence ends, other branch otherwise; a branch set to None is off); everything else B (masked,
-    not a trained negative)."""
+    (branch_of: punct_resp / punct / other; a branch set to None is off); everything else B (masked, not a trained negative)."""
     th = (thresholds or V3_THRESHOLDS)[lang]
     d = f.get("disfluency")
     if d and str(d).startswith("tag_"):
@@ -1003,7 +1025,7 @@ def grade_v3(f, lang, thresholds=None):
         return "B", f"disflA_{d}"
     if f["p_safe_mean"] is None or f["p_rev"] is None:
         return "B", "missing:" + ",".join([j for j, v in f["p_safe"].items() if v is None] + (["C"] if f["p_rev"] is None else []))
-    br = "punct" if f["punct"] else "other"; t = th.get(br)
+    br = branch_of(f); t = th.get(br) if br in th or br != "punct_resp" else th.get("punct")   # thresholds without punct_resp (v0.3/v0.3.1) grade it as punct
     if t and f["p_safe_mean"] >= t["p_safe"] and f["p_rev"] <= t["p_rev"]:
         return "A", f"v3_{br}"
     why = [f"v3_{br}"] + (["off"] if not t else (["p_safe_low"] if f["p_safe_mean"] < t["p_safe"] else []) + (["p_rev_high"] if f["p_rev"] > t["p_rev"] else []))
@@ -1038,7 +1060,7 @@ def build_labels_v3(streams, a_rows, b_rows, c_rows, judges=None, extra=EXTRA_SO
             B = {j: r["decision"] for j, r in bc.get((s["id"], i), {}).items()}
             C = {"relation": crow["relation"], "type": crow.get("type") or ""} if crow else {"relation": "MISSING", "type": ""}
             rows.append(dict(after_word=i, grade=g, why=w, stageA=i in sa, sources=src[i], B=B, C=C, p_safe=f["p_safe"], p_safe_mean=f["p_safe_mean"],
-                             p_rev=f["p_rev"], punct=f["punct"], future_unobserved=C["relation"] == "UNOBSERVED", resolved_by_judge=False))
+                             p_rev=f["p_rev"], punct=f["punct"], resp_head=f["resp_head"], future_unobserved=C["relation"] == "UNOBSERVED", resolved_by_judge=False))
             L["candidates"] += 1; L[g] += 1; L["future_unobserved"] += rows[-1]["future_unobserved"]
             st["why"].setdefault(lang, Counter())[w] += 1
             for k in src[i]:

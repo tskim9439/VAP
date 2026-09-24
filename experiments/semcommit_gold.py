@@ -7,7 +7,7 @@
   score-labels : 교사 라벨(labels.jsonl, A/B/N) vs 골드 — 후보 재현·A 정밀도/재현율·N 정밀도(commit_metrics.gold_label_counts)
   score-eval   : semcommit_eval 스트림 jsonl(모델 방출) vs 골드 — 설정별 P/R/F1·PCR_gold·지연(commit_metrics.gold_commit_counts)
   tune         : 라벨링 레시피 v0.3 임계값 — 교사 행(A/B/C) + 골드로 후보 특징(평균 P(SAFE)·P(REVISION)·구두점)을 만들고, 골드 dev 절반(sha1(id) 짝수)에서
-                 언어·가지(구두점 문장 끝 / 그 외)별로 그 가지의 정밀도 ≥ floor 중 재현율 최대 임계값을 골라(못 넘는 가지는 끔) test 절반 성능과 함께
+                 언어·가지(구두점 문장 끝 / 대답어만의 구두점 단위 / 그 외)별로 그 가지의 정밀도 ≥ floor 중 재현율 최대 임계값을 골라(못 넘는 가지는 끔) test 절반 성능과 함께
                  thresholds JSON 으로 쓴다(teacher.py grade --recipe v0.3 --thresholds).
 골드 행: {id, set, lang, n_words, commit:[i], ambig:[i], how:{i: 'agree'|'adjudicated'|'unresolved'}}. 주석 형식은 GUIDELINE.md 출력 형식({id: {commit, ambig, why}}).
 
@@ -158,17 +158,18 @@ def cmd_tune(a):
             f = sc.candidate_features(s, i, Bc.get((sid, i), {}), crow, judges[lang], src[i], a_out.get(sid))
             lab = "COMMIT" if i in g["commit"] else "AMBIG" if i in g["ambig"] else "NO"
             feats.append((lang, h, f, lab))
-    grids = {"punct": [(t / 100, c) for t in range(0, 100, 10) for c in (0.05, 0.2, 0.5, 1.01)],
-             "other": [(t / 100, c) for t in range(30, 100, 5) for c in (0.02, 0.05, 0.2, 0.5)]}
+    g_punct = [(t / 100, c) for t in range(0, 100, 10) for c in (0.05, 0.2, 0.5, 1.01)]
+    grids = {"punct": g_punct, "punct_resp": g_punct, "other": [(t / 100, c) for t in range(30, 100, 5) for c in (0.02, 0.05, 0.2, 0.5)]}
     def evaluate(th, lang, h, branch=None):
         tp = fp = n = 0
         for lg, hh, f, lab in feats:
-            if lg != lang or hh != h or (branch and ("punct" if f["punct"] else "other") != branch): continue
+            if lg != lang or hh != h or (branch and sc.branch_of(f) != branch): continue
             if sc.grade_v3(f, lang, {lang: th})[0] != "A": continue
             n += 1; tp += lab == "COMMIT"; fp += lab == "NO"
         tot = gold_commit[(lang, h)]
         return (tp / (tp + fp) if tp + fp else 0.0), (tp / tot if tot else 0.0), n
-    # 가지(구두점 / 그 외)마다 따로 floor — 전체 정밀도만 보면 정밀한 구두점 가지의 여유가 부정확한 가지를 끼워 넣는다(gold v1 영어 그 외 가지 dev 0.40).
+    # 가지(구두점 / 대답어 구두점 / 그 외, semcommit_llm.branch_of)마다 따로 floor — 전체 정밀도만 보면 정밀한 구두점 가지의 여유가
+    # 부정확한 가지를 끼워 넣는다(gold v1 영어 그 외 가지 dev 0.40).
     out, report = {}, {}
     for lang in sorted({f[0] for f in feats}):
         th, branch_rep = {}, {}
@@ -180,7 +181,9 @@ def cmd_tune(a):
             th[br] = best[0] if best else None
             branch_rep[br] = dict(dev=dict(zip(("P", "R", "n_A"), best[1])) if best else None,
                                   test=dict(zip(("P", "R", "n_A"), evaluate({br: th[br]}, lang, "test", br))) if best else None)
-            if best is None: print(f"{lang} {br}: no threshold reaches dev precision {a.floor} → branch off")
+            if best is None:
+                nd = sum(1 for lg, hh, f, _ in feats if lg == lang and hh == "dev" and sc.branch_of(f) == br)
+                print(f"{lang} {br}: " + (f"no threshold reaches dev precision {a.floor}" if nd else "no dev candidates") + " → branch off")
         out[lang] = th
         cand = {h: sum(1 for f in feats if f[0] == lang and f[1] == h) for h in ("dev", "test")}
         report[lang] = dict(thresholds=th, dev=dict(zip(("P", "R", "n_A"), evaluate(th, lang, "dev"))), test=dict(zip(("P", "R", "n_A"), evaluate(th, lang, "test"))),
