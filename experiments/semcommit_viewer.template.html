@@ -1,0 +1,601 @@
+<title>SEM_END 타임라인</title>
+<meta name="description" content="semcommit v0.2 rack4 소규모 실행 — 평가 스트림의 오디오, 교사 라벨, 모델 commit·TURN, p(SEM) 궤적">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --ground: #f2f4f6; --surface: #ffffff; --sunk: #e8ecef; --ink: #15202b; --muted: #5a6772; --faint: #636f79; --rule: #d6dde3;
+  --accent: #0e7c86; --accent-soft: #d5ecee; --r2: #34508a; --r2-soft: #dde3f0;
+  --good: #256b47; --good-soft: #dcefe3; --amb: #8a5a14; --amb-soft: #f6ead3; --bad: #b02a2a; --bad-soft: #f7dcdc;
+  --turn: #5b3cc4; --turn-soft: #e6e0f7; --miss: #1a5f99; --miss-soft: #d9e8f5;
+  --shadow: 0 1px 2px rgba(21, 32, 43, .06), 0 4px 16px rgba(21, 32, 43, .05);
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0e141a; --surface: #151d24; --sunk: #1b252e; --ink: #e2e8ee; --muted: #9aa7b3; --faint: #6d7a86; --rule: #28343f;
+    --accent: #45b5bf; --accent-soft: #163a3f; --r2: #8ea8e8; --r2-soft: #1e2a44;
+    --good: #58c08a; --good-soft: #17352a; --amb: #e0a94a; --amb-soft: #3a2d15; --bad: #f07167; --bad-soft: #3d1c1c;
+    --turn: #a08bf5; --turn-soft: #2a2248; --miss: #6fb1ea; --miss-soft: #182c40;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0e141a; --surface: #151d24; --sunk: #1b252e; --ink: #e2e8ee; --muted: #9aa7b3; --faint: #6d7a86; --rule: #28343f;
+  --accent: #45b5bf; --accent-soft: #163a3f; --r2: #8ea8e8; --r2-soft: #1e2a44;
+  --good: #58c08a; --good-soft: #17352a; --amb: #e0a94a; --amb-soft: #3a2d15; --bad: #f07167; --bad-soft: #3d1c1c;
+  --turn: #a08bf5; --turn-soft: #2a2248; --miss: #6fb1ea; --miss-soft: #182c40;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--sans); padding-inline: clamp(16px, 3vw, 40px); padding-block: 28px 56px; }
+.page { max-width: 1320px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: clamp(28px, 3.4vw, 40px); font-weight: 700; letter-spacing: -.01em; }
+h2 { font-size: 21px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; }
+code, .mono { font-family: var(--mono); font-size: .92em; }
+.eyebrow { font: 500 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.top { display: grid; gap: 10px; max-width: 78ch; }
+.lede { color: var(--muted); max-width: 70ch; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; margin-bottom: 14px; }
+.sec-head p { color: var(--muted); font-size: 14px; }
+.seg { display: inline-flex; background: var(--sunk); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button { font: 500 13px/1 var(--sans); border: 0; background: transparent; color: var(--muted); padding: 7px 12px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+button:focus-visible, select:focus-visible, .stream-item:focus-visible, tr[tabindex]:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; }
+
+/* metrics */
+.metrics-grid { display: grid; grid-template-columns: minmax(280px, 400px) 1fr; gap: 20px; align-items: start; }
+.chart-card { padding: 14px 14px 10px; display: grid; gap: 8px; }
+.chart-card .chart-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chart-card figcaption { font-size: 12.5px; color: var(--muted); }
+#pr-chart { width: 100%; height: auto; display: block; }
+#pr-chart text { font: 11px var(--mono); fill: var(--muted); }
+#pr-chart .pt { cursor: pointer; }
+.findings { display: grid; gap: 10px; padding: 16px 18px; }
+.findings li { color: var(--ink); }
+.findings ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; }
+.findings b { font-weight: 600; }
+.table-wrap { overflow-x: auto; margin-top: 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th { font: 500 11.5px/1.3 var(--sans); color: var(--muted); letter-spacing: .02em; background: var(--surface); position: sticky; top: 0; }
+th:first-child, td:first-child, th.l, td.l { text-align: left; }
+td { font-family: var(--mono); font-size: 12.5px; }
+td.sans { font-family: var(--sans); }
+#metric-table tbody tr { cursor: pointer; }
+#metric-table tbody tr:hover { background: var(--sunk); }
+#metric-table tbody tr.sel { background: var(--accent-soft); }
+#metric-table tr.grp td { background: var(--ground); font: 600 12px var(--sans); color: var(--muted); cursor: default; }
+details.more { margin-top: 18px; }
+details.more > summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink); }
+.more-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 12px; }
+.more-grid .panel { padding: 12px 14px; overflow-x: auto; }
+.more-grid h3 { margin-bottom: 8px; }
+.note { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+
+/* stream browser */
+.browser { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 20px; align-items: start; }
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; max-height: calc(100vh - 24px); }
+.rail select { width: 100%; }
+.stream-list { overflow-y: auto; display: grid; gap: 4px; padding-right: 4px; }
+.grp-label { font: 600 11.5px var(--mono); letter-spacing: .08em; color: var(--faint); text-transform: uppercase; padding: 8px 4px 2px; }
+.stream-item { display: grid; gap: 3px; text-align: left; border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 8px 10px; cursor: pointer; color: var(--ink); font: inherit; }
+.stream-item:hover { background: var(--surface); border-color: var(--rule); }
+.stream-item[aria-current="true"] { background: var(--surface); border-color: var(--accent); box-shadow: var(--shadow); }
+.stream-item .sid { font: 500 12.5px var(--mono); display: flex; justify-content: space-between; gap: 8px; }
+.stream-item .sid span { color: var(--faint); font-weight: 400; }
+.stream-item .snip { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dots { display: flex; gap: 3px; flex-wrap: wrap; }
+.dot { width: 7px; height: 7px; border-radius: 50%; }
+label.ctl { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+select { font: 14px var(--sans); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 7px; padding: 6px 8px; }
+
+.detail { display: grid; gap: 16px; min-width: 0; }
+.detail-head { display: grid; gap: 8px; }
+.detail-head .idline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.detail-head .idline h3 { font: 600 18px var(--mono); }
+.detail-head .meta { color: var(--muted); font-size: 13px; font-family: var(--mono); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 12px/1 var(--sans); padding: 5px 8px; border-radius: 999px; background: var(--sunk); color: var(--ink); border: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.controls audio { flex: 1 1 320px; min-width: 0; height: 40px; }
+.statline { display: flex; flex-wrap: wrap; gap: 8px; }
+.stat { display: inline-flex; align-items: center; gap: 6px; font: 500 12.5px var(--mono); padding: 5px 9px; border-radius: 6px; background: var(--sunk); }
+.stat i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+.tl-card { padding: 0; overflow: hidden; }
+.tl-grid { display: grid; grid-template-columns: 92px minmax(0, 1fr); }
+.tl-labels { border-right: 1px solid var(--rule); background: var(--surface); position: relative; }
+.tl-labels div { position: absolute; left: 10px; right: 6px; font: 500 11px/1.25 var(--sans); color: var(--muted); }
+.tl-scroll { overflow-x: auto; position: relative; }
+#timeline { display: block; }
+#timeline text { font-family: var(--mono); }
+#timeline .clickable { cursor: pointer; }
+.tl-foot { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 12px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--muted); }
+.lg { display: inline-flex; align-items: center; gap: 6px; }
+.lg svg { flex: none; }
+
+.tx-grid { display: grid; gap: 12px; }
+.tx { padding: 12px 14px; display: grid; gap: 6px; }
+.tx .tx-label { font: 600 11.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tx .tx-body { line-height: 2; font-size: 15px; }
+.tx .pc { color: var(--muted); font-size: 13.5px; line-height: 1.7; }
+.mk { display: inline-block; font: 600 10.5px/1 var(--mono); padding: 3px 4px; border-radius: 4px; margin: 0 3px; vertical-align: 2px; }
+.mk-A { background: var(--good-soft); color: var(--good); } .mk-B { background: var(--amb-soft); color: var(--amb); } .mk-N { background: var(--bad-soft); color: var(--bad); }
+.mk-inside { background: var(--bad-soft); color: var(--bad); } .mk-end_nocand { background: var(--miss-soft); color: var(--miss); }
+.mk-dup, .mk-mid_word, .mk-no_word { background: var(--sunk); color: var(--muted); }
+.mk-turn { background: var(--turn-soft); color: var(--turn); }
+
+.cand-wrap { overflow-x: auto; }
+#cand-table td { white-space: normal; }
+#cand-table td.ctx { font-family: var(--sans); font-size: 13px; min-width: 260px; max-width: 460px; text-align: left; }
+#cand-table td.ctx b { font-weight: 600; }
+#cand-table td.ctx .fut { color: var(--faint); }
+.g { display: inline-block; min-width: 22px; text-align: center; font: 600 12px/1 var(--mono); padding: 4px 5px; border-radius: 4px; }
+.g-A { background: var(--good-soft); color: var(--good); } .g-B { background: var(--amb-soft); color: var(--amb); } .g-N { background: var(--bad-soft); color: var(--bad); }
+.v-ok { color: var(--good); } .v-no { color: var(--bad); } .v-un { color: var(--amb); }
+.empty { color: var(--faint); font-size: 13px; padding: 10px 0; }
+
+@media (max-width: 960px) {
+  .metrics-grid { grid-template-columns: 1fr; }
+  .browser { grid-template-columns: 1fr; }
+  .rail { position: static; max-height: none; }
+  .stream-list { max-height: 280px; }
+}
+@media (max-width: 520px) {
+  .tl-grid { grid-template-columns: 64px minmax(0, 1fr); }
+  .tl-labels div { font-size: 10px; left: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div class="eyebrow">semcommit v0.2 · rack4 GPU 1장 · 2026-09-24</div>
+    <h1>SEM_END 타임라인</h1>
+    <p class="lede">E2 스트리밍 ASR 에 <code>&lt;SEM_END&gt;</code>·<code>&lt;TURN_END&gt;</code> 를 학습한 r1·r2 가 평가 스트림의 어디에서 의미를 확정했는지, 작은 LLM 교사가 매긴 후보 등급(A 확정 · B 애매 · N 금지)과 나란히 본다. 80 ms 청크마다 모델이 <code>&lt;NEXT_AUDIO&gt;</code> 와 경쟁해 커밋을 낸다.</p>
+  </header>
+
+  <section id="metrics" aria-labelledby="metrics-h">
+    <div class="sec-head">
+      <h2 id="metrics-h">설정별 지표</h2>
+      <div class="seg" role="group" aria-label="평가 언어">
+        <button type="button" id="lang-en" data-lang="English" aria-pressed="true">영어 · LibriSpeech test-clean</button>
+        <button type="button" id="lang-ko" data-lang="Korean" aria-pressed="false">한국어 · Kspon eval_clean</button>
+      </div>
+    </div>
+    <div class="metrics-grid">
+      <figure class="panel chart-card" style="margin:0">
+        <div class="chart-top">
+          <h3>정밀도–재현율 (δ 청크 창 late 2)</h3>
+          <div class="seg" role="group" aria-label="정밀도 기준">
+            <button type="button" id="pmode-a" data-pmode="P" aria-pressed="true">A 기준</button>
+            <button type="button" id="pmode-b" data-pmode="P_exB" aria-pressed="false">B 위 제외</button>
+          </div>
+        </div>
+        <svg id="pr-chart" viewBox="0 0 380 300" role="img" aria-label="모델·설정별 정밀도 재현율 산점도"></svg>
+        <figcaption id="pr-caption">점을 누르면 아래 스트림 뷰의 모델·설정이 바뀐다.</figcaption>
+      </figure>
+      <div class="panel findings">
+        <h3>이 실행에서 읽히는 것</h3>
+        <ul>
+          <li><b>ASR 은 지켜졌다.</b> 학습 전 E2+토큰 대비 영어 WER 5.27 → 4.68 %, 한국어 CER 12.72 → 12.80 % (δ4).</li>
+          <li><b>한계는 라벨이다.</b> 두 작은 교사의 판정 일치도 κ 0.12–0.21. 영어 문장 끝(LibriSpeech-PC) 353 개 중 A 는 63 개(18 %)뿐이고 201 개는 B 로 가려졌다. 모델 커밋이 문장 끝에 놓인 비율(P_pc 0.62–0.67)은 A 라벨 자체(0.68)와 같다.</li>
+          <li><b>한국어 A 의 90 % 는 발화 끝이다.</b> 발화 끝 A 재현 0.80, 중간 A 는 9 개 중 2 개.</li>
+          <li><b>TURN 은 길이를 외웠다.</b> 영어 학습 스트림 대부분(p10–p90)이 24–34 s 라 22–26 s 부근에서 말하는 도중에도 TURN 을 낸다.</li>
+          <li><b>N(금지) 라벨의 절반은 좋은 경계였다</b>(블라인드 점검). N 상향 가중을 끈 r2 가 영어에서 조금 낫다.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="table-wrap panel"><table id="metric-table" aria-label="설정별 지표"></table></div>
+    <p class="note" id="metric-note"></p>
+    <details class="more">
+      <summary>라벨 통계 · 블라인드 점검</summary>
+      <div class="more-grid">
+        <div class="panel"><h3>교사 라벨 (Stage A 후보 → 등급)</h3><table id="label-table"></table><p class="note">발화 끝 A = 스트림 마지막 단어 뒤 A(미래 관측 없음). κ = B 단계 두 판정자 일치도.</p></div>
+        <div class="panel"><h3>블라인드 점검 (등급 숨김, 두 관점 합의)</h3><table id="spot-table"></table><p class="note">Claude 판정자 두 관점(규칙 적용 annotator · 커밋을 받는 LLM)이 같은 답을 낸 경우만 셌다. 사람 주석이 아니다.</p></div>
+      </div>
+    </details>
+  </section>
+
+  <section id="streams" aria-labelledby="streams-h">
+    <div class="sec-head">
+      <h2 id="streams-h">스트림</h2>
+      <p>오류 유형을 골고루 덮도록 고른 30 개 — 무작위 표본이 아니다.</p>
+    </div>
+    <div class="browser">
+      <nav class="rail" aria-label="스트림 목록">
+        <label class="ctl" for="tag-filter">유형으로 거르기
+          <select id="tag-filter"></select>
+        </label>
+        <div class="stream-list" id="stream-list"></div>
+      </nav>
+      <article class="detail" id="detail" aria-live="polite">
+        <div class="detail-head">
+          <div class="idline"><h3 id="d-id"></h3><span class="meta" id="d-meta"></span></div>
+          <div class="chips" id="d-tags"></div>
+        </div>
+        <div class="controls">
+          <label class="ctl" for="model-select">모델<select id="model-select"></select></label>
+          <label class="ctl" for="config-select">디코드 설정<select id="config-select"></select></label>
+          <audio id="player" controls preload="metadata"></audio>
+        </div>
+        <div class="statline" id="d-stats"></div>
+        <div class="panel tl-card">
+          <div class="tl-grid">
+            <div class="tl-labels" id="tl-labels"></div>
+            <div class="tl-scroll" id="tl-scroll"><svg id="timeline" role="img" aria-label="참조 단어·후보 등급·모델 출력·확률 타임라인"></svg></div>
+          </div>
+          <div class="tl-foot" id="tl-legend"></div>
+        </div>
+        <div class="tx-grid">
+          <div class="panel tx"><div class="tx-label"><span>참조 전사 + 교사 후보 등급</span><span id="ref-note"></span></div><div class="tx-body" id="ref-tx"></div><div class="pc" id="pc-tx"></div></div>
+          <div class="panel tx"><div class="tx-label"><span id="hyp-label">모델 출력</span><span id="hyp-err"></span></div><div class="tx-body" id="hyp-tx"></div></div>
+        </div>
+        <div class="panel cand-wrap" style="padding:8px 12px 12px">
+          <h3 style="margin:6px 0 8px">후보 경계 (Stage A → B 판정 → C 미래 안정성 → 등급)</h3>
+          <table id="cand-table"></table>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
+
+<script id="bundle" type="application/json">__DATA__</script>
+<script>
+(() => {
+  "use strict";
+  const D = JSON.parse(document.getElementById("bundle").textContent);
+  const $ = (id) => document.getElementById(id);
+  const NS = "http://www.w3.org/2000/svg";
+  const CH = D.chunk_s;
+  const RUN_LABEL = { r1: "r1 · δ4", r2: "r2 · δ4 · N 가중 끔", r1d2: "r1 · δ2", base: "E2+토큰 · 학습 없음" };
+  const RUN_ORDER = ["r1", "r2", "r1d2", "base"];
+  const CLS = {
+    A: { label: "A 적중", color: "--good" }, B: { label: "B 위(애매)", color: "--amb" }, N: { label: "N 위(금지)", color: "--bad" },
+    inside: { label: "후보 밖", color: "--bad" }, end_nocand: { label: "후보 없는 발화 끝", color: "--miss" },
+    dup: { label: "중복", color: "--faint" }, mid_word: { label: "단어 중간", color: "--faint" }, no_word: { label: "첫 단어 전", color: "--faint" },
+  };
+  const TAG_COLOR = { "A 적중": "--good", "B 위 commit": "--amb", "N 위 commit": "--bad", "후보 밖 commit": "--bad", "후보 없는 발화 끝 commit": "--miss",
+    "TURN 조기": "--turn", "A 놓침": "--faint", "중간 A": "--accent", "블라인드 점검 표본": "--r2" };
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const fmt = (x, d = 2) => (x === null || x === undefined || Number.isNaN(x)) ? "–" : Number(x).toFixed(d);
+  const cfgLabel = (c) => c.replace("bias=", "bias ").replace("theta=", "θ ");
+  const cfgSort = (a, b) => { const k = (c) => [c.startsWith("theta") ? 1 : 0, parseFloat(c.split("=")[1])]; const x = k(a), y = k(b); return x[0] - y[0] || x[1] - y[1]; };
+  const setOf = (lang) => Object.keys(D.sets).find((k) => D.sets[k].lang === lang);
+  const shortId = (id) => id.replace(/^ks-eval_clean-utt-KsponSpeech_/, "").replace(/^ls-test-clean-/, "");
+  const emitT = (k, K) => (Math.min(k, K - 1) + 1) * CH;
+
+  const state = { lang: "English", pmode: "P", run: "r1", cfg: D.main_config, stream: null, tag: "" };
+
+  // ───────── metrics
+  function pcFor(run, cfg) {
+    const pc = (D.summary.pc || {});
+    const key = { r1: "r1-d4-ls-test", r2: "r2-d4-ls-test", base: "base-d4-ls-test", r1d2: "r1-d2-ls-test" }[run];
+    return pc[key] && pc[key].configs ? pc[key].configs[cfg] : null;
+  }
+  function drawPR() {
+    const svg = $("pr-chart"); svg.textContent = "";
+    const W = 380, H = 300, L = 44, R = 14, T = 12, B = 38, pw = W - L - R, ph = H - T - B;
+    const rep = D.sets[setOf(state.lang)].reports;
+    const all = ["r1", "r2", "r1d2"].flatMap((run) => (rep[run] || []).filter((r) => r.P !== null && r.R !== null));
+    const lim = (v) => Math.min(1, Math.ceil((v + 0.04) * 10) / 10);
+    const xmax = lim(Math.max(0.1, ...all.map((r) => r.R))), ymax = lim(Math.max(0.1, ...all.map((r) => Math.max(r.P ?? 0, r.P_exB ?? 0))));
+    const X = (r) => L + pw * r / xmax, Y = (p) => T + ph * (1 - p / ymax);
+    const add = (tag, attrs, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; svg.appendChild(e); return e; };
+    const ticks = (mx) => { const st = mx > 0.5 ? 0.2 : 0.1, out = []; for (let v = 0; v <= mx + 1e-9; v += st) out.push(Math.round(v * 10) / 10); return out; };
+    for (const v of ticks(ymax)) { add("line", { x1: X(0), x2: X(xmax), y1: Y(v), y2: Y(v), stroke: css("--rule"), "stroke-width": 1 }); add("text", { x: L - 6, y: Y(v) + 4, "text-anchor": "end" }, v.toFixed(1)); }
+    for (const v of ticks(xmax)) { add("line", { x1: X(v), x2: X(v), y1: Y(0), y2: Y(ymax), stroke: css("--rule"), "stroke-width": 1 }); add("text", { x: X(v), y: H - B + 16, "text-anchor": "middle" }, v.toFixed(1)); }
+    add("text", { x: L + pw / 2, y: H - 6, "text-anchor": "middle" }, "재현율 R");
+    const yl = add("text", { x: 12, y: T + ph / 2, "text-anchor": "middle", transform: `rotate(-90 12 ${T + ph / 2})` }, state.pmode === "P" ? "정밀도 P (A 기준)" : "정밀도 P (B 위 제외)");
+    const style = { r1: { c: css("--accent"), shape: "circle" }, r2: { c: css("--r2"), shape: "square" }, r1d2: { c: css("--accent"), shape: "ring" } };
+    for (const run of ["r1d2", "r2", "r1"]) {
+      const rows = (rep[run] || []).filter((r) => r.P !== null && r.R !== null);
+      const bias = rows.filter((r) => r.mode === "bias").sort((a, b) => a.value - b.value);
+      if (bias.length > 1) add("polyline", { points: bias.map((r) => `${X(r.R)},${Y(r[state.pmode] ?? 0)}`).join(" "), fill: "none", stroke: style[run].c, "stroke-width": 1.5, "stroke-opacity": .55, "stroke-dasharray": run === "r1d2" ? "3 3" : "" });
+      for (const r of rows) {
+        const x = X(r.R), y = Y(r[state.pmode] ?? 0), s = style[run], sel = state.run === run && state.cfg === r.config;
+        let m;
+        if (r.mode === "threshold") m = add("path", { d: `M${x},${y - 5} L${x + 5},${y + 4} L${x - 5},${y + 4} Z`, fill: s.c, "fill-opacity": .75 });
+        else if (s.shape === "square") m = add("rect", { x: x - 4, y: y - 4, width: 8, height: 8, fill: s.c });
+        else if (s.shape === "ring") m = add("circle", { cx: x, cy: y, r: 4, fill: css("--surface"), stroke: s.c, "stroke-width": 1.8 });
+        else m = add("circle", { cx: x, cy: y, r: 4.5, fill: s.c });
+        m.classList.add("pt"); m.setAttribute("tabindex", "0"); m.setAttribute("role", "button"); m.setAttribute("aria-pressed", String(sel));
+        m.dataset.run = run; m.dataset.cfg = r.config;
+        const t = document.createElementNS(NS, "title"); t.textContent = `${RUN_LABEL[run]} ${cfgLabel(r.config)} — P ${fmt(r.P)} · P(B 제외) ${fmt(r.P_exB)} · R ${fmt(r.R)} · commit ${r.n_hyp}`; m.appendChild(t);
+        m.setAttribute("aria-label", t.textContent);
+        const pick = () => { state.run = run; state.cfg = r.config; syncAll(); const f = $("pr-chart").querySelector(`.pt[data-run="${run}"][data-cfg="${CSS.escape(r.config)}"]`); if (f) f.focus(); };
+        m.addEventListener("click", pick); m.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+        if (sel) add("circle", { cx: x, cy: y, r: 9, fill: "none", stroke: css("--ink"), "stroke-width": 1.5 });
+        if (r.config === "bias=0") add("text", { x: x + 8, y: y + ({ r1: -7, r2: -7, r1d2: 15 }[run]), style: `fill:${s.c}` }, run === "r1d2" ? "δ2 b0" : `${run} b0`);
+      }
+    }
+    // legend
+    let lx = L + 6; const ly = T + 10;
+    for (const [run, lab] of [["r1", "r1"], ["r2", "r2"], ["r1d2", "r1 δ2"]]) {
+      const s = style[run];
+      if (s.shape === "square") add("rect", { x: lx, y: ly - 4, width: 8, height: 8, fill: s.c });
+      else if (s.shape === "ring") add("circle", { cx: lx + 4, cy: ly, r: 4, fill: css("--surface"), stroke: s.c, "stroke-width": 1.8 });
+      else add("circle", { cx: lx + 4, cy: ly, r: 4.5, fill: s.c });
+      add("text", { x: lx + 12, y: ly + 4 }, lab); lx += 56;
+    }
+    add("path", { d: `M${lx + 4},${ly - 5} L${lx + 9},${ly + 4} L${lx - 1},${ly + 4} Z`, fill: css("--muted") }); add("text", { x: lx + 14, y: ly + 4 }, "θ 설정");
+    $("pr-caption").textContent = `선: bias −2 → +2 순서. 세모: 확률 임계값 θ. 점을 누르면 아래 스트림의 모델·설정이 바뀐다.`;
+  }
+  function drawMetricTable() {
+    const set = setOf(state.lang), rep = D.sets[set].reports, en = state.lang === "English";
+    const asrKey = en ? "wer" : "cer_nospace";
+    let h = `<thead><tr><th class="l">모델</th><th class="l">설정</th><th>commit</th><th>P</th><th>P(B 제외)</th><th>R</th><th>F1</th><th>지연 p50</th><th>PCR</th><th>커밋 중 B 위</th><th>N 후보 커밋률</th>${en ? "<th>P_pc</th><th>R_pc</th>" : ""}<th>TURN P</th><th>TURN R</th><th>TURN 조기</th><th>${en ? "WER %" : "CER %"}</th></tr></thead><tbody>`;
+    for (const run of RUN_ORDER) {
+      const rows = (rep[run] || []).slice().sort((a, b) => cfgSort(a.config, b.config));
+      if (!rows.length) continue;
+      h += `<tr class="grp"><td class="l" colspan="${en ? 17 : 15}">${esc(RUN_LABEL[run])}</td></tr>`;
+      for (const r of rows) {
+        const pc = en ? pcFor(run, r.config) : null, sel = state.run === run && state.cfg === r.config;
+        h += `<tr tabindex="0" data-run="${run}" data-cfg="${esc(r.config)}" class="${sel ? "sel" : ""}" aria-selected="${sel}" aria-label="${esc(RUN_LABEL[run] + " " + cfgLabel(r.config))} 선택"><td class="l sans">${esc(run)}</td><td class="l">${esc(cfgLabel(r.config))}</td><td>${r.n_hyp}</td><td>${fmt(r.P)}</td><td>${fmt(r.P_exB)}</td><td>${fmt(r.R)}</td><td>${fmt(r.F1)}</td><td>${r.lat50 == null ? "–" : fmt(r.lat50) + " s"}</td><td>${fmt(r.pcr)}</td><td>${fmt(r.B_share)}</td><td>${fmt(r.N_rate)}</td>${en ? `<td>${fmt(pc && pc.P_pc)}</td><td>${fmt(pc && pc.R_pc)}</td>` : ""}<td>${fmt(r.turn_P)}</td><td>${fmt(r.turn_R)}</td><td>${r.turn_early ?? "–"}</td><td>${fmt(r.asr[asrKey])}</td></tr>`;
+      }
+    }
+    $("metric-table").innerHTML = h + "</tbody>";
+    for (const tr of $("metric-table").querySelectorAll("tr[data-run]")) {
+      const pick = () => { const run = tr.dataset.run, cfg = tr.dataset.cfg; state.run = run; state.cfg = cfg; syncAll(); const f = $("metric-table").querySelector(`tr[data-run="${run}"][data-cfg="${CSS.escape(cfg)}"]`); if (f) f.focus(); };
+      tr.addEventListener("click", pick); tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    }
+    const orc = en ? (D.summary.pc || {})["oracle-d4-ls-test"] : null;
+    $("metric-note").innerHTML = (en ? `영어 ${D.sets[set].reports.r1[0].n_streams} 스트림, A 참조 98 개. P_pc·R_pc = 커밋이 LibriSpeech-PC 문장 끝(. ? !)에 놓인 비율 · 문장 끝 353 개 중 커밋된 비율 — LLM 라벨과 독립. A 라벨 자체의 P_pc ${fmt(orc && orc.configs.oracle.P_pc)} · R_pc ${fmt(orc && orc.configs.oracle.R_pc)}.`
+      : `한국어 ${D.sets[set].reports.r1[0].n_streams} 스트림, A 참조 89 개(80 개가 발화 끝). CER 은 공백 무시.`) + " 행을 누르면 스트림 뷰의 모델·설정이 바뀐다. PCR = 커밋 중 N 위·후보 밖 비율. 커밋 중 B 위 = 가려진(B) 경계에 놓인 커밋 비율. N 후보 커밋률 = N 후보 중 커밋된 비율(커밋 중 비율이 아님). 지연 = 커밋 시각 − 참조 단어 끝.";
+  }
+  function drawSideTables() {
+    const L = D.summary.labels || {};
+    let h = "<thead><tr><th class='l'>셋</th><th>후보</th><th>A</th><th>발화 끝 A</th><th>B</th><th>N</th><th>κ</th></tr></thead><tbody>";
+    for (const k of ["ls-train", "ls-test", "ks-train", "ks-eval"]) {
+      const r = L[k]; if (!r) continue;
+      h += `<tr><td class="l">${k}</td><td>${r.candidates}</td><td>${r.A}</td><td>${r.future_unobserved_A}</td><td>${r.B}</td><td>${r.N}</td><td>${fmt(Object.values(r.kappa || {})[0])}</td></tr>`;
+    }
+    $("label-table").innerHTML = h + "</tbody>";
+    const S = D.summary.spot || []; const grid = {};
+    for (const r of S) { const k = `${r.set}|${r.grade}`; (grid[k] = grid[k] || { n: 0 }); grid[k][r.verdict] = (grid[k][r.verdict] || 0) + r.n; grid[k].n += r.n; }
+    h = "<thead><tr><th class='l'>셋·등급</th><th>n</th><th>둘 다 확정 OK</th><th>둘 다 NOT OK</th><th>갈림·불확실</th></tr></thead><tbody>";
+    for (const k of ["ls-test|A", "ks-eval|A", "ls-test|N", "ks-eval|N", "ls-test|B", "ks-eval|B"]) {
+      const g = grid[k]; if (!g) continue;
+      h += `<tr><td class="l">${k.replace("|", " · ")}</td><td>${g.n}</td><td class="v-ok">${g.COMMIT_OK || 0}</td><td class="v-no">${g.NOT_OK || 0}</td><td class="v-un">${(g.SPLIT || 0) + (g.UNSURE || 0)}</td></tr>`;
+    }
+    $("spot-table").innerHTML = h + "</tbody>";
+  }
+
+  // ───────── stream list
+  const ALL_TAGS = [...new Set(D.streams.flatMap((s) => s.tags))];
+  function buildFilter() {
+    const sel = $("tag-filter");
+    sel.innerHTML = `<option value="">전체 (${D.streams.length})</option>` + ALL_TAGS.map((t) => `<option value="${esc(t)}">${esc(t)} (${D.streams.filter((s) => s.tags.includes(t)).length})</option>`).join("");
+    sel.addEventListener("change", () => { state.tag = sel.value; drawList(); });
+  }
+  function drawList() {
+    const box = $("stream-list"); box.textContent = "";
+    for (const lang of ["English", "Korean"]) {
+      const items = D.streams.filter((s) => s.lang === lang && (!state.tag || s.tags.includes(state.tag)));
+      if (!items.length) continue;
+      const g = document.createElement("div"); g.className = "grp-label"; g.textContent = lang === "English" ? `영어 · ${items.length}` : `한국어 · ${items.length}`; box.appendChild(g);
+      for (const s of items) {
+        const b = document.createElement("button"); b.type = "button"; b.className = "stream-item"; b.id = "item-" + s.id;
+        b.setAttribute("aria-current", state.stream === s ? "true" : "false");
+        b.innerHTML = `<span class="sid">${esc(shortId(s.id))}<span>${s.duration_s.toFixed(1)} s</span></span><span class="snip">${esc((s.ref_text || "").slice(0, 60))}</span><span class="dots">${s.tags.map((t) => `<span class="dot" title="${esc(t)}" style="background:var(${TAG_COLOR[t] || "--faint"})"></span>`).join("")}</span>`;
+        b.addEventListener("click", () => selectStream(s));
+        box.appendChild(b);
+      }
+    }
+  }
+
+  // ───────── detail
+  function modelView(s) {
+    const runs = RUN_ORDER.filter((r) => s.models[r] && Object.keys(s.models[r]).length);
+    if (!runs.includes(state.run)) state.run = runs[0];
+    const cfgs = Object.keys(s.models[state.run]).sort(cfgSort);
+    if (!cfgs.includes(state.cfg)) state.cfg = cfgs.includes(D.main_config) ? D.main_config : cfgs[0];
+    return { runs, cfgs, m: s.models[state.run][state.cfg], trace: s.models[state.run][D.main_config] || s.models[state.run][state.cfg] };
+  }
+  function fillControls(s, v) {
+    $("model-select").innerHTML = v.runs.map((r) => `<option value="${r}" ${r === state.run ? "selected" : ""}>${esc(RUN_LABEL[r])}</option>`).join("");
+    $("config-select").innerHTML = v.cfgs.map((c) => `<option value="${esc(c)}" ${c === state.cfg ? "selected" : ""}>${esc(cfgLabel(c))}</option>`).join("");
+  }
+  function candMap(s) { const m = {}; for (const c of s.candidates) m[c.after_word] = c; return m; }
+
+  function drawTimeline(s, v) {
+    const svg = $("timeline"); svg.textContent = "";
+    const m = v.m, K = m.K, dur = Math.max(s.duration_s, K * CH);
+    const pps = s.lang === "English" ? 100 : 120;
+    const W = Math.ceil(dur * pps) + 24, H = 250;
+    const X = (t) => 8 + t * pps;
+    svg.setAttribute("width", W); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const add = (tag, attrs, text, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) if (attrs[k] !== undefined) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; (parent || svg).appendChild(e); return e; };
+    const Y = { ref: 8, refRow: [20, 34, 48], cand: 62, link: [68, 94], hypRow: [110, 124, 138], evt: [96, 144], prob: [156, 216], axis: 236 };
+    const textW = (t) => { let w = 4; for (const ch of t) w += ch.charCodeAt(0) > 0x1100 ? 11 : 6.7; return w; };
+    const placer = (rows) => { const last = rows.map(() => -1e9); return (x, t) => { const w = textW(t); let j = last.findIndex((e) => e <= x - w); if (j < 0) j = last.indexOf(Math.min(...last)); last[j] = x; return rows[j]; }; };
+    const bands = [["참조 단어", Y.ref, 60], ["모델 출력", 90, 42], ["p(SEM) · p(TURN)", Y.prob[0], Y.prob[1] - Y.prob[0]]];
+    add("rect", { x: 0, y: 0, width: W, height: H, fill: css("--surface") });
+    add("rect", { x: 0, y: 94, width: W, height: 52, fill: css("--ground"), "fill-opacity": .6 });
+    for (let t = 0; t <= dur + 1e-6; t += 1) {
+      add("line", { x1: X(t), x2: X(t), y1: 4, y2: Y.axis - 8, stroke: css("--rule"), "stroke-width": t % 5 === 0 ? 1.2 : .6 });
+      add("text", { x: X(t), y: Y.axis + 6, "text-anchor": "middle", "font-size": 10.5, fill: css("--faint") }, `${t}s`);
+    }
+    if (s.duration_s < dur - 1e-3) add("rect", { x: X(s.duration_s), y: 4, width: X(dur) - X(s.duration_s), height: Y.axis - 12, fill: css("--sunk"), "fill-opacity": .7 });
+    const cand = candMap(s), words = s.words;
+    const t_last = words.length ? words[words.length - 1][1] : 0;
+    // reference words (label ends at word end time)
+    const refPlace = placer(Y.refRow);
+    words.forEach((w, i) => {
+      const x = X(w[1]), row = refPlace(x, w[0]);
+      add("line", { x1: x, x2: x, y1: row + 3, y2: Y.cand - 4, stroke: css("--rule"), "stroke-width": 1 });
+      const pc = w[3] === "SENT" ? "." : (w[3] === "CLAUSE" ? "," : "");
+      const t = add("text", { x: x - 2, y: row, "text-anchor": "end", "font-size": 11, fill: css("--ink") }, w[0]);
+      if (pc) add("tspan", { fill: css("--accent"), "font-weight": 700 }, pc, t);
+      const c = cand[i];
+      if (c) {
+        const col = css({ A: "--good", B: "--amb", N: "--bad" }[c.grade]);
+        if (c.grade === "A") add("path", { d: `M${x},${Y.cand - 5} l5,5 l-5,5 l-5,-5 z`, fill: col });
+        else if (c.grade === "B") add("path", { d: `M${x},${Y.cand - 5} l5,5 l-5,5 l-5,-5 z`, fill: css("--surface"), stroke: col, "stroke-width": 1.6 });
+        else add("path", { d: `M${x - 4},${Y.cand - 4} l8,8 M${x + 4},${Y.cand - 4} l-8,8`, stroke: col, "stroke-width": 2, fill: "none" });
+      }
+    });
+    // model words at emission time
+    const hypPlace = placer(Y.hypRow);
+    m.words.forEach((w) => {
+      const x = X(emitT(w[1], K)), row = hypPlace(x, w[0]);
+      add("text", { x: x - 2, y: row, "text-anchor": "end", "font-size": 11, fill: css("--muted") }, w[0]);
+    });
+    // SEM events: link from mapped reference word end to emission
+    for (const e of m.sem) {
+      const [k, , p, cls] = e, x = X(emitT(k, K)), col = css(CLS[cls].color);
+      if (p >= 0 && p < words.length) add("path", { d: `M${X(words[p][1])},${Y.link[0]} C${X(words[p][1])},${Y.link[0] + 14} ${x},${Y.link[1] - 14} ${x},${Y.link[1]}`, fill: "none", stroke: col, "stroke-width": 1.4, "stroke-opacity": .8 });
+      const bar = add("line", { x1: x, x2: x, y1: Y.evt[0], y2: Y.evt[1], stroke: col, "stroke-width": 3 });
+      add("title", {}, `<SEM_END> 청크 ${k} (${emitT(k, K).toFixed(2)} s) · ${CLS[cls].label}${p >= 0 && p < words.length ? ` · '${words[p][0]}' 뒤, 단어 끝 +${(emitT(k, K) - words[p][1]).toFixed(2)} s` : ""}`, bar);
+    }
+    for (const k of m.turn) {
+      const x = X(emitT(k, K)), col = css("--turn"), early = emitT(k, K) < t_last - 1e-6;
+      add("line", { x1: x, x2: x, y1: Y.evt[0] - 2, y2: Y.prob[1], stroke: col, "stroke-width": 2, "stroke-dasharray": "4 3" });
+      const f = add("path", { d: `M${x},${Y.evt[0] - 2} l12,5 l-12,5 z`, fill: col });
+      add("title", {}, `<TURN_END> 청크 ${k} (${emitT(k, K).toFixed(2)} s)${early ? " · 마지막 단어 끝 전(조기)" : ""}`, f);
+      if (early) add("text", { x: x + 14, y: Y.evt[0] + 7, "font-size": 10, fill: col }, "조기");
+    }
+    // probability lane
+    const tr = v.trace, [p0, p1] = Y.prob, ph = p1 - p0;
+    add("line", { x1: 0, x2: W, y1: p1, y2: p1, stroke: css("--rule") });
+    add("line", { x1: 0, x2: W, y1: p0, y2: p0, stroke: css("--rule"), "stroke-dasharray": "2 4" });
+    if (tr && tr.p_sem) {
+      const area = (arr) => { let d = `M${X(CH)},${p1}`; arr.forEach((v, k) => { d += ` L${X((k + 1) * CH)},${p1 - ph * v / 1000}`; }); return d + ` L${X((arr.length) * CH)},${p1} Z`; };
+      const line = (arr) => arr.map((v, k) => `${k ? "L" : "M"}${X((k + 1) * CH)},${p1 - ph * v / 1000}`).join(" ");
+      add("path", { d: area(tr.p_sem), fill: css("--accent"), "fill-opacity": .18 });
+      add("path", { d: line(tr.p_sem), fill: "none", stroke: css("--accent"), "stroke-width": 1.3 });
+      add("path", { d: line(tr.p_turn), fill: "none", stroke: css("--turn"), "stroke-width": 1.2, "stroke-opacity": .85 });
+      if (state.cfg.startsWith("theta")) { const th = parseFloat(state.cfg.split("=")[1]); add("line", { x1: 0, x2: W, y1: p1 - ph * th, y2: p1 - ph * th, stroke: css("--accent"), "stroke-dasharray": "6 4", "stroke-width": 1 }); }
+    } else add("text", { x: 14, y: p0 + 24, "font-size": 11, fill: css("--faint") }, "이 모델·설정의 확률 궤적 없음");
+    add("text", { x: 4, y: p0 + 10, "font-size": 9.5, fill: css("--faint") }, "1.0");
+    // playhead + click to seek
+    svg.classList.add("clickable");
+    svg.onclick = (ev) => { const r = svg.getBoundingClientRect(); const t = (ev.clientX - r.left) * (W / r.width); const p = $("player"); if (p.src) { p.currentTime = Math.max(0, (t - 8) / pps); if (p.paused) drawPlayhead(); } };
+    add("line", { id: "playhead", x1: X(0), x2: X(0), y1: 2, y2: Y.axis - 6, stroke: css("--ink"), "stroke-width": 1.5 });
+    svg.dataset.pps = pps;
+    // lane labels
+    const lab = $("tl-labels"); lab.style.height = H + "px";
+    lab.innerHTML = [[s.lang === "English" ? "참조 단어<br><span style='color:var(--faint)'>. 문장 끝 · , 절</span>" : "참조 단어", 14], ["교사 후보", Y.cand - 7], ["모델 출력<br>SEM · TURN", 104], ["p(SEM) · p(TURN)", Y.prob[0] + 6], ["초", Y.axis - 3]]
+      .map(([t, y]) => `<div style="top:${y}px">${t}</div>`).join("");
+  }
+  function drawPlayhead() {
+    const p = $("player"), svg = $("timeline"), ph = document.getElementById("playhead"); if (!ph) return;
+    const x = 8 + p.currentTime * parseFloat(svg.dataset.pps || 1); ph.setAttribute("x1", x); ph.setAttribute("x2", x);
+    const sc = $("tl-scroll"); if (!p.paused && (x < sc.scrollLeft + 40 || x > sc.scrollLeft + sc.clientWidth - 80)) sc.scrollLeft = Math.max(0, x - 120);
+  }
+  let raf = 0;
+  function tick() { drawPlayhead(); if (!$("player").paused) raf = requestAnimationFrame(tick); }
+
+  function drawLegend() {
+    const sw = (shape, col) => {
+      const c = css(col);
+      if (shape === "dA") return `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M6,1 l5,5 l-5,5 l-5,-5 z" fill="${c}"/></svg>`;
+      if (shape === "dB") return `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M6,1 l5,5 l-5,5 l-5,-5 z" fill="none" stroke="${c}" stroke-width="1.6"/></svg>`;
+      if (shape === "x") return `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2,2 l8,8 M10,2 l-8,8" stroke="${c}" stroke-width="2"/></svg>`;
+      if (shape === "flag") return `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M1,1 l10,5 l-10,5 z" fill="${c}"/></svg>`;
+      return `<svg width="6" height="12" viewBox="0 0 6 12"><rect x="1.5" y="0" width="3" height="12" fill="${c}"/></svg>`;
+    };
+    $("tl-legend").innerHTML = [
+      [sw("dA", "--good"), "A 후보(확정)"], [sw("dB", "--amb"), "B 후보(학습에서 가림)"], [sw("x", "--bad"), "N 후보(금지)"],
+      [sw("bar", "--good"), "SEM: A 적중"], [sw("bar", "--amb"), "SEM: B 위"], [sw("bar", "--bad"), "SEM: N 위·후보 밖"], [sw("bar", "--miss"), "SEM: 후보 없는 발화 끝"],
+      [sw("flag", "--turn"), "TURN"], ["<span style='color:var(--accent);font-weight:600'>곡선</span>", "p(SEM) (bias 0 디코드)"],
+    ].map(([a, b]) => `<span class="lg">${a}${b}</span>`).join("") + `<span class="lg">회색 띠 = 평가 패딩 무음 · 타임라인을 누르면 그 시각으로 재생 위치 이동</span>`;
+  }
+
+  function drawTranscripts(s, v) {
+    const cand = candMap(s), m = v.m;
+    $("ref-tx").innerHTML = s.words.map((w, i) => { const c = cand[i]; return esc(w[0]) + (c ? `<span class="mk mk-${c.grade}" title="${esc(c.why || "")}">${c.grade}</span>` : ""); }).join(" ");
+    $("pc-tx").textContent = s.pnc_text ? "구두점 전사(LibriSpeech-PC): " + s.pnc_text : "";
+    $("ref-note").textContent = `${s.words.length} 단어 · 후보 ${s.candidates.length}`;
+    const after = {}; for (const e of m.sem) (after[e[1]] = after[e[1]] || []).push(e[3]);
+    const tLast = s.words.length ? s.words[s.words.length - 1][1] : 0;
+    let html = (after[-1] || []).map((c) => `<span class="mk mk-${c}" title="${esc(CLS[c].label)}">SEM</span>`).join("");
+    html += m.words.map((w, i) => esc(w[0]) + (after[i] || []).map((c) => `<span class="mk mk-${c}" title="${esc(CLS[c].label)}">SEM</span>`).join("")).join(" ");
+    for (const k of m.turn) html += `<span class="mk mk-turn" title="청크 ${k}">TURN${emitT(k, m.K) < tLast - 1e-6 ? "·조기" : ""}</span>`;
+    $("hyp-tx").innerHTML = html || `<span class="empty">출력 없음</span>`;
+    $("hyp-label").textContent = `모델 출력 — ${RUN_LABEL[state.run]} · ${cfgLabel(state.cfg)}`;
+    const e = m.err, key = s.lang === "English" ? "wer" : "cer_nospace";
+    $("hyp-err").textContent = e && e[key] ? `${s.lang === "English" ? "WER" : "CER"} ${e[key][0]}/${e[key][1]} = ${(100 * e[key][0] / Math.max(1, e[key][1])).toFixed(1)} %` : "";
+  }
+  function drawStats(s, v) {
+    const m = v.m, cnt = {}; for (const e of m.sem) cnt[e[3]] = (cnt[e[3]] || 0) + 1;
+    const t_last = s.words.length ? s.words[s.words.length - 1][1] : 0;
+    const nA = s.candidates.filter((c) => c.grade === "A").length, hitA = new Set(m.sem.filter((e) => e[3] === "A").map((e) => e[2])).size;
+    const lats = m.sem.filter((e) => e[3] === "A").map((e) => emitT(e[0], m.K) - s.words[e[2]][1]);
+    let h = `<span class="stat">SEM ${m.sem.length}</span>`;
+    for (const c of Object.keys(CLS)) if (cnt[c]) h += `<span class="stat"><i style="background:var(${CLS[c].color})"></i>${CLS[c].label} ${cnt[c]}</span>`;
+    h += `<span class="stat">A 재현 ${hitA}/${nA}</span>`;
+    if (lats.length) h += `<span class="stat">A 적중 지연 ${(lats.reduce((a, b) => a + b, 0) / lats.length).toFixed(2)} s</span>`;
+    h += `<span class="stat"><i style="background:var(--turn)"></i>TURN ${m.turn.length ? m.turn.map((k) => emitT(k, m.K).toFixed(2) + " s").join(", ") : "없음"} · 마지막 단어 끝 ${t_last.toFixed(2)} s</span>`;
+    $("d-stats").innerHTML = h;
+  }
+  function drawCandTable(s, v) {
+    if (!s.candidates.length) { $("cand-table").innerHTML = `<tbody><tr><td class="l sans empty">Stage A 가 이 스트림에서 후보를 내지 않았다.</td></tr></tbody>`; return; }
+    const hits = {}; for (const e of v.m.sem) if (e[2] >= 0) (hits[e[2]] = hits[e[2]] || []).push(e);
+    const spot = {}; for (const x of s.spot || []) spot[x.after_word] = x;
+    let h = `<thead><tr><th class="l">단어#</th><th class="l">경계 (앞 ‖ 뒤)</th><th>등급</th><th class="l">근거</th><th class="l">B 판정</th><th class="l">C 관계</th><th class="l">커밋 (${esc(state.run)} ${esc(cfgLabel(state.cfg))})</th><th class="l">블라인드 점검</th></tr></thead><tbody>`;
+    for (const c of s.candidates) {
+      const i = c.after_word, pre = s.words.slice(Math.max(0, i - 6), i + 1).map((w) => w[0]).join(" "), fut = s.words.slice(i + 1, i + 6).map((w) => w[0]).join(" ");
+      const hs = hits[i] || [], sp = spot[i];
+      const verdict = sp ? Object.entries(sp.verdicts).map(([k, v]) => `<span class="${v === "COMMIT_OK" ? "v-ok" : v === "NOT_OK" ? "v-no" : "v-un"}" title="${esc(sp.notes[k] || "")}">${k === "annotator" ? "규칙" : "소비자"}: ${v === "COMMIT_OK" ? "OK" : v === "NOT_OK" ? "NO" : "?"}</span>`).join(" · ") : "–";
+      const B = c.B ? Object.entries(c.B).map(([k, v]) => `${k} ${v}`).join(" · ") : "–";
+      const C = c.C ? `${c.C.relation}${c.C.type ? "/" + c.C.type : ""}` : "–";
+      h += `<tr><td class="l">${i}</td><td class="ctx">…${esc(pre)} <b>‖</b> <span class="fut">${esc(fut) || "(발화 끝)"}</span></td><td><span class="g g-${c.grade}">${c.grade}</span></td><td class="l">${esc(c.why || "")}</td><td class="l">${esc(B)}</td><td class="l">${esc(C)}</td><td class="l">${hs.length ? hs.map((e) => `+${(emitT(e[0], v.m.K) - s.words[i][1]).toFixed(2)} s`).join(", ") : "–"}</td><td class="l">${verdict}</td></tr>`;
+    }
+    $("cand-table").innerHTML = h + "</tbody>";
+  }
+
+  function drawDetail() {
+    const s = state.stream; if (!s) return;
+    const v = modelView(s);
+    fillControls(s, v);
+    $("d-id").textContent = shortId(s.id);
+    $("d-meta").textContent = `${s.lang === "English" ? "영어" : "한국어"} · ${s.set} · ${s.duration_s.toFixed(2)} s · ${v.m.K} 청크 · δ${v.m.delta}`;
+    $("d-tags").innerHTML = s.tags.map((t) => `<span class="chip" style="box-shadow: inset 3px 0 0 var(${TAG_COLOR[t] || "--faint"})">${esc(t)}</span>`).join("");
+    drawStats(s, v); drawTimeline(s, v); drawTranscripts(s, v); drawCandTable(s, v); drawPlayhead();
+  }
+  function selectStream(s) {
+    const changed = state.stream !== s; state.stream = s;
+    if (s.lang !== state.lang) { state.lang = s.lang; drawMetricsAll(); }
+    for (const b of document.querySelectorAll(".stream-item")) b.setAttribute("aria-current", b.id === "item-" + s.id ? "true" : "false");
+    if (changed) { const p = $("player"); p.pause(); p.src = s.audio; $("tl-scroll").scrollLeft = 0; }
+    drawDetail();
+  }
+  function drawMetricsAll() {
+    $("lang-en").setAttribute("aria-pressed", String(state.lang === "English")); $("lang-ko").setAttribute("aria-pressed", String(state.lang === "Korean"));
+    $("pmode-a").setAttribute("aria-pressed", String(state.pmode === "P")); $("pmode-b").setAttribute("aria-pressed", String(state.pmode === "P_exB"));
+    drawPR(); drawMetricTable();
+  }
+  function syncAll() {
+    if (state.stream && state.stream.lang !== state.lang) { const s = D.streams.find((x) => x.lang === state.lang); if (s) { selectStream(s); drawMetricsAll(); return; } }
+    drawDetail(); drawMetricsAll();
+  }
+
+  // ───────── wiring
+  for (const b of document.querySelectorAll("[data-lang]")) b.addEventListener("click", () => { state.lang = b.dataset.lang; syncAll(); });
+  for (const b of document.querySelectorAll("[data-pmode]")) b.addEventListener("click", () => { state.pmode = b.dataset.pmode; drawMetricsAll(); });
+  $("model-select").addEventListener("change", (e) => { state.run = e.target.value; syncAll(); });
+  $("config-select").addEventListener("change", (e) => { state.cfg = e.target.value; syncAll(); });
+  const player = $("player");
+  player.addEventListener("play", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); });
+  player.addEventListener("seeked", drawPlayhead); player.addEventListener("pause", drawPlayhead);
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const redraw = () => { drawMetricsAll(); drawDetail(); drawLegend(); };
+  if (mq.addEventListener) mq.addEventListener("change", redraw);
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  buildFilter(); drawSideTables(); drawLegend(); drawList();
+  const first = D.streams.find((s) => s.lang === "English" && s.tags.includes("A 적중") && s.tags.includes("B 위 commit")) || D.streams[0];
+  selectStream(first); drawMetricsAll();
+})();
+</script>

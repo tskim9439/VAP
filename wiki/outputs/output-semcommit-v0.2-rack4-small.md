@@ -10,6 +10,8 @@ related: [output-phase1-report]
 
 # Semantic commit v0.2 — rack4 소규모 실행
 
+**뷰어**: https://claude.ai/artifact/WtqWnzpgXedbtHrpNCYJYC — 평가 스트림 30 개(영어 12 · 한국어 18, 오류 유형별 선택)의 오디오, 참조 단어·교사 후보(A/B/N)·LibriSpeech-PC 문장 끝, 모델·설정별 가설 단어와 `<SEM_END>`(분류별 색·참조 단어 끝→방출 지연 연결선)·`<TURN_END>`, p(SEM)/p(TURN) 궤적, 설정별 지표·P–R 산점도. 생성: `experiments/semcommit_viewer_bundle.py --html experiments/semcommit_viewer.template.html`.
+
 ## 질문
 계획서(`raw/inbox/streaming_asr_semantic_commit_plan.md`)의 semantic commit 시퀀스(`<SEM_END>`·`<TURN_END>` 를 `<NEXT_AUDIO>` 와 경쟁하는 순수 토큰으로)와
 3 단계 LLM 재라벨링(A 후보·B 인과 판정·C 미래 안정성)을, 작은 데이터와 작은 오픈 모델로 rack4 GPU 1 장에서 끝까지 돌리면 무엇이 되고 무엇이 막히는가.
