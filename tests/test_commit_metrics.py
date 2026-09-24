@@ -516,3 +516,37 @@ def test_pc_punct_after_and_commit_counts():
     c = cm.pc_commit_counts(words, "I went home, then I slept well.", hyp, ev)
     assert c == dict(commits=2, SENT=1, CLAUSE=1, NONE=0, n_sent=1, sent_hit=1)
     assert cm.pc_commit_counts(words, "I went home, then I slept well.", hyp, [])["commits"] == 0
+
+def test_gold_label_and_commit_counts():
+    """골드(전수 주석) 대조: 교사 A/B/N 을 골드 COMMIT/AMBIG/NO 에 대어 세고, 모델 확정은 map_events 위치로 hit/ambig/no·중복·지연을 센다."""
+    words = [dict(i=i, text=w, end_time=0.4 * (i + 1)) for i, w in enumerate("i went home and then i slept well".split())]
+    gold = dict(commit=[2, 7], ambig=[4])
+    cands = [dict(after_word=2, grade="A"), dict(after_word=3, grade="N"), dict(after_word=4, grade="B"), dict(after_word=7, grade="N")]
+    c = cm.gold_label_counts(gold, cands); f = cm.finalize_gold_labels(c)
+    assert (c["gold_commit"], c["cand_at_commit"], c["A_at_commit"], c["N_at_commit"], c["N_at_no"], c["B_at_ambig"]) == (2, 2, 1, 1, 1, 1)
+    assert f["A_precision"] == 1.0 and f["A_recall"] == 0.5 and f["cand_recall"] == 1.0 and f["N_precision"] == 0.5
+    hyp = "i went home and then i slept well".split(); K = 40
+    ev = [dict(id=SEM, k=10, after=2), dict(id=SEM, k=11, after=2), dict(id=SEM, k=14, after=4), dict(id=SEM, k=16, after=5), dict(id=SEM, k=30, after=7)]
+    g = cm.gold_commit_counts(words, gold, hyp, ev, K=K); r = cm.finalize_gold_commits(g)
+    assert (g["hit"], g["dup"], g["at_ambig"], g["at_no"]) == (2, 1, 1, 1) and g["lat"] == [round(cm.emit_time(10, K) - 1.2, 4), round(cm.emit_time(30, K) - 3.2, 4)]
+    assert r["P"] == 0.5 and r["R"] == 1.0 and r["PCR_gold"] == 0.4                       # P = 2/(5−1), 오류 = no 1 + 중복 1
+
+def test_gold_cli_merge_adjudication_and_scoring(tmp_path):
+    """merge: 일치 → 그대로, 불일치 → 판정(없으면 AMBIG·판정 패킷), κ·COMMIT F1; score-labels·score-eval 이 골드를 읽는다."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("semcommit_gold", ROOT / "experiments/semcommit_gold.py"); g = importlib.util.module_from_spec(spec); spec.loader.exec_module(g)
+    row = mk_row("s1", "English", [("i", 0.4, [], 1), ("went", 0.8, [], 1), ("home", 1.2, [], 1), ("then", 1.6, [], 1), ("slept", 2.0, [], 1)], 3.0)
+    wp = tmp_path / "w.jsonl"; wp.write_text(json.dumps(row) + "\n")
+    a = {"s1": {"commit": [2, 4], "ambig": [], "why": {"2": "done", "4": "end"}}}; b = {"s1": {"commit": [4], "ambig": [2], "why": {"2": "maybe"}}}
+    (tmp_path / "x.rules.json").write_text(json.dumps(a)); (tmp_path / "x.consumer.json").write_text(json.dumps(b))
+    out = tmp_path / "gold.jsonl"; pk = tmp_path / "adj.txt"
+    st = g.main(["merge", "--words", str(wp), "--ann", str(tmp_path / "x.rules.json"), str(tmp_path / "x.consumer.json"), "--out", str(out), "--adj-packet", str(pk)])
+    gold = json.loads(out.read_text()); assert gold["commit"] == [4] and gold["ambig"] == [2] and gold["how"]["2"] == "unresolved" and "i=2 (home)" in pk.read_text()
+    (tmp_path / "adj.json").write_text(json.dumps({"s1": {"2": "COMMIT"}}))
+    g.main(["merge", "--words", str(wp), "--ann", str(tmp_path / "x.rules.json"), str(tmp_path / "x.consumer.json"), "--adj", str(tmp_path / "adj.json"), "--out", str(out)])
+    gold = json.loads(out.read_text()); assert gold["commit"] == [2, 4] and gold["ambig"] == [] and gold["how"] == {"2": "adjudicated", "4": "agree"}
+    lp = tmp_path / "l.jsonl"; lp.write_text(json.dumps(dict(id="s1", lang="English", candidates=[cand(2, "A"), cand(3, "N")])) + "\n")
+    res = g.main(["score-labels", "--words", str(wp), "--labels", str(lp), "--gold", str(out)]); assert res["A_precision"] == 1.0 and res["A_recall"] == 0.5 and res["N_precision"] == 1.0
+    rec = dict(id="s1", config=dict(name="bias=0"), K=40, delta=4, event_ids=[SEM, None], hyp=dict(words=["i", "went", "home", "then", "slept"], events=[dict(id=SEM, k=20, after=2, mid_word=False)]))
+    sp = tmp_path / "r.streams.jsonl"; sp.write_text(json.dumps(rec) + "\n")
+    ev = g.main(["score-eval", "--words", str(wp), "--gold", str(out), "--streams", str(sp)])["r"]["bias=0"]; assert ev["hit"] == 1 and ev["P"] == 1.0 and ev["R"] == 0.5

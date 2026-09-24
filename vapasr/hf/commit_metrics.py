@@ -400,3 +400,49 @@ def pc_commit_counts(words: Sequence[dict], pnc_text: str, hyp_words: Sequence[s
     cats = [pa.get(p, "NONE") for p in pos]
     return dict(commits=len(pos), SENT=cats.count("SENT"), CLAUSE=cats.count("CLAUSE"), NONE=cats.count("NONE"),
                 n_sent=sum(v == "SENT" for v in pa.values()), sent_hit=sum(1 for p in pos if pa.get(p) == "SENT"))
+
+# ───────────────────────────── 골드셋(전수 주석) 대조 ─────────────────────────────
+# 골드 행 {id, commit:[i], ambig:[i]} — 스트림의 모든 단어 경계를 판정한 것(목록에 없는 경계 = NO). 교사 라벨(Stage A 후보에 한정)과 달리 후보 누락까지 잡는다.
+def gold_sets(g: Optional[dict]) -> Tuple[set, set]:
+    g = g or {}
+    return {int(i) for i in g.get("commit", [])}, {int(i) for i in g.get("ambig", [])}
+
+def gold_label_counts(gold: Optional[dict], cands: Sequence[dict]) -> dict:
+    """교사 라벨(labels.jsonl candidates, 등급 A/B/N) vs 골드 — 합산 가능한 카운트. cand_at_commit = 골드 확정 자리가 Stage A 후보였던 수(후보 재현)."""
+    C, Am = gold_sets(gold); grade = {int(c["after_word"]): _grade(c) for c in cands}
+    out = dict(gold_commit=len(C), gold_ambig=len(Am), cand=len(grade), cand_at_commit=len(set(grade) & C))
+    for g in ("A", "B", "N"):
+        P = {p for p, x in grade.items() if x == g}
+        out.update({g: len(P), f"{g}_at_commit": len(P & C), f"{g}_at_ambig": len(P & Am), f"{g}_at_no": len(P - C - Am)})
+    return out
+
+def finalize_gold_labels(c: dict) -> dict:
+    """A 정밀도(골드 AMBIG 자리 제외)·A 재현율·후보 재현율·N 정밀도(= 골드 NO 비율, AMBIG 제외)·B 중 골드 확정 비율."""
+    r = lambda a, b: round(a / b, 4) if b else None
+    return dict(c, A_precision=r(c["A_at_commit"], c["A"] - c["A_at_ambig"]), A_recall=r(c["A_at_commit"], c["gold_commit"]), cand_recall=r(c["cand_at_commit"], c["gold_commit"]),
+                N_precision=r(c["N_at_no"], c["N"] - c["N_at_ambig"]), B_commit_share=r(c["B_at_commit"], c["B"]))
+
+def gold_commit_counts(words: Sequence[dict], gold: Optional[dict], hyp_words: Sequence[str], events: Sequence[dict], ref_k: Optional[Sequence[int]] = None,
+                       K: Optional[int] = None, norm: Callable[[str], str] = norm_word) -> dict:
+    """모델 <SEM_END>(map_events 로 '참조 단어 p 뒤' 에 사상) vs 골드 — 합산 가능한 카운트. 단어 중간·첫 단어 전·같은 자리 중복은 text_position_metrics 와 같은 규칙.
+    hit = 골드 COMMIT 자리, at_ambig = 골드 AMBIG(정밀도에서 뺀다), at_no = 그 밖(조기·오확정). lat = 맞힌 확정의 (방출 시각 − 그 단어 끝)."""
+    C, Am = gold_sets(gold); ws = sorted(words, key=lambda w: int(w["i"]))
+    pos = map_events([w["text"] for w in ws], hyp_words, events, ref_k, K, norm)
+    out = dict(n_hyp=len(events), hit=0, at_ambig=0, at_no=0, dup=0, mid_word=0, no_word=0, gold_commit=len(C), lat=[])
+    seen = set()
+    for ev, p in zip(events, pos):
+        if ev.get("mid_word"): out["mid_word"] += 1; continue
+        if p < 0: out["no_word"] += 1; continue
+        if p in seen: out["dup"] += 1; continue
+        seen.add(p)
+        if p in C: out["hit"] += 1; out["lat"].append(round(emit_time(int(ev["k"]), K) - float(ws[p]["end_time"]), 4))
+        elif p in Am: out["at_ambig"] += 1
+        else: out["at_no"] += 1
+    return out
+
+def finalize_gold_commits(c: dict) -> dict:
+    """P = hit ÷ (확정 − 골드 AMBIG 자리) (중복·단어 중간·첫 단어 전은 오류로 셈), R = hit ÷ 골드 COMMIT, F1, PCR_gold = (골드 NO + 단어 중간 + 첫 단어 전 + 중복) ÷ 확정."""
+    den = c["n_hyp"] - c["at_ambig"]; P = c["hit"] / den if den else None; R = c["hit"] / c["gold_commit"] if c["gold_commit"] else None
+    bad = c["at_no"] + c["mid_word"] + c["no_word"] + c["dup"]
+    return dict({k: v for k, v in c.items() if k != "lat"}, P=None if P is None else round(P, 4), R=None if R is None else round(R, 4), F1=round(_f1(P, R), 4) if P is not None and R is not None else None,
+                PCR_gold=round(bad / c["n_hyp"], 4) if c["n_hyp"] else None, latency_s=latency_stats(c["lat"]))
