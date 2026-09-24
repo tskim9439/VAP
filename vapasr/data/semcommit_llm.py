@@ -1004,8 +1004,44 @@ def response_unit(words, i, lang):
     j = i - 1
     while j >= 0 and "punct_final" not in (words[j].get("tags") or []):
         j -= 1
-    unit = [re.sub(r"[^\w'-]", "", str(w["text"]).lower()) for w in words[j + 1:i + 1]]
+    unit = [_tok(w["text"]) for w in words[j + 1:i + 1]]
     return bool(unit) and all(u in toks for u in unit)
+
+
+# Rule negatives (recipe v0.3.3): word ends gold v1 marks NO by convention, graded N (hard negative) whether or not they are candidates.
+KO_CONNECTIVE_ENDINGS = ("니까", "고", "서", "면", "지만", "가지고", "가지구", "갖고", "다가", "면서")
+KO_NEUDE = ("는데", "은데", "던데")     # mid-stream = NO in gold v1, but a turn ending in -는데 (trailing off) is AMBIG → conn_mid only
+KO_FINAL_GO = ("더라고", "다고", "라고", "자고", "냐고")   # sentence-final -고 (retrospective / quotative), not a connective
+NEG_RULES = ("reply_prefix", "conn_final", "conn_mid")
+
+
+def _tok(t):
+    return re.sub(r"[^\w'-]", "", str(t).lower())
+
+
+def rule_negatives(stream, rules=NEG_RULES):
+    """{i: rule} for recipe v0.3.3 rule negatives (gold v1 COMMIT / AMBIG / NO in brackets). reply_prefix: every word of a
+    stream-initial run of reply words (RESPONSE_TOKENS) except the stream's last word [0/0/111 Korean, 0/0/6 English];
+    conn_final: a Korean stream's last word ending in a connective ending (KO_CONNECTIVE_ENDINGS, not a sentence-final -고) with no
+    sentence-final punctuation [1/2/54]; conn_mid: an earlier Korean word ending in a connective ending or -는데, unpunctuated [0/5/494]."""
+    words, lang, out = stream["words"], stream.get("lang"), {}
+    if "reply_prefix" in rules:
+        toks = RESPONSE_TOKENS.get(lang, ())
+        for p, w in enumerate(words[:-1]):
+            if _tok(w["text"]) not in toks:
+                break
+            out[p] = "reply_prefix"
+    def conn(w, endings):
+        t = _tok(w["text"])
+        return "punct_final" not in (w.get("tags") or []) and not t.endswith(KO_FINAL_GO) and any(t.endswith(e) and len(t) > len(e) for e in endings)
+    if lang == "Korean" and words:
+        if "conn_final" in rules and conn(words[-1], KO_CONNECTIVE_ENDINGS):
+            out[len(words) - 1] = "conn_final"
+        if "conn_mid" in rules:
+            for i, w in enumerate(words[:-1]):
+                if i not in out and conn(w, KO_CONNECTIVE_ENDINGS + KO_NEUDE):
+                    out[i] = "conn_mid"
+    return out
 
 
 def branch_of(f):
@@ -1032,16 +1068,19 @@ def grade_v3(f, lang, thresholds=None):
     return "B", "+".join(why)
 
 
-def build_labels_v3(streams, a_rows, b_rows, c_rows, judges=None, extra=EXTRA_SOURCES, thresholds=None, turn_end=False):
+def build_labels_v3(streams, a_rows, b_rows, c_rows, judges=None, extra=EXTRA_SOURCES, thresholds=None, turn_end=False, neg_rules=NEG_RULES):
     """Recipe v0.3 labels.jsonl rows + stats: candidates = Stage A ∪ extra sources, grade_v3 per candidate. Same row fields
     as v0.2 (grade/why/stageA/B/C) plus p_safe/p_safe_mean/p_rev/punct/sources, so SemCommitDataset and the metrics read them
-    unchanged. Stage C rows must use next_candidate = next Stage A boundary (stage_c_items) — checked like v0.2."""
+    unchanged. Stage C rows must use next_candidate = next Stage A boundary (stage_c_items) — checked like v0.2.
+    neg_rules (v0.3.3, rule_negatives): those word ends are N (why rule_<name>) — a candidate's grade is overridden unless it is
+    already N, and a non-candidate gets an N row (stageA false, sources [rule_<name>]; SemCommitDataset gives it hardneg_weight).
+    neg_rules=() reproduces v0.3–v0.3.2."""
     judges = {**{k: tuple(v) for k, v in PRIMARY_JUDGES.items()}, **(judges or {})}
     cs, bc, cc = candidate_sets(streams, a_rows, extra), by_candidate(list(b_rows)), by_candidate(list(c_rows))
     a_out = {sid: out for sid, (_, out) in candidates_of(a_rows).items()}
     labels, problems, seen = [], [], set()
     st = dict(recipe=RECIPE_V3, prompt_version=prompt_version(), judges={k: list(v) for k, v in judges.items()}, extra=list(extra),
-              thresholds=thresholds or V3_THRESHOLDS, streams=Counter(), by_lang={}, why={}, sources={})
+              thresholds=thresholds or V3_THRESHOLDS, neg_rules=list(neg_rules), streams=Counter(), by_lang={}, why={}, sources={})
     for s in streams:
         st["streams"]["total"] += 1
         if s["id"] in seen:
@@ -1051,19 +1090,23 @@ def build_labels_v3(streams, a_rows, b_rows, c_rows, judges=None, extra=EXTRA_SO
             st["streams"]["no_stageA"] += 1; continue
         lang = s["lang"]; L = st["by_lang"].setdefault(lang, Counter()); js = judges[lang]
         allc, sa, src = cs[s["id"]]; sas = sorted(sa); rows = []
-        for i in allc:
+        rn = rule_negatives(s, neg_rules) if neg_rules else {}
+        for i in sorted(set(allc) | set(rn)):
             crow = next(iter(sorted(cc.get((s["id"], i), {}).items())), (None, None))[1]
             if crow is not None and "next_candidate" in crow and crow["next_candidate"] != next_stage_a(sas, i):
                 problems.append(f"{s['id']}@{i}: Stage C next_candidate {crow['next_candidate']} != next Stage A boundary {next_stage_a(sas, i)}")
-            f = candidate_features(s, i, bc.get((s["id"], i), {}), crow, js, src[i], a_out.get(s["id"]))
-            g, w = grade_v3(f, lang, thresholds)
+            sources = list(src.get(i, [])) + ([f"rule_{rn[i]}"] if i in rn else [])
+            f = candidate_features(s, i, bc.get((s["id"], i), {}), crow, js, sources, a_out.get(s["id"]))
+            g, w = grade_v3(f, lang, thresholds) if i in src else ("N", f"rule_{rn[i]}")
+            if i in rn and g != "N":
+                g, w = "N", f"rule_{rn[i]}"
             B = {j: r["decision"] for j, r in bc.get((s["id"], i), {}).items()}
             C = {"relation": crow["relation"], "type": crow.get("type") or ""} if crow else {"relation": "MISSING", "type": ""}
-            rows.append(dict(after_word=i, grade=g, why=w, stageA=i in sa, sources=src[i], B=B, C=C, p_safe=f["p_safe"], p_safe_mean=f["p_safe_mean"],
+            rows.append(dict(after_word=i, grade=g, why=w, stageA=i in sa, sources=sources, B=B, C=C, p_safe=f["p_safe"], p_safe_mean=f["p_safe_mean"],
                              p_rev=f["p_rev"], punct=f["punct"], resp_head=f["resp_head"], future_unobserved=C["relation"] == "UNOBSERVED", resolved_by_judge=False))
             L["candidates"] += 1; L[g] += 1; L["future_unobserved"] += rows[-1]["future_unobserved"]
             st["why"].setdefault(lang, Counter())[w] += 1
-            for k in src[i]:
+            for k in sources:
                 st["sources"].setdefault(lang, Counter())[f"{k}:{g}"] += 1
         st["streams"]["labeled"] += 1; L["streams"] += 1; L["words"] += len(s["words"])
         labels.append(dict(id=s["id"], lang=lang, candidates=rows, turn_end=bool(turn_end)))

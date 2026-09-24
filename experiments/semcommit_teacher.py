@@ -81,9 +81,10 @@ def parse(argv=None):
     p.add_argument("--tiebreak", type=Path, nargs="*", default=[])
     p.add_argument("--recipe", choices=["v0.2", "v0.3"], default="v0.2",
                    help="v0.3: candidates = Stage A ∪ --extra-candidates, calibrated grade (mean P(SAFE), P(REVISION), punctuated "
-                        "sentence ends), N only from human disfluency tags; thresholds from --thresholds or semcommit_llm.V3_THRESHOLDS")
+                        "sentence ends), N from human disfluency tags and --neg-rules; thresholds from --thresholds or semcommit_llm.V3_THRESHOLDS")
     p.add_argument("--extra-candidates", default=",".join(sc.EXTRA_SOURCES), help="v0.3 extra candidate sources")
-    p.add_argument("--thresholds", type=Path, default=None, help="v0.3 thresholds JSON {lang: {punct|other: {p_safe, p_rev}}} (semcommit_gold.py tune)")
+    p.add_argument("--thresholds", type=Path, default=None, help="v0.3 thresholds JSON {lang: {punct|punct_resp|other: {p_safe, p_rev} | null}} (semcommit_gold.py tune)")
+    p.add_argument("--neg-rules", default=",".join(sc.NEG_RULES), help="v0.3 rule negatives (semcommit_llm.rule_negatives) graded N; '' = v0.3–v0.3.2")
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--stats", type=Path, required=True)
     p.add_argument("--strict", action=argparse.BooleanOptionalAction, default=True)
@@ -187,7 +188,8 @@ def main(argv=None):
         if a.recipe == "v0.3":
             th = json.load(open(a.thresholds)) if a.thresholds else None
             labels, stats = sc.build_labels_v3(streams, by["A"], by["B"], by["C"], judges=judges, turn_end=a.turn_end == "all",
-                                               extra=tuple(x for x in a.extra_candidates.split(",") if x), thresholds=th)
+                                               extra=tuple(x for x in a.extra_candidates.split(",") if x), thresholds=th,
+                                               neg_rules=tuple(x for x in a.neg_rules.split(",") if x))
         else:
             labels, stats = sc.build_labels(streams, by["A"], by["B"], by["C"], by["T"], strict=a.strict, judges=judges,
                                             disfl_negatives=a.disfl_negatives, turn_end=a.turn_end == "all",

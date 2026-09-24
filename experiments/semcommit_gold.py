@@ -147,15 +147,16 @@ def cmd_tune(a):
     rows = lambda ps: [r for p in ps for r in read_jsonl(p)]
     A, Bc, Cc = rows(a.stageA), sc.by_candidate(rows(a.stageB)), sc.by_candidate(rows(a.stageC))
     extra = tuple(x for x in a.extra_candidates.split(",") if x); judges = {"English": tuple(a.judges_en.split(",")), "Korean": tuple(a.judges_ko.split(","))}
+    neg_rules = tuple(x for x in a.neg_rules.split(",") if x)
     streams = [W[sid] for sid in G if sid in W]; cs = sc.candidate_sets(streams, A, extra); a_out = {sid: out for sid, (_, out) in sc.candidates_of(A).items()}
     feats, gold_commit = [], collections.Counter()
     for s in streams:
         sid, lang = s["id"], s["lang"]; g = G[sid]; h = split_half(sid); gold_commit[(lang, h)] += len(g["commit"])
         if sid not in cs: continue
-        allc, sa, src = cs[sid]
+        allc, sa, src = cs[sid]; rn = sc.rule_negatives(s, neg_rules) if neg_rules else {}
         for i in allc:
             crow = next(iter(sorted(Cc.get((sid, i), {}).items())), (None, None))[1]
-            f = sc.candidate_features(s, i, Bc.get((sid, i), {}), crow, judges[lang], src[i], a_out.get(sid))
+            f = dict(sc.candidate_features(s, i, Bc.get((sid, i), {}), crow, judges[lang], src[i], a_out.get(sid)), rule_neg=i in rn)
             lab = "COMMIT" if i in g["commit"] else "AMBIG" if i in g["ambig"] else "NO"
             feats.append((lang, h, f, lab))
     g_punct = [(t / 100, c) for t in range(0, 100, 10) for c in (0.05, 0.2, 0.5, 1.01)]
@@ -164,7 +165,7 @@ def cmd_tune(a):
         tp = fp = n = 0
         for lg, hh, f, lab in feats:
             if lg != lang or hh != h or (branch and sc.branch_of(f) != branch): continue
-            if sc.grade_v3(f, lang, {lang: th})[0] != "A": continue
+            if f["rule_neg"] or sc.grade_v3(f, lang, {lang: th})[0] != "A": continue                 # 규칙 음성(v0.3.3)은 A 가 될 수 없다
             n += 1; tp += lab == "COMMIT"; fp += lab == "NO"
         tot = gold_commit[(lang, h)]
         return (tp / (tp + fp) if tp + fp else 0.0), (tp / tot if tot else 0.0), n
@@ -191,7 +192,7 @@ def cmd_tune(a):
                             cand_recall={h: round(sum(1 for f in feats if f[0] == lang and f[1] == h and f[3] == "COMMIT") / max(1, gold_commit[(lang, h)]), 4) for h in ("dev", "test")})
         r = report[lang]; print(f"{lang}: {json.dumps(th)} | dev P {r['dev']['P']:.3f} R {r['dev']['R']:.3f} n {r['dev']['n_A']} | test P {r['test']['P']:.3f} R {r['test']['R']:.3f} n {r['test']['n_A']} | cand recall {r['cand_recall']}")
     json.dump(out, open(a.out, "w"), indent=1)
-    if a.report: json.dump(dict(floor=a.floor, extra=list(extra), judges={k: list(v) for k, v in judges.items()}, languages=report), open(a.report, "w"), indent=1, ensure_ascii=False)
+    if a.report: json.dump(dict(floor=a.floor, extra=list(extra), neg_rules=list(neg_rules), judges={k: list(v) for k, v in judges.items()}, languages=report), open(a.report, "w"), indent=1, ensure_ascii=False)
     return report
 
 
@@ -207,6 +208,7 @@ def main(argv=None):
     p.add_argument("--stageA", nargs="+", required=True); p.add_argument("--stageB", nargs="+", required=True); p.add_argument("--stageC", nargs="+", required=True)
     p.add_argument("--judges-en", default="qwen3,exaone35"); p.add_argument("--judges-ko", default="exaone35,qwen3")
     p.add_argument("--extra-candidates", default="last,seg_end,punct_final"); p.add_argument("--floor", type=float, default=0.90)
+    p.add_argument("--neg-rules", default="reply_prefix,conn_final,conn_mid", help="규칙 음성(semcommit_llm.rule_negatives) — 그 자리는 A 후보에서 뺀다; '' = v0.3.2 까지")
     p.add_argument("--out", required=True); p.add_argument("--report", default=None)
     a = ap.parse_args(argv)
     return dict(packet=cmd_packet, merge=cmd_merge, tune=cmd_tune, **{"score-labels": cmd_score_labels, "score-eval": cmd_score_eval})[a.cmd](a)

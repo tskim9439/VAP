@@ -854,12 +854,33 @@ def test_build_labels_v3_pipeline():
     b = sc.run_stage_b(FakeLLM("qwen3"), items, "qwen3") + sc.run_stage_b(FakeLLM("exaone35"), items, "exaone35")
     c = sc.run_stage_c(FakeLLM(), sc.stage_c_items(streams, a, sc.EXTRA_SOURCES), "qwen3")
     J = {"English": ("qwen3", "exaone35"), "Korean": ("exaone35", "qwen3")}
-    labels, st = sc.build_labels_v3(streams, a, b, c, judges=J)
+    labels, st = sc.build_labels_v3(streams, a, b, c, judges=J, neg_rules=())                         # 규칙 음성 없음 = v0.3–v0.3.2
     g = {r["id"]: [(x["after_word"], x["grade"], x["stageA"], x["why"]) for x in r["candidates"]] for r in labels}
     assert g["e2"] == [(2, "A", True, "v3_punct"), (7, "A", False, "v3_punct")]                         # 7 = 추가 후보(마지막·구간 끝·구두점)
     assert g["k2"] == [(4, "A", True, "v3_punct")]
     assert [x[1] for x in g["k1"]] == ["B", "B"] and st["recipe"] == sc.RECIPE_V3                      # 한국어 그 외 가지 꺼짐(기본) → B
-    labels2, _ = sc.build_labels_v3(streams, a, b, c, judges=J, thresholds={"English": sc.V3_THRESHOLDS["English"], "Korean": {"punct": None, "other": {"p_safe": 0.4, "p_rev": 0.2}}})
+    labels2, _ = sc.build_labels_v3(streams, a, b, c, judges=J, neg_rules=(),
+                                    thresholds={"English": sc.V3_THRESHOLDS["English"], "Korean": {"punct": None, "other": {"p_safe": 0.4, "p_rev": 0.2}}})
     assert [x["grade"] for x in labels2[1]["candidates"]] == ["A", "A"] and st["sources"]["English"]["last:A"] == 1
+    # v0.3.3 기본: 규칙 음성 — 스트림 머리 대답어(어) · 연결어미(그리고 · 갔다가)는 후보가 아니어도 N 행(stageA 거짓)
+    labels3, st3 = sc.build_labels_v3(streams, a, b, c, judges=J)
+    g3 = {r["id"]: [(x["after_word"], x["grade"], x["stageA"], x["why"]) for x in r["candidates"]] for r in labels3}
+    assert g3["e2"] == g["e2"] and st3["neg_rules"] == list(sc.NEG_RULES)
+    assert g3["k1"] == [(0, "N", False, "rule_reply_prefix"), (5, "B", True, "v3_other+off"), (6, "N", False, "rule_conn_mid"), (8, "B", True, "v3_other+off")]
+    assert g3["k2"] == [(1, "N", False, "rule_conn_mid"), (4, "A", True, "v3_punct")]
     bad = [dict(r, next_candidate=99) if r["after_word"] == 7 else r for r in c]
     with pytest.raises(ValueError, match="next Stage A boundary"): sc.build_labels_v3(streams, a, b, bad, judges=J)
+
+
+def test_rule_negatives():
+    W = lambda toks, tags=None: dict(id="s", lang="Korean", words=[dict(i=i, text=x.rstrip("."), tags=(["punct_final"] if x.endswith(".") else []) + ((tags or {}).get(i) or []))
+                                                              for i, x in enumerate(toks)])
+    assert sc.rule_negatives(W(["어", "네", "저는", "갔어요."])) == {0: "reply_prefix", 1: "reply_prefix"}
+    assert sc.rule_negatives(W(["맞아", "맞아"])) == {0: "reply_prefix"}                                 # 스트림 끝 대답어는 음성 아님
+    assert sc.rule_negatives(W(["밥", "먹고", "갔는데", "비가", "와서"])) == {1: "conn_mid", 2: "conn_mid", 4: "conn_final"}
+    assert sc.rule_negatives(W(["어제", "갔는데"])) == {}                                                # 말끝 -는데 = 골드 AMBIG
+    assert sc.rule_negatives(W(["엄청", "좋더라고"])) == {} and sc.rule_negatives(W(["간다고"])) == {}  # 문장 끝 -더라고 · 인용 -다고
+    assert sc.rule_negatives(W(["비가", "와서."])) == {}                                                 # 구두점이 있으면 규칙 밖
+    assert sc.rule_negatives(W(["먹고", "와서"]), ()) == {} and sc.rule_negatives(W(["먹고", "와서"]), ("conn_mid",)) == {0: "conn_mid"}
+    en = dict(id="e", lang="English", words=[dict(i=i, text=x, tags=[]) for i, x in enumerate(["yeah", "so", "we", "went"])])
+    assert sc.rule_negatives(en) == {0: "reply_prefix"}                                                 # 영어는 대답어 머리만
