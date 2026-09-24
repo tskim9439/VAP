@@ -55,6 +55,10 @@ def _model(p, stage_a=True):
                    help="stop after this many consecutive all-error blocks (0 = never); the run then exits 2")
     if not stage_a:
         p.add_argument("--stageA", type=Path, required=True)
+        p.add_argument("--extra-candidates", default="", help="recipe v0.3: also judge rule-based candidates "
+                       f"(comma list of {','.join(sc.EXTRA_SOURCES)}); '' = Stage A only (v0.2)")
+        p.add_argument("--only-extra", action="store_true", help="only the extra candidates Stage A did not propose "
+                       "(write them to a new file next to the v0.2 rows; grade takes several B/C files)")
 
 
 def parse(argv=None):
@@ -73,8 +77,13 @@ def parse(argv=None):
     p = sub.add_parser("grade"); _common(p)
     p.add_argument("--stageA", type=Path, required=True)
     p.add_argument("--stageB", type=Path, nargs="+", required=True)
-    p.add_argument("--stageC", type=Path, required=True)
+    p.add_argument("--stageC", type=Path, nargs="+", required=True)
     p.add_argument("--tiebreak", type=Path, nargs="*", default=[])
+    p.add_argument("--recipe", choices=["v0.2", "v0.3"], default="v0.2",
+                   help="v0.3: candidates = Stage A ∪ --extra-candidates, calibrated grade (mean P(SAFE), P(REVISION), punctuated "
+                        "sentence ends), N only from human disfluency tags; thresholds from --thresholds or semcommit_llm.V3_THRESHOLDS")
+    p.add_argument("--extra-candidates", default=",".join(sc.EXTRA_SOURCES), help="v0.3 extra candidate sources")
+    p.add_argument("--thresholds", type=Path, default=None, help="v0.3 thresholds JSON {lang: {punct|other: {p_safe, p_rev}}} (semcommit_gold.py tune)")
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--stats", type=Path, required=True)
     p.add_argument("--strict", action=argparse.BooleanOptionalAction, default=True)
@@ -85,7 +94,7 @@ def parse(argv=None):
                         "dataset gives them hardneg_weight, overriding the default NEXT weight at those word ends)")
     p.add_argument("--c-mask-types", default=",".join(sc.C_MASK_TYPES),
                    help="Stage C REVISION types graded B (masked) instead of N ('' = every REVISION is N)")
-    p.add_argument("--turn-end", choices=["all", "none"], default="all", help="v0 end-of-speech proxy per stream")
+    p.add_argument("--turn-end", choices=["all", "none"], default="all", help="labels row turn_end flag (used only when training with --turn-end: <EOT>)")
     a = ap.parse_args(argv)
     if a.batch_size is None:
         a.batch_size = 1 if getattr(a, "kind", None) == "gptoss" else 8
@@ -171,19 +180,24 @@ def main(argv=None):
             llm, b, a.judge_name, a.max_new_tokens, a.batch_size, a.retries, pv), params)
     if a.cmd == "grade":
         judges = {"Korean": tuple(a.judges_ko.split(",")), "English": tuple(a.judges_en.split(","))}
-        files = [("A", a.stageA), *[("B", p) for p in a.stageB], ("C", a.stageC), *[("T", p) for p in a.tiebreak]]
+        files = [("A", a.stageA), *[("B", p) for p in a.stageB], *[("C", p) for p in a.stageC], *[("T", p) for p in a.tiebreak]]
         rows = [(st, p, sc.read_jsonl(p)) for st, p in files]
         prov = sc.check_provenance(file_digest(a.words), rows)
         by = {st: [r for s_, _, rs in rows if s_ == st for r in rs] for st in "ABCT"}
-        labels, stats = sc.build_labels(streams, by["A"], by["B"], by["C"], by["T"], strict=a.strict, judges=judges,
-                                        disfl_negatives=a.disfl_negatives, turn_end=a.turn_end == "all",
-                                        c_mask_types=tuple(x for x in a.c_mask_types.split(",") if x))
+        if a.recipe == "v0.3":
+            th = json.load(open(a.thresholds)) if a.thresholds else None
+            labels, stats = sc.build_labels_v3(streams, by["A"], by["B"], by["C"], judges=judges, turn_end=a.turn_end == "all",
+                                               extra=tuple(x for x in a.extra_candidates.split(",") if x), thresholds=th)
+        else:
+            labels, stats = sc.build_labels(streams, by["A"], by["B"], by["C"], by["T"], strict=a.strict, judges=judges,
+                                            disfl_negatives=a.disfl_negatives, turn_end=a.turn_end == "all",
+                                            c_mask_types=tuple(x for x in a.c_mask_types.split(",") if x))
         stats["code_prompt_version"], stats["prompt_version"] = stats["prompt_version"], prov["prompt_version"]
         if prov["prompt_version"] != stats["code_prompt_version"]:
             print(f"WARNING: inputs were made with prompt {prov['prompt_version']}, code is at "
                   f"{stats['code_prompt_version']}", flush=True)
         stats["provenance"] = prov["files"]
-        stats["inputs"] = {str(p): file_digest(p) for p in [a.words, a.stageA, *a.stageB, a.stageC, *a.tiebreak]}
+        stats["inputs"] = {str(p): file_digest(p) for p in [a.words, a.stageA, *a.stageB, *a.stageC, *a.tiebreak]}
         a.out.parent.mkdir(parents=True, exist_ok=True)
         tmp = a.out.with_suffix(a.out.suffix + ".tmp")
         with tmp.open("w", encoding="utf-8") as f:
@@ -195,19 +209,21 @@ def main(argv=None):
                          ensure_ascii=False), flush=True)
         return labels, stats
     a_rows = sc.read_jsonl(a.stageA)
+    extra = tuple(x for x in getattr(a, "extra_candidates", "").split(",") if x)
     if a.cmd == "stageB":
-        return run_model_stage(a, "B", sc.stage_b_items(streams, a_rows), lambda llm, b, pv: sc.run_stage_b(
-            llm, b, a.judge_name, a.batch_size, "B", pv), dict(labels=sc.B_LABELS, prefix=sc.B_PREFIX))
+        return run_model_stage(a, "B", sc.stage_b_items(streams, a_rows, extra, a.only_extra), lambda llm, b, pv: sc.run_stage_b(
+            llm, b, a.judge_name, a.batch_size, "B", pv), dict(labels=sc.B_LABELS, prefix=sc.B_PREFIX,
+            **({"extra": list(extra), "only_extra": a.only_extra} if extra else {})))
     if a.cmd == "tiebreak":
         items = sc.tiebreak_items(streams, a_rows, _rows_of(a.stageB), a.judges_ko.split(","))
         return run_model_stage(a, "T", items, lambda llm, b, pv: sc.run_stage_b(
             llm, b, a.judge_name, a.batch_size, "T", pv),
             dict(labels=sc.B_LABELS, prefix=sc.B_PREFIX, judges_ko=a.judges_ko))
     if a.cmd == "stageC":
-        return run_model_stage(a, "C", sc.stage_c_items(streams, a_rows), lambda llm, b, pv: sc.run_stage_c(
+        return run_model_stage(a, "C", sc.stage_c_items(streams, a_rows, extra, a.only_extra), lambda llm, b, pv: sc.run_stage_c(
             llm, b, a.judge_name, a.batch_size, a.future_words, a.future_s, pv),
             dict(labels=sc.C_LABELS, types=sc.C_TYPES, prefix=sc.C_PREFIX, future_words=a.future_words,
-                 future_s=a.future_s, stageA_sha256=file_digest(a.stageA)))
+                 future_s=a.future_s, stageA_sha256=file_digest(a.stageA), **({"extra": list(extra), "only_extra": a.only_extra} if extra else {})))
 
 
 if __name__ == "__main__":

@@ -6,6 +6,9 @@
   merge        : 주석 2 개(+ 판정) → gold.jsonl + 일치도 통계. 판정이 없거나 모자라면 --adj-packet 에 불일치 경계 목록을 쓴다.
   score-labels : 교사 라벨(labels.jsonl, A/B/N) vs 골드 — 후보 재현·A 정밀도/재현율·N 정밀도(commit_metrics.gold_label_counts)
   score-eval   : semcommit_eval 스트림 jsonl(모델 방출) vs 골드 — 설정별 P/R/F1·PCR_gold·지연(commit_metrics.gold_commit_counts)
+  tune         : 라벨링 레시피 v0.3 임계값 — 교사 행(A/B/C) + 골드로 후보 특징(평균 P(SAFE)·P(REVISION)·구두점)을 만들고, 골드 dev 절반(sha1(id) 짝수)에서
+                 언어·가지(구두점 문장 끝 / 그 외)별로 그 가지의 정밀도 ≥ floor 중 재현율 최대 임계값을 골라(못 넘는 가지는 끔) test 절반 성능과 함께
+                 thresholds JSON 으로 쓴다(teacher.py grade --recipe v0.3 --thresholds).
 골드 행: {id, set, lang, n_words, commit:[i], ambig:[i], how:{i: 'agree'|'adjudicated'|'unresolved'}}. 주석 형식은 GUIDELINE.md 출력 형식({id: {commit, ambig, why}}).
 
   python experiments/semcommit_gold.py packet --words words-ks-long.jsonl --domain "Korean|spontaneous conversation" --name ks-long --out packets/
@@ -132,6 +135,63 @@ def cmd_score_eval(a):
     return out
 
 
+def split_half(sid: str) -> str:
+    import hashlib
+    return "dev" if int(hashlib.sha1(sid.encode()).hexdigest(), 16) % 2 == 0 else "test"
+
+
+def cmd_tune(a):
+    from vapasr.data import semcommit_llm as sc
+    W = words_of(a.words); G = {}
+    for p in a.gold: G.update(_load_gold(p))
+    rows = lambda ps: [r for p in ps for r in read_jsonl(p)]
+    A, Bc, Cc = rows(a.stageA), sc.by_candidate(rows(a.stageB)), sc.by_candidate(rows(a.stageC))
+    extra = tuple(x for x in a.extra_candidates.split(",") if x); judges = {"English": tuple(a.judges_en.split(",")), "Korean": tuple(a.judges_ko.split(","))}
+    streams = [W[sid] for sid in G if sid in W]; cs = sc.candidate_sets(streams, A, extra); a_out = {sid: out for sid, (_, out) in sc.candidates_of(A).items()}
+    feats, gold_commit = [], collections.Counter()
+    for s in streams:
+        sid, lang = s["id"], s["lang"]; g = G[sid]; h = split_half(sid); gold_commit[(lang, h)] += len(g["commit"])
+        if sid not in cs: continue
+        allc, sa, src = cs[sid]
+        for i in allc:
+            crow = next(iter(sorted(Cc.get((sid, i), {}).items())), (None, None))[1]
+            f = sc.candidate_features(s, i, Bc.get((sid, i), {}), crow, judges[lang], src[i], a_out.get(sid))
+            lab = "COMMIT" if i in g["commit"] else "AMBIG" if i in g["ambig"] else "NO"
+            feats.append((lang, h, f, lab))
+    grids = {"punct": [(t / 100, c) for t in range(0, 100, 10) for c in (0.05, 0.2, 0.5, 1.01)],
+             "other": [(t / 100, c) for t in range(30, 100, 5) for c in (0.02, 0.05, 0.2, 0.5)]}
+    def evaluate(th, lang, h, branch=None):
+        tp = fp = n = 0
+        for lg, hh, f, lab in feats:
+            if lg != lang or hh != h or (branch and ("punct" if f["punct"] else "other") != branch): continue
+            if sc.grade_v3(f, lang, {lang: th})[0] != "A": continue
+            n += 1; tp += lab == "COMMIT"; fp += lab == "NO"
+        tot = gold_commit[(lang, h)]
+        return (tp / (tp + fp) if tp + fp else 0.0), (tp / tot if tot else 0.0), n
+    # 가지(구두점 / 그 외)마다 따로 floor — 전체 정밀도만 보면 정밀한 구두점 가지의 여유가 부정확한 가지를 끼워 넣는다(gold v1 영어 그 외 가지 dev 0.40).
+    out, report = {}, {}
+    for lang in sorted({f[0] for f in feats}):
+        th, branch_rep = {}, {}
+        for br, grid in grids.items():
+            best = None
+            for ts, tr in grid:
+                P, R, n = evaluate({br: {"p_safe": ts, "p_rev": tr}}, lang, "dev", br)
+                if n and P >= a.floor and (best is None or R > best[1][1] or (R == best[1][1] and P > best[1][0])): best = ({"p_safe": ts, "p_rev": tr}, (P, R, n))
+            th[br] = best[0] if best else None
+            branch_rep[br] = dict(dev=dict(zip(("P", "R", "n_A"), best[1])) if best else None,
+                                  test=dict(zip(("P", "R", "n_A"), evaluate({br: th[br]}, lang, "test", br))) if best else None)
+            if best is None: print(f"{lang} {br}: no threshold reaches dev precision {a.floor} → branch off")
+        out[lang] = th
+        cand = {h: sum(1 for f in feats if f[0] == lang and f[1] == h) for h in ("dev", "test")}
+        report[lang] = dict(thresholds=th, dev=dict(zip(("P", "R", "n_A"), evaluate(th, lang, "dev"))), test=dict(zip(("P", "R", "n_A"), evaluate(th, lang, "test"))),
+                            branches=branch_rep, candidates=cand, gold_commit={h: gold_commit[(lang, h)] for h in ("dev", "test")},
+                            cand_recall={h: round(sum(1 for f in feats if f[0] == lang and f[1] == h and f[3] == "COMMIT") / max(1, gold_commit[(lang, h)]), 4) for h in ("dev", "test")})
+        r = report[lang]; print(f"{lang}: {json.dumps(th)} | dev P {r['dev']['P']:.3f} R {r['dev']['R']:.3f} n {r['dev']['n_A']} | test P {r['test']['P']:.3f} R {r['test']['R']:.3f} n {r['test']['n_A']} | cand recall {r['cand_recall']}")
+    json.dump(out, open(a.out, "w"), indent=1)
+    if a.report: json.dump(dict(floor=a.floor, extra=list(extra), judges={k: list(v) for k, v in judges.items()}, languages=report), open(a.report, "w"), indent=1, ensure_ascii=False)
+    return report
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter); sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("packet"); p.add_argument("--words", nargs="+", required=True); p.add_argument("--domain", required=True); p.add_argument("--name", required=True); p.add_argument("--out", required=True)
@@ -140,8 +200,13 @@ def main(argv=None):
     p = sub.add_parser("score-labels"); p.add_argument("--words", nargs="+", required=True); p.add_argument("--labels", required=True); p.add_argument("--gold", required=True)
     p = sub.add_parser("score-eval"); p.add_argument("--words", nargs="+", required=True); p.add_argument("--gold", required=True); p.add_argument("--streams", nargs="+", required=True)
     p.add_argument("--out", default=None)
+    p = sub.add_parser("tune"); p.add_argument("--words", nargs="+", required=True); p.add_argument("--gold", nargs="+", required=True)
+    p.add_argument("--stageA", nargs="+", required=True); p.add_argument("--stageB", nargs="+", required=True); p.add_argument("--stageC", nargs="+", required=True)
+    p.add_argument("--judges-en", default="qwen3,exaone35"); p.add_argument("--judges-ko", default="exaone35,qwen3")
+    p.add_argument("--extra-candidates", default="last,seg_end,punct_final"); p.add_argument("--floor", type=float, default=0.90)
+    p.add_argument("--out", required=True); p.add_argument("--report", default=None)
     a = ap.parse_args(argv)
-    return dict(packet=cmd_packet, merge=cmd_merge, **{"score-labels": cmd_score_labels, "score-eval": cmd_score_eval})[a.cmd](a)
+    return dict(packet=cmd_packet, merge=cmd_merge, tune=cmd_tune, **{"score-labels": cmd_score_labels, "score-eval": cmd_score_eval})[a.cmd](a)
 
 
 if __name__ == "__main__":

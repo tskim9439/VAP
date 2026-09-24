@@ -844,17 +844,63 @@ def candidates_of(a_rows):
     return out
 
 
-def stage_b_items(streams, a_rows):
-    cands = candidates_of(a_rows)
-    return [(s, i) for s in streams for i in cands.get(s["id"], ((), None))[0]]
+EXTRA_SOURCES = ("last", "seg_end", "punct_final")   # recipe v0.3 candidate sources beside Stage A (gold v1: +0.06–0.15 candidate recall)
 
 
-def stage_c_items(streams, a_rows):
-    cands = candidates_of(a_rows)
-    out = []
+def extra_candidates(stream, kinds=EXTRA_SOURCES):
+    """{word index: [source, ...]} for rule-based candidate sources: 'last' = the stream's last word, 'seg_end' = the last
+    word of each segment (utterance end inside a multi-utterance stream), 'punct_final' = a word whose human transcript
+    ends a sentence (. ? ! — LibriSpeech-PC / GigaSpeech punctuation, Kspon transcript punctuation; words tag)."""
+    words, out = stream["words"], {}
+    if not words:
+        return out
+    if "last" in kinds:
+        out.setdefault(len(words) - 1, []).append("last")
+    if "seg_end" in kinds:
+        ends = {}
+        for k, w in enumerate(words):
+            ends[w.get("seg", 0)] = k
+        for k in sorted(ends.values()):
+            out.setdefault(k, []).append("seg_end")
+    if "punct_final" in kinds:
+        for k, w in enumerate(words):
+            if "punct_final" in (w.get("tags") or ()):
+                out.setdefault(k, []).append("punct_final")
+    return out
+
+
+def candidate_sets(streams, a_rows, extra=()):
+    """{stream id: (sorted candidates, Stage A set, {i: sources})} — Stage A boundaries ∪ extra sources (streams without an
+    ok Stage A row get none: the same rule as v0.2). Sources list 'stageA' first when Stage A proposed the index."""
+    cands, out = candidates_of(a_rows), {}
     for s in streams:
-        b = list(cands.get(s["id"], ((), None))[0])
-        out += [(s, i, b[k + 1] if k + 1 < len(b) else None) for k, i in enumerate(b)]
+        if s["id"] not in cands:
+            continue
+        sa = set(cands[s["id"]][0]); src = {i: ["stageA"] for i in sa}
+        for i, ks in extra_candidates(s, tuple(extra)).items() if extra else ():
+            src.setdefault(i, []).extend(ks)
+        out[s["id"]] = (sorted(src), sa, src)
+    return out
+
+
+def next_stage_a(sa_sorted, i):
+    """Next Stage A boundary after word i (None if none) — the Stage C future window stops there for every candidate
+    (v0.2 rows keep their next_candidate; extra candidates use the same rule)."""
+    return next((b for b in sa_sorted if b > i), None)
+
+
+def stage_b_items(streams, a_rows, extra=(), only_extra=False):
+    cs = candidate_sets(streams, a_rows, extra)
+    return [(s, i) for s in streams for i in cs.get(s["id"], ((), set(), {}))[0] if not (only_extra and i in cs[s["id"]][1])]
+
+
+def stage_c_items(streams, a_rows, extra=(), only_extra=False):
+    cs, out = candidate_sets(streams, a_rows, extra), []
+    for s in streams:
+        if s["id"] not in cs:
+            continue
+        allc, sa, _ = cs[s["id"]]; sas = sorted(sa)
+        out += [(s, i, next_stage_a(sas, i)) for i in allc if not (only_extra and i in sa)]
     return out
 
 
@@ -905,6 +951,105 @@ def _kappa(pairs, cats=B_LABELS):
 
 def _tok_bad(r):
     return r.get("tok_ok") is False or r.get("type_tok_ok") is False
+
+
+RECIPE_V3 = "semcommit-recipe-v0.3"
+# gold v1 dev-half tuning with a per-branch precision floor 0.90 (labels v0.3.1; Qwen3-8B + EXAONE-3.5-7.8B judges, Qwen3-8B Stage C):
+# punctuated sentence ends are A; no threshold lifts the other branch to 0.90 on its own (English dev 0.40 at best) → off (None).
+# Re-tune for other teachers (semcommit_gold.py tune).
+V3_THRESHOLDS = {"English": {"punct": {"p_safe": 0.0, "p_rev": 1.01}, "other": None},
+                 "Korean": {"punct": {"p_safe": 0.0, "p_rev": 1.01}, "other": None}}
+
+
+def label_probs(logprobs):
+    """Softmax over scored label log-probs ({label: logprob}) → {label: p}; None for missing or non-finite scores."""
+    if not logprobs or any(v is None or not math.isfinite(v) for v in logprobs.values()):
+        return None
+    m = max(logprobs.values()); z = {k: math.exp(v - m) for k, v in logprobs.items()}; t = sum(z.values())
+    return {k: v / t for k, v in z.items()}
+
+
+def candidate_features(stream, i, b_rows_by_judge, c_row, judges, sources=(), stage_a_out=None):
+    """Grade inputs for word i: per-judge P(SAFE) (softmax of the B label log-probs), mean over the primary judges (None if
+    any is missing), P(REVISION) from Stage C (0 when the future is unobserved, None when missing), punctuation and
+    disfluency flags. Deterministic, no LLM call."""
+    ps = {}
+    for j in judges:
+        r = b_rows_by_judge.get(j)
+        p = label_probs(r.get("logprobs")) if r else None
+        ps[j] = None if p is None else round(p.get("SAFE", 0.0), 6)
+    mean = None if any(v is None for v in ps.values()) or not ps else round(sum(ps.values()) / len(ps), 6)
+    if c_row is None:
+        prev = None
+    elif c_row.get("relation") == "UNOBSERVED":
+        prev = 0.0
+    else:
+        pr = label_probs(c_row.get("logprobs")); prev = None if pr is None else round(pr.get("REVISION", 0.0), 6)
+    tags = stream["words"][i].get("tags") or []
+    return dict(p_safe=ps, p_safe_mean=mean, p_rev=prev, punct="punct_final" in tags,
+                disfluency=disfluency_reason(i, stage_a_out, [w.get("tags") or [] for w in stream["words"]]), sources=list(sources))
+
+
+def grade_v3(f, lang, thresholds=None):
+    """Recipe v0.3 grade from candidate_features → (grade, why). N only from human transcript disfluency tags (gold v1: LLM-made
+    N was 42–68 % correct); a Stage-A-only disfluency conflict or any missing score → B; A when the branch's thresholds hold
+    (punct branch for punctuated sentence ends, other branch otherwise; a branch set to None is off); everything else B (masked,
+    not a trained negative)."""
+    th = (thresholds or V3_THRESHOLDS)[lang]
+    d = f.get("disfluency")
+    if d and str(d).startswith("tag_"):
+        return "N", f"disfl_{d}"
+    if d:
+        return "B", f"disflA_{d}"
+    if f["p_safe_mean"] is None or f["p_rev"] is None:
+        return "B", "missing:" + ",".join([j for j, v in f["p_safe"].items() if v is None] + (["C"] if f["p_rev"] is None else []))
+    br = "punct" if f["punct"] else "other"; t = th.get(br)
+    if t and f["p_safe_mean"] >= t["p_safe"] and f["p_rev"] <= t["p_rev"]:
+        return "A", f"v3_{br}"
+    why = [f"v3_{br}"] + (["off"] if not t else (["p_safe_low"] if f["p_safe_mean"] < t["p_safe"] else []) + (["p_rev_high"] if f["p_rev"] > t["p_rev"] else []))
+    return "B", "+".join(why)
+
+
+def build_labels_v3(streams, a_rows, b_rows, c_rows, judges=None, extra=EXTRA_SOURCES, thresholds=None, turn_end=False):
+    """Recipe v0.3 labels.jsonl rows + stats: candidates = Stage A ∪ extra sources, grade_v3 per candidate. Same row fields
+    as v0.2 (grade/why/stageA/B/C) plus p_safe/p_safe_mean/p_rev/punct/sources, so SemCommitDataset and the metrics read them
+    unchanged. Stage C rows must use next_candidate = next Stage A boundary (stage_c_items) — checked like v0.2."""
+    judges = {**{k: tuple(v) for k, v in PRIMARY_JUDGES.items()}, **(judges or {})}
+    cs, bc, cc = candidate_sets(streams, a_rows, extra), by_candidate(list(b_rows)), by_candidate(list(c_rows))
+    a_out = {sid: out for sid, (_, out) in candidates_of(a_rows).items()}
+    labels, problems, seen = [], [], set()
+    st = dict(recipe=RECIPE_V3, prompt_version=prompt_version(), judges={k: list(v) for k, v in judges.items()}, extra=list(extra),
+              thresholds=thresholds or V3_THRESHOLDS, streams=Counter(), by_lang={}, why={}, sources={})
+    for s in streams:
+        st["streams"]["total"] += 1
+        if s["id"] in seen:
+            st["streams"]["dup_id_skipped"] += 1; continue
+        seen.add(s["id"])
+        if s["id"] not in cs:
+            st["streams"]["no_stageA"] += 1; continue
+        lang = s["lang"]; L = st["by_lang"].setdefault(lang, Counter()); js = judges[lang]
+        allc, sa, src = cs[s["id"]]; sas = sorted(sa); rows = []
+        for i in allc:
+            crow = next(iter(sorted(cc.get((s["id"], i), {}).items())), (None, None))[1]
+            if crow is not None and "next_candidate" in crow and crow["next_candidate"] != next_stage_a(sas, i):
+                problems.append(f"{s['id']}@{i}: Stage C next_candidate {crow['next_candidate']} != next Stage A boundary {next_stage_a(sas, i)}")
+            f = candidate_features(s, i, bc.get((s["id"], i), {}), crow, js, src[i], a_out.get(s["id"]))
+            g, w = grade_v3(f, lang, thresholds)
+            B = {j: r["decision"] for j, r in bc.get((s["id"], i), {}).items()}
+            C = {"relation": crow["relation"], "type": crow.get("type") or ""} if crow else {"relation": "MISSING", "type": ""}
+            rows.append(dict(after_word=i, grade=g, why=w, stageA=i in sa, sources=src[i], B=B, C=C, p_safe=f["p_safe"], p_safe_mean=f["p_safe_mean"],
+                             p_rev=f["p_rev"], punct=f["punct"], future_unobserved=C["relation"] == "UNOBSERVED", resolved_by_judge=False))
+            L["candidates"] += 1; L[g] += 1; L["future_unobserved"] += rows[-1]["future_unobserved"]
+            st["why"].setdefault(lang, Counter())[w] += 1
+            for k in src[i]:
+                st["sources"].setdefault(lang, Counter())[f"{k}:{g}"] += 1
+        st["streams"]["labeled"] += 1; L["streams"] += 1; L["words"] += len(s["words"])
+        labels.append(dict(id=s["id"], lang=lang, candidates=rows, turn_end=bool(turn_end)))
+    if problems:
+        raise ValueError(f"{len(problems)} Stage C rows do not match the candidate set: " + "; ".join(problems[:5]))
+    st["streams"] = dict(st["streams"]); st["by_lang"] = {k: dict(v) for k, v in st["by_lang"].items()}
+    st["why"] = {k: dict(v) for k, v in st["why"].items()}; st["sources"] = {k: dict(v) for k, v in st["sources"].items()}
+    return labels, st
 
 
 def build_labels(streams, a_rows, b_rows, c_rows, t_rows=(), strict=True, judges=None, disfl_negatives=False,

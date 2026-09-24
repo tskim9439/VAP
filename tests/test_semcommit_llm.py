@@ -785,3 +785,62 @@ def test_run_stage_a_snaps_anchor_output():
             return [{"text": '{"semantic_boundaries": [[4, "갔어요"], [7, "먹었어요"]], "fillers": [[0, 0]]}', "truncated": False}]
     row = sc.run_stage_a(AnchorLLM(), [KO1], "qwen3", pv="t")[0]
     assert row["status"] == "ok" and row["out"]["semantic_boundaries"] == [5, 8] and row["snap"]["snapped"] == 2
+
+
+# ───────────── recipe v0.3 ─────────────
+def _two_seg():
+    s = mk_stream("e2", "English", ["i", "went", "home", "and", "then", "we", "slept", "well"], {2: ["punct_final"], 7: ["punct_final"]})
+    for w in s["words"]: w["seg"] = 0 if w["i"] <= 2 else 1
+    return s
+
+
+def test_extra_candidates_sets_and_items():
+    s = _two_seg()
+    assert sc.extra_candidates(s) == {7: ["last", "seg_end", "punct_final"], 2: ["seg_end", "punct_final"]}
+    assert sc.extra_candidates(s, ("last",)) == {7: ["last"]} and sc.extra_candidates(dict(s, words=[])) == {}
+    a = sc.run_stage_a(FakeLLM(), [s, KO1], "qwen3")                                    # Stage A: 'home' (2) · 갔어요/먹었어요 (5, 8)
+    cs = sc.candidate_sets([s, KO1], a, sc.EXTRA_SOURCES)
+    assert cs["e2"][0] == [2, 7] and cs["e2"][1] == {2} and cs["e2"][2] == {2: ["stageA", "seg_end", "punct_final"], 7: ["last", "seg_end", "punct_final"]}
+    assert cs["k1"][0] == [5, 8] and cs["k1"][2][8] == ["stageA", "last", "seg_end"]
+    assert sc.candidate_sets([s], a)["e2"][0] == [2]                                    # extra 없음 = v0.2 후보
+    assert [i for _, i in sc.stage_b_items([s, KO1], a, sc.EXTRA_SOURCES)] == [2, 7, 5, 8]
+    assert [i for _, i in sc.stage_b_items([s, KO1], a, sc.EXTRA_SOURCES, only_extra=True)] == [7]
+    assert [(i, nc) for _, i, nc in sc.stage_c_items([s], a, sc.EXTRA_SOURCES)] == [(2, None), (7, None)]   # window stops at the next *Stage A* boundary
+    assert [(i, nc) for _, i, nc in sc.stage_c_items([KO1], a)] == [(5, 8), (8, None)]                      # v0.2 rows unchanged
+
+
+def test_label_probs_features_and_grade_v3():
+    assert sc.label_probs({"SAFE": 0.0, "WAIT": -2.0, "UNCERTAIN": -2.0})["SAFE"] == pytest.approx(1 / (1 + 2 * math.exp(-2)))
+    assert sc.label_probs(None) is None and sc.label_probs({"SAFE": float("nan"), "WAIT": 0.0}) is None
+    s = _two_seg(); b = {"qwen3": dict(logprobs={"SAFE": 0.0, "WAIT": -2.0, "UNCERTAIN": -2.0}), "exaone35": dict(logprobs={"SAFE": -2.0, "WAIT": 0.0, "UNCERTAIN": -2.0})}
+    f = sc.candidate_features(s, 7, b, dict(relation="UNOBSERVED"), ("qwen3", "exaone35"), ["last"])
+    assert f["punct"] and f["p_rev"] == 0.0 and f["p_safe_mean"] == pytest.approx((0.787 + 0.1065) / 2, abs=1e-3) and f["sources"] == ["last"]
+    assert sc.grade_v3(f, "English") == ("A", "v3_punct")                                               # 구두점 문장 끝: 판정자가 반대해도(기본 임계 0) A
+    th = {"English": {"punct": {"p_safe": 0.6, "p_rev": 0.5}, "other": None}}
+    assert sc.grade_v3(f, "English", th) == ("B", "v3_punct+p_safe_low")
+    f2 = sc.candidate_features(s, 5, b, dict(relation="STABLE", logprobs={"REVISION": -2.0, "STABLE": 0.0}), ("qwen3", "exaone35"))
+    assert not f2["punct"] and f2["p_rev"] == pytest.approx(math.exp(-2) / (1 + math.exp(-2)))
+    assert sc.grade_v3(f2, "English") == ("B", "v3_other+off")                                           # 기본(v0.3.1): 그 외 가지 꺼짐
+    assert sc.grade_v3(f2, "English", {"English": {"punct": None, "other": {"p_safe": 0.4, "p_rev": 0.2}}}) == ("A", "v3_other")
+    assert sc.grade_v3(f2, "English", {"English": {"punct": None, "other": {"p_safe": 0.4, "p_rev": 0.1}}}) == ("B", "v3_other+p_rev_high")
+    assert sc.grade_v3(dict(f2, disfluency="tag_filler"), "English") == ("N", "disfl_tag_filler")      # N = 사람 전사 표지만
+    assert sc.grade_v3(dict(f2, disfluency="reparandum"), "English") == ("B", "disflA_reparandum")
+    assert sc.grade_v3(sc.candidate_features(s, 5, {"qwen3": b["qwen3"]}, None, ("qwen3", "exaone35")), "English")[1] == "missing:exaone35,C"
+
+
+def test_build_labels_v3_pipeline():
+    s = _two_seg(); streams = [s, KO1, KO2]
+    a = sc.run_stage_a(FakeLLM(), streams, "qwen3")
+    items = sc.stage_b_items(streams, a, sc.EXTRA_SOURCES)
+    b = sc.run_stage_b(FakeLLM("qwen3"), items, "qwen3") + sc.run_stage_b(FakeLLM("exaone35"), items, "exaone35")
+    c = sc.run_stage_c(FakeLLM(), sc.stage_c_items(streams, a, sc.EXTRA_SOURCES), "qwen3")
+    J = {"English": ("qwen3", "exaone35"), "Korean": ("exaone35", "qwen3")}
+    labels, st = sc.build_labels_v3(streams, a, b, c, judges=J)
+    g = {r["id"]: [(x["after_word"], x["grade"], x["stageA"], x["why"]) for x in r["candidates"]] for r in labels}
+    assert g["e2"] == [(2, "A", True, "v3_punct"), (7, "A", False, "v3_punct")]                         # 7 = 추가 후보(마지막·구간 끝·구두점)
+    assert g["k2"] == [(4, "A", True, "v3_punct")]
+    assert [x[1] for x in g["k1"]] == ["B", "B"] and st["recipe"] == sc.RECIPE_V3                      # 한국어 그 외 가지 꺼짐(기본) → B
+    labels2, _ = sc.build_labels_v3(streams, a, b, c, judges=J, thresholds={"English": sc.V3_THRESHOLDS["English"], "Korean": {"punct": None, "other": {"p_safe": 0.4, "p_rev": 0.2}}})
+    assert [x["grade"] for x in labels2[1]["candidates"]] == ["A", "A"] and st["sources"]["English"]["last:A"] == 1
+    bad = [dict(r, next_candidate=99) if r["after_word"] == 7 else r for r in c]
+    with pytest.raises(ValueError, match="next Stage A boundary"): sc.build_labels_v3(streams, a, b, bad, judges=J)

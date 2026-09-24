@@ -550,3 +550,55 @@ def test_gold_cli_merge_adjudication_and_scoring(tmp_path):
     rec = dict(id="s1", config=dict(name="bias=0"), K=40, delta=4, event_ids=[SEM, None], hyp=dict(words=["i", "went", "home", "then", "slept"], events=[dict(id=SEM, k=20, after=2, mid_word=False)]))
     sp = tmp_path / "r.streams.jsonl"; sp.write_text(json.dumps(rec) + "\n")
     ev = g.main(["score-eval", "--words", str(wp), "--gold", str(out), "--streams", str(sp)])["r"]["bias=0"]; assert ev["hit"] == 1 and ev["P"] == 1.0 and ev["R"] == 0.5
+
+def test_gold_cli_tune_picks_thresholds_meeting_floor(tmp_path):
+    """tune: 후보 특징(평균 P(SAFE)·P(REVISION)·구두점)으로 dev 절반에서 정밀도 floor 이상 중 재현율 최대 임계값 — 분리 가능한 합성 데이터면 dev·test 모두 P 1."""
+    import importlib.util, hashlib
+    spec = importlib.util.spec_from_file_location("semcommit_gold", ROOT / "experiments/semcommit_gold.py"); g = importlib.util.module_from_spec(spec); spec.loader.exec_module(g)
+    words, gold, A, B, C = [], [], [], [], []
+    for n in range(24):
+        sid = f"k{n:02d}"; good = n % 3 != 0
+        words.append(dict(id=sid, lang="Korean", duration_s=2.0, K=25, segments=[], words=[dict(i=i, text=f"w{i}", end_time=0.5 * (i + 1), seg=0, tags=[]) for i in range(3)]))
+        gold.append(dict(id=sid, commit=[1] if good else [], ambig=[]))
+        A.append(dict(stage="A", id=sid, status="ok", out=dict(semantic_boundaries=[1])))
+        for j in ("exaone35", "qwen3"):
+            B.append(dict(stage="B", id=sid, after_word=1, judge=j, status="ok", decision="SAFE" if good else "WAIT",
+                          logprobs={"SAFE": 0.0 if good else -4.0, "WAIT": -4.0 if good else 0.0, "UNCERTAIN": -4.0}))
+        C.append(dict(stage="C", id=sid, after_word=1, judge="qwen3", status="ok", relation="STABLE", logprobs={"REVISION": -5.0, "STABLE": 0.0}))
+    assert {g.split_half(r["id"]) for r in words} == {"dev", "test"}
+    paths = {}
+    for name, rows in (("w", words), ("g", gold), ("a", A), ("b", B), ("c", C)):
+        paths[name] = tmp_path / f"{name}.jsonl"; paths[name].write_text("".join(json.dumps(r) + "\n" for r in rows))
+    rep = g.main(["tune", "--words", str(paths["w"]), "--gold", str(paths["g"]), "--stageA", str(paths["a"]), "--stageB", str(paths["b"]), "--stageC", str(paths["c"]),
+                  "--extra-candidates", "", "--floor", "0.9", "--out", str(tmp_path / "th.json")])
+    k = rep["Korean"]; th = json.loads((tmp_path / "th.json").read_text())["Korean"]
+    assert k["dev"]["P"] == 1.0 and k["dev"]["R"] == 1.0 and k["test"]["P"] == 1.0 and th["other"]["p_safe"] > 0.1   # WAIT 쪽(P(SAFE)≈0.02)은 A 가 안 된다
+
+
+def test_gold_cli_tune_floors_each_branch(tmp_path):
+    """tune: floor 는 가지마다 — 구두점 가지(전부 COMMIT)의 여유로 전체 정밀도가 floor 를 넘어도, 특징이 같은 C/NO 반반인 그 외 가지는 꺼진다."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("semcommit_gold", ROOT / "experiments/semcommit_gold.py"); g = importlib.util.module_from_spec(spec); spec.loader.exec_module(g)
+    ids = [f"s{n:03d}" for n in range(100)]; half = {sid: g.split_half(sid) for sid in ids}
+    other = {sid for h in ("dev", "test") for sid in [x for x in ids if half[x] == h][:4]}             # 절반마다 그 외 후보 4 개(C 2 · NO 2)
+    other_c = {sid for h in ("dev", "test") for sid in [x for x in ids if half[x] == h][:2]}
+    words, gold, A, B, C = [], [], [], [], []
+    for sid in ids:
+        words.append(dict(id=sid, lang="Korean", duration_s=2.0, K=25, segments=[],
+                          words=[dict(i=i, text=f"w{i}", end_time=0.5 * (i + 1), seg=0, tags=["punct_final"] if i == 0 else []) for i in range(3)]))
+        cands = [0, 1] if sid in other else [0]
+        gold.append(dict(id=sid, commit=[0] + ([1] if sid in other_c else []), ambig=[]))
+        A.append(dict(stage="A", id=sid, status="ok", out=dict(semantic_boundaries=cands)))
+        for i in cands:
+            for j in ("exaone35", "qwen3"):
+                B.append(dict(stage="B", id=sid, after_word=i, judge=j, status="ok", decision="SAFE", logprobs={"SAFE": 0.0, "WAIT": -4.0, "UNCERTAIN": -4.0}))
+            C.append(dict(stage="C", id=sid, after_word=i, judge="qwen3", status="ok", relation="STABLE", logprobs={"REVISION": -5.0, "STABLE": 0.0}))
+    paths = {}
+    for name, rows in (("w", words), ("g", gold), ("a", A), ("b", B), ("c", C)):
+        paths[name] = tmp_path / f"{name}.jsonl"; paths[name].write_text("".join(json.dumps(r) + "\n" for r in rows))
+    n_dev = sum(1 for sid in ids if half[sid] == "dev"); assert (n_dev + 2) / (n_dev + 4) >= 0.9     # 전체 floor 였다면 그 외 가지가 켜졌을 구성
+    rep = g.main(["tune", "--words", str(paths["w"]), "--gold", str(paths["g"]), "--stageA", str(paths["a"]), "--stageB", str(paths["b"]), "--stageC", str(paths["c"]),
+                  "--extra-candidates", "", "--floor", "0.9", "--out", str(tmp_path / "th.json")])
+    th = json.loads((tmp_path / "th.json").read_text())["Korean"]; k = rep["Korean"]
+    assert th["other"] is None and th["punct"] is not None
+    assert k["branches"]["punct"]["dev"]["P"] == 1.0 and k["branches"]["other"]["dev"] is None and k["dev"]["P"] == 1.0 and k["test"]["P"] == 1.0
