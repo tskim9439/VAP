@@ -1,0 +1,144 @@
+{
+  "by_lang": {
+    "English": {
+      "A": 193,
+      "B": 42,
+      "candidates": 235,
+      "future_unobserved": 79,
+      "streams": 79,
+      "words": 2674
+    }
+  },
+  "code_prompt_version": "semcommit-prompt-v0.2+ab90c940",
+  "extra": [
+    "last",
+    "seg_end",
+    "punct_final"
+  ],
+  "inputs": {
+    "/data4/tskim/semcommit/gold/v1/words-gs-test.jsonl": "f6cf7b2c4869eee303e67701d08dbfb4ead0c426c958bfa1a34d248eea97093a",
+    "/data4/tskim/semcommit/labels/v0.2-gold/A-gs-test.jsonl": "a9b65475108b9202bdd0ff818d44b3136021a604bc8c224d0599771d70c24ee8",
+    "/data4/tskim/semcommit/labels/v0.2-gold/B.exaone35-gs-test.jsonl": "bdf8b13f7f793c1b563b5f2084bd03214867e03d07dcda92126300f26f56c212",
+    "/data4/tskim/semcommit/labels/v0.2-gold/B.qwen3-gs-test.jsonl": "0b43a4ca369413aa26666099f4c49cc40080920c81b93439d725d8d504e6b62c",
+    "/data4/tskim/semcommit/labels/v0.2-gold/C-gs-test.jsonl": "737d6b795a7af1a527bcff6399d3728ddda73c8da6df81753b0366a6a3892bc8",
+    "/data4/tskim/semcommit/labels/v0.3/B.exaone35-gs-test.x.jsonl": "5d070dd560887f91540af40197e8c261bae3139ed78bf6cc9cf8fdbda4a06e3b",
+    "/data4/tskim/semcommit/labels/v0.3/B.qwen3-gs-test.x.jsonl": "880df353819cd2490d3b805a48ed40eb09ea4e1e2f435b4d5b0fd2d77f1ce8af",
+    "/data4/tskim/semcommit/labels/v0.3/C-gs-test.x.jsonl": "4a01f3616e9a604f2eeb18c2d8f83bcdc2f4817319e7b035d7b14966c8e2ad30"
+  },
+  "judges": {
+    "English": [
+      "qwen3",
+      "exaone35"
+    ],
+    "Korean": [
+      "exaone35",
+      "qwen3"
+    ]
+  },
+  "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+  "provenance": {
+    "/data4/tskim/semcommit/labels/v0.2-gold/A-gs-test.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 79,
+      "stage": "A"
+    },
+    "/data4/tskim/semcommit/labels/v0.2-gold/B.exaone35-gs-test.jsonl": {
+      "judge": "exaone35",
+      "kind": "exaone35",
+      "model_path": "/data4/tskim/OpenSource/EXAONE-3.5-7.8B-Instruct-rev0ff6b5e",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 214,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.2-gold/B.qwen3-gs-test.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 214,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.2-gold/C-gs-test.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 214,
+      "stage": "C"
+    },
+    "/data4/tskim/semcommit/labels/v0.3/B.exaone35-gs-test.x.jsonl": {
+      "judge": "exaone35",
+      "kind": "exaone35",
+      "model_path": "/data4/tskim/OpenSource/EXAONE-3.5-7.8B-Instruct-rev0ff6b5e",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 21,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.3/B.qwen3-gs-test.x.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 21,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.3/C-gs-test.x.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 21,
+      "stage": "C"
+    }
+  },
+  "recipe": "semcommit-recipe-v0.3",
+  "sources": {
+    "English": {
+      "last:A": 79,
+      "punct_final:A": 188,
+      "punct_final:B": 1,
+      "seg_end:A": 79,
+      "stageA:A": 173,
+      "stageA:B": 41
+    }
+  },
+  "streams": {
+    "labeled": 79,
+    "total": 79
+  },
+  "thresholds": {
+    "English": {
+      "other": {
+        "p_rev": 0.2,
+        "p_safe": 0.35
+      },
+      "punct": {
+        "p_rev": 1.01,
+        "p_safe": 0.0
+      }
+    },
+    "Korean": {
+      "other": {
+        "p_rev": 0.02,
+        "p_safe": 0.95
+      },
+      "punct": {
+        "p_rev": 1.01,
+        "p_safe": 0.0
+      }
+    }
+  },
+  "why": {
+    "English": {
+      "disflA_filler": 2,
+      "v3_other": 5,
+      "v3_other+p_rev_high": 16,
+      "v3_other+p_safe_low": 5,
+      "v3_other+p_safe_low+p_rev_high": 19,
+      "v3_punct": 188
+    }
+  }
+}

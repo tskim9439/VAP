@@ -1,0 +1,24 @@
+ls-test  punct: A 367  gold C 353 AMBIG 10 NO 4 | p_safe>=0.02: lose C 41 drop NO 4 | p_safe>=0.05: lose C 52 drop NO 4 | p_safe>=0.1: lose C 64 drop NO 4 | p_safe>=0.2: lose C 93 drop NO 4 | p_rev<=0.9: lose C 159 drop NO 2 | p_rev<=0.7: lose C 172 drop NO 3 | p_rev<=0.5: lose C 182 drop NO 3
+ls-test  other: A 61  gold C 16 AMBIG 9 NO 36
+      FP O ps=0.61 pr=0.00: …and set down with a meditative calmness ‖ which makes these two etchings
+      FP O ps=0.81 pr=0.00: …bringing down her one sheaf of corn ‖ to an old watermill itself
+      FP O ps=0.97 pr=0.00: …to life she would not be proud ‖ nor haughty as the glass
+      FP O ps=0.48 pr=0.02: …rendered the delay of a single moment ‖ necessary
+gs-test  punct: A 188  gold C 152 AMBIG 20 NO 16 | p_safe>=0.02: lose C 24 drop NO 10 | p_safe>=0.05: lose C 34 drop NO 10 | p_safe>=0.1: lose C 37 drop NO 10 | p_safe>=0.2: lose C 44 drop NO 10 | p_rev<=0.9: lose C 50 drop NO 9 | p_rev<=0.7: lose C 52 drop NO 9 | p_rev<=0.5: lose C 52 drop NO 9
+gs-test  other: A 5  gold C 0 AMBIG 0 NO 5
+      FP O ps=1.00 pr=0.00: …was all done we were driving home ‖ and saying wow what do
+      FP P ps=0.01 pr=0.00: …but if it's not a timeout defensively ‖ 
+      FP P ps=0.40 pr=1.00: …course the benefit of getting the vaccine ‖ you know even three or
+      FP P ps=0.01 pr=1.00: …bears that you've seen come through here ‖ have have you noticed that
+ks-eval  punct: A 254  gold C 203 AMBIG 28 NO 23 | p_safe>=0.02: lose C 44 drop NO 9 | p_safe>=0.05: lose C 47 drop NO 10 | p_safe>=0.1: lose C 53 drop NO 10 | p_safe>=0.2: lose C 61 drop NO 11 | p_rev<=0.9: lose C 36 drop NO 9 | p_rev<=0.7: lose C 39 drop NO 10 | p_rev<=0.5: lose C 41 drop NO 10
+ks-eval  other: A 9  gold C 7 AMBIG 1 NO 1
+      FP P ps=0.00 pr=0.00: …우리나라 돈으로 한 ‖ 
+      FP P ps=0.19 pr=0.50: …너는 조그마한하거든 ‖ 애가
+      FP P ps=0.00 pr=0.98: …응 ‖ 소수과
+      FP P ps=0.00 pr=0.00: …우리 학교 쪽 ‖ 우리 학교 쪽에 있는 거
+ks-long  punct: A 165  gold C 123 AMBIG 24 NO 18 | p_safe>=0.02: lose C 8 drop NO 6 | p_safe>=0.05: lose C 9 drop NO 6 | p_safe>=0.1: lose C 11 drop NO 6 | p_safe>=0.2: lose C 14 drop NO 7 | p_rev<=0.9: lose C 51 drop NO 9 | p_rev<=0.7: lose C 54 drop NO 10 | p_rev<=0.5: lose C 58 drop NO 10
+ks-long  other: A 5  gold C 2 AMBIG 0 NO 3
+      FP P ps=0.00 pr=0.00: …호텔이나 이런데 뭐 식당 밥 먹다 보면은 ‖ 
+      FP P ps=0.47 pr=1.00: …같이 갔던 베트남 식당 있는 쪽 있잖아 ‖ 기억나 아 태국 식당
+      FP P ps=0.35 pr=1.00: …갔던 베트남 식당 있는 쪽 있잖아 기억나 ‖ 아 태국 식당
+      FP P ps=0.00 pr=0.00: …좋은데 안 안 빠지는 걸 어떡해 근데 ‖ 

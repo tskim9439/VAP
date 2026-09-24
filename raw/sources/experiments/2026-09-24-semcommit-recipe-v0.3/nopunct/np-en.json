@@ -1,0 +1,737 @@
+{
+ "ls-test-clean-5142-36377-00433": {
+  "commit": [
+   12,
+   21,
+   32,
+   50,
+   68,
+   87
+  ],
+  "ambig": [
+   59
+  ],
+  "why": {
+   "12": "sentence complete; new sentence follows",
+   "21": "clause complete; next has own subject",
+   "32": "sentence complete; new sentence follows",
+   "50": "sentence complete; new sentence follows",
+   "59": "shared-subject VP coordination follows (and showed)",
+   "68": "sentence complete; new sentence follows",
+   "87": "stream end, complete"
+  }
+ },
+ "ls-test-clean-2300-131720-00173": {
+  "commit": [
+   47,
+   75
+  ],
+  "ambig": [
+   24,
+   60
+  ],
+  "why": {
+   "24": "main clause done; which-relative follows",
+   "47": "sentence complete; new sentence follows",
+   "60": "not alone for..but for extends same predicate",
+   "75": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1284-1181-00088": {
+  "commit": [
+   5,
+   15,
+   40
+  ],
+  "ambig": [
+   28,
+   34
+  ],
+  "why": {
+   "5": "after speaker tag; new sentence follows",
+   "15": "quote sentence complete; new utterance",
+   "28": "after tag but who-relative follows",
+   "34": "next tag may make this a quote",
+   "40": "stream end, tag clause complete"
+  }
+ },
+ "ls-test-clean-8463-294825-00694": {
+  "commit": [
+   2,
+   9,
+   16
+  ],
+  "ambig": [
+   27,
+   36,
+   55
+  ],
+  "why": {
+   "2": "complete; new clause follows",
+   "9": "complete; next clause has own subject",
+   "16": "sentence complete; new sentence follows",
+   "27": "complete but appositive fragment follows",
+   "36": "appositive complete; another appositive follows",
+   "55": "stream end; list lacks and, maybe cut"
+  }
+ },
+ "ls-test-clean-4992-41806-00401": {
+  "commit": [
+   16,
+   32,
+   52,
+   67,
+   75
+  ],
+  "ambig": [
+   28
+  ],
+  "why": {
+   "16": "sentence complete; new sentence follows",
+   "28": "shared-subject VP coordination follows (and removed)",
+   "32": "sentence complete; new sentence follows",
+   "52": "pre-tagged thought ends; so-clause follows",
+   "67": "complete; next clause has own subject",
+   "75": "stream end, complete"
+  }
+ },
+ "ls-test-clean-4507-16021-00352": {
+  "commit": [
+   8,
+   15,
+   38,
+   45,
+   51
+  ],
+  "ambig": [],
+  "why": {
+   "8": "question complete; new question follows",
+   "15": "question complete; new sentence follows",
+   "38": "sentence complete; marker now heads next",
+   "45": "question complete; new question follows",
+   "51": "stream end, complete"
+  }
+ },
+ "ls-test-clean-61-70970-00496": {
+  "commit": [
+   10,
+   19,
+   42,
+   53,
+   62,
+   69,
+   78
+  ],
+  "ambig": [
+   59
+  ],
+  "why": {
+   "10": "utterance complete; other speaker replies",
+   "19": "after tag and its adjunct",
+   "42": "sentence complete; new sentence follows",
+   "53": "complete; next clause has own subject",
+   "59": "reason PP adjunct follows",
+   "62": "sentence complete; new sentence follows",
+   "69": "complete; next clause has own subject",
+   "78": "stream end, complete"
+  }
+ },
+ "ls-test-clean-7127-75947-00588": {
+  "commit": [
+   8,
+   12,
+   18,
+   23,
+   28,
+   38,
+   49,
+   51,
+   69
+  ],
+  "ambig": [
+   34
+  ],
+  "why": {
+   "8": "after speaker tag; new sentence",
+   "12": "complete; next clause has own subject",
+   "18": "complete; new statement follows",
+   "23": "chain item complete; new clause",
+   "28": "chain item complete; new clause",
+   "34": "well+tag; unclear if well is marker",
+   "38": "complete; other speaker replies",
+   "49": "after tag and participle; new sentence",
+   "51": "imperative complete; question follows",
+   "69": "stream end, complete"
+  }
+ },
+ "ls-test-clean-2830-3980-00237": {
+  "commit": [
+   9,
+   21,
+   23,
+   37,
+   40,
+   49,
+   57
+  ],
+  "ambig": [],
+  "why": {
+   "9": "sentence complete; new fragment unit",
+   "21": "not..but fragment complete",
+   "23": "question complete",
+   "37": "not..but fragment complete",
+   "40": "imperative complete; for-reason clause follows",
+   "49": "complete; new question follows",
+   "57": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1320-122617-00102": {
+  "commit": [
+   5,
+   13,
+   26,
+   33,
+   39,
+   62
+  ],
+  "ambig": [
+   48
+  ],
+  "why": {
+   "5": "complete; next clause has own subject",
+   "13": "complete; new sentence follows",
+   "26": "complete; next clause has own subject",
+   "33": "clause complete; new speaker question",
+   "39": "question complete; reply follows",
+   "48": "after tag but though-clause continues quote",
+   "62": "stream end, complete"
+  }
+ },
+ "ls-test-clean-5105-28241-00416": {
+  "commit": [
+   16,
+   73,
+   82
+  ],
+  "ambig": [
+   5,
+   29,
+   37,
+   50
+  ],
+  "why": {
+   "5": "shared-subject VP coordination follows",
+   "16": "sentence complete; new sentence follows",
+   "29": "shared-subject VP coordination follows",
+   "37": "already..when construction; when-clause follows",
+   "50": "which-relative clause follows",
+   "73": "complete; whilst-clause with own subject",
+   "82": "stream end, complete"
+  }
+ },
+ "ls-test-clean-5639-40744-00453": {
+  "commit": [
+   29,
+   35,
+   59,
+   76,
+   97,
+   116
+  ],
+  "ambig": [
+   13,
+   49,
+   65,
+   83,
+   101,
+   107
+  ],
+  "why": {
+   "13": "after tag; of-which relative continues quote",
+   "29": "complete; next clause has own subject",
+   "35": "complete; new sentence follows",
+   "49": "in-which relative clause follows",
+   "59": "sentence complete; new sentence follows",
+   "65": "shared-subject VP coordination follows",
+   "76": "complete; next clause has own subject",
+   "83": "until-clause limits the state",
+   "97": "complete; next clause has own subject",
+   "101": "PP adjunct follows",
+   "107": "which-relative clause follows",
+   "116": "stream end, complete"
+  }
+ },
+ "ls-test-clean-7127-75947-00591": {
+  "commit": [
+   13,
+   17,
+   24,
+   43,
+   50,
+   78
+  ],
+  "ambig": [
+   37,
+   39
+  ],
+  "why": {
+   "13": "question complete; new statement follows",
+   "17": "statement complete; oh heads next",
+   "24": "after tag; next clause has own subject",
+   "37": "i suppose hedge follows",
+   "39": "tag question is it not follows",
+   "43": "question complete; new quote follows",
+   "50": "after tag; new clause follows",
+   "78": "stream end, complete"
+  }
+ },
+ "ls-test-clean-6829-68769-00516": {
+  "commit": [
+   16,
+   35,
+   45,
+   65,
+   76,
+   90
+  ],
+  "ambig": [
+   24,
+   58,
+   84
+  ],
+  "why": {
+   "16": "complete; but-clause with own subject",
+   "24": "shared-subject VP coordination follows",
+   "35": "sentence complete; new sentence follows",
+   "45": "after report tag; new clause",
+   "58": "cause PP adjunct follows",
+   "65": "sentence complete; new quote follows",
+   "76": "after speaker tag; new sentence",
+   "84": "purpose infinitive follows",
+   "90": "stream end, complete"
+  }
+ },
+ "ls-test-clean-5105-28241-00419": {
+  "commit": [
+   13,
+   16,
+   27,
+   54,
+   68
+  ],
+  "ambig": [
+   35
+  ],
+  "why": {
+   "13": "quote question complete after complement",
+   "16": "complete; new sentence follows",
+   "27": "complete; new sentence follows",
+   "35": "only-to result infinitive follows",
+   "54": "sentence complete; new quote follows",
+   "68": "stream end, complete"
+  }
+ },
+ "ls-test-clean-3575-170457-00285": {
+  "commit": [
+   3,
+   12,
+   31,
+   44,
+   73,
+   83,
+   85
+  ],
+  "ambig": [
+   49
+  ],
+  "why": {
+   "3": "complete; new sentence follows",
+   "12": "complete; new sentence follows",
+   "31": "sentence complete; p s follows",
+   "44": "request complete; new sentence follows",
+   "49": "partly-to purpose adjuncts follow",
+   "73": "complete; concessive clause with own subject",
+   "83": "sentence complete; signature follows",
+   "85": "stream end, signature complete"
+  }
+ },
+ "ls-test-clean-6930-75918-00536": {
+  "commit": [
+   12,
+   31,
+   41,
+   46,
+   63
+  ],
+  "ambig": [],
+  "why": {
+   "12": "complete; next clause has own subject",
+   "31": "sentence complete; new sentence follows",
+   "41": "sentence complete; new sentence follows",
+   "46": "complete; next clause has own subject",
+   "63": "stream end, complete"
+  }
+ },
+ "ls-test-clean-5639-40744-00451": {
+  "commit": [
+   7,
+   28,
+   36,
+   44,
+   75
+  ],
+  "ambig": [
+   58
+  ],
+  "why": {
+   "7": "complete; next clause has own subject",
+   "28": "sentence complete; new sentence follows",
+   "36": "complete; new clause follows",
+   "44": "complete; next clause has own subject",
+   "58": "shared-subject passive VP coordination follows",
+   "75": "stream end, complete"
+  }
+ },
+ "ls-test-clean-5105-28233-00408": {
+  "commit": [
+   12,
+   21,
+   33
+  ],
+  "ambig": [],
+  "why": {
+   "12": "complete; but-clause with own subject",
+   "21": "complete; next clause has own subject",
+   "33": "stream end, complete"
+  }
+ },
+ "ls-test-clean-7127-75947-00584": {
+  "commit": [
+   14,
+   16,
+   25,
+   39,
+   48
+  ],
+  "ambig": [
+   21,
+   24,
+   44
+  ],
+  "why": {
+   "14": "statement complete; new request follows",
+   "16": "request complete; answer follows",
+   "21": "unclear whether following words are a tag",
+   "24": "unclear: tag end or inquired no",
+   "25": "unit closed; narration she then rose",
+   "39": "sentence complete; new sentence follows",
+   "44": "shared-subject VP coordination follows",
+   "48": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000150_S0000073": {
+  "commit": [
+   19,
+   40,
+   47
+  ],
+  "ambig": [
+   11
+  ],
+  "why": {
+   "11": "subjectless VP list; next has own subject",
+   "19": "clause complete; new topic follows",
+   "40": "complete; yeah heads next unit",
+   "47": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000167_S0000179": {
+  "commit": [
+   5,
+   12,
+   21
+  ],
+  "ambig": [],
+  "why": {
+   "5": "complete; new clause follows",
+   "12": "complete; next clause has own subject",
+   "21": "stream end, complete"
+  }
+ },
+ "gs-test-podcast-POD1000000036_S0000019": {
+  "commit": [
+   31
+  ],
+  "ambig": [
+   18,
+   19
+  ],
+  "why": {
+   "18": "right may be tag question",
+   "19": "right may head next unit",
+   "31": "stream end, complete"
+  }
+ },
+ "gs-test-podcast-POD1000000043_S0000257": {
+  "commit": [
+   57
+  ],
+  "ambig": [
+   9,
+   48,
+   62
+  ],
+  "why": {
+   "9": "garbled but complete; and you know follows",
+   "48": "second reason inside because-scope follows",
+   "57": "pseudo-cleft complete; like i thought follows",
+   "62": "stream end; maybe cut-off new unit"
+  }
+ },
+ "gs-test-youtube-YOU1000000144_S0000047": {
+  "commit": [
+   10,
+   29,
+   34
+  ],
+  "ambig": [
+   1,
+   15
+  ],
+  "why": {
+   "1": "stream-initial fragment two clips",
+   "10": "complete; but-clause with own subject",
+   "15": "as-if clause may attach",
+   "29": "complete; new sentence follows",
+   "34": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000189_S0000098": {
+  "commit": [
+   22,
+   28
+  ],
+  "ambig": [
+   13
+  ],
+  "why": {
+   "13": "stream-initial fragment ends; but-clause follows",
+   "22": "complete; elaborating clause follows",
+   "28": "stream end, complete"
+  }
+ },
+ "gs-test-podcast-POD1000000041_S0000230": {
+  "commit": [
+   9,
+   22,
+   28
+  ],
+  "ambig": [],
+  "why": {
+   "9": "complete; new sentence follows",
+   "22": "complete after unless-condition",
+   "28": "stream end, complete"
+  }
+ },
+ "gs-test-podcast-POD1000000005_S0000202": {
+  "commit": [
+   9,
+   20,
+   32
+  ],
+  "ambig": [
+   13
+  ],
+  "why": {
+   "9": "complete; new sentence follows",
+   "13": "restated with names; repair-like",
+   "20": "complete; next clause has own subject",
+   "32": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000045_S0000039": {
+  "commit": [
+   41
+  ],
+  "ambig": [
+   10,
+   25
+  ],
+  "why": {
+   "10": "question complete; when may attach",
+   "25": "or-alternative question follows",
+   "41": "stream end, question complete"
+  }
+ },
+ "gs-test-podcast-POD1000000035_S0000007": {
+  "commit": [
+   4,
+   36
+  ],
+  "ambig": [
+   24
+  ],
+  "why": {
+   "4": "complete; new sentence follows",
+   "24": "participial NP modifier follows",
+   "36": "stream end, complete"
+  }
+ },
+ "gs-test-podcast-POD1000000041_S0000514": {
+  "commit": [
+   34
+  ],
+  "ambig": [
+   11,
+   23,
+   31
+  ],
+  "why": {
+   "11": "stream-initial list fragment ends; um follows",
+   "23": "because-clause follows hedge statement",
+   "31": "time PP adjunct follows after ah",
+   "34": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000165_S0000001": {
+  "commit": [
+   1,
+   12,
+   16,
+   32
+  ],
+  "ambig": [],
+  "why": {
+   "1": "imperative complete; new sentence",
+   "12": "complete; new sentence follows",
+   "16": "greeting complete; next clause has own subject",
+   "32": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000134_S0000081": {
+  "commit": [
+   27,
+   34
+  ],
+  "ambig": [
+   15,
+   17,
+   23
+  ],
+  "why": {
+   "15": "shared-subject VP list continues",
+   "17": "shared-subject VP list continues",
+   "23": "shared-subject VP list continues",
+   "27": "quoted sentence complete; new quoted sentence",
+   "34": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000185_S0000013": {
+  "commit": [
+   9,
+   20,
+   30,
+   36
+  ],
+  "ambig": [
+   4
+  ],
+  "why": {
+   "4": "purpose infinitive follows",
+   "9": "complete; so-clause follows",
+   "20": "complete; but-clause with own subject",
+   "30": "complete; and so heads next",
+   "36": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000148_S0000037": {
+  "commit": [
+   19,
+   31
+  ],
+  "ambig": [
+   10,
+   23
+  ],
+  "why": {
+   "10": "complete; you know + which-relative follows",
+   "19": "complete; new sentence follows",
+   "23": "when-clause supplies the occasion",
+   "31": "stream end, complete"
+  }
+ },
+ "gs-test-podcast-POD1000000044_S0000094": {
+  "commit": [
+   4,
+   12,
+   33
+  ],
+  "ambig": [],
+  "why": {
+   "4": "complete; new sentence follows",
+   "12": "complete; and you know heads next",
+   "33": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000135_S0000052": {
+  "commit": [
+   16,
+   20,
+   27
+  ],
+  "ambig": [],
+  "why": {
+   "16": "complete; new sentence follows",
+   "20": "complete; next clause has own subject",
+   "27": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000140_S0000022": {
+  "commit": [
+   12,
+   19,
+   38
+  ],
+  "ambig": [
+   5,
+   23,
+   26
+  ],
+  "why": {
+   "5": "quote followed by attribution-like sentence",
+   "12": "complete; new sentence follows",
+   "19": "complete; new sentence follows",
+   "23": "garbled; possible restart",
+   "26": "exclamation fragment or restart",
+   "38": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000175_S0000101": {
+  "commit": [
+   4,
+   24
+  ],
+  "ambig": [
+   12,
+   18
+  ],
+  "why": {
+   "4": "complete; new sentence follows",
+   "12": "time PP adjunct follows",
+   "18": "later sarcasm remark reframes it",
+   "24": "stream end, complete"
+  }
+ },
+ "gs-test-youtube-YOU1000000117_S0000122": {
+  "commit": [
+   27
+  ],
+  "ambig": [
+   7
+  ],
+  "why": {
+   "7": "suggest complement comes later as that-clause",
+   "27": "stream end, complete"
+  }
+ }
+}

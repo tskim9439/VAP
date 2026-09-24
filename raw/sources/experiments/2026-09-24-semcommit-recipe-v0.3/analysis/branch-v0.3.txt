@@ -1,0 +1,26 @@
+
+== A labels by branch (C/AMBIG/NO, marginal P = C/(C+NO)) ==
+ls-test  dev   punct 225/5/2 P 0.991 | other 12/5/18 P 0.400
+ls-test  test  punct 128/5/2 P 0.985 | other 4/4/18 P 0.182
+gs-test  dev   punct 90/13/9 P 0.909 | other 0/0/3 P 0.000
+gs-test  test  punct 62/7/7 P 0.899 | other 0/0/2 P 0.000
+ks-eval  dev   punct 95/13/7 P 0.931 | other 4/0/1 P 0.800
+ks-eval  test  punct 108/15/16 P 0.871 | other 3/1/0 P 1.000
+ks-long  dev   punct 55/15/7 P 0.887 | other 0/0/1 P 0.000
+ks-long  test  punct 68/9/11 P 0.861 | other 2/0/2 P 0.500
+
+== other-branch sweep (all other candidates, not only A): C/NO kept at p_safe>=t, p_rev<=r ==
+EN dev  other cands C 36 AMB 18 NO 155 | 0.35/0.02:10-17 0.35/0.2:12-21 0.5/0.02:8-15 0.5/0.2:9-18 0.7/0.02:3-6 0.7/0.2:3-7 0.9/0.02:2-4 0.9/0.2:2-5 0.95/0.02:2-3 0.95/0.2:2-3 0.99/0.02:0-2 0.99/0.2:0-2
+EN test other cands C 16 AMB 13 NO 96 | 0.35/0.02:4-18 0.35/0.2:4-20 0.5/0.02:4-14 0.5/0.2:4-16 0.7/0.02:3-12 0.7/0.2:3-13 0.9/0.02:2-9 0.9/0.2:2-10 0.95/0.02:1-8 0.95/0.2:1-9 0.99/0.02:1-7 0.99/0.2:1-7
+KO dev  other cands C 15 AMB 17 NO 91 | 0.35/0.02:9-13 0.35/0.2:10-15 0.5/0.02:6-7 0.5/0.2:7-9 0.7/0.02:5-6 0.7/0.2:5-7 0.9/0.02:4-5 0.9/0.2:4-5 0.95/0.02:4-2 0.95/0.2:4-2 0.99/0.02:3-2 0.99/0.2:3-2
+KO test other cands C 18 AMB 21 NO 162 | 0.35/0.02:9-15 0.35/0.2:9-16 0.5/0.02:9-9 0.5/0.2:9-10 0.7/0.02:7-5 0.7/0.2:7-6 0.9/0.02:5-4 0.9/0.2:5-4 0.95/0.02:5-2 0.95/0.2:5-2 0.99/0.02:3-2 0.99/0.2:3-2
+
+== punct-branch A: stream-final vs mid (C/AMBIG/NO) and p_safe<0.02 subset ==
+ls-test  final: 88/2/0  (p_safe<0.02: 4/1/0)
+ls-test  mid  : 265/8/4  (p_safe<0.02: 37/0/4)
+gs-test  final: 74/1/4  (p_safe<0.02: 16/0/3)
+gs-test  mid  : 78/19/12  (p_safe<0.02: 8/6/7)
+ks-eval  final: 153/20/3  (p_safe<0.02: 38/10/3)
+ks-eval  mid  : 50/8/20  (p_safe<0.02: 6/5/6)
+ks-long  final: 49/9/6  (p_safe<0.02: 4/2/3)
+ks-long  mid  : 74/15/12  (p_safe<0.02: 4/3/3)

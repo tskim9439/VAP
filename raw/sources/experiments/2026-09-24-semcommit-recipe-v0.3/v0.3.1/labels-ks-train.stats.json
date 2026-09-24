@@ -1,0 +1,149 @@
+{
+  "by_lang": {
+    "Korean": {
+      "A": 2691,
+      "B": 1119,
+      "N": 93,
+      "candidates": 3903,
+      "future_unobserved": 1977,
+      "streams": 1977,
+      "words": 20791
+    }
+  },
+  "code_prompt_version": "semcommit-prompt-v0.2+ab90c940",
+  "extra": [
+    "last",
+    "seg_end",
+    "punct_final"
+  ],
+  "inputs": {
+    "/data4/tskim/semcommit/data/v0/words-ks-train.jsonl": "0ae549fb3f7fc9cb6f6fcf8c74858adad781ae1c34e274c93c1ab2fc8be9592d",
+    "/data4/tskim/semcommit/labels/v0.2/A-ks-train.jsonl": "57fd6ffcc4cb5f6d14796127ee821beb0c86aa6a85e5e05e2f95266726ef91d8",
+    "/data4/tskim/semcommit/labels/v0.2/B.exaone35-ks-train.jsonl": "1af621ac813511a7ec754d5cd116a11289174d892b686d8b3a4c4ded03291ed9",
+    "/data4/tskim/semcommit/labels/v0.2/B.qwen3-ks-train.jsonl": "37e0d7cf8c57d9b0365db2f1d5d503e74ae9119403d45b263d195b06302dfc40",
+    "/data4/tskim/semcommit/labels/v0.2/C-ks-train.jsonl": "f0a958ef5b15388e81613a55e19fcdcdaab2d114c33a45e242e4fbc97593b56b",
+    "/data4/tskim/semcommit/labels/v0.3/B.exaone35-ks-train.x.jsonl": "ca001b1274a02dbca5e783e70c5742c7cbe4ea7780296d3228ebb33a2343910f",
+    "/data4/tskim/semcommit/labels/v0.3/B.qwen3-ks-train.x.jsonl": "f44a0a8a547c8356e9e4322e276e1c9afd7249e1e7b3b20e068c4c14a64bf19f",
+    "/data4/tskim/semcommit/labels/v0.3/C-ks-train.x.jsonl": "daeb46d27ae312753d711eedee686961cec6b727743a4fb4bf85519d9d18c029"
+  },
+  "judges": {
+    "English": [
+      "qwen3",
+      "gptoss"
+    ],
+    "Korean": [
+      "exaone35",
+      "qwen3"
+    ]
+  },
+  "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+  "provenance": {
+    "/data4/tskim/semcommit/labels/v0.2/A-ks-train.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 2000,
+      "stage": "A"
+    },
+    "/data4/tskim/semcommit/labels/v0.2/B.exaone35-ks-train.jsonl": {
+      "judge": "exaone35",
+      "kind": "exaone35",
+      "model_path": "/data4/tskim/OpenSource/EXAONE-3.5-7.8B-Instruct-rev0ff6b5e",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 3255,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.2/B.qwen3-ks-train.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 3255,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.2/C-ks-train.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 3255,
+      "stage": "C"
+    },
+    "/data4/tskim/semcommit/labels/v0.3/B.exaone35-ks-train.x.jsonl": {
+      "judge": "exaone35",
+      "kind": "exaone35",
+      "model_path": "/data4/tskim/OpenSource/EXAONE-3.5-7.8B-Instruct-rev0ff6b5e",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 648,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.3/B.qwen3-ks-train.x.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 648,
+      "stage": "B"
+    },
+    "/data4/tskim/semcommit/labels/v0.3/C-ks-train.x.jsonl": {
+      "judge": "qwen3",
+      "kind": "qwen3",
+      "model_path": "/data4/tskim/OpenSource/qwen3-8b",
+      "prompt_version": "semcommit-prompt-v0.2+ab90c940",
+      "rows": 648,
+      "stage": "C"
+    }
+  },
+  "recipe": "semcommit-recipe-v0.3",
+  "sources": {
+    "Korean": {
+      "last:A": 1461,
+      "last:B": 465,
+      "last:N": 51,
+      "punct_final:A": 2691,
+      "punct_final:B": 136,
+      "punct_final:N": 6,
+      "seg_end:A": 1461,
+      "seg_end:B": 465,
+      "seg_end:N": 51,
+      "stageA:A": 2212,
+      "stageA:B": 966,
+      "stageA:N": 77
+    }
+  },
+  "streams": {
+    "labeled": 1977,
+    "no_stageA": 23,
+    "total": 2000
+  },
+  "thresholds": {
+    "English": {
+      "other": null,
+      "punct": {
+        "p_rev": 1.01,
+        "p_safe": 0.0
+      }
+    },
+    "Korean": {
+      "other": null,
+      "punct": {
+        "p_rev": 1.01,
+        "p_safe": 0.0
+      }
+    }
+  },
+  "why": {
+    "Korean": {
+      "disflA_filler": 123,
+      "disflA_inside_repair": 1,
+      "disflA_reparandum": 1,
+      "disflA_repetition": 44,
+      "disfl_tag_filler": 40,
+      "disfl_tag_rep": 19,
+      "disfl_tag_unclear": 34,
+      "v3_other+p_safe_low": 950,
+      "v3_punct": 2691
+    }
+  }
+}

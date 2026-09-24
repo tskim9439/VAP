@@ -1,0 +1,8 @@
+ks-eval  reply-prefix {'dev': 'C 0 AMB 0 NO 45', 'test': 'C 0 AMB 0 NO 45'} | conn-final {'dev': 'C 3 AMB 9 NO 15', 'test': 'C 0 AMB 4 NO 18'}
+          endings: {('가지고', 'N'): 2, ('가지구', 'N'): 1, ('고', 'A'): 2, ('고', 'C'): 2, ('고', 'N'): 7, ('는데', 'A'): 9, ('니까', 'C'): 1, ('니까', 'N'): 4, ('다가', 'N'): 2, ('던데', 'A'): 1, ('면', 'N'): 5, ('면서', 'N'): 2, ('서', 'N'): 7, ('은데', 'A'): 1, ('지만', 'N'): 3}
+ks-long  reply-prefix {'dev': 'C 0 AMB 0 NO 14', 'test': 'C 0 AMB 0 NO 7'} | conn-final {'dev': 'C 0 AMB 3 NO 8', 'test': 'C 0 AMB 4 NO 13'}
+          endings: {('고', 'N'): 10, ('는데', 'A'): 5, ('니까', 'N'): 3, ('다가', 'N'): 1, ('면', 'A'): 1, ('면', 'N'): 3, ('서', 'N'): 4, ('지만', 'A'): 1}
+gs-test  reply-prefix {'dev': 'C 0 AMB 0 NO 1', 'test': 'C 0 AMB 0 NO 3'} | conn-final {'dev': 'C 0 AMB 0 NO 0', 'test': 'C 0 AMB 0 NO 0'}
+ls-test  reply-prefix {'dev': 'C 0 AMB 0 NO 0', 'test': 'C 0 AMB 0 NO 2'} | conn-final {'dev': 'C 0 AMB 0 NO 0', 'test': 'C 0 AMB 0 NO 0'}
+ks-train reply-prefix positions 430 conn-final streams 182 of 2000
+ls-train reply-prefix positions 7 conn-final streams 0 of 400

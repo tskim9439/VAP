@@ -1,0 +1,7 @@
+ls-test {('dev', 'C', 'A'): 1, ('test', 'C', 'A'): 1}
+gs-test {('test', 'N', 'B'): 1}
+ks-eval {('dev', 'N', 'B'): 7, ('test', 'N', 'B'): 12}
+ks-long {('dev', 'N', 'B'): 1, ('test', 'C', 'B'): 1, ('test', 'N', 'B'): 2}
+ls-train {('all', '-', 'A'): 1, ('all', '-', 'B'): 1}
+ks-train {('all', '-', 'B'): 126}
+{"punct": {"dev": {"P": 0.9433962264150944, "R": 0.7936507936507936, "n_A": 187}, "test": {"P": 0.9259259259259259, "R": 0.813953488372093, "n_A": 213}}, "punct_resp": {"dev": null, "test": null}, "other": {"dev": null, "test": null}}

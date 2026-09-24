@@ -1,0 +1,144 @@
+{
+ "floor": 0.9,
+ "extra": [
+  "last",
+  "seg_end",
+  "punct_final"
+ ],
+ "neg_rules": [
+  "reply_prefix",
+  "conn_final",
+  "conn_mid"
+ ],
+ "judges": {
+  "English": [
+   "qwen3",
+   "exaone35"
+  ],
+  "Korean": [
+   "exaone35",
+   "qwen3"
+  ]
+ },
+ "languages": {
+  "English": {
+   "thresholds": {
+    "punct": {
+     "p_safe": 0.0,
+     "p_rev": 1.01
+    },
+    "punct_resp": {
+     "p_safe": 0.0,
+     "p_rev": 1.01
+    },
+    "other": null
+   },
+   "dev": {
+    "P": 0.9662576687116564,
+    "R": 0.7274826789838337,
+    "n_A": 344
+   },
+   "test": {
+    "P": 0.9547738693467337,
+    "R": 0.7251908396946565,
+    "n_A": 211
+   },
+   "branches": {
+    "punct": {
+     "dev": {
+      "P": 0.9661538461538461,
+      "R": 0.7251732101616628,
+      "n_A": 343
+     },
+     "test": {
+      "P": 0.9545454545454546,
+      "R": 0.7213740458015268,
+      "n_A": 210
+     }
+    },
+    "punct_resp": {
+     "dev": {
+      "P": 1.0,
+      "R": 0.0023094688221709007,
+      "n_A": 1
+     },
+     "test": {
+      "P": 1.0,
+      "R": 0.003816793893129771,
+      "n_A": 1
+     }
+    },
+    "other": {
+     "dev": null,
+     "test": null
+    }
+   },
+   "candidates": {
+    "dev": 554,
+    "test": 337
+   },
+   "gold_commit": {
+    "dev": 433,
+    "test": 262
+   },
+   "cand_recall": {
+    "dev": 0.8129,
+    "test": 0.7863
+   }
+  },
+  "Korean": {
+   "thresholds": {
+    "punct": {
+     "p_safe": 0.0,
+     "p_rev": 1.01
+    },
+    "punct_resp": null,
+    "other": null
+   },
+   "dev": {
+    "P": 0.9433962264150944,
+    "R": 0.7936507936507936,
+    "n_A": 187
+   },
+   "test": {
+    "P": 0.9259259259259259,
+    "R": 0.813953488372093,
+    "n_A": 213
+   },
+   "branches": {
+    "punct": {
+     "dev": {
+      "P": 0.9433962264150944,
+      "R": 0.7936507936507936,
+      "n_A": 187
+     },
+     "test": {
+      "P": 0.9259259259259259,
+      "R": 0.813953488372093,
+      "n_A": 213
+     }
+    },
+    "punct_resp": {
+     "dev": null,
+     "test": null
+    },
+    "other": {
+     "dev": null,
+     "test": null
+    }
+   },
+   "candidates": {
+    "dev": 325,
+    "test": 432
+   },
+   "gold_commit": {
+    "dev": 189,
+    "test": 215
+   },
+   "cand_recall": {
+    "dev": 0.8889,
+    "test": 0.907
+   }
+  }
+ }
+}

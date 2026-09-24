@@ -1,0 +1,4 @@
+ks-eval {'reply_prefix/dev': 'C 0 AMB 0 NO 45', 'reply_prefix/test': 'C 0 AMB 0 NO 45', 'conn_final/dev': 'C 1 AMB 0 NO 15', 'conn_final/test': 'C 0 AMB 0 NO 18', 'conn_mid/dev': 'C 0 AMB 2 NO 79', 'conn_mid/test': 'C 0 AMB 1 NO 105'}
+ks-long {'reply_prefix/dev': 'C 0 AMB 0 NO 14', 'reply_prefix/test': 'C 0 AMB 0 NO 7', 'conn_final/dev': 'C 0 AMB 2 NO 8', 'conn_final/test': 'C 0 AMB 0 NO 13', 'conn_mid/dev': 'C 0 AMB 1 NO 136', 'conn_mid/test': 'C 0 AMB 1 NO 174'}
+gs-test {'reply_prefix/dev': 'C 0 AMB 0 NO 1', 'reply_prefix/test': 'C 0 AMB 0 NO 3'}
+ls-test {'reply_prefix/test': 'C 0 AMB 0 NO 2'}

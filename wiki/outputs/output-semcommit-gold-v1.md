@@ -5,10 +5,12 @@ type: output
 created: 2026-09-24
 updated: 2026-09-24
 sources: [raw/sources/experiments/2026-09-24-semcommit-gold-v1/, raw/inbox/streaming_asr_semantic_commit_plan.md]
-related: [output-semcommit-v0.2-rack4-small, decision-semcommit-turn-eot-scope]
+related: [output-semcommit-v0.2-rack4-small, decision-semcommit-turn-eot-scope, output-semcommit-recipe-v0.3]
 ---
 
 # SEM_END 골드셋 v1
+
+**라벨링 레시피 v0.3(2026-09-24 추가)**: 아래 §4 의 교사 관문 목표(A 정밀도 ≥ 0.9 를 지키며 재현율 상향)에 맞춰 레시피를 고쳤다 — 같은 8B 교사로 A 재현율 0.70–0.82, 정밀도 0.89–0.99(v0.3.2), 교사 관문 스크립트도 v0.3 기본으로 바뀌었다: [[output-semcommit-recipe-v0.3]].
 
 ## 질문
 v0.2 실험([[output-semcommit-v0.2-rack4-small]])의 평가 정답은 교사 라벨(A)이라, 교사가 틀리면 모델 점수도 같이 틀린다. 교사와 무관한 기준으로

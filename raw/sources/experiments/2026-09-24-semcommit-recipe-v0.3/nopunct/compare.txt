@@ -1,0 +1,6 @@
+np-en punct: gold C 109 A 9 N 3 | no-punct C 104 | both C 102 | COMMIT F1 0.958 | gold C → no-punct C/A/N 102/7/0 | gold N → no-punct C 0
+np-en other: gold C 50 A 40 N 1892 | no-punct C 47 | both C 47 | COMMIT F1 0.969 | gold C → no-punct C/A/N 47/3/0 | gold N → no-punct C 0
+np-en all: COMMIT F1 0.961 (gold 159, no-punct 151, both 149)
+np-ko punct: gold C 77 A 14 N 10 | no-punct C 63 | both C 61 | COMMIT F1 0.871 | gold C → no-punct C/A/N 61/15/1 | gold N → no-punct C 0
+np-ko other: gold C 18 A 16 N 1027 | no-punct C 23 | both C 16 | COMMIT F1 0.780 | gold C → no-punct C/A/N 16/2/0 | gold N → no-punct C 0
+np-ko all: COMMIT F1 0.851 (gold 95, no-punct 86, both 77)

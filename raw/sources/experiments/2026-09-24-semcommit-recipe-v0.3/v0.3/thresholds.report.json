@@ -1,0 +1,88 @@
+{
+ "floor": 0.9,
+ "extra": [
+  "last",
+  "seg_end",
+  "punct_final"
+ ],
+ "judges": {
+  "English": [
+   "qwen3",
+   "exaone35"
+  ],
+  "Korean": [
+   "exaone35",
+   "qwen3"
+  ]
+ },
+ "languages": {
+  "English": {
+   "thresholds": {
+    "punct": {
+     "p_safe": 0.0,
+     "p_rev": 1.01
+    },
+    "other": {
+     "p_safe": 0.35,
+     "p_rev": 0.2
+    }
+   },
+   "dev": {
+    "P": 0.9108635097493036,
+    "R": 0.7551963048498845,
+    "n_A": 382
+   },
+   "test": {
+    "P": 0.8699551569506726,
+    "R": 0.7404580152671756,
+    "n_A": 239
+   },
+   "candidates": {
+    "dev": 554,
+    "test": 337
+   },
+   "gold_commit": {
+    "dev": 433,
+    "test": 262
+   },
+   "cand_recall": {
+    "dev": 0.8129,
+    "test": 0.7863
+   }
+  },
+  "Korean": {
+   "thresholds": {
+    "punct": {
+     "p_safe": 0.0,
+     "p_rev": 1.01
+    },
+    "other": {
+     "p_safe": 0.95,
+     "p_rev": 0.02
+    }
+   },
+   "dev": {
+    "P": 0.9058823529411765,
+    "R": 0.8148148148148148,
+    "n_A": 198
+   },
+   "test": {
+    "P": 0.861904761904762,
+    "R": 0.8418604651162791,
+    "n_A": 235
+   },
+   "candidates": {
+    "dev": 325,
+    "test": 432
+   },
+   "gold_commit": {
+    "dev": 189,
+    "test": 215
+   },
+   "cand_recall": {
+    "dev": 0.8889,
+    "test": 0.907
+   }
+  }
+ }
+}

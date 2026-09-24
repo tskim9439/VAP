@@ -1,0 +1,22 @@
+{
+ "English": {
+  "punct": {
+   "p_safe": 0.0,
+   "p_rev": 1.01
+  },
+  "other": {
+   "p_safe": 0.35,
+   "p_rev": 0.2
+  }
+ },
+ "Korean": {
+  "punct": {
+   "p_safe": 0.0,
+   "p_rev": 1.01
+  },
+  "other": {
+   "p_safe": 0.95,
+   "p_rev": 0.02
+  }
+ }
+}
