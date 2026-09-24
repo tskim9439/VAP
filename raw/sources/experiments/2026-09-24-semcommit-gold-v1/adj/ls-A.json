@@ -1,0 +1,258 @@
+{
+ "ls-test-clean-1089-134691-00017": {
+  "9": "AMBIG",
+  "11": "COMMIT",
+  "57": "NO"
+ },
+ "ls-test-clean-1188-133604-00030": {
+  "36": "AMBIG"
+ },
+ "ls-test-clean-1188-133604-00036": {
+  "39": "AMBIG"
+ },
+ "ls-test-clean-121-123852-00042": {
+  "7": "AMBIG",
+  "34": "AMBIG",
+  "43": "NO"
+ },
+ "ls-test-clean-1221-135767-00072": {
+  "12": "NO",
+  "23": "NO",
+  "29": "NO",
+  "39": "AMBIG",
+  "58": "NO"
+ },
+ "ls-test-clean-1284-1180-00074": {
+  "8": "NO",
+  "30": "NO",
+  "69": "AMBIG"
+ },
+ "ls-test-clean-1284-1180-00081": {
+  "32": "COMMIT",
+  "51": "COMMIT"
+ },
+ "ls-test-clean-1284-1181-00088": {
+  "28": "AMBIG"
+ },
+ "ls-test-clean-1320-122612-00093": {
+  "53": "NO"
+ },
+ "ls-test-clean-1320-122612-00096": {
+  "2": "AMBIG",
+  "60": "NO"
+ },
+ "ls-test-clean-1320-122617-00102": {
+  "33": "COMMIT",
+  "47": "AMBIG",
+  "48": "COMMIT"
+ },
+ "ls-test-clean-1320-122617-00104": {
+  "7": "NO",
+  "27": "NO",
+  "50": "AMBIG",
+  "55": "COMMIT",
+  "72": "NO"
+ },
+ "ls-test-clean-1320-122617-00111": {
+  "4": "AMBIG",
+  "20": "AMBIG",
+  "35": "NO",
+  "72": "NO",
+  "85": "NO"
+ },
+ "ls-test-clean-1580-141083-00116": {
+  "49": "NO"
+ },
+ "ls-test-clean-1580-141084-00125": {
+  "18": "COMMIT"
+ },
+ "ls-test-clean-1580-141084-00127": {
+  "39": "AMBIG"
+ },
+ "ls-test-clean-1995-1837-00143": {
+  "24": "AMBIG",
+  "25": "NO",
+  "27": "COMMIT",
+  "60": "COMMIT",
+  "66": "AMBIG"
+ },
+ "ls-test-clean-1995-1837-00144": {
+  "16": "NO",
+  "36": "NO",
+  "61": "AMBIG"
+ },
+ "ls-test-clean-2300-131720-00173": {
+  "24": "AMBIG"
+ },
+ "ls-test-clean-2300-131720-00179": {
+  "8": "AMBIG"
+ },
+ "ls-test-clean-237-126133-00184": {
+  "3": "AMBIG",
+  "13": "AMBIG",
+  "21": "AMBIG"
+ },
+ "ls-test-clean-237-126133-00188": {
+  "6": "AMBIG"
+ },
+ "ls-test-clean-237-134493-00195": {
+  "10": "AMBIG"
+ },
+ "ls-test-clean-2830-3979-00222": {
+  "33": "NO"
+ },
+ "ls-test-clean-2830-3979-00224": {
+  "41": "NO"
+ },
+ "ls-test-clean-2961-960-00248": {
+  "38": "NO"
+ },
+ "ls-test-clean-3570-5694-00266": {
+  "11": "NO",
+  "22": "AMBIG",
+  "38": "NO",
+  "77": "AMBIG",
+  "91": "AMBIG"
+ },
+ "ls-test-clean-3575-170457-00285": {
+  "49": "AMBIG",
+  "73": "COMMIT"
+ },
+ "ls-test-clean-3729-6852-00303": {
+  "74": "NO"
+ },
+ "ls-test-clean-3729-6852-00311": {
+  "4": "NO",
+  "11": "NO",
+  "28": "AMBIG",
+  "44": "NO",
+  "52": "AMBIG"
+ },
+ "ls-test-clean-4077-13751-00318": {
+  "56": "NO",
+  "63": "AMBIG"
+ },
+ "ls-test-clean-4077-13754-00328": {
+  "46": "AMBIG"
+ },
+ "ls-test-clean-4446-2273-00338": {
+  "73": "NO",
+  "74": "COMMIT"
+ },
+ "ls-test-clean-4446-2273-00342": {
+  "7": "NO"
+ },
+ "ls-test-clean-4507-16021-00354": {
+  "14": "COMMIT",
+  "24": "AMBIG"
+ },
+ "ls-test-clean-4507-16021-00364": {
+  "8": "COMMIT"
+ },
+ "ls-test-clean-4970-29095-00383": {
+  "21": "AMBIG"
+ },
+ "ls-test-clean-4992-41806-00401": {
+  "5": "AMBIG",
+  "28": "NO"
+ },
+ "ls-test-clean-5105-28240-00409": {
+  "27": "AMBIG"
+ },
+ "ls-test-clean-5105-28241-00416": {
+  "5": "NO",
+  "29": "NO",
+  "50": "AMBIG",
+  "65": "AMBIG",
+  "73": "COMMIT"
+ },
+ "_why": {
+  "ls-test-clean-1089-134691-00017:9": "완결 문장이나 뒤 hello stephanos 를 부르는 앞 표지로도 읽힘 (R6)",
+  "ls-test-clean-1089-134691-00017:11": "인사 외침 완결, here comes… 는 자기 주어 가진 새 외침",
+  "ls-test-clean-1089-134691-00017:57": "같은 주어 동사구 and parried… 이어짐, 자기 주어 없음 (R2)",
+  "ls-test-clean-1188-133604-00030:36": "절 완결 뒤 little and great·in spirit… 덧붙임: 정보 추가 vs 같은 절 연속",
+  "ls-test-clean-1188-133604-00036:39": "절 완결 뒤 itself mossy and rent… 서술 형용사구 덧붙음",
+  "ls-test-clean-121-123852-00042:7": "절 완결 뒤 to leap… 부정사 덧붙음 (sinker 선례)",
+  "ls-test-clean-121-123852-00042:34": "절 완결 뒤 receiving… 분사구 덧붙음 (breaking out 선례)",
+  "ls-test-clean-121-123852-00042:43": "heavy tears 의 동격 명사구 badges of… 이어짐 (R2 같은 논항)",
+  "ls-test-clean-1221-135767-00072:12": "apple trees 의 동격 명사구 probably the descendants… 이어짐 (R2)",
+  "ls-test-clean-1221-135767-00072:23": "blackstone 의 동격 명사구 the first settler… 이어짐 (R2)",
+  "ls-test-clean-1221-135767-00072:29": "blackstone 의 둘째 동격 that half mythological personage… 이어짐 (R2)",
+  "ls-test-clean-1221-135767-00072:39": "관계절 완결 뒤 seated on… 분사구 덧붙음 (breaking out 선례)",
+  "ls-test-clean-1221-135767-00072:58": "같은 주어 동사구 and would not be pacified, 자기 주어 없음 (R2)",
+  "ls-test-clean-1284-1180-00074:8": "같은 주어 동사구 and started up the path, 자기 주어 없음 (R2)",
+  "ls-test-clean-1284-1180-00074:30": "even if 절 안, while 절이 조건 범위를 좁힘 (R1·안정)",
+  "ls-test-clean-1284-1180-00074:69": "절 완결 뒤 whom… who… 비제한 관계절 (aunt who 선례)",
+  "ls-test-clean-1284-1180-00081:32": "완결, for+자기 주어 이유 새 절 (R2), 보고된 생각이어도 앞 뜻 불변",
+  "ls-test-clean-1284-1180-00081:51": "완결, 둘째 for+자기 주어 이유 새 절 (R2)",
+  "ls-test-clean-1284-1181-00088:28": "인용+표지 완결 뒤 who… 비제한 관계절 (aunt who 선례)",
+  "ls-test-clean-1320-122612-00093:53": "같은 주어 동사구 and was shedding…, 자기 주어 없음 (R2)",
+  "ls-test-clean-1320-122612-00096:2": "see 완결 여부 불명(19 도 AMBIG)+표지 뒤 pointing 분사구 이어짐",
+  "ls-test-clean-1320-122612-00096:60": "같은 주어 동사구 and seldom rendered…, 자기 주어 없음 (R2)",
+  "ls-test-clean-1320-122617-00102:33": "말 끊겼으나 절 완결, 다른 화자의 새 질문 이어짐 (R9 준용)",
+  "ls-test-clean-1320-122617-00102:47": "인용+표지 완결 뒤 표지 분사 hesitating 덧붙음",
+  "ls-test-clean-1320-122617-00102:48": "표지 끝(R6), 재개 인용 though+자기 주어 양보절은 덧붙임",
+  "ls-test-clean-1320-122617-00104:7": "같은 주어 동사구 and motioned…, 자기 주어 없음 (R2)",
+  "ls-test-clean-1320-122617-00104:27": "같은 주어 동사구 and growled, 자기 주어 없음 (R2)",
+  "ls-test-clean-1320-122617-00104:50": "인용+표지 완결 뒤 표지 분사구 improving the hint… 덧붙음",
+  "ls-test-clean-1320-122617-00104:55": "표지 끝(R6), 재개 인용 they must… 자기 주어 새 절",
+  "ls-test-clean-1320-122617-00104:72": "같은 주어 동사구 and slowly entered…, 자기 주어 없음 (R2)",
+  "ls-test-clean-1320-122617-00111:4": "the delaware dog 감탄/주제 불명+표지 뒤 분사구 이어짐",
+  "ls-test-clean-1320-122617-00111:20": "the delaware dog 이 감탄 완결인지 is he afraid 의 주제인지 불명 (R6)",
+  "ls-test-clean-1320-122617-00111:35": "같은 주어 동사구 and shook…, 자기 주어 없음 (R2)",
+  "ls-test-clean-1320-122617-00111:72": "같은 주어 동사구 and ran along…, 자기 주어 없음 (R2)",
+  "ls-test-clean-1320-122617-00111:85": "같은 주어 동사구 and stepped forth…, 자기 주어 없음 (R2)",
+  "ls-test-clean-1580-141083-00116:49": "같은 주어 동사구 and took the papers…, 자기 주어 없음 (R2)",
+  "ls-test-clean-1580-141084-00125:18": "서술 문장 완결, 발화 경계 뒤 and one more… 는 별도 발언 (R3)",
+  "ls-test-clean-1580-141084-00127:39": "come come 이 완결 권유인지 it is human… 의 머리 표지(R3)인지 불명",
+  "ls-test-clean-1995-1837-00143:24": "절 완결 뒤 hot and still 묘사 형용사 덧붙음",
+  "ls-test-clean-1995-1837-00143:25": "hot and still 형용사 병렬 안 (R2), 참조·휴지도 이 구조",
+  "ls-test-clean-1995-1837-00143:27": "hot and still 끝, no breath of air stirred 자기 주어 새 절",
+  "ls-test-clean-1995-1837-00143:60": "생략 질문 and now? 완결(참조 물음표·발화 경계), 새 문장",
+  "ls-test-clean-1995-1837-00143:66": "절 완결 뒤 waiting weeping 분사 덧붙음",
+  "ls-test-clean-1995-1837-00144:16": "and put foot… 같은 주어 동사구, until 절이든 주절이든 자기 주어 없음 (R2)",
+  "ls-test-clean-1995-1837-00144:36": "then turned… 같은 주어 동사구 연쇄, 자기 주어 없음 (R2)",
+  "ls-test-clean-1995-1837-00144:61": "절 완결 뒤 thick tall wet and willowy 형용사 나열 덧붙음",
+  "ls-test-clean-2300-131720-00173:24": "절 완결 뒤 which… 비제한 관계절 (aunt who 선례)",
+  "ls-test-clean-2300-131720-00179:8": "절 완결 뒤 despite… 양보 전치사구 덧붙음",
+  "ls-test-clean-237-126133-00184:3": "절 완결 뒤 comforted and soothed… 분사구 덧붙음",
+  "ls-test-clean-237-126133-00184:13": "앞 분사구 뒤 rejoicing… 분사구 또 덧붙음",
+  "ls-test-clean-237-126133-00184:21": "완결 뒤 who… 비제한 관계절 (aunt who 선례)",
+  "ls-test-clean-237-126133-00188:6": "대답+표지 완결 뒤 vehemently and winking… 표지 부가어 덧붙음",
+  "ls-test-clean-237-134493-00195:10": "절 완결 뒤 under the walnut trees 장소구 덧붙음",
+  "ls-test-clean-2830-3979-00222:33": "make luther talk american 을 streamline him 으로 바꿔 말하는 병렬 동사구 (R2)",
+  "ls-test-clean-2830-3979-00224:41": "the central thought 의 동격 명사구 the justification… 이어짐 (R2)",
+  "ls-test-clean-2961-960-00248:38": "types in nature 의 동격 나열 forms of men… 이어짐 (R2)",
+  "ls-test-clean-3570-5694-00266:11": "같은 주어 동사구 and may even be said…, 자기 주어 없음 (R2)",
+  "ls-test-clean-3570-5694-00266:22": "절 완결 뒤 real or ostensible 한정 형용사 덧붙음",
+  "ls-test-clean-3570-5694-00266:38": "two classes 의 동격 명사구 the free and the servile… 이어짐 (R2)",
+  "ls-test-clean-3570-5694-00266:77": "절 완결 뒤 such as 예시 덧붙음 (like 예시 선례)",
+  "ls-test-clean-3570-5694-00266:91": "예시 끝, in short 표지(R3) 뒤 동격 요약구: 새 단위 vs 연속",
+  "ls-test-clean-3575-170457-00285:49": "절 완결 뒤 partly to… 목적 부정사 덧붙음 (sinker 선례)",
+  "ls-test-clean-3575-170457-00285:73": "완결, however… it may be 자기 주어 양보절이 정보만 덧붙임",
+  "ls-test-clean-3729-6852-00303:74": "같은 주어 동사구 and take my leave, 자기 주어 없음 (R2)",
+  "ls-test-clean-3729-6852-00311:4": "같은 주어 동사구 나열 could tell… 이어짐 (R2, 동사구 연쇄 선례)",
+  "ls-test-clean-3729-6852-00311:11": "같은 주어 동사구 나열 was celebrated… 이어짐 (R2)",
+  "ls-test-clean-3729-6852-00311:28": "절 완결 뒤 seldom going out… 분사구 덧붙음",
+  "ls-test-clean-3729-6852-00311:44": "because 절 안 같은 주어 동사구 and was surrounded… (R2)",
+  "ls-test-clean-3729-6852-00311:52": "완결 뒤 with which… 비제한 관계절 (aunt who 선례)",
+  "ls-test-clean-4077-13751-00318:56": "같은 주어 동사구 and afterward established…, 자기 주어 없음 (R2)",
+  "ls-test-clean-4077-13751-00318:63": "절 완결 뒤 therein founding… 분사구 덧붙음",
+  "ls-test-clean-4077-13754-00328:46": "절 완결 뒤 presenting… 분사구 덧붙음",
+  "ls-test-clean-4446-2273-00338:73": "관용구 don't i, though 안 (though 는 앞에 붙음)",
+  "ls-test-clean-4446-2273-00338:74": "관용 대답 don't i, though 완결, i'm so sorry… 새 문장",
+  "ls-test-clean-4446-2273-00342:7": "같은 주어 동사구 and whispered…, 자기 주어 없음 (R2)",
+  "ls-test-clean-4507-16021-00354:14": "we may be stopped 완결, 자기 주어 가진 새 절 이어짐 (R2)",
+  "ls-test-clean-4507-16021-00354:24": "절 완결 뒤 문장 관계절 which is… 덧붙음 (관계절 선례)",
+  "ls-test-clean-4507-16021-00364:8": "무동사 조각 완결(참조 마침표), and so 표지가 다음 단위 머리 (R3)",
+  "ls-test-clean-4970-29095-00383:21": "절 완결 뒤 veiled and pinioned… 분사 덧붙음",
+  "ls-test-clean-4992-41806-00401:5": "절 완결 뒤 bearing… 분사구 덧붙음",
+  "ls-test-clean-4992-41806-00401:28": "같은 주어 동사구 and removed the cloth, 자기 주어 없음 (R2)",
+  "ls-test-clean-5105-28240-00409:27": "보문 완결 뒤 hardly more than six miles… 거리 묘사구 덧붙음",
+  "ls-test-clean-5105-28241-00416:5": "같은 주어 동사구 and would have amply sufficed…, 자기 주어 없음 (R2)",
+  "ls-test-clean-5105-28241-00416:29": "같은 주어 동사구 and had already reached…, 자기 주어 없음 (R2)",
+  "ls-test-clean-5105-28241-00416:50": "절 완결 뒤 in which… 비제한 관계절 (aunt who 선례)",
+  "ls-test-clean-5105-28241-00416:65": "관계절 완결 뒤 throughout the winter… cruising 부가어 덧붙음",
+  "ls-test-clean-5105-28241-00416:73": "완결, whilst+자기 주어 대조절이 여름 정보만 덧붙임 (R2)"
+ }
+}

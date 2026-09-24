@@ -1,0 +1,410 @@
+{
+ "r1-d4-ls-test": {
+  "bias=-1": {
+   "n_hyp": 23,
+   "hit": 19,
+   "at_ambig": 0,
+   "at_no": 4,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.8261,
+   "R": 0.0378,
+   "F1": 0.0722,
+   "PCR_gold": 0.1739,
+   "latency_s": {
+    "n": 19,
+    "mean": 0.3445,
+    "p50": 0.345,
+    "p90": 0.387
+   }
+  },
+  "bias=-2": {
+   "n_hyp": 8,
+   "hit": 8,
+   "at_ambig": 0,
+   "at_no": 0,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 1.0,
+   "R": 0.0159,
+   "F1": 0.0313,
+   "PCR_gold": 0.0,
+   "latency_s": {
+    "n": 8,
+    "mean": 0.3384,
+    "p50": 0.34,
+    "p90": 0.388
+   }
+  },
+  "bias=0": {
+   "n_hyp": 56,
+   "hit": 44,
+   "at_ambig": 2,
+   "at_no": 10,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.8148,
+   "R": 0.0875,
+   "F1": 0.158,
+   "PCR_gold": 0.1786,
+   "latency_s": {
+    "n": 44,
+    "mean": 0.347,
+    "p50": 0.342,
+    "p90": 0.3935
+   }
+  },
+  "bias=1": {
+   "n_hyp": 119,
+   "hit": 88,
+   "at_ambig": 6,
+   "at_no": 25,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.7788,
+   "R": 0.175,
+   "F1": 0.2857,
+   "PCR_gold": 0.2101,
+   "latency_s": {
+    "n": 88,
+    "mean": 0.3495,
+    "p50": 0.353,
+    "p90": 0.3963
+   }
+  },
+  "bias=2": {
+   "n_hyp": 185,
+   "hit": 119,
+   "at_ambig": 15,
+   "at_no": 51,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.7,
+   "R": 0.2366,
+   "F1": 0.3536,
+   "PCR_gold": 0.2757,
+   "latency_s": {
+    "n": 119,
+    "mean": 0.3463,
+    "p50": 0.349,
+    "p90": 0.3952
+   }
+  },
+  "theta=0.2": {
+   "n_hyp": 140,
+   "hit": 99,
+   "at_ambig": 7,
+   "at_no": 34,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.7444,
+   "R": 0.1968,
+   "F1": 0.3113,
+   "PCR_gold": 0.2429,
+   "latency_s": {
+    "n": 99,
+    "mean": 0.3481,
+    "p50": 0.35,
+    "p90": 0.3952
+   }
+  },
+  "theta=0.35": {
+   "n_hyp": 89,
+   "hit": 71,
+   "at_ambig": 4,
+   "at_no": 14,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.8353,
+   "R": 0.1412,
+   "F1": 0.2415,
+   "PCR_gold": 0.1573,
+   "latency_s": {
+    "n": 71,
+    "mean": 0.3452,
+    "p50": 0.349,
+    "p90": 0.39
+   }
+  },
+  "theta=0.5": {
+   "n_hyp": 56,
+   "hit": 44,
+   "at_ambig": 2,
+   "at_no": 10,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.8148,
+   "R": 0.0875,
+   "F1": 0.158,
+   "PCR_gold": 0.1786,
+   "latency_s": {
+    "n": 44,
+    "mean": 0.347,
+    "p50": 0.342,
+    "p90": 0.3935
+   }
+  }
+ },
+ "r2-d4-ls-test": {
+  "bias=-1": {
+   "n_hyp": 32,
+   "hit": 27,
+   "at_ambig": 0,
+   "at_no": 5,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.8438,
+   "R": 0.0537,
+   "F1": 0.1009,
+   "PCR_gold": 0.1562,
+   "latency_s": {
+    "n": 27,
+    "mean": 0.3395,
+    "p50": 0.335,
+    "p90": 0.3894
+   }
+  },
+  "bias=-2": {
+   "n_hyp": 15,
+   "hit": 13,
+   "at_ambig": 0,
+   "at_no": 2,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.8667,
+   "R": 0.0258,
+   "F1": 0.0502,
+   "PCR_gold": 0.1333,
+   "latency_s": {
+    "n": 13,
+    "mean": 0.3459,
+    "p50": 0.335,
+    "p90": 0.3938
+   }
+  },
+  "bias=0": {
+   "n_hyp": 67,
+   "hit": 53,
+   "at_ambig": 2,
+   "at_no": 12,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.8154,
+   "R": 0.1054,
+   "F1": 0.1866,
+   "PCR_gold": 0.1791,
+   "latency_s": {
+    "n": 53,
+    "mean": 0.3461,
+    "p50": 0.345,
+    "p90": 0.3986
+   }
+  },
+  "bias=1": {
+   "n_hyp": 117,
+   "hit": 84,
+   "at_ambig": 6,
+   "at_no": 27,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.7568,
+   "R": 0.167,
+   "F1": 0.2736,
+   "PCR_gold": 0.2308,
+   "latency_s": {
+    "n": 84,
+    "mean": 0.3434,
+    "p50": 0.345,
+    "p90": 0.3967
+   }
+  },
+  "bias=2": {
+   "n_hyp": 215,
+   "hit": 144,
+   "at_ambig": 16,
+   "at_no": 55,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.7236,
+   "R": 0.2863,
+   "F1": 0.4103,
+   "PCR_gold": 0.2558,
+   "latency_s": {
+    "n": 144,
+    "mean": 0.347,
+    "p50": 0.349,
+    "p90": 0.397
+   }
+  },
+  "theta=0.2": {
+   "n_hyp": 145,
+   "hit": 103,
+   "at_ambig": 9,
+   "at_no": 33,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.7574,
+   "R": 0.2048,
+   "F1": 0.3224,
+   "PCR_gold": 0.2276,
+   "latency_s": {
+    "n": 103,
+    "mean": 0.3437,
+    "p50": 0.345,
+    "p90": 0.3968
+   }
+  },
+  "theta=0.35": {
+   "n_hyp": 94,
+   "hit": 68,
+   "at_ambig": 4,
+   "at_no": 22,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.7556,
+   "R": 0.1352,
+   "F1": 0.2293,
+   "PCR_gold": 0.234,
+   "latency_s": {
+    "n": 68,
+    "mean": 0.3427,
+    "p50": 0.3425,
+    "p90": 0.3976
+   }
+  },
+  "theta=0.5": {
+   "n_hyp": 63,
+   "hit": 49,
+   "at_ambig": 2,
+   "at_no": 12,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.8033,
+   "R": 0.0974,
+   "F1": 0.1738,
+   "PCR_gold": 0.1905,
+   "latency_s": {
+    "n": 49,
+    "mean": 0.3474,
+    "p50": 0.346,
+    "p90": 0.3994
+   }
+  }
+ },
+ "r1-d2-ls-test": {
+  "bias=-1": {
+   "n_hyp": 22,
+   "hit": 17,
+   "at_ambig": 1,
+   "at_no": 4,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.8095,
+   "R": 0.0338,
+   "F1": 0.0649,
+   "PCR_gold": 0.1818,
+   "latency_s": {
+    "n": 17,
+    "mean": 0.1777,
+    "p50": 0.172,
+    "p90": 0.2278
+   }
+  },
+  "bias=0": {
+   "n_hyp": 51,
+   "hit": 37,
+   "at_ambig": 2,
+   "at_no": 12,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.7551,
+   "R": 0.0736,
+   "F1": 0.1341,
+   "PCR_gold": 0.2353,
+   "latency_s": {
+    "n": 37,
+    "mean": 0.1839,
+    "p50": 0.185,
+    "p90": 0.2354
+   }
+  },
+  "bias=1": {
+   "n_hyp": 86,
+   "hit": 58,
+   "at_ambig": 6,
+   "at_no": 22,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.725,
+   "R": 0.1153,
+   "F1": 0.199,
+   "PCR_gold": 0.2558,
+   "latency_s": {
+    "n": 58,
+    "mean": 0.1841,
+    "p50": 0.1855,
+    "p90": 0.2329
+   }
+  }
+ },
+ "oracle-d4-ls-test": {
+  "oracle": {
+   "n_hyp": 98,
+   "hit": 72,
+   "at_ambig": 6,
+   "at_no": 20,
+   "dup": 0,
+   "mid_word": 0,
+   "no_word": 0,
+   "gold_commit": 503,
+   "P": 0.7826,
+   "R": 0.1431,
+   "F1": 0.242,
+   "PCR_gold": 0.2041,
+   "latency_s": {
+    "n": 72,
+    "mean": 0.3653,
+    "p50": 0.3705,
+    "p90": 0.3949
+   }
+  }
+ }
+}

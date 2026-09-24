@@ -1,0 +1,980 @@
+{
+ "ls-test-clean-1089-134691-00017": {
+  "commit": [
+   15,
+   49,
+   64
+  ],
+  "ambig": [
+   1,
+   9,
+   11,
+   57
+  ],
+  "why": {
+   "1": "again again: exclamation or adverb of next clause",
+   "9": "complete, but introduces following quoted call (R6)",
+   "11": "quoted greeting complete; quote continues",
+   "15": "quoted exclamation ends; narration starts new sentence",
+   "49": "long subject sentence complete; new sentence follows",
+   "57": "complete; shared-subject VP coordination follows",
+   "64": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1188-133604-00030": {
+  "commit": [
+   44,
+   67
+  ],
+  "ambig": [],
+  "why": {
+   "44": "sentence complete; 'you know' marker starts next unit",
+   "67": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1188-133604-00035": {
+  "commit": [
+   15,
+   54,
+   73
+  ],
+  "ambig": [],
+  "why": {
+   "15": "sentence complete; new sentence follows",
+   "54": "sentence complete; 'but now' new clause follows",
+   "73": "stream end, complete question-like clause"
+  }
+ },
+ "ls-test-clean-1188-133604-00036": {
+  "commit": [
+   8,
+   16,
+   24,
+   51,
+   56,
+   72
+  ],
+  "ambig": [],
+  "why": {
+   "8": "complete; new clause with own subject follows",
+   "16": "sentence complete; new sentence follows",
+   "24": "sentence complete; new sentence follows",
+   "51": "sentence complete; new sentence follows",
+   "56": "sentence complete; imperative sentence follows",
+   "72": "stream end, complete"
+  }
+ },
+ "ls-test-clean-121-123852-00042": {
+  "commit": [
+   47
+  ],
+  "ambig": [
+   17
+  ],
+  "why": {
+   "17": "archaic poetic syntax; 'but that' clause unclear",
+   "47": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1221-135767-00069": {
+  "commit": [
+   5,
+   19,
+   26,
+   66
+  ],
+  "ambig": [],
+  "why": {
+   "5": "complete; 'but he hath' new clause follows",
+   "19": "sentence complete; new sentence follows",
+   "26": "sentence complete; narration sentence follows",
+   "66": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1221-135767-00072": {
+  "commit": [
+   46,
+   63
+  ],
+  "ambig": [
+   58
+  ],
+  "why": {
+   "46": "long sentence complete; new sentence follows",
+   "58": "complete; shared-subject VP coordination follows",
+   "63": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1284-1180-00074": {
+  "commit": [
+   13,
+   34,
+   56,
+   80
+  ],
+  "ambig": [
+   8,
+   20,
+   30,
+   69
+  ],
+  "why": {
+   "8": "complete; shared-subject VP coordination follows",
+   "13": "sentence complete; new sentence follows",
+   "20": "complete; concessive 'even if' clause follows",
+   "30": "while-clause narrows the conditional clause",
+   "34": "sentence complete; new sentence follows",
+   "56": "sentence complete; new sentence follows",
+   "69": "complete; non-restrictive relative clause follows",
+   "80": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1284-1180-00081": {
+  "commit": [
+   6,
+   15,
+   72,
+   86
+  ],
+  "ambig": [
+   32,
+   46,
+   51
+  ],
+  "why": {
+   "6": "complete; because-clause only adds reason",
+   "15": "sentence complete; new sentence follows",
+   "32": "for-clause reason, possibly inside reported thought",
+   "46": "complete; short 'as the cat is' comparison follows",
+   "51": "another for-clause reason follows, reported reasoning",
+   "72": "sentence complete; new sentence follows",
+   "86": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1284-1181-00088": {
+  "commit": [
+   5,
+   15,
+   34
+  ],
+  "ambig": [
+   28,
+   40
+  ],
+  "why": {
+   "5": "quote plus trailing speaker tag complete (R6)",
+   "15": "quoted sentence complete; new quote follows",
+   "28": "tag complete; non-restrictive relative clause follows",
+   "34": "sentence complete; separate tag sentence follows",
+   "40": "stream end; speaker tag whose quote is missing"
+  }
+ },
+ "ls-test-clean-1320-122612-00093": {
+  "commit": [
+   22,
+   40,
+   46,
+   64,
+   70
+  ],
+  "ambig": [
+   53
+  ],
+  "why": {
+   "22": "complete; concessive though-clause only adds info",
+   "40": "sentence complete; new sentence follows",
+   "46": "complete; new clause with own subject follows",
+   "53": "complete; shared-subject VP coordination follows",
+   "64": "complete; temporal when-clause only adds time",
+   "70": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1320-122612-00096": {
+  "commit": [
+   27,
+   70
+  ],
+  "ambig": [
+   19,
+   60
+  ],
+  "why": {
+   "19": "'see' plus tag; quote continues with content",
+   "27": "quote complete; new narration sentence follows",
+   "60": "complete; shared-subject VP coordination follows",
+   "70": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1320-122617-00102": {
+  "commit": [
+   5,
+   13,
+   26,
+   33,
+   39,
+   62
+  ],
+  "ambig": [
+   48
+  ],
+  "why": {
+   "5": "complete; new clause with own subject follows",
+   "13": "sentence complete; new sentence follows",
+   "26": "complete; new clause with own subject follows",
+   "33": "sentence complete; question follows",
+   "39": "question complete; new quote follows",
+   "48": "tag ends; quote resumes with concessive though",
+   "62": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1320-122617-00104": {
+  "commit": [
+   15,
+   29,
+   60,
+   77
+  ],
+  "ambig": [
+   7,
+   27,
+   55,
+   72
+  ],
+  "why": {
+   "7": "complete; shared-subject VP coordination follows",
+   "15": "sentence complete; 'but the bear' new sentence",
+   "27": "complete; short VP coordination 'and growled'",
+   "29": "sentence complete; David's quote follows",
+   "55": "tag participle points to following speech",
+   "60": "quote complete; new narration sentence follows",
+   "72": "complete; shared-subject VP coordination follows",
+   "77": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1320-122617-00111": {
+  "commit": [
+   23,
+   29,
+   53,
+   59,
+   81,
+   93
+  ],
+  "ambig": [
+   20,
+   35,
+   40,
+   72,
+   85
+  ],
+  "why": {
+   "20": "exclamation or topic of following question",
+   "23": "question complete; new question follows",
+   "29": "question complete; narration follows",
+   "35": "complete; shared-subject VP coordination follows",
+   "40": "complete; 'as though' manner clause follows",
+   "53": "sentence complete; new sentence follows",
+   "59": "complete; for-clause gives reason only",
+   "72": "complete; shared-subject VP coordination follows",
+   "81": "sentence complete; new sentence follows",
+   "85": "complete; shared-subject VP coordination follows",
+   "93": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1580-141083-00116": {
+  "commit": [
+   11,
+   21,
+   32,
+   40,
+   42,
+   46,
+   60,
+   70,
+   77,
+   90,
+   97
+  ],
+  "ambig": [
+   49,
+   95
+  ],
+  "why": {
+   "11": "quote plus speaker tag complete (R6)",
+   "21": "quote plus speaker tag complete (R6)",
+   "32": "sentence complete; new sentence follows",
+   "40": "statement plus 'you say' tag complete",
+   "42": "short question complete; answer follows",
+   "46": "fragment answer complete (R8)",
+   "49": "complete; shared-subject VP coordination follows",
+   "60": "sentence complete; new quote follows",
+   "70": "quote plus tag complete; for-clause reason follows",
+   "77": "sentence complete; question follows",
+   "90": "question complete; answer follows",
+   "95": "answer complete; 'not less' qualifies it",
+   "97": "stream end, complete answer"
+  }
+ },
+ "ls-test-clean-1580-141084-00123": {
+  "commit": [
+   5,
+   12,
+   17,
+   34,
+   39,
+   56,
+   68,
+   70,
+   87
+  ],
+  "ambig": [],
+  "why": {
+   "5": "quote plus speaker tag complete (R6)",
+   "12": "sentence complete; new sentence follows",
+   "17": "sentence complete; new sentence follows",
+   "34": "sentence complete; new sentence follows",
+   "39": "sentence complete; new sentence follows",
+   "56": "sentence complete; new sentence follows",
+   "68": "sentence complete; farewell follows",
+   "70": "farewell complete; narration follows",
+   "87": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1580-141084-00125": {
+  "commit": [
+   2,
+   7,
+   23,
+   31,
+   53,
+   58,
+   64,
+   74,
+   80
+  ],
+  "ambig": [
+   18
+  ],
+  "why": {
+   "2": "imperative complete; narration follows",
+   "7": "sentence complete; new sentence follows",
+   "18": "complete, but 'and one more' continues argument",
+   "23": "elliptical remark complete; new sentence follows",
+   "31": "complete; new clause with own subject follows",
+   "53": "sentence complete; new sentence follows",
+   "58": "complete; independent 'so great was' clause follows",
+   "64": "complete; new clause with own subject follows",
+   "74": "sentence complete; new utterance follows",
+   "80": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1580-141084-00127": {
+  "commit": [
+   21,
+   34,
+   44,
+   57,
+   63,
+   72,
+   81
+  ],
+  "ambig": [
+   39
+  ],
+  "why": {
+   "21": "question complete; narration follows",
+   "34": "sentence complete; new quote follows",
+   "39": "'come come' marker plus tag; content follows",
+   "44": "complete; new clause with own subject follows",
+   "57": "sentence complete; 'well well' marker follows",
+   "63": "imperative complete; new imperative follows",
+   "72": "sentence complete; new sentence follows",
+   "81": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1995-1837-00143": {
+  "commit": [
+   7,
+   14,
+   32,
+   38,
+   41,
+   47,
+   58,
+   68,
+   73,
+   77
+  ],
+  "ambig": [
+   25,
+   27,
+   60
+  ],
+  "why": {
+   "7": "sentence complete; new sentence follows",
+   "14": "sentence complete; new sentence follows",
+   "25": "'hot and still' vs 'and still no breath' parse",
+   "27": "'hot and still' vs 'and still no breath' parse",
+   "32": "clause complete; new clause follows",
+   "38": "clause complete; new clause follows",
+   "41": "clause complete; question follows",
+   "47": "question complete; new sentence follows",
+   "58": "complete; 'and now' elliptical question follows",
+   "60": "'and now?' fragment or marker of next clause",
+   "68": "sentence complete; new sentence follows",
+   "73": "sentence complete; new sentence follows",
+   "77": "stream end, complete"
+  }
+ },
+ "ls-test-clean-1995-1837-00144": {
+  "commit": [
+   23,
+   27,
+   31,
+   43,
+   52,
+   66,
+   80
+  ],
+  "ambig": [
+   8,
+   16,
+   36
+  ],
+  "why": {
+   "8": "complete; until-clause bounds the action",
+   "16": "VP may belong to until-clause; attachment unclear",
+   "23": "sentence complete; new sentence follows",
+   "27": "sentence complete; new sentence follows",
+   "31": "sentence complete; new sentence follows",
+   "36": "complete; 'then turned' shared-subject VP follows",
+   "43": "sentence complete; new sentence follows",
+   "52": "complete; inverted new clause 'beneath lay' follows",
+   "66": "sentence complete; new sentence follows",
+   "80": "stream end, complete"
+  }
+ },
+ "ls-test-clean-2300-131720-00173": {
+  "commit": [
+   47,
+   75
+  ],
+  "ambig": [
+   24
+  ],
+  "why": {
+   "24": "complete; non-restrictive which-clause follows",
+   "47": "sentence complete; new sentence follows",
+   "75": "stream end, complete"
+  }
+ },
+ "ls-test-clean-2300-131720-00179": {
+  "commit": [
+   12,
+   33,
+   67
+  ],
+  "ambig": [],
+  "why": {
+   "12": "sentence complete; new sentence follows",
+   "33": "sentence complete; new sentence follows",
+   "67": "stream end, complete"
+  }
+ },
+ "ls-test-clean-237-126133-00184": {
+  "commit": [
+   37,
+   74
+  ],
+  "ambig": [
+   21
+  ],
+  "why": {
+   "21": "complete; non-restrictive who-clause follows",
+   "37": "sentence complete; new sentence follows",
+   "74": "stream end, complete"
+  }
+ },
+ "ls-test-clean-237-126133-00188": {
+  "commit": [
+   17,
+   22,
+   33,
+   40,
+   50,
+   56,
+   59
+  ],
+  "ambig": [],
+  "why": {
+   "17": "fragment answer plus tag complete; quote resumes",
+   "22": "utterance complete; other speaker replies",
+   "33": "sentence complete; new quote follows",
+   "40": "quote plus tag complete; while-clause adds time",
+   "50": "sentence complete; new quote follows",
+   "56": "request plus tag complete; reason follows",
+   "59": "stream end, complete"
+  }
+ },
+ "ls-test-clean-237-134493-00195": {
+  "commit": [
+   14
+  ],
+  "ambig": [],
+  "why": {
+   "14": "stream end, complete"
+  }
+ },
+ "ls-test-clean-237-134500-00203": {
+  "commit": [
+   3,
+   13,
+   25,
+   39,
+   46
+  ],
+  "ambig": [
+   33
+  ],
+  "why": {
+   "3": "complete; 'but that's' new clause follows",
+   "13": "sentence complete; new sentence follows",
+   "25": "quote plus tag complete; new clause resumes",
+   "33": "complete; emphatic 'not if' conditional follows",
+   "39": "sentence complete; new sentence follows",
+   "46": "stream end, complete"
+  }
+ },
+ "ls-test-clean-2830-3979-00222": {
+  "commit": [
+   16,
+   20,
+   38,
+   67,
+   76
+  ],
+  "ambig": [],
+  "why": {
+   "16": "sentence complete; question follows",
+   "20": "question complete; new sentence follows",
+   "38": "complete; because-clause only adds reason",
+   "67": "sentence complete; new sentence follows",
+   "76": "stream end, complete"
+  }
+ },
+ "ls-test-clean-2830-3979-00224": {
+  "commit": [
+   20,
+   28,
+   53,
+   61
+  ],
+  "ambig": [],
+  "why": {
+   "20": "complete; new clause with own subject follows",
+   "28": "sentence complete; new sentence follows",
+   "53": "sentence complete; 'but' new sentence follows",
+   "61": "stream end, complete"
+  }
+ },
+ "ls-test-clean-2830-3980-00237": {
+  "commit": [
+   9,
+   21,
+   23,
+   37,
+   40,
+   49,
+   57
+  ],
+  "ambig": [],
+  "why": {
+   "9": "sentence complete; new fragment sentence follows",
+   "21": "'not X but himself' fragment complete",
+   "23": "question 'what for' complete; answer follows",
+   "37": "fragment answer complete; imperative follows",
+   "40": "imperative complete; for-clause gives reason",
+   "49": "sentence complete; question follows",
+   "57": "stream end, complete question"
+  }
+ },
+ "ls-test-clean-2961-960-00244": {
+  "commit": [
+   24,
+   64
+  ],
+  "ambig": [],
+  "why": {
+   "24": "sentence complete; new sentence follows",
+   "64": "stream end, complete"
+  }
+ },
+ "ls-test-clean-2961-960-00248": {
+  "commit": [
+   27,
+   31,
+   44,
+   62
+  ],
+  "ambig": [],
+  "why": {
+   "27": "sentence complete; new sentence follows",
+   "31": "complete; 'but they have become' new clause",
+   "44": "sentence complete; new sentence follows",
+   "62": "stream end, complete"
+  }
+ },
+ "ls-test-clean-3570-5694-00266": {
+  "commit": [
+   25,
+   49,
+   61,
+   102
+  ],
+  "ambig": [
+   11,
+   91
+  ],
+  "why": {
+   "11": "complete; shared-subject VP coordination follows",
+   "25": "sentence complete; new sentence follows",
+   "49": "sentence complete; 'but' new sentence follows",
+   "61": "sentence complete; 'so' marker starts next unit",
+   "91": "complete; 'in short' summary appositive follows",
+   "102": "stream end, complete"
+  }
+ },
+ "ls-test-clean-3575-170457-00285": {
+  "commit": [
+   3,
+   12,
+   31,
+   44,
+   83,
+   85
+  ],
+  "ambig": [
+   73
+  ],
+  "why": {
+   "3": "sentence complete; new sentence follows",
+   "12": "complete; if-clause belongs to next sentence",
+   "31": "sentence complete; postscript follows",
+   "44": "request complete; new sentence follows",
+   "73": "complement complete; concessive however-clause follows",
+   "83": "letter body complete; signature follows",
+   "85": "stream end, signature complete"
+  }
+ },
+ "ls-test-clean-3729-6852-00303": {
+  "commit": [
+   6,
+   14,
+   26,
+   38,
+   62,
+   71,
+   78
+  ],
+  "ambig": [
+   74
+  ],
+  "why": {
+   "6": "complete; new clause with own subject follows",
+   "14": "sentence complete; new sentence follows",
+   "26": "sentence complete; new sentence follows",
+   "38": "reported clause complete; new clause follows",
+   "62": "complete; new clause with own subject follows",
+   "71": "sentence complete; new sentence follows",
+   "74": "complete; shared-subject VP coordination follows",
+   "78": "stream end, complete"
+  }
+ },
+ "ls-test-clean-3729-6852-00306": {
+  "commit": [
+   39,
+   64,
+   77,
+   88,
+   98,
+   110
+  ],
+  "ambig": [],
+  "why": {
+   "39": "fragment answer complete (R8); new sentence",
+   "64": "sentence complete; new sentence follows",
+   "77": "first case complete; new clause follows",
+   "88": "complete; for-clause gives reason only",
+   "98": "complete; new clause with own subject follows",
+   "110": "stream end, complete"
+  }
+ },
+ "ls-test-clean-3729-6852-00311": {
+  "commit": [
+   21,
+   35,
+   60
+  ],
+  "ambig": [
+   4,
+   11,
+   44,
+   52
+  ],
+  "why": {
+   "4": "complete; shared-subject VP list continues",
+   "11": "complete; shared-subject VP list continues",
+   "21": "complete; 'but he spent' new clause follows",
+   "35": "complete; because-clause only adds reason",
+   "44": "reason complete; second VP reason follows",
+   "52": "complete; non-restrictive relative clause follows",
+   "60": "stream end, complete"
+  }
+ },
+ "ls-test-clean-4077-13751-00318": {
+  "commit": [
+   12,
+   25,
+   36,
+   70
+  ],
+  "ambig": [
+   56
+  ],
+  "why": {
+   "12": "complete; new clause with own subject follows",
+   "25": "sentence complete; new sentence follows",
+   "36": "sentence complete; new sentence follows",
+   "56": "complete; shared-subject VP coordination follows",
+   "70": "stream end, complete"
+  }
+ },
+ "ls-test-clean-4077-13754-00328": {
+  "commit": [
+   35,
+   64
+  ],
+  "ambig": [],
+  "why": {
+   "35": "sentence complete; new sentence follows",
+   "64": "stream end, complete"
+  }
+ },
+ "ls-test-clean-4446-2271-00331": {
+  "commit": [
+   2,
+   7,
+   13,
+   26,
+   32,
+   38,
+   46,
+   82
+  ],
+  "ambig": [
+   70
+  ],
+  "why": {
+   "2": "complete; because-clause only adds reason",
+   "7": "sentence complete; new sentence follows",
+   "13": "complete; new clause with own subject follows",
+   "26": "sentence complete; new sentence follows",
+   "32": "sentence complete; new sentence follows",
+   "38": "complete; new clause with own subject follows",
+   "46": "sentence complete; new quote follows",
+   "70": "narration complete but inside interrupted quote",
+   "82": "stream end, complete"
+  }
+ },
+ "ls-test-clean-4446-2273-00338": {
+  "commit": [
+   35,
+   43,
+   45,
+   54,
+   63,
+   71,
+   80,
+   86
+  ],
+  "ambig": [
+   73,
+   74
+  ],
+  "why": {
+   "35": "sentence complete; new sentence follows",
+   "43": "sentence complete; 'thank you' follows",
+   "45": "thanks complete; 'but' new sentence follows",
+   "54": "sentence complete; question follows",
+   "63": "question complete; new sentence follows",
+   "71": "sentence complete; new utterance follows",
+   "73": "'though' may attach to 'don't I' or next",
+   "74": "'don't I though' idiom vs 'though I'm sorry'",
+   "80": "sentence complete; question follows",
+   "86": "stream end, complete question"
+  }
+ },
+ "ls-test-clean-4446-2273-00342": {
+  "commit": [
+   18,
+   19,
+   27
+  ],
+  "ambig": [
+   7
+  ],
+  "why": {
+   "7": "complete; shared-subject VP coordination follows",
+   "18": "whispered question complete; answer follows",
+   "19": "standalone answer 'yes' complete; narration follows",
+   "27": "stream end, complete"
+  }
+ },
+ "ls-test-clean-4507-16021-00352": {
+  "commit": [
+   8,
+   15,
+   38,
+   45,
+   51
+  ],
+  "ambig": [],
+  "why": {
+   "8": "question complete; new question follows",
+   "15": "question complete; new sentence follows",
+   "38": "sentence complete; 'now' marker starts next",
+   "45": "question complete; new question follows",
+   "51": "stream end, complete question"
+  }
+ },
+ "ls-test-clean-4507-16021-00354": {
+  "commit": [
+   4,
+   10,
+   31,
+   59
+  ],
+  "ambig": [
+   14,
+   24
+  ],
+  "why": {
+   "4": "question complete; answer follows",
+   "10": "sentence complete; new sentence follows",
+   "14": "short clause previews following objection",
+   "24": "complete; sentential which-relative follows",
+   "31": "complete; new clause with own subject follows",
+   "59": "stream end, complete"
+  }
+ },
+ "ls-test-clean-4507-16021-00364": {
+  "commit": [
+   13,
+   28,
+   38,
+   50,
+   61
+  ],
+  "ambig": [
+   8
+  ],
+  "why": {
+   "8": "verbless fragment; completeness depends on prior context",
+   "13": "sentence complete; new sentence follows",
+   "28": "sentence complete; new clause follows",
+   "38": "sentence complete; 'in this world' starts new sentence",
+   "50": "sentence complete; new sentence follows",
+   "61": "stream end, complete"
+  }
+ },
+ "ls-test-clean-4970-29095-00383": {
+  "commit": [
+   13,
+   29,
+   45,
+   60,
+   68,
+   76
+  ],
+  "ambig": [],
+  "why": {
+   "13": "exclamation complete; if-clause starts next sentence",
+   "29": "sentence complete; question follows",
+   "45": "question complete; new question follows",
+   "60": "question complete; new question follows",
+   "68": "question complete; new clause follows",
+   "76": "stream end, complete"
+  }
+ },
+ "ls-test-clean-4992-41806-00401": {
+  "commit": [
+   16,
+   32,
+   52,
+   67,
+   75
+  ],
+  "ambig": [
+   28
+  ],
+  "why": {
+   "16": "sentence complete; new sentence follows",
+   "28": "complete; shared-subject VP coordination follows",
+   "32": "sentence complete; new quote follows",
+   "52": "quoted thought complete; 'so' starts next unit",
+   "67": "complete; new clause with own subject follows",
+   "75": "stream end, complete"
+  }
+ },
+ "ls-test-clean-5105-28233-00408": {
+  "commit": [
+   12,
+   21,
+   33
+  ],
+  "ambig": [],
+  "why": {
+   "12": "complete; 'but' new clause with own subject",
+   "21": "complete; new clause with own subject follows",
+   "33": "stream end, complete"
+  }
+ },
+ "ls-test-clean-5105-28240-00409": {
+  "commit": [
+   17,
+   35
+  ],
+  "ambig": [
+   64,
+   73
+  ],
+  "why": {
+   "17": "sentence complete; new sentence follows",
+   "35": "complete; 'but' new clause with own subject",
+   "64": "following orphan speaker tag could re-attribute it",
+   "73": "stream end; speaker tag whose quote is missing"
+  }
+ },
+ "ls-test-clean-5105-28241-00416": {
+  "commit": [
+   16,
+   82
+  ],
+  "ambig": [
+   5,
+   29,
+   37,
+   50,
+   73
+  ],
+  "why": {
+   "5": "complete; shared-subject VP coordination follows",
+   "16": "sentence complete; new sentence follows",
+   "29": "complete; shared-subject VP coordination follows",
+   "37": "'had already' expects the following when-clause",
+   "50": "complete; non-restrictive relative clause follows",
+   "73": "winter/summer contrast inside relative clause",
+   "82": "stream end, complete"
+  }
+ }
+}

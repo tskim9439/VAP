@@ -1,0 +1,300 @@
+{"id": "ks-eval_clean-utt-KsponSpeech_E00002", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00019", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00029", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00031", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00035", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00041", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00047", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00053", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00058", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00099", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00109", "set": "kspon-eval", "lang": "Korean", "n_words": 11, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00123", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00128", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00137", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [], "ambig": [11], "how": {"11": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00138", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [3], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00162", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00166", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [3], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00180", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00183", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00184", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00188", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [5], "how": {"5": "agree", "6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00190", "set": "kspon-eval", "lang": "Korean", "n_words": 11, "commit": [], "ambig": [10], "how": {"10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00202", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [4], "how": {"4": "agree", "6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00204", "set": "kspon-eval", "lang": "Korean", "n_words": 10, "commit": [9], "ambig": [], "how": {"9": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00205", "set": "kspon-eval", "lang": "Korean", "n_words": 11, "commit": [5], "ambig": [10], "how": {"5": "adjudicated", "10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00208", "set": "kspon-eval", "lang": "Korean", "n_words": 11, "commit": [6], "ambig": [10], "how": {"6": "agree", "10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00219", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00243", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00265", "set": "kspon-eval", "lang": "Korean", "n_words": 25, "commit": [24], "ambig": [], "how": {"24": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00306", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00307", "set": "kspon-eval", "lang": "Korean", "n_words": 15, "commit": [14], "ambig": [], "how": {"14": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00313", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [6], "ambig": [], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00346", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00348", "set": "kspon-eval", "lang": "Korean", "n_words": 22, "commit": [11, 18, 21], "ambig": [12], "how": {"11": "adjudicated", "12": "agree", "18": "agree", "21": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00349", "set": "kspon-eval", "lang": "Korean", "n_words": 19, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00360", "set": "kspon-eval", "lang": "Korean", "n_words": 16, "commit": [], "ambig": [15], "how": {"15": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00362", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00372", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00375", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00377", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00393", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00407", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00409", "set": "kspon-eval", "lang": "Korean", "n_words": 10, "commit": [5, 9], "ambig": [], "how": {"5": "agree", "9": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00413", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [2], "how": {"2": "adjudicated", "4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00425", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [3], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00432", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [7, 11], "ambig": [], "how": {"2": "adjudicated", "7": "agree", "11": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00433", "set": "kspon-eval", "lang": "Korean", "n_words": 13, "commit": [12], "ambig": [], "how": {"12": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00447", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [6], "how": {"6": "agree", "7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00474", "set": "kspon-eval", "lang": "Korean", "n_words": 10, "commit": [0, 9], "ambig": [], "how": {"0": "agree", "9": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00476", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00480", "set": "kspon-eval", "lang": "Korean", "n_words": 32, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00493", "set": "kspon-eval", "lang": "Korean", "n_words": 18, "commit": [11, 17], "ambig": [], "how": {"11": "agree", "17": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00539", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00553", "set": "kspon-eval", "lang": "Korean", "n_words": 16, "commit": [], "ambig": [15], "how": {"15": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00554", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00560", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00562", "set": "kspon-eval", "lang": "Korean", "n_words": 13, "commit": [12], "ambig": [], "how": {"12": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00567", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00581", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00587", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [11], "ambig": [], "how": {"11": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00626", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00631", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [2], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00635", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00640", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00646", "set": "kspon-eval", "lang": "Korean", "n_words": 19, "commit": [18], "ambig": [], "how": {"18": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00652", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00678", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [], "ambig": [5], "how": {"5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00688", "set": "kspon-eval", "lang": "Korean", "n_words": 36, "commit": [35], "ambig": [], "how": {"35": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00689", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00703", "set": "kspon-eval", "lang": "Korean", "n_words": 17, "commit": [10], "ambig": [], "how": {"10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00734", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00747", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [3], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00761", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [], "ambig": [5], "how": {"5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00781", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [5], "ambig": [], "how": {"5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00782", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00794", "set": "kspon-eval", "lang": "Korean", "n_words": 11, "commit": [6], "ambig": [10], "how": {"6": "adjudicated", "10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00795", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [2, 3], "ambig": [], "how": {"2": "agree", "3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00811", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00819", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00824", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00828", "set": "kspon-eval", "lang": "Korean", "n_words": 11, "commit": [10], "ambig": [], "how": {"10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00830", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00831", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00838", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00843", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00853", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [7, 8], "ambig": [], "how": {"1": "adjudicated", "7": "adjudicated", "8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00862", "set": "kspon-eval", "lang": "Korean", "n_words": 13, "commit": [7, 12], "ambig": [], "how": {"7": "agree", "12": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00863", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [], "ambig": [0], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00870", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [10], "ambig": [], "how": {"10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00884", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00890", "set": "kspon-eval", "lang": "Korean", "n_words": 14, "commit": [13], "ambig": [], "how": {"13": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00899", "set": "kspon-eval", "lang": "Korean", "n_words": 16, "commit": [6], "ambig": [12, 15], "how": {"6": "agree", "12": "agree", "15": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00903", "set": "kspon-eval", "lang": "Korean", "n_words": 13, "commit": [3, 9, 12], "ambig": [], "how": {"3": "agree", "9": "agree", "12": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00910", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00942", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00953", "set": "kspon-eval", "lang": "Korean", "n_words": 23, "commit": [7, 11, 22], "ambig": [], "how": {"7": "agree", "11": "agree", "22": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00971", "set": "kspon-eval", "lang": "Korean", "n_words": 14, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E00973", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01007", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [5], "ambig": [], "how": {"5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01032", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01041", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01049", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01060", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01062", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [3], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01065", "set": "kspon-eval", "lang": "Korean", "n_words": 10, "commit": [9], "ambig": [], "how": {"9": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01077", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [2], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01088", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01100", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [1], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01111", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [1], "how": {"1": "agree", "2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01146", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01163", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01187", "set": "kspon-eval", "lang": "Korean", "n_words": 10, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01201", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01204", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [3, 6], "ambig": [], "how": {"3": "agree", "6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01231", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01242", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01269", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01288", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01291", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01295", "set": "kspon-eval", "lang": "Korean", "n_words": 13, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01304", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01318", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01331", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01332", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01337", "set": "kspon-eval", "lang": "Korean", "n_words": 14, "commit": [10, 13], "ambig": [], "how": {"10": "agree", "13": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01344", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [5], "ambig": [], "how": {"5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01347", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [0], "ambig": [3], "how": {"0": "adjudicated", "3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01358", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01366", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [], "ambig": [0], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01368", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [6, 11], "ambig": [], "how": {"6": "agree", "11": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01377", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [3], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01415", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01416", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01423", "set": "kspon-eval", "lang": "Korean", "n_words": 13, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01434", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01456", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01479", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [5], "ambig": [], "how": {"5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01495", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01501", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [5], "ambig": [3], "how": {"3": "agree", "5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01517", "set": "kspon-eval", "lang": "Korean", "n_words": 18, "commit": [6, 17], "ambig": [], "how": {"6": "agree", "17": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01530", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01543", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01568", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01572", "set": "kspon-eval", "lang": "Korean", "n_words": 16, "commit": [2], "ambig": [9], "how": {"2": "agree", "9": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01573", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01575", "set": "kspon-eval", "lang": "Korean", "n_words": 14, "commit": [], "ambig": [13], "how": {"13": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01582", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [2], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01583", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01598", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01608", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [11], "ambig": [], "how": {"11": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01622", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [3], "ambig": [], "how": {"3": "adjudicated"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01623", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01625", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01633", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"2": "adjudicated", "3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01640", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [1, 3], "ambig": [], "how": {"1": "agree", "3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01647", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01657", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01658", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01672", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01673", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01683", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01687", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01704", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [5], "ambig": [], "how": {"5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01728", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01729", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01740", "set": "kspon-eval", "lang": "Korean", "n_words": 11, "commit": [10], "ambig": [], "how": {"10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01742", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [], "ambig": [3], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01744", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01779", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "adjudicated"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01793", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01800", "set": "kspon-eval", "lang": "Korean", "n_words": 16, "commit": [3, 8], "ambig": [], "how": {"3": "agree", "8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01824", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [2, 5], "ambig": [], "how": {"2": "agree", "5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01843", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [6], "ambig": [5, 7], "how": {"5": "agree", "6": "agree", "7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01845", "set": "kspon-eval", "lang": "Korean", "n_words": 21, "commit": [], "ambig": [8, 10], "how": {"8": "agree", "10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01846", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [2], "how": {"2": "agree", "3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01873", "set": "kspon-eval", "lang": "Korean", "n_words": 19, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01879", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [], "ambig": [6], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01886", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [4, 7], "ambig": [], "how": {"4": "agree", "7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01891", "set": "kspon-eval", "lang": "Korean", "n_words": 17, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01899", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01923", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01946", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01951", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01952", "set": "kspon-eval", "lang": "Korean", "n_words": 18, "commit": [8, 12, 13], "ambig": [], "how": {"8": "agree", "12": "agree", "13": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01977", "set": "kspon-eval", "lang": "Korean", "n_words": 10, "commit": [], "ambig": [9], "how": {"9": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01989", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [2, 7], "ambig": [], "how": {"2": "agree", "7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E01994", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02012", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02013", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02028", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02029", "set": "kspon-eval", "lang": "Korean", "n_words": 10, "commit": [9], "ambig": [], "how": {"9": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02030", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [1], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02051", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02053", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [5], "ambig": [], "how": {"5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02068", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02070", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [3, 4, 8], "ambig": [], "how": {"3": "agree", "4": "agree", "8": "adjudicated"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02073", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [3], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02074", "set": "kspon-eval", "lang": "Korean", "n_words": 21, "commit": [15, 19], "ambig": [], "how": {"15": "agree", "19": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02078", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02079", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [5], "how": {"5": "agree", "7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02082", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02089", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [], "ambig": [7], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02095", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02104", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02107", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02111", "set": "kspon-eval", "lang": "Korean", "n_words": 14, "commit": [7], "ambig": [13], "how": {"7": "agree", "13": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02112", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [1], "how": {"1": "adjudicated"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02124", "set": "kspon-eval", "lang": "Korean", "n_words": 10, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02138", "set": "kspon-eval", "lang": "Korean", "n_words": 10, "commit": [9], "ambig": [], "how": {"9": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02154", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [2], "ambig": [5], "how": {"2": "agree", "5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02164", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02171", "set": "kspon-eval", "lang": "Korean", "n_words": 21, "commit": [8, 20], "ambig": [], "how": {"8": "agree", "20": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02187", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [], "ambig": [2], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02192", "set": "kspon-eval", "lang": "Korean", "n_words": 6, "commit": [1, 5], "ambig": [], "how": {"1": "agree", "5": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02206", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02215", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02218", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02240", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02247", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02256", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02257", "set": "kspon-eval", "lang": "Korean", "n_words": 16, "commit": [7, 14], "ambig": [], "how": {"7": "agree", "14": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02260", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02265", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02266", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02268", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [2, 6, 8], "ambig": [], "how": {"2": "agree", "6": "agree", "8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02278", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02298", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02300", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [3], "ambig": [], "how": {"3": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02308", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [], "ambig": [4], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02321", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02331", "set": "kspon-eval", "lang": "Korean", "n_words": 12, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02339", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [6], "ambig": [], "how": {"6": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02351", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "adjudicated"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02367", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02374", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02395", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02404", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02414", "set": "kspon-eval", "lang": "Korean", "n_words": 27, "commit": [20, 26], "ambig": [], "how": {"20": "agree", "26": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02415", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [2], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02438", "set": "kspon-eval", "lang": "Korean", "n_words": 23, "commit": [8, 20], "ambig": [], "how": {"8": "agree", "20": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02441", "set": "kspon-eval", "lang": "Korean", "n_words": 14, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02460", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02469", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [0, 2], "ambig": [], "how": {"0": "agree", "2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02475", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02500", "set": "kspon-eval", "lang": "Korean", "n_words": 29, "commit": [15], "ambig": [28], "how": {"15": "agree", "28": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02508", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02511", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [7, 8], "ambig": [], "how": {"7": "agree", "8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02518", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02524", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02533", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [4, 8], "ambig": [], "how": {"4": "agree", "8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02534", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02541", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02544", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02553", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02565", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02569", "set": "kspon-eval", "lang": "Korean", "n_words": 7, "commit": [], "ambig": [0], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02587", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02617", "set": "kspon-eval", "lang": "Korean", "n_words": 11, "commit": [10], "ambig": [], "how": {"10": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02649", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02651", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02653", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [1], "how": {"1": "agree", "2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02655", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02662", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02679", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [], "ambig": [4], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02683", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02693", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02697", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02701", "set": "kspon-eval", "lang": "Korean", "n_words": 19, "commit": [18], "ambig": [], "how": {"18": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02702", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02703", "set": "kspon-eval", "lang": "Korean", "n_words": 13, "commit": [], "ambig": [12], "how": {"12": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02722", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02723", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02724", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02727", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02733", "set": "kspon-eval", "lang": "Korean", "n_words": 21, "commit": [5, 15, 20], "ambig": [11], "how": {"5": "adjudicated", "11": "adjudicated", "15": "adjudicated", "20": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02741", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02784", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [0], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02787", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [0], "how": {"0": "agree", "1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02788", "set": "kspon-eval", "lang": "Korean", "n_words": 13, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02804", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02809", "set": "kspon-eval", "lang": "Korean", "n_words": 3, "commit": [], "ambig": [2], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02813", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02821", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02826", "set": "kspon-eval", "lang": "Korean", "n_words": 11, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02840", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [1], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02868", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02879", "set": "kspon-eval", "lang": "Korean", "n_words": 9, "commit": [8], "ambig": [], "how": {"8": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02885", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [4], "ambig": [], "how": {"4": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02888", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02911", "set": "kspon-eval", "lang": "Korean", "n_words": 5, "commit": [], "ambig": [], "how": {}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02912", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02917", "set": "kspon-eval", "lang": "Korean", "n_words": 1, "commit": [0], "ambig": [], "how": {"0": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02918", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02920", "set": "kspon-eval", "lang": "Korean", "n_words": 26, "commit": [6, 15], "ambig": [22, 25], "how": {"6": "agree", "15": "agree", "22": "agree", "25": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02924", "set": "kspon-eval", "lang": "Korean", "n_words": 15, "commit": [7, 14], "ambig": [1], "how": {"1": "agree", "7": "agree", "14": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02929", "set": "kspon-eval", "lang": "Korean", "n_words": 8, "commit": [7], "ambig": [], "how": {"7": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02943", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [], "ambig": [1], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02948", "set": "kspon-eval", "lang": "Korean", "n_words": 2, "commit": [1], "ambig": [], "how": {"1": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02960", "set": "kspon-eval", "lang": "Korean", "n_words": 4, "commit": [2], "ambig": [], "how": {"2": "agree"}}
+{"id": "ks-eval_clean-utt-KsponSpeech_E02987", "set": "kspon-eval", "lang": "Korean", "n_words": 20, "commit": [12, 18], "ambig": [], "how": {"12": "adjudicated", "18": "agree"}}

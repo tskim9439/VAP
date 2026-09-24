@@ -1,0 +1,98 @@
+{
+ "gs-test-youtube-YOU1000000135_S0000052": {
+  "11": "AMBIG"
+ },
+ "gs-test-youtube-YOU1000000140_S0000022": {
+  "26": "AMBIG",
+  "32": "AMBIG"
+ },
+ "gs-test-youtube-YOU1000000003_S0000178": {
+  "27": "COMMIT"
+ },
+ "gs-test-youtube-YOU1000000134_S0000259": {
+  "17": "NO"
+ },
+ "gs-test-youtube-YOU1000000185_S0000013": {
+  "4": "AMBIG"
+ },
+ "gs-test-youtube-YOU1000000045_S0000039": {
+  "10": "COMMIT"
+ },
+ "gs-test-youtube-YOU1000000130_S0000046": {
+  "34": "AMBIG"
+ },
+ "gs-test-youtube-YOU1000000169_S0000125": {
+  "22": "NO"
+ },
+ "gs-test-youtube-YOU1000000153_S0000050": {
+  "17": "AMBIG",
+  "21": "AMBIG"
+ },
+ "gs-test-youtube-YOU1000000124_S0000176": {
+  "9": "AMBIG",
+  "16": "AMBIG"
+ },
+ "gs-test-youtube-YOU1000000153_S0000120": {
+  "13": "AMBIG"
+ },
+ "gs-test-youtube-YOU1000000134_S0000081": {
+  "15": "NO",
+  "17": "NO",
+  "23": "NO"
+ },
+ "gs-test-podcast-POD1000000043_S0000280": {
+  "30": "AMBIG"
+ },
+ "gs-test-podcast-POD1000000043_S0000257": {
+  "21": "AMBIG",
+  "48": "COMMIT",
+  "57": "COMMIT",
+  "60": "AMBIG",
+  "62": "NO"
+ },
+ "gs-test-podcast-POD1000000019_S0000376": {
+  "21": "AMBIG"
+ },
+ "gs-test-podcast-POD1000000016_S0000133": {
+  "21": "AMBIG"
+ },
+ "gs-test-podcast-POD1000000021_S0000530": {
+  "12": "NO"
+ },
+ "gs-test-podcast-POD1000000012_S0000006": {
+  "12": "AMBIG"
+ },
+ "gs-test-podcast-POD1000000035_S0000007": {
+  "24": "AMBIG"
+ },
+ "_why": {
+  "gs-test-youtube-YOU1000000135_S0000052:11": "절 완결 뒤 to부정사 덧붙음: 정보 추가 vs 같은 절 연속 (sinker 선례)",
+  "gs-test-youtube-YOU1000000140_S0000022:26": "oh this gang 이 감탄·인용 끝인지 she's like 앞 머리인지 불분명",
+  "gs-test-youtube-YOU1000000140_S0000022:32": "인용 내부 경계, 뒤 get the 는 끊긴 인용 연속 (인용 내부 선례)",
+  "gs-test-youtube-YOU1000000003_S0000178:27": "조건문 완결, so(R3) 뒤 자기 주어 it 가진 새 절 (R2)",
+  "gs-test-youtube-YOU1000000134_S0000259:17": "enjoyed 의 둘째 목적어 feeling like… 병렬·동격 이어짐 (R2)",
+  "gs-test-youtube-YOU1000000185_S0000013:4": "절 완결 뒤 목적 to부정사 덧붙음 (sinker 선례)",
+  "gs-test-youtube-YOU1000000045_S0000039:10": "질문 완결, when… 은 구체화한 새 질문의 머리 (스트림 전체로 확인)",
+  "gs-test-youtube-YOU1000000130_S0000046:34": "절 완결 뒤 서술적 that 관계절: 정보 추가 vs 명사구 연속",
+  "gs-test-youtube-YOU1000000169_S0000125:22": "noticed 의 둘째 that 보문이 이어짐 (R2·R6)",
+  "gs-test-youtube-YOU1000000153_S0000050:17": "for a tiny house 가 앞 절 부가어인지 다음 단위 머리인지 불분명",
+  "gs-test-youtube-YOU1000000153_S0000050:21": "for a tiny house 가 다음 단위(i think…) 머리일 수 있음",
+  "gs-test-youtube-YOU1000000124_S0000176:9": "view 내용(보문) 안 절 경계, 둘째 절 이어짐 (보문 내부 선례)",
+  "gs-test-youtube-YOU1000000124_S0000176:16": "완결이나 뒤 절이 바꿔 말함, view 설명 연속",
+  "gs-test-youtube-YOU1000000153_S0000120:13": "절 완결 뒤 like 예시 덧붙음: 정보 추가 vs 같은 절 연속",
+  "gs-test-youtube-YOU1000000134_S0000081:15": "같은 주어 동사구 연쇄, 자기 주어 없음 (R2)",
+  "gs-test-youtube-YOU1000000134_S0000081:17": "같은 주어 동사구 연쇄, 자기 주어 없음 (R2)",
+  "gs-test-youtube-YOU1000000134_S0000081:23": "같은 주어 동사구 연쇄(says…), 자기 주어 없음 (R2)",
+  "gs-test-podcast-POD1000000043_S0000280:30": "완결 뒤 based on 분사 부가어 덧붙음 (breaking out 선례)",
+  "gs-test-podcast-POD1000000043_S0000257:21": "수사 질문 완결 vs why 절이 and that 과 병렬로 is because 의 주어",
+  "gs-test-podcast-POD1000000043_S0000257:48": "이유 절 완결, and 뒤 자기 주어 가진 새 절 (R2·R7)",
+  "gs-test-podcast-POD1000000043_S0000257:57": "문장 완결, like i thought 는 부가 논평이든 새 시작이든 안정",
+  "gs-test-podcast-POD1000000043_S0000257:60": "like i thought 가 완결 꼬리(뒤 you know 표지)인지 끊긴 새 시작인지",
+  "gs-test-podcast-POD1000000043_S0000257:62": "you know 표지 바로 뒤 스트림 끝 (R3·R9)",
+  "gs-test-podcast-POD1000000019_S0000376:21": "새 문장 vs roger miller 뒤 인용·보어(announce it) 연속 가능",
+  "gs-test-podcast-POD1000000016_S0000133:21": "절 완결 뒤 서술적 that 관계절 덧붙음",
+  "gs-test-podcast-POD1000000021_S0000530:12": "thanks to 의 이름 나열이 이어짐 (R2)",
+  "gs-test-podcast-POD1000000012_S0000006:12": "절 완결 뒤 who 관계절 덧붙음 (aunt who 선례)",
+  "gs-test-podcast-POD1000000035_S0000007:24": "절 완결 뒤 서술적 분사구 running 덧붙음"
+ }
+}

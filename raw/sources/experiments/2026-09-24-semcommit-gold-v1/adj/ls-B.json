@@ -1,0 +1,148 @@
+{
+ "ls-test-clean-5142-33396-00425": {
+  "62": "AMBIG"
+ },
+ "ls-test-clean-5639-40744-00451": {
+  "58": "NO"
+ },
+ "ls-test-clean-5639-40744-00453": {
+  "101": "AMBIG"
+ },
+ "ls-test-clean-5683-32879-00477": {
+  "17": "COMMIT",
+  "71": "NO",
+  "72": "COMMIT"
+ },
+ "ls-test-clean-61-70968-00485": {
+  "40": "AMBIG"
+ },
+ "ls-test-clean-61-70970-00496": {
+  "15": "AMBIG",
+  "24": "AMBIG",
+  "59": "AMBIG"
+ },
+ "ls-test-clean-672-122797-00514": {
+  "37": "NO"
+ },
+ "ls-test-clean-6829-68769-00516": {
+  "58": "AMBIG",
+  "84": "AMBIG"
+ },
+ "ls-test-clean-6829-68771-00532": {
+  "59": "NO"
+ },
+ "ls-test-clean-6930-76324-00544": {
+  "9": "NO"
+ },
+ "ls-test-clean-7021-79740-00559": {
+  "18": "AMBIG",
+  "25": "AMBIG"
+ },
+ "ls-test-clean-7021-85628-00569": {
+  "35": "COMMIT",
+  "82": "NO"
+ },
+ "ls-test-clean-7127-75946-00573": {
+  "22": "AMBIG",
+  "41": "NO"
+ },
+ "ls-test-clean-7127-75947-00584": {
+  "21": "AMBIG"
+ },
+ "ls-test-clean-7127-75947-00588": {
+  "59": "AMBIG"
+ },
+ "ls-test-clean-7176-88083-00598": {
+  "68": "NO"
+ },
+ "ls-test-clean-7176-92135-00602": {
+  "54": "AMBIG"
+ },
+ "ls-test-clean-7729-102255-00615": {
+  "17": "NO"
+ },
+ "ls-test-clean-7729-102255-00620": {
+  "54": "AMBIG",
+  "60": "NO"
+ },
+ "ls-test-clean-8224-274381-00642": {
+  "25": "AMBIG"
+ },
+ "ls-test-clean-8455-210777-00684": {
+  "78": "NO"
+ },
+ "ls-test-clean-8463-287645-00688": {
+  "18": "NO",
+  "25": "NO"
+ },
+ "ls-test-clean-8463-294825-00694": {
+  "27": "NO",
+  "36": "NO"
+ },
+ "ls-test-clean-8463-294828-00698": {
+  "33": "NO",
+  "56": "AMBIG"
+ },
+ "ls-test-clean-8463-294828-00699": {
+  "14": "AMBIG"
+ },
+ "ls-test-clean-8555-284447-00705": {
+  "12": "NO",
+  "51": "NO"
+ },
+ "ls-test-clean-8555-292519-00720": {
+  "10": "NO",
+  "15": "NO"
+ },
+ "ls-test-clean-8555-292519-00723": {
+  "25": "COMMIT"
+ },
+ "ls-test-clean-908-157963-00733": {
+  "10": "AMBIG"
+ },
+ "_why": {
+  "ls-test-clean-5142-33396-00425:62": "절 완결 뒤 목적 to부정사 덧붙음: 정보 추가 vs 같은 절 연속",
+  "ls-test-clean-5639-40744-00451:58": "was 공유 수동 분사 병렬(and treated), 자기 주어 없음 (R2)",
+  "ls-test-clean-5639-40744-00453:101": "절 완결 뒤 수단·원인 전치사구(through…) 덧붙음",
+  "ls-test-clean-5683-32879-00477:17": "양보 절 완결, but(R3) 뒤 새 명령절 (R2), 앞 의미 유지",
+  "ls-test-clean-5683-32879-00477:71": "뒤 호격 rachel 이 앞 문장 끝 (참고 쉼표, 같은 스트림 dear dorcas 합의)",
+  "ls-test-clean-5683-32879-00477:72": "호격까지 문장 완결, 뒤 자기 주어 가진 새 절",
+  "ls-test-clean-61-70968-00485:40": "인용+표지 핵심 완결, 표지 부사 presently 덧붙음 (R6)",
+  "ls-test-clean-61-70970-00496:15": "대답+표지 완결, 표지 방식구 with a half laugh 덧붙음 (R6)",
+  "ls-test-clean-61-70970-00496:24": "절 완결 뒤 목적 to부정사(to show…) 덧붙음",
+  "ls-test-clean-61-70970-00496:59": "절 완결 뒤 이유 전치사구(for harboring) 덧붙음",
+  "ls-test-clean-672-122797-00514:37": "관계절 안 같은 주어 동사구 병렬(and were so glad), 자기 주어 없음 (R2)",
+  "ls-test-clean-6829-68769-00516:58": "절 완결 뒤 결과 전치사구(as a consequence…) 덧붙음",
+  "ls-test-clean-6829-68769-00516:84": "절 완결 뒤 목적 to부정사(to protect…) 덧붙음",
+  "ls-test-clean-6829-68771-00532:59": "a beautiful girl 에 동격 명사구 이어짐 (R2)",
+  "ls-test-clean-6930-76324-00544:9": "'ll 공유 동사구 병렬(and have…), 자기 주어 없음 (R2)",
+  "ls-test-clean-7021-79740-00559:18": "호격 뒤 인사 완결이나 삽입절 뒤 목적구 to make… 재개",
+  "ls-test-clean-7021-79740-00559:25": "삽입절 완결이나 인용 절의 목적 부가어 재개",
+  "ls-test-clean-7021-85628-00569:35": "절 완결, but(R3) 뒤 자기 주어 he 가진 새 절 (R2)",
+  "ls-test-clean-7021-85628-00569:82": "bent down and kissed 한 동작 병렬(쉼표 없음), 자기 주어 없음 (R2)",
+  "ls-test-clean-7127-75946-00573:22": "절 완결 뒤 목적 전치사구(for the purpose…) 덧붙음",
+  "ls-test-clean-7127-75946-00573:41": "which 관계절 안 동사구 병렬(and had cost), 자기 주어 없음 (R2)",
+  "ls-test-clean-7127-75947-00584:21": "문장 완결(발화 경계)이나 뒤 the princess inquired 가 이 인용의 표지로 들림 (R6)",
+  "ls-test-clean-7127-75947-00588:59": "질문 완결 뒤 서술 분사구(silvering…) 덧붙음",
+  "ls-test-clean-7176-88083-00598:68": "while 절 안 같은 주어 동사구 병렬(yet hesitated), 자기 주어 없음 (R2)",
+  "ls-test-clean-7176-92135-00602:54": "앞 표지 인용 내부, 끊긴 and 뒤 재시작 (인용 내부 선례)",
+  "ls-test-clean-7729-102255-00615:17": "the principal speech 에 동격 명사구 이어짐 (R2)",
+  "ls-test-clean-7729-102255-00620:54": "절 완결 뒤 분사 부가어(finally culminating…) 덧붙음",
+  "ls-test-clean-7729-102255-00620:60": "bands 를 꾸미는 동격 형용사구 이어짐 (R2)",
+  "ls-test-clean-8224-274381-00642:25": "완결 뒤 비제한 where 관계절 덧붙음 (관계절 선례)",
+  "ls-test-clean-8455-210777-00684:78": "will 공유 동사구 병렬(and delay…), 자기 주어 없음 (R2)",
+  "ls-test-clean-8463-287645-00688:18": "who 관계절 안 동사구 병렬(and fell asleep), 자기 주어 없음 (R2)",
+  "ls-test-clean-8463-287645-00688:25": "who 관계절 안 동사구 병렬(and was found), 자기 주어 없음 (R2)",
+  "ls-test-clean-8463-294825-00694:27": "this book 의 동격 명사구(surely one of…) 이어짐 (R2)",
+  "ls-test-clean-8463-294825-00694:36": "둘째 동격 명사구(an inspiration…) 이어짐 (R2)",
+  "ls-test-clean-8463-294828-00698:33": "any country whatever 의 예시 동격 이어짐 (R2)",
+  "ls-test-clean-8463-294828-00698:56": "요청 완결 vs forgive 의 for 보어가 용서 내용 채움",
+  "ls-test-clean-8463-294828-00699:14": "절 완결 뒤 정도 전치사구(to the point where…) 덧붙음",
+  "ls-test-clean-8555-284447-00705:12": "분사 부가어 병렬(and threatening), 자기 주어 없음 (R2)",
+  "ls-test-clean-8555-284447-00705:51": "'ll 공유 동사구 병렬(and patch him), 자기 주어 없음 (R2)",
+  "ls-test-clean-8555-292519-00720:10": "she 의 동격 명사구(the glory…) 이어짐 (R2)",
+  "ls-test-clean-8555-292519-00720:15": "둘째 동격 명사구(a beached king's galley…) 이어짐 (R2)",
+  "ls-test-clean-8555-292519-00723:25": "문장·발화 완결, 뒤 자기 주어 가진 새 문장, 앞 의미 부정 안 함",
+  "ls-test-clean-908-157963-00733:10": "앞 표지 인용 내부, and 뒤 새 주어 절 (인용 내부 선례)"
+ }
+}

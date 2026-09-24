@@ -10,6 +10,8 @@ related: [output-phase1-report]
 
 # Semantic commit v0.2 — rack4 소규모 실행
 
+**골드셋 대조(2026-09-24 추가)**: 이 페이지의 정밀도·재현율은 교사 A 라벨 기준이다. 전수 주석 골드셋으로 다시 재면 한국어 r1 은 P 0.95 / R 0.50 으로 교사 라벨보다 낫고, 영어 대화체는 거의 확정하지 못한다 — [[output-semcommit-gold-v1]]. 턴 종료는 이후 <EOT> 로 통일했다([[decision-semcommit-turn-eot-scope]]).
+
 **입문자용 보고서**: https://claude.ai/artifact/9qW2rzzNoeWDQrdVGVKzn9 — 모델·데이터·라벨링·학습·평가·결과를 처음 보는 사람 기준으로 풀어 쓴 판(수치는 이 페이지와 원자료로 교차 검증).
 
 **뷰어**: https://claude.ai/artifact/WtqWnzpgXedbtHrpNCYJYC — 평가 스트림 30 개(영어 12 · 한국어 18, 오류 유형별 선택)의 오디오, 참조 단어·교사 후보(A/B/N)·LibriSpeech-PC 문장 끝, 모델·설정별 가설 단어와 `<SEM_END>`(분류별 색·참조 단어 끝→방출 지연 연결선)·`<TURN_END>`, p(SEM)/p(TURN) 궤적, 설정별 지표·P–R 산점도. 생성: `experiments/semcommit_viewer_bundle.py --html experiments/semcommit_viewer.template.html`.

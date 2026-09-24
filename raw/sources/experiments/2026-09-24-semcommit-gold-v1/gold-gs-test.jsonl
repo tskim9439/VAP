@@ -1,0 +1,79 @@
+{"id": "gs-test-youtube-YOU1000000165_S0000001", "set": "gs-test", "lang": "English", "n_words": 33, "commit": [1, 12, 16, 32], "ambig": [], "how": {"1": "agree", "12": "agree", "16": "agree", "32": "agree"}}
+{"id": "gs-test-youtube-YOU1000000101_S0000080", "set": "gs-test", "lang": "English", "n_words": 29, "commit": [7, 12, 19, 28], "ambig": [], "how": {"7": "agree", "12": "agree", "19": "agree", "28": "agree"}}
+{"id": "gs-test-youtube-YOU1000000033_S0000152", "set": "gs-test", "lang": "English", "n_words": 45, "commit": [11, 27, 37, 44], "ambig": [], "how": {"11": "agree", "27": "agree", "37": "agree", "44": "agree"}}
+{"id": "gs-test-youtube-YOU1000000135_S0000052", "set": "gs-test", "lang": "English", "n_words": 28, "commit": [16, 20, 27], "ambig": [11], "how": {"11": "adjudicated", "16": "agree", "20": "agree", "27": "agree"}}
+{"id": "gs-test-youtube-YOU1000000150_S0000073", "set": "gs-test", "lang": "English", "n_words": 48, "commit": [11, 19, 40, 47], "ambig": [28], "how": {"11": "agree", "19": "agree", "28": "agree", "40": "agree", "47": "agree"}}
+{"id": "gs-test-youtube-YOU1000000109_S0000163", "set": "gs-test", "lang": "English", "n_words": 26, "commit": [22, 25], "ambig": [], "how": {"22": "agree", "25": "agree"}}
+{"id": "gs-test-youtube-YOU1000000140_S0000022", "set": "gs-test", "lang": "English", "n_words": 39, "commit": [12, 19, 38], "ambig": [23, 26, 32], "how": {"12": "agree", "19": "agree", "23": "agree", "26": "adjudicated", "32": "adjudicated", "38": "agree"}}
+{"id": "gs-test-youtube-YOU1000000003_S0000178", "set": "gs-test", "lang": "English", "n_words": 38, "commit": [15, 27, 31, 37], "ambig": [1], "how": {"1": "agree", "15": "agree", "27": "adjudicated", "31": "agree", "37": "agree"}}
+{"id": "gs-test-youtube-YOU1000000134_S0000259", "set": "gs-test", "lang": "English", "n_words": 25, "commit": [10, 24], "ambig": [], "how": {"10": "agree", "17": "adjudicated", "24": "agree"}}
+{"id": "gs-test-youtube-YOU1000000185_S0000013", "set": "gs-test", "lang": "English", "n_words": 37, "commit": [9, 20, 30, 36], "ambig": [4], "how": {"4": "adjudicated", "9": "agree", "20": "agree", "30": "agree", "36": "agree"}}
+{"id": "gs-test-youtube-YOU1000000129_S0000084", "set": "gs-test", "lang": "English", "n_words": 30, "commit": [12, 29], "ambig": [17], "how": {"12": "agree", "17": "agree", "29": "agree"}}
+{"id": "gs-test-youtube-YOU1000000033_S0000105", "set": "gs-test", "lang": "English", "n_words": 49, "commit": [19, 48], "ambig": [13, 33], "how": {"13": "agree", "19": "agree", "33": "agree", "48": "agree"}}
+{"id": "gs-test-youtube-YOU1000000111_S0000073", "set": "gs-test", "lang": "English", "n_words": 26, "commit": [11, 18], "ambig": [], "how": {"11": "agree", "18": "agree"}}
+{"id": "gs-test-youtube-YOU1000000133_S0000043", "set": "gs-test", "lang": "English", "n_words": 47, "commit": [9, 13, 28, 46], "ambig": [], "how": {"9": "agree", "13": "agree", "28": "agree", "46": "agree"}}
+{"id": "gs-test-youtube-YOU1000000045_S0000039", "set": "gs-test", "lang": "English", "n_words": 42, "commit": [10, 41], "ambig": [], "how": {"10": "adjudicated", "41": "agree"}}
+{"id": "gs-test-youtube-YOU1000000130_S0000046", "set": "gs-test", "lang": "English", "n_words": 42, "commit": [22, 41], "ambig": [13, 34], "how": {"13": "agree", "22": "agree", "34": "adjudicated", "41": "agree"}}
+{"id": "gs-test-youtube-YOU1000000185_S0000024", "set": "gs-test", "lang": "English", "n_words": 29, "commit": [28], "ambig": [], "how": {"28": "agree"}}
+{"id": "gs-test-youtube-YOU1000000144_S0000047", "set": "gs-test", "lang": "English", "n_words": 35, "commit": [10, 29, 34], "ambig": [1, 15], "how": {"1": "agree", "10": "agree", "15": "agree", "29": "agree", "34": "agree"}}
+{"id": "gs-test-youtube-YOU1000000189_S0000097", "set": "gs-test", "lang": "English", "n_words": 28, "commit": [3], "ambig": [14, 27], "how": {"3": "agree", "14": "agree", "27": "agree"}}
+{"id": "gs-test-youtube-YOU1000000169_S0000125", "set": "gs-test", "lang": "English", "n_words": 29, "commit": [28], "ambig": [3], "how": {"3": "agree", "22": "adjudicated", "28": "agree"}}
+{"id": "gs-test-youtube-YOU1000000129_S0000024", "set": "gs-test", "lang": "English", "n_words": 24, "commit": [4, 23], "ambig": [12], "how": {"4": "agree", "12": "agree", "23": "agree"}}
+{"id": "gs-test-youtube-YOU1000000115_S0000180", "set": "gs-test", "lang": "English", "n_words": 22, "commit": [2, 6, 9, 21], "ambig": [], "how": {"2": "agree", "6": "agree", "9": "agree", "21": "agree"}}
+{"id": "gs-test-youtube-YOU1000000115_S0000209", "set": "gs-test", "lang": "English", "n_words": 25, "commit": [6, 13, 24], "ambig": [], "how": {"6": "agree", "13": "agree", "24": "agree"}}
+{"id": "gs-test-youtube-YOU1000000141_S0000111", "set": "gs-test", "lang": "English", "n_words": 36, "commit": [5, 20, 29, 35], "ambig": [12], "how": {"5": "agree", "12": "agree", "20": "agree", "29": "agree", "35": "agree"}}
+{"id": "gs-test-youtube-YOU1000000153_S0000050", "set": "gs-test", "lang": "English", "n_words": 57, "commit": [27, 39, 56], "ambig": [17, 21, 47], "how": {"17": "adjudicated", "21": "adjudicated", "27": "agree", "39": "agree", "47": "agree", "56": "agree"}}
+{"id": "gs-test-youtube-YOU1000000132_S0000035", "set": "gs-test", "lang": "English", "n_words": 39, "commit": [11, 23, 38], "ambig": [], "how": {"11": "agree", "23": "agree", "38": "agree"}}
+{"id": "gs-test-youtube-YOU1000000175_S0000101", "set": "gs-test", "lang": "English", "n_words": 25, "commit": [4, 24], "ambig": [18], "how": {"4": "agree", "18": "agree", "24": "agree"}}
+{"id": "gs-test-youtube-YOU1000000164_S0000052", "set": "gs-test", "lang": "English", "n_words": 21, "commit": [6, 20], "ambig": [], "how": {"6": "agree", "20": "agree"}}
+{"id": "gs-test-youtube-YOU1000000124_S0000176", "set": "gs-test", "lang": "English", "n_words": 23, "commit": [22], "ambig": [9, 16], "how": {"9": "adjudicated", "16": "adjudicated", "22": "agree"}}
+{"id": "gs-test-youtube-YOU1000000167_S0000179", "set": "gs-test", "lang": "English", "n_words": 22, "commit": [5, 12, 21], "ambig": [], "how": {"5": "agree", "12": "agree", "21": "agree"}}
+{"id": "gs-test-youtube-YOU1000000117_S0000122", "set": "gs-test", "lang": "English", "n_words": 28, "commit": [7, 27], "ambig": [], "how": {"7": "agree", "27": "agree"}}
+{"id": "gs-test-youtube-YOU1000000168_S0000005", "set": "gs-test", "lang": "English", "n_words": 27, "commit": [17], "ambig": [], "how": {"17": "agree"}}
+{"id": "gs-test-youtube-YOU1000000137_S0000353", "set": "gs-test", "lang": "English", "n_words": 28, "commit": [7, 13, 21, 27], "ambig": [], "how": {"7": "agree", "13": "agree", "21": "agree", "27": "agree"}}
+{"id": "gs-test-youtube-YOU1000000148_S0000037", "set": "gs-test", "lang": "English", "n_words": 32, "commit": [19, 23, 31], "ambig": [10], "how": {"10": "agree", "19": "agree", "23": "agree", "31": "agree"}}
+{"id": "gs-test-youtube-YOU1000000019_S0000009", "set": "gs-test", "lang": "English", "n_words": 36, "commit": [12, 35], "ambig": [], "how": {"12": "agree", "35": "agree"}}
+{"id": "gs-test-youtube-YOU1000000153_S0000120", "set": "gs-test", "lang": "English", "n_words": 37, "commit": [16, 22, 36], "ambig": [13], "how": {"13": "adjudicated", "16": "agree", "22": "agree", "36": "agree"}}
+{"id": "gs-test-youtube-YOU1000000165_S0000021", "set": "gs-test", "lang": "English", "n_words": 26, "commit": [3, 25], "ambig": [16], "how": {"3": "agree", "16": "agree", "25": "agree"}}
+{"id": "gs-test-youtube-YOU1000000134_S0000081", "set": "gs-test", "lang": "English", "n_words": 35, "commit": [34], "ambig": [27], "how": {"15": "adjudicated", "17": "adjudicated", "23": "adjudicated", "27": "agree", "34": "agree"}}
+{"id": "gs-test-youtube-YOU1000000189_S0000098", "set": "gs-test", "lang": "English", "n_words": 29, "commit": [22, 28], "ambig": [13], "how": {"13": "agree", "22": "agree", "28": "agree"}}
+{"id": "gs-test-youtube-YOU1000000172_S0000042", "set": "gs-test", "lang": "English", "n_words": 25, "commit": [10, 16, 24], "ambig": [], "how": {"10": "agree", "16": "agree", "24": "agree"}}
+{"id": "gs-test-podcast-POD1000000037_S0000046", "set": "gs-test", "lang": "English", "n_words": 37, "commit": [19, 36], "ambig": [], "how": {"19": "agree", "36": "agree"}}
+{"id": "gs-test-podcast-POD1000000046_S0000307", "set": "gs-test", "lang": "English", "n_words": 50, "commit": [18, 33, 44, 49], "ambig": [], "how": {"18": "agree", "33": "agree", "44": "agree", "49": "agree"}}
+{"id": "gs-test-podcast-POD1000000045_S0000205", "set": "gs-test", "lang": "English", "n_words": 32, "commit": [15, 31], "ambig": [20], "how": {"15": "agree", "20": "agree", "31": "agree"}}
+{"id": "gs-test-podcast-POD1000000030_S0000027", "set": "gs-test", "lang": "English", "n_words": 39, "commit": [22, 38], "ambig": [], "how": {"22": "agree", "38": "agree"}}
+{"id": "gs-test-podcast-POD1000000043_S0000280", "set": "gs-test", "lang": "English", "n_words": 42, "commit": [2, 41], "ambig": [30], "how": {"2": "agree", "30": "adjudicated", "41": "agree"}}
+{"id": "gs-test-podcast-POD1000000023_S0000016", "set": "gs-test", "lang": "English", "n_words": 34, "commit": [33], "ambig": [22], "how": {"22": "agree", "33": "agree"}}
+{"id": "gs-test-podcast-POD1000000043_S0000257", "set": "gs-test", "lang": "English", "n_words": 63, "commit": [48, 57], "ambig": [9, 21, 60], "how": {"9": "agree", "21": "adjudicated", "48": "adjudicated", "57": "adjudicated", "60": "adjudicated", "62": "adjudicated"}}
+{"id": "gs-test-podcast-POD1000000019_S0000376", "set": "gs-test", "lang": "English", "n_words": 34, "commit": [7, 17, 33], "ambig": [21], "how": {"7": "agree", "17": "agree", "21": "adjudicated", "33": "agree"}}
+{"id": "gs-test-podcast-POD1000000019_S0000346", "set": "gs-test", "lang": "English", "n_words": 60, "commit": [6, 13, 29, 40, 59], "ambig": [], "how": {"6": "agree", "13": "agree", "29": "agree", "40": "agree", "59": "agree"}}
+{"id": "gs-test-podcast-POD1000000045_S0000214", "set": "gs-test", "lang": "English", "n_words": 43, "commit": [4, 10, 21, 42], "ambig": [36], "how": {"4": "agree", "10": "agree", "21": "agree", "36": "agree", "42": "agree"}}
+{"id": "gs-test-podcast-POD1000000044_S0000094", "set": "gs-test", "lang": "English", "n_words": 34, "commit": [4, 12, 33], "ambig": [25], "how": {"4": "agree", "12": "agree", "25": "agree", "33": "agree"}}
+{"id": "gs-test-podcast-POD1000000028_S0000263", "set": "gs-test", "lang": "English", "n_words": 37, "commit": [36], "ambig": [12], "how": {"12": "agree", "36": "agree"}}
+{"id": "gs-test-podcast-POD1000000044_S0000389", "set": "gs-test", "lang": "English", "n_words": 23, "commit": [4, 14, 22], "ambig": [], "how": {"4": "agree", "14": "agree", "22": "agree"}}
+{"id": "gs-test-podcast-POD1000000034_S0000026", "set": "gs-test", "lang": "English", "n_words": 24, "commit": [14, 23], "ambig": [], "how": {"14": "agree", "23": "agree"}}
+{"id": "gs-test-podcast-POD1000000046_S0000534", "set": "gs-test", "lang": "English", "n_words": 41, "commit": [14, 35, 40], "ambig": [3, 26], "how": {"3": "agree", "14": "agree", "26": "agree", "35": "agree", "40": "agree"}}
+{"id": "gs-test-podcast-POD1000000040_S0000327", "set": "gs-test", "lang": "English", "n_words": 52, "commit": [16, 27, 33, 40], "ambig": [47], "how": {"16": "agree", "27": "agree", "33": "agree", "40": "agree", "47": "agree"}}
+{"id": "gs-test-podcast-POD1000000005_S0000202", "set": "gs-test", "lang": "English", "n_words": 33, "commit": [9, 20, 32], "ambig": [13], "how": {"9": "agree", "13": "agree", "20": "agree", "32": "agree"}}
+{"id": "gs-test-podcast-POD1000000034_S0000012", "set": "gs-test", "lang": "English", "n_words": 55, "commit": [24, 54], "ambig": [], "how": {"24": "agree", "54": "agree"}}
+{"id": "gs-test-podcast-POD1000000023_S0000146", "set": "gs-test", "lang": "English", "n_words": 42, "commit": [41], "ambig": [15], "how": {"15": "agree", "41": "agree"}}
+{"id": "gs-test-podcast-POD1000000028_S0000007", "set": "gs-test", "lang": "English", "n_words": 23, "commit": [8, 22], "ambig": [], "how": {"8": "agree", "22": "agree"}}
+{"id": "gs-test-podcast-POD1000000005_S0000153", "set": "gs-test", "lang": "English", "n_words": 22, "commit": [21], "ambig": [], "how": {"21": "agree"}}
+{"id": "gs-test-podcast-POD1000000015_S0000127", "set": "gs-test", "lang": "English", "n_words": 25, "commit": [5, 24], "ambig": [19], "how": {"5": "agree", "19": "agree", "24": "agree"}}
+{"id": "gs-test-podcast-POD1000000037_S0000032", "set": "gs-test", "lang": "English", "n_words": 35, "commit": [19, 25, 34], "ambig": [], "how": {"19": "agree", "25": "agree", "34": "agree"}}
+{"id": "gs-test-podcast-POD1000000016_S0000133", "set": "gs-test", "lang": "English", "n_words": 38, "commit": [4, 31, 37], "ambig": [21], "how": {"4": "agree", "21": "adjudicated", "31": "agree", "37": "agree"}}
+{"id": "gs-test-podcast-POD1000000012_S0000231", "set": "gs-test", "lang": "English", "n_words": 27, "commit": [19, 26], "ambig": [], "how": {"19": "agree", "26": "agree"}}
+{"id": "gs-test-podcast-POD1000000021_S0000530", "set": "gs-test", "lang": "English", "n_words": 20, "commit": [19], "ambig": [], "how": {"12": "adjudicated", "19": "agree"}}
+{"id": "gs-test-podcast-POD1000000012_S0000006", "set": "gs-test", "lang": "English", "n_words": 23, "commit": [22], "ambig": [12], "how": {"12": "adjudicated", "22": "agree"}}
+{"id": "gs-test-podcast-POD1000000030_S0000006", "set": "gs-test", "lang": "English", "n_words": 43, "commit": [13, 25, 42], "ambig": [], "how": {"13": "agree", "25": "agree", "42": "agree"}}
+{"id": "gs-test-podcast-POD1000000041_S0000514", "set": "gs-test", "lang": "English", "n_words": 35, "commit": [34], "ambig": [11, 23], "how": {"11": "agree", "23": "agree", "34": "agree"}}
+{"id": "gs-test-podcast-POD1000000041_S0000230", "set": "gs-test", "lang": "English", "n_words": 29, "commit": [9, 22, 28], "ambig": [], "how": {"9": "agree", "22": "agree", "28": "agree"}}
+{"id": "gs-test-podcast-POD1000000040_S0000379", "set": "gs-test", "lang": "English", "n_words": 31, "commit": [20, 30], "ambig": [], "how": {"20": "agree", "30": "agree"}}
+{"id": "gs-test-podcast-POD1000000011_S0000089", "set": "gs-test", "lang": "English", "n_words": 36, "commit": [35], "ambig": [], "how": {"35": "agree"}}
+{"id": "gs-test-podcast-POD1000000021_S0000012", "set": "gs-test", "lang": "English", "n_words": 24, "commit": [5, 23], "ambig": [], "how": {"5": "agree", "23": "agree"}}
+{"id": "gs-test-podcast-POD1000000015_S0000155", "set": "gs-test", "lang": "English", "n_words": 21, "commit": [8, 20], "ambig": [], "how": {"8": "agree", "20": "agree"}}
+{"id": "gs-test-podcast-POD1000000039_S0000230", "set": "gs-test", "lang": "English", "n_words": 30, "commit": [17, 29], "ambig": [], "how": {"17": "agree", "29": "agree"}}
+{"id": "gs-test-podcast-POD1000000036_S0000019", "set": "gs-test", "lang": "English", "n_words": 32, "commit": [18, 31], "ambig": [27], "how": {"18": "agree", "27": "agree", "31": "agree"}}
+{"id": "gs-test-podcast-POD1000000035_S0000007", "set": "gs-test", "lang": "English", "n_words": 37, "commit": [4, 36], "ambig": [24], "how": {"4": "agree", "24": "adjudicated", "36": "agree"}}
+{"id": "gs-test-podcast-POD1000000024_S0000119", "set": "gs-test", "lang": "English", "n_words": 40, "commit": [39], "ambig": [24, 30], "how": {"24": "agree", "30": "agree", "39": "agree"}}
+{"id": "gs-test-podcast-POD1000000011_S0000093", "set": "gs-test", "lang": "English", "n_words": 26, "commit": [7, 16, 25], "ambig": [], "how": {"7": "agree", "16": "agree", "25": "agree"}}

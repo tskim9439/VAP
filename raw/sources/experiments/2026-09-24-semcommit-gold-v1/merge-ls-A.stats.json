@@ -1,0 +1,33 @@
+{
+ "streams": 50,
+ "boundaries": 3511,
+ "annotators": [
+  "rules",
+  "consumer"
+ ],
+ "kappa_3class": 0.8444,
+ "commit_f1_between": 0.9508,
+ "annotator_counts": {
+  "rules": {
+   "NO": 3213,
+   "AMBIG": 65,
+   "COMMIT": 233
+  },
+  "consumer": {
+   "NO": 3206,
+   "AMBIG": 50,
+   "COMMIT": 255
+  }
+ },
+ "decisions": {
+  "agree_NO": 3178,
+  "agree_AMBIG": 14,
+  "adjudicated_AMBIG": 38,
+  "adjudicated_COMMIT": 14,
+  "agree_COMMIT": 232,
+  "adjudicated_NO": 35
+ },
+ "gold_commit": 246,
+ "gold_ambig": 52,
+ "unresolved": 0
+}

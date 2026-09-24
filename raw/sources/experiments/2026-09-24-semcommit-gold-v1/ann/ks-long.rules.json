@@ -1,0 +1,1259 @@
+{
+ "ks-eval_clean-utt-KsponSpeech_E00017": {
+  "commit": [],
+  "ambig": [
+   11,
+   12
+  ],
+  "why": {
+   "11": "완결이나 '거의'가 뒤로 붙는 수식일 수 있음",
+   "12": "'거의' 우측 이동 수식인지 다음 절 머리인지 불명"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00020": {
+  "commit": [
+   18
+  ],
+  "ambig": [],
+  "why": {
+   "18": "베트남→태국 식당 고침 뒤 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00066": {
+  "commit": [],
+  "ambig": [
+   17
+  ],
+  "why": {
+   "17": "말끝 -는데(요 없음), 스트림 끝"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00073": {
+  "commit": [
+   7,
+   19
+  ],
+  "ambig": [],
+  "why": {
+   "7": "완결 문장, 뒤는 표지 그래가지고",
+   "19": "수사 의문 완결, 뒤는 표지 근데"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00087": {
+  "commit": [
+   20,
+   21
+  ],
+  "ambig": [],
+  "why": {
+   "20": "완결 문장, 뒤는 맺음 네",
+   "21": "스트림 끝 맺음 대답 네"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00100": {
+  "commit": [
+   4,
+   12,
+   17
+  ],
+  "ambig": [
+   21
+  ],
+  "why": {
+   "4": "완결, 뒤는 자기 주어 가진 새 절",
+   "12": "완결 문장, 뒤는 표지 그래가지고",
+   "17": "시험 망했다 완결, 뒤는 그래도",
+   "21": "스트림 끝 -는데(요 없음)"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00169": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00206": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00289": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00301": {
+  "commit": [],
+  "ambig": [
+   6,
+   13,
+   19
+  ],
+  "why": {
+   "6": "-고 절에 뒤로 붙은 부사어, 완결 불명",
+   "13": "-는데 뒤 관련 절 이어짐",
+   "19": "스트림 끝 -는데(요 없음)"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00358": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00364": {
+  "commit": [
+   15,
+   19
+  ],
+  "ambig": [],
+  "why": {
+   "15": "완결 문장, 뒤는 새 절",
+   "19": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00384": {
+  "commit": [
+   8,
+   21
+  ],
+  "ambig": [],
+  "why": {
+   "8": "완결 문장, 뒤는 새 문장(설명)",
+   "21": "스트림 끝, 완결 -잖아"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00411": {
+  "commit": [
+   4
+  ],
+  "ambig": [
+   10
+  ],
+  "why": {
+   "4": "완결 문장, 뒤는 간투사 아",
+   "10": "-니까 이유절, 앞·뒤 어느 쪽 연결인지 불명"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00430": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00479": {
+  "commit": [
+   18,
+   25
+  ],
+  "ambig": [],
+  "why": {
+   "18": "완결 문장, 뒤는 새 질문",
+   "25": "스트림 끝, 질문 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00521": {
+  "commit": [],
+  "ambig": [
+   22
+  ],
+  "why": {
+   "22": "명사구로 끝난 조각, 완결 불명"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00528": {
+  "commit": [
+   19
+  ],
+  "ambig": [],
+  "why": {
+   "19": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00573": {
+  "commit": [
+   24
+  ],
+  "ambig": [
+   6,
+   7,
+   13,
+   28
+  ],
+  "why": {
+   "6": "완결이나 '나도'가 뒤붙은 주어일 수 있음",
+   "7": "'나도'가 앞 꼬리인지 다음 머리인지",
+   "13": "-아서 이유절, 앞뒤 연결 불명",
+   "24": "완결 -거든, 뒤는 같은 내용 보충",
+   "28": "스트림 끝 -는데(요 없음)"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00580": {
+  "commit": [
+   4,
+   10,
+   13
+  ],
+  "ambig": [
+   20
+  ],
+  "why": {
+   "4": "나열 항목 '또 자의식' 완결, 뒤는 그리고",
+   "10": "세 번째 항목 성실함 완결",
+   "13": "게으르면 안 돼요 완결, 뒤는 새 문장",
+   "20": "뒤붙은 이유절 끝인지 뒤 '뭐'로 이어지는지"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00606": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00710": {
+  "commit": [
+   4
+  ],
+  "ambig": [
+   19
+  ],
+  "why": {
+   "4": "완결 문장, 뒤는 혹시 새 질문",
+   "19": "스트림 끝 -는지 간접 의문, 완결 불명"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00858": {
+  "commit": [
+   23
+  ],
+  "ambig": [
+   22
+  ],
+  "why": {
+   "22": "완결이나 뒤에 우측 이동 화제 성실함",
+   "23": "뒤붙은 화제어까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E00982": {
+  "commit": [
+   21,
+   22
+  ],
+  "ambig": [],
+  "why": {
+   "21": "완결 질문, 뒤는 맺음 네",
+   "22": "스트림 끝 맺음 대답 네"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01101": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01168": {
+  "commit": [
+   20
+  ],
+  "ambig": [],
+  "why": {
+   "20": "스트림 끝, 못쳤어 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01173": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01240": {
+  "commit": [
+   3,
+   18
+  ],
+  "ambig": [],
+  "why": {
+   "3": "완결 문장, 뒤는 새 절(이유)",
+   "18": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01262": {
+  "commit": [
+   6,
+   24
+  ],
+  "ambig": [],
+  "why": {
+   "6": "완결 문장, 뒤는 표지 그래서",
+   "24": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01418": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01426": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01461": {
+  "commit": [
+   9,
+   24
+  ],
+  "ambig": [],
+  "why": {
+   "9": "완결 문장, 뒤는 새 문장",
+   "24": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01476": {
+  "commit": [
+   8,
+   21
+  ],
+  "ambig": [],
+  "why": {
+   "8": "완결 -거든, 뒤는 표지 그래서",
+   "21": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01535": {
+  "commit": [
+   4
+  ],
+  "ambig": [],
+  "why": {
+   "4": "완결 문장, 뒤는 표지 왜냐면"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01547": {
+  "commit": [
+   4,
+   18
+  ],
+  "ambig": [
+   17
+  ],
+  "why": {
+   "4": "완결 문장, 뒤는 표지 근데",
+   "17": "완결이나 뒤에 우측 이동 주어 이게",
+   "18": "뒤붙은 주어까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01566": {
+  "commit": [
+   20
+  ],
+  "ambig": [],
+  "why": {
+   "20": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01782": {
+  "commit": [
+   8
+  ],
+  "ambig": [],
+  "why": {
+   "8": "완결 -잖아, 뒤는 표지 근데"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01804": {
+  "commit": [
+   24
+  ],
+  "ambig": [],
+  "why": {
+   "24": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01819": {
+  "commit": [
+   27
+  ],
+  "ambig": [
+   20
+  ],
+  "why": {
+   "20": "-니까 이유절, 말끝인지 뒤 질문 연결인지",
+   "27": "스트림 끝, 질문 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01864": {
+  "commit": [
+   12,
+   20
+  ],
+  "ambig": [
+   1,
+   5,
+   17
+  ],
+  "why": {
+   "1": "전언 맺음이나 뒤 인용 묶음 안일 수 있음",
+   "5": "전언 맺음이나 뒤 인용과 충돌 가능",
+   "12": "인용 뒤 표지까지 완결, 뒤는 그래서",
+   "17": "인용 안인지 독립 진술인지 불명",
+   "20": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E01883": {
+  "commit": [
+   13,
+   22
+  ],
+  "ambig": [],
+  "why": {
+   "13": "완결 문장, 뒤는 새 문장",
+   "22": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02075": {
+  "commit": [
+   9
+  ],
+  "ambig": [
+   24
+  ],
+  "why": {
+   "9": "완결 문장, 뒤는 일정 보충 새 단위",
+   "24": "스트림 끝 -는데(요 없음)"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02162": {
+  "commit": [
+   19,
+   20
+  ],
+  "ambig": [],
+  "why": {
+   "19": "완결 문장, 뒤는 맺음 네",
+   "20": "스트림 끝 맺음 대답 네"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02242": {
+  "commit": [
+   4,
+   9
+  ],
+  "ambig": [
+   16
+  ],
+  "why": {
+   "4": "완결 문장, 뒤는 표지 왜냐면은",
+   "9": "이유 문장 완결, 뒤는 보충",
+   "16": "나열 조각 '물리'로 끝남, 완결 불명"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02310": {
+  "commit": [
+   5,
+   19
+  ],
+  "ambig": [
+   17
+  ],
+  "why": {
+   "5": "완결 문장, 뒤는 표지 그래서",
+   "17": "완결이나 뒤에 우측 이동 '그 판'",
+   "19": "뒤붙은 말까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02400": {
+  "commit": [
+   8,
+   13
+  ],
+  "ambig": [],
+  "why": {
+   "8": "완결 문장, 뒤는 표지 그래갖고",
+   "13": "완결 -잖아, 뒤는 표지 근데"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02433": {
+  "commit": [],
+  "ambig": [
+   17
+  ],
+  "why": {
+   "17": "스트림 끝 -는데(요 없음)"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02439": {
+  "commit": [
+   5,
+   12,
+   16
+  ],
+  "ambig": [],
+  "why": {
+   "5": "완결 -잖아, 뒤는 표지 근데",
+   "12": "완결 문장, 뒤는 표지 근데",
+   "16": "완결 문장, 뒤는 표지 근데"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02551": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02629": {
+  "commit": [
+   20
+  ],
+  "ambig": [],
+  "why": {
+   "20": "인용 뒤 표지까지 완결, 뒤는 새 절"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02713": {
+  "commit": [
+   18
+  ],
+  "ambig": [],
+  "why": {
+   "18": "그거용→노동자용 고침 뒤 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02737": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02750": {
+  "commit": [
+   24
+  ],
+  "ambig": [],
+  "why": {
+   "24": "스트림 끝, 질문 완결"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02815": {
+  "commit": [
+   7,
+   16
+  ],
+  "ambig": [],
+  "why": {
+   "7": "완결 문장, 뒤는 새 문장",
+   "16": "완결 문장, 뒤는 표지 그러구"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02838": {
+  "commit": [
+   10
+  ],
+  "ambig": [
+   4
+  ],
+  "why": {
+   "4": "'그거' 내용이 뒤에 나옴, 예고 표지 가능",
+   "10": "속담 내용까지 완결, 뒤는 보충 시작"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02854": {
+  "commit": [
+   23
+  ],
+  "ambig": [],
+  "why": {
+   "23": "완결 질문, 뒤는 표지 근데"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02859": {
+  "commit": [
+   24,
+   25
+  ],
+  "ambig": [],
+  "why": {
+   "24": "완결 문장, 뒤는 맺음 네",
+   "25": "스트림 끝 맺음 대답 네"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02955": {
+  "commit": [
+   25
+  ],
+  "ambig": [],
+  "why": {
+   "25": "완결, 뒤 -면은 은 이유 보충 시작"
+  }
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02964": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_clean-utt-KsponSpeech_E02978": {
+  "commit": [
+   14
+  ],
+  "ambig": [],
+  "why": {
+   "14": "완결 문장, 뒤는 간투사로 새 단위"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03358": {
+  "commit": [
+   8,
+   13,
+   15,
+   19
+  ],
+  "ambig": [],
+  "why": {
+   "8": "완결 -거든, 뒤는 새 문장",
+   "13": "완결 문장, 뒤는 표지 그래서",
+   "15": "완결 -잖아, 뒤는 표지 그럼",
+   "19": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03377": {
+  "commit": [
+   5
+  ],
+  "ambig": [],
+  "why": {
+   "5": "완결 문장, 뒤는 표지 그래가지고"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03395": {
+  "commit": [
+   2,
+   6,
+   10,
+   12
+  ],
+  "ambig": [],
+  "why": {
+   "2": "완결 문장, 뒤는 풀어 말하는 새 문장",
+   "6": "완결 -잖아, 뒤는 간투사",
+   "10": "완결, 뒤는 이유 덧붙임",
+   "12": "뒤로 붙은 이유절까지 완결, 뒤는 근데"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03404": {
+  "commit": [
+   5
+  ],
+  "ambig": [
+   19
+  ],
+  "why": {
+   "5": "완결 문장, 뒤는 새 절",
+   "19": "스트림 끝 -는데(요 없음)"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03426": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_other-utt-KsponSpeech_E03454": {
+  "commit": [
+   8,
+   25
+  ],
+  "ambig": [
+   24
+  ],
+  "why": {
+   "8": "완결 질문, 뒤는 풀어 묻는 새 질문",
+   "24": "완결 질문이나 뒤에 한정 부사 웬만해서",
+   "25": "뒤붙은 부사까지 질문 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03488": {
+  "commit": [
+   5
+  ],
+  "ambig": [
+   14,
+   15,
+   19,
+   20
+  ],
+  "why": {
+   "5": "완결 문장, 뒤는 표지 근데",
+   "14": "완결이나 뒤 '이게'가 우측 이동일 수 있음",
+   "15": "'이게'가 앞 꼬리인지 다음 머리인지 불명",
+   "19": "조각 완결이나 뒤에 '나한테는' 이어짐",
+   "20": "'나한테는'이 앞 꼬리인지 새 절 머리인지"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03548": {
+  "commit": [
+   21
+  ],
+  "ambig": [],
+  "why": {
+   "21": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03568": {
+  "commit": [
+   9,
+   17
+  ],
+  "ambig": [
+   16
+  ],
+  "why": {
+   "9": "완결 문장, 뒤는 표지 그래야지",
+   "16": "완결이나 뒤에 우측 이동 주어 그게",
+   "17": "뒤붙은 주어까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03593": {
+  "commit": [
+   5,
+   10,
+   20
+  ],
+  "ambig": [],
+  "why": {
+   "5": "완결 문장, 뒤는 새 문장(이유)",
+   "10": "완결 문장, 뒤는 표지 그래갖고",
+   "20": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03608": {
+  "commit": [
+   12
+  ],
+  "ambig": [],
+  "why": {
+   "12": "완결 문장, 뒤는 우선 새 단위"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03701": {
+  "commit": [
+   12
+  ],
+  "ambig": [],
+  "why": {
+   "12": "완결 문장, 뒤는 표지 그러고"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03703": {
+  "commit": [
+   6
+  ],
+  "ambig": [
+   16,
+   21
+  ],
+  "why": {
+   "6": "완결 문장, 뒤는 간투사 새 문장",
+   "16": "뒤 조건절이 앞을 한정하는지 새 문장인지",
+   "21": "뒤로 붙은 조건절 끝인지 새 문장 시작인지"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03706": {
+  "commit": [
+   8,
+   11,
+   16
+  ],
+  "ambig": [
+   7
+  ],
+  "why": {
+   "7": "완결이나 뒤에 우측 이동 주어 자기가",
+   "8": "뒤붙은 주어까지 완결, 뒤는 새 문장",
+   "11": "완결 전언, 뒤는 표지 그래서",
+   "16": "완결 -거든, 뒤는 간투사"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03750": {
+  "commit": [
+   26
+  ],
+  "ambig": [],
+  "why": {
+   "26": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03792": {
+  "commit": [
+   15
+  ],
+  "ambig": [],
+  "why": {
+   "15": "완결 -거든, 뒤는 표지 그래서"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03823": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_other-utt-KsponSpeech_E03851": {
+  "commit": [
+   24
+  ],
+  "ambig": [],
+  "why": {
+   "24": "스트림 끝, 질문 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03852": {
+  "commit": [
+   5,
+   14
+  ],
+  "ambig": [],
+  "why": {
+   "5": "완결 문장, 뒤는 이유 보충 새 문장",
+   "14": "완결 문장, 뒤는 표지 그리고"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E03971": {
+  "commit": [
+   17
+  ],
+  "ambig": [
+   14
+  ],
+  "why": {
+   "14": "완결이나 뒤에 목적 보문 우측 이동",
+   "17": "뒤붙은 보문까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04033": {
+  "commit": [
+   3,
+   24
+  ],
+  "ambig": [],
+  "why": {
+   "3": "완결 문장, 뒤는 새 절(배경)",
+   "24": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04082": {
+  "commit": [
+   20
+  ],
+  "ambig": [],
+  "why": {
+   "20": "완결 문장, 뒤는 표지 그러고"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04225": {
+  "commit": [
+   18
+  ],
+  "ambig": [
+   21
+  ],
+  "why": {
+   "18": "완결, 뒤는 짐작 덧붙임(조건 아님)",
+   "21": "뒤로 붙은 -지만 끝인지 새 절 시작인지"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04403": {
+  "commit": [
+   6
+  ],
+  "ambig": [
+   18,
+   20
+  ],
+  "why": {
+   "6": "완결 문장, 뒤는 표지 그리고",
+   "18": "완결이나 뒤 -않고 가 우측 이동 수식일 수 있음",
+   "20": "뒤붙은 수식 끝인지 나열 -고 끊김인지"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04418": {
+  "commit": [
+   20
+  ],
+  "ambig": [],
+  "why": {
+   "20": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04458": {
+  "commit": [
+   25,
+   26
+  ],
+  "ambig": [
+   12
+  ],
+  "why": {
+   "12": "-고요 첫 항목, 나열 이어짐과 맺음 사이",
+   "25": "완결 문장, 뒤는 맺음 네",
+   "26": "스트림 끝 맺음 대답 네"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04530": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_other-utt-KsponSpeech_E04565": {
+  "commit": [
+   20
+  ],
+  "ambig": [
+   11,
+   12
+  ],
+  "why": {
+   "11": "완결이나 뒤 '아니야'가 부정할 수 있음",
+   "12": "독립 대답인지 다음 단위 머리 표지인지",
+   "20": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04693": {
+  "commit": [
+   22,
+   27
+  ],
+  "ambig": [],
+  "why": {
+   "22": "완결 문장, 뒤는 새 문장",
+   "27": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04723": {
+  "commit": [
+   9,
+   20
+  ],
+  "ambig": [
+   19
+  ],
+  "why": {
+   "9": "완결 -잖아, 뒤는 표지 이제",
+   "19": "완결이나 뒤에 우측 이동 부사 그냥",
+   "20": "뒤붙은 부사까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04737": {
+  "commit": [
+   3,
+   11,
+   21
+  ],
+  "ambig": [
+   17
+  ],
+  "why": {
+   "3": "완결 문장, 뒤는 보충 새 문장",
+   "11": "완결(있다?), 뒤는 새 문장",
+   "17": "완결이나 뒤에서 다시 시작함",
+   "21": "완결 -거든, 뒤는 보충 새 단위"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04783": {
+  "commit": [
+   20
+  ],
+  "ambig": [
+   19
+  ],
+  "why": {
+   "19": "완결이나 뒤에 우측 이동 부사",
+   "20": "뒤붙은 부사까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04853": {
+  "commit": [
+   17
+  ],
+  "ambig": [],
+  "why": {
+   "17": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E04952": {
+  "commit": [
+   9,
+   13,
+   17
+  ],
+  "ambig": [],
+  "why": {
+   "9": "완결 -잖아, 뒤는 새 문장",
+   "13": "완결 문장, 뒤는 풀어 말하는 새 문장",
+   "17": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05127": {
+  "commit": [],
+  "ambig": [
+   15,
+   20
+  ],
+  "why": {
+   "15": "'-고.' 맺음 여부 불명, 뒤는 이유절",
+   "20": "끝 -니까 이유절, 뒤로 붙음인지 끊김인지"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05134": {
+  "commit": [
+   16
+  ],
+  "ambig": [],
+  "why": {
+   "16": "완결(해야되나), 뒤는 표지 그래서"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05135": {
+  "commit": [
+   12,
+   14,
+   24
+  ],
+  "ambig": [],
+  "why": {
+   "12": "완결 -거든, 뒤는 양보 덧붙임",
+   "14": "뒤로 붙은 양보절까지 완결, 뒤는 그래서",
+   "24": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05138": {
+  "commit": [
+   10,
+   22
+  ],
+  "ambig": [
+   26,
+   27
+  ],
+  "why": {
+   "10": "25도로 고친 뒤 완결, 뒤는 그래서",
+   "22": "완결 문장, 뒤는 새 절",
+   "26": "완결이나 '정말'이 뒤로 붙을 수 있음",
+   "27": "'정말'이 앞 꼬리인지 다음 머리인지"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05227": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_other-utt-KsponSpeech_E05231": {
+  "commit": [
+   6,
+   19
+  ],
+  "ambig": [],
+  "why": {
+   "6": "완결 문장, 뒤는 표지 근데",
+   "19": "스트림 끝, 완결 전언"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05275": {
+  "commit": [
+   11,
+   20
+  ],
+  "ambig": [],
+  "why": {
+   "11": "완결 문장, 뒤는 표지 근데",
+   "20": "완결 문장, 뒤는 새 절"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05308": {
+  "commit": [
+   17,
+   21
+  ],
+  "ambig": [
+   0
+  ],
+  "why": {
+   "0": "앞 발화 꼬리 '솔직히'인지 머리인지 불명",
+   "17": "완결 -잖아, 뒤는 표지 근데",
+   "21": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05348": {
+  "commit": [],
+  "ambig": [
+   17
+  ],
+  "why": {
+   "17": "스트림 끝 -는데(요 없음)"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05349": {
+  "commit": [
+   18
+  ],
+  "ambig": [],
+  "why": {
+   "18": "스트림 끝, 완결 -잖아"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05356": {
+  "commit": [],
+  "ambig": [
+   22
+  ],
+  "why": {
+   "22": "스트림 끝 -는지 간접 의문, 완결 불명"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05380": {
+  "commit": [
+   4,
+   20
+  ],
+  "ambig": [
+   19
+  ],
+  "why": {
+   "4": "완결 문장, 뒤는 표지 그래갖고",
+   "19": "완결이나 뒤에 우측 이동 화제 여자들은",
+   "20": "뒤붙은 화제까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05393": {
+  "commit": [
+   15
+  ],
+  "ambig": [
+   20,
+   23
+  ],
+  "why": {
+   "15": "'한 번 지면 무너져' 완결, 뒤는 게다가",
+   "20": "뒤 조건절이 앞을 한정하는지 새 문장인지",
+   "23": "뒤로 붙은 조건절 끝인지 끊김인지"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05462": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_other-utt-KsponSpeech_E05553": {
+  "commit": [
+   15
+  ],
+  "ambig": [],
+  "why": {
+   "15": "완결 문장, 뒤는 표지 근데"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05578": {
+  "commit": [
+   9,
+   25
+  ],
+  "ambig": [],
+  "why": {
+   "9": "완결 문장, 뒤는 세부 묘사 새 단위",
+   "25": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05583": {
+  "commit": [
+   17,
+   21
+  ],
+  "ambig": [
+   19
+  ],
+  "why": {
+   "17": "완결 문장, 뒤는 풀어 말하는 새 문장",
+   "19": "완결이나 뒤에 우측 이동 '그 땐'",
+   "21": "뒤붙은 말까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05642": {
+  "commit": [
+   9,
+   16
+  ],
+  "ambig": [
+   0
+  ],
+  "why": {
+   "0": "'혼나'를 뒤에서 같은 술어로 다시 이음",
+   "9": "나열 마지막 항목 위험해 완결",
+   "16": "완결 -잖아, 뒤는 표지 그래갖고"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05687": {
+  "commit": [
+   26
+  ],
+  "ambig": [],
+  "why": {
+   "26": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05755": {
+  "commit": [
+   22
+  ],
+  "ambig": [],
+  "why": {
+   "22": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05822": {
+  "commit": [
+   4,
+   10,
+   21
+  ],
+  "ambig": [
+   15
+  ],
+  "why": {
+   "4": "완결 -잖아, 뒤는 표지 그러니까",
+   "10": "완결 문장, 뒤는 표지 그래가지구",
+   "15": "'스쿼트 자세 있지' 지시 도입, 완결 불명",
+   "21": "스트림 끝, 완결"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05823": {
+  "commit": [
+   9,
+   19
+  ],
+  "ambig": [
+   17
+  ],
+  "why": {
+   "9": "완결 질문, 뒤는 표지 그래서",
+   "17": "완결이나 뒤에 우측 이동 부사어",
+   "19": "뒤붙은 부사어까지 완결, 스트림 끝"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05830": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ },
+ "ks-eval_other-utt-KsponSpeech_E05872": {
+  "commit": [
+   13
+  ],
+  "ambig": [],
+  "why": {
+   "13": "되풀이 뒤 완결, 뒤는 새 단위"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05876": {
+  "commit": [
+   14
+  ],
+  "ambig": [],
+  "why": {
+   "14": "완결 문장, 뒤는 표지 그래서"
+  }
+ },
+ "ks-eval_other-utt-KsponSpeech_E05900": {
+  "commit": [],
+  "ambig": [],
+  "why": {}
+ }
+}
