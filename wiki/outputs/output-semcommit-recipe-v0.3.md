@@ -5,7 +5,7 @@ type: output
 created: 2026-09-24
 updated: 2026-09-24
 sources: [raw/sources/experiments/2026-09-24-semcommit-recipe-v0.3/, raw/sources/experiments/2026-09-24-semcommit-gold-v1/]
-related: [output-semcommit-gold-v1, output-semcommit-v0.2-rack4-small, decision-semcommit-turn-eot-scope]
+related: [output-semcommit-gold-v1, output-semcommit-v0.2-rack4-small, decision-semcommit-turn-eot-scope, task-semcommit-main-labeling]
 ---
 
 # semcommit 라벨링 레시피 v0.3
@@ -119,6 +119,8 @@ r1 / r2 와 같은 학습 설정(E2 초기화, 3 epoch 567 step, `<SEM_END>` 만
 - 남은 한국어 오판(r5 ks-long bias −2 골드 NO 38): 다시 말하기·반복(`일 학 일 학이 어디야 ‖ 이 학 이 학`), 규칙이 못 잡는 축약 -ㄴ데(`한데`·`인데`), 명사구 중간 쉼.
 
 ## 5. 해석과 다음
+본 라벨링(mxc, 전 코퍼스) 실행 절차는 [[task-semcommit-main-labeling]] — 판정 LLM 은 EXAONE-4.0 · Qwen3.8-27B 만 쓴다(사용자 결정 2026-09-24).
+
 1. **작은 교사로는 LLM 판정이 구두점 이상을 보태지 못한다**. A 는 사실상 참조 전사 구두점(대답어 단위 제외)이고, 품질을 올린 것은 후보 추가·가지별 floor·골드로 검증한 규칙 음성이다.
    전사에 구두점이 없는 코퍼스는 A 가 거의 안 생긴다(본 학습 대화체 코퍼스마다 구두점 유무를 먼저 확인) — (a) 큰 교사의 그 외 가지가 floor 를 넘는지 mxc 교사 관문에서 보거나, (b) 구두점 복원 모델로 `punct_final` 을 만들고 그 정밀도를 골드로 다시 잰다.
 2. **mxc 교사 관문**(`experiments/semcommit_teacher_gate.sh`, 기본 `RECIPE=v0.3` — 추가 후보 채점 → 가지별 조정(규칙 음성 자리 제외) → 등급(규칙 음성 포함) → 골드 대조). 본 라벨링은 그 `thresholds.json` 을 쓴다.
