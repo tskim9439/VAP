@@ -1013,6 +1013,31 @@ KO_CONNECTIVE_ENDINGS = ("니까", "고", "서", "면", "지만", "가지고", "
 KO_NEUDE = ("는데", "은데", "던데")     # mid-stream = NO in gold v1, but a turn ending in -는데 (trailing off) is AMBIG → conn_mid only
 KO_FINAL_GO = ("더라고", "다고", "라고", "자고", "냐고")   # sentence-final -고 (retrospective / quotative), not a connective
 NEG_RULES = ("reply_prefix", "conn_final", "conn_mid")
+MASK_RULES = ("conn_end_punct",)   # v0.3.5: a punctuated stream end on a connective ending is B (gold v1: AMBIG), not A
+
+
+def _ko_question_nikka(t):
+    """-습니까 / -ㅂ니까 (됩니까·겁니까) is a sentence-final question ending, not the connective -니까 (speechlm pilot 75518)."""
+    if not t.endswith("니까") or len(t) < 3:
+        return False
+    prev = t[-3]
+    return t.endswith("습니까") or ("가" <= prev <= "힣" and (ord(prev) - 0xAC00) % 28 == 17)   # 받침 ㅂ
+
+
+def ko_connective(t, endings):
+    """Korean word text (lexical) ends in a connective ending — excluding sentence-final -고 forms and -ㅂ니까 questions."""
+    return (not t.endswith(KO_FINAL_GO) and not _ko_question_nikka(t)
+            and any(t.endswith(e) and len(t) > len(e) for e in endings))
+
+
+def rule_masks(stream, rules=MASK_RULES):
+    """{i: rule} graded B instead of A. conn_end_punct: a Korean stream's last word with sentence-final punctuation that ends in a
+    connective ending or -는데 — an utterance that trails off (ASR silver text puts a period on almost every utterance end)."""
+    words, out = stream["words"], {}
+    if "conn_end_punct" in rules and stream.get("lang") == "Korean" and words and "punct_final" in (words[-1].get("tags") or []):
+        if ko_connective(_tok(words[-1]["text"]), KO_CONNECTIVE_ENDINGS + KO_NEUDE):
+            out[len(words) - 1] = "conn_end_punct"
+    return out
 
 
 def _tok(t):
@@ -1032,8 +1057,7 @@ def rule_negatives(stream, rules=NEG_RULES):
                 break
             out[p] = "reply_prefix"
     def conn(w, endings):
-        t = _tok(w["text"])
-        return "punct_final" not in (w.get("tags") or []) and not t.endswith(KO_FINAL_GO) and any(t.endswith(e) and len(t) > len(e) for e in endings)
+        return "punct_final" not in (w.get("tags") or []) and ko_connective(_tok(w["text"]), endings)
     if lang == "Korean" and words:
         if "conn_final" in rules and conn(words[-1], KO_CONNECTIVE_ENDINGS):
             out[len(words) - 1] = "conn_final"
@@ -1077,19 +1101,21 @@ def grade_v3(f, lang, thresholds=None):
     return "B", "+".join(why)
 
 
-def build_labels_v3(streams, a_rows, b_rows, c_rows, judges=None, extra=EXTRA_SOURCES, thresholds=None, turn_end=False, neg_rules=NEG_RULES):
+def build_labels_v3(streams, a_rows, b_rows, c_rows, judges=None, extra=EXTRA_SOURCES, thresholds=None, turn_end=False, neg_rules=NEG_RULES,
+                    mask_rules=MASK_RULES):
     """Recipe v0.3 labels.jsonl rows + stats: candidates = Stage A ∪ extra sources, grade_v3 per candidate. Same row fields
     as v0.2 (grade/why/stageA/B/C) plus p_safe/p_safe_mean/p_rev/punct/sources, so SemCommitDataset and the metrics read them
     unchanged. Stage C rows must use next_candidate = next Stage A boundary (stage_c_items) — checked like v0.2.
     neg_rules (v0.3.3, rule_negatives): those word ends are N (why rule_<name>) — a candidate's grade is overridden unless it is
     already N, and a non-candidate gets an N row (stageA false, sources [rule_<name>]; SemCommitDataset gives it hardneg_weight).
-    neg_rules=() reproduces v0.3–v0.3.2."""
+    neg_rules=() reproduces v0.3–v0.3.2. mask_rules (v0.3.5, rule_masks): an A there becomes B (why rule_<name>); mask_rules=()
+    reproduces v0.3.3–v0.3.4."""
     judges = {**{k: tuple(v) for k, v in PRIMARY_JUDGES.items()}, **(judges or {})}
     cs, bc, cc = candidate_sets(streams, a_rows, extra), by_candidate(list(b_rows)), by_candidate(list(c_rows))
     a_out = {sid: out for sid, (_, out) in candidates_of(a_rows).items()}
     labels, problems, seen = [], [], set()
     st = dict(recipe=RECIPE_V3, prompt_version=prompt_version(), judges={k: list(v) for k, v in judges.items()}, extra=list(extra),
-              thresholds=thresholds or V3_THRESHOLDS, neg_rules=list(neg_rules), streams=Counter(), by_lang={}, why={}, sources={})
+              thresholds=thresholds or V3_THRESHOLDS, neg_rules=list(neg_rules), mask_rules=list(mask_rules), streams=Counter(), by_lang={}, why={}, sources={})
     for s in streams:
         st["streams"]["total"] += 1
         if s["id"] in seen:
@@ -1100,6 +1126,7 @@ def build_labels_v3(streams, a_rows, b_rows, c_rows, judges=None, extra=EXTRA_SO
         lang = s["lang"]; L = st["by_lang"].setdefault(lang, Counter()); js = judges[lang]
         allc, sa, src = cs[s["id"]]; sas = sorted(sa); rows = []
         rn = rule_negatives(s, neg_rules) if neg_rules else {}
+        rm = rule_masks(s, mask_rules) if mask_rules else {}
         for i in sorted(set(allc) | set(rn)):
             crow = next(iter(sorted(cc.get((s["id"], i), {}).items())), (None, None))[1]
             if crow is not None and "next_candidate" in crow and crow["next_candidate"] != next_stage_a(sas, i):
@@ -1109,6 +1136,8 @@ def build_labels_v3(streams, a_rows, b_rows, c_rows, judges=None, extra=EXTRA_SO
             g, w = grade_v3(f, lang, thresholds) if i in src else ("N", f"rule_{rn[i]}")
             if i in rn and g != "N":
                 g, w = "N", f"rule_{rn[i]}"
+            elif i in rm and g == "A":
+                g, w = "B", f"rule_{rm[i]}"
             B = {j: r["decision"] for j, r in bc.get((s["id"], i), {}).items()}
             C = {"relation": crow["relation"], "type": crow.get("type") or ""} if crow else {"relation": "MISSING", "type": ""}
             rows.append(dict(after_word=i, grade=g, why=w, stageA=i in sa, sources=sources, B=B, C=C, p_safe=f["p_safe"], p_safe_mean=f["p_safe_mean"],

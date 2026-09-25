@@ -10,6 +10,8 @@ each candidate words file must hash to its builder stats. Never overwrites: --ou
       --training-eligibility <gate>/decision/training-eligibility-summary.json \
       --candidates <cand>/part-000123.words.jsonl ... --out-dir <approved> [--shard-rows 2000]
 Outputs: <out-dir>/{short,long}/<part>-NNNN.jsonl, <out-dir>/index.tsv (pool<TAB>path), <out-dir>/summary.json.
+Part mode (--qc-split <split dir> --part part-NNNNNN --out-words W): one words file with every approved row of that part,
+keys from semcommit_split_qc_pass.py; writes W and W.ok (digest, counts). Used by slurm/semcommit-part-label-worker.sh.
 """
 import argparse
 from collections import Counter, defaultdict
@@ -68,6 +70,43 @@ def qc_states(decision_file, expected_sha, keys):
     return states
 
 
+def stamp(r, te):
+    if r.get("set") != "speechlm-partial" or r.get("candidate_only") is not True or r.get("training_eligible") is not False:
+        raise ValueError(f"not a candidate row: {r.get('id')}")
+    return dict(r, candidate_only=False, training_eligible=True, approval_fingerprint=te["approval_fingerprint"],
+                approval_status=te["approval_status"])
+
+
+def approve_part(te_path, qc_split, part, candidates, out_words):
+    """Part-unit mode: approved rows of one alignment part → one words file (+ <out>.ok with digest and counts).
+    Keys come from semcommit_split_qc_pass.py (its summary must name the same decision file digest and fingerprint)."""
+    out_words = Path(out_words)
+    te = load_eligibility(te_path)
+    split = json.loads((Path(qc_split) / "summary.json").read_text())
+    if (split.get("decision_file_sha256") != te["decision_file_sha256"] or split.get("approval_fingerprint") != te["approval_fingerprint"]):
+        raise ValueError("QC split does not belong to this training eligibility")
+    kf = Path(qc_split) / "pass-keys" / f"{part}.keys"
+    if kf.exists():
+        if sha256(kf) != split["key_files_sha256"].get(part):
+            raise ValueError(f"pass-keys digest mismatch: {kf}")
+        keys = set(kf.read_text().split())
+    else:
+        keys = set()                                      # a part with no QC-passed row
+    counts, kept = Counter(), []
+    for _, r in candidate_rows([candidates]):
+        if r["source_key"] not in keys:
+            counts["drop_not_qc_pass"] += 1
+            continue
+        kept.append(stamp(r, te)); counts["kept_short" if r["duration_s"] < SHORT_S else "kept_long"] += 1
+    with out_words.open("x", encoding="utf-8") as f:
+        f.writelines(json.dumps(r, ensure_ascii=False, allow_nan=False) + "\n" for r in kept)
+    ok = dict(part=part, words_sha256=sha256(out_words), counts=dict(counts), approval_fingerprint=te["approval_fingerprint"],
+              candidates_sha256=sha256(candidates))
+    Path(str(out_words) + ".ok").open("x").write(json.dumps(ok))
+    print(json.dumps(ok))
+    return ok
+
+
 def approve(te_path, candidates, out_dir, shard_rows=2000):
     out_dir = Path(out_dir)
     if out_dir.exists():
@@ -78,14 +117,11 @@ def approve(te_path, candidates, out_dir, shard_rows=2000):
     states = qc_states(te["decision_file"], te["decision_file_sha256"], keys)
     counts, by_pool, punct = Counter(), defaultdict(list), Counter()
     for path, r in rows:
-        if r.get("set") != "speechlm-partial" or r.get("candidate_only") is not True or r.get("training_eligible") is not False:
-            raise ValueError(f"not a candidate row: {r.get('id')}")
         st = states.get(r["source_key"])
         if st != PASS:
-            counts[f"drop_{st or 'no_decision'}"] += 1
+            stamp(r, te); counts[f"drop_{st or 'no_decision'}"] += 1
             continue
-        r = dict(r, candidate_only=False, training_eligible=True, approval_fingerprint=te["approval_fingerprint"],
-                 approval_status=te["approval_status"])
+        r = stamp(r, te)
         pool = "short" if r["duration_s"] < SHORT_S else "long"
         by_pool[(pool, path.name.replace(".words.jsonl", ""))].append(r)
         counts[f"kept_{pool}"] += 1
@@ -117,10 +153,20 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--training-eligibility", type=Path, required=True)
     p.add_argument("--candidates", type=Path, nargs="+", required=True)
-    p.add_argument("--out-dir", type=Path, required=True)
+    p.add_argument("--out-dir", type=Path, help="pooled shards mode (decision-file scan)")
     p.add_argument("--shard-rows", type=int, default=2000)
+    p.add_argument("--qc-split", type=Path, help="part mode: semcommit_split_qc_pass.py output dir")
+    p.add_argument("--part", help="part mode: alignment part name (part-NNNNNN)")
+    p.add_argument("--out-words", type=Path, help="part mode: single approved words file (+ .ok)")
     a = p.parse_args()
-    approve(a.training_eligibility, a.candidates, a.out_dir, a.shard_rows)
+    if a.qc_split:
+        if not (a.part and a.out_words and len(a.candidates) == 1):
+            p.error("part mode needs --part, --out-words and exactly one --candidates file")
+        approve_part(a.training_eligibility, a.qc_split, a.part, a.candidates[0], a.out_words)
+    elif a.out_dir:
+        approve(a.training_eligibility, a.candidates, a.out_dir, a.shard_rows)
+    else:
+        p.error("give --out-dir (pooled) or --qc-split/--part/--out-words (part mode)")
 
 
 if __name__ == "__main__":

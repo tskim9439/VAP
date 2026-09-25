@@ -872,6 +872,18 @@ def test_build_labels_v3_pipeline():
     with pytest.raises(ValueError, match="next Stage A boundary"): sc.build_labels_v3(streams, a, b, bad, judges=J)
 
 
+def test_v035_question_nikka_and_conn_end_mask():
+    W = lambda toks: dict(id="s", lang="Korean", words=[dict(i=i, text=x.rstrip("."), tags=["punct_final"] if x.endswith(".") else [])
+                                                     for i, x in enumerate(toks)])
+    assert sc._ko_question_nikka("됩니까") and sc._ko_question_nikka("있습니까") and not sc._ko_question_nikka("경차니까")
+    assert sc.rule_negatives(W(["여기", "맞습니까", "확인"])) == {}                                    # -ㅂ니까 의문 어미는 연결어미 아님
+    assert sc.rule_negatives(W(["시간", "없으니까", "빨리"])) == {1: "conn_mid"}
+    assert sc.rule_masks(W(["같이", "살자고", "해서."])) == {2: "conn_end_punct"}                      # 구두점 붙은 발화 끝 연결어미 → B
+    assert sc.rule_masks(W(["어디", "있는데."])) == {1: "conn_end_punct"}
+    assert sc.rule_masks(W(["네", "알겠습니다."])) == {} and sc.rule_masks(W(["어떻게", "되십니까."])) == {}
+    assert sc.rule_masks(W(["해서"])) == {} and sc.rule_masks(dict(W(["해서."]), lang="English")) == {}
+
+
 def test_punct_coord_branch_and_fallback():
     f = dict(p_safe={"q": 0.99}, p_safe_mean=0.99, p_rev=0.0, punct=False, resp_head=False, disfluency=None, sources=["punct_coord"])
     assert sc.branch_of(f) == "punct_coord"                                                                    # punct_coord 단독 후보만

@@ -148,16 +148,16 @@ def cmd_tune(a):
     rows = lambda ps: [r for p in ps for r in read_jsonl(p)]
     A, Bc, Cc = rows(a.stageA), sc.by_candidate(rows(a.stageB)), sc.by_candidate(rows(a.stageC))
     extra = tuple(x for x in a.extra_candidates.split(",") if x); judges = {"English": tuple(a.judges_en.split(",")), "Korean": tuple(a.judges_ko.split(","))}
-    neg_rules = tuple(x for x in a.neg_rules.split(",") if x)
+    neg_rules = tuple(x for x in a.neg_rules.split(",") if x); mask_rules = tuple(x for x in a.mask_rules.split(",") if x)
     streams = [W[sid] for sid in G if sid in W]; cs = sc.candidate_sets(streams, A, extra); a_out = {sid: out for sid, (_, out) in sc.candidates_of(A).items()}
     feats, gold_commit = [], collections.Counter()
     for s in streams:
         sid, lang = s["id"], s["lang"]; g = G[sid]; h = split_half(sid); gold_commit[(lang, h)] += len(g["commit"])
         if sid not in cs: continue
-        allc, sa, src = cs[sid]; rn = sc.rule_negatives(s, neg_rules) if neg_rules else {}
+        allc, sa, src = cs[sid]; rn = sc.rule_negatives(s, neg_rules) if neg_rules else {}; rm = sc.rule_masks(s, mask_rules) if mask_rules else {}
         for i in allc:
             crow = next(iter(sorted(Cc.get((sid, i), {}).items())), (None, None))[1]
-            f = dict(sc.candidate_features(s, i, Bc.get((sid, i), {}), crow, judges[lang], src[i], a_out.get(sid)), rule_neg=i in rn)
+            f = dict(sc.candidate_features(s, i, Bc.get((sid, i), {}), crow, judges[lang], src[i], a_out.get(sid)), rule_neg=i in rn or i in rm)
             lab = "COMMIT" if i in g["commit"] else "AMBIG" if i in g["ambig"] else "NO"
             feats.append((lang, h, f, lab))
     g_punct = [(t / 100, c) for t in range(0, 100, 10) for c in (0.05, 0.2, 0.5, 1.01)]
@@ -195,7 +195,7 @@ def cmd_tune(a):
                             cand_recall={h: round(sum(1 for f in feats if f[0] == lang and f[1] == h and f[3] == "COMMIT") / max(1, gold_commit[(lang, h)]), 4) for h in ("dev", "test")})
         r = report[lang]; print(f"{lang}: {json.dumps(th)} | dev P {r['dev']['P']:.3f} R {r['dev']['R']:.3f} n {r['dev']['n_A']} | test P {r['test']['P']:.3f} R {r['test']['R']:.3f} n {r['test']['n_A']} | cand recall {r['cand_recall']}")
     json.dump(out, open(a.out, "w"), indent=1)
-    if a.report: json.dump(dict(floor=a.floor, min_branch_a=a.min_branch_a, extra=list(extra), neg_rules=list(neg_rules), judges={k: list(v) for k, v in judges.items()}, languages=report), open(a.report, "w"), indent=1, ensure_ascii=False)
+    if a.report: json.dump(dict(floor=a.floor, min_branch_a=a.min_branch_a, extra=list(extra), neg_rules=list(neg_rules), mask_rules=list(mask_rules), judges={k: list(v) for k, v in judges.items()}, languages=report), open(a.report, "w"), indent=1, ensure_ascii=False)
     return report
 
 
@@ -211,6 +211,7 @@ def main(argv=None):
     p.add_argument("--stageA", nargs="+", required=True); p.add_argument("--stageB", nargs="+", required=True); p.add_argument("--stageC", nargs="+", required=True)
     p.add_argument("--judges-en", default="qwen3,exaone35"); p.add_argument("--judges-ko", default="exaone35,qwen3")
     p.add_argument("--extra-candidates", default="last,seg_end,punct_final"); p.add_argument("--floor", type=float, default=0.90)
+    p.add_argument("--mask-rules", default="conn_end_punct", help="규칙 마스크(semcommit_llm.rule_masks) — 그 자리는 A 후보에서 뺀다(B); '' = v0.3.4 까지")
     p.add_argument("--min-branch-a", type=int, default=20, help="가지를 켜는 데 필요한 dev A 최소 개수(작은 표본의 우연한 정밀도로 켜지는 것 방지; 0 = v0.3.3 까지)")
     p.add_argument("--neg-rules", default="reply_prefix,conn_final,conn_mid", help="규칙 음성(semcommit_llm.rule_negatives) — 그 자리는 A 후보에서 뺀다; '' = v0.3.2 까지")
     p.add_argument("--out", required=True); p.add_argument("--report", default=None)

@@ -26,7 +26,7 @@ ap.add_argument("--init", required=True, help="HF vapasr 디렉토리(config.jso
 ap.add_argument("--qwen-dir", default=None, help="Qwen3-ASR 디렉토리: --init qwen 의 원본, 또는 init 에 tokenizer 파일이 없을 때 tokenizer 출처")
 ap.add_argument("--init-adapter", default=None, help="--init qwen 일 때 증류 adapter.pt ('adapter' 또는 'state' 키)")
 ap.add_argument("--nemotron-dir", default=None, help="*.nemo 가 든 디렉토리(예: HF 캐시 snapshot) — NemotronOnline(path=) 로 전달")
-ap.add_argument("--train-words", action="append", required=True, help="words.jsonl (반복 또는 쉼표 목록)"); ap.add_argument("--train-labels", action="append", required=True, help="labels.jsonl (--train-words 와 같은 순서)")
+ap.add_argument("--train-words", action="append", required=True, help="words.jsonl (반복·쉼표 목록·@목록파일)"); ap.add_argument("--train-labels", action="append", required=True, help="labels.jsonl (--train-words 와 같은 순서)")
 ap.add_argument("--path-map", default="", help="segment 경로 접두어 치환 'old=new[,old2=new2]' (words.jsonl 이 이미 rack4 경로면 불필요)")
 ap.add_argument("--allow-unlabeled", action="store_true", help="labels 없는 스트림도 학습(후보 없음 = SEM 없음) — 기본은 건너뜀")
 ap.add_argument("--max-items-en", type=int, default=0); ap.add_argument("--max-items-ko", type=int, default=0)
@@ -135,7 +135,10 @@ if model is not None:
         f"sem_w {cfg.sem_weight} turn_w {cfg.turn_weight} hardneg_w {a.hardneg_weight} · grad ckpt {a.grad_ckpt} · liger {a.liger}")
 
 # ── 데이터
-W = [p for x in a.train_words for p in x.split(",") if p]; L = [p for x in a.train_labels for p in x.split(",") if p]
+def _paths(vals):
+    """'@list' = one path per line (semcommit_collect_done.py snapshot lists — thousands of shards exceed argv limits), else comma list."""
+    return [q for x in vals for q in ([l.strip() for l in open(x[1:]) if l.strip()] if x.startswith("@") else x.split(",")) if q]
+W = _paths(a.train_words); L = _paths(a.train_labels)
 assert len(W) == len(L), f"--train-words {len(W)} 개 ≠ --train-labels {len(L)} 개"
 pmap = dict(x.split("=", 1) for x in a.path_map.split(",") if x)
 delays = tuple(int(x) for x in a.delays.split(",")); train_sets = {}
