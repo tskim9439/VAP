@@ -1044,9 +1044,18 @@ def rule_negatives(stream, rules=NEG_RULES):
     return out
 
 
+BRANCH_FALLBACK = {"punct_resp": "punct", "punct_coord": "other"}   # thresholds files without the key grade the branch as before
+
+
 def branch_of(f):
-    """v0.3 grading branch: punct_resp (reply-word unit before more speech), punct (other punctuated sentence ends), other."""
-    return "punct_resp" if f.get("resp_head") else "punct" if f["punct"] else "other"
+    """v0.3 grading branch: punct_resp (reply-word unit before more speech), punct (other punctuated sentence ends),
+    punct_coord (v0.3.4: a candidate proposed only by the punct_coord rule — tuned on its own so it cannot shift the other
+    branch's thresholds; mxc gold gate 2026-09-25), other."""
+    if f.get("resp_head"):
+        return "punct_resp"
+    if f["punct"]:
+        return "punct"
+    return "punct_coord" if f.get("sources") and set(f["sources"]) == {"punct_coord"} else "other"
 
 
 def grade_v3(f, lang, thresholds=None):
@@ -1061,7 +1070,7 @@ def grade_v3(f, lang, thresholds=None):
         return "B", f"disflA_{d}"
     if f["p_safe_mean"] is None or f["p_rev"] is None:
         return "B", "missing:" + ",".join([j for j, v in f["p_safe"].items() if v is None] + (["C"] if f["p_rev"] is None else []))
-    br = branch_of(f); t = th.get(br) if br in th or br != "punct_resp" else th.get("punct")   # thresholds without punct_resp (v0.3/v0.3.1) grade it as punct
+    br = branch_of(f); t = th.get(br) if br in th or br not in BRANCH_FALLBACK else th.get(BRANCH_FALLBACK[br])   # older thresholds files
     if t and f["p_safe_mean"] >= t["p_safe"] and f["p_rev"] <= t["p_rev"]:
         return "A", f"v3_{br}"
     why = [f"v3_{br}"] + (["off"] if not t else (["p_safe_low"] if f["p_safe_mean"] < t["p_safe"] else []) + (["p_rev_high"] if f["p_rev"] > t["p_rev"] else []))

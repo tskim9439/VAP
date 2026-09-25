@@ -7,7 +7,8 @@
   score-labels : 교사 라벨(labels.jsonl, A/B/N) vs 골드 — 후보 재현·A 정밀도/재현율·N 정밀도(commit_metrics.gold_label_counts)
   score-eval   : semcommit_eval 스트림 jsonl(모델 방출) vs 골드 — 설정별 P/R/F1·PCR_gold·지연(commit_metrics.gold_commit_counts)
   tune         : 라벨링 레시피 v0.3 임계값 — 교사 행(A/B/C) + 골드로 후보 특징(평균 P(SAFE)·P(REVISION)·구두점)을 만들고, 골드 dev 절반(sha1(id) 짝수)에서
-                 언어·가지(구두점 문장 끝 / 대답어만의 구두점 단위 / 그 외)별로 그 가지의 정밀도 ≥ floor 중 재현율 최대 임계값을 골라(못 넘는 가지는 끔) test 절반 성능과 함께
+                 언어·가지(구두점 문장 끝 / 대답어만의 구두점 단위 / punct_coord 단독 후보 / 그 외)별로 그 가지의 정밀도 ≥ floor 이고 dev A ≥ --min-branch-a 인
+                 임계값 중 재현율 최대를 골라(못 넘는 가지는 끔) test 절반 성능과 함께
                  thresholds JSON 으로 쓴다(teacher.py grade --recipe v0.3 --thresholds).
 골드 행: {id, set, lang, n_words, commit:[i], ambig:[i], how:{i: 'agree'|'adjudicated'|'unresolved'}}. 주석 형식은 GUIDELINE.md 출력 형식({id: {commit, ambig, why}}).
 
@@ -160,7 +161,8 @@ def cmd_tune(a):
             lab = "COMMIT" if i in g["commit"] else "AMBIG" if i in g["ambig"] else "NO"
             feats.append((lang, h, f, lab))
     g_punct = [(t / 100, c) for t in range(0, 100, 10) for c in (0.05, 0.2, 0.5, 1.01)]
-    grids = {"punct": g_punct, "punct_resp": g_punct, "other": [(t / 100, c) for t in range(30, 100, 5) for c in (0.02, 0.05, 0.2, 0.5)]}
+    g_other = [(t / 100, c) for t in range(30, 100, 5) for c in (0.02, 0.05, 0.2, 0.5)]
+    grids = {"punct": g_punct, "punct_resp": g_punct, "other": g_other, "punct_coord": g_other}
     def evaluate(th, lang, h, branch=None):
         tp = fp = n = 0
         for lg, hh, f, lab in feats:
@@ -178,13 +180,14 @@ def cmd_tune(a):
             best = None
             for ts, tr in grid:
                 P, R, n = evaluate({br: {"p_safe": ts, "p_rev": tr}}, lang, "dev", br)
-                if n and P >= a.floor and (best is None or R > best[1][1] or (R == best[1][1] and P > best[1][0])): best = ({"p_safe": ts, "p_rev": tr}, (P, R, n))
+                # 최소 지지: dev A 가 min_branch_a 개 미만인 가지는 켜지 않는다(mxc 75451: punct_coord 가 dev 2/2 로 켜지고 test 0/2)
+                if n >= max(1, a.min_branch_a) and P >= a.floor and (best is None or R > best[1][1] or (R == best[1][1] and P > best[1][0])): best = ({"p_safe": ts, "p_rev": tr}, (P, R, n))
             th[br] = best[0] if best else None
             branch_rep[br] = dict(dev=dict(zip(("P", "R", "n_A"), best[1])) if best else None,
                                   test=dict(zip(("P", "R", "n_A"), evaluate({br: th[br]}, lang, "test", br))) if best else None)
             if best is None:
                 nd = sum(1 for lg, hh, f, _ in feats if lg == lang and hh == "dev" and sc.branch_of(f) == br)
-                print(f"{lang} {br}: " + (f"no threshold reaches dev precision {a.floor}" if nd else "no dev candidates") + " → branch off")
+                print(f"{lang} {br}: " + (f"no threshold reaches dev precision {a.floor} with ≥ {a.min_branch_a} dev A" if nd else "no dev candidates") + " → branch off")
         out[lang] = th
         cand = {h: sum(1 for f in feats if f[0] == lang and f[1] == h) for h in ("dev", "test")}
         report[lang] = dict(thresholds=th, dev=dict(zip(("P", "R", "n_A"), evaluate(th, lang, "dev"))), test=dict(zip(("P", "R", "n_A"), evaluate(th, lang, "test"))),
@@ -192,7 +195,7 @@ def cmd_tune(a):
                             cand_recall={h: round(sum(1 for f in feats if f[0] == lang and f[1] == h and f[3] == "COMMIT") / max(1, gold_commit[(lang, h)]), 4) for h in ("dev", "test")})
         r = report[lang]; print(f"{lang}: {json.dumps(th)} | dev P {r['dev']['P']:.3f} R {r['dev']['R']:.3f} n {r['dev']['n_A']} | test P {r['test']['P']:.3f} R {r['test']['R']:.3f} n {r['test']['n_A']} | cand recall {r['cand_recall']}")
     json.dump(out, open(a.out, "w"), indent=1)
-    if a.report: json.dump(dict(floor=a.floor, extra=list(extra), neg_rules=list(neg_rules), judges={k: list(v) for k, v in judges.items()}, languages=report), open(a.report, "w"), indent=1, ensure_ascii=False)
+    if a.report: json.dump(dict(floor=a.floor, min_branch_a=a.min_branch_a, extra=list(extra), neg_rules=list(neg_rules), judges={k: list(v) for k, v in judges.items()}, languages=report), open(a.report, "w"), indent=1, ensure_ascii=False)
     return report
 
 
@@ -208,6 +211,7 @@ def main(argv=None):
     p.add_argument("--stageA", nargs="+", required=True); p.add_argument("--stageB", nargs="+", required=True); p.add_argument("--stageC", nargs="+", required=True)
     p.add_argument("--judges-en", default="qwen3,exaone35"); p.add_argument("--judges-ko", default="exaone35,qwen3")
     p.add_argument("--extra-candidates", default="last,seg_end,punct_final"); p.add_argument("--floor", type=float, default=0.90)
+    p.add_argument("--min-branch-a", type=int, default=20, help="가지를 켜는 데 필요한 dev A 최소 개수(작은 표본의 우연한 정밀도로 켜지는 것 방지; 0 = v0.3.3 까지)")
     p.add_argument("--neg-rules", default="reply_prefix,conn_final,conn_mid", help="규칙 음성(semcommit_llm.rule_negatives) — 그 자리는 A 후보에서 뺀다; '' = v0.3.2 까지")
     p.add_argument("--out", required=True); p.add_argument("--report", default=None)
     a = ap.parse_args(argv)

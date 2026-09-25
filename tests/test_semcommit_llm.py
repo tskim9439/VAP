@@ -872,6 +872,16 @@ def test_build_labels_v3_pipeline():
     with pytest.raises(ValueError, match="next Stage A boundary"): sc.build_labels_v3(streams, a, b, bad, judges=J)
 
 
+def test_punct_coord_branch_and_fallback():
+    f = dict(p_safe={"q": 0.99}, p_safe_mean=0.99, p_rev=0.0, punct=False, resp_head=False, disfluency=None, sources=["punct_coord"])
+    assert sc.branch_of(f) == "punct_coord"                                                                    # punct_coord 단독 후보만
+    assert sc.branch_of(dict(f, sources=["stageA", "punct_coord"])) == "other" and sc.branch_of(dict(f, sources=["stageA"])) == "other"
+    assert sc.branch_of(dict(f, punct=True)) == "punct"
+    other_on = {"English": {"punct": None, "other": {"p_safe": 0.5, "p_rev": 0.5}}}
+    assert sc.grade_v3(f, "English", other_on) == ("A", "v3_punct_coord")                                    # 키 없음 = 예전처럼 other 임계값
+    assert sc.grade_v3(f, "English", {"English": dict(other_on["English"], punct_coord=None)}) == ("B", "v3_punct_coord+off")
+
+
 def test_rule_negatives():
     W = lambda toks, tags=None: dict(id="s", lang="Korean", words=[dict(i=i, text=x.rstrip("."), tags=(["punct_final"] if x.endswith(".") else []) + ((tags or {}).get(i) or []))
                                                               for i, x in enumerate(toks)])

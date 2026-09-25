@@ -570,7 +570,7 @@ def test_gold_cli_tune_picks_thresholds_meeting_floor(tmp_path):
     for name, rows in (("w", words), ("g", gold), ("a", A), ("b", B), ("c", C)):
         paths[name] = tmp_path / f"{name}.jsonl"; paths[name].write_text("".join(json.dumps(r) + "\n" for r in rows))
     rep = g.main(["tune", "--words", str(paths["w"]), "--gold", str(paths["g"]), "--stageA", str(paths["a"]), "--stageB", str(paths["b"]), "--stageC", str(paths["c"]),
-                  "--extra-candidates", "", "--floor", "0.9", "--out", str(tmp_path / "th.json")])
+                  "--extra-candidates", "", "--floor", "0.9", "--min-branch-a", "1", "--out", str(tmp_path / "th.json")])
     k = rep["Korean"]; th = json.loads((tmp_path / "th.json").read_text())["Korean"]
     assert k["dev"]["P"] == 1.0 and k["dev"]["R"] == 1.0 and k["test"]["P"] == 1.0 and th["other"]["p_safe"] > 0.1   # WAIT 쪽(P(SAFE)≈0.02)은 A 가 안 된다
 
@@ -602,3 +602,9 @@ def test_gold_cli_tune_floors_each_branch(tmp_path):
     th = json.loads((tmp_path / "th.json").read_text())["Korean"]; k = rep["Korean"]
     assert th["other"] is None and th["punct"] is not None
     assert k["branches"]["punct"]["dev"]["P"] == 1.0 and k["branches"]["other"]["dev"] is None and k["dev"]["P"] == 1.0 and k["test"]["P"] == 1.0
+
+    # 최소 지지(--min-branch-a): dev A 가 그보다 적으면 정밀도가 floor 를 넘어도 가지를 켜지 않는다 — 구두점 가지의 dev A 는 스트림 수만큼
+    n_dev_a = k["branches"]["punct"]["dev"]["n_A"]
+    rep2 = g.main(["tune", "--words", str(paths["w"]), "--gold", str(paths["g"]), "--stageA", str(paths["a"]), "--stageB", str(paths["b"]), "--stageC", str(paths["c"]),
+                   "--extra-candidates", "", "--floor", "0.9", "--min-branch-a", str(n_dev_a + 1), "--out", str(tmp_path / "th2.json")])
+    assert json.loads((tmp_path / "th2.json").read_text())["Korean"]["punct"] is None and rep2["Korean"]["branches"]["punct"]["dev"] is None
