@@ -11,6 +11,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --time=24:00:00
 #SBATCH --requeue
+#SBATCH --open-mode=append
 #SBATCH --exclude=slurmmxch200v5-hpc-52
 #SBATCH --output=/soundai/users/tskim/VAPKT/logs/train/%x-%j.out
 #SBATCH --error=/soundai/users/tskim/VAPKT/logs/train/%x-%j.err
