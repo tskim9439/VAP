@@ -5,13 +5,47 @@
 # (experiments/semcommit_collect_done.py). Parts come from parts-order.tsv (DB round-robin) and are dealt out by rank.
 # A part with DONE.json is skipped; a failed part prints PART_FAILED and is retried by the next submission (teacher stages
 # resume their own rows). Never deletes: retries write into attempt-scoped directories.
+# Part locks make concurrent runs safe (a SLURM job next to direct GPU workers, see slurm/semcommit-direct-label.sh): the worker
+# holding a part keeps <part>/lock-<owner> fresh (touched every 5 min); a part with a foreign lock fresher than LOCK_STALE_S
+# (default 1800 s) is skipped (PART_BUSY), a stale lock (dead run) is taken over. Lock files are never removed.
+# Outside SLURM set WORKER_ID/NWORKERS/RUN_ID; ORDER=reverse walks parts-order.tsv from the end.
 set -uo pipefail
 cd "$PROJECT"
 [[ -n "${CUDA_VISIBLE_DEVICES:-}" && "$CUDA_VISIBLE_DEVICES" != *,* ]] || {
-  echo "Slurm must bind exactly one visible GPU per task: ${CUDA_VISIBLE_DEVICES:-unset}" >&2; exit 2; }
+  echo "exactly one visible GPU per worker is required: ${CUDA_VISIBLE_DEVICES:-unset}" >&2; exit 2; }
 
-rank=${SLURM_PROCID:?}; ntasks=${SLURM_NTASKS:?}
-attempt="j${SLURM_JOB_ID:-0}-r${SLURM_RESTART_COUNT:-0}-t$rank"
+rank=${SLURM_PROCID:-${WORKER_ID:?SLURM_PROCID or WORKER_ID}}; ntasks=${SLURM_NTASKS:-${NWORKERS:?SLURM_NTASKS or NWORKERS}}
+run_id=${SLURM_JOB_ID:-${RUN_ID:?SLURM_JOB_ID or RUN_ID}}
+attempt="j${run_id}-r${SLURM_RESTART_COUNT:-0}-t$rank"
+owner="${run_id}-r${SLURM_RESTART_COUNT:-0}-t${rank}-$(hostname -s)-$$"
+LOCK_STALE_S=${LOCK_STALE_S:-1800}
+
+fresh_foreign_lock() {   # prints a foreign lock fresher than LOCK_STALE_S, if any
+  local dest=$1 mine=$2 f now; now=$(date +%s)
+  for f in "$dest"/lock-*; do
+    [[ -e $f && $f != "$mine" ]] || continue
+    (( now - $(stat -c %Y "$f") < LOCK_STALE_S )) && { echo "$f"; return 0; }
+  done
+  return 1
+}
+
+claim_part() {   # 0 = this worker owns the part now
+  local dest=$1 mine=$1/lock-$owner f
+  fresh_foreign_lock "$dest" "$mine" >/dev/null && return 1      # someone is working on it
+  touch "$mine"; sleep 3
+  for f in $(fresh_foreign_lock_all "$dest" "$mine"); do          # simultaneous claim: smallest lock name wins
+    [[ $f < $mine ]] && return 1
+  done
+  return 0
+}
+
+fresh_foreign_lock_all() {
+  local dest=$1 mine=$2 f now; now=$(date +%s)
+  for f in "$dest"/lock-*; do
+    [[ -e $f && $f != "$mine" ]] || continue
+    (( now - $(stat -c %Y "$f") < LOCK_STALE_S )) && echo "$f"
+  done
+}
 T="$PY -u experiments/semcommit_teacher.py"
 X="--extra-candidates $EXTRA_CANDIDATES"
 
@@ -69,11 +103,17 @@ done_n=0; failed_n=0
 while IFS=$'\t' read -r part source npass; do
   [[ -n $part ]] || continue
   [[ -f $OUT/parts/$part/DONE.json ]] && continue
+  mkdir -p "$OUT/parts/$part"
+  claim_part "$OUT/parts/$part" || { echo "PART_BUSY rank=$rank part=$part"; continue; }
+  [[ -f $OUT/parts/$part/DONE.json ]] && continue                 # finished while we were claiming
+  ( while sleep 300; do touch "$OUT/parts/$part/lock-$owner"; done ) & hb=$!
   if run_part "$part"; then
     done_n=$((done_n + 1)); echo "PART_DONE rank=$rank part=$part source=$source"
   else
     failed_n=$((failed_n + 1)); echo "PART_FAILED rank=$rank part=$part source=$source"
   fi
+  kill "$hb" 2>/dev/null; wait "$hb" 2>/dev/null
   if [[ "${MAX_PARTS_PER_RANK:-0}" -gt 0 && "$done_n" -ge "$MAX_PARTS_PER_RANK" ]]; then break; fi
-done < <(awk -F '\t' -v r="$rank" -v n="$ntasks" '((NR-1)%n)==r {print $0}' "$QC_SPLIT/parts-order.tsv")
+done < <( { if [[ ${ORDER:-forward} == reverse ]]; then tac "$QC_SPLIT/parts-order.tsv"; else cat "$QC_SPLIT/parts-order.tsv"; fi; } |
+          awk -F '\t' -v r="$rank" -v n="$ntasks" '((NR-1)%n)==r {print $0}')
 echo "RANK_COMPLETE rank=$rank done=$done_n failed=$failed_n"
