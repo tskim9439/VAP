@@ -19,6 +19,7 @@ run_id=${SLURM_JOB_ID:-${RUN_ID:?SLURM_JOB_ID or RUN_ID}}
 attempt="j${run_id}-r${SLURM_RESTART_COUNT:-0}-t$rank"
 owner="${run_id}-r${SLURM_RESTART_COUNT:-0}-t${rank}-$(hostname -s)-$$"
 LOCK_STALE_S=${LOCK_STALE_S:-1800}
+BS_A=${BS_A:-16}; BS_BC=${BS_BC:-32}   # H200 143 GB: 27–32B bf16 ≈ 54–64 GB; OOM halves the batch automatically (LLM.max_batch)
 
 fresh_foreign_lock() {   # prints a foreign lock fresher than LOCK_STALE_S, if any
   local dest=$1 mine=$2 f now; now=$(date +%s)
@@ -78,14 +79,14 @@ run_part() {
   local w=$wd/words.jsonl
   if [[ -s $w ]]; then
     spec "$A_KIND"
-    $T stageA --words "$w" --model "$MODEL" --kind "$KIND" --judge-name "$NAME" --out "$wd/A.jsonl" --gpu 0 --batch-size 8 || return 1
+    $T stageA --words "$w" --model "$MODEL" --kind "$KIND" --judge-name "$NAME" --out "$wd/A.jsonl" --gpu 0 --batch-size "$BS_A" || return 1
     $T stageB --words "$w" --stageA "$wd/A.jsonl" --model "$EXAONE" --kind exaone4 --judge-name exaone4-32b \
-      --out "$wd/B.exaone4-32b.jsonl" $X --gpu 0 --batch-size 16 || return 1
+      --out "$wd/B.exaone4-32b.jsonl" $X --gpu 0 --batch-size "$BS_BC" || return 1
     $T stageB --words "$w" --stageA "$wd/A.jsonl" --model "$QWEN" --kind qwen38 --judge-name qwen3.8-27b \
-      --out "$wd/B.qwen3.8-27b.jsonl" $X --gpu 0 --batch-size 16 || return 1
+      --out "$wd/B.qwen3.8-27b.jsonl" $X --gpu 0 --batch-size "$BS_BC" || return 1
     spec "$C_KIND"
     $T stageC --words "$w" --stageA "$wd/A.jsonl" --model "$MODEL" --kind "$KIND" --judge-name "$NAME" \
-      --out "$wd/C.jsonl" $X --gpu 0 --batch-size 16 || return 1
+      --out "$wd/C.jsonl" $X --gpu 0 --batch-size "$BS_BC" || return 1
     $T grade --recipe v0.3 --turn-end none $X --thresholds "$THRESHOLDS" --words "$w" --stageA "$wd/A.jsonl" \
       --stageB "$wd/B.exaone4-32b.jsonl" "$wd/B.qwen3.8-27b.jsonl" --stageC "$wd/C.jsonl" \
       --judges-en exaone4-32b,qwen3.8-27b --judges-ko exaone4-32b,qwen3.8-27b \
