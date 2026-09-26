@@ -47,7 +47,9 @@ def test_split_approve_finalize_collect(tmp_path):
     labels = tmp_path / "labels.jsonl"
     labels.write_text("".join(json.dumps(dict(id=r["id"], candidates=[])) + "\n" for r in rows[:2]))   # id 3 (31 s) unlabeled
     done = w.parent / "DONE.json"
-    rec = fin_mod.finalize("part-000001", w, labels, None, w.parent / "pools-a", done)
+    rec = fin_mod.finalize("part-000001", w, labels, None, w.parent / "pools-a", done,
+                           dict(job="1", words_dir=str(w.parent), thresholds="/x/thresholds.json"))   # worker --meta (key clash regression)
+    assert json.loads(done.read_text())["meta"]["thresholds"] == "/x/thresholds.json"
     assert rec["counts"] == dict(words=3, labeled=2, main=1, short=1, over_30s=0)
     for pool in ("main", "short"):
         ws = [json.loads(l)["id"] for l in open(rec["files"][pool]["words"])]

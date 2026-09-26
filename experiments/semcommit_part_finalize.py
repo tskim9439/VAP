@@ -56,7 +56,7 @@ def finalize(part, words, labels, stats, pool_dir, done, extra=None):
     grades = {k: v for lang in (st.get("by_lang") or {}).values() for k, v in lang.items() if k in ("A", "B", "N")}
     rec = dict(schema="speechlm-semcommit-part-done-v1", part=part, counts=counts, files=files, grades=grades,
                recipe=st.get("recipe"), thresholds=st.get("thresholds"), neg_rules=st.get("neg_rules"), mask_rules=st.get("mask_rules"),
-               source_words=str(words), source_words_sha256=sha256(words), **(extra or {}))
+               source_words=str(words), source_words_sha256=sha256(words), meta=dict(extra or {}))
     done.open("x").write(json.dumps(rec, ensure_ascii=False))
     print(json.dumps(dict(part=part, counts=counts)))
     return rec
