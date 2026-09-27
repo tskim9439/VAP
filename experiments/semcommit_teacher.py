@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Semantic-commit LLM teacher (plan §7–11, §16, §23). One model per process, resumable append-only JSONL.
+"""Semantic-commit LLM teacher (plan §7–11, §16, §23). Resumable append-only JSONL.
 
   stageA    full-context annotation, greedy JSON generation (index-based)      → A.jsonl
   stageB    causal prefix judge, label scoring SAFE/WAIT/UNCERTAIN            → B.<judge>.jsonl
   stageC    future stability judge, label scoring STABLE/REVISION (+type)     → C.jsonl
   tiebreak  Korean candidates whose primary judges disagree (Stage B prompt)  → T.jsonl
   grade     A/B/N labels.jsonl + stats.json (no model)
+  multi     run a list of the commands above in one process (--jobs JSONL of {"tag", "argv"}): the loaded model stays
+            resident while consecutive jobs use the same --model/--kind, so the part worker loads each 27–32B judge once per
+            group of parts instead of once per part (NFS load ≈ 9–11 min vs a few minutes of inference on a small part).
+            A failing job marks its tag failed and later jobs of that tag are skipped; per-job status → --result JSON.
 
 Each model stage refuses to resume onto an output whose <out>.fingerprint.json differs (model, kind, prompt hash,
 chat-template hash, template kwargs, generation/scoring params, words.jsonl digest; stageC also the Stage A file digest,
@@ -31,6 +35,31 @@ from vapasr.data import semcommit_llm as sc
 from vapasr.data.selection import file_digest
 
 LLM = sc.LLM   # module attribute so tests can inject a fake model adapter
+_RESIDENT = {}   # multi only: {(model, kind, device, dtype, max_memory): LLM} — at most one entry (one model on the GPU)
+
+
+def _llm(a):
+    """New adapter per command; under multi, reuse the resident one when the model is the same (else free it first)."""
+    key = (str(a.model), a.kind, a.device, a.dtype, a.max_memory)
+    if _RESIDENT.get("on") is None:
+        return LLM(a.model, a.kind, device=a.device, max_memory=sc.parse_max_memory(a.max_memory), dtype=a.dtype)
+    if key not in _RESIDENT:
+        _release()
+        _RESIDENT[key] = LLM(a.model, a.kind, device=a.device, max_memory=sc.parse_max_memory(a.max_memory), dtype=a.dtype)
+    return _RESIDENT[key]
+
+
+def _release():
+    for k in [k for k in _RESIDENT if k != "on"]:
+        del _RESIDENT[k]
+    import gc
+    gc.collect()
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except ImportError:
+        pass
 
 
 def _common(p):
@@ -123,7 +152,7 @@ def run_model_stage(a, stage, items, fn, params):
         os.environ["CUDA_VISIBLE_DEVICES"] = str(a.gpu)
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
-    llm = LLM(a.model, a.kind, device=a.device, max_memory=sc.parse_max_memory(a.max_memory), dtype=a.dtype)
+    llm = _llm(a)
     pv = sc.prompt_version()
     fp = dict(llm.fingerprint(), stage=stage, judge=a.judge_name, prompt_version=pv, prompt_sha256=sc.prompt_sha256(),
               words_sha256=file_digest(a.words), params=params)
@@ -173,7 +202,47 @@ def run_model_stage(a, stage, items, fn, params):
     return store
 
 
+def run_multi(argv):
+    p = argparse.ArgumentParser(prog="semcommit_teacher.py multi")
+    p.add_argument("--jobs", type=Path, required=True, help='JSONL: {"tag": <part>, "argv": ["stageA", ...]} in run order')
+    p.add_argument("--result", type=Path, required=True, help="per-job status JSON, rewritten after every job")
+    m = p.parse_args(argv)
+    jobs = [json.loads(l) for l in m.jobs.read_text().splitlines() if l.strip()]
+    failed, res = set(), []
+    _RESIDENT["on"] = True
+    try:
+        for k, j in enumerate(jobs):
+            tag, sub = j["tag"], j["argv"]
+            if tag in failed:
+                status = "skipped"
+            else:
+                print(f"JOB_START {k + 1}/{len(jobs)} tag={tag} cmd={sub[0]} out={sub[sub.index('--out') + 1] if '--out' in sub else ''}",
+                      flush=True)
+                try:
+                    main(sub)
+                    status = "ok"
+                except SystemExit as e:
+                    status = "ok" if e.code in (0, None) else f"exit {e.code}"
+                except Exception as e:   # keep going with the other tags; drop the model in case the failure left it broken
+                    status = f"error {type(e).__name__}: {e}"[:400]
+                    e.__traceback__ = None
+                    _release()
+                if status != "ok":
+                    failed.add(tag)
+                print(f"JOB_END tag={tag} cmd={sub[0]} status={status}", flush=True)
+            res.append(dict(tag=tag, cmd=sub[0], out=sub[sub.index("--out") + 1] if "--out" in sub else None, status=status))
+            sc.write_json(m.result, dict(jobs=res, failed_tags=sorted(failed), done=len(res), total=len(jobs)))
+    finally:
+        _release()
+        _RESIDENT.clear()
+    print(f"MULTI_SUMMARY jobs={len(jobs)} failed_tags={len(failed)}", flush=True)
+    return 2 if failed else 0
+
+
 def main(argv=None):
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv[:1] == ["multi"]:
+        sys.exit(run_multi(argv[1:]))
     a = parse(argv)
     streams = sc.load_words(a.words, a.lang_filter, a.limit)
     if a.cmd == "stageA":
