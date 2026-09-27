@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# speechlm semcommit teacher labeling, part-unit (all 19 DBs). Submit with slurm/submit-semcommit-label-v035-apex-n2.sh.
+# semcommit teacher labeling, part-unit (speechlm all 19 KO DBs; + English manifest parts via PARTS_ORDER). Submit with slurm/submit-semcommit-label-v035-apex-n2.sh.
 # Every part is finished end to end before the next (DONE.json), parts alternate across DBs, so a partial run is a usable
 # training set at any time (experiments/semcommit_collect_done.py). Resubmit the same script to continue; do not run two at once.
 #SBATCH --job-name=SA_SFT_FullDuplex
@@ -9,6 +9,7 @@
 #SBATCH --ntasks-per-node=8
 #SBATCH --gres=gpu:8
 #SBATCH --cpus-per-task=8
+#SBATCH --mem=0
 #SBATCH --time=24:00:00
 #SBATCH --requeue
 #SBATCH --open-mode=append
@@ -31,8 +32,10 @@ QWEN_ASR=/soundai/Model/Qwen3-ASR-0.6B
 : "${C_KIND:?qwen38 or exaone4 required}"
 : "${OUT:?labels root required}"
 export A_KIND C_KIND
+PARTS_ORDER=${PARTS_ORDER:-$QC_SPLIT/parts-order.tsv}                # language-balanced EN+KO order: experiments/semcommit_mix_parts_order.py
+BS_A=${BS_A:-16}; BS_BC=${BS_BC:-32}; GROUP_PARTS=${GROUP_PARTS:-8}
 cd "$PROJECT"
-test -x "$PY" && test -d "$RESULTS" && test -f "$QC_SPLIT/parts-order.tsv" && test -f "$APPROVAL_SUMMARY"
+test -x "$PY" && test -d "$RESULTS" && test -f "$QC_SPLIT/parts-order.tsv" && test -f "$PARTS_ORDER" && test -f "$APPROVAL_SUMMARY"
 test -f "$GATE_ACCEPTED" && test -f "$THRESHOLDS" && test -d "$QWEN" && test -d "$EXAONE" && test -d "$QWEN_ASR"
 test "${SLURM_JOB_NUM_NODES:?}" -ge 1 && test "${SLURM_NTASKS:?}" -eq $((SLURM_JOB_NUM_NODES * 8))
 export PYTHONUNBUFFERED=1 PYTHONNOUSERSITE=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
@@ -64,7 +67,8 @@ PY
 EXTRA_CANDIDATES=$("$PY" -c "import json,pathlib,sys; print(','.join(json.loads(pathlib.Path(sys.argv[1]).with_name('thresholds.report.json').read_text())['extra']))" "$THRESHOLDS")
 mkdir -p "$OUT/parts"
 
-export PROJECT PY QWEN EXAONE QWEN_ASR RESULTS QC_SPLIT OUT THRESHOLDS A_KIND C_KIND APPROVAL_SUMMARY EXTRA_CANDIDATES
+export PROJECT PY QWEN EXAONE QWEN_ASR RESULTS QC_SPLIT OUT THRESHOLDS A_KIND C_KIND APPROVAL_SUMMARY EXTRA_CANDIDATES PARTS_ORDER BS_A BS_BC GROUP_PARTS
+echo "parts order $PARTS_ORDER ($(wc -l < "$PARTS_ORDER") parts) · batch A $BS_A / B·C $BS_BC · group $GROUP_PARTS parts/model load"
 srun --nodes="$SLURM_JOB_NUM_NODES" --ntasks="$SLURM_NTASKS" --ntasks-per-node=8 --cpus-per-task=8 \
   --gpus-per-task=1 --gpu-bind=single:1 \
   bash "$PROJECT/slurm/semcommit-part-label-worker.sh"

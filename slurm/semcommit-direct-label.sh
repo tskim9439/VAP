@@ -3,6 +3,7 @@
 # Same worker as slurm/semcommit-part-label-apex.sbatch; part locks keep it from colliding with a running job, and it walks
 # parts-order.tsv from the end (ORDER=reverse) so the two meet as late as possible.
 #   bash slurm/semcommit-direct-label.sh 1,3,4        # one background worker per listed GPU (check nvidia-smi first)
+#   PARTS_ORDER=<mixed.tsv> ORDER=forward BS_A=32 BS_BC=64 bash slurm/semcommit-direct-label.sh 1,3,4   # same order as a SLURM job
 # Logs: $OUT/direct-logs/<run id>-g<gpu>.log. Stop: kill the worker PIDs printed at launch (parts resume later).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -20,7 +21,7 @@ export APPROVAL_SUMMARY=$G/decision/training-eligibility-summary.json
 export GATE_ACCEPTED=$G/decision/gate-accepted.json
 export THRESHOLDS=$G/thresholds.json
 export OUT=$W/labels/speechlm-all19-v035
-export A_KIND=qwen38 C_KIND=qwen38 ORDER=reverse
+export A_KIND=qwen38 C_KIND=qwen38 ORDER=${ORDER:-reverse}   # PARTS_ORDER/ORDER/BS_A/BS_BC/GROUP_PARTS from the caller pass through
 export PYTHONUNBUFFERED=1 PYTHONNOUSERSITE=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 export TOKENIZERS_PARALLELISM=false OMP_NUM_THREADS=4 MKL_NUM_THREADS=4
 

@@ -9,6 +9,8 @@
 # holding a part keeps <part>/lock-<owner> fresh (touched every 5 min); a part with a foreign lock fresher than LOCK_STALE_S
 # (default 1800 s) is skipped (PART_BUSY), a stale lock (dead run) is taken over. Lock files are never removed.
 # Outside SLURM set WORKER_ID/NWORKERS/RUN_ID; ORDER=reverse walks parts-order.tsv from the end.
+# PARTS_ORDER (default $QC_SPLIT/parts-order.tsv): another part list, e.g. the language-balanced EN+KO order of
+# experiments/semcommit_mix_parts_order.py. English parts (en-*) come with words.jsonl(.ok) prebuilt by semcommit_build_en_parts.py.
 # Groups (GROUP_PARTS, default 8): the worker claims up to GROUP_PARTS parts, builds their words, then runs every model stage of
 # the whole group in ONE teacher process (semcommit_teacher.py multi) ordered by model — Stage A, B and C with the A/C judge,
 # then B with the other judge — so each 27–32B judge is loaded once per group instead of once per stage per part (the NFS load
@@ -26,6 +28,7 @@ owner="${run_id}-r${SLURM_RESTART_COUNT:-0}-t${rank}-$(hostname -s)-$$"
 LOCK_STALE_S=${LOCK_STALE_S:-1800}
 BS_A=${BS_A:-16}; BS_BC=${BS_BC:-32}   # H200 143 GB: 27–32B bf16 ≈ 54–64 GB; OOM halves the batch automatically (LLM.max_batch)
 GROUP_PARTS=${GROUP_PARTS:-8}
+PARTS_ORDER=${PARTS_ORDER:-$QC_SPLIT/parts-order.tsv}
 export BS_A BS_BC
 
 fresh_foreign_lock() {   # prints a foreign lock fresher than LOCK_STALE_S, if any
@@ -67,6 +70,7 @@ prepare_part() {   # builds the part's words.jsonl (candidates → QC-pass appro
   local part=$1 dest=$OUT/parts/$1 wd
   mkdir -p "$dest"
   wd=$(words_dir "$dest")
+  if [[ -z $wd && $part == en-* ]]; then echo "English part $part has no prebuilt words.jsonl.ok (semcommit_build_en_parts.py)" >&2; return 1; fi
   if [[ -z $wd ]]; then
     if [[ -e $dest/words.jsonl ]]; then wd=$dest/attempt-$attempt; mkdir -p "$wd"; else wd=$dest; fi
     "$PY" -u experiments/semcommit_build_speechlm_candidates.py --results "$RESULTS" --out-dir "$dest/cand-$attempt" \
@@ -156,7 +160,7 @@ while IFS=$'\t' read -r part source npass; do
   SOURCE[$part]=$source; group+=("$part")
   (( ${#group[@]} >= GROUP_PARTS )) && flush_group
   if [[ "${MAX_PARTS_PER_RANK:-0}" -gt 0 && "$done_n" -ge "$MAX_PARTS_PER_RANK" ]]; then break; fi
-done < <( { if [[ ${ORDER:-forward} == reverse ]]; then tac "$QC_SPLIT/parts-order.tsv"; else cat "$QC_SPLIT/parts-order.tsv"; fi; } |
+done < <( { if [[ ${ORDER:-forward} == reverse ]]; then tac "$PARTS_ORDER"; else cat "$PARTS_ORDER"; fi; } |
           awk -F '\t' -v r="$rank" -v n="$ntasks" '((NR-1)%n)==r {print $0}')
 flush_group
 echo "RANK_COMPLETE rank=$rank done=$done_n failed=$failed_n"

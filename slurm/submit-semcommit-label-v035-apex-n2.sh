@@ -4,6 +4,8 @@
 # (DONE.json 파트는 건너뜀). 파트는 작업 번호로 고정 배분되므로 두 job 을 동시에 돌리지 않는다 — 이어 붙일 때는 --after.
 #   옵션: --nodes N(기본 2) --time HH:MM:SS(기본 24:00:00) --after JOBID(그 job 이 끝난 뒤 시작, afterany)
 #         --partition P(기본 apex; hpc 는 선점이 잦지만 --requeue 로 다시 대기열에 들어가 이어서 한다)
+#         --job-name NAME(기본 SA_SFT_FullDuplex) --order TSV(파트 순서; 기본 QC split 의 KO 순서 — EN+KO 균형 순서는
+#           experiments/semcommit_mix_parts_order.py) --bs-a N / --bs-bc N(GPU 배치, 기본 16/32) --group-parts N(모델 로드당 파트 수, 기본 8)
 #   예: 6 노드 3 시간 → 끝나면 2 노드로 이어서
 #     bash slurm/submit-semcommit-label-v035-apex-n2.sh --nodes 6 --time 03:00:00
 #     bash slurm/submit-semcommit-label-v035-apex-n2.sh --after <위 job id>
@@ -15,18 +17,24 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-nodes=2; time_limit=24:00:00; after=""; partition=apex
+nodes=2; time_limit=24:00:00; after=""; partition=apex; job_name=SA_SFT_FullDuplex; order=""; bs_a=16; bs_bc=32; group_parts=8
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --nodes) nodes=$2; shift 2 ;;
     --time) time_limit=$2; shift 2 ;;
     --after) after=$2; shift 2 ;;
     --partition) partition=$2; shift 2 ;;
-    *) echo "알 수 없는 옵션: $1 (--nodes N --time HH:MM:SS --after JOBID --partition P)" >&2; exit 2 ;;
+    --job-name) job_name=$2; shift 2 ;;
+    --order) order=$2; shift 2 ;;
+    --bs-a) bs_a=$2; shift 2 ;;
+    --bs-bc) bs_bc=$2; shift 2 ;;
+    --group-parts) group_parts=$2; shift 2 ;;
+    *) echo "알 수 없는 옵션: $1 (--nodes N --time HH:MM:SS --after JOBID --partition P --job-name NAME --order TSV --bs-a N --bs-bc N --group-parts N)" >&2; exit 2 ;;
   esac
 done
 [[ $nodes =~ ^[1-9][0-9]*$ ]] || { echo "--nodes 는 양의 정수" >&2; exit 2; }
 [[ -z $after || $after =~ ^[0-9]+$ ]] || { echo "--after 는 job id" >&2; exit 2; }
+for v in "$bs_a" "$bs_bc" "$group_parts"; do [[ $v =~ ^[1-9][0-9]*$ ]] || { echo "--bs-a/--bs-bc/--group-parts 는 양의 정수" >&2; exit 2; }; done
 
 D=/soundai/users/tskim/VAPKT-data/data
 W=$D/semcommit-work
@@ -38,16 +46,17 @@ approval_summary=$G/decision/training-eligibility-summary.json
 gate_accepted=$G/decision/gate-accepted.json
 thresholds=$G/thresholds.json
 out=$W/labels/speechlm-all19-v035
+order=${order:-$qc_split/parts-order.tsv}
 
-for f in "$qc_split/parts-order.tsv" "$approval_summary" "$gate_accepted" "$thresholds"; do
+for f in "$qc_split/parts-order.tsv" "$order" "$approval_summary" "$gate_accepted" "$thresholds"; do
   [[ -f "$f" ]] || { echo "없음: $f" >&2; exit 1; }
 done
 [[ -d "$results" ]] || { echo "없음: $results" >&2; exit 1; }
 if [[ -d "$out/parts" ]]; then
-  echo "이어서 제출: 끝난 파트 $(find "$out/parts" -maxdepth 2 -name DONE.json | wc -l) / $(wc -l < "$qc_split/parts-order.tsv")" >&2
+  echo "이어서 제출: 끝난 파트 $(find "$out/parts" -maxdepth 2 -name DONE.json | wc -l) · 이번 순서 $(wc -l < "$order") 파트($order)" >&2
 fi
 
-sbatch --job-name=SA_SFT_FullDuplex --partition="$partition" ${after:+--dependency=afterany:$after} \
+sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} \
   --nodes="$nodes" --ntasks=$((nodes * 8)) --ntasks-per-node=8 --gres=gpu:8 --time="$time_limit" \
-  --export="ALL,RESULTS=$results,QC_SPLIT=$qc_split,APPROVAL_SUMMARY=$approval_summary,GATE_ACCEPTED=$gate_accepted,THRESHOLDS=$thresholds,A_KIND=qwen38,C_KIND=qwen38,OUT=$out" \
+  --export="ALL,RESULTS=$results,QC_SPLIT=$qc_split,APPROVAL_SUMMARY=$approval_summary,GATE_ACCEPTED=$gate_accepted,THRESHOLDS=$thresholds,A_KIND=qwen38,C_KIND=qwen38,OUT=$out,PARTS_ORDER=$order,BS_A=$bs_a,BS_BC=$bs_bc,GROUP_PARTS=$group_parts" \
   slurm/semcommit-part-label-apex.sbatch
