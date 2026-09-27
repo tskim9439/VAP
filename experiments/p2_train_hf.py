@@ -25,6 +25,8 @@ ap.add_argument("--start-mode", default="grid", choices=["grid", "mixed"], help=
 ap.add_argument("--lr-encoder", type=float, default=1e-5, help="--train-encoder 일 때 인코더 lr")
 ap.add_argument("--exclude-split", default=None, help="세션 split JSON(experiments/p2_make_split.py): 각 코퍼스의 heldout conv_id 를 학습에서 뺀다(D1c 부터)")
 ap.add_argument("--train-encoder", action="store_true", help="인코더도 학습(기본 동결 — 정본 §1)"); ap.add_argument("--mono-cache", default=None, help="대화별 mono 혼합 캐시 디렉토리(float16 npy, mmap)"); ap.add_argument("--resume", default="auto"); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--num-workers", type=int, default=2); ap.add_argument("--gpu", default=None); ap.add_argument("--check", action="store_true", help="학습 전 창별 라운드트립(라벨 토큰 = 참조 토큰) 검사")
+from vapasr.speedup import add_speed_args, apply_speedups, training_args_kwargs
+add_speed_args(ap, batch_budget=False)                           # --pack-max-tokens(샘플 이어 붙이기)·--attn-impl·--optim·--deepspeed (패딩 동적 배치는 기존 --max-tokens)
 a = ap.parse_args()
 rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))
 _cache_root = os.path.join(os.environ.get("VAPASR_LOCAL_CACHE", "/tmp"), f"vapasr-{os.getuid()}-{os.environ.get('SLURM_JOB_ID', 'local')}")
@@ -59,12 +61,12 @@ from vapasr.hf.data import RoundRobinLoader
 class WeightedRoundRobin(RoundRobinLoader):
     """코퍼스 배치 비중을 가중(equal/sqrt/prop) 으로 두는 라운드로빈. epoch 당 step 수는 코퍼스 배치 수의 합(부모와 같음)이고, 그 step 을 가중치대로 나눠 셔플한 일정(seed+epoch 로 결정적)으로 코퍼스를 고른다.
     equal 은 부모와 같은 균등(작은 코퍼스가 여러 epoch 반복), prop 은 창 수 비례(모두 ≈1 epoch), sqrt 는 그 중간."""
-    def __init__(self, train_sets, samplers, num_workers, mix="equal", seed=0):
+    def __init__(self, train_sets, samplers, num_workers, mix="equal", seed=0, collate_fn=collate_dialogue):
         empty = [m for m in train_sets if len(samplers[m]) == 0]                     # rank 당 배치가 0 인 코퍼스(배치 수 < world) — 남겨 두면 그 rank 의 iterator 가 비어 라운드로빈이 멈추고 다른 rank 는 all_reduce 에서 영원히 기다린다
         if empty: log(f"  ! 배치 수 < world 라 제외: {empty}")
         train_sets = {m: ds for m, ds in train_sets.items() if m not in empty}; samplers = {m: samplers[m] for m in train_sets}; assert train_sets, "모든 코퍼스의 배치 수가 world 보다 작음(창·예산을 늘리거나 GPU 를 줄인다)"
         self.names = list(train_sets); self.samplers = samplers
-        self.loaders = {m: DataLoader(ds, batch_sampler=samplers[m], num_workers=num_workers, collate_fn=collate_dialogue, persistent_workers=False) for m, ds in train_sets.items()}
+        self.loaders = {m: DataLoader(ds, batch_sampler=samplers[m], num_workers=num_workers, collate_fn=collate_fn, persistent_workers=False) for m, ds in train_sets.items()}
         self.epoch = 0; self._n = sum(len(s) for s in samplers.values()); self.mix = mix; self.seed = seed
         alpha = {"equal": 0.0, "sqrt": 0.5, "prop": 1.0}[mix]; w = {m: max(1, len(samplers[m])) ** alpha for m in self.names}; tot = sum(w.values())
         self.counts = {m: int(round(self._n * w[m] / tot)) for m in self.names}
@@ -93,10 +95,7 @@ else: log(f"Phase 2 모델 로드(lanes={cfg.lanes})"); model.add_phase2_tokens(
 cfg.act_weight, cfg.eot_weight, cfg.next_weight, cfg.next_weight_ko, cfg.delays, cfg.tag_weight = a.act_weight, a.eot_weight, a.next_weight, a.next_weight_ko, [int(x) for x in a.delays.split(",")], a.tag_weight
 assert dict(cfg.phase2_registry) == {k: v for k, v in load_frozen_registry().items() if k in cfg.phase2_registry}, "registry 불일치"
 if not a.no_grad_ckpt: model.thinker.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False}); model.thinker.config.use_cache = False
-if not a.no_liger:
-    try:
-        from vapasr.hf.liger import apply_liger_to_thinker; log(f"liger: {apply_liger_to_thinker(model)}")
-    except ImportError as e: log(f"liger 미적용({e})")
+speed = apply_speedups(model, a, log, liger=not a.no_liger)      # attention 구현 + Liger
 model.encoder.eval(); init_has_encoder = bool(cfg.encoder_trainable or getattr(cfg, "encoder_saved", False))
 if not a.train_encoder:
     for p_ in model.encoder.parameters(): p_.requires_grad_(False)
@@ -139,13 +138,17 @@ class P2Trainer(VapAsrTrainer):
     """VapAsrTrainer 의 데이터·손실만 Phase 2 로: 창 데이터셋 라운드로빈(collate_dialogue), forward 에 soft/활동 타깃 전달, 손실 분해 로그. 평가는 D1 초기엔 없음(lane parser 연결 뒤)."""
     def bs_of(self, name): return self.bs_ko if LANG.get(name, "English") == "Korean" else self.bs_en
     def get_train_dataloader(self):
+        if a.pack_max_tokens > 0:                               # 샘플 이어 붙이기: 배치 = 추정 길이 합 ≤ 예산인 창들을 한 줄로(vapasr/hf/packing.py)
+            from vapasr.hf.packing import PackedBudgetSampler, packed
+            samplers = {m: PackedBudgetSampler(ds, a.pack_max_tokens, max_bs=a.pack_max_bs, seed=self.args.seed, rank=self.args.process_index, world=self.args.world_size, drop_last=len(ds) > a.pack_max_bs) for m, ds in self.train_sets.items()}
+            return WeightedRoundRobin(self.train_sets, samplers, self.num_workers, mix=a.mix, seed=self.args.seed, collate_fn=packed(collate_dialogue))
         if a.max_tokens > 0: samplers = {m: TokenBudgetSampler(ds, a.max_tokens, max_bs=a.max_bs, seed=self.args.seed, rank=self.args.process_index, world=self.args.world_size, drop_last=len(ds) > a.max_bs) for m, ds in self.train_sets.items()}
         else: samplers = {m: WindowBucketSampler(ds, min(self.bs_of(m), len(ds)), seed=self.args.seed, drop_last=len(ds) > self.bs_of(m), rank=self.args.process_index, world=self.args.world_size) for m, ds in self.train_sets.items()}
         return WeightedRoundRobin(self.train_sets, samplers, self.num_workers, mix=a.mix, seed=self.args.seed)
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         cfg_ = getattr(model, "module", model).config                                   # DDP 래퍼면 .module
         lang = inputs.get("lang", ["English"])[0]; nw = cfg_.next_weight_ko if lang == "Korean" else cfg_.next_weight
-        x = {k: inputs[k] for k in ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "labels_alt", "activity", "activity_mask") if k in inputs}; x["soft_w"] = inputs["soft_w_full"]
+        x = {k: inputs[k] for k in ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "labels_alt", "activity", "activity_mask", "position_ids") if k in inputs}; x["soft_w"] = inputs["soft_w_full"]
         out = model(**x, next_weight=nw)
         for k in ("loss_next", "loss_text", "top1_text", "loss_eot", "loss_act", "act_acc"):
             v = getattr(out, k, None)
@@ -163,15 +166,15 @@ class P2Trainer(VapAsrTrainer):
     def evaluate(self, *args, **kw): return {}
 
 targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradient_accumulation_steps=1, num_train_epochs=a.epochs, max_steps=a.max_steps if a.max_steps > 0 else -1,
-                          learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, bf16=True, logging_strategy="steps", logging_steps=a.log_every, logging_first_step=True,
+                          learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, **{"bf16": True, **training_args_kwargs(a)}, logging_strategy="steps", logging_steps=a.log_every, logging_first_step=True,
                           eval_strategy="no", save_strategy="steps", save_steps=a.save_every, save_total_limit=2, save_safetensors=True, seed=a.seed, data_seed=a.seed, report_to=["tensorboard"], logging_dir=os.path.join(out, "tb"),
                           remove_unused_columns=False, disable_tqdm=True, ignore_data_skip=True, dataloader_num_workers=a.num_workers, label_names=["labels"], log_level="warning")
 preempt_cb = PreemptCallback(out, gloo_pg)
 trainer = P2Trainer(model=model, args=targs, train_sets=train_sets, dev_sets={}, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, lr_encoder=a.lr_encoder, num_workers=a.num_workers, gloo_pg=gloo_pg, callbacks=[preempt_cb], processing_class=tok)
 tdl = trainer.get_train_dataloader(); log("배치/epoch: " + ", ".join(f"{m}:{len(s)}" for m, s in tdl.samplers.items()) + f" → steps/epoch {len(tdl)} · 비중({a.mix}) " + ", ".join(f"{m}:{n}" for m, n in tdl.counts.items()))
-if a.max_tokens > 0:
-    for m, sp in tdl.samplers.items(): log(f"  동적 배치 {m}: {sp.describe()}")
-if main: json.dump(dict(args=vars(a), world=world, registry=cfg.phase2_registry, train_windows={k: len(v) for k, v in train_sets.items()}, steps_per_epoch=len(tdl), mix_counts=tdl.counts, batching={m: sp.describe() for m, sp in tdl.samplers.items()} if a.max_tokens > 0 else None, trainable_m=n_tr / 1e6), open(os.path.join(out, "run.json"), "w"), indent=1, ensure_ascii=False)
+if a.max_tokens > 0 or a.pack_max_tokens > 0:
+    for m, sp in tdl.samplers.items(): log(f"  {'packing' if a.pack_max_tokens > 0 else '동적 배치'} {m}: {sp.describe()}")
+if main: json.dump(dict(args=vars(a), world=world, registry=cfg.phase2_registry, train_windows={k: len(v) for k, v in train_sets.items()}, steps_per_epoch=len(tdl), mix_counts=tdl.counts, batching={m: sp.describe() for m, sp in tdl.samplers.items()} if (a.max_tokens > 0 or a.pack_max_tokens > 0) else None, speed=speed, trainable_m=n_tr / 1e6), open(os.path.join(out, "run.json"), "w"), indent=1, ensure_ascii=False)
 last = None
 if a.resume == "auto":
     import re; c = [(int(m.group(1)), os.path.join(out, x)) for x in os.listdir(out) for m in [re.fullmatch(r"checkpoint-(\d+)", x)] if m and os.path.exists(os.path.join(out, x, "trainer_state.json"))]
@@ -182,7 +185,7 @@ done = st.global_step >= st.max_steps and not preempted
 log(f"train 종료: step {st.global_step}/{st.max_steps} {'완료' if done else '(선점/중단 → 재시작 시 이어서)'} · {res.metrics}")
 if done and not a.no_check_save and main:
     def batch_loss(m, x):
-        m.eval(); xx = {k: (v.cuda() if torch.is_tensor(v) else v) for k, v in x.items()}; xin = {k: xx[k] for k in ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "labels_alt", "activity", "activity_mask")}; xin["soft_w"] = xx["soft_w_full"]
+        m.eval(); xx = {k: (v.cuda() if torch.is_tensor(v) else v) for k, v in x.items()}; xin = {k: xx[k] for k in ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "labels_alt", "activity", "activity_mask", "position_ids") if k in xx}; xin["soft_w"] = xx["soft_w_full"]
         with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16): o = m(**xin, next_weight=0.15)
         return dict(loss_text=round(float(o.loss_text), 4), top1=round(float(o.top1_text), 4), loss_next=round(float(o.loss_next), 4), loss_eot=(round(float(o.loss_eot), 4) if o.loss_eot is not None else None))
     xb = next(iter(tdl)); mem = getattr(trainer.model, "module", trainer.model); log("check-save 메모리(trainer.model):", batch_loss(mem, xb), "| 스크립트 model 객체 동일:", mem is model)

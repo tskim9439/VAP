@@ -78,22 +78,33 @@ class VapAsrForStreamingASR(PreTrainedModel):
     def chunk_embed(self, feats): return self.adapter(feats[:, 0].float())        # (B,1,K,Din) → (B,K,D)
 
     # ── 학습 forward
-    def build(self, feats, ids, is_audio, chunk_of):
+    def build(self, feats, ids, is_audio, chunk_of, packed: bool = False):
         emb = self.get_input_embeddings(); E = emb(ids); ce = self.chunk_embed(feats).to(E.dtype); D = E.shape[-1]
+        if packed: ce = ce.reshape(1, -1, D)                                          # (B,Kmax,D) → (1,B·Kmax,D); chunk_of 는 packing.pack_batch 의 전역 인덱스
         g = torch.gather(ce, 1, chunk_of.clamp(min=0)[..., None].expand(-1, -1, D))
         return torch.where(is_audio[..., None], g, E)
 
     def forward(self, ids=None, is_audio=None, chunk_of=None, labels=None, mask=None, wav=None, wav_len=None, K=None, feats=None, next_weight: Optional[float] = None, return_dict: bool = True,
-                labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, **_):
+                labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, position_ids=None, **_):
         """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight.
         Phase 2(config.lanes>0): labels_alt/soft_w 가 있으면 EOT 후보 위치의 label 을 (labels: w, labels_alt: 1−w) 두 점 분포로 학습(정본 §5.2),
         activity (B,K,R)·activity_mask (B,K) 가 있으면 audio 위치 hidden 으로 lane 활동 BCE 를 더한다(정본 §6). EOT 위치 가중 config.eot_weight.
         semantic commit(config.sem_registry 가 있으면, lanes 와 무관): <SEM_END> 타깃 가중 config.sem_weight, mono 턴 종료(<EOT>; v0.2 는 <TURN_END>)를 함께 학습하면 turn_weight,
         pos_weight (B,L) 은 labels 와 같은 인덱싱의 위치별 가중 덮어쓰기(0 = 기본, >0 = 그 값; hard negative 결정 위치). 덮어쓰기는 SEM/TURN 가중보다 우선하므로
-        결정 위치가 이벤트 타깃에 떨어지지 않게 하는 것은 데이터셋 책임이다."""
+        결정 위치가 이벤트 타깃에 떨어지지 않게 하는 것은 데이터셋 책임이다.
+        position_ids (1, N) 가 있으면 packing 경로(vapasr/hf/packing.py): thinker 입력은 여러 샘플을 이은 한 줄, 샘플마다 0 부터 다시 세는 위치,
+        attention_mask 없음 → transformers 가 블록 대각 causal mask 를 만든다. 인코더 출력은 (1, B·Kmax) 로 펴고 activity 도 같이 편다."""
         if wav is not None: feats = self.encode(wav, wav_len, K)
         nw = self.config.next_weight if next_weight is None else float(next_weight)
-        h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of), attention_mask=mask).last_hidden_state
+        packed = position_ids is not None
+        if packed:
+            h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of, packed=True), attention_mask=None, position_ids=position_ids,
+                                   use_cache=False).last_hidden_state
+            if activity is not None:
+                activity = activity.reshape(1, -1, activity.shape[-1])
+                activity_mask = activity_mask.reshape(1, -1) if activity_mask is not None else None
+        else:
+            h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of), attention_mask=mask).last_hidden_state
         tgt = labels[:, 1:]; sel = tgt != -100; t = tgt[sel]
         logits = self.thinker.lm_head(h[:, :-1][sel]).float()                       # 라벨 위치만 (전 위치 fp32 logits 는 OOM)
         alt = labels_alt[:, 1:][sel] if labels_alt is not None else None; w = soft_w[:, 1:][sel] if soft_w is not None else None

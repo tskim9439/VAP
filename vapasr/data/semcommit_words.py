@@ -116,6 +116,48 @@ def split_words(token_ids, times, tok, text: Optional[str] = None) -> Optional[L
     if text is not None and [w["text"] for w in words] != text.split(): return None
     return words
 
+# ───────────────────────── lexical 단어(구두점 → 태그) ─────────────────────────
+# speechlm words(experiments/semcommit_build_speechlm_candidates.py)는 split_words 의 단어('해야지.')에서 가장자리 구두점을 떼어
+# punct_final/punct_comma 태그로 옮긴 lexical 단어다. SemCommitDataset 의 tokenizer 관문도 같은 규칙으로 대조한다.
+FINAL = set(".?!。？！")
+COMMA = set(",;:，；：")
+EDGE_PUNCT = re.compile(r"^([^\w]*)(.*?)([^\w]*)$", re.UNICODE | re.DOTALL)
+
+
+def punct_tags(trailing):
+    """Tags for punctuation that follows a word. An ellipsis ('...', '…') trails off — not a sentence end."""
+    t = trailing.strip()
+    final = any(c in t for c in FINAL) and not (t.endswith("...") or "…" in t)
+    return (["punct_final"] if final else []) + (["punct_comma"] if any(c in t for c in COMMA) else [])
+
+
+def lexical_words(canonical):
+    """Tokenizer-split words keep punctuation inside the word ('해야지.'); semcommit words (gold v1, labels) are lexical with
+    punctuation as tags. Strip edge punctuation into punct_final/punct_comma tags; a punctuation-only word is merged into the
+    previous word (or the next one at stream start) so tokens[a:b] still cover every token. Returns (words, None) or
+    (None, reason)."""
+    out = []
+    lead = None
+    for w in canonical:
+        m = EDGE_PUNCT.match(w["text"]); core = m.group(2)
+        if not core:
+            if out:
+                prev = out[-1]; prev["b"] = w["b"]; prev["_trail"] += w["text"]
+            elif lead is None:
+                lead = w
+            else:
+                lead = dict(lead, b=w["b"])
+            continue
+        nw = dict(w, text=core, _trail=m.group(3))
+        if lead is not None:
+            nw["a"] = lead["a"]; lead = None
+        out.append(nw)
+    if not out:
+        return None, "punct_only"
+    for i, w in enumerate(out):
+        w["i"] = i; w["tags"] = punct_tags(w.pop("_trail"))
+    return out, None
+
 # ───────────────────────── segment 배정 ─────────────────────────
 def assign_segments(words: List[dict], segs: List[dict], lex_counts: Optional[List[int]] = None, tail_s: float = SEG_TAIL_S) -> Tuple[Optional[List[int]], str]:
     """단어별 segment index. 1) segment 별 lexical 단어 수로 자르고 각 end_time 이 그 segment 창 [offset_s, offset_s+dur_s+tail_s] 안이면 'count'.

@@ -82,6 +82,9 @@ esac
 COMMON="--out-dir $OUT --train $TRAIN --epochs $EPOCHS --bs-en $BS_EN --bs-ko $BS_KO --next-weight 0.3 --next-weight-ko 0.15 --eval-every $EVAL_EVERY --eval-bias 0 --sentinel-stream 10 --sentinel-utt 100 --save-every $SAVE_EVERY --warmup $WARMUP --lr $LR --lr-adapter $LR_ADAPTER --resume auto ${INIT:+--init $INIT} ${INIT_ADAPTER:+--init-adapter $INIT_ADAPTER} $ENCODER_ARGS ${DEV_EXTRA:+--dev-extra $DEV_EXTRA} ${EXTRA_ARGS:-}"
 COMMON="$COMMON ${TRAIN_MAN_ROOT:+--train-man-root $TRAIN_MAN_ROOT} ${TRAIN_ALIGN_ROOT:+--train-align-root $TRAIN_ALIGN_ROOT}"
 COMMON="$COMMON ${LANGUAGE_SCHEDULE:+--language-schedule $LANGUAGE_SCHEDULE}"
+# 속도(vapasr/speedup.py): BATCH_MAX_TOKENS=N 최대 길이 기반 동적 배치(샘플 수 × 최장 ≤ N), PACK_MAX_TOKENS=N 샘플 이어 붙이기(varlen 커널 없으면 느림),
+#   ATTN_IMPL(sdpa|eager), OPTIM(기본 adamw_torch_fused), DEEPSPEED=configs/deepspeed/zero2.json
+COMMON="$COMMON ${BATCH_MAX_TOKENS:+--batch-max-tokens $BATCH_MAX_TOKENS} ${PACK_MAX_TOKENS:+--pack-max-tokens $PACK_MAX_TOKENS} ${PACK_MAX_BS:+--pack-max-bs $PACK_MAX_BS} ${ATTN_IMPL:+--attn-impl $ATTN_IMPL} ${OPTIM:+--optim $OPTIM} ${DEEPSPEED:+--deepspeed $DEEPSPEED}"
 # ── 선점·시간 제한: PREEMPT 파일(공유 FS) → 모든 rank 가 다음 step 경계에서 감지(all_reduce) → rank 0 저장 → 종료 → requeue
 rm -f "$OUT/PREEMPT"
 on_preempt() { echo "[$(date '+%T')] 신호 수신 → PREEMPT 표시, 저장 대기"; touch "$OUT/PREEMPT"; wait "$PID"; echo "requeue $SLURM_JOB_ID"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }

@@ -47,27 +47,33 @@ class PreemptCallback(TrainerCallback):
 class VapAsrTrainer(Trainer):
     def __init__(self, *a, train_sets: Dict[str, object] = None, dev_sets: Dict[str, object] = None, tokenizer=None, bs_en: int = 12, bs_ko: int = 48, lr_adapter: float = 1e-3,
                  lr_encoder: float = 1e-5, eval_delay: int = 2, eval_biases=(0.0,), max_per_chunk: int = 0, gloo_pg=None, num_workers: int = 4,
-                 language_schedule: str = "balanced", **kw):
+                 language_schedule: str = "balanced", pack_max_tokens: int = 0, pack_max_bs: int = 64, batch_max_tokens: int = 0, **kw):
         self.train_sets, self.dev_sets, self.tok = train_sets or {}, dev_sets or {}, tokenizer
         self.bs_en, self.bs_ko, self.lr_adapter, self.lr_encoder = bs_en, bs_ko, lr_adapter, lr_encoder
         self.eval_delay, self.eval_biases, self.M, self.gloo_pg, self.num_workers = eval_delay, list(eval_biases), max_per_chunk, gloo_pg, num_workers
         self.language_schedule = language_schedule
+        self.pack_max_tokens, self.pack_max_bs, self.batch_max_tokens = pack_max_tokens, pack_max_bs, batch_max_tokens   # token-budget batches: packed | padded dynamic (vapasr/hf/packing.py)
         self._parts = {}; self._n_parts = 0; self.eval_hist: List[dict] = []
         super().__init__(*a, train_dataset=next(iter(self.train_sets.values())) if self.train_sets else None, eval_dataset=next(iter(self.dev_sets.values())) if self.dev_sets else None, **kw)   # dict 를 주면 Trainer 가 셋마다 evaluate 를 부른다 → 자리표시자 하나만
+        # forward 가 **_ 를 받아 Trainer 가 "모델이 손실을 스스로 정규화한다" 고 보고 gradient accumulation 나눗셈을 건너뛴다(model_accepts_loss_kwargs).
+        # compute_loss 는 num_items_in_batch 를 쓰지 않으므로 끈다 — 켜 두면 accumulation > 1 에서 gradient 가 그 배수로 커진다.
+        self.model_accepts_loss_kwargs = False
 
     # ── 데이터
     def bs_of(self, name): return self.bs_ko if lang_of(name) == "Korean" else self.bs_en
     def get_train_dataloader(self):
         from .data import RoundRobinLoader
+        from .packing import budget_sampler_factory
         return RoundRobinLoader(self.train_sets, self.bs_of, seed=self.args.seed, rank=self.args.process_index,
-                                world=self.args.world_size, num_workers=self.num_workers, schedule=self.language_schedule)
+                                world=self.args.world_size, num_workers=self.num_workers, schedule=self.language_schedule,
+                                sampler_factory=budget_sampler_factory(self.pack_max_tokens, self.batch_max_tokens, self.pack_max_bs))
     def num_examples(self, dataloader): return sum(len(ds) for ds in self.train_sets.values())
 
     # ── 손실
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         lang = inputs.get("lang", ["English"])[0]
         nw = self.model.config.next_weight_ko if (lang == "Korean" and self.model.config.next_weight_ko is not None) else self.model.config.next_weight
-        x = {k: inputs[k] for k in ("wav", "wav_len", "K", "feats", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight") if k in inputs}   # pos_weight: semantic commit hard negative 위치 가중
+        x = {k: inputs[k] for k in ("wav", "wav_len", "K", "feats", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids") if k in inputs}   # pos_weight: semantic commit hard negative 위치 가중, position_ids: packing
         out = model(**x, next_weight=nw)
         for k in ("loss_next", "loss_text", "top1_text"): self._parts[k] = self._parts.get(k, 0.0) + float(getattr(out, k))
         for k in SEM_LOG_KEYS:                                                                          # semantic commit 통계 — 배치에 없으면 None → 그 배치는 평균에서 뺀다(키별 개수)

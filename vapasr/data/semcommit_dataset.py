@@ -268,7 +268,11 @@ class SemCommitDataset(Dataset):
                     try: ws = split_words([int(t[0]) for t in r["tokens"]], [float(t[1]) for t in r["tokens"]], tok)
                     except Exception as e: ws = f"{type(e).__name__}: {e}"
                     want = [(w["text"], int(w["a"]), int(w["b"])) for w in r["words"]]
-                    if not isinstance(ws, list) or [(w["text"], w["a"], w["b"]) for w in ws] != want:
+                    got = [(w["text"], w["a"], w["b"]) for w in ws] if isinstance(ws, list) else None
+                    if got is not None and got != want:                                     # speechlm words: 가장자리 구두점을 태그로 뗀 lexical 단어(같은 빌더 규칙)
+                        from .semcommit_words import lexical_words
+                        lw, _ = lexical_words([dict(w) for w in ws]); got = [(w["text"], w["a"], w["b"]) for w in lw] if lw else None
+                    if got != want:
                         tok_bad.append((r["id"], " ".join(w[0] for w in want[:8]), ws if not isinstance(ws, list) else " ".join(w["text"] for w in ws[:8])))
                 K0 = int(r["K"]); has_turn = any(len(x) > 2 for x in ev)
                 need = max(last_emit_chunk(ev, d, self.sp, max_per_chunk) for d in self.delays) + tail_margin if (has_turn or pad_tail) else 0
@@ -353,10 +357,10 @@ def collate_semcommit(batch):
     for k in ("n_sem", "n_turn", "n_B", "n_N", "n_decision_on_event", "sem_in_flush", "turn_in_flush"): out[k] = sum(int(b.get(k, 0)) for b in batch)
     return out
 
-def semcommit_round_robin(datasets: Dict[str, "SemCommitDataset"], bs_of, seed: int = 0, num_workers: int = 4, schedule: str = "balanced", rank: int = 0, world: int = 1):
-    """vapasr.hf.data.RoundRobinLoader(언어별 버킷 배치·step 교대)와 같고 collate 만 collate_semcommit(pos_weight 포함). 버킷 길이 = 패딩된 K'."""
-    from torch.utils.data import DataLoader
+def semcommit_round_robin(datasets: Dict[str, "SemCommitDataset"], bs_of, seed: int = 0, num_workers: int = 4, schedule: str = "balanced", rank: int = 0, world: int = 1,
+                          sampler_factory=None):
+    """vapasr.hf.data.RoundRobinLoader(언어별 버킷 배치·step 교대)와 같고 collate 만 collate_semcommit(pos_weight 포함). 버킷 길이 = 패딩된 K'.
+    sampler_factory(vapasr.hf.packing.packing_sampler_factory) 를 주면 셋마다 토큰 예산 배치 + packed collate(한 줄로 이어 붙임)."""
     from ..hf.data import RoundRobinLoader
-    rr = RoundRobinLoader(datasets, bs_of, seed=seed, rank=rank, world=world, num_workers=num_workers, schedule=schedule)
-    rr.loaders = {m: DataLoader(ds, batch_sampler=rr.samplers[m], num_workers=num_workers, collate_fn=collate_semcommit, persistent_workers=False) for m, ds in datasets.items()}
-    return rr
+    return RoundRobinLoader(datasets, bs_of, seed=seed, rank=rank, world=world, num_workers=num_workers, schedule=schedule,
+                            sampler_factory=sampler_factory, collate_fn=collate_semcommit)

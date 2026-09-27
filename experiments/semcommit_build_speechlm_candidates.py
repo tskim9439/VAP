@@ -17,12 +17,11 @@ import re
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from vapasr.data.semcommit_words import PieceVocab, split_words
+from vapasr.data.semcommit_words import PieceVocab, split_words, EDGE_PUNCT, punct_tags, lexical_words   # lexical_words: 학습 로더(SemCommitDataset tok_check)도 같은 규칙
 
 
 LEX = re.compile(r"\w+(?:['’]\w+)*", re.UNICODE)
-FINAL = set(".?!。？！")
-COMMA = set(",;:，；：")
+from vapasr.data.semcommit_words import FINAL, COMMA
 EXCLUDED_CORPUS = ("earnings", "turnbench")
 
 
@@ -55,44 +54,6 @@ def completed_part(part, verify=True):
         if verify and sha256(p) != summary["outputs"][name]:
             raise ValueError(f"source checksum mismatch: {p}")
     return summary
-
-
-EDGE_PUNCT = re.compile(r"^([^\w]*)(.*?)([^\w]*)$", re.UNICODE | re.DOTALL)
-
-
-def punct_tags(trailing):
-    """Tags for punctuation that follows a word. An ellipsis ('...', '…') trails off — not a sentence end."""
-    t = trailing.strip()
-    final = any(c in t for c in FINAL) and not (t.endswith("...") or "…" in t)
-    return (["punct_final"] if final else []) + (["punct_comma"] if any(c in t for c in COMMA) else [])
-
-
-def lexical_words(canonical):
-    """Tokenizer-split words keep punctuation inside the word ('해야지.'); semcommit words (gold v1, labels) are lexical with
-    punctuation as tags. Strip edge punctuation into punct_final/punct_comma tags; a punctuation-only word is merged into the
-    previous word (or the next one at stream start) so tokens[a:b] still cover every token. Returns (words, None) or
-    (None, reason)."""
-    out = []
-    lead = None
-    for w in canonical:
-        m = EDGE_PUNCT.match(w["text"]); core = m.group(2)
-        if not core:
-            if out:
-                prev = out[-1]; prev["b"] = w["b"]; prev["_trail"] += w["text"]
-            elif lead is None:
-                lead = w
-            else:
-                lead = dict(lead, b=w["b"])
-            continue
-        nw = dict(w, text=core, _trail=m.group(3))
-        if lead is not None:
-            nw["a"] = lead["a"]; lead = None
-        out.append(nw)
-    if not out:
-        return None, "punct_only"
-    for i, w in enumerate(out):
-        w["i"] = i; w["tags"] = punct_tags(w.pop("_trail"))
-    return out, None
 
 
 def _token_to_word(tokens, spans, lexical_spans):

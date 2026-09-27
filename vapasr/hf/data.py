@@ -17,11 +17,20 @@ class RoundRobinLoader:
     """여러 (이름 → DataLoader) 를 라운드로빈으로 돈다. 한 셋이 먼저 끝나면 그 셋은 새 epoch 순열로 이어서 낸다(모든 셋이 같은 수의 배치를 내지 않아도 step 수 = 합).
     Trainer 가 요구하는 것: __len__(epoch 당 step 수), __iter__, set_epoch(rank 간 동일한 셔플)."""
     def __init__(self, datasets: Dict[str, MonoStreamDataset], bs_of, seed: int = 0, rank: int = 0, world: int = 1,
-                 num_workers: int = 4, drop_last: bool = True, schedule: str = "balanced"):
+                 num_workers: int = 4, drop_last: bool = True, schedule: str = "balanced", sampler_factory=None, collate_fn=collate_streams):
+        """sampler_factory (vapasr.hf.packing.budget_sampler_factory): (ds, seed, rank, world) → token-budget sampler; if the factory
+        packs (.pack) the collate is wrapped with packing.packed — one packed thinker row per batch. None = fixed-size length buckets (default)."""
         if schedule not in ("balanced", "proportional"):
             raise ValueError(f"unknown language schedule: {schedule}")
-        self.names = list(datasets); self.samplers = {m: BucketBatchSampler(ds, min(bs_of(m), len(ds)), seed=seed, drop_last=drop_last, rank=rank, world=world) for m, ds in datasets.items()}
-        self.loaders = {m: DataLoader(ds, batch_sampler=self.samplers[m], num_workers=num_workers, collate_fn=collate_streams, persistent_workers=False) for m, ds in datasets.items()}
+        self.names = list(datasets)
+        if sampler_factory is not None:
+            from .packing import packed
+            self.samplers = {m: sampler_factory(ds, seed=seed, rank=rank, world=world) for m, ds in datasets.items()}
+            if getattr(sampler_factory, "pack", True): collate_fn = packed(collate_fn)
+        else:
+            self.samplers = {m: BucketBatchSampler(ds, min(bs_of(m), len(ds)), seed=seed, drop_last=drop_last, rank=rank, world=world) for m, ds in datasets.items()}
+        self.collate_fn = collate_fn
+        self.loaders = {m: DataLoader(ds, batch_sampler=self.samplers[m], num_workers=num_workers, collate_fn=collate_fn, persistent_workers=False) for m, ds in datasets.items()}
         self.epoch = 0; self._n = sum(len(s) for s in self.samplers.values()); self.schedule = schedule
     def set_epoch(self, e: int): self.epoch = e
     def __len__(self): return self._n

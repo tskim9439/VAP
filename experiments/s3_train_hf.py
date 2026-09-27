@@ -30,6 +30,8 @@ ap.add_argument("--train-align-root", default=None, help="학습 alignment 전�
 ap.add_argument("--language-schedule", choices=("balanced", "proportional"), default="balanced",
                 help="balanced=언어 step 1:1(작은 셋 반복), proportional=각 스트림을 epoch당 정확히 한 번")
 ap.add_argument("--seed", type=int, default=0); ap.add_argument("--log-every", type=int, default=50); ap.add_argument("--num-workers", type=int, default=4); ap.add_argument("--gpu", default=None)
+from vapasr.speedup import add_speed_args, apply_speedups, training_args_kwargs
+add_speed_args(ap)
 a = ap.parse_args()
 
 rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))
@@ -73,12 +75,8 @@ else:
 if a.train_encoder: model.encoder.set_trainable(True); model.config.encoder_trainable = True
 model._keys_to_ignore_on_save = [k for k in model.state_dict() if k.startswith("encoder.")] if not model.config.encoder_trainable else None   # 동결 인코더는 저장·재개 경고 제외
 if not a.no_grad_ckpt: model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-use_liger = a.liger or not a.no_liger
-if use_liger:
-    try:
-        from vapasr.hf.liger import apply_liger_to_thinker; n = apply_liger_to_thinker(model); log(f"liger: {n}")
-    except ImportError as e: log(f"liger 미적용({e})"); use_liger = False
-model.config.use_liger = use_liger
+speed = apply_speedups(model, a, log, liger=a.liger or not a.no_liger)        # attention 구현 + Liger (vapasr/speedup.py)
+model.config.use_liger = bool(speed["liger"])
 n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad)
 log(f"model ← {src} ({time.time()-t0:.0f}s) · trainable {n_tr/1e6:.1f}M · encoder {'학습' if model.config.encoder_trainable else '동결'} · grad ckpt {not a.no_grad_ckpt}")
 
@@ -101,7 +99,7 @@ log("train " + ", ".join(f"{k}:{len(v)} (drop {v.dropped}, no-align {v.no_align}
 
 # ── Trainer
 targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradient_accumulation_steps=1, num_train_epochs=a.epochs if a.epochs > 0 else 1, max_steps=a.max_steps if a.max_steps > 0 else -1,
-                          learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, bf16=True,
+                          learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, **{"bf16": True, **training_args_kwargs(a)},
                           logging_strategy="steps", logging_steps=a.log_every, logging_first_step=True, eval_strategy=("no" if a.eval_every >= 10**6 else "steps"), eval_steps=a.eval_every, save_strategy="steps", save_steps=a.save_every,   # 재개 시 checkpoint 의 eval_steps 가 복원되므로 끄려면 strategy 자체를 no 로
                           save_total_limit=a.save_total_limit, save_safetensors=True, save_on_each_node=False, seed=a.seed, data_seed=a.seed, report_to=["tensorboard"], logging_dir=os.path.join(out, "tb"), remove_unused_columns=False,
                           disable_tqdm=True, ignore_data_skip=True, ddp_find_unused_parameters=False, ddp_broadcast_buffers=False, ddp_timeout=10800, dataloader_num_workers=a.num_workers,
@@ -109,7 +107,8 @@ targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradien
 preempt_cb = PreemptCallback(out, gloo_pg)
 trainer = VapAsrTrainer(model=model, args=targs, train_sets=train_sets, dev_sets=dev_sets, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, lr_encoder=a.lr_encoder,
                         eval_delay=a.eval_delay, eval_biases=[float(x) for x in a.eval_bias.split(",")], max_per_chunk=a.M, gloo_pg=gloo_pg, num_workers=a.num_workers,
-                        language_schedule=a.language_schedule, callbacks=[preempt_cb], processing_class=tok)                    # checkpoint-N 에 tokenizer 도 저장
+                        language_schedule=a.language_schedule, pack_max_tokens=a.pack_max_tokens, pack_max_bs=a.pack_max_bs, batch_max_tokens=a.batch_max_tokens,
+                        callbacks=[preempt_cb], processing_class=tok)                    # checkpoint-N 에 tokenizer 도 저장
 if a.eval_only:                                                                # 오프라인 평가: --init <checkpoint-N 디렉토리> → out-dir/eval/offline-N.json
     import re; mstep = re.search(r"checkpoint-(\d+)", init or ""); trainer.state.global_step = int(mstep.group(1)) if mstep else 0
     r = trainer.evaluate(metric_key_prefix=a.eval_tag); log(json.dumps(r, ensure_ascii=False))
@@ -132,7 +131,7 @@ if a.resume == "auto": last = last_complete_checkpoint(out)
 elif a.resume != "none": last = a.resume
 if main:
     tdl = trainer.get_train_dataloader(); log(f"rank 당 배치/epoch: " + ", ".join(f"{m}:{len(s)}" for m, s in tdl.samplers.items()) + f" → steps/epoch {len(tdl)} · 유효 배치 EN {a.bs_en*world} / KO {a.bs_ko*world}" + (f" · 재개 ← {last}" if last else ""))
-    json.dump(dict(args=vars(a), textnorm_version=TEXTNORM_VERSION, trainable_m=n_tr / 1e6, train_streams={k: len(v) for k, v in train_sets.items()}, steps_per_epoch=len(tdl), init=src, world=world),
+    json.dump(dict(args=vars(a), textnorm_version=TEXTNORM_VERSION, trainable_m=n_tr / 1e6, train_streams={k: len(v) for k, v in train_sets.items()}, steps_per_epoch=len(tdl), init=src, world=world, speed=speed),
               open(os.path.join(out, "run.json"), "w"), indent=1, ensure_ascii=False)
 if os.path.exists(os.path.join(out, "PREEMPT")) and main: os.remove(os.path.join(out, "PREEMPT"))
 barrier()

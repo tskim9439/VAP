@@ -50,8 +50,8 @@ gc_g = ap.add_mutually_exclusive_group()
 gc_g.add_argument("--grad-ckpt", dest="grad_ckpt", action="store_true", help="gradient checkpointing(기본 켬)"); gc_g.add_argument("--no-grad-ckpt", dest="grad_ckpt", action="store_false")
 ap.set_defaults(grad_ckpt=True)
 lg_g = ap.add_mutually_exclusive_group()
-lg_g.add_argument("--no-liger", dest="liger", action="store_false", help="Liger 끔(기본 — rack4 env 에 liger 없음)"); lg_g.add_argument("--liger", dest="liger", action="store_true")
-ap.set_defaults(liger=False)
+lg_g.add_argument("--no-liger", dest="liger", action="store_false", help="Liger 끔"); lg_g.add_argument("--liger", dest="liger", action="store_true", help="(기본) Liger — 패키지가 없으면(rack4) 경고 뒤 끈다")
+ap.set_defaults(liger=True)
 ap.add_argument("--save-every", type=int, default=500); ap.add_argument("--save-total-limit", type=int, default=0, help="0 = checkpoint 를 지우지 않는다(원격 삭제 금지)")
 ap.add_argument("--log-every", type=int, default=10); ap.add_argument("--num-workers", type=int, default=4); ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--language-schedule", choices=("balanced", "proportional"), default="balanced")
@@ -60,20 +60,31 @@ ap.add_argument("--force-resume", action="store_true", help="체크포인트의 
 ap.add_argument("--allow-missing-lang", action="store_true", help="words 행이 있는 언어가 labels 짝이 없어 0 항목이 돼도 다른 언어만으로 학습")
 ap.add_argument("--no-check-save", action="store_true", help="final 재로드 parity 검사 끔(기본 켬)"); ap.add_argument("--check-items", type=int, default=64, help="학습 전 셋마다 시퀀스 불변식 검사 항목 수")
 ap.add_argument("--report-to", default="tensorboard"); ap.add_argument("--dry-run", action="store_true")
+from vapasr.speedup import add_speed_args, apply_speedups, training_args_kwargs
+add_speed_args(ap)                                                                            # --pack-max-tokens·--attn-impl·--optim·--deepspeed (vapasr/speedup.py)
 a = ap.parse_args()
 if a.M != 0: sys.exit(f"--M {a.M}: v0 는 --M 0 만 지원 — M>0 이면 <SEM_END> 가 청크 한도에 세어져 단어와 다른 청크로 밀린다(계약 위반), 평가 패딩도 M=0 가정")
-if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
+rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))   # torchrun 이면 DDP
+if a.gpu is not None and world == 1: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
-_cache_root = os.path.join(os.environ.get("VAPASR_LOCAL_CACHE", "/tmp"), f"vapasr-{os.getuid()}-semcommit")
-for k_, d_ in (("TRITON_CACHE_DIR", "triton"), ("TORCHINDUCTOR_CACHE_DIR", "inductor")): os.environ.setdefault(k_, os.path.join(_cache_root, d_)); os.makedirs(os.environ[k_], exist_ok=True)
-import torch
+_cache_root = os.path.join(os.environ.get("VAPASR_LOCAL_CACHE", "/tmp"), f"vapasr-{os.getuid()}-semcommit-{os.environ.get('SLURM_JOB_ID', 'local')}")
+for k_, d_ in (("TRITON_CACHE_DIR", "triton"), ("TORCHINDUCTOR_CACHE_DIR", "inductor")): os.environ.setdefault(k_, os.path.join(_cache_root, f"{d_}-{local}")); os.makedirs(os.environ[k_], exist_ok=True)
+import torch, torch.distributed as dist
+gloo_pg = None
+if world > 1 and not a.dry_run:                                                               # s3_train_hf.py 와 같은 초기화: NCCL 학습 pg + 선점 합의용 gloo pg
+    from datetime import timedelta
+    os.environ.setdefault("TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC", "3600")
+    torch.cuda.set_device(local); dist.init_process_group("nccl", timeout=timedelta(hours=3), device_id=torch.device("cuda", local))
+    gloo_pg = dist.new_group(backend="gloo", timeout=timedelta(hours=1))
+main = rank == 0
 from vapasr.data.semcommit_dataset import SemCommitDataset, add_semcommit_specials, semcommit_fingerprint, checkpoint_fingerprint_diff
 from vapasr.data.semcommit_tokens import SEM_SPECIALS, TURN_TOKEN
-def log(*s): print(*s, flush=True)
+def log(*s):
+    if main: print(*s, flush=True)
 torch.manual_seed(a.seed); random.seed(a.seed); torch.backends.cuda.matmul.allow_tf32 = True
 out = a.out_dir; os.makedirs(out, exist_ok=True)
-if not a.dry_run and torch.cuda.is_available() and torch.cuda.device_count() > 1: sys.exit("GPU 가 여러 장 보인다 — --gpu N 으로 한 장만 고른다(Trainer 가 DataParallel 로 감싸는 것 방지)")
-IN_KEYS = ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight")
+if not a.dry_run and world == 1 and torch.cuda.is_available() and torch.cuda.device_count() > 1: sys.exit("GPU 가 여러 장 보인다 — --gpu N 으로 한 장만 고르거나 torchrun 으로 DDP(Trainer 가 DataParallel 로 감싸는 것 방지)")
+IN_KEYS = ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids")   # position_ids: packing
 LOSS_KEYS = ("loss_next", "loss_text", "top1_text", "loss_sem", "top1_sem", "sem_fp", "loss_turn", "top1_turn")
 
 def tokenizer_src(init_dir):
@@ -125,10 +136,7 @@ if model is not None:
     model._keys_to_ignore_on_save = None                                                      # 인코더 키를 저장에서 빼지 않는다(save_pretrained 가 encoder_saved 로 판단)
     n_enc_tr = sum(p.numel() for p in model.encoder.parameters() if p.requires_grad); assert not a.freeze_encoder or n_enc_tr == 0
     if a.grad_ckpt: model.thinker.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False}); model.thinker.config.use_cache = False
-    if a.liger:
-        try:
-            from vapasr.hf.liger import apply_liger_to_thinker; log(f"liger: {apply_liger_to_thinker(model)}")
-        except ImportError as e: log(f"liger 미적용({e})"); a.liger = False
+    speed = apply_speedups(model, a, log, liger=a.liger); a.liger = bool(speed["liger"])         # attention 구현 + Liger(없으면 끔)
     cfg.use_liger = a.liger
     n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad)
     log(f"model ← {src} ({time.time()-t0:.0f}s) · 학습 {n_tr/1e6:.1f}M · 인코더 {'동결' if a.freeze_encoder else '학습'}(init 인코더 저장됨={init_had_encoder}, 이번 저장={cfg.encoder_saved or cfg.encoder_trainable}) · "
@@ -185,15 +193,17 @@ class SemTrainer(VapAsrTrainer):
     """데이터만 바꾼다: 언어 = 셋의 lang(이름이 manifest 가 아님), collate_semcommit. 손실·로그는 VapAsrTrainer 그대로(pos_weight 전달, loss_sem/loss_turn/top1_sem/sem_fp 키별 평균)."""
     def bs_of(self, name): return self.bs_ko if self.train_sets[name].lang == "Korean" else self.bs_en
     def get_train_dataloader(self):
-        return semcommit_round_robin(self.train_sets, self.bs_of, seed=self.args.seed, num_workers=self.num_workers, schedule=self.language_schedule)
+        from vapasr.hf.packing import budget_sampler_factory
+        return semcommit_round_robin(self.train_sets, self.bs_of, seed=self.args.seed, num_workers=self.num_workers, rank=self.args.process_index, world=self.args.world_size,
+                                     schedule=self.language_schedule, sampler_factory=budget_sampler_factory(self.pack_max_tokens, self.batch_max_tokens, self.pack_max_bs))
     def evaluate(self, *args, **kw): return {}                                                # v0: 자유 디코드 SEM/TURN 평가는 별도 스크립트
 
 targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradient_accumulation_steps=1, num_train_epochs=a.epochs, max_steps=a.max_steps if a.max_steps > 0 else -1,
-                          learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, bf16=True,
+                          learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, **{"bf16": True, **training_args_kwargs(a)},
                           logging_strategy="steps", logging_steps=a.log_every, logging_first_step=True, eval_strategy="no", save_strategy="steps", save_steps=a.save_every,
                           save_total_limit=a.save_total_limit, save_safetensors=True, seed=a.seed, data_seed=a.seed, report_to=[x for x in a.report_to.split(",") if x and x != "none"],
                           logging_dir=os.path.join(out, "tb"), remove_unused_columns=False, disable_tqdm=True, ignore_data_skip=True, dataloader_num_workers=a.num_workers,
-                          label_names=["labels"], log_level="warning")
+                          label_names=["labels"], log_level="warning" if main else "error", ddp_find_unused_parameters=False, ddp_broadcast_buffers=False, ddp_timeout=10800)
 def last_complete_checkpoint(d):
     """checkpoint-N 중 trainer_state.json·model.safetensors 가 모두 있는 가장 큰 N(선점이 저장 도중 끊은 디렉토리는 건너뛴다)."""
     import re
@@ -206,21 +216,25 @@ if last:                                                                        
     fdiff = checkpoint_fingerprint_diff(last, fp)
     if fdiff and not a.force_resume: sys.exit(f"재개 거부: {last} 의 config.semcommit 이 지금 설정·데이터와 다르다 {fdiff[:8]} — 새 --out-dir 을 쓰거나(같은 out-dir 에 새로 시작하면 옛 checkpoint-N 과 섞인다), 차이를 알고 이어가려면 --force-resume")
     log(f"재개 ← {last}" + (f" · !! --force-resume: 지문 차이 {fdiff}" if fdiff else " · 지문 일치"))
-preempt_cb = PreemptCallback(out, None)
+preempt_cb = PreemptCallback(out, gloo_pg)
 trainer = SemTrainer(model=model, args=targs, train_sets=train_sets, dev_sets={}, tokenizer=tok, bs_en=a.bs_en, bs_ko=a.bs_ko, lr_adapter=a.lr_adapter, lr_encoder=a.lr_encoder,
-                     max_per_chunk=a.M, num_workers=a.num_workers, language_schedule=a.language_schedule, callbacks=[preempt_cb], processing_class=tok)
+                     max_per_chunk=a.M, num_workers=a.num_workers, language_schedule=a.language_schedule, gloo_pg=gloo_pg,
+                     pack_max_tokens=a.pack_max_tokens, pack_max_bs=a.pack_max_bs, batch_max_tokens=a.batch_max_tokens, callbacks=[preempt_cb], processing_class=tok)
 tdl = trainer.get_train_dataloader()
-log("배치/epoch: " + ", ".join(f"{m}:{len(s)}" for m, s in tdl.samplers.items()) + f" → steps/epoch {len(tdl)} · 배치 EN {a.bs_en} / KO {a.bs_ko}")
+log("배치/epoch: " + ", ".join(f"{m}:{len(s)}" for m, s in tdl.samplers.items()) + f" → steps/epoch {len(tdl)} · world {world} · "
+    + (f"토큰 예산 배치 " + ", ".join(f"{m}:{s.describe()}" for m, s in tdl.samplers.items()) if (a.pack_max_tokens or a.batch_max_tokens) else f"배치 EN {a.bs_en} / KO {a.bs_ko}"))
 run_rec = dict(args=vars(a), init=src, sp_ids=sp_ids, semcommit=fp, resume_from=last, resume_fingerprint_diff=fdiff, trainable_m=n_tr / 1e6, encoder_saved=bool(model.config.encoder_saved),
                train_streams={k: len(v) for k, v in train_sets.items()}, sets={k: dict(v.stats) for k, v in train_sets.items()}, excluded={k: dict(v.bad) for k, v in train_sets.items()},
-               check=check, steps_per_epoch=len(tdl), started=time.strftime("%F %T"))
+               check=check, steps_per_epoch=len(tdl), world=world, speed=speed, started=time.strftime("%F %T"))
 run_path = os.path.join(out, time.strftime("run-%Y%m%d-%H%M%S") + f"-{os.getpid()}.json")          # 시작마다 새 파일(첫 설정을 덮어쓰지 않는다)
-json.dump(run_rec, open(run_path, "w"), indent=1, ensure_ascii=False); log(f"실행 기록 → {run_path}")
+if main: json.dump(run_rec, open(run_path, "w"), indent=1, ensure_ascii=False); log(f"실행 기록 → {run_path}")
 res = trainer.train(resume_from_checkpoint=last); st = trainer.state
 done = st.global_step >= st.max_steps and not preempt_cb.fired
 log(f"train 종료: step {st.global_step}/{st.max_steps} {'완료' if done else '(선점/중단 → 재시작 시 이어서)'} · {res.metrics}")
 if done:
-    fin = os.path.join(out, "final"); trainer.save_model(fin); tok.save_pretrained(fin)
+    fin = os.path.join(out, "final"); trainer.save_model(fin)                                  # 모든 rank 가 부른다(Trainer 가 rank 0 만 쓴다)
+if done and main:
+    tok.save_pretrained(fin)
     json.dump(run_rec, open(os.path.join(fin, "semcommit_run.json"), "w"), indent=1, ensure_ascii=False)          # 평가가 학습 설정을 찾을 수 있게(config.json 의 semcommit 과 함께)
     json.dump(dict(args=vars(a), log_history=st.log_history[-300:], steps=st.global_step), open(os.path.join(out, "results.json"), "w"), indent=1, ensure_ascii=False)
     if not a.no_check_save:                                                                   # 재로드 parity: state_dict(인코더 포함)·한 배치 손실
@@ -229,7 +243,7 @@ if done:
             nw = m.config.next_weight_ko if x["lang"][0] == "Korean" else m.config.next_weight
             with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16): o = m(**{k: xx[k] for k in IN_KEYS if k in xx}, next_weight=nw)
             return {k: round(float(getattr(o, k)), 5) for k in ("loss",) + LOSS_KEYS if getattr(o, k, None) is not None}
-        xb = next(iter(trainer.get_train_dataloader())); mem = trainer.model
+        xb = next(iter(trainer.get_train_dataloader())); mem = getattr(trainer.model, "module", trainer.model)
         re_ = VapAsrForStreamingASR.from_pretrained(fin, encoder_path=a.nemotron_dir).cuda()
         sd1 = {k: v.detach().float().cpu() for k, v in mem.state_dict().items()}; sd2 = {k: v.detach().float().cpu() for k, v in re_.state_dict().items()}
         miss = sorted(set(sd1) - set(sd2)); extra = sorted(set(sd2) - set(sd1)); shape = [k for k in sd1 if k in sd2 and sd1[k].shape != sd2[k].shape]
@@ -252,3 +266,4 @@ if done:
         log("PARITY OK" if parity else "PARITY FAIL — 저장된 final 이 학습 모델과 다르다(parity.json)")
         del re_; torch.cuda.empty_cache()
     open(os.path.join(out, "DONE"), "w").write(time.strftime("%F %T")); log("final →", fin)
+if world > 1 and not a.dry_run: dist.destroy_process_group()
