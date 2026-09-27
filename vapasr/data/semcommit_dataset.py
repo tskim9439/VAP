@@ -28,6 +28,7 @@ from .interleave import InterleaveStats, Specials
 from .semcommit_tokens import SEM_SPECIALS, BASE_VOCAB, TURN_TOKEN, add_semantic_specials, assert_frozen_semantic
 from ..uslm.interleave_data import specials_of, CHUNK_S
 from ..uslm.mono_data import build_mono_sequence, collate_streams
+from .semcommit_tn import normalize_ko_row
 
 SR = 16000
 
@@ -233,11 +234,13 @@ class SemCommitDataset(Dataset):
     짝 통계(stats): words_rows(언어 필터 뒤 words 행) · labeled(그중 labels 짝이 있는 행) · labels_without_words(어느 words 행과도 짝이 없는 label id — 다른 셋·표본의 labels)
       · dup_label_rows · decision_on_event(B/N 결정 위치가 TURN 타깃에 떨어지는 (항목, δ) 수) / decision_on_event_items. bad['lang_mismatch'] = label.lang ≠ words.lang(제외).
     tok_check: 앞쪽 words 행 이만큼을 이 tokenizer 로 다시 단어 분할(semcommit_words.split_words — words 빌더와 같은 함수)해 단어 text·[a,b) 가 같은지 본다.
-      다르면 ValueError(words.jsonl 의 토큰 id 가 이 tokenizer 에서 다른 단어가 된다). tokenizer 에 convert_ids_to_tokens 가 없으면(가짜) 건너뛰고 stats['tok_check_skipped']."""
+      다르면 ValueError(words.jsonl 의 토큰 id 가 이 tokenizer 에서 다른 단어가 된다). tokenizer 에 convert_ids_to_tokens 가 없으면(가짜) 건너뛰고 stats['tok_check_skipped'].
+    ko_textnorm: Korean 행의 타깃을 asr-tn-v1 로(vapasr/data/semcommit_tn.normalize_ko_row) — speechlm 행은 구두점 토큰이 붙어 정렬돼 있다.
+      바뀐 행 수 stats['ko_textnorm_changed'], 제외 사유 bad['tn_digit'|'tn_charset'|'tn_word_split'|'tn_word_empty'|'tn_decode']."""
     def __init__(self, words_jsonl, labels_jsonl, tok, sp_ids: Optional[Dict[str, int]] = None, delays=(2, 3, 4, 6), turn_end: bool = False,
                  hangover_s: float = 0.48, hardneg_weight: float = 1.0, max_items: Optional[int] = None, seed: int = 0, online: bool = True,
                  allow_unlabeled: bool = False, max_per_chunk: int = 0, langs: Optional[Sequence[str]] = None, path_map: Optional[Dict[str, str]] = None,
-                 tail_margin: int = 2, pad_tail: bool = True, max_audio_retries: int = 8, tok_check: int = 32):
+                 tail_margin: int = 2, pad_tail: bool = True, max_audio_retries: int = 8, tok_check: int = 32, ko_textnorm: bool = True):
         self.tok = tok; self.sp_ids = dict(sp_ids) if sp_ids is not None else add_semcommit_specials(tok); check_sem_ids(self.sp_ids)
         self.sp = specials_of(self.sp_ids); self.sem_id, self.turn_id = self.sp_ids["<SEM_END>"], self.sp_ids[TURN_TOKEN]
         self.delays = tuple(int(d) for d in delays); self.M = max_per_chunk; self.online = online; self.turn_end = turn_end; self.hangover_s = hangover_s
@@ -259,6 +262,10 @@ class SemCommitDataset(Dataset):
                 if lab is None and not allow_unlabeled: self.stats["skipped_unlabeled"] += 1; continue
                 if lab is not None and lab.get("lang") not in (None, r["lang"]): self.bad["lang_mismatch"] += 1; continue
                 if not r.get("words"): self.bad["no_words"] += 1; continue
+                if ko_textnorm and r["lang"] == "Korean":                                    # KO 타깃 → asr-tn-v1(구두점 토큰 제거; digit·허용 밖 문자 행 제외) — semcommit_tn
+                    r2 = normalize_ko_row(r, tok)
+                    if isinstance(r2, tuple): self.bad[r2[1]] += 1; continue
+                    self.stats["ko_textnorm_changed"] += r2 is not r; r = r2
                 try: ev, marks = build_semcommit_tokens(r["words"], r["tokens"], lab, self.sem_id, self.turn_id, turn_end=turn_end, hangover_s=hangover_s)
                 except ValueError as e: self.bad[str(e).split(":")[0]] += 1; continue          # 메시지 앞머리 = 사유 코드
                 except KeyError as e: self.bad[f"missing_key:{e}"] += 1; continue

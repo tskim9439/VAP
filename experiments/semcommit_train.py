@@ -58,6 +58,8 @@ ap.add_argument("--language-schedule", choices=("balanced", "proportional"), def
 ap.add_argument("--resume", default="auto", help="auto | none | <checkpoint dir>"); ap.add_argument("--gpu", default=None)
 ap.add_argument("--force-resume", action="store_true", help="체크포인트의 config.semcommit 지문이 지금 설정·데이터와 달라도 재개(차이는 run 기록에 남는다)")
 ap.add_argument("--allow-missing-lang", action="store_true", help="words 행이 있는 언어가 labels 짝이 없어 0 항목이 돼도 다른 언어만으로 학습")
+ap.add_argument("--no-ko-textnorm", dest="ko_textnorm", action="store_false", help="KO 타깃을 asr-tn-v1 로 정규화하지 않는다(기본은 정규화: speechlm 행의 구두점 토큰 제거, "
+                "digit·허용 밖 문자 행 제외 — vapasr/data/semcommit_tn.py)")
 ap.add_argument("--no-check-save", action="store_true", help="final 재로드 parity 검사 끔(기본 켬)"); ap.add_argument("--check-items", type=int, default=64, help="학습 전 셋마다 시퀀스 불변식 검사 항목 수")
 ap.add_argument("--report-to", default="tensorboard"); ap.add_argument("--dry-run", action="store_true")
 from vapasr.speedup import add_speed_args, apply_speedups, training_args_kwargs
@@ -152,7 +154,7 @@ pmap = dict(x.split("=", 1) for x in a.path_map.split(",") if x)
 delays = tuple(int(x) for x in a.delays.split(",")); train_sets = {}
 for key, lang, cap in (("en", "English", a.max_items_en), ("ko", "Korean", a.max_items_ko)):
     ds = SemCommitDataset(W, L, tok, sp_ids, delays=delays, turn_end=a.turn_end, hangover_s=a.hangover, hardneg_weight=a.hardneg_weight, max_items=cap or None,
-                          seed=a.seed, online=True, allow_unlabeled=a.allow_unlabeled, max_per_chunk=a.M, langs=[lang], path_map=pmap, tail_margin=a.tail_margin)
+                          seed=a.seed, online=True, allow_unlabeled=a.allow_unlabeled, max_per_chunk=a.M, langs=[lang], path_map=pmap, tail_margin=a.tail_margin, ko_textnorm=a.ko_textnorm)
     nw_, nl_ = ds.stats["words_rows"], ds.stats["labeled"]
     log(f"  {key}: words 행 {nw_} · labels 짝 {nl_} ({nl_ / max(1, nw_):.1%}) · {len(ds)} 스트림 · stats {dict(ds.stats)} · 제외 {dict(ds.bad)}")
     if ds.stats["labels_without_words"]: log(f"  !! {key}: words 행과 짝이 없는 label id {ds.stats['labels_without_words']} 개 — labels 가 다른 셋·표본에서 만들어졌을 수 있다")
@@ -170,7 +172,7 @@ for key, ds in train_sets.items():                                              
 assert all(v["bad"] == 0 for v in check.values()), f"시퀀스 불변식 위반: {check}"
 fp = semcommit_fingerprint(W, L, tok, turn_end=a.turn_end, turn_token=TURN_TOKEN if a.turn_end else None, hangover_s=a.hangover, tail_margin=a.tail_margin, pad_tail=True, M=a.M, delays=list(delays),
                            sem_weight=a.sem_weight, turn_weight=a.turn_weight, hardneg_weight=a.hardneg_weight, next_weight=a.next_weight, next_weight_ko=a.next_weight_ko,
-                           allow_unlabeled=a.allow_unlabeled, max_items_en=a.max_items_en, max_items_ko=a.max_items_ko, seed=a.seed, sem_ids={k: sp_ids[k] for k in EVENTS})
+                           allow_unlabeled=a.allow_unlabeled, max_items_en=a.max_items_en, max_items_ko=a.max_items_ko, seed=a.seed, ko_textnorm="asr-tn-v1" if a.ko_textnorm else None, sem_ids={k: sp_ids[k] for k in EVENTS})
 log(f"  지문: words {[x[:12] for x in fp['words_sha256']]} labels {[x[:12] for x in fp['labels_sha256']]} vocab {(fp['vocab_sha256'] or '')[:12]}")
 if a.dry_run:
     ds = next(iter(train_sets.values())); s = ds.sequence(0, max(ds.delays)); it = ds.items[0]; P = len(ds.prefix(it["lang"], max(ds.delays)))
