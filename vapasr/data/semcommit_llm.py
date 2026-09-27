@@ -216,6 +216,7 @@ def stage_c_messages(prefix_words, future_words, lang, future_end=False):
 
 # ───────────────────────── JSON extraction / validation ─────────────────────────
 _SPECIAL = re.compile(r"<\|[^|>]{1,40}\|>")
+_LEADING_ZERO = re.compile(r"(?<=[\[,:\s])0+(?=\d)")   # 049 → 49 after '[', ',', ':' or space (numbers only; tried after a strict parse fails)
 
 
 def extract_json(text):
@@ -230,13 +231,14 @@ def extract_json(text):
         t = t.rsplit("<|message|>", 1)[1]
     t = _SPECIAL.sub("", t)
     dec = json.JSONDecoder()
-    for m in re.finditer(r"\{", t):
-        try:
-            obj, _ = dec.raw_decode(t, m.start())
-        except json.JSONDecodeError:
-            continue
-        if isinstance(obj, dict):
-            return obj
+    for u in (t, _LEADING_ZERO.sub("", t)):   # 2nd pass: zero-padded indices ('[[049, "dogs"]]', long EN streams) are not JSON
+        for m in re.finditer(r"\{", u):
+            try:
+                obj, _ = dec.raw_decode(u, m.start())
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict):
+                return obj
     raise ValueError("no JSON object in output")
 
 
