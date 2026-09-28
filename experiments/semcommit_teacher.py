@@ -208,6 +208,15 @@ def run_multi(argv):
     p.add_argument("--result", type=Path, required=True, help="per-job status JSON, rewritten after every job")
     m = p.parse_args(argv)
     jobs = [json.loads(l) for l in m.jobs.read_text().splitlines() if l.strip()]
+    if any("--device" not in j["argv"] or j["argv"][j["argv"].index("--device") + 1].startswith("cuda") for j in jobs if j["argv"][0] != "grade"):
+        import torch
+        if not torch.cuda.is_available():
+            # A task bound to a GPU the node does not expose (job 76481 on hpc-4: "No CUDA GPUs are available") would otherwise mark
+            # every claimed part failed in seconds and walk through the whole order. Park instead: the worker keeps its locks
+            # fresh, only this group's parts wait for the next submission, and the rest of the job is untouched.
+            print(f"NO_GPU host={os.uname().nodename} CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')} — parking this worker", flush=True)
+            while True:
+                time.sleep(3600)
     failed, res = set(), []
     _RESIDENT["on"] = True
     try:

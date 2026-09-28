@@ -39,6 +39,7 @@ export VAPASR_LOCAL_CACHE=/tmp/sa_tskim
 # 인덱스 쓰기를 시도해 실패). voxpopuli 처럼 자체 <tar>.index.json 이 있는 tar 는 그것을 쓴다(vapasr/data/archive.py).
 export VAPASR_TAR_INDEX_ROOT=${VAPASR_TAR_INDEX_ROOT:-/soundai/users/tskim/VAPKT-data/data/speechlm-asr-tar-index-v1}
 
+ARGS_EXTRA=${ARGS_EXTRA//%2C/,}                                          # submit 이 쉼표를 %2C 로 넘긴다(sbatch --export 구분자)
 ARGS="--init $INIT --nemotron-dir $MXC_NEMOTRON_DIR --out-dir $OUT \
  --train-words @$SNAP/main-words.list --train-labels @$SNAP/main-labels.list \
  --short-train-words @$SNAP/short-words.list --short-train-labels @$SNAP/short-labels.list \

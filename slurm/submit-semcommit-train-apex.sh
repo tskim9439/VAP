@@ -44,4 +44,4 @@ args="--delays $delays --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --
 echo "δ $delays · 스냅숏 $snap ($(python3 -c "import json,sys;s=json.load(open(sys.argv[1]));print(s['parts'],'파트')" "$snap/summary.json")) · init $init · 산출물 $out · $nodes 노드 × 8 GPU" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} --nodes="$nodes" --time="$time_limit" \
-  --export="ALL,OUT=$out,SNAP=$snap,INIT=$init,ARGS_EXTRA=$args" slurm/semcommit-train-apex.sbatch
+  --export="ALL,OUT=$out,SNAP=$snap,INIT=$init,ARGS_EXTRA=${args//,/%2C}" slurm/semcommit-train-apex.sbatch   # --export 는 쉼표로 변수를 가른다(job 76482: '--delays 2,3,…' 가 '--delays 2' 로 잘림) → %2C 로 넘기고 sbatch 가 되돌린다

@@ -13,7 +13,8 @@
 #SBATCH --time=24:00:00
 #SBATCH --requeue
 #SBATCH --open-mode=append
-#SBATCH --exclude=slurmmxch200v5-hpc-52
+#   제외: hpc-52(NCCL SIGSEGV), hpc-4(GPU 한 장이 안 보임 — job 76481 'No CUDA GPUs are available', 2026-09-29)
+#SBATCH --exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4
 #SBATCH --output=/soundai/users/tskim/VAPKT/logs/train/%x-%j.out
 #SBATCH --error=/soundai/users/tskim/VAPKT/logs/train/%x-%j.err
 set -euo pipefail
