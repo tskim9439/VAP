@@ -77,9 +77,11 @@ def stamp(r, te):
                 approval_status=te["approval_status"])
 
 
-def approve_part(te_path, qc_split, part, candidates, out_words):
+def approve_part(te_path, qc_split, part, candidates, out_words, main_only=False):
     """Part-unit mode: approved rows of one alignment part → one words file (+ <out>.ok with digest and counts).
-    Keys come from semcommit_split_qc_pass.py (its summary must name the same decision file digest and fingerprint)."""
+    Keys come from semcommit_split_qc_pass.py (its summary must name the same decision file digest and fingerprint).
+    main_only: drop approved rows shorter than SHORT_S (the short pool — training caps it at --short-step-fraction of the steps and
+    ~0.8 M short rows were already labelled, while they are ~77 % of a Korean part's rows); counted as skip_short."""
     out_words = Path(out_words)
     te = load_eligibility(te_path)
     split = json.loads((Path(qc_split) / "summary.json").read_text())
@@ -97,11 +99,14 @@ def approve_part(te_path, qc_split, part, candidates, out_words):
         if r["source_key"] not in keys:
             counts["drop_not_qc_pass"] += 1
             continue
+        if main_only and r["duration_s"] < SHORT_S:
+            counts["skip_short"] += 1
+            continue
         kept.append(stamp(r, te)); counts["kept_short" if r["duration_s"] < SHORT_S else "kept_long"] += 1
     with out_words.open("x", encoding="utf-8") as f:
         f.writelines(json.dumps(r, ensure_ascii=False, allow_nan=False) + "\n" for r in kept)
     ok = dict(part=part, words_sha256=sha256(out_words), counts=dict(counts), approval_fingerprint=te["approval_fingerprint"],
-              candidates_sha256=sha256(candidates))
+              candidates_sha256=sha256(candidates), main_only=bool(main_only))
     Path(str(out_words) + ".ok").open("x").write(json.dumps(ok))
     print(json.dumps(ok))
     return ok
@@ -158,11 +163,12 @@ def main():
     p.add_argument("--qc-split", type=Path, help="part mode: semcommit_split_qc_pass.py output dir")
     p.add_argument("--part", help="part mode: alignment part name (part-NNNNNN)")
     p.add_argument("--out-words", type=Path, help="part mode: single approved words file (+ .ok)")
+    p.add_argument("--main-only", action="store_true", help="part mode: keep only rows ≥ 8 s (skip the short pool)")
     a = p.parse_args()
     if a.qc_split:
         if not (a.part and a.out_words and len(a.candidates) == 1):
             p.error("part mode needs --part, --out-words and exactly one --candidates file")
-        approve_part(a.training_eligibility, a.qc_split, a.part, a.candidates[0], a.out_words)
+        approve_part(a.training_eligibility, a.qc_split, a.part, a.candidates[0], a.out_words, main_only=a.main_only)
     elif a.out_dir:
         approve(a.training_eligibility, a.candidates, a.out_dir, a.shard_rows)
     else:

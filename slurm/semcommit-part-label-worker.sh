@@ -29,6 +29,8 @@ LOCK_STALE_S=${LOCK_STALE_S:-1800}
 BS_A=${BS_A:-16}; BS_BC=${BS_BC:-32}   # H200 143 GB: 27–32B bf16 ≈ 54–64 GB; OOM halves the batch automatically (LLM.max_batch)
 GROUP_PARTS=${GROUP_PARTS:-8}
 PARTS_ORDER=${PARTS_ORDER:-$QC_SPLIT/parts-order.tsv}
+MAIN_ONLY=${MAIN_ONLY:-}                 # 1: new Korean parts keep only ≥ 8 s rows (approve --main-only); parts with words already built keep theirs
+[[ $MAIN_ONLY == 0 ]] && MAIN_ONLY=""
 export BS_A BS_BC
 
 fresh_foreign_lock() {   # prints a foreign lock fresher than LOCK_STALE_S, if any
@@ -77,7 +79,8 @@ prepare_part() {   # builds the part's words.jsonl (candidates → QC-pass appro
       --part "$part" --tokenizer "$QWEN_ASR" >&2 || return 1
     [[ -f $dest/cand-$attempt/$part.words.jsonl ]] || { echo "no candidate output for $part" >&2; return 1; }
     "$PY" -u experiments/semcommit_approve_speechlm_words.py --training-eligibility "$APPROVAL_SUMMARY" --qc-split "$QC_SPLIT" \
-      --part "$part" --candidates "$dest/cand-$attempt/$part.words.jsonl" --out-words "$wd/words.jsonl" >&2 || return 1
+      --part "$part" --candidates "$dest/cand-$attempt/$part.words.jsonl" --out-words "$wd/words.jsonl" \
+      ${MAIN_ONLY:+--main-only} >&2 || return 1
   fi
   echo "$wd"
 }

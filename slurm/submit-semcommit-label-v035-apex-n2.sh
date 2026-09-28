@@ -6,6 +6,7 @@
 #         --partition P(기본 apex; hpc 는 선점이 잦지만 --requeue 로 다시 대기열에 들어가 이어서 한다)
 #         --job-name NAME(기본 SA_SFT_FullDuplex) --order TSV(파트 순서; 기본 QC split 의 KO 순서 — EN+KO 균형 순서는
 #           experiments/semcommit_mix_parts_order.py) --bs-a N / --bs-bc N(GPU 배치, 기본 16/32) --group-parts N(모델 로드당 파트 수, 기본 8)
+#         --main-only(새 KO 파트는 8 s 이상 행만 라벨링 — short 풀은 학습에서 step 10 % 로 제한되고 이미 충분)
 #   예: 6 노드 3 시간 → 끝나면 2 노드로 이어서
 #     bash slurm/submit-semcommit-label-v035-apex-n2.sh --nodes 6 --time 03:00:00
 #     bash slurm/submit-semcommit-label-v035-apex-n2.sh --after <위 job id>
@@ -17,7 +18,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-nodes=2; time_limit=24:00:00; after=""; partition=apex; job_name=SA_SFT_FullDuplex; order=""; bs_a=16; bs_bc=32; group_parts=8
+nodes=2; time_limit=24:00:00; after=""; partition=apex; job_name=SA_SFT_FullDuplex; order=""; bs_a=16; bs_bc=32; group_parts=8; main_only=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --nodes) nodes=$2; shift 2 ;;
@@ -29,6 +30,7 @@ while [[ $# -gt 0 ]]; do
     --bs-a) bs_a=$2; shift 2 ;;
     --bs-bc) bs_bc=$2; shift 2 ;;
     --group-parts) group_parts=$2; shift 2 ;;
+    --main-only) main_only=1; shift ;;
     *) echo "알 수 없는 옵션: $1 (--nodes N --time HH:MM:SS --after JOBID --partition P --job-name NAME --order TSV --bs-a N --bs-bc N --group-parts N)" >&2; exit 2 ;;
   esac
 done
@@ -58,5 +60,5 @@ fi
 
 sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} \
   --nodes="$nodes" --ntasks=$((nodes * 8)) --ntasks-per-node=8 --gres=gpu:8 --time="$time_limit" \
-  --export="ALL,RESULTS=$results,QC_SPLIT=$qc_split,APPROVAL_SUMMARY=$approval_summary,GATE_ACCEPTED=$gate_accepted,THRESHOLDS=$thresholds,A_KIND=qwen38,C_KIND=qwen38,OUT=$out,PARTS_ORDER=$order,BS_A=$bs_a,BS_BC=$bs_bc,GROUP_PARTS=$group_parts" \
+  --export="ALL,RESULTS=$results,QC_SPLIT=$qc_split,APPROVAL_SUMMARY=$approval_summary,GATE_ACCEPTED=$gate_accepted,THRESHOLDS=$thresholds,A_KIND=qwen38,C_KIND=qwen38,OUT=$out,PARTS_ORDER=$order,BS_A=$bs_a,BS_BC=$bs_bc,GROUP_PARTS=$group_parts,MAIN_ONLY=$main_only" \
   slurm/semcommit-part-label-apex.sbatch

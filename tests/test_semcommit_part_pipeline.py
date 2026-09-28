@@ -44,6 +44,10 @@ def test_split_approve_finalize_collect(tmp_path):
     w = tmp_path / "part" / "words.jsonl"; w.parent.mkdir()
     ok = approve_mod.approve_part(te, split, "part-000001", cand, w)
     assert ok["counts"] == {"kept_short": 1, "kept_long": 2, "drop_not_qc_pass": 1}
+    w2 = tmp_path / "part-main" / "words.jsonl"; w2.parent.mkdir()                         # --main-only: short rows skipped, counted
+    ok2 = approve_mod.approve_part(te, split, "part-000001", cand, w2, main_only=True)
+    assert ok2["counts"] == {"kept_long": 2, "skip_short": 1, "drop_not_qc_pass": 1} and ok2["main_only"] is True
+    assert all(json.loads(l)["duration_s"] >= 8 for l in open(w2))
     labels = tmp_path / "labels.jsonl"
     labels.write_text("".join(json.dumps(dict(id=r["id"], candidates=[])) + "\n" for r in rows[:2]))   # id 3 (31 s) unlabeled
     done = w.parent / "DONE.json"

@@ -33,7 +33,7 @@ QWEN_ASR=/soundai/Model/Qwen3-ASR-0.6B
 : "${OUT:?labels root required}"
 export A_KIND C_KIND
 PARTS_ORDER=${PARTS_ORDER:-$QC_SPLIT/parts-order.tsv}                # language-balanced EN+KO order: experiments/semcommit_mix_parts_order.py
-BS_A=${BS_A:-16}; BS_BC=${BS_BC:-32}; GROUP_PARTS=${GROUP_PARTS:-8}
+BS_A=${BS_A:-16}; BS_BC=${BS_BC:-32}; GROUP_PARTS=${GROUP_PARTS:-8}; MAIN_ONLY=${MAIN_ONLY:-}
 cd "$PROJECT"
 test -x "$PY" && test -d "$RESULTS" && test -f "$QC_SPLIT/parts-order.tsv" && test -f "$PARTS_ORDER" && test -f "$APPROVAL_SUMMARY"
 test -f "$GATE_ACCEPTED" && test -f "$THRESHOLDS" && test -d "$QWEN" && test -d "$EXAONE" && test -d "$QWEN_ASR"
@@ -67,8 +67,8 @@ PY
 EXTRA_CANDIDATES=$("$PY" -c "import json,pathlib,sys; print(','.join(json.loads(pathlib.Path(sys.argv[1]).with_name('thresholds.report.json').read_text())['extra']))" "$THRESHOLDS")
 mkdir -p "$OUT/parts"
 
-export PROJECT PY QWEN EXAONE QWEN_ASR RESULTS QC_SPLIT OUT THRESHOLDS A_KIND C_KIND APPROVAL_SUMMARY EXTRA_CANDIDATES PARTS_ORDER BS_A BS_BC GROUP_PARTS
-echo "parts order $PARTS_ORDER ($(wc -l < "$PARTS_ORDER") parts) · batch A $BS_A / B·C $BS_BC · group $GROUP_PARTS parts/model load"
+export PROJECT PY QWEN EXAONE QWEN_ASR RESULTS QC_SPLIT OUT THRESHOLDS A_KIND C_KIND APPROVAL_SUMMARY EXTRA_CANDIDATES PARTS_ORDER BS_A BS_BC GROUP_PARTS MAIN_ONLY
+echo "parts order $PARTS_ORDER ($(wc -l < "$PARTS_ORDER") parts) · batch A $BS_A / B·C $BS_BC · group $GROUP_PARTS parts/model load · main only ${MAIN_ONLY:-no}"
 srun --nodes="$SLURM_JOB_NUM_NODES" --ntasks="$SLURM_NTASKS" --ntasks-per-node=8 --cpus-per-task=8 \
   --gpus-per-task=1 --gpu-bind=single:1 \
   bash "$PROJECT/slurm/semcommit-part-label-worker.sh"
