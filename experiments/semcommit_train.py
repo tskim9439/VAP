@@ -69,8 +69,25 @@ if a.M != 0: sys.exit(f"--M {a.M}: v0 는 --M 0 만 지원 — M>0 이면 <SEM_E
 rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))   # torchrun 이면 DDP
 if a.gpu is not None and world == 1: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
-_cache_root = os.path.join(os.environ.get("VAPASR_LOCAL_CACHE", "/tmp"), f"vapasr-{os.getuid()}-semcommit-{os.environ.get('SLURM_JOB_ID', 'local')}")
+def _writable_root():
+    """Triton/inductor 캐시·TMPDIR 자리: VAPASR_LOCAL_CACHE → /tmp → out-dir/.cache/<host>(NFS). 일부 노드는 job step 안에서 /tmp 에 쓸 수 없다
+    (job 76397: PermissionError '/tmp/sa_tskim', slurmstepd 'TMPDIR [/tmp] is not writeable'). /dev/shm 은 noexec 라 Triton 이 만든 .so 를 못 올린다."""
+    import socket
+    name = f"vapasr-{os.getuid()}-semcommit-{os.environ.get('SLURM_JOB_ID', 'local')}"
+    for base in (os.environ.get("VAPASR_LOCAL_CACHE"), "/tmp", os.path.join(os.path.abspath(a.out_dir), ".cache", socket.gethostname())):
+        if not base: continue
+        root = os.path.join(base, name)
+        try:
+            os.makedirs(root, exist_ok=True); probe = os.path.join(root, f".probe-{os.getpid()}"); open(probe, "w").close(); os.remove(probe)
+            return root
+        except OSError:
+            continue
+    raise SystemExit("쓸 수 있는 캐시 디렉토리가 없다(VAPASR_LOCAL_CACHE·/tmp·out-dir)")
+_cache_root = _writable_root()
 for k_, d_ in (("TRITON_CACHE_DIR", "triton"), ("TORCHINDUCTOR_CACHE_DIR", "inductor")): os.environ.setdefault(k_, os.path.join(_cache_root, f"{d_}-{local}")); os.makedirs(os.environ[k_], exist_ok=True)
+if not os.access(os.environ.get("TMPDIR", "/tmp"), os.W_OK):                                # tempfile(Triton 빌드 등)도 쓸 수 있는 곳으로
+    os.environ["TMPDIR"] = os.path.join(_cache_root, f"tmp-{local}"); os.makedirs(os.environ["TMPDIR"], exist_ok=True)
+    import tempfile; tempfile.tempdir = None
 import torch, torch.distributed as dist
 gloo_pg = None
 if world > 1 and not a.dry_run:                                                               # s3_train_hf.py 와 같은 초기화: NCCL 학습 pg + 선점 합의용 gloo pg
