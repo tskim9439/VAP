@@ -12,7 +12,8 @@
 #SBATCH --requeue
 #SBATCH --open-mode=append
 #SBATCH --signal=B:USR1@180
-#SBATCH --exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4   # hpc-4: GPU 7 없음(job 76397 invalid device ordinal, 2026-09-28)
+#   제외: hpc-52(NCCL SIGSEGV), hpc-4(GPU 7 이 안 보임 — job 76397 torch.cuda.set_device(7) invalid device ordinal, 2026-09-28)
+#SBATCH --exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4
 #SBATCH --output=/soundai/users/tskim/VAPKT/logs/train/%x-%j.out
 #SBATCH --error=/soundai/users/tskim/VAPKT/logs/train/%x-%j.err
 set -uo pipefail
