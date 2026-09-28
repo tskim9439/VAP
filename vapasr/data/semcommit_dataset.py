@@ -236,7 +236,8 @@ class SemCommitDataset(Dataset):
     tok_check: 앞쪽 words 행 이만큼을 이 tokenizer 로 다시 단어 분할(semcommit_words.split_words — words 빌더와 같은 함수)해 단어 text·[a,b) 가 같은지 본다.
       다르면 ValueError(words.jsonl 의 토큰 id 가 이 tokenizer 에서 다른 단어가 된다). tokenizer 에 convert_ids_to_tokens 가 없으면(가짜) 건너뛰고 stats['tok_check_skipped'].
     ko_textnorm: Korean 행의 타깃을 asr-tn-v1 로(vapasr/data/semcommit_tn.normalize_ko_row) — speechlm 행은 구두점 토큰이 붙어 정렬돼 있다.
-      바뀐 행 수 stats['ko_textnorm_changed'], 제외 사유 bad['tn_digit'|'tn_charset'|'tn_word_split'|'tn_word_empty'|'tn_decode']."""
+      바뀐 행 수 stats['ko_textnorm_changed'], 숫자를 원본 전사(segments[].raw_text)의 읽는 형태로 바꾼 행 stats['ko_digit_spoken'],
+      제외 사유 bad['tn_digit'(대응 불확실)|'tn_charset'|'tn_word_split'|'tn_word_empty'|'tn_decode'|'tn_label_index']."""
     def __init__(self, words_jsonl, labels_jsonl, tok, sp_ids: Optional[Dict[str, int]] = None, delays=(2, 3, 4, 6), turn_end: bool = False,
                  hangover_s: float = 0.48, hardneg_weight: float = 1.0, max_items: Optional[int] = None, seed: int = 0, online: bool = True,
                  allow_unlabeled: bool = False, max_per_chunk: int = 0, langs: Optional[Sequence[str]] = None, path_map: Optional[Dict[str, str]] = None,
@@ -265,7 +266,13 @@ class SemCommitDataset(Dataset):
                 if ko_textnorm and r["lang"] == "Korean":                                    # KO 타깃 → asr-tn-v1(구두점 토큰 제거; digit·허용 밖 문자 행 제외) — semcommit_tn
                     r2 = normalize_ko_row(r, tok)
                     if isinstance(r2, tuple): self.bad[r2[1]] += 1; continue
-                    self.stats["ko_textnorm_changed"] += r2 is not r; r = r2
+                    self.stats["ko_textnorm_changed"] += r2 is not r
+                    self.stats["ko_digit_spoken"] += r2 is not r and any(ch.isdigit() for w in r["words"] for ch in w["text"])   # 숫자 → 원본 전사의 읽는 형태
+                    if "word_map" in r2 and lab is not None:                                   # 숫자 단어가 여러 단어가 됨 → 라벨 단어 index 를 새 순서로
+                        wm = r2["word_map"]
+                        if any(not 0 <= c["after_word"] < len(wm) for c in lab.get("candidates", [])): self.bad["tn_label_index"] += 1; continue
+                        lab = dict(lab, candidates=[dict(c, after_word=wm[c["after_word"]]) for c in lab.get("candidates", [])])
+                    r = r2
                 try: ev, marks = build_semcommit_tokens(r["words"], r["tokens"], lab, self.sem_id, self.turn_id, turn_end=turn_end, hangover_s=hangover_s)
                 except ValueError as e: self.bad[str(e).split(":")[0]] += 1; continue          # 메시지 앞머리 = 사유 코드
                 except KeyError as e: self.bad[f"missing_key:{e}"] += 1; continue

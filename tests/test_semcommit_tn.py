@@ -64,3 +64,34 @@ def test_rejected_rows(words, reason):
     else:
         r = row([("안녕", 0.2), (" A", 0.5), ("/S", 0.8)], [("안녕", 1, []), ("A/S", 2, [])])
     assert normalize_ko_row(r, tok) == (None, reason)
+
+
+# ── 숫자 → 원본 전사(segments[].raw_text)의 읽는 형태
+from vapasr.data.semcommit_tn import spoken_digit_words
+
+
+@pytest.mark.parametrize("qwords,raw,want", [
+    (["발생했던", "게", "2007년이었대"], "발생했던 게 이천칠년이었대", [None, None, ["이천칠년이었대"]]),
+    (["1980년에", "출간한"], "천구백팔십 년에 출간한", [["천구백팔십", "년에"], None]),
+    (["10시", "20분에"], "열 시 이십 분에", [["열", "시"], ["이십", "분에"]]),
+    (["징역", "6개월의", "처한데"], "징역 육개월의 처한대", [None, ["육개월의"], None]),     # 숫자 밖 철자 차이는 Qwen 그대로
+    (["주문번호", "2", "3"], "주문번호 이 삼", None),                                      # 다른 블록이 단어 경계를 넘음 → 모호
+    (["완전히", "다른", "3개"], "전혀 관계없는 말입니다", None),                            # 전사가 다름
+    (["3개"], "", None),                                                                    # 원본 전사 없음
+])
+def test_spoken_digit_words(qwords, raw, want):
+    assert spoken_digit_words(qwords, raw) == want
+
+
+def test_digit_word_split_remaps_word_index_and_times():
+    t2 = BPE(P + ["1980년에", " 출간", "한", "천구백팔십", " 천구백팔십", " 년에", "년에"])
+    toks = [[t2.pieces.index(p), t] for p, t in (("1980년에", 1.2), (" 출간", 1.6), ("한", 1.8), (".", 1.8))]
+    ws = [dict(i=0, text="1980년에", a=0, b=1, end_time=1.2, seg=0, tags=[]), dict(i=1, text="출간한", a=1, b=4, end_time=1.8, seg=0, tags=["punct_final"])]
+    r = dict(id="x", lang="Korean", text="1980년에 출간한", tokens=toks, words=ws, K=30, duration_s=2.0)
+    r["segments"] = [dict(raw_text="천구백팔십 년에 출간한")]
+    n = normalize_ko_row(r, t2)
+    assert [w["text"] for w in n["words"]] == ["천구백팔십", "년에", "출간한"] and n["word_map"] == [1, 2]
+    assert [w["i"] for w in n["words"]] == [0, 1, 2] and n["words"][2]["tags"] == ["punct_final"] and n["words"][0]["tags"] == []
+    assert n["words"][1]["end_time"] == 1.2 and n["words"][2]["end_time"] == 1.8                  # 원래 단어 끝 시각 유지
+    ws = split_words([t[0] for t in n["tokens"]], [t[1] for t in n["tokens"]], t2)
+    assert [(w["text"], w["a"], w["b"]) for w in ws] == [(w["text"], w["a"], w["b"]) for w in n["words"]]
