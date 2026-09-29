@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 # Two GPUs at most, per-process environment only. No login-shell/env changes.
+# usage: run_single_turn_asr_mxc.sh <checkpoint> <out> [gpus=0,2] [batch=128] [limit=0] [deltas=2,4] [manifest]
+#   manifest: 7th argument or MANIFEST env (default: the v1 LibriSpeech+Kspon manifest). English evaluation uses VoxPopuli-Cleaned-AA from
+#   2026-09-29: build .../single-turn-vpaa-kspon-v1/manifest.jsonl with `eval_single_turn_asr.py prepare --voxpopuli-aa-root ...` first.
+#   PY env overrides the interpreter; when the node-local env cannot import numpy (seen 2026-09-29: PyCapsule datetime error) the conda env is used.
 set -euo pipefail
 PROJECT=/soundai/users/tskim/VAPKT
 DATA=/soundai/users/tskim/VAPKT-data
-PY=/tmp/sa_tskim-vapasr-env-local/bin/python
+PY_CONDA=$DATA/conda/envs/vapasr/bin/python
+PY=${PY:-/tmp/sa_tskim-vapasr-env-local/bin/python}
+if ! "$PY" -c 'import numpy' >/dev/null 2>&1; then
+  echo "python env unusable ($PY) -> $PY_CONDA" >&2
+  PY=$PY_CONDA
+fi
 CHECKPOINT=${1:-/soundai/Model/VAPASR/hf-approved-qwen-v1-e10-n2/checkpoint-35000}
 OUT=${2:-${DATA}/results/single-turn-35000-d2-d4-v1}
 GPU_LIST=${3:-0,2}
@@ -32,7 +41,9 @@ export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4
 export TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
 export VAPASR_STAGE_DIR=/dev/shm/tskim-vapasr-infer-35000
 ENC=/soundai/Model/nemotron-3.5-asr-streaming-0.6b
-MANIFEST="$DATA/data/evaluation/single-turn-v1/manifest.jsonl"
+MANIFEST=${7:-${MANIFEST:-$DATA/data/evaluation/single-turn-v1/manifest.jsonl}}
+[[ -f "$MANIFEST" ]] || { echo "Manifest not found: $MANIFEST" >&2; exit 2; }
+echo "manifest=$MANIFEST python=$PY"
 pids=()
 cleanup() { for p in "${pids[@]}"; do kill "$p" 2>/dev/null || true; done; }
 trap cleanup INT TERM

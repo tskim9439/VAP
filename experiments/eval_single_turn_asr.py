@@ -19,11 +19,56 @@ from vapasr.data.single_turn_eval import (PROTOCOL, aggregate, canonical_referen
     digest, fingerprint, read_jsonl, score_pair, write_json)
 
 
+VOXPOPULI_AA_REVISION = "07adf4a242e2e5dd955a230909c177573c978ee3"   # HF ArtificialAnalysis/VoxPopuli-Cleaned-AA, 2026-02-17
+
+
+def prepare_voxpopuli_aa(root, revision, workers):
+    """VoxPopuli-Cleaned-AA(ESB VoxPopuli 영어 test 의 AA 교정 부분집합, 628 발화) → (rows, missing, coverage).
+    root 는 HF 스냅숏과 같은 배치(voxpopuli_cleaned_aa_v1.jsonl + audio/<uuid>.wav, 16 kHz mono float32)."""
+    import soundfile as sf
+    root = Path(root)
+    src = root / "voxpopuli_cleaned_aa_v1.jsonl"
+    labels = read_jsonl(src)
+    if not labels:
+        raise ValueError(f"No labels: {src}")
+
+    def inspect(item):
+        p = root / item["url"]
+        r = dict(id=f"voxpopuli-aa/{item['id']}", dataset="voxpopuli-aa-test", lang="English",
+                 raw_reference=item["transcript"], source_id=item["id"], session=item["id"].split("-en_")[0],
+                 gender=item.get("gender"))
+        if not p.is_file():
+            return r, False, None
+        info = sf.info(str(p))
+        if info.channels != 1 or info.samplerate != 16000:
+            raise ValueError(f"Unexpected VoxPopuli-AA format: {p} {info}")
+        if abs(info.duration - float(item["duration"])) > 0.05:
+            raise ValueError(f"Duration differs from the dataset card: {p} {info.duration} vs {item['duration']}")
+        sha = hashlib.sha256(p.read_bytes()).hexdigest()
+        return dict(r, path=str(p), sample_rate=info.samplerate, num_samples=info.frames, audio_s=info.frames / info.samplerate,
+                    audio_format="wav", audio_subtype=info.subtype, reference=canonical_reference(item["transcript"], "English")), True, (item["url"], sha)
+
+    rows, missing, hashes = [], [], []
+    with ThreadPoolExecutor(workers) as pool:
+        for r, ok, h in pool.map(inspect, labels):
+            (rows if ok else missing).append(r)
+            if h:
+                hashes.append(h)
+    coverage = dict(source_labels=len(labels), expected_standard_count=628, revision=revision,
+                    jsonl_sha256=hashlib.sha256(src.read_bytes()).hexdigest(), audio_sha256=digest(sorted(hashes)))
+    return rows, missing, coverage
+
+
 def prepare(a):
     import soundfile as sf
     from vapasr.data.kspon import read_trn, resolve_path
+    if not (a.voxpopuli_aa_root or a.libri_root or a.kspon_root):
+        raise SystemExit("prepare: --voxpopuli-aa-root / --kspon-root / --libri-root 중 하나 이상 필요")
     rows, missing, coverage = [], [], {}
-    for subset in ("test-clean", "test-other"):
+    if a.voxpopuli_aa_root:                                      # 영어 기본 평가 세트(2026-09-29 부터)
+        r, m, c = prepare_voxpopuli_aa(a.voxpopuli_aa_root, a.voxpopuli_aa_revision, a.workers)
+        rows += r; missing += m; coverage["voxpopuli-aa-test"] = c
+    for subset in (("test-clean", "test-other") if a.libri_root else ()):   # LibriSpeech: 이전 결과와의 비교용(legacy)
         candidates = []
         for p in sorted((Path(a.libri_root) / subset).glob("*/*/*.trans.txt")):
             for line in p.read_text().splitlines():
@@ -44,7 +89,7 @@ def prepare(a):
             for r, ok in pool.map(inspect, candidates):
                 (rows if ok else missing).append(r)
         coverage[f"librispeech-{subset}"] = dict(source_labels=len(candidates), expected_standard_count={"test-clean": 2620, "test-other": 2939}[subset])
-    for subset in ("eval_clean", "eval_other"):
+    for subset in (("eval_clean", "eval_other") if a.kspon_root else ()):
         source = Path(a.kspon_root) / (subset + ".trn")
         labels = read_trn(str(source))
         if not labels:
@@ -246,6 +291,19 @@ def run(a):
     print(f"DONE rank={a.rank} predictions={completed}", flush=True)
 
 
+def aa_report(rows):
+    """영어 세트·조건별 AA-WER 비교 지표(vapasr/data/aa_wer.py: Whisper 정규화 + 숫자 분리, micro 와 오디오 길이 가중 평균).
+    내부 주 지표(groups 의 wer = score_en micro)와 별개의 보조 지표다. 영어 행이 없으면 빈 dict."""
+    from vapasr.data.aa_wer import aa_fingerprint, aa_summary
+    en = {}
+    for r in rows:
+        if r["lang"] == "English":
+            en.setdefault(f"{r['dataset']}/delta-{r['delta']}", []).append(r)
+    if not en:
+        return {}
+    return dict(aa_wer={k: aa_summary(v) for k, v in sorted(en.items())}, aa_scoring=aa_fingerprint())
+
+
 def summarize(a):
     out = Path(a.out)
     configs = sorted(out.glob("config-rank*.json"))
@@ -258,7 +316,7 @@ def summarize(a):
     expected = cfg["utterances"] * len(cfg["deltas"])
     complete = (len(rows) == expected and len(list(out.glob("done-rank*.json"))) == cfg["world_size"])
     report = dict(complete=complete, predictions=len(rows), expected_predictions=expected,
-                  config=cfg, groups=aggregate(rows))
+                  config=cfg, groups=aggregate(rows), **aa_report(rows))
     write_json(out / "summary.json", report)
     print(json.dumps({k: v for k, v in report.items() if k != "config"}, ensure_ascii=False, indent=2))
     if not complete and not a.allow_partial:
@@ -269,8 +327,10 @@ def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="command", required=True)
     q = sub.add_parser("prepare")
-    q.add_argument("--libri-root", required=True)
-    q.add_argument("--kspon-root", required=True)
+    q.add_argument("--voxpopuli-aa-root", default=None, help="영어 기본 세트: VoxPopuli-Cleaned-AA 스냅숏 루트(jsonl + audio/)")
+    q.add_argument("--voxpopuli-aa-revision", default=VOXPOPULI_AA_REVISION, help="coverage.json 에 기록할 HF 리비전")
+    q.add_argument("--kspon-root", default=None, help="한국어: KsponSpeech eval_clean/eval_other")
+    q.add_argument("--libri-root", default=None, help="legacy 영어 비교: LibriSpeech test-clean/test-other")
     q.add_argument("--out", required=True)
     q.add_argument("--workers", type=int, default=32)
     q = sub.add_parser("run")

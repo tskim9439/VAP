@@ -1,0 +1,35 @@
+{
+ "checked": "2026-09-29",
+ "test_set": "ArtificialAnalysis/VoxPopuli-Cleaned-AA@07adf4a242e2e5dd955a230909c177573c978ee3 (628)",
+ "train_reference": "mxc /soundai/users/tskim/VAPKT-data/data/labels/voxpopuli/asr_en.tsv split=train (182,482 rows)",
+ "id_session_speaker": {
+  "split": {
+   "test": 628
+  },
+  "sessions": 292,
+  "sessions_in_train": 280,
+  "speakers_known": 207,
+  "speakers_in_train": 80,
+  "paragraphs": 347,
+  "paragraphs_in_train": 0
+ },
+ "text": {
+  "exact_normalized_sentence_match": 0,
+  "five_gram_containment_bins": {
+   "<0.2": 551,
+   "≥0.2": 75,
+   "≥0.5": 2
+  },
+  "high_containment_ids": [
+   [
+    0.57,
+    "20130610-0900-PLENARY-15-en_20130610-21:07:10_1"
+   ],
+   [
+    0.5,
+    "20170614-0900-PLENARY-7-en_20170614-11:04:26_18"
+   ]
+  ]
+ },
+ "speakers_in_train_train_utterances": 13818
+}
