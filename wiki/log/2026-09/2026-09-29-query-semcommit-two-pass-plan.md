@@ -1,0 +1,27 @@
+## [2026-09-29] query | SEM_END 트리거 2-pass 재디코드 실험 계획
+
+- Changed: `wiki/outputs/output-semcommit-two-pass-plan.md`(신규, 같은 날 리뷰 반영 개정). 코드·학습·서버 산출물은 바꾸지 않았다(mxc 는 읽기 전용 조회만).
+- Reason:
+  - 사용자 요청으로 T1(`<SEM_END>` 트리거 2-pass 재디코드) 실험 계획을 정리했다. 1차 스트리밍 텍스트를 commit 구간 단위로 full-context 디코더(Qwen3-ASR-1.7B 주, 0.6B 보조)가 다시 디코드한 결과로 바꾼다.
+  - 범위 정정: 사용자 지시 "3번은 일단 제외하고 더 고민해보자"의 3번은 논문 인사이트 3번(영어 레이블 불균형)이다. 초판과 리뷰 반영판은 이를 T3(commit latency) 제외로 잘못 읽어 T3 코드를 쓰지 않게 했다.
+    - 재정정: T3(창 없는 지연 지표, `hyp.word_k`)는 커밋 `5103556` 으로 들어갔고, 계획의 1차 디코드·지연 지표는 그 판에 고정했다(머리말, §4.1, §6.2, §6.6, §10). 비정렬 세트(AIHub 3 세트, ESB)의 단어 끝 기준 지연은 정렬이 없어서 근사로 남는다.
+  - 계획의 주요 내용:
+    - 비교 시스템: S0 / S1 / S1+ / S2 VAD / S2m 방출 공백 / S3 고정창 / S4 오라클 / S5 오프라인 / V8-dual
+    - SEM 세그먼트·절단·문맥(iso / text / prefix) 규칙, soft(SEM)·hard 트리거 구분, 인과성(늦은 단어, direct-final)
+    - 지표: 지연 5 종(표시, 트리거, 확정(재귀 큐), 잠정 표시 시간, 발화 끝), 번복·3-way, 2차 비용
+    - 데이터: R1 벤치마크(Kspon, AIHub 3 세트, LibriSpeech, 선택 ESB; 공통 오디오 규약), R2 장문(LS streams, 골드 v1, aihub71631-dev 세션 창), dev/test 분리
+    - 학습 스냅샷 `speechlm-all19-v035/snapshots/20260929-0928` 과의 중복 점검 결과(경로·세션 충돌 없음, 상담 text-seen 34 발화, 전화망 파형 수준은 미확정, 71631-dev 세션·화자 중복 0)
+    - 예산 약 30 GPU-h(상한 45), 성공 기준 S-1–S-5(군집 bootstrap, Holm, 게이트 순서)
+  - 리뷰 2 건(37 항목)을 코드와 mxc 에서 확인하고 모두 반영했다. 요지는 계획 부록 B 에 있다.
+    - mxc 실행 전제 정정: `semcommit_eval.py`·`semcommit_build_words.py` 미배포, `align-asr-tn-v1` 은 스트림별 파일 구조, 골드 words 599 행이 rack4 경로
+    - 설계 정정: V8-dual WER ≡ S0-δ8, S5 가 상한이라는 보장 없음, min_seg 는 SEM 에만, VAD 인과성, R1 오디오 규약 통일, 71631 창 누설·겹침·SNR
+    - 데이터 사실 정정: TED-LIUM datalist 중복(2,310 행 → 고유 1,155), dev 시간(약 17.4 h)
+- Next:
+  - P0-0: 5103556 판 `semcommit_eval.py`·`commit_metrics.py` 와 새 파일의 mxc 배포(진행 중인 골드 평가가 끝난 뒤), `align-asr-tn-v1` → words.jsonl 어댑터, 골드 words 경로 변경과 PCM 대조.
+  - P0-1: AIHub 3 세트를 PCM 해시 보호 인덱스에 추가하고 approval audit 를 다시 대조한다.
+  - P0-2: aihub71631-dev 장문 창 빌더를 만들고 자격을 만족하는 창 수를 먼저 센다(2026-09-29 조회로 조건을 만족하는 30 s 이상 run 374 개). ESB-lite 표본 목록을 만든다.
+  - `vapasr/hf/twopass.py`, `vapasr/hf/second_pass.py`, `experiments/semcommit_twopass_eval.py` 를 구현하고 테스트한다.
+  - 학습 run `semcommit-v035-snap0929-d8` 의 final 이 나온 뒤 P0-3 스모크와 P0-5 S0 대 S5 점검을 한다(제출은 사용자).
+  - 부록 A 의 scratchpad 조사 스크립트(`twopass_review/probe*.py` 포함)를 `raw/sources/experiments/` 에 보존할지 정한다.
+  - `wiki/status.md` 에 T1 항목을 반영한다(미커밋 변경이 있어 이번에는 건드리지 않았다).
+- By: tskim
