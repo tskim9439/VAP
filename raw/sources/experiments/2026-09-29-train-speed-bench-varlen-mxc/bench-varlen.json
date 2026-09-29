@@ -1,0 +1,184 @@
+{
+ "args": {
+  "init": "/soundai/Model/VAPASR/hf-approved-qwen-v1-e10-n2/checkpoint-35000",
+  "nemotron_dir": "/soundai/Model/nemotron-3.5-asr-streaming-0.6b",
+  "train_words": [
+   "@/soundai/users/tskim/VAPKT-data/bench/speedup-20260927/main-words.list"
+  ],
+  "train_labels": [
+   "@/soundai/users/tskim/VAPKT-data/bench/speedup-20260927/main-labels.list"
+  ],
+  "configs": "budget:16384,budget:16384@varlen,pack:16384@varlen,budget:32768@varlen,pack:32768@varlen",
+  "steps": 12,
+  "warmup": 3,
+  "bs_en": 6,
+  "bs_ko": 16,
+  "pack_max_bs": 256,
+  "max_items": 0,
+  "num_workers": 16,
+  "gpu": "6",
+  "out": "/soundai/users/tskim/VAPKT-data/bench/speedup-20260927/bench-varlen-20260929.json"
+ },
+ "results": {
+  "budget:16384": {
+   "steps": 12,
+   "sec": 5.0,
+   "sec_per_step": 0.416,
+   "audio_h_per_gpu_h": 1252.1,
+   "samples_per_s": 127.93,
+   "label_tok_per_s": 19225,
+   "row_tok_per_step": 15283,
+   "real_tok_frac": 0.996,
+   "data_audio_h_per_h": 1189.7,
+   "data_sec": 6.6,
+   "num_workers": 16,
+   "samples_per_step": 53.2,
+   "peak_mem_gb": 25.1,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 0,
+   "batch_max_tokens": 16384,
+   "attn": "sdpa",
+   "batches": {
+    "ko": {
+     "mode": "padded",
+     "batches": 422,
+     "per_rank": 422,
+     "max_tokens": 16384,
+     "bs_min": 7,
+     "bs_mean": 53.9,
+     "bs_max": 65,
+     "fill": 0.989
+    }
+   }
+  },
+  "budget:16384@varlen": {
+   "steps": 12,
+   "sec": 3.8,
+   "sec_per_step": 0.313,
+   "audio_h_per_gpu_h": 1664.9,
+   "samples_per_s": 170.11,
+   "label_tok_per_s": 25564,
+   "row_tok_per_step": 15283,
+   "real_tok_frac": 0.996,
+   "data_audio_h_per_h": 1666.0,
+   "data_sec": 4.7,
+   "num_workers": 16,
+   "samples_per_step": 53.2,
+   "peak_mem_gb": 25.1,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 0,
+   "batch_max_tokens": 16384,
+   "attn": "vapasr_varlen",
+   "batches": {
+    "ko": {
+     "mode": "padded",
+     "batches": 422,
+     "per_rank": 422,
+     "max_tokens": 16384,
+     "bs_min": 7,
+     "bs_mean": 53.9,
+     "bs_max": 65,
+     "fill": 0.989
+    }
+   }
+  },
+  "pack:16384@varlen": {
+   "steps": 12,
+   "sec": 3.7,
+   "sec_per_step": 0.309,
+   "audio_h_per_gpu_h": 1688.1,
+   "samples_per_s": 172.53,
+   "label_tok_per_s": 25937,
+   "row_tok_per_step": 15218,
+   "real_tok_frac": 1.0,
+   "data_audio_h_per_h": 1656.4,
+   "data_sec": 4.7,
+   "num_workers": 16,
+   "samples_per_step": 53.2,
+   "peak_mem_gb": 25.1,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 16384,
+   "batch_max_tokens": 0,
+   "attn": "vapasr_varlen",
+   "batches": {
+    "ko": {
+     "mode": "packed",
+     "batches": 421,
+     "per_rank": 421,
+     "max_tokens": 16384,
+     "bs_min": 30,
+     "bs_mean": 54.0,
+     "bs_max": 65,
+     "fill": 0.991
+    }
+   }
+  },
+  "budget:32768@varlen": {
+   "steps": 12,
+   "sec": 7.4,
+   "sec_per_step": 0.613,
+   "audio_h_per_gpu_h": 1694.9,
+   "samples_per_s": 184.04,
+   "label_tok_per_s": 26065,
+   "row_tok_per_step": 30601,
+   "real_tok_frac": 0.995,
+   "data_audio_h_per_h": 1394.7,
+   "data_sec": 11.2,
+   "num_workers": 16,
+   "samples_per_step": 112.8,
+   "peak_mem_gb": 40.7,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 0,
+   "batch_max_tokens": 32768,
+   "attn": "vapasr_varlen",
+   "batches": {
+    "ko": {
+     "mode": "padded",
+     "batches": 210,
+     "per_rank": 210,
+     "max_tokens": 32768,
+     "bs_min": 50,
+     "bs_mean": 108.3,
+     "bs_max": 129,
+     "fill": 0.995
+    }
+   }
+  },
+  "pack:32768@varlen": {
+   "steps": 12,
+   "sec": 6.5,
+   "sec_per_step": 0.542,
+   "audio_h_per_gpu_h": 1921.0,
+   "samples_per_s": 208.57,
+   "label_tok_per_s": 29546,
+   "row_tok_per_step": 30502,
+   "real_tok_frac": 1.0,
+   "data_audio_h_per_h": 2805.6,
+   "data_sec": 5.6,
+   "num_workers": 16,
+   "samples_per_step": 113.0,
+   "peak_mem_gb": 40.7,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 32768,
+   "batch_max_tokens": 0,
+   "attn": "vapasr_varlen",
+   "batches": {
+    "ko": {
+     "mode": "packed",
+     "batches": 210,
+     "per_rank": 210,
+     "max_tokens": 32768,
+     "bs_min": 31,
+     "bs_mean": 108.3,
+     "bs_max": 130,
+     "fill": 0.993
+    }
+   }
+  }
+ }
+}

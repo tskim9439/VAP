@@ -11,13 +11,21 @@ starts with prefix tokens labelled -100, so no target crosses from one sample in
            one packed row per batch, so memory is set by the budget, not by the longest sample × batch size.
            padded=True is the non-packing variant (n × longest ≤ budget) for the normal padded collate.
 
-When packing pays: the thinker attention over a packed row is only cheap with a varlen kernel (flash_attention_2 cu_seqlens). With sdpa
-the packed 4D mask makes attention O(N_row²) (mostly masked), and flex_attention's packed backward is wrong on torch 2.9 / transformers
-4.57 (tests/test_packing.py, speedup.py). Measured on H200 (semcommit KO main, 2026-09-27): length-bucketed padded batches already had
-~5 % padding, and packing at 16 k tokens was 2.6× slower than padded bs 16 — use --batch-max-tokens (padded dynamic batch) instead.
+When packing pays: the thinker attention over a packed row is only cheap with a varlen kernel. With sdpa the packed 4D mask makes
+attention O(N_row²) (mostly masked): thinker fwd+bwd alone 2.34 s packed vs 0.25 s padded for a 15.5 k-token KO-like batch (H200,
+2026-09-29), i.e. almost all of the 2.36 s/step of the end-to-end pack:16384 sdpa run (2.6× slower than padded bs 16).
+flex_attention's packed backward is wrong on torch 2.9 / transformers 4.57 (tests/test_packing.py, speedup.py). With --attn-impl
+varlen (torch's bundled FlashAttention-2 varlen, vapasr/hf/varlen_attention.py) attention costs Σ nᵢ² and pad tokens disappear;
+padded batches are then unpadded inside the model, so packing and padded + varlen do the same thinker work — they differ only in the
+sampler rule (Σ ≤ budget vs n × longest ≤ budget) and the encoder batch size. Long / mixed-length sequences (EN long streams, Phase 2
+windows) need varlen (thinker 3–5× faster than padded sdpa). KO main end to end (~283 tokens, 0.4 % padding, H200 2026-09-29):
+budget:16384 sdpa 0.39–0.42 s/step → budget:16384@varlen 0.31–0.32 → pack:16384@varlen 0.31 (+22–35 % audio h/GPU h; with 0.4 %
+padding the gain presumably comes from sdpa's masked-kernel fallback), and pack:32768@varlen 1,900 audio h/GPU h (+36 % over
+budget:32768 sdpa) — experiments/train_speed_bench.py, raw/sources/experiments/2026-09-29-train-speed-bench-varlen-mxc.
   collate  packed(collate_fn): run the normal padded collate, then pack_batch() → ids/labels/... (1, N), position_ids (1, N),
            chunk_of as a global index into the flattened encoder output (B·Kmax), mask dropped.
-  model    VapAsrForStreamingASR.forward(position_ids=...) takes the packed path (see modeling_vapasr.py).
+  model    VapAsrForStreamingASR.forward(position_ids=...) takes the packed path (see modeling_vapasr.py); under varlen it turns
+           position_ids into cu_seqlens (varlen_attention.packed_kwargs) so no layer needs a mask.
 """
 import random
 from typing import Callable, Optional

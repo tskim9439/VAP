@@ -1,0 +1,216 @@
+{
+ "args": {
+  "init": "/soundai/Model/VAPASR/hf-approved-qwen-v1-e10-n2/checkpoint-35000",
+  "nemotron_dir": "/soundai/Model/nemotron-3.5-asr-streaming-0.6b",
+  "train_words": [
+   "@/soundai/users/tskim/VAPKT-data/bench/speedup-20260927/main-words.list"
+  ],
+  "train_labels": [
+   "@/soundai/users/tskim/VAPKT-data/bench/speedup-20260927/main-labels.list"
+  ],
+  "configs": "pack:32768@varlen,budget:16384@varlen,budget:16384,pack:16384@varlen,budget:32768,pack:16384",
+  "steps": 24,
+  "warmup": 4,
+  "bs_en": 6,
+  "bs_ko": 16,
+  "pack_max_bs": 256,
+  "max_items": 0,
+  "num_workers": 16,
+  "gpu": "6",
+  "out": "/soundai/users/tskim/VAPKT-data/bench/speedup-20260927/bench-varlen-20260929.rev.json"
+ },
+ "results": {
+  "pack:32768@varlen": {
+   "steps": 24,
+   "sec": 13.3,
+   "sec_per_step": 0.554,
+   "audio_h_per_gpu_h": 1900.8,
+   "samples_per_s": 191.95,
+   "label_tok_per_s": 29014,
+   "row_tok_per_step": 30621,
+   "real_tok_frac": 1.0,
+   "data_audio_h_per_h": 3030.0,
+   "data_sec": 9.7,
+   "num_workers": 16,
+   "samples_per_step": 106.3,
+   "peak_mem_gb": 40.9,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 32768,
+   "batch_max_tokens": 0,
+   "attn": "vapasr_varlen",
+   "batches": {
+    "ko": {
+     "mode": "packed",
+     "batches": 210,
+     "per_rank": 210,
+     "max_tokens": 32768,
+     "bs_min": 31,
+     "bs_mean": 108.3,
+     "bs_max": 130,
+     "fill": 0.993
+    }
+   }
+  },
+  "budget:16384@varlen": {
+   "steps": 24,
+   "sec": 7.7,
+   "sec_per_step": 0.321,
+   "audio_h_per_gpu_h": 1621.1,
+   "samples_per_s": 164.23,
+   "label_tok_per_s": 24887,
+   "row_tok_per_step": 15275,
+   "real_tok_frac": 0.996,
+   "data_audio_h_per_h": 2462.5,
+   "data_sec": 5.9,
+   "num_workers": 16,
+   "samples_per_step": 52.8,
+   "peak_mem_gb": 25.1,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 0,
+   "batch_max_tokens": 16384,
+   "attn": "vapasr_varlen",
+   "batches": {
+    "ko": {
+     "mode": "padded",
+     "batches": 422,
+     "per_rank": 422,
+     "max_tokens": 16384,
+     "bs_min": 7,
+     "bs_mean": 53.9,
+     "bs_max": 65,
+     "fill": 0.989
+    }
+   }
+  },
+  "budget:16384": {
+   "steps": 24,
+   "sec": 9.4,
+   "sec_per_step": 0.392,
+   "audio_h_per_gpu_h": 1330.5,
+   "samples_per_s": 134.79,
+   "label_tok_per_s": 20427,
+   "row_tok_per_step": 15275,
+   "real_tok_frac": 0.996,
+   "data_audio_h_per_h": 2284.9,
+   "data_sec": 6.4,
+   "num_workers": 16,
+   "samples_per_step": 52.8,
+   "peak_mem_gb": 25.1,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 0,
+   "batch_max_tokens": 16384,
+   "attn": "sdpa",
+   "batches": {
+    "ko": {
+     "mode": "padded",
+     "batches": 422,
+     "per_rank": 422,
+     "max_tokens": 16384,
+     "bs_min": 7,
+     "bs_mean": 53.9,
+     "bs_max": 65,
+     "fill": 0.989
+    }
+   }
+  },
+  "pack:16384@varlen": {
+   "steps": 24,
+   "sec": 7.3,
+   "sec_per_step": 0.305,
+   "audio_h_per_gpu_h": 1710.5,
+   "samples_per_s": 173.31,
+   "label_tok_per_s": 26261,
+   "row_tok_per_step": 15218,
+   "real_tok_frac": 1.0,
+   "data_audio_h_per_h": 2648.9,
+   "data_sec": 5.5,
+   "num_workers": 16,
+   "samples_per_step": 52.8,
+   "peak_mem_gb": 25.1,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 16384,
+   "batch_max_tokens": 0,
+   "attn": "vapasr_varlen",
+   "batches": {
+    "ko": {
+     "mode": "packed",
+     "batches": 421,
+     "per_rank": 421,
+     "max_tokens": 16384,
+     "bs_min": 30,
+     "bs_mean": 54.0,
+     "bs_max": 65,
+     "fill": 0.991
+    }
+   }
+  },
+  "budget:32768": {
+   "steps": 24,
+   "sec": 18.0,
+   "sec_per_step": 0.75,
+   "audio_h_per_gpu_h": 1399.7,
+   "samples_per_s": 141.5,
+   "label_tok_per_s": 21364,
+   "row_tok_per_step": 30723,
+   "real_tok_frac": 0.994,
+   "data_audio_h_per_h": 3313.2,
+   "data_sec": 8.9,
+   "num_workers": 16,
+   "samples_per_step": 106.1,
+   "peak_mem_gb": 40.8,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 0,
+   "batch_max_tokens": 32768,
+   "attn": "sdpa",
+   "batches": {
+    "ko": {
+     "mode": "padded",
+     "batches": 210,
+     "per_rank": 210,
+     "max_tokens": 32768,
+     "bs_min": 50,
+     "bs_mean": 108.3,
+     "bs_max": 129,
+     "fill": 0.995
+    }
+   }
+  },
+  "pack:16384": {
+   "steps": 24,
+   "sec": 56.7,
+   "sec_per_step": 2.361,
+   "audio_h_per_gpu_h": 220.9,
+   "samples_per_s": 22.38,
+   "label_tok_per_s": 3391,
+   "row_tok_per_step": 15218,
+   "real_tok_frac": 1.0,
+   "data_audio_h_per_h": 2357.6,
+   "data_sec": 6.2,
+   "num_workers": 16,
+   "samples_per_step": 52.8,
+   "peak_mem_gb": 25.3,
+   "liger": true,
+   "fused_adamw": true,
+   "pack_max_tokens": 16384,
+   "batch_max_tokens": 0,
+   "attn": "sdpa",
+   "batches": {
+    "ko": {
+     "mode": "packed",
+     "batches": 421,
+     "per_rank": 421,
+     "max_tokens": 16384,
+     "bs_min": 30,
+     "bs_mean": 54.0,
+     "bs_max": 65,
+     "fill": 0.991
+    }
+   }
+  }
+ }
+}

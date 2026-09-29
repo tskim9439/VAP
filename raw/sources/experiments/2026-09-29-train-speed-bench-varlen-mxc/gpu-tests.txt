@@ -1,0 +1,12 @@
+varlen-20260929-pytest.log:.kernel vs fp32 reference (out, dq, dk, dv): [0.00192, 0.00251, 0.00308, 0.00291]
+varlen-20260929-pytest.log:bf16 relative error vs padded sdpa: {'packed_sdpa': {'loss': 7.984169627196765e-08, 'grads': [0.00212, 0.00026, 0.00311]}, 'packed_varlen': {'loss': 0.0, 'grads': [0.00424, 0.00029, 0.00454]}, 'padded_varlen': {'loss': 0.0, 'grads': [0.00424, 0.00029, 0.00454]}}
+varlen-20260929-pytest.log:decode logits relative error vs fp32 eager: {'sdpa': [0.00288, 0.00274, 0.00294], 'varlen': [0.00288, 0.00274, 0.00294], 'varlen_vs_sdpa': [0.0, 0.0, 0.0]}
+varlen-20260929-pytest.log:13 passed, 1 warning in 92.54s (0:01:32)
+varlen-20260929-pytest2.log:.kernel vs fp32 reference (out, dq, dk, dv): [0.00192, 0.00251, 0.00308, 0.00291]
+varlen-20260929-pytest2.log:bf16 relative error vs padded sdpa: {'packed_sdpa': {'loss': 7.984169627196765e-08, 'grads': [0.00212, 0.00026, 0.00311]}, 'packed_varlen': {'loss': 0.0, 'grads': [0.00424, 0.00029, 0.00454]}, 'padded_varlen': {'loss': 0.0, 'grads': [0.00424, 0.00029, 0.00454]}}
+varlen-20260929-pytest2.log:decode logits relative error vs fp32 eager: {'sdpa': [0.00897, 0.01144, 0.00847], 'varlen': [0.00897, 0.01144, 0.00847], 'top_left': [0.00897, 0.99792, 1.05174], 'varlen_vs_sdpa': [0.0, 0.0, 0.0]}
+varlen-20260929-pytest2.log:13 passed, 1 warning in 70.00s (0:01:10)
+review-20260929-run.log (리뷰 반영 후, GPU 1, 14:03 KST — GC 재계산·행별 구간·거부 테스트 3 개 추가):kernel vs fp32 reference (out, dq, dk, dv): [0.00192, 0.00251, 0.00308, 0.00291]
+review-20260929-run.log:bf16 relative error vs padded sdpa: {'packed_sdpa': {'loss': 7.984169627196765e-08, 'grads': [0.00212, 0.00026, 0.00311]}, 'packed_varlen': {'loss': 0.0, 'grads': [0.00424, 0.00029, 0.00454]}, 'padded_varlen': {'loss': 0.0, 'grads': [0.00424, 0.00029, 0.00454]}}
+review-20260929-run.log:decode logits relative error vs fp32 eager: {'sdpa': [0.00897, 0.01144, 0.00847], 'varlen': [0.00897, 0.01144, 0.00847], 'top_left': [0.00897, 0.99792, 1.05174], 'varlen_vs_sdpa': [0.0, 0.0, 0.0]}
+review-20260929-run.log:16 passed, 1 warning in 192.32s (0:03:12)

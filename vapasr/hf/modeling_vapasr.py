@@ -12,6 +12,7 @@ from transformers import PreTrainedModel
 from transformers.utils import ModelOutput
 from .configuration_vapasr import VapAsrConfig
 from .p2_losses import soft_ce, activity_bce, gather_audio_targets
+from .varlen_attention import is_varlen, packed_kwargs
 
 class Adapter(nn.Module):                                   # uslm/model.Adapter 와 동일 구조(키 이름 net.* 유지 → 기존 ckpt 호환)
     def __init__(self, d_in=1024, d_out=1024, h=2048):
@@ -93,16 +94,21 @@ class VapAsrForStreamingASR(PreTrainedModel):
         pos_weight (B,L) 은 labels 와 같은 인덱싱의 위치별 가중 덮어쓰기(0 = 기본, >0 = 그 값; hard negative 결정 위치). 덮어쓰기는 SEM/TURN 가중보다 우선하므로
         결정 위치가 이벤트 타깃에 떨어지지 않게 하는 것은 데이터셋 책임이다.
         position_ids (1, N) 가 있으면 packing 경로(vapasr/hf/packing.py): thinker 입력은 여러 샘플을 이은 한 줄, 샘플마다 0 부터 다시 세는 위치,
-        attention_mask 없음 → transformers 가 블록 대각 causal mask 를 만든다. 인코더 출력은 (1, B·Kmax) 로 펴고 activity 도 같이 편다."""
+        attention_mask 없음 → transformers 가 블록 대각 causal mask 를 만든다. 인코더 출력은 (1, B·Kmax) 로 펴고 activity 도 같이 편다.
+        thinker 가 varlen attention(vapasr/hf/varlen_attention.py, --attn-impl varlen)이면: packing 은 position_ids 로 cu_seqlens 를 만들어 넘기고(Σnᵢ² attention),
+        패딩 배치는 모델 안에서 한 줄로 unpad 해 같은 커널로 돌린 뒤 (B, L) 로 되돌린다(_thinker_unpadded — pad 토큰은 어느 층에서도 계산하지 않는다)."""
         if wav is not None: feats = self.encode(wav, wav_len, K)
         nw = self.config.next_weight if next_weight is None else float(next_weight)
-        packed = position_ids is not None
+        packed = position_ids is not None; varlen = is_varlen(self.thinker)
         if packed:
+            fa = packed_kwargs(position_ids=position_ids) if varlen else {}
             h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of, packed=True), attention_mask=None, position_ids=position_ids,
-                                   use_cache=False).last_hidden_state
+                                   use_cache=False, **fa).last_hidden_state
             if activity is not None:
                 activity = activity.reshape(1, -1, activity.shape[-1])
                 activity_mask = activity_mask.reshape(1, -1) if activity_mask is not None else None
+        elif varlen and mask is not None:
+            h = self._thinker_unpadded(self.build(feats, ids, is_audio, chunk_of), mask.bool())
         else:
             h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of), attention_mask=mask).last_hidden_state
         tgt = labels[:, 1:]; sel = tgt != -100; t = tgt[sel]
@@ -131,6 +137,16 @@ class VapAsrForStreamingASR(PreTrainedModel):
                            loss_sem=st["loss_sem"] if st.get("n_sem") else None, top1_sem=st["top1_sem"] if st.get("n_sem") else None, n_sem=st.get("n_sem"), sem_fp=st.get("sem_fp"),
                            loss_turn=st["loss_turn"] if st.get("n_turn") else None, n_turn=st.get("n_turn"))
         return out if return_dict else (loss,)
+
+    def _thinker_unpadded(self, E, sel):
+        """varlen: 패딩 배치 E (B,L,D) 의 유효 토큰(sel (B,L) bool)만 한 줄 packed 로 thinker 에 넣고(cu_seqlens = 행별 유효 토큰 수)
+        결과를 (B,L,D) 로 되돌린다 — packing.pack_batch 와 같은 계산. pad 위치 hidden 은 0 (손실·통계는 라벨/오디오 위치, 즉 유효 토큰만 읽는다).
+        위치는 원래 열 인덱스: 패딩 sdpa 경로(가려진 토큰은 보이지 않지만 위치는 유지)와 같다 — 오른쪽 패딩은 0 부터 세는 packing 과 같고,
+        왼쪽 패딩·중간이 빈 마스크도 RoPE 상대 거리가 sdpa 와 같다(0 부터 다시 세면 구멍 양쪽 거리가 줄어든다)."""
+        pos = torch.arange(sel.shape[1], device=sel.device).expand_as(sel)[sel][None]
+        hp = self.thinker.model(inputs_embeds=E[sel][None], attention_mask=None, position_ids=pos, use_cache=False,
+                                **packed_kwargs(lengths=sel.sum(1))).last_hidden_state[0]
+        return hp.new_zeros(*sel.shape, hp.shape[-1]).index_put((sel,), hp)
 
     def activity_logits(self, h_audio: torch.Tensor) -> torch.Tensor:
         """Phase 2 lane 활동 logits (…, R) — 추론 parser(lane_state) 가 닫힘 판정에 쓴다."""
