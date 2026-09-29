@@ -86,13 +86,15 @@ class VapAsrForStreamingASR(PreTrainedModel):
         return torch.where(is_audio[..., None], g, E)
 
     def forward(self, ids=None, is_audio=None, chunk_of=None, labels=None, mask=None, wav=None, wav_len=None, K=None, feats=None, next_weight: Optional[float] = None, return_dict: bool = True,
-                labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, position_ids=None, **_):
+                labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, position_ids=None, sem_mask=None, **_):
         """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight.
         Phase 2(config.lanes>0): labels_alt/soft_w 가 있으면 EOT 후보 위치의 label 을 (labels: w, labels_alt: 1−w) 두 점 분포로 학습(정본 §5.2),
         activity (B,K,R)·activity_mask (B,K) 가 있으면 audio 위치 hidden 으로 lane 활동 BCE 를 더한다(정본 §6). EOT 위치 가중 config.eot_weight.
         semantic commit(config.sem_registry 가 있으면, lanes 와 무관): <SEM_END> 타깃 가중 config.sem_weight, mono 턴 종료(<EOT>; v0.2 는 <TURN_END>)를 함께 학습하면 turn_weight,
         pos_weight (B,L) 은 labels 와 같은 인덱싱의 위치별 가중 덮어쓰기(0 = 기본, >0 = 그 값; hard negative 결정 위치). 덮어쓰기는 SEM/TURN 가중보다 우선하므로
         결정 위치가 이벤트 타깃에 떨어지지 않게 하는 것은 데이터셋 책임이다.
+        sem_mask (B,L) bool(labels 와 같은 인덱싱; packing 이면 (1,N)): True 인 위치는 softmax 에서 <SEM_END>·턴 종료 logit 을 −∞ 로 뺀다 — SEM 라벨이 없는 ASR 행
+        (SemCommitDataset sem_free)이 텍스트·NEXT 는 그대로 배우면서 'SEM 아님' 음성 신호는 주지 않게. 그 위치에 이벤트 타깃이 있으면 AssertionError. sem_fp 통계는 그 위치를 분모에 넣는다.
         position_ids (1, N) 가 있으면 packing 경로(vapasr/hf/packing.py): thinker 입력은 여러 샘플을 이은 한 줄, 샘플마다 0 부터 다시 세는 위치,
         attention_mask 없음 → transformers 가 블록 대각 causal mask 를 만든다. 인코더 출력은 (1, B·Kmax) 로 펴고 activity 도 같이 편다.
         thinker 가 varlen attention(vapasr/hf/varlen_attention.py, --attn-impl varlen)이면: packing 은 position_ids 로 cu_seqlens 를 만들어 넘기고(Σnᵢ² attention),
@@ -124,6 +126,12 @@ class VapAsrForStreamingASR(PreTrainedModel):
             from ..data.semcommit_tokens import SEM_REGISTRY, LEGACY_TURN_ID
             sem_id = turn_id = -1
             assert not torch.isin(t, torch.tensor(list(SEM_REGISTRY.values()) + [LEGACY_TURN_ID], device=t.device)).any(), "labels 에 <SEM_END> 가 있는데 config.sem_registry 가 비어 있음 — model.add_semantic_tokens(tok) 먼저"
+        if sem_mask is not None and sem_id >= 0:                                     # SEM 중립(라벨 없는 ASR 행): 그 위치 softmax 에서 <SEM_END>·턴 종료를 뺀다 → 'SEM 아님' 신호가 없다
+            sm = sem_mask[:, 1:][sel].bool()
+            ev_ids = [i for i in (sem_id, turn_id) if i >= 0]
+            assert not (sm & torch.isin(t, torch.tensor(ev_ids, device=t.device))).any(), "sem_mask 위치에 <SEM_END>/턴 종료 타깃 — SEM 중립 행에 이벤트 라벨이 있으면 안 된다"
+            col = torch.zeros(logits.shape[1], dtype=torch.bool, device=logits.device); col[ev_ids] = True
+            logits = logits.masked_fill(sm[:, None] & col[None, :], float("-inf"))
         evt = {i: float(getattr(self.config, k, 1.0)) for i, k in ((sem_id, "sem_weight"), (turn_id, "turn_weight")) if i >= 0} or None
         pw = pos_weight[:, 1:][sel] if pos_weight is not None else None
         loss, st = soft_ce(logits, t, alt, w, self.next_audio, nw, eot_id=eot_id, eot_weight=self.config.eot_weight if eot_id >= 0 else 1.0, tag_ids=tag_ids, tag_weight=getattr(self.config, "tag_weight", 1.0),

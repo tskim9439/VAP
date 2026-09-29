@@ -34,7 +34,7 @@ import numpy as np
 import torch
 from torch.utils.data import Sampler
 
-ROW_KEYS = ("ids", "is_audio", "labels", "pos_weight", "labels_alt", "soft_w_full")   # (B, L) tensors concatenated along L
+ROW_KEYS = ("ids", "is_audio", "labels", "pos_weight", "labels_alt", "soft_w_full", "sem_mask")   # (B, L) tensors concatenated along L
 
 
 def est_lens(ds) -> np.ndarray:

@@ -14,11 +14,18 @@
 #   --delays LIST      학습 δ(지연 청크) 목록, 기본 2,3,4,6(hf-E2 와 같음). 예: 2,3,4,6,8 — <DELAY_1..8> 은 어휘에 있고, E2 가 배우지 않은 δ 는
 #                      이 학습에서 처음 배운다. 샘플마다 목록에서 고르게 뽑고, 꼬리 패딩은 가장 큰 δ 에 맞춘다.
 #   --extra "..."      semcommit_train.py 에 그대로 붙일 인자
+#   ASR 정확도 옵션(2026-09-29, 기본은 모두 끔 — 켜면 지문이 달라져 새 --run 이 필요하다):
+#   --train-encoder    인코더도 학습(--lr-encoder 1e-5, E2 레시피). 활성화 메모리가 커서 --batch-tokens 를 함께 줄인다(스모크 실측 참고)
+#   --spec-augment X   off | light(주파수 2×27·시간 5×0.05) | nemo(2×27·10×0.05) | Fm,Fw,Tm,Tw — 입력 log-mel 마스크(학습 중에만)
+#   --speed-perturb L  배율 목록, 예 0.9,1.0,1.1 — 오디오 리샘플 + 이벤트 시각 1/배율
+#   --asr-list FILE    SEM 중립 ASR words 목록(semcommit_asr_words_list.py) → --asr-words @FILE,  --asr-max-ratio R(셋마다 ≤ R × 라벨 항목)
+#   --varlen           --attn-impl varlen(torch FA2 varlen; 처리량 +22–36 %, 4430c94)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 LABELS=/soundai/users/tskim/VAPKT-data/data/semcommit-work/labels/speechlm-all19-v035
 run=""; snap=""; init=/soundai/Model/VAPASR/hf-E2/final; nodes=1; time_limit=24:00:00; partition=apex; job_name=SA_SFT_FullDuplex
 batch_tokens=32768; max_bs=256; epochs=2; lr=6e-5; warmup=50; save_every=200; max_steps=0; extra=""; delays=2,3,4,6; after=""
+train_encoder=0; spec_augment=off; speed_perturb=""; asr_list=""; asr_max_ratio=""; varlen=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --run) run=$2; shift 2 ;;            --snap) snap=$2; shift 2 ;;          --init) init=$2; shift 2 ;;
@@ -27,6 +34,8 @@ while [[ $# -gt 0 ]]; do
     --epochs) epochs=$2; shift 2 ;;      --lr) lr=$2; shift 2 ;;              --warmup) warmup=$2; shift 2 ;;
     --save-every) save_every=$2; shift 2 ;; --max-steps) max_steps=$2; shift 2 ;; --extra) extra=$2; shift 2 ;;
     --delays) delays=$2; shift 2 ;;      --after) after=$2; shift 2 ;;
+    --train-encoder) train_encoder=1; shift ;;  --spec-augment) spec_augment=$2; shift 2 ;;  --speed-perturb) speed_perturb=$2; shift 2 ;;
+    --asr-list) asr_list=$2; shift 2 ;;  --asr-max-ratio) asr_max_ratio=$2; shift 2 ;;  --varlen) varlen=1; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -34,13 +43,23 @@ done
 [[ $nodes =~ ^[1-9][0-9]*$ ]] || { echo "--nodes 는 양의 정수" >&2; exit 2; }
 [[ -z $after || $after =~ ^[0-9]+$ ]] || { echo "--after 는 job id" >&2; exit 2; }
 [[ $delays =~ ^[1-8](,[1-8])*$ ]] || { echo "--delays 는 1–8 의 쉼표 목록(<DELAY_1..8>)" >&2; exit 2; }
+[[ $spec_augment =~ ^(off|light|nemo|[0-9]+,[0-9]+,[0-9]+,[0-9.]+)$ ]] || { echo "--spec-augment 는 off|light|nemo|Fm,Fw,Tm,Tw" >&2; exit 2; }
+[[ -z $speed_perturb || $speed_perturb =~ ^[0-9.]+(,[0-9.]+)*$ ]] || { echo "--speed-perturb 는 배율 쉼표 목록" >&2; exit 2; }
+[[ -z $asr_list || -f $asr_list ]] || { echo "--asr-list 파일 없음: $asr_list" >&2; exit 1; }
 snap=${snap:-$(ls -d "$LABELS"/snapshots/*/ 2>/dev/null | sort | tail -1)}; snap=${snap%/}
 for f in main-words.list main-labels.list short-words.list short-labels.list summary.json; do
   [[ -f $snap/$f ]] || { echo "스냅숏에 없음: $snap/$f" >&2; exit 1; }
 done
 [[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }
 out=/soundai/Model/VAPASR/semcommit-$run
-args="--delays $delays --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --epochs $epochs --lr $lr --warmup $warmup --save-every $save_every --max-steps $max_steps --num-workers 8 $extra"
+args="--delays $delays --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --epochs $epochs --lr $lr --warmup $warmup --save-every $save_every --max-steps $max_steps --num-workers 8"
+(( train_encoder )) && args+=" --train-encoder --lr-encoder 1e-5"
+[[ $spec_augment != off ]] && args+=" --spec-augment $spec_augment"
+[[ -n $speed_perturb ]] && args+=" --speed-perturb $speed_perturb"
+[[ -n $asr_list ]] && args+=" --asr-words @$asr_list" && [[ -n $asr_max_ratio ]] && args+=" --asr-max-ratio $asr_max_ratio"
+(( varlen )) && args+=" --attn-impl varlen"
+args+=" $extra"
+echo "ASR 옵션: 인코더 $([[ $train_encoder = 1 ]] && echo 학습 || echo 동결) · SpecAugment $spec_augment · 속도 ${speed_perturb:-끔} · ASR 목록 ${asr_list:-없음} · varlen $varlen" >&2
 echo "δ $delays · 스냅숏 $snap ($(python3 -c "import json,sys;s=json.load(open(sys.argv[1]));print(s['parts'],'파트')" "$snap/summary.json")) · init $init · 산출물 $out · $nodes 노드 × 8 GPU" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} --nodes="$nodes" --time="$time_limit" \

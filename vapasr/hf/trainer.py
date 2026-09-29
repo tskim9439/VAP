@@ -73,7 +73,7 @@ class VapAsrTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         lang = inputs.get("lang", ["English"])[0]
         nw = self.model.config.next_weight_ko if (lang == "Korean" and self.model.config.next_weight_ko is not None) else self.model.config.next_weight
-        x = {k: inputs[k] for k in ("wav", "wav_len", "K", "feats", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids") if k in inputs}   # pos_weight: semantic commit hard negative 위치 가중, position_ids: packing
+        x = {k: inputs[k] for k in ("wav", "wav_len", "K", "feats", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids", "sem_mask") if k in inputs}   # pos_weight: semantic commit hard negative 위치 가중, position_ids: packing, sem_mask: SEM 중립(라벨 없는 ASR) 행
         out = model(**x, next_weight=nw)
         for k in ("loss_next", "loss_text", "top1_text"): self._parts[k] = self._parts.get(k, 0.0) + float(getattr(out, k))
         for k in SEM_LOG_KEYS:                                                                          # semantic commit 통계 — 배치에 없으면 None → 그 배치는 평균에서 뺀다(키별 개수)

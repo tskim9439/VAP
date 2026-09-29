@@ -11,6 +11,8 @@ from it (apply_en_pnc, word match ≥ --pnc-min-ratio); LibriSpeech (no LibriSpe
 Streams are ordered by sha1(seed:id) inside a set (a partial run samples the whole set) and cut into parts of ≈ --part-hours.
 Output: <out>/parts/en-<set>-NNNNNN/{words.jsonl, words.jsonl.ok} and <out>/en-parts/<set>.tsv (part, source, rows, hours),
 <out>/en-parts/<set>.stats.json. Never overwrites: an existing part directory with words.jsonl is refused.
+--lang / --part-prefix (2026-09-29): other languages and a separate root for SEM-neutral ASR words (semcommit_train --asr-words), e.g. E2's Korean
+corpora: --lang Korean --part-prefix asr --min-s 0.5 --max-s 60 --out .../semcommit-work/asr-words-v1 (defaults keep the English labeling layout).
 
 --regroup (2026-09-28): the streams the default mode leaves out, turned into 8–30 s main-pool streams → parts en-rg-<set>-NNNNNN:
   split   streams longer than --max-s made of several utterances (LibriSpeech: 581 h, 2.3 utterances each) are cut at utterance
@@ -178,8 +180,8 @@ def write_parts(a, prefix, name, rows):
         (d / "words.jsonl.ok").write_text(json.dumps(dict(schema="semcommit-en-part-words-v1", part=part, source=name, rows=len(prows),
                                                         hours=round(h, 4), words_sha256=sha, seed=a.seed)) + "\n")
         table.append((part, name, len(prows), h))
-    (out_root / "en-parts").mkdir(parents=True, exist_ok=True)
-    (out_root / "en-parts" / f"{prefix[3:]}.tsv").write_text("".join(f"{p}\t{s}\t{n}\t{h:.4f}\n" for p, s, n, h in table))
+    (out_root / f"{a.part_prefix}-parts").mkdir(parents=True, exist_ok=True)
+    (out_root / f"{a.part_prefix}-parts" / f"{prefix[len(a.part_prefix) + 1:]}.tsv").write_text("".join(f"{p}\t{s}\t{n}\t{h:.4f}\n" for p, s, n, h in table))
     return table, parts
 
 
@@ -189,7 +191,7 @@ def build_set(a, tok, name):
     with open(Path(a.manifests) / name / "streams.jsonl", encoding="utf-8") as f:
         for line in f:
             r = json.loads(line)
-            if r.get("lang") == "English" and a.min_s <= float(r["duration_s"]) <= a.max_s:
+            if (a.lang == "any" or r.get("lang") == a.lang) and a.min_s <= float(r["duration_s"]) <= a.max_s:
                 streams[r["id"]] = r
     counts, drops, rows = Counter(streams_in_range=len(streams)), Counter(), []
     for it in iter_items(Path(a.align_root) / name / "_items-online-v2.json.gz"):
@@ -209,10 +211,10 @@ def build_set(a, tok, name):
         counts["tagged"] += any(w.get("tags") for w in out["words"])
         counts["pnc_text"] += "pnc_text" in out
         rows.append(out)
-    table, parts = write_parts(a, f"en-{name}", name, rows)
+    table, parts = write_parts(a, f"{a.part_prefix}-{name}", name, rows)
     stats = dict(set=name, counts=dict(counts), dropped=dict(drops), kept=len(rows), hours=round(sum(r["duration_s"] for r in rows) / 3600, 2),
                  parts=len(parts), part_hours=a.part_hours, min_s=a.min_s, max_s=a.max_s, seed=a.seed, seconds=round(time.time() - t0, 1))
-    (Path(a.out) / "en-parts" / f"{name}.stats.json").write_text(json.dumps(stats, ensure_ascii=False, indent=1))
+    (Path(a.out) / f"{a.part_prefix}-parts" / f"{name}.stats.json").write_text(json.dumps(stats, ensure_ascii=False, indent=1))
     print(json.dumps(stats, ensure_ascii=False), flush=True)
     return stats
 
@@ -224,7 +226,7 @@ def build_regroup(a, tok, hf_tok, name):
         for line in f:
             r = json.loads(line)
             d = float(r["duration_s"])
-            if r.get("lang") == "English" and (d < a.min_s or (d > a.max_s and len(r["segments"]) > 1)):
+            if (a.lang == "any" or r.get("lang") == a.lang) and (d < a.min_s or (d > a.max_s and len(r["segments"]) > 1)):
                 streams[r["id"]] = r
     counts, drops, built = Counter(streams_selected=len(streams)), Counter(), {}
     for it in iter_items(Path(a.align_root) / name / "_items-online-v2.json.gz"):
@@ -283,11 +285,11 @@ def build_regroup(a, tok, hf_tok, name):
             drops["resplit_mismatch"] += 1
         else:
             good.append(r)
-    table, parts = write_parts(a, f"en-rg-{name}", name, good)
+    table, parts = write_parts(a, f"{a.part_prefix}-rg-{name}", name, good)
     stats = dict(set=name, mode="regroup", counts=dict(counts), dropped=dict(drops), kept=len(good), hours=round(sum(r["duration_s"] for r in good) / 3600, 2),
                  parts=len(parts), part_hours=a.part_hours, min_s=a.min_s, max_s=a.max_s, concat=[a.concat_min, a.concat_max], seed=a.seed,
                  seconds=round(time.time() - t0, 1))
-    (Path(a.out) / "en-parts" / f"rg-{name}.stats.json").write_text(json.dumps(stats, ensure_ascii=False, indent=1))
+    (Path(a.out) / f"{a.part_prefix}-parts" / f"rg-{name}.stats.json").write_text(json.dumps(stats, ensure_ascii=False, indent=1))
     print(json.dumps(stats, ensure_ascii=False), flush=True)
     return stats
 
@@ -298,7 +300,9 @@ def main(argv=None):
     p.add_argument("--align-root", default=None, help="forced-alignment cache root (default <manifests>/align-asr-tn-v1)")
     p.add_argument("--sets", required=True, help="comma list of English manifest sets")
     p.add_argument("--tokenizer", required=True, help="Qwen3-ASR directory (tokenizer.json / vocab.json)")
-    p.add_argument("--out", required=True, help="labels root (parts/ and en-parts/ are written below it)")
+    p.add_argument("--out", required=True, help="labels root (parts/ and <prefix>-parts/ are written below it)")
+    p.add_argument("--lang", default="English", help="manifest row language filter: English (default) | Korean | any")
+    p.add_argument("--part-prefix", default="en", help="part name prefix <prefix>-<set>-NNNNNN and table dir <prefix>-parts (default en)")
     p.add_argument("--part-hours", type=float, default=1.5)
     p.add_argument("--min-s", type=float, default=8.0); p.add_argument("--max-s", type=float, default=30.0)
     p.add_argument("--pnc-min-ratio", type=float, default=0.9); p.add_argument("--seed", type=int, default=0)
