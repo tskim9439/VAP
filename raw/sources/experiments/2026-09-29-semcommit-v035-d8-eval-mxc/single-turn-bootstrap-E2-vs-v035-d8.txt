@@ -1,0 +1,13 @@
+set/δ                            n      E2     new     Δ%p            95% CI     rel  cluster
+kspon-eval_clean/δ2           3000   16.46   13.80   -2.66 [ -3.16,  -2.14]  -16.2%  utt
+kspon-eval_clean/δ4           3000   12.32   12.26   -0.07 [ -0.47,  +0.36]   -0.6%  utt
+kspon-eval_clean/δ6           3000   11.76   12.04   +0.28 [ -0.13,  +0.68]   +2.4%  utt
+kspon-eval_other/δ2           2687   17.87   14.07   -3.81 [ -4.25,  -3.35]  -21.3%  utt
+kspon-eval_other/δ4           2687   12.86   12.26   -0.60 [ -0.96,  -0.23]   -4.7%  utt
+kspon-eval_other/δ6           2687   12.67   12.19   -0.47 [ -0.85,  -0.08]   -3.7%  utt
+librispeech-test-clean/δ2     2620    9.14    7.90   -1.24 [ -1.54,  -0.95]  -13.6%  speaker(40)
+librispeech-test-clean/δ4     2620    5.59    5.05   -0.54 [ -0.74,  -0.36]   -9.7%  speaker(40)
+librispeech-test-clean/δ6     2620    5.19    4.57   -0.62 [ -0.80,  -0.43]  -12.0%  speaker(40)
+librispeech-test-other/δ2     2939   17.37   16.08   -1.29 [ -1.62,  -0.98]   -7.4%  speaker(33)
+librispeech-test-other/δ4     2939   12.89   11.88   -1.01 [ -1.28,  -0.73]   -7.8%  speaker(33)
+librispeech-test-other/δ6     2939   12.34   11.06   -1.28 [ -1.63,  -0.96]  -10.4%  speaker(33)

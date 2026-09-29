@@ -1,0 +1,22 @@
+## [2026-09-29] query | semcommit v035-snap0929-d8 평가 (ASR 전체셋 · 골드 commit · 창 없는 지연)
+
+- Changed:
+  - `wiki/outputs/output-semcommit-v035-d8-eval.md`(신규)
+  - `raw/sources/experiments/2026-09-29-semcommit-v035-d8-eval-mxc/`(신규: 요약 JSON·bootstrap·채점 스크립트·parity)
+  - `wiki/status.md`(2026-09-29 절)
+- Reason:
+  - 학습 job 76601(`semcommit-v035-snap0929-d8`, E2 초기화, 5 epoch)이 끝나 사용자가 평가를 요청했다.
+  - 평가 구성:
+    - ASR: single-turn v1 전체 셋, E2 와 같은 규약으로 비교
+    - commit: 골드 v1 기준(dev/test 절반)
+    - 지연: 커밋 5103556 의 창 없는 지표로 GPU 없이 재채점
+  - mxc `/tmp/sa_tskim-vapasr-env-local` 이 깨져(numpy import 실패) 평가 wrapper 사본을 conda env python 으로 돌렸다. 저장소 스크립트는 바꾸지 않았다.
+  - 정정: 처음 사용자에게 "골드셋 commit 평가"로 보고한 수치는 v0.3.5 교사 라벨 기준(교사 일치도)이었다. 골드 v1 로 다시 채점해 페이지 §3 에 실었다.
+- Next:
+  - 언어별 추론 SEM bias(KO −1~−2, EN +1~+2) 기본값화와 검증
+  - 한국어 긴 발화 조기 확정 유형 분석
+  - 영어 레이블 불균형(보류 중)
+  - 라벨링 재개와 varlen 으로 다음 학습
+  - 2-pass 계획 P0
+  - 사용자 요청: WER/CER 개선 방안 분석
+- By: tskim

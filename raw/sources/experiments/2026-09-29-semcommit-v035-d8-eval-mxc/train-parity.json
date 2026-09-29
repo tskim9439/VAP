@@ -1,0 +1,32 @@
+{
+ "parity": true,
+ "semcommit_config_ok": true,
+ "memory": {
+  "loss": 0.06416,
+  "loss_next": 0.05012,
+  "loss_text": 0.08804,
+  "top1_text": 0.97606,
+  "loss_sem": 0.03796,
+  "top1_sem": 0.98276,
+  "sem_fp": 0.00109
+ },
+ "reloaded": {
+  "loss": 0.06415,
+  "loss_next": 0.05032,
+  "loss_text": 0.08775,
+  "top1_text": 0.97606,
+  "loss_sem": 0.03678,
+  "top1_sem": 1.0,
+  "sem_fp": 0.00109
+ },
+ "missing": [],
+ "extra": [],
+ "shape_mismatch": [],
+ "value_diff": [],
+ "encoder_keys": 638,
+ "encoder_diff": [],
+ "encoder_saved_keys": 638,
+ "tokenizer_reload_ok": true,
+ "tokenizer_reload_error": null,
+ "batch_n_sem": 58
+}

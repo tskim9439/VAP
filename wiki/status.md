@@ -2,13 +2,21 @@
 type: status
 status: active
 created: 2026-09-03
-updated: 2026-09-22
-summary: 승인 2356시간 학습 중이며, 별도 speechlm Arrow에서 중복을 뺀 대화형 ASR P0 후보와 재선별 관문을 확정했다.
+updated: 2026-09-29
+summary: semcommit 첫 본 학습(E2→v0.3.5 라벨 5 epoch) 평가 완료 — ASR 은 E2 대비 개선, commit F1 KO 0.85·EN 0.67–0.74, WER/CER 개선안 분석 중
 ---
 
 # 상태
 
-마지막 갱신: 2026-09-22 (아래 기존 볼트 상태는 2026-09-07의 기록)
+마지막 갱신: 2026-09-29 (아래 기존 볼트 상태는 2026-09-07의 기록)
+
+## 2026-09-29 semcommit 첫 본 학습·평가
+
+- 레시피 v0.3.5 라벨(스냅숏 20260929-0928: EN main 26.3 만 · KO main 39.5 만 · KO short 93.6 만 스트림)로 E2 에서 5 epoch 학습했다(job 76601, apex 2 노드, 약 3.6 h, δ 2·3·4·6·8). 저장·재로드 parity 는 통과했다. → [[output-semcommit-v035-d8-eval]]
+- ASR 전체 셋(single-turn v1, 11,246 발화): E2 대비 12 칸 중 10 칸이 유의하게 개선됐고 악화는 없다. δ4 수치는 test-clean 5.05 · test-other 11.88 · Kspon eval_clean/other 12.26/12.26 % 다. 오프라인 수준과는 아직 차이가 커서 개선 방안을 분석 중이다.
+- commit(골드 v1, δ4): F1 은 KO 짧은/긴 발화 0.85/0.79, EN 낭독/대화체 0.67/0.74 다. 한국어는 너무 자주, 영어는 너무 드물게 확정한다. 언어별 추론 bias 로 보정할 계획이다.
+- 코드: 창 없는 commit 지연 지표(5103556), varlen attention(4430c94, 학습 처리량 +22–36 %), 2-pass 재디코드 계획(2c0eb99). 출력 형식 플래그는 Codex 의 미커밋 short-pool 변경과 같은 헝크에 있어 커밋을 미뤘다.
+- 라벨링은 09-29 11:09 에 멈췄다. 확보량은 EN main 1,337 h · KO main 1,347 h · KO short 1,114 h 이고, 언어별 균형까지 언어당 약 800 h 가 남았다.
 
 ## 2026-09-22 speechlm Arrow ASR 확장 조사
 
