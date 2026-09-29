@@ -20,6 +20,15 @@ Nemotron 특징은 스트림당 1 회 인코드한 뒤, 디코드 설정(행) = 
 보고서는 항상 스트림 jsonl 의 방출에서 현재 labels 로 다시 채점한다(--score-only 는 GPU 없이 재채점만). 재채점 전에 행마다 words 행 지문(words_digest)과
   현재 labels 로 다시 계산한 K' 가 기록과 같은지 확인한다(다르면 다른 오디오로 디코드한 방출 — 멈춘다).
 --oracle: 모델 대신 참조 직렬화를 가설로 — 지표 상한(정밀도·재현율 1, PCR 0) 점검.
+창 없는 지연 지표(정의: vapasr/hf/commit_metrics.py 모듈 docstring '지연 지표') — 설정·언어·세트별 요약과 PR 곡선 점에 추가, 끝에 [latency] 표:
+  commit     : A 경계별 첫 확정 commit 의 지연(emit_time − word_end; coverage·exact_rate·p50/p90/p95/p99/max·τ 별 late_rate/recall_at·excess_chunks(δ 상대)·prefix·B/N)
+  display    : 참조 단어별 표시 지연(짝지은 가설 단어 마지막 토큰)·첫 토큰 지연 — 스트림 jsonl 의 hyp.word_k(가설 단어별 [첫, 마지막] 토큰 청크)를 쓴다
+  after_text : commit 청크 − 앞 가설 단어 마지막 토큰 청크(학습 목표 0; flush 라운드도 원래 번호로 빼고 in_flush 로 따로 셈)
+  --late-thresholds τ… : 늦음 임계값(초, 기본 0.32 0.64 1.0). δ 이상 지연이 [0.08δ, 0.08(δ+1)] 이라 δ 끼리는 excess_chunks·recall_within_chunks 로 비교한다.
+  --tokenizer DIR|none : 옛 스트림 jsonl(hyp.word_k 없음)을 --score-only 로 재채점할 때 word_k 를 방출에서 다시 만들 tokenizer(기본: 디코드 설정의 model).
+                         다시 나눈 가설 단어·이벤트가 저장값과 다르면 멈춘다. oracle 행은 words 에서, tokenizer 를 못 읽거나(어떤 예외든) none 이면
+                         모델 행의 display·after_text 는 missing 으로 센다(commit 지연은 저장된 이벤트만으로 계산).
+labels 후보 after_word 가 단어 범위 [0, n) 밖인 행이 있으면 디코드·재채점 전에 멈춘다(학습 build_semcommit_tokens 의 after_word_range 와 같은 사유).
 
   python experiments/semcommit_eval.py --model /data3/tskim/runs/semcommit-v0/final --words eval.words.jsonl --labels eval.labels.jsonl \\
       --delay 4 --sem-bias -2 -1 0 1 2 --theta 0.2 0.35 0.5 --gpu 0 --max-streams 300 --out /data3/tskim/eval/semcommit-v0/report.json
@@ -31,8 +40,8 @@ from pathlib import Path
 if __name__ == "__main__" and "--gpu" in sys.argv[:-1]:                          # vapasr.hf 가 torch 를 import 하기 전에 GPU 를 고정(s3_train_hf 와 같은 방식)
     os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[sys.argv.index("--gpu") + 1]
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from vapasr.hf.commit_metrics import (CHUNK_S, EARLY, EOT_ID, HANGOVER_S, LATES, LEGACY_TURN_END_ID, SEM_END_ID, SEM_SPECIALS, aggregate, events_from_emits,
-                                      eval_audio_len, oracle_hyp, pr_point, score_stream, split_hyp, turn_flag)
+from vapasr.hf.commit_metrics import (CHUNK_S, EARLY, EOT_ID, HANGOVER_S, LATE_THRESHOLDS_S, LATES, LEGACY_TURN_END_ID, SEM_END_ID, SEM_SPECIALS, _tkey, aggregate,
+                                      after_word_range_errors, events_from_emits, eval_audio_len, oracle_hyp, oracle_word_k, pr_point, score_stream, split_hyp, turn_flag)
 
 PROTOCOL = "semcommit-eval-v2"                                                   # v2: 턴 종료 토큰 = config.sem_registry(<EOT> | v0.2 <TURN_END> | 없음)
 ROOT = Path(__file__).resolve().parents[1]
@@ -162,6 +171,12 @@ def select_streams(words, labels, langs=None, max_streams=0):
         ids = [i for i in ids if i in keep]
     info["selected"] = len(ids); return ids, info
 
+def check_label_ranges(words, labels, ids):
+    """선택한 스트림의 labels 후보 after_word 가 단어 범위 [0, n) 밖이면 멈춘다 — 학습 build_semcommit_tokens 의 after_word_range 와 같은 사유.
+    디코드(GPU) 전·재채점 전에 한꺼번에 알린다(score_stream 도 행마다 거부한다: 범위 밖 후보는 text·commit 블록의 n_A 를 어긋나게 한다)."""
+    bad = [(i, b[:3]) for i in ids for b in [after_word_range_errors(words[i].get("words") or [], (labels.get(i) or {}).get("candidates", []))] if b]
+    assert not bad, f"after_word_range: labels 후보 after_word 가 단어 범위 밖 {len(bad)}/{len(ids)} 행, 예 (id, after_word) {bad[:3]} — labels 를 words 에 맞춰 다시 만드세요"
+
 def make_configs(sem_bias, thetas):
     return [dict(name=f"bias={float(b):g}", mode="bias", value=float(b)) for b in (sem_bias or [])] + [dict(name=f"theta={float(t):g}", mode="threshold", value=float(t)) for t in (thetas or [])]
 
@@ -250,6 +265,53 @@ def hyp_from_emitted(emitted, tok, sem_id, turn_id):
     h["text"] = re.sub(r"\s+", " ", decode([t for _, t in emitted if is_text(t)])).strip()        # 이벤트·특수 토큰은 디코드 전에 뺀다
     return h
 
+def _backfill_fns(path):
+    """옛 스트림 jsonl 의 hyp.word_k backfill 용 tokenizer → ((sem_id, turn_id) → tokenizer_fns(tok, …), None) | (None, 이유).
+    디코드와 같은 tokenizer 를 로컬 파일에서만 읽는다(내려받지 않음): 체크포인트에 tokenizer 파일이 있으면 그것, 없으면 config.json 의 thinker_name_or_path
+    (load_tokenizer 와 같은 원본) + check_sem_ids 와 같은 Phase1+Phase2+SEM 특수 토큰 추가. 맞는지는 backfill_word_k 가 저장된 단어·이벤트와 대조해 확인한다.
+    path 가 'none'(--tokenizer none)이면 backfill 을 끈다. 로드 단계의 예외는 종류와 상관없이(tokenizers 바인딩의 Exception 포함) (None, 이유)로 떨어뜨린다."""
+    if not path or path == "oracle": return None, "tokenizer 경로 없음"
+    if str(path).lower() == "none": return None, "--tokenizer none: word_k backfill 끔"
+    p = Path(path); cfg = _load_json(p / "config.json") or {}
+    src = str(p) if (p / "tokenizer_config.json").exists() else cfg.get("thinker_name_or_path")
+    if not src: return None, f"tokenizer 없음({p}: tokenizer_config.json·config.json thinker_name_or_path 없음)"
+    try:
+        from transformers import AutoTokenizer
+        from vapasr.uslm.interleave_data import SPECIAL_TOKENS as P1
+        from vapasr.data.dialogue_tokens import PHASE2_SPECIALS as P2
+        tok = AutoTokenizer.from_pretrained(src, local_files_only=True); tok.add_tokens(P1 + P2 + SEM_SPECIALS, special_tokens=True)
+    except Exception as e: return None, f"{type(e).__name__}: {str(e)[:200]}"
+    return (lambda sem_id, turn_id: tokenizer_fns(tok, sem_id, turn_id)), None
+
+def _ev_key(events): return [(int(e["id"]), int(e["k"]), int(e["after"]), bool(e.get("mid_word"))) for e in events]
+
+def backfill_word_k(recs, words, dc, tokenizer=None):
+    """옛 스트림 jsonl 행(hyp.word_k 없음)의 word_k 를 메모리에서 채운다(파일은 안 바꾼다) → 통계 dict(legacy, oracle, tokenizer, missing, src, error).
+    oracle 행: commit_metrics.oracle_word_k(words 행, δ, K). 모델 행: tokenizer(_backfill_fns) 로 방출을 split_hyp 로 다시 나눠 가설 단어와
+    이벤트 (id, k, after, mid_word) 가 저장값과 같을 때만 채운다 — 다르면 AssertionError(디코드 때와 다른 tokenizer: --tokenizer 로 지정하거나 --tokenizer none).
+    tokenizer 를 못 읽거나 none 이면 비워 둔다(display·after_text 가 missing 으로 센다; commit 지연은 저장된 이벤트만으로 계산된다)."""
+    st = dict(legacy=0, oracle=0, tokenizer=0, missing=0, src=None, error=None); fns, loaded, cache = None, False, {}
+    for r in recs:
+        h = r["hyp"]
+        if h.get("word_k") is not None: continue
+        st["legacy"] += 1
+        if (r.get("config") or {}).get("mode") == "oracle":
+            w = words[r["id"]]; ref = [x["text"] for x in sorted(w["words"], key=lambda x: int(x["i"]))]
+            assert h["words"] == ref, f"word_k backfill: oracle 행 가설 단어가 words 행과 다름 ({r['id']})"
+            h["word_k"] = oracle_word_k(w, r["delta"], r["K"]); st["oracle"] += 1; continue
+        if not loaded:
+            fns, st["error"] = _backfill_fns(tokenizer); st["src"] = tokenizer; loaded = True
+            if fns is None: print(f"주의: word_k backfill tokenizer 없음({st['error']}) — 옛 모델 행의 표시·첫 토큰·after-text 지연은 missing", flush=True)
+        if fns is None: st["missing"] += 1; continue
+        sem_id, turn_id = r.get("event_ids") or (SEM_END_ID, None)
+        if (sem_id, turn_id) not in cache: cache[(sem_id, turn_id)] = fns(sem_id, turn_id)
+        is_text, word_start, decode = cache[(sem_id, turn_id)]
+        s = split_hyp(r["emitted"], is_text=is_text, word_start=word_start, decode=decode, event_ids=(sem_id, turn_id))
+        assert s["words"] == h["words"] and _ev_key(s["events"]) == _ev_key(h["events"]), \
+            f"word_k backfill: tokenizer 불일치 — 방출을 다시 나눈 가설 단어·이벤트가 저장값과 다름 ({r['id']}, {r['config']['name']}, tokenizer {tokenizer}) — 디코드 때 tokenizer 를 --tokenizer 로(표시 지연 없이 채점하려면 --tokenizer none)"
+        h["word_k"] = s["word_k"]; st["tokenizer"] += 1
+    return st
+
 # ───────────────────────────── 모델·토큰 ─────────────────────────────
 def load_sem_model(path, encoder, dtype, device):
     """infer.load_model 과 같은 로드. tokenizer 는 load_tokenizer 가 SEM 토큰을 모르면(sp_ids 불일치) Phase1+Phase2+SEM 순서로 직접 붙인다."""
@@ -307,6 +369,7 @@ def make_record(wrow, cfg, delta, K, dur, emitted, hyp, forced=0, flush_rounds=0
     rec = dict(id=wrow["id"], set=wrow.get("set"), lang=wrow["lang"], config=cfg, delta=delta, K=K, K0=wrow.get("K"), duration_s=round(dur, 3), pad_delays=pad_delays, event_ids=[sem_id, turn_id],
                words_digest=row_digest(wrow), emitted=[[int(k), int(t)] for k, t in emitted], sem_k=events_from_emits(emitted, sem_id), turn_k=events_from_emits(emitted, turn_id),
                hyp=dict(words=hyp["words"], events=hyp["events"], text=hyp["text"]), forced=forced, flush_rounds=flush_rounds, guard_blocked=int(guard_blocked))
+    if hyp.get("word_k") is not None: rec["hyp"]["word_k"] = [[int(a), int(b)] for a, b in hyp["word_k"]]      # 표시·첫 토큰 지연 입력(가설 단어별 [첫, 마지막] 토큰 청크)
     if trace is not None:
         tr = [(k, ps, pt) for k, ps, pt in trace if ps >= trace_min_p or pt >= trace_min_p]
         rec["trace"] = dict(k=[k for k, _, _ in tr], p_sem=[round(p, 4) for _, p, _ in tr], p_turn=[round(p, 4) for _, _, p in tr], steps=len(trace))
@@ -315,6 +378,7 @@ def make_record(wrow, cfg, delta, K, dur, emitted, hyp, forced=0, flush_rounds=0
 def run(a):
     words = {r["id"]: r for r in read_jsonl(a.words)}; labels = {r["id"]: r for r in read_jsonl(a.labels)}
     ids, info = select_streams(words, labels, a.langs, a.max_streams); configs = [dict(name="oracle", mode="oracle", value=0.0)] if a.oracle else make_configs(a.sem_bias, a.theta)
+    check_label_ranges(words, labels, ids)
     dest = streams_path(a); dest.parent.mkdir(parents=True, exist_ok=True); cfg_path = Path(str(dest) + ".config.json"); dcfg = decode_config(a)
     if cfg_path.exists():
         old = json.loads(cfg_path.read_text()); diff = sorted(k for k in set(old) | set(dcfg) if old.get(k) != dcfg.get(k))
@@ -396,9 +460,12 @@ def run(a):
 
 def build_report(a):
     """스트림 jsonl → 현재 words/labels 로 재채점 → 설정·언어·세트별 요약 + PR 곡선(bias·threshold).
-    재채점 전 검사: 행마다 words_digest(= 디코드 때 words 행) 와 현재 labels 로 다시 계산한 K' 가 기록과 같아야 한다 — 다르면 다른 오디오·패딩의 방출이라 멈춘다."""
+    재채점 전 검사: 행마다 words_digest(= 디코드 때 words 행) 와 현재 labels 로 다시 계산한 K' 가 기록과 같아야 한다 — 다르면 다른 오디오·패딩의 방출이라 멈춘다.
+    labels 후보가 단어 범위 밖이면(after_word_range) 멈춘다(check_label_ranges).
+    옛 행(hyp.word_k 없음)은 재채점 전에 backfill_word_k(oracle 은 words, 모델은 --tokenizer 또는 디코드 설정의 model)로 메모리에서 채운다."""
     words = {r["id"]: r for r in read_jsonl(a.words)}; labels = {r["id"]: r for r in read_jsonl(a.labels)}
     ids, info = select_streams(words, labels, a.langs, a.max_streams); sel = set(ids); src = streams_path(a); cfg_path = Path(str(src) + ".config.json")
+    check_label_ranges(words, labels, ids)
     if cfg_path.exists(): dc = json.loads(cfg_path.read_text())                                  # 오디오를 어떻게 디코드했는지(패딩·δ)는 저장된 설정이 정본
     else: resolve_settings(a); dc = decode_config(a)
     if any(getattr(a, k) is not None and getattr(a, k) != dc.get(k) for k in ("turn_end", "hangover_s", "tail_margin")):
@@ -408,6 +475,7 @@ def build_report(a):
     assert not stale, f"words 행이 디코드 때와 다름(words_digest 불일치) {len(stale)}/{len(recs)} 행, 예 {stale[:3]} — 다시 디코드하세요(새 --out)"
     k_bad = [(r["id"], r["K"], eval_len(words[r["id"]], labels.get(r["id"]), dc)[1]) for r in recs]; k_bad = [x for x in k_bad if x[1] != x[2]]
     assert not k_bad, f"기록 K' ≠ 현재 words/labels 로 계산한 K' {len(k_bad)}/{len(recs)} 행, 예 (id, 기록, 지금) {k_bad[:3]} — labels.turn_end 등이 바뀌었으면 다시 디코드하세요"
+    wk = backfill_word_k(recs, words, dc, a.tokenizer or dc.get("model"))
     by_cfg = {}
     for r in recs:
         sem_id, turn_id = r.get("event_ids") or (SEM_END_ID, None)
@@ -416,15 +484,26 @@ def build_report(a):
         by_cfg.setdefault(r["config"]["name"], dict(config=r["config"], recs=[]))["recs"].append(r)
     configs = {}
     for name, g in by_cfg.items():
-        configs[name] = dict(mode=g["config"]["mode"], value=g["config"]["value"], n_streams=len(g["recs"]), complete=len(g["recs"]) == len(ids), **aggregate(g["recs"], ("lang", "set")))
+        configs[name] = dict(mode=g["config"]["mode"], value=g["config"]["value"], n_streams=len(g["recs"]), complete=len(g["recs"]) == len(ids),
+                             **aggregate(g["recs"], ("lang", "set"), late_thresholds=a.late_thresholds))
     pr = {}
     for name, c in sorted(configs.items(), key=lambda kv: (kv[1]["mode"], kv[1]["value"])):
         for grp, summ in [("overall", c["overall"])] + list(c["by_lang"].items()):
-            pr.setdefault(c["mode"], []).append(dict(value=c["value"], group=grp, **pr_point(summ, a.primary_late)))
+            pr.setdefault(c["mode"], []).append(dict(value=c["value"], group=grp, **pr_point(summ, a.primary_late, a.late_thresholds)))
     return dict(protocol=PROTOCOL, created=time.strftime("%Y-%m-%dT%H:%M:%S"), selection=info, n_selected=len(ids), streams_file=str(streams_path(a)),
                 decode=dc, scoring=dict(early=a.early, lates=list(a.lates), primary_late=a.primary_late, hangover_s=dc["hangover_s"], turn_end=dc["turn_end"],
                                                       chunk_s=CHUNK_S, ref_time="(a) ref_k=int(word_end/0.08)+delta for P/R/F1; (b) latency vs word_end, hyp_time=(k+1)*0.08",
-                                                      pcr_raw="(premature + guard_blocked)/(n_hyp + guard_blocked): sem-guard 가 막은 SEM 발화를 조기 commit 으로 센 PCR"),
+                                                      pcr_raw="(premature + guard_blocked)/(n_hyp + guard_blocked): sem-guard 가 막은 SEM 발화를 조기 commit 으로 센 PCR",
+                                                      late_thresholds_s=list(a.late_thresholds), word_k=wk,
+                                                      commit_latency="A 경계 a 별 첫 유효 commit(mid_word 아님, map_events 위치 p ∈ [a, 다음 A)) 의 emit_time(k) − word_end(a); "
+                                                                     "창 없음, 다음 A 이후의 commit 은 미확정(coverage). prefix = 위치 ≥ a 인 첫 유효 commit 까지",
+                                                      display_latency="참조 단어 i 와 align_pairs 로 짝지은 가설 단어의 마지막 토큰 emit_time − word_end(i); 삭제는 빼고 coverage 로",
+                                                      first_token="첫 정렬 쌍 (i*, j*) 의 가설 첫 토큰 emit_time − word_end(i*) (i* > 0 이면 first_skip 으로 빼고 셈); "
+                                                                  "first_any = 첫 가설 토큰 emit_time − word_end(0)",
+                                                      excess="min(k,K−1) − min(ref_k(a),K−1) 청크 = δ 목표 대비 초과 지연(emit_time 과 같은 척도: excess·0.08 = lat − 이상 지연, "
+                                                             "flush 라운드 = 청크 K−1; recall_within_chunks[L] = #(excess ≤ L)/n_A). display lag 도 같은 척도",
+                                                      after_text="유효 commit 청크 − 바로 앞 가설 단어 마지막 토큰 청크(학습 목표 0). 둘 다 원래 k(flush 라운드 번호 포함)로 빼고, "
+                                                                 "SEM 이 flush 라운드인 commit 도 lag 에 넣어 in_flush 로 따로 센다. 제외: mid_word·no_word(p<0)·no_text(앞 가설 텍스트 없음)"),
                 configs=configs, pr_curve=pr)
 
 def print_table(rep, late):
@@ -436,6 +515,22 @@ def print_table(rep, late):
             w = s["timing"].get(f"late{late}", {}); t = s["text"]; asr = s["asr"].get("cer_nospace") or s["asr"].get("wer") if grp == "Korean" else s["asr"].get("wer")
             print(f"{name:>12} {grp[:8]:>8} {t['n_hyp']:>6} {f(w.get('precision'))} {f(w.get('recall'))} {f(t['precision'])} {f(t['recall'])} {f(t['pcr'])} {f(t.get('pcr_raw'))} "
                   f"{t.get('guard_blocked', 0):>6} {f((w.get('latency_s') or {}).get('p50'))} {f(asr['rate'] if asr else None)}")
+
+def print_latency_table(rep):
+    """창 없는 지연 표(설정 × 전체·언어): commit = A 경계별 첫 확정(nA·coverage·정확 위치율·지연 분위수(s)·τ 별 지연 재현율·excess p90(청크)),
+    disp = 참조 단어 표시 지연 분위수(s), ftl = 첫 토큰 지연 p50(s). commit 블록이 없는 요약은 건너뛴다."""
+    tk = [_tkey(t) for t in (rep.get("scoring", {}).get("late_thresholds_s") or LATE_THRESHOLDS_S)]
+    f = lambda v: "   -  " if v is None else f"{v:6.3f}"
+    print(f"[latency] τ {'/'.join(tk)} s — commit: A 경계별 첫 확정(창 없음) · disp: 참조 단어 표시 · ftl: 첫 토큰")
+    print(f"{'config':>12} {'group':>8} {'nA':>5} {'cov':>6} {'exact':>6} {'c50':>6} {'c90':>6} {'c95':>6} {'c99':>6} " + " ".join(f"{'r@' + t:>6}" for t in tk)
+          + f" {'exc90':>6} {'d50':>6} {'d90':>6} {'d95':>6} {'ftl50':>6}")
+    for name, c in sorted(rep["configs"].items(), key=lambda kv: (kv[1]["mode"], kv[1]["value"])):
+        for grp, s in [("all", c["overall"])] + list(c["by_lang"].items()):
+            if not s or "commit" not in s: continue
+            x = s["commit"]; cl = x["latency_s"]; d = s.get("display") or {}; dl = d.get("latency_s") or {}
+            print(f"{name:>12} {grp[:8]:>8} {x['n_A']:>5} {f(x['coverage'])} {f(x['exact_rate'])} {f(cl['p50'])} {f(cl['p90'])} {f(cl['p95'])} {f(cl['p99'])} "
+                  + " ".join(f(x["recall_at"].get(t)) for t in tk)
+                  + f" {f(x['excess_chunks']['p90'])} {f(dl.get('p50'))} {f(dl.get('p90'))} {f(dl.get('p95'))} {f((d.get('first_token_s') or {}).get('p50'))}")
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -459,6 +554,10 @@ def parse_args(argv=None):
     p.add_argument("--langs", nargs="*", default=None, help="English Korean 중 선택")
     p.add_argument("--path-remap", nargs="*", default=[], help="OLD=NEW 오디오 경로 접두 치환 (예: " + MXC_PREFIX + "LibriSpeech/=/data5/LibriSpeech/)")
     p.add_argument("--early", type=int, default=EARLY); p.add_argument("--lates", type=int, nargs="+", default=list(LATES)); p.add_argument("--primary-late", type=int, default=2)
+    p.add_argument("--late-thresholds", type=float, nargs="+", default=list(LATE_THRESHOLDS_S),
+                   help="창 없는 commit·표시 지연의 늦음 임계값(초, 양수·오름차순) — late_rate·recall_at·PR 곡선 commit_recall_at_τs")
+    p.add_argument("--tokenizer", default=None, help="옛 스트림 jsonl(hyp.word_k 없음) 재채점 때 word_k 를 방출에서 다시 만들 tokenizer 디렉토리(기본: 디코드 설정의 model); "
+                                                     "none = backfill 끔(모델 행의 display·after_text 는 missing)")
     p.add_argument("--trace-min-p", type=float, default=0.0, help="trace 저장 필터(p_sem 또는 p_turn ≥ 값인 step 만; 0 = 모든 결정 step)")
     p.add_argument("--allow-other-ids", action="store_true", help="SEM/TURN id 가 151723/151724 가 아니어도 진행")
     p.add_argument("--verify", action="store_true", help="언어별 첫 배치 1 행을 model.stream_decode 와 대조(cuda)")
@@ -468,6 +567,9 @@ def parse_args(argv=None):
     a = p.parse_args(argv)
     assert a.oracle or a.score_only or a.model, "--model 필요"
     assert a.primary_late in a.lates and a.batch_size > 0 and a.max_flush >= 0 and a.prefetch >= 0
+    lt = a.late_thresholds; keys = [_tkey(t) for t in lt]                           # 보고서 키(%g, 유효숫자 6 자리)가 겹치면 late_rate·recall_at 항목이 조용히 덮어써진다
+    assert all(t > 0 for t in lt) and all(x < y for x, y in zip(lt, lt[1:])) and len(set(keys)) == len(keys), \
+        f"--late-thresholds 는 양수·오름차순이고 보고서 키(%g 6 자리)도 서로 달라야 함: {lt} → {keys}"
     return a
 
 def main(argv=None):
@@ -475,7 +577,7 @@ def main(argv=None):
     if a.gpu is not None: os.environ["CUDA_VISIBLE_DEVICES"] = str(a.gpu)
     if not a.score_only: resolve_settings(a); run(a)
     elif not streams_path(a).exists(): raise SystemExit(f"--score-only: 스트림 jsonl 없음 {streams_path(a)} (다른 --out 이면 --streams-out 으로 원래 파일을 주세요)")
-    rep = build_report(a); write_json(a.out, rep); print_table(rep, a.primary_late); print(f"REPORT {a.out}", flush=True)
+    rep = build_report(a); write_json(a.out, rep); print_table(rep, a.primary_late); print_latency_table(rep); print(f"REPORT {a.out}", flush=True)
     return rep
 
 if __name__ == "__main__":
