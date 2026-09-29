@@ -70,3 +70,18 @@ def test_single_command_does_not_cache(tmp_path, monkeypatch):
     for n in ("A1", "A2"):
         T.main(["stageA", "--words", str(W), "--device", "cpu", "--model", "q", "--kind", "qwen3", "--out", str(tmp_path / f"{n}.jsonl")])
     assert made == ["qwen3", "qwen3"] and T._RESIDENT == {}
+
+
+def test_multi_without_gpu_exits_75_and_runs_nothing(tmp_path, monkeypatch):
+    """A task bound to a GPU the node does not expose: exit NO_GPU_EXIT before any job (the worker then stops claiming parts)."""
+    import torch
+    from experiments import semcommit_teacher as T
+    made = []
+    monkeypatch.setattr(T, "LLM", lambda path, kind, **kw: made.append(kind) or FakeLLM(kind))
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    d = tmp_path / "p"; d.mkdir(); (d / "words.jsonl").write_text(json.dumps(KO1, ensure_ascii=False) + "\n")
+    jp = tmp_path / "jobs.jsonl"
+    jp.write_text(json.dumps(dict(tag="p", argv=["stageA", "--words", str(d / "words.jsonl"), "--model", "q", "--kind", "qwen3", "--out", str(d / "A.jsonl")])) + "\n")
+    with pytest.raises(SystemExit) as e:
+        T.main(["multi", "--jobs", str(jp), "--result", str(tmp_path / "r.json")])
+    assert e.value.code == T.NO_GPU_EXIT == 75 and made == [] and not (d / "A.jsonl").exists() and not (tmp_path / "r.json").exists()

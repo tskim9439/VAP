@@ -138,7 +138,11 @@ J += [job(p, wd, cmd, kind, out, bs_bc) for cmd, kind, out in later for p, wd in
 open(sys.argv[1], "w").write("".join(json.dumps(j) + "\n" for j in J))
 PY
   echo "GROUP_START rank=$rank parts=${active[*]} jobs=$jobs"
-  $T multi --jobs "$jobs" --result "$res" < /dev/null
+  $T multi --jobs "$jobs" --result "$res" < /dev/null; local rc=$?
+  if [[ $rc == 75 ]]; then                           # NO_GPU_EXIT: this task sees no GPU (a broken node) — stop claiming, fail nothing
+    echo "NO_GPU_EXIT rank=$rank host=$(hostname -s) parts=${active[*]} — worker stops; these parts go to the next submission"
+    STOP=1; return 0
+  fi
   failed=$("$PY" -c 'import json,sys; print(" ".join(json.load(open(sys.argv[1]))["failed_tags"]))' "$res" 2>/dev/null) || failed="${active[*]}"
   for part in "${pairs[@]}"; do
     wd=${part#*=}; part=${part%%=*}
@@ -147,7 +151,7 @@ PY
   done
 }
 
-done_n=0; failed_n=0; declare -A SOURCE; group=()
+done_n=0; failed_n=0; declare -A SOURCE; group=(); STOP=""
 flush_group() {   # heartbeat on every claimed lock while the group runs
   (( ${#group[@]} )) || return 0
   local p; ( while sleep 300; do for p in "${group[@]}"; do touch "$OUT/parts/$p/lock-$owner"; done; done ) & local hb=$!
@@ -162,8 +166,9 @@ while IFS=$'\t' read -r part source npass; do
   [[ -f $OUT/parts/$part/DONE.json ]] && continue                 # finished while we were claiming
   SOURCE[$part]=$source; group+=("$part")
   (( ${#group[@]} >= GROUP_PARTS )) && flush_group
+  [[ -n ${STOP:-} ]] && break
   if [[ "${MAX_PARTS_PER_RANK:-0}" -gt 0 && "$done_n" -ge "$MAX_PARTS_PER_RANK" ]]; then break; fi
 done < <( { if [[ ${ORDER:-forward} == reverse ]]; then tac "$PARTS_ORDER"; else cat "$PARTS_ORDER"; fi; } |
           awk -F '\t' -v r="$rank" -v n="$ntasks" '((NR-1)%n)==r {print $0}')
-flush_group
+[[ -n $STOP ]] || flush_group
 echo "RANK_COMPLETE rank=$rank done=$done_n failed=$failed_n"

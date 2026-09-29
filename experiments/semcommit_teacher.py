@@ -202,6 +202,9 @@ def run_model_stage(a, stage, items, fn, params):
     return store
 
 
+NO_GPU_EXIT = 75                 # multi: this task sees no GPU — semcommit-part-label-worker.sh stops claiming parts
+
+
 def run_multi(argv):
     p = argparse.ArgumentParser(prog="semcommit_teacher.py multi")
     p.add_argument("--jobs", type=Path, required=True, help='JSONL: {"tag": <part>, "argv": ["stageA", ...]} in run order')
@@ -212,11 +215,11 @@ def run_multi(argv):
         import torch
         if not torch.cuda.is_available():
             # A task bound to a GPU the node does not expose (job 76481 on hpc-4: "No CUDA GPUs are available") would otherwise mark
-            # every claimed part failed in seconds and walk through the whole order. Park instead: the worker keeps its locks
-            # fresh, only this group's parts wait for the next submission, and the rest of the job is untouched.
-            print(f"NO_GPU host={os.uname().nodename} CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')} — parking this worker", flush=True)
-            while True:
-                time.sleep(3600)
+            # every claimed part failed in seconds and walk through the whole order. Exit NO_GPU_EXIT (75) without running any job:
+            # the part worker stops claiming and ends cleanly; this group's parts are not marked failed (their locks go stale and
+            # the next submission takes them).
+            print(f"NO_GPU host={os.uname().nodename} CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')} — worker stops", flush=True)
+            return NO_GPU_EXIT
     failed, res = set(), []
     _RESIDENT["on"] = True
     try:
