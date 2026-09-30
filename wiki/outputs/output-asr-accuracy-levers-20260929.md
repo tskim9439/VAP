@@ -114,6 +114,7 @@ raw_authors:
 | SpecAugment | vapasr/features/online.py(커밋 1ee510b) · `--spec-augment light\|nemo\|Fm,Fw,Tm,Tw` | 학습에 증강이 전혀 없었다. 마스크 0 = Nemotron 사전학습(2×27·10×5 %)과 같은 입력 분포 |
 | 속도 변형 | semcommit_dataset(리샘플 + 이벤트 시각 1/배율, K·시퀀스 재구성) · `--speed-perturb 0.9,1.0,1.1` | 표준 ASR 증강, 시각 라벨을 함께 변형 |
 | 인코더 학습 | `--train-encoder --lr-encoder 1e-5`(기존 옵션) | 76601 은 인코더를 동결했다. E2 에서 인코더 해동이 −21~−42 % 로 가장 컸다 |
+| 잡음·잔향 | experiments/build_noise_bank.py + vapasr/data/noise_aug.py(커밋 52b3da7) · `--noise-bank DIR`(기본 잡음 p 0.4·SNR 5–30 dB, 음악 SNR 10–30, 잔향 p 0.2) | 학습에 잡음·잔향이 없었고 test-other·Kspon other 가 약하다. 뱅크 = MUSAN noise·music(speech 제외), RIRS_NOISES(simulated 6,000 + real 325 RIR, 등방 잡음), DEMAND 17 환경, ETSI 36(음성 2 제외) — 잡음 8.9 h·음악 42.6 h |
 | SEM 중립 ASR 데이터 | 모델 sem_mask(커밋 1ee510b: 그 행 softmax 에서 `<SEM_END>` 제외) + 데이터셋 sem_free · `--asr-words @목록 --asr-max-ratio R` | 라벨 없는 데이터도 텍스트·NEXT 는 배우고, 'SEM 아님' 신호는 주지 않는다 |
 
 SEM 중립 데이터(목록 `semcommit-work/asr-words-v1/lists/asr-words-20260929.list`):
@@ -152,7 +153,8 @@ bash slurm/submit-semcommit-train-apex.sh --run v036-asr-aug \
   --init /soundai/Model/VAPASR/semcommit-v035-snap0929-d8/final --nodes 2 --time 24:00:00 \
   --delays 2,3,4,6,8 --batch-tokens 16384 --epochs 3 --lr 3e-5 --warmup 200 \
   --train-encoder --spec-augment 2,27,2,0.03 --speed-perturb 0.9,1.0,1.1 \
-  --asr-list /soundai/users/tskim/VAPKT-data/data/semcommit-work/asr-words-v1/lists/asr-words-20260929.list --asr-max-ratio 1.0 --varlen
+  --asr-list /soundai/users/tskim/VAPKT-data/data/semcommit-work/asr-words-v1/lists/asr-words-20260929.list --asr-max-ratio 1.0 --varlen \
+  --noise-bank /soundai/users/tskim/VAPKT-data/data/noise-bank-v1
 ```
 
 - init 은 현재 최고 모델(v035-d8)에서 이어서다. LR 은 76601 의 절반인 3e-5 다. 인코더 LR 은 1e-5(E2 레시피)다.
@@ -188,3 +190,14 @@ bash slurm/submit-semcommit-train-apex.sh --run v036-asr-aug \
 - 2-pass: `runs/semcommit/eval/v035-snap0929-d8/twopass/`
 - 스모크: `runs/semcommit/smoke/asr-aug-20260929c/`
 - SEM 중립 words: `data/semcommit-work/asr-words-v1/`(logs·lists)
+
+## 10. 잡음·잔향 증강 추가 (2026-09-30, 사용자 제안)
+
+- 뱅크: `/soundai/users/tskim/VAPKT-data/data/noise-bank-v1`(6.4 GB, `/soundai/DB` 는 읽기만).
+  - 잡음 1,059 파일(8.9 h), 음악 660 파일(42.6 h), RIR 6,325 개(simulated 방마다 2,000 + real 325).
+  - RIRS_NOISES pointsource_noises 는 MUSAN free-sound 와 같은 파일이라 뺐다(중복 가중 방지).
+- 증강 순서: 잔향 → 가산 잡음.
+  - 잔향은 RIR 의 직접음 최대점을 t=0 에 맞춰 단어 시각·청크 라벨이 밀리지 않는다.
+  - SNR 은 20 ms 프레임 전력 상위 절반(음성 구간) 기준이다.
+- 비용: 20 s 항목에 잔향 + 잡음을 모두 걸면 약 210 ms(CPU)다. 기본 확률이면 평균 약 60 ms 이고, 데이터로더 워커 8 개가 나눠 진다.
+- 기본값은 SpecAugment 와 같은 취지로 보수적이다(잡음 40 %, 잔향 20 %). 확률·SNR 은 `--extra "--noise-p 0.4 --noise-snr 5,30 --rir-p 0.2"` 로 바꾼다.

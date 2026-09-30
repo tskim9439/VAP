@@ -4,7 +4,7 @@
 
   잡음(category noise | music): <out>/audio/<source>/<name>.wav (PCM16) + <out>/noise.jsonl {path, source, category, n, dur}
     MUSAN noise(free-sound·sound-bible) = noise, MUSAN music = music. MUSAN speech 는 넣지 않는다(영어 음성이 섞이면 전사 타깃과 어긋난다).
-    RIRS_NOISES pointsource_noises · real_rirs_isotropic_noises 의 *noise* = noise. DEMAND 환경마다 ch01 = noise. ETSI(바이노럴) 첫 채널 = noise,
+    RIRS_NOISES real_rirs_isotropic_noises 의 *noise* = noise(pointsource_noises 는 MUSAN free-sound 와 같은 파일이라 뺀다). DEMAND 환경마다 ch01 = noise. ETSI(바이노럴) 첫 채널 = noise,
     이름에 Voice/Speech 가 든 파일(음성 방해원)은 뺀다.
   RIR: <out>/rir.npy float16 (N, L) + rir.jsonl {i, source, n}. RIRS_NOISES simulated_rirs(작은·중간·큰 방) 에서 방마다 --sim-per-room 개(sha1 결정적 표본)
     + real_rirs_isotropic_noises 의 RIR 전부(다채널이면 첫 채널). 최대 --rir-max-s 초로 자르고 절대값 최대 1 로 맞춘다.
@@ -76,8 +76,6 @@ def main(argv=None):
                 if "/real_rirs_isotropic_noises/" in n:
                     if "noise" in base.lower(): W.noise("rirs-isotropic", "noise", base[:-4], read_bytes(z.read(n)))
                     else: rirs.append(read_bytes(z.read(n))); rir_rows.append(dict(source="real", name=n))
-                elif "/pointsource_noises/" in n:
-                    W.noise("rirs-pointsource", "noise", base[:-4], read_bytes(z.read(n)))
         L = int(a.rir_max_s * SR); bank = np.zeros((len(rirs), L), np.float16)
         for i, (r, row) in enumerate(zip(rirs, rir_rows)):
             r = r[:L]; r = r / max(1e-8, float(np.abs(r).max())); bank[i, :len(r)] = r; row.update(i=i, n=int(len(r)))
@@ -95,7 +93,7 @@ def main(argv=None):
         print(f"demand {dict(W.stats['demand'])}", flush=True)
 
     if "etsi" not in skip:
-        for p in sorted(glob.glob(str(db / "ETSI" / "ETSI" / "*.wav"))):
+        for p in sorted(glob.glob(str(db / "ETSI" / "**" / "*.wav"), recursive=True)):
             base = Path(p).stem
             if SPEECHY.search(base): W.stats["etsi"]["skipped_speech"] += 1; continue
             x, sr = sf.read(p, dtype="float32", always_2d=True)
