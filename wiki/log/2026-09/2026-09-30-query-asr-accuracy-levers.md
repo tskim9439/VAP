@@ -1,0 +1,23 @@
+## [2026-09-30] query | ASR 정확도 개선: 진단·상한·2-pass·학습 레버 적용
+
+- Changed:
+  - `wiki/outputs/output-asr-accuracy-levers-20260929.md`(신규)
+  - 코드 커밋: 1ee510b(SpecAugment·sem_mask·데이터 도구), 0d2b584(2-pass), ac23dee(VoxPopuli-AA 평가)
+  - `slurm/semcommit-words-only.sbatch`
+  - mxc 산출물:
+    - `results/single-turn-{qwen3-asr-*-offline,nemotron-rnnt}`
+    - `runs/semcommit/eval/v035-snap0929-d8/twopass`
+    - `data/semcommit-work/asr-words-v1`
+    - 스모크 `runs/semcommit/smoke/asr-aug-20260929c`
+- Reason:
+  - 사용자가 "WER/CER 이 너무 안 좋다, 개선 방안을 고민해 적용해 달라"고 요청했다.
+  - 오류 유형을 진단했고, 오프라인 Qwen3-ASR 과 같은 인코더 RNN-T 로 상한을 쟀다.
+  - 2-pass 재디코드를 구현하고 평가했다.
+  - 학습 옵션을 적용했다: SpecAugment·속도 변형·인코더 학습·SEM 중립 ASR 데이터(E2 한국어 3.5k h + 라벨 전 영어 0.8k h + MNSC).
+  - 사용자 지시로 영어 평가를 VoxPopuli-Cleaned-AA 로 바꿨다. 데이터는 로컬 T5 에만 있고 업로드는 사용자가 한다.
+- Next:
+  - 사용자 제출: 다음 학습(페이지 §6 명령)과 words-only 빌드
+  - VoxPopuli-AA 업로드 뒤 전 모델 평가
+  - 2-pass 의 최대 세그먼트 절단·text 모드 복사 방지·전체 셋 평가
+  - Codex 미커밋 short 풀 변경의 커밋 여부 결정(데이터셋·학습 스크립트 쪽 이번 변경이 거기에 묶여 있다)
+- By: tskim
