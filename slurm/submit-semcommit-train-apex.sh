@@ -20,12 +20,13 @@
 #   --speed-perturb L  배율 목록, 예 0.9,1.0,1.1 — 오디오 리샘플 + 이벤트 시각 1/배율
 #   --asr-list FILE    SEM 중립 ASR words 목록(semcommit_asr_words_list.py) → --asr-words @FILE,  --asr-max-ratio R(셋마다 ≤ R × 라벨 항목)
 #   --varlen           --attn-impl varlen(torch FA2 varlen; 처리량 +22–36 %, 4430c94)
+#   --noise-bank DIR   잡음·잔향 증강(experiments/build_noise_bank.py 뱅크; 확률·SNR 은 --extra "--noise-p 0.4 --noise-snr 5,30 --rir-p 0.2")
 set -euo pipefail
 cd "$(dirname "$0")/.."
 LABELS=/soundai/users/tskim/VAPKT-data/data/semcommit-work/labels/speechlm-all19-v035
 run=""; snap=""; init=/soundai/Model/VAPASR/hf-E2/final; nodes=1; time_limit=24:00:00; partition=apex; job_name=SA_SFT_FullDuplex
 batch_tokens=32768; max_bs=256; epochs=2; lr=6e-5; warmup=50; save_every=200; max_steps=0; extra=""; delays=2,3,4,6; after=""
-train_encoder=0; spec_augment=off; speed_perturb=""; asr_list=""; asr_max_ratio=""; varlen=0
+train_encoder=0; spec_augment=off; speed_perturb=""; asr_list=""; asr_max_ratio=""; varlen=0; noise_bank=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --run) run=$2; shift 2 ;;            --snap) snap=$2; shift 2 ;;          --init) init=$2; shift 2 ;;
@@ -36,6 +37,7 @@ while [[ $# -gt 0 ]]; do
     --delays) delays=$2; shift 2 ;;      --after) after=$2; shift 2 ;;
     --train-encoder) train_encoder=1; shift ;;  --spec-augment) spec_augment=$2; shift 2 ;;  --speed-perturb) speed_perturb=$2; shift 2 ;;
     --asr-list) asr_list=$2; shift 2 ;;  --asr-max-ratio) asr_max_ratio=$2; shift 2 ;;  --varlen) varlen=1; shift ;;
+    --noise-bank) noise_bank=$2; shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -46,6 +48,7 @@ done
 [[ $spec_augment =~ ^(off|light|nemo|[0-9]+,[0-9]+,[0-9]+,[0-9.]+)$ ]] || { echo "--spec-augment 는 off|light|nemo|Fm,Fw,Tm,Tw" >&2; exit 2; }
 [[ -z $speed_perturb || $speed_perturb =~ ^[0-9.]+(,[0-9.]+)*$ ]] || { echo "--speed-perturb 는 배율 쉼표 목록" >&2; exit 2; }
 [[ -z $asr_list || -f $asr_list ]] || { echo "--asr-list 파일 없음: $asr_list" >&2; exit 1; }
+[[ -z $noise_bank || ( -f $noise_bank/noise.jsonl && -f $noise_bank/rir.npy ) ]] || { echo "--noise-bank 뱅크 불완전: $noise_bank" >&2; exit 1; }
 snap=${snap:-$(ls -d "$LABELS"/snapshots/*/ 2>/dev/null | sort | tail -1)}; snap=${snap%/}
 for f in main-words.list main-labels.list short-words.list short-labels.list summary.json; do
   [[ -f $snap/$f ]] || { echo "스냅숏에 없음: $snap/$f" >&2; exit 1; }
@@ -58,8 +61,9 @@ args="--delays $delays --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --
 [[ -n $speed_perturb ]] && args+=" --speed-perturb $speed_perturb"
 [[ -n $asr_list ]] && args+=" --asr-words @$asr_list" && [[ -n $asr_max_ratio ]] && args+=" --asr-max-ratio $asr_max_ratio"
 (( varlen )) && args+=" --attn-impl varlen"
+[[ -n $noise_bank ]] && args+=" --noise-bank $noise_bank"
 args+=" $extra"
-echo "ASR 옵션: 인코더 $([[ $train_encoder = 1 ]] && echo 학습 || echo 동결) · SpecAugment $spec_augment · 속도 ${speed_perturb:-끔} · ASR 목록 ${asr_list:-없음} · varlen $varlen" >&2
+echo "ASR 옵션: 인코더 $([[ $train_encoder = 1 ]] && echo 학습 || echo 동결) · SpecAugment $spec_augment · 속도 ${speed_perturb:-끔} · ASR 목록 ${asr_list:-없음} · varlen $varlen · 잡음 뱅크 ${noise_bank:-없음}" >&2
 echo "δ $delays · 스냅숏 $snap ($(python3 -c "import json,sys;s=json.load(open(sys.argv[1]));print(s['parts'],'파트')" "$snap/summary.json")) · init $init · 산출물 $out · $nodes 노드 × 8 GPU" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} --nodes="$nodes" --time="$time_limit" \
