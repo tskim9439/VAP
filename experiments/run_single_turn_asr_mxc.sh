@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Two GPUs at most, per-process environment only. No login-shell/env changes.
-# usage: run_single_turn_asr_mxc.sh <checkpoint> <out> [gpus=0,2] [batch=128] [limit=0] [deltas=2,4] [manifest]
+# usage: run_single_turn_asr_mxc.sh <checkpoint> <out> [gpus=0,2] [batch=128] [limit=0] [deltas=2,4] [manifest] [final]
+#   final: 8th argument `final` also evaluates the final (offline) mode (delta="final"; models trained with --offline-frac).
 #   manifest: 7th argument or MANIFEST env (default: the v1 LibriSpeech+Kspon manifest). English evaluation uses VoxPopuli-Cleaned-AA from
 #   2026-09-29: build .../single-turn-vpaa-kspon-v1/manifest.jsonl with `eval_single_turn_asr.py prepare --voxpopuli-aa-root ...` first.
 #   PY env overrides the interpreter; when the node-local env cannot import numpy (seen 2026-09-29: PyCapsule datetime error) the conda env is used.
@@ -19,6 +20,8 @@ GPU_LIST=${3:-0,2}
 BATCH=${4:-128}
 LIMIT=${5:-0}
 DELAY_LIST=${6:-2,4}
+FINAL_ARGS=()
+case "${8:-}" in final) FINAL_ARGS=(--final) ;; "") ;; *) echo "8th argument must be 'final' or empty: ${8}" >&2; exit 2 ;; esac
 IFS=',' read -r -a DELTAS <<< "$DELAY_LIST"
 for delta in "${DELTAS[@]}"; do
   [[ "$delta" =~ ^[1-8]$ ]] || { echo 'Delta must be an integer from 1 to 8.' >&2; exit 2; }
@@ -51,7 +54,7 @@ for rank in "${!GPUS[@]}"; do
   CUDA_VISIBLE_DEVICES=${GPUS[$rank]} "$PY" experiments/eval_single_turn_asr.py run \
     --manifest "$MANIFEST" --checkpoint "$CHECKPOINT" --encoder "$ENC" --out "$OUT" \
     --deltas "${DELTAS[@]}" --tail-s 1.0 --max-flush 8 --batch-size "$BATCH" \
-    --rank "$rank" --world-size "${#GPUS[@]}" --limit "$LIMIT" --verify \
+    --rank "$rank" --world-size "${#GPUS[@]}" --limit "$LIMIT" --verify "${FINAL_ARGS[@]}" \
     > "$OUT/rank${rank}.log" 2>&1 &
   pids+=("$!")
   echo "rank=$rank gpu=${GPUS[$rank]} pid=${pids[$rank]}"
