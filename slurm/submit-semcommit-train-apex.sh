@@ -7,6 +7,8 @@
 #   --init DIR         초기 HF 체크포인트(기본 /soundai/Model/VAPASR/hf-E2/final — semcommit recipe v0.3 과 같다)
 #   --nodes N          노드 수(노드당 8 GPU, 기본 1)   --time HH:MM:SS(기본 24:00:00)   --partition P(기본 apex)   --job-name NAME
 #   --after JOBID      그 job 이 끝난 뒤 시작(afterany)
+#   --afterok JOBID    그 job 이 성공한 뒤에만 시작(afterok) — 그 job 이 --init 을 만들 예정이면 init 존재 검사를 건너뛴다
+#   --dry-run          sbatch 대신 명령만 출력("Submitted batch job 0" 형식으로 끝낸다)
 #   --batch-tokens N   GPU 당 동적 배치 예산(샘플 수 × 최장 길이 ≤ N, 기본 32768)   --max-bs N(기본 256)
 #   --epochs E(기본 2)  --lr LR(기본 6e-5)  --warmup N(기본 50)  --save-every N(기본 200)  --max-steps N(기본 0 = epochs)
 #   참고(2026-09-28 스냅숏 1,274 파트, 1 노드): 32k 예산이면 GPU 당 ≈110 스트림/step → 8 GPU ≈900 스트림/step, epoch ≈420 step.
@@ -30,7 +32,7 @@ cd "$(dirname "$0")/.."
 LABELS=/soundai/users/tskim/VAPKT-data/data/semcommit-work/labels/speechlm-all19-v035
 run=""; snap=""; init=/soundai/Model/VAPASR/hf-E2/final; nodes=1; time_limit=24:00:00; partition=apex; job_name=SA_SFT_FullDuplex
 batch_tokens=32768; max_bs=256; epochs=2; lr=6e-5; warmup=50; save_every=200; max_steps=0; extra=""; delays=2,3,4,6; after=""
-train_encoder=0; spec_augment=off; speed_perturb=""; asr_list=""; asr_max_ratio=""; varlen=0; noise_bank=""; qwen_dir=""; asr_only=0; offline_frac=0; freeze_thinker=0
+train_encoder=0; spec_augment=off; speed_perturb=""; asr_list=""; asr_max_ratio=""; varlen=0; noise_bank=""; qwen_dir=""; asr_only=0; offline_frac=0; freeze_thinker=0; afterok=""; dry=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --run) run=$2; shift 2 ;;            --snap) snap=$2; shift 2 ;;          --init) init=$2; shift 2 ;;
@@ -42,6 +44,7 @@ while [[ $# -gt 0 ]]; do
     --train-encoder) train_encoder=1; shift ;;  --spec-augment) spec_augment=$2; shift 2 ;;  --speed-perturb) speed_perturb=$2; shift 2 ;;
     --asr-list) asr_list=$2; shift 2 ;;  --asr-max-ratio) asr_max_ratio=$2; shift 2 ;;  --varlen) varlen=1; shift ;;
     --noise-bank) noise_bank=$2; shift 2 ;;
+    --afterok) afterok=$2; shift 2 ;;  --dry-run) dry=1; shift ;;
     --qwen-dir) qwen_dir=$2; shift 2 ;;  --asr-only) asr_only=1; shift ;;  --offline-frac) offline_frac=$2; shift 2 ;;  --freeze-thinker) freeze_thinker=1; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
@@ -49,6 +52,8 @@ done
 [[ $run =~ ^[A-Za-z0-9._-]+$ ]] || { echo "--run 이름 필요(영숫자·._-)" >&2; exit 2; }
 [[ $nodes =~ ^[1-9][0-9]*$ ]] || { echo "--nodes 는 양의 정수" >&2; exit 2; }
 [[ -z $after || $after =~ ^[0-9]+$ ]] || { echo "--after 는 job id" >&2; exit 2; }
+[[ -z $afterok || $afterok =~ ^[0-9]+$ ]] || { echo "--afterok 는 job id" >&2; exit 2; }
+[[ -z $after || -z $afterok ]] || { echo "--after 와 --afterok 는 함께 쓰지 않는다" >&2; exit 2; }
 [[ $delays =~ ^[1-8](,[1-8])*$ ]] || { echo "--delays 는 1–8 의 쉼표 목록(<DELAY_1..8>)" >&2; exit 2; }
 [[ $spec_augment =~ ^(off|light|nemo|[0-9]+,[0-9]+,[0-9]+,[0-9.]+)$ ]] || { echo "--spec-augment 는 off|light|nemo|Fm,Fw,Tm,Tw" >&2; exit 2; }
 [[ -z $speed_perturb || $speed_perturb =~ ^[0-9.]+(,[0-9.]+)*$ ]] || { echo "--speed-perturb 는 배율 쉼표 목록" >&2; exit 2; }
@@ -59,6 +64,7 @@ for f in main-words.list main-labels.list short-words.list short-labels.list sum
   [[ -f $snap/$f ]] || { echo "스냅숏에 없음: $snap/$f" >&2; exit 1; }
 done
 if [[ -n $qwen_dir ]]; then [[ -f $qwen_dir/config.json ]] || { echo "Qwen3-ASR 없음: $qwen_dir" >&2; exit 1; }; init=qwen
+elif [[ -n $afterok ]]; then [[ -f $init/config.json ]] || echo "init 은 job $afterok 가 만들 예정: $init" >&2
 else [[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }; fi
 [[ $offline_frac =~ ^(0|1|0?\.[0-9]+|1\.0+)$ ]] || { echo "--offline-frac 은 [0, 1]" >&2; exit 2; }
 out=/soundai/Model/VAPASR/semcommit-$run
@@ -77,5 +83,9 @@ args+=" $extra"
 echo "ASR 옵션: 인코더 $([[ $train_encoder = 1 ]] && echo 학습 || echo 동결) · SpecAugment $spec_augment · 속도 ${speed_perturb:-끔} · ASR 목록 ${asr_list:-없음} · varlen $varlen · 잡음 뱅크 ${noise_bank:-없음} · init ${qwen_dir:-$init} · ASR 전용 $asr_only · final 비율 $offline_frac · thinker 동결 $freeze_thinker" >&2
 echo "δ $delays · 스냅숏 $snap ($(python3 -c "import json,sys;s=json.load(open(sys.argv[1]));print(s['parts'],'파트')" "$snap/summary.json")) · init $init · 산출물 $out · $nodes 노드 × 8 GPU" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
-sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} --nodes="$nodes" --time="$time_limit" \
+dep=""; [[ -n $after ]] && dep="--dependency=afterany:$after"; [[ -n $afterok ]] && dep="--dependency=afterok:$afterok"
+(( dry )) && sb="echo sbatch" || sb=sbatch
+$sb --job-name="$job_name" --partition="$partition" $dep --nodes="$nodes" --time="$time_limit" \
   --export="ALL,OUT=$out,SNAP=$snap,INIT=$init,ARGS_EXTRA=${args//,/%2C}" slurm/semcommit-train-apex.sbatch   # --export 는 쉼표로 변수를 가른다(job 76482: '--delays 2,3,…' 가 '--delays 2' 로 잘림) → %2C 로 넘기고 sbatch 가 되돌린다
+(( dry )) && echo "Submitted batch job 0"
+exit 0
