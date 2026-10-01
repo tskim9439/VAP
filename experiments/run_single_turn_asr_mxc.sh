@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Two GPUs at most, per-process environment only. No login-shell/env changes.
 # usage: run_single_turn_asr_mxc.sh <checkpoint> <out> [gpus=0,2] [batch=128] [limit=0] [deltas=2,4] [manifest] [final]
-#   final: 8th argument `final` also evaluates the final (offline) mode (delta="final"; models trained with --offline-frac).
+#   8th argument: comma list of flags — `final` also evaluates the final (offline) mode (delta="final"; models trained with --offline-frac),
+#   `rcN` evaluates with encoder att_context [56,N] instead of the checkpoint's (e.g. final,rc3; multi-lookahead-trained encoders only).
 #   manifest: 7th argument or MANIFEST env (default: the v1 LibriSpeech+Kspon manifest). English evaluation uses VoxPopuli-Cleaned-AA from
 #   2026-09-29: build .../single-turn-vpaa-kspon-v1/manifest.jsonl with `eval_single_turn_asr.py prepare --voxpopuli-aa-root ...` first.
 #   PY env overrides the interpreter; when the node-local env cannot import numpy (seen 2026-09-29: PyCapsule datetime error) the conda env is used.
@@ -21,7 +22,11 @@ BATCH=${4:-128}
 LIMIT=${5:-0}
 DELAY_LIST=${6:-2,4}
 FINAL_ARGS=()
-case "${8:-}" in final) FINAL_ARGS=(--final) ;; "") ;; *) echo "8th argument must be 'final' or empty: ${8}" >&2; exit 2 ;; esac
+IFS=',' read -r -a FLAGS <<< "${8:-}"
+for f in "${FLAGS[@]}"; do
+  case "$f" in final) FINAL_ARGS+=(--final) ;; rc[0-9]|rc1[0-9]) FINAL_ARGS+=(--encoder-right-context "${f#rc}") ;; "") ;;
+    *) echo "8th argument: comma list of final / rcN: ${8}" >&2; exit 2 ;; esac
+done
 IFS=',' read -r -a DELTAS <<< "$DELAY_LIST"
 for delta in "${DELTAS[@]}"; do
   [[ "$delta" =~ ^[1-8]$ ]] || { echo 'Delta must be an integer from 1 to 8.' >&2; exit 2; }

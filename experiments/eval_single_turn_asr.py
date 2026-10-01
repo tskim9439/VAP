@@ -183,7 +183,8 @@ def run(a):
         manifest_digest=digest(rows), utterances=len(rows), deltas=a.deltas, tail_s=a.tail_s,
         leading_silence_s=0, next_bias=0, dtype=a.dtype, tf32=False, max_flush_rounds=a.max_flush,
         textnorm=fingerprint(), code=code, world_size=a.world_size, limit_per_set=a.limit,
-        batch_size=a.batch_size, encoder_batch_size=1, cpu_threads=a.cpu_threads, **({"final": True} if a.final else {}))
+        batch_size=a.batch_size, encoder_batch_size=1, cpu_threads=a.cpu_threads, **({"final": True} if a.final else {}),
+        **({"encoder_right_context": a.encoder_right_context} if a.encoder_right_context is not None else {}))
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     cp = out / f"config-rank{a.rank}.json"
@@ -204,6 +205,11 @@ def run(a):
     print(f"START rank={a.rank} total={len(assigned)} remaining={len(todo)} deltas={a.deltas}", flush=True)
     model, tok = load_model(str(ck), encoder_path=a.encoder, dtype=getattr(torch, a.dtype))
     assert model.config.lanes == 0, "This adapter is for the mono model"
+    if a.encoder_right_context is not None:                                      # 평가 시 인코더 lookahead 만 바꾼다(config 는 메모리에서만)
+        ctx = [int(model.config.encoder_left_context), int(a.encoder_right_context)]; allowed = [list(map(int, c)) for c in (getattr(model.encoder.enc, "att_context_size_all", None) or [])]
+        assert not allowed or ctx in allowed, f"att_context {ctx} not in {allowed}"
+        model.encoder.enc.set_default_att_context_size(ctx); model.config.encoder_right_context = ctx[1]
+    print(f"encoder att_context {model.encoder.enc.att_context_size}", flush=True)
     for d in a.deltas:
         assert f"<DELAY_{d}>" in model.config.sp_ids
     dev = next(model.parameters()).device
@@ -362,6 +368,8 @@ def main():
     q.add_argument("--encoder", required=True)
     q.add_argument("--out", required=True)
     q.add_argument("--deltas", type=int, nargs="*", default=[2, 4])
+    q.add_argument("--encoder-right-context", type=int, default=None, help="인코더 att_context 우측 프레임을 체크포인트 config 대신 이 값으로(예: 3 → [56,3]). "
+                   "multi-lookahead 로 학습된 인코더(--encoder-context-sampling multi)에서만 의미가 있다")
     q.add_argument("--final", action="store_true", help="final(오프라인) 모드도 평가(같은 모델·같은 인코더 특징; offline_frac 으로 학습한 모델) — delta='final'")
     q.add_argument("--tail-s", type=float, default=1.0)
     q.add_argument("--max-flush", type=int, default=8)
