@@ -20,13 +20,17 @@
 #   --speed-perturb L  배율 목록, 예 0.9,1.0,1.1 — 오디오 리샘플 + 이벤트 시각 1/배율
 #   --asr-list FILE    SEM 중립 ASR words 목록(semcommit_asr_words_list.py) → --asr-words @FILE,  --asr-max-ratio R(셋마다 ≤ R × 라벨 항목)
 #   --varlen           --attn-impl varlen(torch FA2 varlen; 처리량 +22–36 %, 4430c94)
+#   단계 학습(2026-10-01):
+#   --qwen-dir DIR     --init 대신 Qwen3-ASR(0.6B·1.7B)에서 새로 시작(adapter random, 출력 차원 = thinker hidden)
+#   --asr-only         Stage 1: labels 무시, <SEM_END> 학습 안 함   --offline-frac F  final(오프라인) 모드 항목 비율(스트리밍과 함께)
+#   --freeze-thinker   Stage 0 adapter 워밍업(--offline-frac 1 과 함께)
 #   --noise-bank DIR   잡음·잔향 증강(experiments/build_noise_bank.py 뱅크; 확률·SNR 은 --extra "--noise-p 0.4 --noise-snr 5,30 --rir-p 0.2")
 set -euo pipefail
 cd "$(dirname "$0")/.."
 LABELS=/soundai/users/tskim/VAPKT-data/data/semcommit-work/labels/speechlm-all19-v035
 run=""; snap=""; init=/soundai/Model/VAPASR/hf-E2/final; nodes=1; time_limit=24:00:00; partition=apex; job_name=SA_SFT_FullDuplex
 batch_tokens=32768; max_bs=256; epochs=2; lr=6e-5; warmup=50; save_every=200; max_steps=0; extra=""; delays=2,3,4,6; after=""
-train_encoder=0; spec_augment=off; speed_perturb=""; asr_list=""; asr_max_ratio=""; varlen=0; noise_bank=""
+train_encoder=0; spec_augment=off; speed_perturb=""; asr_list=""; asr_max_ratio=""; varlen=0; noise_bank=""; qwen_dir=""; asr_only=0; offline_frac=0; freeze_thinker=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --run) run=$2; shift 2 ;;            --snap) snap=$2; shift 2 ;;          --init) init=$2; shift 2 ;;
@@ -38,6 +42,7 @@ while [[ $# -gt 0 ]]; do
     --train-encoder) train_encoder=1; shift ;;  --spec-augment) spec_augment=$2; shift 2 ;;  --speed-perturb) speed_perturb=$2; shift 2 ;;
     --asr-list) asr_list=$2; shift 2 ;;  --asr-max-ratio) asr_max_ratio=$2; shift 2 ;;  --varlen) varlen=1; shift ;;
     --noise-bank) noise_bank=$2; shift 2 ;;
+    --qwen-dir) qwen_dir=$2; shift 2 ;;  --asr-only) asr_only=1; shift ;;  --offline-frac) offline_frac=$2; shift 2 ;;  --freeze-thinker) freeze_thinker=1; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -53,7 +58,9 @@ snap=${snap:-$(ls -d "$LABELS"/snapshots/*/ 2>/dev/null | sort | tail -1)}; snap
 for f in main-words.list main-labels.list short-words.list short-labels.list summary.json; do
   [[ -f $snap/$f ]] || { echo "스냅숏에 없음: $snap/$f" >&2; exit 1; }
 done
-[[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }
+if [[ -n $qwen_dir ]]; then [[ -f $qwen_dir/config.json ]] || { echo "Qwen3-ASR 없음: $qwen_dir" >&2; exit 1; }; init=qwen
+else [[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }; fi
+[[ $offline_frac =~ ^(0|1|0?\.[0-9]+|1\.0+)$ ]] || { echo "--offline-frac 은 [0, 1]" >&2; exit 2; }
 out=/soundai/Model/VAPASR/semcommit-$run
 args="--delays $delays --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --epochs $epochs --lr $lr --warmup $warmup --save-every $save_every --max-steps $max_steps --num-workers 8"
 (( train_encoder )) && args+=" --train-encoder --lr-encoder 1e-5"
@@ -62,8 +69,12 @@ args="--delays $delays --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --
 [[ -n $asr_list ]] && args+=" --asr-words @$asr_list" && [[ -n $asr_max_ratio ]] && args+=" --asr-max-ratio $asr_max_ratio"
 (( varlen )) && args+=" --attn-impl varlen"
 [[ -n $noise_bank ]] && args+=" --noise-bank $noise_bank"
+[[ -n $qwen_dir ]] && args+=" --qwen-dir $qwen_dir"
+(( asr_only )) && args+=" --asr-only"
+[[ $offline_frac != 0 ]] && args+=" --offline-frac $offline_frac"
+(( freeze_thinker )) && args+=" --freeze-thinker"
 args+=" $extra"
-echo "ASR 옵션: 인코더 $([[ $train_encoder = 1 ]] && echo 학습 || echo 동결) · SpecAugment $spec_augment · 속도 ${speed_perturb:-끔} · ASR 목록 ${asr_list:-없음} · varlen $varlen · 잡음 뱅크 ${noise_bank:-없음}" >&2
+echo "ASR 옵션: 인코더 $([[ $train_encoder = 1 ]] && echo 학습 || echo 동결) · SpecAugment $spec_augment · 속도 ${speed_perturb:-끔} · ASR 목록 ${asr_list:-없음} · varlen $varlen · 잡음 뱅크 ${noise_bank:-없음} · init ${qwen_dir:-$init} · ASR 전용 $asr_only · final 비율 $offline_frac · thinker 동결 $freeze_thinker" >&2
 echo "δ $delays · 스냅숏 $snap ($(python3 -c "import json,sys;s=json.load(open(sys.argv[1]));print(s['parts'],'파트')" "$snap/summary.json")) · init $init · 산출물 $out · $nodes 노드 × 8 GPU" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} --nodes="$nodes" --time="$time_limit" \
