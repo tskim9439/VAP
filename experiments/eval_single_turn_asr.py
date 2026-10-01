@@ -183,7 +183,7 @@ def run(a):
         manifest_digest=digest(rows), utterances=len(rows), deltas=a.deltas, tail_s=a.tail_s,
         leading_silence_s=0, next_bias=0, dtype=a.dtype, tf32=False, max_flush_rounds=a.max_flush,
         textnorm=fingerprint(), code=code, world_size=a.world_size, limit_per_set=a.limit,
-        batch_size=a.batch_size, encoder_batch_size=1, cpu_threads=a.cpu_threads)
+        batch_size=a.batch_size, encoder_batch_size=1, cpu_threads=a.cpu_threads, **({"final": True} if a.final else {}))
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     cp = out / f"config-rank{a.rank}.json"
@@ -196,7 +196,9 @@ def run(a):
     done = {(r["id"], r["delta"]) for r in previous}
     assert len(done) == len(previous), "Duplicate predictions in resume file"
     assigned = [r for i, r in enumerate(rows) if i % a.world_size == a.rank]
-    todo = [r for r in assigned if not all((r["id"], d) in done for d in a.deltas)]
+    conds = list(a.deltas) + (["final"] if a.final else [])                     # final = 같은 모델의 오프라인 모드(vapasr/hf/offline_decode)
+    assert conds, "--deltas 나 --final 중 하나는 필요"
+    todo = [r for r in assigned if not all((r["id"], d) in done for d in conds)]
     # Sort by corpus and duration to minimize dense KV-cache padding/wasted work.
     todo.sort(key=lambda r: (r["dataset"], r["audio_s"], r["id"]))
     print(f"START rank={a.rank} total={len(assigned)} remaining={len(todo)} deltas={a.deltas}", flush=True)
@@ -225,7 +227,7 @@ def run(a):
     with ThreadPoolExecutor(a.io_workers) as pool, dest.open("a", buffering=1) as output, torch.inference_mode():
         # Submit in the background; waveform arrays stay in CPU RAM for reuse.
         futures = [pool.submit(read_audio, r, a.tail_s) for r in todo]
-        pos = 0
+        pos = 0; ofmt = oblk = None
         while pos < len(todo):
             end = min(len(todo), pos + a.batch_size)
             while todo[end - 1]["dataset"] != todo[pos]["dataset"]:
@@ -282,10 +284,31 @@ def run(a):
                     completed += 1
                 output.flush()
                 os.fsync(output.fileno())
-                print(f"PROGRESS rank={a.rank} predictions={completed}/{len(assigned)*len(a.deltas)} "
+                print(f"PROGRESS rank={a.rank} predictions={completed}/{len(assigned)*len(conds)} "
                       f"dataset={batch[0]['dataset']} delta={delta} batch={len(batch)} "
                       f"encode_s={encoded_s:.1f} decode_s={elapsed:.1f} elapsed_s={time.monotonic()-start:.1f} "
                       f"peak_gpu_gb={torch.cuda.max_memory_allocated()/1e9:.2f}", flush=True)
+            if a.final:                                                         # 같은 인코더 특징(인과)으로 오프라인 모드 전사
+                from vapasr.hf.offline_decode import offline_decode, offline_blocked_ids
+                from vapasr.data.offline_seq import OfflineFormat
+                from vapasr.data.textnorm import score_en, score_ko
+                if ofmt is None: ofmt = OfflineFormat(tok); oblk = torch.tensor(offline_blocked_ids(model, ofmt), device=dev)
+                dt = time.monotonic()
+                for r, f in zip(batch, feats):
+                    if (r["id"], "final") in done:
+                        continue
+                    ids = offline_decode(model, tok, f[0], r["lang"], fmt=ofmt, blocked=oblk)
+                    hyp = tok.decode(ids, skip_special_tokens=True).strip()
+                    norm = score_en if r["lang"] == "English" else (lambda x: score_ko(x, False))
+                    rec = dict(id=r["id"], dataset=r["dataset"], lang=r["lang"], path=r["path"], delta="final", audio_s=r["audio_s"], tail_s=a.tail_s,
+                        K=int(f.shape[1]), raw_reference=r["raw_reference"], reference=r["reference"], hypothesis=hyp,
+                        reference_normalized=norm(r["reference"]), hypothesis_normalized=norm(hyp),
+                        primary_metric="wer" if r["lang"] == "English" else "cer_nospace", metrics=score_pair(r["reference"], hyp, r["lang"]),
+                        token_ids=ids, emissions=[], forced=0, flush_rounds=0, post_audio_tokens=0, batch_size=1, batch_decode_s=None, batch_encode_s=encoded_s)
+                    output.write(json.dumps(rec, ensure_ascii=False) + "\n"); done.add((r["id"], "final")); completed += 1
+                output.flush(); os.fsync(output.fileno())
+                print(f"PROGRESS rank={a.rank} predictions={completed}/{len(assigned)*len(conds)} dataset={batch[0]['dataset']} delta=final "
+                      f"batch={len(batch)} decode_s={time.monotonic()-dt:.1f} elapsed_s={time.monotonic()-start:.1f}", flush=True)
             pos = end
     write_json(out / f"done-rank{a.rank}.json", dict(predictions=completed, elapsed_s=time.monotonic()-start))
     print(f"DONE rank={a.rank} predictions={completed}", flush=True)
@@ -313,7 +336,7 @@ def summarize(a):
     assert all(json.loads(p.read_text()) == cfg for p in configs), "Inconsistent worker protocols"
     rows = [r for p in sorted(out.glob("predictions-rank*.jsonl")) for r in read_jsonl(p)]
     assert len({(r['id'], r['delta']) for r in rows}) == len(rows), "Duplicate predictions"
-    expected = cfg["utterances"] * len(cfg["deltas"])
+    expected = cfg["utterances"] * (len(cfg["deltas"]) + int(bool(cfg.get("final"))))
     complete = (len(rows) == expected and len(list(out.glob("done-rank*.json"))) == cfg["world_size"])
     report = dict(complete=complete, predictions=len(rows), expected_predictions=expected,
                   config=cfg, groups=aggregate(rows), **aa_report(rows))
@@ -338,7 +361,8 @@ def main():
     q.add_argument("--checkpoint", required=True)
     q.add_argument("--encoder", required=True)
     q.add_argument("--out", required=True)
-    q.add_argument("--deltas", type=int, nargs="+", default=[2, 4])
+    q.add_argument("--deltas", type=int, nargs="*", default=[2, 4])
+    q.add_argument("--final", action="store_true", help="final(오프라인) 모드도 평가(같은 모델·같은 인코더 특징; offline_frac 으로 학습한 모델) — delta='final'")
     q.add_argument("--tail-s", type=float, default=1.0)
     q.add_argument("--max-flush", type=int, default=8)
     q.add_argument("--batch-size", type=int, default=64)

@@ -258,7 +258,8 @@ class VapAsrForStreamingASR(PreTrainedModel):
 
     @classmethod
     def from_qwen(cls, qwen_dir: str, tokenizer=None, encoder_path: Optional[str] = None, load_encoder: bool = True, seed: int = 0, **cfg_kw):
-        """Qwen3-ASR 디렉토리에서 새 모델. 특수 토큰을 tokenizer 에 추가하고 그 임베딩 행을 평균+잡음으로 초기화(mono_model 과 동일). adapter 는 random."""
+        """Qwen3-ASR 디렉토리(0.6B·1.7B)에서 새 모델. 특수 토큰을 tokenizer 에 추가하고 그 임베딩 행을 평균+잡음으로 초기화(mono_model 과 동일). adapter 는 random,
+        출력 차원은 thinker hidden(1.7B = 2048)."""
         from qwen_asr.core.transformers_backend.modeling_qwen3_asr import Qwen3ASRForConditionalGeneration
         from transformers import AutoTokenizer
         from ..uslm.interleave_data import add_specials, SPECIAL_TOKENS
@@ -268,8 +269,10 @@ class VapAsrForStreamingASR(PreTrainedModel):
         c = thinker.config; pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]
         blocked = [c.audio_token_id, c.audio_start_token_id, c.audio_end_token_id, tok.convert_tokens_to_ids("<|im_end|>"), tok.convert_tokens_to_ids("<|im_start|>"),
                    tok.convert_tokens_to_ids("<asr_text>"), sp_ids["<EMPTY_AUDIO>"], sp_ids["<SPK_A>"], sp_ids["<SPK_B>"]] + [v for k, v in sp_ids.items() if k.startswith("<DELAY_")]
+        cfg_kw.setdefault("adapter_d_out", int(c.to_dict().get("text_config", {}).get("hidden_size", 1024)))   # 0.6B 1024, 1.7B 2048 — adapter 출력 = thinker 임베딩 차원
         config = VapAsrConfig(thinker=c.to_dict(), thinker_name_or_path=qwen_dir, sp_ids=sp_ids, special_tokens=list(SPECIAL_TOKENS), blocked_ids=sorted(set(blocked)),
                               audio_pad_id=c.audio_token_id, prefix_ids=pre, **cfg_kw)
+        assert config.adapter_d_out == config.hidden_size, f"adapter_d_out {config.adapter_d_out} ≠ thinker hidden {config.hidden_size}"
         m = cls(config, thinker=thinker)
         W = m.get_input_embeddings().weight; rows = sorted(sp_ids.values()); assert max(rows) < W.shape[0], "임베딩에 특수 토큰 여유 행 없음"
         g = torch.Generator().manual_seed(seed)

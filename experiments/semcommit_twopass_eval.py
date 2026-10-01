@@ -77,6 +77,36 @@ class Decoder:
         return texts, cost
 
 
+class SelfDecoder:
+    """같은 VapAsr 모델의 final(오프라인) 모드(vapasr/hf/offline_decode) — 스트림 전체를 인과 인코더로 한 번 인코딩하고 세그먼트 프레임을 잘라 디코드한다
+    (좌측 문맥이 살아 있고 1차 스트리밍과 같은 특징). offline_frac 으로 학습한 모델에서 의미가 있다. text 모드(문맥 주입)는 없다."""
+    def __init__(self, model_dir, encoder=None):
+        import torch
+        from vapasr.hf.infer import load_model
+        from vapasr.data.offline_seq import OfflineFormat
+        from vapasr.hf.offline_decode import offline_blocked_ids
+        self.m, self.tok = load_model(model_dir, encoder_path=encoder, dtype=torch.bfloat16); self.dev = next(self.m.parameters()).device
+        self.fmt = OfflineFormat(self.tok); self.blocked = torch.tensor(offline_blocked_ids(self.m, self.fmt), device=self.dev)
+
+    def feats(self, wav):
+        import torch
+        w = torch.from_numpy(wav).to(self.dev); K = int(round(len(wav) / SR * self.m.config.frame_hz))
+        return self.m.encode(w[None], torch.tensor([len(wav)], device=self.dev), torch.tensor([K], device=self.dev))[0, 0]
+
+    def run_frames(self, frames, langs):
+        from vapasr.hf.offline_decode import offline_decode
+        texts, cost = [], []
+        for f, lang in zip(frames, langs):
+            t0 = time.monotonic(); ids = offline_decode(self.m, self.tok, f, lang, fmt=self.fmt, blocked=self.blocked) if f.shape[0] else []
+            texts.append(self.tok.decode(ids, skip_special_tokens=True).strip()); cost.append(time.monotonic() - t0)
+        return texts, cost
+
+
+def dec_tag(a):
+    """출력 이름 태그: Qwen 디렉토리 이름, self 면 self-<모델 run 이름>."""
+    return f"self-{Path(a.decoder[5:]).parent.name}" if a.decoder.startswith("self:") else Path(a.decoder).name
+
+
 def load_set(a, se, s):
     """세트 s: words 행, 1차 스트림 행(설정 하나, words 지문 확인, word_k backfill), 디코드 설정."""
     words = {r["id"]: r for r in se.read_jsonl(Path(a.words_dir) / f"words-{s}.jsonl")}
@@ -99,7 +129,7 @@ def fingerprint(a, s, dc):
 
 def run_set(a, se, dec, s):
     words, recs, dc, bst = load_set(a, se, s)
-    tag = Path(a.decoder).name; out = Path(a.out_dir) / f"{s}-d{a.delay}-{tag}.jsonl"; out.parent.mkdir(parents=True, exist_ok=True)
+    tag = dec_tag(a); out = Path(a.out_dir) / f"{s}-d{a.delay}-{tag}.jsonl"; out.parent.mkdir(parents=True, exist_ok=True)
     cfg_path = Path(str(out) + ".config.json"); fp = fingerprint(a, s, dc)
     if cfg_path.exists():
         old = json.loads(cfg_path.read_text()); diff = sorted(k for k in set(old) | set(fp) if old.get(k) != fp.get(k))
@@ -125,7 +155,20 @@ def run_set(a, se, dec, s):
             ids = [r["id"] for r in todo[mode] if r["id"] in rows]
             if not ids: continue
             t1 = time.monotonic()
-            if mode == "s5":
+            if isinstance(dec, SelfDecoder):                                                   # 같은 모델 final 모드: 스트림 특징을 한 번 만들고 프레임을 자른다
+                assert mode in ("iso", "s5"), "self 디코더는 iso·s5 만(text 문맥 주입 없음)"
+                F = {i: dec.feats(wav[i][:int(round(rows[i]["t_eos"] * SR))]) for i in ids}; fk = lambda t: int(round(t / 0.08))
+                if mode == "s5":
+                    texts, cost = dec.run_frames([F[i] for i in ids], [LANG[rows[i]["w"]["lang"]] for i in ids])
+                    res = {i: dict(seg_texts=[t], cost=c, segs=[dict(start=0.0, end=rows[i]["t_eos"], t_trig=rows[i]["t_eos"], kind="eos", w0=0, w1=len(rows[i]["r"]["hyp"]["words"]),
+                                                                        k_sem=None, held=0)]) for i, t, c in zip(ids, texts, cost)}
+                else:
+                    res = {i: dict(seg_texts=[None] * len(rows[i]["segs"]), cost=0.0, segs=rows[i]["segs"]) for i in ids}
+                    jobs = [(i, j) for i in ids for j in range(len(rows[i]["segs"]))]
+                    texts, cost = dec.run_frames([F[i][fk(rows[i]["segs"][j]["start"]):max(fk(rows[i]["segs"][j]["start"]) + 1, fk(rows[i]["segs"][j]["end"]))] for i, j in jobs],
+                                                 [LANG[rows[i]["w"]["lang"]] for i, _ in jobs])
+                    for (i, j), t, c in zip(jobs, texts, cost): res[i]["seg_texts"][j] = t; res[i]["cost"] += c
+            elif mode == "s5":
                 xs = [wav[i][:int(round(rows[i]["t_eos"] * SR))] for i in ids]
                 texts, cost = dec.run(xs, [LANG[rows[i]["w"]["lang"]] for i in ids], [""] * len(ids))
                 res = {i: dict(seg_texts=[t], cost=c, segs=[dict(start=0.0, end=rows[i]["t_eos"], t_trig=rows[i]["t_eos"], kind="eos", w0=0, w1=len(rows[i]["r"]["hyp"]["words"]),
@@ -197,17 +240,17 @@ def main(argv=None):
     p.add_argument("--eval-dir", required=True, help="semcommit_eval 출력 폴더(<set>-d<δ>.streams.jsonl + .config.json)")
     p.add_argument("--words-dir", required=True, help="words-<set>.jsonl 폴더(1차 디코드와 같은 words)")
     p.add_argument("--sets", nargs="+", required=True); p.add_argument("--delay", type=int, default=4); p.add_argument("--config", default="bias=0")
-    p.add_argument("--decoder", required=True, help="Qwen3-ASR 디렉토리(2차 디코더)"); p.add_argument("--modes", nargs="+", default=["iso", "text", "s5"], choices=["iso", "text", "s5"])
+    p.add_argument("--decoder", required=True, help="Qwen3-ASR 디렉토리(2차 디코더) 또는 self:<VapAsr 모델> — 같은 모델 final 모드(offline_frac 학습)"); p.add_argument("--encoder", default=None, help="self 디코더의 Nemotron 디렉토리(기본 MXC_NEMOTRON_DIR)"); p.add_argument("--modes", nargs="+", default=["iso", "text", "s5"], choices=["iso", "text", "s5"])
     p.add_argument("--out-dir", required=True); p.add_argument("--gpu", default=None); p.add_argument("--batch-size", type=int, default=16)
     p.add_argument("--max-new-tokens", type=int, default=512); p.add_argument("--min-seg", type=float, default=0.8); p.add_argument("--min-words", type=int, default=2)
     p.add_argument("--context-chars", type=int, default=600, help="text 모드 context 로 넘길 직전 최종 텍스트 끝 글자 수(0 = 끔)")
     p.add_argument("--path-remap", nargs="*", default=[], help="OLD=NEW (1차 디코드와 같은 값)"); p.add_argument("--tokenizer", default=None, help="word_k backfill tokenizer(기본: 1차 디코드 모델)")
     p.add_argument("--io-workers", type=int, default=8); p.add_argument("--score-only", action="store_true")
     a = p.parse_args(argv)
-    se = _semcommit_eval(); tag = Path(a.decoder).name
+    se = _semcommit_eval(); tag = dec_tag(a)
     paths = [Path(a.out_dir) / f"{s}-d{a.delay}-{tag}.jsonl" for s in a.sets]
     if not a.score_only:
-        dec = Decoder(a.decoder, a.batch_size, a.max_new_tokens)
+        dec = SelfDecoder(a.decoder[len("self:"):], a.encoder) if a.decoder.startswith("self:") else Decoder(a.decoder, a.batch_size, a.max_new_tokens)
         for s in a.sets: run_set(a, se, dec, s)
     summ = summarize(a, se, paths); print_summary(summ)
     se.write_json(Path(a.out_dir) / f"summary-d{a.delay}-{tag}.json", dict(protocol=PROTOCOL, delay=a.delay, config=a.config, decoder=os.path.abspath(a.decoder),
