@@ -20,3 +20,5 @@ source_type: source-drop
   - `vpaa_bootstrap_E2_vs_v035.py`: VoxPopuli-AA 에서 E2 대 v035-d8
   - `summaries-noGroups.jsonl`: 두 모델 summary.json(groups 제외, AA-WER·config 포함)
 - 발화별 predictions 는 mxc `VAPKT-data/results/single-turn-vpaa-kspon-{q17,q06}-s1/` 에 있다.
+- `s1_compare_rc.txt`·`s1_compare_rc.py`: 같은 q17-s1 을 평가 context 만 [56,3] 으로 바꾼 평가(`single-turn-vpaa-kspon-q17-s1-rc3`, δ 2/3/4/6 + final)와
+  [56,0] δ3 보충(`-d3`)의 같은 총지연 짝 bootstrap. q17-s1 은 NeMo multi-lookahead(학습 step 마다 context 무작위)로 학습돼 두 context 모두 학습 분포 안이다.
