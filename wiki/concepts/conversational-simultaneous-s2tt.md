@@ -51,7 +51,7 @@ sources:
 ## 열린 문제
 
 - **입력 채널**: 기존 결정은 mono 혼합 입력이었다([[decision-mono-input]]). 명세는 “양쪽 음성 스트림”을 관찰하고 화자 분리(diarization)를 범위에서 뺐다. 그래서 화자별 채널 입력이 자연스럽다. 재결정이 필요하다. → [[decision-project-goal-cst-s2tt]]
-- **원천 commit 과 번역 commit 의 관계**: `<SEM_END>`(원천 의미 완결)를 번역 시작(WRITE) 신호로 쓸 수 있는지는 검증 전이다. SOV(한국어)→SVO(영어)에서 특히 다를 수 있다.
+- **원천 commit 과 번역 단위의 관계**: 현 `<SEM_END>` 는 문장급(EN 11 s·KO 8 s/단위)이라 WRITE 단위로는 크다. 번역 기준 의미 단위(MU·문맥 정렬)를 따로 정의할 것을 권고했다. 한국어 연결어미 규칙 음성은 KO→EN 청크 경계와 충돌한다. → [[output-simulst-translation-unit-survey-20261002]]
 - **번역 데이터**: 실제 교차언어 대화 + 참조 번역이 필요하다. 지금 확보된 것은 없다. → [[task-cst-data-access]]
 
 ## 관련
