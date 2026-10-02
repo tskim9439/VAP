@@ -2,59 +2,64 @@
 type: overview
 status: active
 created: 2026-09-03
-updated: 2026-09-04
-summary: streaming ASR과 VAP를 하나의 representation으로 통합하는 연구를 축적하는 볼트
+updated: 2026-10-02
+summary: 2인 교차언어 대화의 동시 음성→텍스트 번역(CST-S2TT)과 상호작용 제어, CST-Bench 를 연구하는 볼트 (2026-10-02 목표 전환)
 ---
 
 # 개요
 
-## 이 볼트가 다루는 것
+## 이 볼트가 다루는 것 (2026-10-02 부터)
 
-**streaming ASR 과 turn-taking 예측을 하나의 representation 에서 동시에 푸는 연구.**
+**대화형 동시 음성→텍스트 번역 — [[conversational-simultaneous-s2tt]] (CST-S2TT).**
 
-목표 모델 [[streaming-conversational-projection-asr]] 는 매 시점의 streaming audio 에서
-transcription 과 **미래 2초의 대화 역학**(누가 언제 말할 것인가, interruption,
-backchannel)을 함께 예측한다.
+서로 다른 언어를 쓰는 두 사람이 한 대화에서 번갈아 말할 때, AI 통역기가 상대 언어의 텍스트 번역을 실시간으로 낸다. 번역에 더해 다음을 함께 판단한다.
+- 언제 듣고 언제 쓰기 시작할지
+- 언제 기다리고 멈출지
+- 어느 방향(A→B / B→A)으로 전환할지
 
-핵심 구분: [[source-muse-voice-transcribe]] 같은 endpointing 은 "지금 끝났는가" 를
-묻고, [[voice-activity-projection]] 은 "앞으로 누가 말할 것인가" 를 묻는다.
-사람은 턴 종료 **−151 ms** 시점에 이미 움직이지만 최고 성능 VAP 는 **368 ms** 가
-걸린다 ([[source-turnbench]]). 이 **약 520 ms 의 격차**가 연구 대상이다.
+핵심 가설은 **번역 정책과 turn-taking 정책은 독립이 아니다** 이다. [[source-cst-s2tt-project-spec-v0-1]]
 
-## 현재 상태
+이전 목표(스트리밍 ASR + 미래 2 초 turn-taking 투사, [[streaming-conversational-projection-asr]])에서 전환했다. 전환 이유와 이어지는 자산은 [[decision-project-goal-cst-s2tt]].
 
-[[source-chatgpt-research-plan]] 초안을 사실 검증하고 수정한
-**[[output-streaming-vap-research-plan]] (v2)** 가 현재의 계획이다.
-17개 태스크로 분해되어 있다 → [[todo]]
+## 첫 논문 범위
 
-초안의 인용은 전부 실재했으나, 계획을 바꾸는 사실이 나왔다:
-DualTurn 누락, Muse 의 closed-weights, AI Hub 재배포 제약,
-encoder causality 미검증.
+- 포함:
+  - 2 인, 서로 다른 언어, 실제 multi-turn 대화
+  - 스트리밍 입력, 양방향 동시 S2TT
+  - semantic commitment(확정 번역은 수정 불가), 턴 전환·맞장구·끼어들기
+- 제외: TTS/S2ST, 음성 자연성, 3 인 이상, 화자 분리, code-switching 중심 과제
+- S2ST 는 후속 확장이다.
+
+## 현재 최우선
+
+모델보다 **[[cst-bench]] v0 와 strong pipeline 기준선**이 먼저다. 첫 질문은 “상호작용을 다루지 않는 기존 SimulST 파이프라인은 어디서, 얼마나 실패하는가?”다. joint 모델은 kill criterion 을 통과한 뒤에 만든다.
+
+| 단계 | 내용 | 태스크 |
+|---|---|---|
+| Phase 0 | 교차언어 대화 코퍼스 확보, 공통 schema 파서 | [[task-cst-data-access]], [[task-cst-conversation-schema-parser]] |
+| Phase 1 | 턴 재구성·번역 정규화·통제 타임라인 생성기 | [[task-cst-timeline-generator]] |
+| Phase 2 | CST-Bench v0 (두 세트·지표·revision-free commit) | [[task-cst-bench-v0-metrics]] |
+| Phase 3 | 기준선 B0–B4, kill criterion | [[task-cst-strong-baselines]], [[task-cst-kill-criterion-check]] |
+| Phase 4 | joint 모델(B5) + ablation | — |
+| Phase 5 | 한국어 확장(ETRI 또는 KO↔EN 수집) | — |
+| Phase 6 | S2ST 확장 | — |
 
 ## 주제 영역
 
-### 모델과 목표
-- [[voice-activity-projection]] — 출발 baseline
-- [[streaming-conversational-projection-asr]] — 제안 모델과 3개 가설
-- [[turn-taking-objectives]] — VAP + hazard + event 다중 목표
-- [[acoustic-linguistic-fusion]] — cascade 없는 semantic 결합
+### 과제와 평가
+- [[conversational-simultaneous-s2tt]]: 과제 정의, 기존 SimulST 와의 차이, 기존 자산 연결
+- [[cst-bench]]: 두 세트, 합성 상호작용, 지표, 기준선, kill criterion
 
-### 제약과 평가
-- [[streaming-causality-and-latency-budget]] — **최대 방법론적 위험**
-- [[turn-taking-evaluation-protocol]] — TurnBench 규약 채택
-- [[korean-turn-taking-cues]] — 한국어가 흥미로운 이유
+### 이전 목표에서 이어지는 자산
+- 스트리밍 백본: 인과 인코더 Nemotron + Qwen3-ASR thinker, δ 지연 → [[decision-asr-backbone]], [[output-stage1-pilot-eval-20261001]]
+- semantic commit: `<SEM_END>` 라벨, 골드 commit, commit 지연 지표 → [[output-semcommit-recipe-v0.3]], [[output-semcommit-gold-v1]], [[output-semcommit-v035-d8-eval]]
+- turn-taking 기준선: VAP 재현 → [[voice-activity-projection]], [[output-vap-turnbench-baseline-reproduction]]
+- 지연·인과성 규약: [[streaming-causality-and-latency-budget]], [[output-encoder-causality-audit]]
 
-### 자원
-- [[source-conversation-corpora]] — 코퍼스 채널 구조와 라이선스
-- [[source-qwen3-asr]] / [[source-nemotron-3-5-asr-streaming]] — backbone 후보
-- [[source-turn-taking-related-work-2026]] — JAL-Turn, Next-Turn, **DualTurn**
-
-### 결정
-- [[decision-asr-backbone]] — 최종: Nemotron `[56,0]` → adapter → Qwen3-ASR thinker LM
-- [[decision-korean-benchmark-release-scope]] — 어노테이션 레이어로 공개
+### 이전 목표의 기록 (참고)
+- [[streaming-conversational-projection-asr]], [[output-streaming-vap-research-plan]], [[turn-taking-objectives]], [[korean-turn-taking-cues]]
 
 ## 다음 관문
 
-causality 감사는 완료되었고 최종 backbone이 확정되었다. 다음 선행 관문은
-[[task-uslm-feasibility-u0]]의 정렬·토큰율 검증과 [[task-uslm-u05-adapter-bridge]]의
-Nemotron–thinker 연결 품질 검증이다.
+- 즉시 접근 가능한 교차언어 대화 코퍼스 1 개 확보(라이선스 확인 포함)
+- 입력 채널 재결정(mono 혼합 → 화자별 스트림) → [[decision-mono-input]] 재검토

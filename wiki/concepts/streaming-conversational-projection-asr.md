@@ -1,12 +1,14 @@
 ---
 type: concept
-status: seed
+status: superseded
 created: 2026-09-03
-updated: 2026-09-04
+updated: 2026-10-02
 summary: 하나의 streaming representation에서 transcription과 미래 대화 역학을 동시 예측하는 제안 모델의 정의와 가설
 sources:
   - [[source-chatgpt-research-plan]]
 ---
+
+> **2026-10-02 목표 전환** — 이 모델은 더 이상 프로젝트의 최종 목표가 아니다. 새 목표는 [[conversational-simultaneous-s2tt]] 이고, 여기서 만든 스트리밍 백본·VAP 는 기준선·구성요소로 이어진다. → [[decision-project-goal-cst-s2tt]]
 
 # Streaming Conversational Projection ASR (제안 모델)
 

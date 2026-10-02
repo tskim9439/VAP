@@ -2,13 +2,40 @@
 type: status
 status: active
 created: 2026-09-03
-updated: 2026-09-29
-summary: semcommit 첫 본 학습(E2→v0.3.5 라벨 5 epoch) 평가 완료 — ASR 은 E2 대비 개선, commit F1 KO 0.85·EN 0.67–0.74, WER/CER 개선안 분석 중
+updated: 2026-10-02
+summary: 2026-10-02 프로젝트 목표를 CST-S2TT(대화형 동시 S2TT)로 전환 — Phase 0 데이터 확보·CST-Bench v0·기준선이 최우선
 ---
 
 # 상태
 
-마지막 갱신: 2026-09-29 (아래 기존 볼트 상태는 2026-09-07의 기록)
+마지막 갱신: 2026-10-02 (아래 기존 볼트 상태는 2026-09-07의 기록)
+
+## 2026-10-02 프로젝트 목표 전환 → CST-S2TT
+
+- 사용자가 `raw/sources/CST_S2TT_Project_Spec_v0.1.pdf` 를 제시했다. 목표를 **대화형 동시 음성→텍스트 번역(CST-S2TT)과 CST-Bench** 로 바꿨다.
+  → [[decision-project-goal-cst-s2tt]], [[source-cst-s2tt-project-spec-v0-1]], [[conversational-simultaneous-s2tt]], [[cst-bench]]
+- 최우선은 모델이 아니라 Phase 0–3 이다.
+  - 교차언어 대화 코퍼스 확보
+  - 공통 schema
+  - 통제 타임라인 생성기
+  - CST-Bench v0 지표
+  - strong 기준선 B0–B4 와 kill criterion
+  - 태스크: [[task-cst-data-access]], [[task-cst-conversation-schema-parser]], [[task-cst-timeline-generator]], [[task-cst-bench-v0-metrics]], [[task-cst-strong-baselines]], [[task-cst-kill-criterion-check]]
+- `README.md`·`PLAN.md`·`TODO.md` 를 새 목표로 다시 썼다. 이전 판은 `plans/*-vap-asr-*.md` 로 보관했다.
+- 이전 목표에서 이어 쓰는 자산:
+  - 스트리밍 백본(인과 인코더 + Qwen3-ASR thinker, δ 지연, final 모드)
+  - `<SEM_END>` commit 라벨·골드·지연 지표
+  - VAP 재현(B3)
+  - single-turn ASR 평가
+- 전환 시점 진행 중:
+  - semcommit 라벨링 job 79205(4 노드)는 완료 4,565 파트이고, 이번 순서에서 3,694 파트가 남았다
+  - Stage 1 본학습 q17-s1m-r0([56,0])·r3([56,3], 3 epoch)이 끝났다:
+    - 한국어는 파일럿 대비 약 1 %p 개선, 영어(VoxPopuli)는 약 1 %p 악화했다
+    - 중간 checkpoint 평가로 원인을 epoch 증가(한국어 77 % 학습 구성)로 좁혔다 → [[output-stage1-pilot-eval-20261001]]
+  - 라벨링 계속 여부와 Stage 2 진행 여부는 사용자 판단이 필요하다
+- 재검토할 기존 결정:
+  - [[decision-mono-input]]: 화자별 스트림 입력 여부
+  - [[decision-target-architecture]], [[decision-semcommit-turn-eot-scope]], [[decision-multi-speaker-scope]]
 
 ## 2026-09-29 semcommit 첫 본 학습·평가
 

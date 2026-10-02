@@ -1,0 +1,23 @@
+## [2026-10-02] ingest | CST-S2TT Project Specification v0.1 (프로젝트 목표 전환)
+
+- Changed:
+  - 원천: `raw/sources/CST_S2TT_Project_Spec_v0.1.pdf` (`raw/inbox/` 에서 분류 이동)
+  - 위키 신규:
+    - `wiki/sources/source-cst-s2tt-project-spec-v0-1.md`
+    - `wiki/concepts/conversational-simultaneous-s2tt.md`, `wiki/concepts/cst-bench.md`
+    - `wiki/decisions/decision-project-goal-cst-s2tt.md`
+    - `wiki/tasks/task-cst-{data-access,conversation-schema-parser,timeline-generator,bench-v0-metrics,strong-baselines,kill-criterion-check}.md`
+  - 위키 갱신:
+    - `wiki/overview.md`, `wiki/status.md`
+    - `wiki/concepts/streaming-conversational-projection-asr.md`(superseded 표시)
+  - 루트 문서:
+    - `README.md`·`PLAN.md`·`TODO.md` 를 새 목표로 다시 썼다
+    - 이전 판은 `plans/{README,PLAN}-vap-asr-20260905.md`, `plans/TODO-vap-asr-20260903.md` 로 보관했다
+- Reason: 사용자가 명세서를 제시하고 “프로젝트의 목표를 이 문서와 같이 수정”하라고 지시했다.
+- Next:
+  - Phase 0 교차언어 대화 코퍼스 접근·라이선스 확인
+  - 입력 채널(mono 혼합 vs 화자별 스트림) 재결정
+  - 진행 중 semcommit 라벨링·Stage 2 진행 여부 결정
+  - `wiki/index.md`·`log.md`·`todo.md` 재생성(병합 전)
+  - 결정 페이지 팀원 검토
+- By: tskim
