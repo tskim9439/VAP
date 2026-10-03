@@ -290,6 +290,105 @@ def simul(a):
     print("DONE", flush=True)
 
 
+HAN_RE = __import__("re").compile(r"[\u4e00-\u9fff\u3040-\u30ff]")
+HANGUL_RE = __import__("re").compile(r"[\uac00-\ud7a3]")
+
+
+def lang_ok(text, tgt):
+    """목표 언어 출력인지: 한자·가나가 없고, 영어 목표면 한글이 없고, 한국어 목표면 한글이 글자의 30 % 이상."""
+    import re
+    if HAN_RE.search(text):
+        return False
+    if tgt == "English":
+        return not HANGUL_RE.search(text)
+    return len(HANGUL_RE.findall(text)) >= 0.3 * max(len(re.findall(r"\w", text)), 1)
+
+
+def messages_incremental(src_lang, heard, committed, final):
+    tgt = TGT[src_lang]
+    note = "" if final else " The speaker is still talking: translate only what has been said so far and do not guess the rest."
+    return [{"role": "user", "content":
+             f"You are a simultaneous interpreter translating {src_lang} speech into {tgt}.\n"
+             f"Source heard so far: {heard}\n"
+             f"Translation already given (cannot be changed): {committed or '(none)'}\n"
+             f"Translate only the part of the source that the translation already given does not cover yet, continuing it naturally in {tgt}.{note} "
+             f"Output only the new {tgt} text, nothing else. If nothing new can be translated yet, output nothing."}]
+
+
+def simul2(a):
+    """보강 MU(MU2): 문맥 정렬의 유효 절단 중 최소 단위(단어·초)를 넘는 후보에서 접두 번역을 실제로 생성하고,
+    그 결과가 전체 번역의 해당 구간(정렬상 새로 덮이는 목표 단어)과 chrF ≥ τ 로 일치하며 목표 언어일 때만 확정한다(Zhang 2020 의 생성 검증).
+    확정한 번역은 강제 접두가 아니라 프롬프트로 알려 준다. 같은 프롬프트 방식의 SEM_END2·발화 끝(utt_end)도 함께 낸다.
+    commits 에 (경계 단어 수, 확정 텍스트)를 남겨 score 가 지연을 계산한다."""
+    import sacrebleu
+    from vapasr.data.semcommit_llm import LLM
+    S = {json.loads(l)["id"]: json.loads(l) for l in open(a.streams)}
+    al = {json.loads(l)["id"]: json.loads(l) for l in open(a.align) if '"L"' in l}
+    ids = [i for i in al if S[i]["lang"] == a.lang][: a.max_streams]
+    done = {json.loads(l)["id"] for l in open(a.out)} if os.path.exists(a.out) else set()
+    llm = LLM(a.model, a.kind, device="cuda", dtype="bfloat16"); llm.load()
+    def gen(s, b, committed, cap, final):
+        tgt = TGT[s["lang"]]
+        for tries in range(2):
+            m = messages_incremental(s["lang"], " ".join(s["src"][:b]), committed, final)
+            if tries:
+                m[0]["content"] += f" Write the answer in {tgt} only."
+            r = llm.generate_json([llm.build_prompt(m)], max_new_tokens=cap, batch_size=1)[0]
+            out = cut_loop(r["text"].split("</think>")[-1].split("\n")[0].strip())
+            if not out or lang_ok(out, tgt):
+                return out
+        return None                                                                   # 두 번 모두 다른 언어 → 확정하지 않음
+    t0 = time.time(); stat = Counter()
+    with open(a.out, "a") as f:
+        for k, sid in enumerate(i for i in ids if i not in done):
+            s = S[sid]; n = s["n"]; ends = s["ends"]; r_al = al[sid]
+            a_al, C, M = units(r_al); full = r_al["translation"].split(); T = len(a_al)
+            rec = dict(id=sid, lang=s["lang"], n=n, out={}, commits={})
+            off = gen(s, n, "", a.max_new_tokens, True) or ""; rec["out"]["utt_end"] = off; rec["commits"]["utt_end"] = [[n, off]]
+            cap = min(a.max_new_tokens, 2 * len(llm.encode(off or r_al["translation"])) + 8)
+            min_w = a.min_words_ko if s["lang"] == "Korean" else a.min_words_en
+            # MU2
+            committed, log, k_prev, last_b = "", [], 0, 0
+            for b in C:
+                if b >= n:
+                    break
+                S_b = {j for j in range(T) if a_al[j] <= b}; k_b = len(S_b)
+                if k_b <= k_prev or b - last_b < min_w or ends[b - 1] - (ends[last_b - 1] if last_b else 0.0) < a.min_sec:
+                    continue
+                stat["cand"] += 1
+                new = gen(s, b, committed, cap, False)
+                expect = " ".join(full[k_prev:k_b])
+                if new and sacrebleu.sentence_chrf(new, [expect]).score >= a.tau:
+                    committed = (committed + " " + new).strip(); log.append([b, new]); k_prev, last_b = k_b, b; stat["ok"] += 1
+                else:
+                    stat["reject_lang" if new is None else ("reject_empty" if not new else "reject_chrf")] += 1
+            new = gen(s, n, committed, cap, True) or ""
+            committed = (committed + " " + new).strip() if new else committed; log.append([n, new])
+            rec["out"]["MU2"] = committed; rec["commits"]["MU2"] = log
+            # SEM_END2 (같은 프롬프트 방식)
+            committed, log = "", []
+            for b in sorted(set(i for i in s["A"] if 1 <= i <= n) | {n}):
+                new = gen(s, b, committed, cap, b >= n) or ""
+                committed = (committed + " " + new).strip() if new else committed; log.append([b, new])
+            rec["out"]["SEM_END2"] = committed; rec["commits"]["SEM_END2"] = log
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n"); f.flush()
+            if (k + 1) % 10 == 0:
+                print(f"{k + 1} {time.time() - t0:.0f}s {dict(stat)}", flush=True)
+    print("DONE", dict(stat), flush=True)
+
+
+def commit_laal(log, ends, out_words):
+    """확정 기록 [(경계 단어 수, 텍스트)] → 목표 단어별 확정 시각으로 LAAL(초)·첫 토큰(초)."""
+    d = []
+    for b, txt in log:
+        d += [ends[b - 1]] * len(txt.split())
+    if not d:
+        return None, None
+    X = ends[-1]; T = max(len(d), out_words, 1)
+    tau = next((j for j, v in enumerate(d) if v >= X - 1e-6), len(d) - 1)
+    return sum(d[j] - j * X / T for j in range(tau + 1)) / (tau + 1), d[0]
+
+
 def score(a):
     """정책별 최종 번역 vs 참조(다른 교사의 오프라인 번역) — sacrebleu BLEU·chrF(한국어 목표는 chrF 주 지표, BLEU tokenize intl).
     --streams 를 주면 원문과 정책별 번역·MU 확정 과정 예시를 --examples 개 출력한다(정책 간 차이가 큰 것부터 절반, 나머지는 무작위)."""
@@ -304,12 +403,20 @@ def score(a):
         hyp = [r["out"][pol] for r in rows]; R = [[ref[r["id"]] for r in rows]]
         b = sacrebleu.corpus_bleu(hyp, R, tokenize=tokz); c = sacrebleu.corpus_chrf(hyp, R)
         same = sum(r["out"][pol] == r["out"].get("utt_end") for r in rows)
-        print(f"  {pol:8s} BLEU {b.score:5.1f}  chrF {c.score:5.1f}  길이비 {b.sys_len / max(b.ref_len, 1):.2f}  오프라인과 동일 {same}/{len(rows)}")
+        broken = sum(not r["out"][pol].strip() or not lang_ok(r["out"][pol], tgt) or cut_loop(r["out"][pol]) != r["out"][pol] for r in rows)
+        lat = ""
+        if a.streams and all(pol in r.get("commits", {}) for r in rows):
+            SS = {json.loads(l)["id"]: json.loads(l) for l in open(a.streams)}
+            vals = [commit_laal(r["commits"][pol], SS[r["id"]]["ends"], len(r["out"][pol].split())) for r in rows]
+            vals = [v for v in vals if v[0] is not None]
+            if vals:
+                lat = f"  LAAL {sum(v[0] for v in vals) / len(vals):.2f}s  첫 확정 {sum(v[1] for v in vals) / len(vals):.2f}s"
+        print(f"  {pol:8s} BLEU {b.score:5.1f}  chrF {c.score:5.1f}  길이비 {b.sys_len / max(b.ref_len, 1):.2f}  오프라인과 동일 {same}/{len(rows)}  붕괴 {broken}{lat}")
     if a.streams and a.examples:
         S = {json.loads(l)["id"]: json.loads(l) for l in open(a.streams)}
         def gap(r):
             o = r["out"].get("utt_end", "")
-            return 100 - sacrebleu.sentence_chrf(r["out"].get("MU", ""), [o]).score
+            return 100 - sacrebleu.sentence_chrf(r["out"].get("MU2", r["out"].get("MU", "")), [o]).score
         ordered = sorted(rows, key=gap, reverse=True)
         k = a.examples // 2
         rng = random.Random(0); rest = ordered[k:]; rng.shuffle(rest)
@@ -318,10 +425,10 @@ def score(a):
             print(f"\n--- {r['id'][-16:]} ({s['set']}, {s['n']} 단어, {ends[-1]:.1f} s, MU 와 오프라인 chrF 차 {gap(r):.1f})")
             print(f"  원문     : {' '.join(s['src'])}")
             print(f"  참조(EXAONE): {ref[r['id']]}")
-            for pol in ("utt_end", "SEM_END", "MU"):
+            for pol in ("utt_end", "SEM_END", "SEM_END2", "MU", "MU2"):
                 if pol in r["out"]:
                     print(f"  {pol:8s}: {r['out'][pol]}")
-            for b, new in r.get("commits", {}).get("MU", []):
+            for b, new in r.get("commits", {}).get("MU2", r.get("commits", {}).get("MU", [])):
                 print(f"    MU 확정 @{ends[b - 1]:5.2f}s [{' '.join(s['src'][:b])[-40:]}] → {new}")
 
 
@@ -341,11 +448,17 @@ def main():
     q.add_argument("--streams", required=True); q.add_argument("--align", required=True); q.add_argument("--lang", choices=["Korean", "English"], required=True)
     q.add_argument("--out", required=True); q.add_argument("--model", default="/soundai/Model/Qwen3.8-27B"); q.add_argument("--kind", default="qwen38", choices=["qwen38", "exaone4"])
     q.add_argument("--max-streams", type=int, default=150); q.add_argument("--max-new-tokens", type=int, default=160); q.add_argument("--wait-k", type=int, nargs="*", default=[3, 5])
+    q = sub.add_parser("simul2")
+    q.add_argument("--streams", required=True); q.add_argument("--align", required=True); q.add_argument("--lang", choices=["Korean", "English"], required=True)
+    q.add_argument("--out", required=True); q.add_argument("--model", default="/soundai/Model/Qwen3.8-27B"); q.add_argument("--kind", default="qwen38", choices=["qwen38", "exaone4"])
+    q.add_argument("--max-streams", type=int, default=150); q.add_argument("--max-new-tokens", type=int, default=160)
+    q.add_argument("--tau", type=float, default=50.0, help="접두 번역 vs 전체 번역 해당 구간 chrF 문턱")
+    q.add_argument("--min-words-ko", type=int, default=2); q.add_argument("--min-words-en", type=int, default=3); q.add_argument("--min-sec", type=float, default=1.0)
     q = sub.add_parser("score")
     q.add_argument("--simul", required=True); q.add_argument("--ref", required=True)
     q.add_argument("--streams", default=None); q.add_argument("--examples", type=int, default=0)
     a = p.parse_args()
-    {"sample": sample, "run": run, "analyze": analyze, "simul": simul, "score": score}[a.cmd](a)
+    {"sample": sample, "run": run, "analyze": analyze, "simul": simul, "simul2": simul2, "score": score}[a.cmd](a)
 
 
 if __name__ == "__main__":
