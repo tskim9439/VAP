@@ -1,0 +1,217 @@
+16:09:58
+==> /soundai/users/tskim/VAPKT-data/results/cst-unit-probe-v1/simul3-ko2en.log <==
+DONE
+
+==> /soundai/users/tskim/VAPKT-data/results/cst-unit-probe-v1/simul3-en2ko.log <==
+DONE
+Korean→English: 150 스트림, 참조 = /soundai/users/tskim/VAPKT-data/results/cst-unit-probe-v1/ko2en-exaone4.jsonl
+  utt_end  BLEU  32.9  chrF  58.4  길이비 1.02  오프라인과 동일 150/150
+  MU       BLEU  28.1  chrF  54.2  길이비 0.98  오프라인과 동일 21/150
+  SEM_END  BLEU  34.4  chrF  59.2  길이비 1.03  오프라인과 동일 98/150
+
+--- ade13c31be9e3202 (speechlm-partial, 22 단어, 14.9 s, MU 와 오프라인 chrF 차 98.5)
+  원문     : 근데 그러면 메인 일이 남아있잖아. 메인 일을 하지 않아. 하고 다른 일까지 손을 대게 되면 메인 일을 하기가 싫어서 더 그만두지 않을까.
+  참조(EXAONE): But then the main task is left unfinished, right? If you don't do the main task and start dealing with other tasks instead, you might end up quitting because you don't want to do the main task anymore.
+  utt_end : But then the main task is still left undone. If you don’t tackle the main task and instead start getting involved in other things, won’t you end up quitting even more because you dislike doing the main task?
+  SEM_END : But then, the main task is still left. You're not doing the main task. If you start touching other tasks as well, won't you end up quitting even more because you don't want to do the main task?
+  MU      : But
+    MU 확정 @ 1.92s [근데] → But
+    MU 확정 @ 2.40s [근데 그러면] → 
+    MU 확정 @14.88s [른 일까지 손을 대게 되면 메인 일을 하기가 싫어서 더 그만두지 않을까.] → 
+
+--- 15b37bd2cb3e5378 (speechlm-partial, 25 단어, 16.5 s, MU 와 오프라인 chrF 차 95.4)
+  원문     : 민법상 미성년자는 19세 미만자지만 형사법에서는 14세 미만자를 미성년자라고 보는 이유는 14세 미만에 대해서는 이 처벌을 하지 않거나 소년법을 통해서 형벌이 아닌 소년법상의 보호처분을 한다는 취지인데요.
+  참조(EXAONE): Under civil law, a minor is defined as someone under 19 years old, but in criminal law, a minor is considered to be under 14 years old because those under 14 are not subject to punishment or are instead handled through protective measures under the Juvenile Act rather than criminal penalties.
+  utt_end : Under civil law, a minor is defined as a person under the age of 19, whereas under criminal law, a minor is defined as a person under the age of 14. This distinction reflects the principle that individuals under 14 are not subject to criminal punishment; instead, they are handled under the Juvenile Act, which provides protective measures rather than criminal penalties.
+  SEM_END : Under civil law, a minor is defined as a person under the age of 19, whereas under criminal law, a minor is defined as a person under the age of 14. This distinction reflects the principle that individuals under 14 are not subject to criminal punishment; instead, they are handled under the Juvenile Act, which provides protective measures rather than criminal penalties.
+  MU      : Under civil law 19세 미만자지만 형사법에서는 14세 미만자를 미성년자라고 보는 이유는 14세 미만에 대해서는 이 처벌을 하지 않거나 소년법을 통해서 형벌이 아닌 소년법상의 보호처분을 한다는 취지인데요.
+    MU 확정 @ 0.96s [민법상] → Under civil law
+    MU 확정 @16.48s [나 소년법을 통해서 형벌이 아닌 소년법상의 보호처분을 한다는 취지인데요.] → 19세 미만자지만 형사법에서는 14세 미만자를 미성년자라고 보는 이유는 14세 미만에 대해서는 이 처벌을 하지 않거나 소년법을 통해서 형벌이 아닌 소년법상의 보호처분을 한다는 취지인데요.
+
+--- 2fac3e364e53f77a (speechlm-partial, 15 단어, 9.9 s, MU 와 오프라인 chrF 차 91.1)
+  원문     : 미나리는 2021년 4월 25일에 열린 제 93회 아카데미상 시상식 여섯 개 부문 후보에 오른 영화다.
+  참조(EXAONE): "Minari" is a film that was nominated in six categories at the 93rd Academy Awards ceremony held on April 25, 2021.
+  utt_end : Minari was nominated for six awards at the 93rd Academy Awards ceremony held on April 25, 2021.
+  SEM_END : Minari was nominated for six awards at the 93rd Academy Awards ceremony held on April 25, 2021.
+  MU      : Minari 2021년 4월 25일에 열린 제 93회 아카데미상 시상식 여섯 個 부문 후보에 오른 영화다.
+    MU 확정 @ 0.96s [미나리는] → Minari
+    MU 확정 @ 7.68s [미나리는 2021년 4월 25일에 열린 제 93회 아카데미상 시상식 여섯] → 2021년 4월 25일에 열린 제 93회 아카데미상 시상식 여섯
+    MU 확정 @ 9.92s [에 열린 제 93회 아카데미상 시상식 여섯 개 부문 후보에 오른 영화다.] → 個 부문 후보에 오른 영화다.
+
+--- a07f0f2ee17a4414 (speechlm-partial, 12 단어, 10.1 s, MU 와 오프라인 chrF 차 89.8)
+  원문     : 아 네, 훈련 기간은 2021년 12월 13일부터 2022년 1월 10일까지로 확인 되시고요.
+  참조(EXAONE): Ah, yes. The training period is confirmed to be from December 13, 2021, to January 10, 2022.
+  utt_end : Yes, the training period is confirmed to be from December 13, 2021, to January 10, 2022.
+  SEM_END : Yes, the training period is confirmed to be from December 13, 2021, to January 10, 2022.
+  MU      : Ah, yes, 2021년 12월 13일부터 2022년 1월 10일까지로 확인 되시고요.
+    MU 확정 @ 1.44s [아 네,] → Ah, yes,
+    MU 확정 @ 2.08s [아 네, 훈련] → 
+    MU 확정 @ 2.88s [아 네, 훈련 기간은] → 
+    MU 확정 @ 9.28s [련 기간은 2021년 12월 13일부터 2022년 1월 10일까지로 확인] → 2021년 12월 13일부터 2022년 1월 10일까지로 확인
+    MU 확정 @10.08s [2021년 12월 13일부터 2022년 1월 10일까지로 확인 되시고요.] → 되시고요.
+
+--- b284365e9dd93a14 (speechlm-partial, 24 단어, 23.0 s, MU 와 오프라인 chrF 차 49.0)
+  원문     : 나는 반려동물을 따로 키우지는 않는데 길거리 지나갈 때마다 보는 강아지들 너무 귀여워서 한동안 계속 쳐다보고 있어. 어떻게 개네들은 아무것도 안 해도 그렇게 귀여운 거지?
+  참조(EXAONE): I don't have a pet at home, but every time I see dogs on the street, they're so cute that I can't help but stare at them for a while. How can they be so adorable without even doing anything?
+  utt_end : I don’t have a pet of my own, but every time I walk down the street, I can’t help but stare at the dogs for a while—they’re just so cute. How do they manage to be so adorable without doing anything?
+  SEM_END : I don’t have a pet of my own, but every time I walk down the street, the dogs I see are so cute that I end up staring at them for a while. How do they manage to be so adorable without doing anything?
+  MU      : I am not a pet owner, but every time I pass by, the dogs on the street are so cute that I end up staring at them for a while. How is it that they, without doing anything at all, are so adorable?
+    MU 확정 @ 1.92s [나는] → I am
+    MU 확정 @ 3.36s [나는 반려동물을] → 
+    MU 확정 @ 3.76s [나는 반려동물을 따로] → 
+    MU 확정 @ 6.08s [나는 반려동물을 따로 키우지는 않는데] → 
+    MU 확정 @ 7.92s [나는 반려동물을 따로 키우지는 않는데 길거리 지나갈] → 
+    MU 확정 @19.36s [보는 강아지들 너무 귀여워서 한동안 계속 쳐다보고 있어. 어떻게 개네들은] → 
+    MU 확정 @20.80s [ 귀여워서 한동안 계속 쳐다보고 있어. 어떻게 개네들은 아무것도 안 해도] → not a pet owner, but every time I pass by, the dogs on the street are so cute that I end up staring at them for a while. How is it that they, without doing anything at all,
+    MU 확정 @23.04s [ 쳐다보고 있어. 어떻게 개네들은 아무것도 안 해도 그렇게 귀여운 거지?] → are so adorable?
+
+--- 47289602c2996bad (speechlm-partial, 27 단어, 25.6 s, MU 와 오프라인 chrF 차 43.2)
+  원문     : 맞아, 정말 항상 칼질할 때 조심하고 있어. 뭐 요리할 때 칼질도 굉장히 조심하고 있고, 평상시에 터터칼로 뭘 자를 때도 많이 조심하는 편이라고 할 수 있을 것 같아.
+  참조(EXAONE): You're right, I'm always very careful when using a knife. I'm also very cautious when cutting things while cooking, and I tend to be careful even when using a butter knife to cut things in everyday life.
+  utt_end : Yeah, I really do take great care when using a knife. I’m very cautious when chopping while cooking, and I’m also quite careful when cutting things with a utility knife in everyday life.
+  SEM_END : Yeah, I really do always take care when I'm cutting. I'm very careful with the knife when I'm cooking, and I'd say I'm pretty cautious even when I'm using a utility knife for everyday tasks.
+  MU      : Yeah, I really do always have to be careful when I'm cutting. I'm very careful with the knife when I'm cooking, and even when I'm using a utility knife to cut things in everyday life, I'm pretty cautious.
+    MU 확정 @ 5.60s [맞아, 정말 항상 칼질할 때 조심하고] → Yeah, I really do always have to be careful when I'm cutting.
+    MU 확정 @20.56s [ 때 칼질도 굉장히 조심하고 있고, 평상시에 터터칼로 뭘 자를 때도 많이] → I'm very careful with the knife when I'm cooking, and even when I'm using a utility knife to cut things in everyday life, I'm
+    MU 확정 @25.60s [에 터터칼로 뭘 자를 때도 많이 조심하는 편이라고 할 수 있을 것 같아.] → pretty cautious.
+
+--- 1be27611c8cf3abe (speechlm-partial, 13 단어, 8.5 s, MU 와 오프라인 chrF 차 41.5)
+  원문     : 상당수가 경제적으로 가난하거나 어렵거나 교육을 받지 못한 사람들도 있다라는 통계들이 많이 나와 있어요.
+  참조(EXAONE): There are many statistics showing that a significant number of people are economically poor, struggling, or uneducated.
+  utt_end : A significant number of statistics indicate that a substantial proportion of individuals are economically poor, facing financial hardship, or lack education.
+  SEM_END : A significant number of statistics indicate that a substantial proportion of individuals are economically poor, facing financial hardship, or lack education.
+  MU      : Statistics show that a considerable number of them are economically poor, facing financial hardship, or lack education.
+    MU 확정 @ 7.36s [제적으로 가난하거나 어렵거나 교육을 받지 못한 사람들도 있다라는 통계들이] → Statistics show that a considerable number of them are economically poor, facing financial hardship, or lack education.
+    MU 확정 @ 8.48s [어렵거나 교육을 받지 못한 사람들도 있다라는 통계들이 많이 나와 있어요.] → 
+
+--- dfb0c80fbe234b95 (speechlm-partial, 19 단어, 8.8 s, MU 와 오프라인 chrF 차 30.8)
+  원문     : 네, 국적 비슷한 사람 외국인까지 모이는 건 쉽지는 않은가 보네요. 한국어 한글 공부 가르쳐 주시는 분은 당연 한국 사람이겠죠.
+  참조(EXAONE): Yes, it seems difficult to gather even foreigners of similar nationality. Of course, the person teaching Korean Hangul must be Korean.
+  utt_end : Yes, it seems quite difficult to gather people with similar nationalities, including foreigners. Naturally, the person teaching Korean and Hangul would be a Korean.
+  SEM_END : Yes, it seems that gathering people of similar nationalities, including foreigners, is not easy. It goes without saying that the person teaching Korean and Hangul would be a Korean.
+  MU      : Yes, it seems that it's not easy to gather people of similar nationalities, including foreigners. It goes without saying that the person teaching Korean and Hangul is Korean
+    MU 확정 @ 0.48s [네,] → Yes,
+    MU 확정 @ 4.40s [네, 국적 비슷한 사람 외국인까지 모이는 건 쉽지는 않은가 보네요.] → it seems that it's not easy to gather people of similar nationalities, including foreigners.
+    MU 확정 @ 8.32s [ 쉽지는 않은가 보네요. 한국어 한글 공부 가르쳐 주시는 분은 당연 한국] → It goes without saying that the person teaching Korean and Hangul is Korean
+    MU 확정 @ 8.80s [가 보네요. 한국어 한글 공부 가르쳐 주시는 분은 당연 한국 사람이겠죠.] → 
+
+
+English→Korean: 150 스트림, 참조 = /soundai/users/tskim/VAPKT-data/results/cst-unit-probe-v1/en2ko-exaone4.jsonl
+  utt_end  BLEU  21.2  chrF  42.3  길이비 1.00  오프라인과 동일 150/150
+  MU       BLEU  12.9  chrF  33.1  길이비 1.12  오프라인과 동일 14/150
+  SEM_END  BLEU  19.2  chrF  40.8  길이비 0.97  오프라인과 동일 83/150
+
+--- 90917-20:10:52_2 (voxpopuli-train, 22 단어, 8.8 s, MU 와 오프라인 chrF 차 98.7)
+  원문     : the indian government has deployed a significant number of additional military and paramilitary troops in kashmir and along the line of control
+  참조(EXAONE): 인도 정부는 카슈미르와 통제선을 따라 상당한 수의 추가 군대 및 준군사 부대를 배치했습니다.
+  utt_end : 인도 정부는 카슈미르와 통제선 일대에 상당한 규모의 추가 군대 및 준군사 부대를 배치했습니다.
+  SEM_END : 인도 정부는 카슈미르와 통제선 일대에 상당한 규모의 추가 군대 및 준군사 부대를 배치했습니다.
+  MU      : 인도인 政府 是 在 克什米尔 和 沿 线 部署 了 大量 额外 的 军事 和 准军事 部队 的
+    MU 확정 @ 1.24s [the indian] → 인도인
+    MU 확정 @ 1.88s [the indian government] → 政府
+    MU 확정 @ 8.28s [ary troops in kashmir and along the line] → 是 在 克什米尔 和 沿 线 部署 了 大量 额外 的 军事 和 准军事 部队
+    MU 확정 @ 8.84s [in kashmir and along the line of control] → 的
+
+--- _1561_00_2_00-n4 (yodas-en129-rg, 29 단어, 12.7 s, MU 와 오프라인 chrF 차 98.6)
+  원문     : trigger you gotta watch your own detecting shell in flight this girl's gone from crazy to bonkers there may only be one left but don't let your guard down
+  참조(EXAONE): 트리거, 너는 네가 발사한 포탄을 잘 지켜봐야 해. 이 여자는 미친 상태에서 완전히 미쳐버렸어. 아마 하나만 남았을 수도 있지만, 경계를 늦추지 마.
+  utt_end : 트리거를 발동하려면 비행 중인 자신의 탐지 셸을 주시해야 합니다. 이 여자는 미친 것에서 완전히 미쳐버린 상태로 변했죠. 남은 건 하나뿐일 수 있지만, 경계를 늦추지 마세요.
+  SEM_END : 트리거를 당기면 비행 중인 자신의 탐지 셸을 주시해야 합니다 이 여자는 미친 것에서 완전히 미쳐버린 상태가 됐어요 1개만 남았을 수 있지만 방심하지 마세요
+  MU      : 트리거 gotta 飛行中の自機検出シェルに注意 する 必要 がある この 女の子 狂気 から 暴走 へ 移行 した かもしれない 残っている 可能性 がある 1 人 だけ だが しない 注意 する 必要 がある
+    MU 확정 @ 1.46s [trigger] → 트리거
+    MU 확정 @ 2.10s [trigger you gotta] → gotta
+    MU 확정 @ 4.80s [watch your own detecting shell in flight] → 飛行中の自機検出シェルに注意
+    MU 확정 @ 6.55s [ your own detecting shell in flight this] → する
+    MU 확정 @ 6.67s [wn detecting shell in flight this girl's] → 必要 がある この 女の子
+    MU 확정 @ 7.35s [ll in flight this girl's gone from crazy] → 狂気 から
+    MU 확정 @10.87s [one from crazy to bonkers there may only] → 暴走 へ 移行 した かもしれない
+    MU 확정 @11.67s [o bonkers there may only be one left but] → 残っている 可能性 がある 1 人 だけ だが
+    MU 확정 @11.83s [ers there may only be one left but don't] → しない
+    MU 확정 @12.39s [nly be one left but don't let your guard] → 注意
+    MU 확정 @12.71s [e one left but don't let your guard down] → する 必要 がある
+
+--- 2-55449-03709-p1 (librispeech-960-rg, 39 단어, 15.7 s, MU 와 오프라인 chrF 차 98.6)
+  원문     : like that of the glazed colors on stone ware her hair was of a deep rich chestnut but worn in close short curls all round her head her indian figure was not without its impairing effect on her bust
+  참조(EXAONE): 유약을 바른 도자기의 색과 같은 그녀의 머리카락은 진한 진한 밤색이었지만, 머리 전체에 가까운 짧은 곱슬머리로 묶여 있었다. 그녀의 인도식 체형은 가슴 부분에 부정적인 영향을 미치지 않았다.
+  utt_end : 도자기의 유약 색감처럼, 그녀의 머리카락은 깊고 풍성한 chestnut색이었으며, 머리 전체를 감싸는 짧고 단단한 컬로 묶어 올렸다. 그녀의 인도인 체형은 가슴의 실루엣에 약간의 영향을 미쳤다.
+  SEM_END : 도자기의 유약 색감처럼, 그녀의 머리카락은 깊고 풍성한 chestnut색이었으며, 머리 전체를 감싸는 짧고 단단한 컬로 말려 있었다. 1인디안 특유의 체형은 그녀의 가슴선에 약간의 영향을 미치고 있었다.
+  MU      : 유약이 발린 것의 色調가 陶器의 釉色과 似て 彼女の 髪 色は 深い 豊 潤 な 栗 色 でした 髪 は 密 に 巻 いた 短い 巻き 髪 に 纏 め て 頭 の 周 り に 纏 め て 彼女 的 印度 人 的 体 型 は 胸 元 に 一 定 の 影 響 を 及 ぼ し て い ま し た
+    MU 확정 @ 2.82s [like that of the glazed] → 유약이 발린 것의
+    MU 확정 @ 3.22s [like that of the glazed colors] → 
+    MU 확정 @ 5.70s [t of the glazed colors on stone ware her] → 色調가 陶器의 釉色과 似て
+    MU 확정 @ 5.86s [the glazed colors on stone ware her hair] → 彼女の 髪
+    MU 확정 @ 6.66s [ors on stone ware her hair was of a deep] → 色は
+    MU 확정 @ 7.14s [n stone ware her hair was of a deep rich] → 深い 豊
+    MU 확정 @ 7.78s [are her hair was of a deep rich chestnut] → 潤 な 栗 色 でした
+    MU 확정 @ 9.86s [h chestnut but worn in close short curls] → 髪 は 密 に 巻 いた 短い 巻き 髪 に 纏 め て
+    MU 확정 @12.26s [close short curls all round her head her] → 頭 の 周 り に 纏 め て 彼女
+    MU 확정 @12.74s [hort curls all round her head her indian] → 
+    MU 확정 @15.70s [without its impairing effect on her bust] → 的 印度 人 的 体 型 は 胸 元 に 一 定 の 影 響 を 及 ぼ し て い ま し た
+
+--- 10914-18:49:44_1 (voxpopuli-train, 25 단어, 9.5 s, MU 와 오프라인 chrF 차 97.5)
+  원문     : the arab spring and its potential for a great leap forward can only be fully realised when the israeli palestinian conflict and occupation is resolved
+  참조(EXAONE): 아랍의 봄과 그 큰 도약의 잠재력은 이스라엘-팔레스타인 갈등과 점령이 해결될 때만 완전히 실현될 수 있습니다.
+  utt_end : 아랍의 봄과 그 거대한 도약의 잠재력은 이스라엘-팔레스타인 분쟁과 점령이 해결될 때만 비로소 온전히 실현될 수 있습니다.
+  SEM_END : 아랍의 봄과 그 거대한 도약의 잠재력은 이스라엘-팔레스타인 분쟁과 점령이 해결될 때만 비로소 온전히 실현될 수 있습니다.
+  MU      : 아랍인 3월 혁명과 3월 혁명의 3월 혁명의 3월 혁명의 3월 혁명의 3월
+    MU 확정 @ 1.55s [the arab] → 아랍인
+    MU 확정 @ 2.03s [the arab spring and] → 3월 혁명과
+    MU 확정 @ 2.11s [the arab spring and its] → 
+    MU 확정 @ 3.47s [rab spring and its potential for a great] → 3월 혁명의
+    MU 확정 @ 8.83s [aeli palestinian conflict and occupation] → 3월 혁명의
+    MU 확정 @ 9.47s [nian conflict and occupation is resolved] → 3월 혁명의 3월 혁명의 3월
+
+--- 91022-17:42:29_5 (voxpopuli-train, 29 단어, 10.8 s, MU 와 오프라인 chrF 차 72.3)
+  원문     : that is exactly why the money spent from the eu budget has to be used efficiently and any fraud in the use of public money has to be prevented
+  참조(EXAONE): 그래서 EU 예산에서 쓰는 돈을 효율적으로 사용해야 하고, 공공 자금의 부정 사용을 막아야 하는 이유가 바로 그것입니다.
+  utt_end : 바로 그 때문에 EU 예산에서 지출되는 자금은 효율적으로 사용되어야 하며, 공적 자금 사용过程中的 모든 부정행위는 방지되어야 합니다.
+  SEM_END : 바로 그 때문에 EU 예산에서 지출되는 자금은 효율적으로 사용되어야 하며, 공적 자금 사용过程中的 모든 부정행위는 방지되어야 합니다.
+  MU      : 그것은 2025년 EU 예산에서 지출된 자금이 2025년 효율적으로 사용되어야 하는 정확한 이유입니다 2025년 2025년 2025년
+    MU 확정 @ 0.94s [that is] → 그것은
+    MU 확정 @ 2.38s [that is exactly why] → 
+    MU 확정 @ 4.38s [y why the money spent from the eu budget] → 2025년 EU 예산에서 지출된 자금이
+    MU 확정 @ 6.54s [the eu budget has to be used efficiently] → 2025년 효율적으로 사용되어야 하는 정확한 이유입니다
+    MU 확정 @ 7.02s [eu budget has to be used efficiently and] → 2025년
+    MU 확정 @10.78s [ use of public money has to be prevented] → 2025년 2025년
+
+--- 0311-19:50:42_17 (voxpopuli-train, 36 단어, 11.7 s, MU 와 오프라인 chrF 차 61.1)
+  원문     : the agreement that we reached in december will apply to anyone involved in the food supply chain with a turnover of eur three hundred and fifty million with differentiated levels of protection provided below that threshold
+  참조(EXAONE): 12월에 도달한 합의는 3억 5천만 유로의 매출을 기준으로 식품 공급망에 관여하는 모든 당사자에게 적용되며, 해당 기준 미만의 경우 아래에 명시된 차등 보호 수준이 제공됩니다.
+  utt_end : 12월에 합의한 내용은 연매출 3억 5천만 유로 이상의 식품 공급망에 관여하는 모든 주체에 적용되며, 해당 기준 미만에는 차등화된 수준의 보호가 제공됩니다.
+  SEM_END : 12월에 합의한 내용은 연매출 3억 5천만 유로 이상의 식품 공급망에 관여하는 모든 주체에 적용되며, 해당 기준 미만에는 차등화된 수준의 보호가 제공됩니다.
+  MU      : 12월에 도달한 합의 3억 5천만 유로의 매출을 올리는 식품 공급망에 관여하는 모든 사람에게 적용 3억 5천만 유로 미만은 차등화된 수준의 보호를 제공합니다 3억 5천만 유로 미만
+    MU 확정 @ 2.82s [he agreement that we reached in december] → 12월에 도달한 합의
+    MU 확정 @ 3.30s [reement that we reached in december will] → 
+    MU 확정 @ 7.22s [ turnover of eur three hundred and fifty] → 3억 5천만 유로의 매출을 올리는 식품 공급망에 관여하는 모든 사람에게 적용
+    MU 확정 @ 8.42s [eur three hundred and fifty million with] → 
+    MU 확정 @11.30s [levels of protection provided below that] → 3억 5천만 유로 미만은 차등화된 수준의 보호를 제공합니다
+    MU 확정 @11.70s [protection provided below that threshold] → 3억 5천만 유로 미만
+
+--- 621-141593-04826 (librispeech-960, 59 단어, 29.0 s, MU 와 오프라인 chrF 차 59.8)
+  원문     : a vast system of irrigation works far greater both in its extent in its utility and its effect upon their world as a habitation for civilised beings where our destructive agencies are perhaps more prominent than those of an improving and recuperative character a challenge to the thinking world this volume is therefore in the nature of a challenge
+  참조(EXAONE): 광대한 관개 시스템은 그 규모와 유용성 모두에서, 그리고 문명화된 존재들을 위한 서식지로서 그들의 세계에 미치는 영향에 있어 훨씬 더 위대한 것으로, 우리의 파괴적인 작용들이 개선적이고 회복적인 성격의 것들보다 더 두드러질 수 있는 곳에서 이는 사고하는 세계에 대한 도전이다. 따라서 이 책은 일종의 도전이다.
+  utt_end : 문명화된 존재들의 거주지로서, 그 세계에 미친 영향, 효용, 그리고 규모 면에서 모두 훨씬 더 거대한 관개 시설 체계. 파괴적인 작용이 개선 및 회복적인 성격의 작용보다 더 두드러진 우리 사회에 대한 도전. 따라서 이 책은 본질적으로 하나의 도전이다.
+  SEM_END : 문명화된 존재들의 거주지로서 그 세계에 미친 영향, 그 범위, 그리고 그 효용 면에서 모두 훨씬 더 거대한 방대한 관개 시설 체계 우리에게는 파괴적인 작용이 개선적이고 회복적인 성격의 작용보다 더 두드러진 경향이 있다  이는 사고하는 세계에 대한 도전이다  따라서 이 책은 본질적으로 하나의 도전이다
+  MU      : 문명화된 존재들의 거주지로서 그들의 세계에 미치는 범위, 유용성, 그리고 영향력 면에서 훨씬 더 거대한 관개 시설 체계; 우리의 파괴적 작용들이 개선 및 회복적 성격의 것들보다 아마도 더 두드러진 도전 이 책은 따라서 思考하는 세계에 대한 도전의 성격을 지니고 있다
+    MU 확정 @20.33s [ an improving and recuperative character] → 문명화된 존재들의 거주지로서 그들의 세계에 미치는 범위, 유용성, 그리고 영향력 면에서 훨씬 더 거대한 관개 시설 체계; 우리의 파괴적 작용들이 개선 및 회복적 성격의 것들보다 아마도 더 두드러진
+    MU 확정 @22.57s [g and recuperative character a challenge] → 도전
+    MU 확정 @27.13s [ thinking world this volume is therefore] → 이 책은 따라서
+    MU 확정 @27.93s [d this volume is therefore in the nature] → 
+    MU 확정 @29.05s [s therefore in the nature of a challenge] → 思考하는 세계에 대한 도전의 성격을 지니고 있다
+
+--- 1201-09:24:03_23 (voxpopuli-train, 44 단어, 23.3 s, MU 와 오프라인 chrF 차 43.1)
+  원문     : to establish temporary bilateral liquidity swap arrangements so that liquidity can be provided in each jurisdiction in any of the currencies should market conditions so warrant as the ecb's governing council meets on thursday next week we are now in the pre decision period
+  참조(EXAONE): 시장 상황이 이를 요구할 경우 각 관할 구역에서 어떤 통화로든 유동성을 제공할 수 있도록 임시 양자간 유동성 스왑 체계를 마련하기 위해, 우리는 다음 주 목요일 유럽중앙은행(ECB) 이사회가 열리는 시점에 앞서 현재 의사 결정 전 단계에 있습니다.
+  utt_end : 시장 여건이 이를 요구할 경우, 각 관할권 내에서 해당 통화로 유동성을 공급할 수 있도록 임시 양자 간 유동성 스왑 협정을 체결하기 위해, 유럽중앙은행 집행이사회가 다음 주 목요일 회의를 앞두고 현재 사전 결정 기간에 들어갔습니다.
+  SEM_END : 시장 여건이 이를 요구할 경우, 각 관할권 내에서 해당 통화로 유동성을 제공할 수 있도록 임시 양자 간 유동성 스왑 협정을 체결하기 위해 2025년 1월 16일 목요일 유럽중앙은행 집행이사회가 소집됩니다. 현재는 의사결정 대기 기간에 있습니다.
+  MU      : 시장 여건이 그렇게 요구할 경우, 각 관할권에서 해당 통화로 유동성을 제공할 수 있도록 임시 양자 간 유동성 스왑 협정을 체결하기 위해 14일 목요일 유럽중앙은행 집행이사회가 14일 목요일에 소집되는 가운데, 우리는 현재 사전 14일 목요일에 소집되는 가운데, 우리는 현재 사전 결정 대기 기간에 들어
+    MU 확정 @13.17s [e currencies should market conditions so] → 시장 여건이 그렇게 요구할 경우, 각 관할권에서 해당 통화로 유동성을 제공할 수 있도록 임시 양자 간 유동성 스왑 협정을 체결하기 위해
+    MU 확정 @16.29s [s should market conditions so warrant as] → 
+    MU 확정 @17.17s [arket conditions so warrant as the ecb's] → 
+    MU 확정 @17.57s [itions so warrant as the ecb's governing] → 
+    MU 확정 @19.33s [governing council meets on thursday next] → 14일 목요일 유럽중앙은행 집행이사회가
+    MU 확정 @20.69s [g council meets on thursday next week we] → 
+    MU 확정 @22.05s [thursday next week we are now in the pre] → 14일 목요일에 소집되는 가운데, 우리는 현재 사전
+    MU 확정 @23.25s [ek we are now in the pre decision period] → 14일 목요일에 소집되는 가운데, 우리는 현재 사전 결정 대기 기간에 들어
+
+[exited with code 0]
