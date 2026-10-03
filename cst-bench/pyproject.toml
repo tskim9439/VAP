@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cst-bench"
+version = "0.1.0"
+description = "Build tools for CST-Bench, the Conversational Simultaneous Speech-to-Text Translation benchmark"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+dependencies = ["numpy>=1.21", "scipy>=1.7", "soundfile>=0.10"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+cstbench = "cstbench.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

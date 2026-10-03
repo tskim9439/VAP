@@ -1,0 +1,11 @@
+{
+  "name": "taxi-natural",
+  "description": "TAXI turns joined with everyday turn-taking gaps (no overlap, L0).",
+  "sample_rate": 16000,
+  "gap": {"type": "normal", "mean": 0.2, "std": 0.25, "min": 0.05, "max": 1.0},
+  "same_speaker_pause": [0.3, 0.8],
+  "lead_s": 0.5,
+  "tail_s": 0.5,
+  "trim": {"enabled": true, "frame_s": 0.02, "rel": 0.1, "margin_s": 0.1},
+  "seed": 0
+}
