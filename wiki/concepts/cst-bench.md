@@ -82,3 +82,5 @@ joint 모델을 만들기 전에 **B3(VAP + 2× strong SimulST)가 통제 세트
 - 배제: 따로 낭독한 병렬 음성, 화자별로 따로 녹음한 텍스트 대화, 단순 합친 다언어 코퍼스, 순서·문맥을 복원할 수 없는 발화 모음
 
 후보와 확보 상태는 [[task-cst-data-access]].
+
+합성음 세트(실제 대화 확보 전 주 세트) 구축 계획: [[output-cst-bench-synthetic-plan-20261003]].

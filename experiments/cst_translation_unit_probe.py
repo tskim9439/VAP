@@ -216,6 +216,115 @@ def analyze(a):
         print(f"- 원천 단어의 평균 대기(다음 경계까지, 초): MU {m('wait_M')} (중앙 {md('wait_M')}) · <SEM_END> {m('wait_A')} (중앙 {md('wait_A')}) · 스트림 끝 {m('wait_end')}")
 
 
+PARTIAL_NOTE = ("The transcript may be incomplete because the speaker is still talking: translate only what has been said so far, "
+                "do not guess or complete the rest.")
+
+
+def messages_partial(src_lang, text, final):
+    tgt = TGT[src_lang]
+    note = "" if final else " " + PARTIAL_NOTE
+    return [{"role": "user", "content": f"Translate the following {src_lang} speech transcript into natural {tgt}.{note} "
+                                        f"Output only the {tgt} translation, nothing else.\n\n{text}"}]
+
+
+def cut_loop(text, n=3, reps=3):
+    """같은 n-gram 이 연달아 reps 번 이상 반복되면 첫 반복 뒤를 잘라낸다(탐욕 디코드 반복 붕괴)."""
+    w = text.split()
+    for i in range(len(w)):
+        for m in range(1, n + 1):
+            if i + m * reps <= len(w) and all(w[i:i + m] == w[i + m * r:i + m * (r + 1)] for r in range(1, reps)):
+                return " ".join(w[:i + m])
+    return text
+
+
+def simul(a):
+    """확정형(revision-free) 동시 번역 흉내: 정책 경계 b 마다 원천 앞 b 단어를 번역하되 지금까지 확정한 번역을 어시스턴트 앞부분으로
+    강제하고, 새로 생성한 부분을 확정한다(Zhang 2020 의 강제 디코딩). 정책:
+    - MU: 문맥 정렬 MU 경계(--align 런)
+    - SEM_END: 라벨 A
+    - waitK: K 단어 뒤 원천 단어마다 목표 1 단어
+    - utt_end: 발화 끝 한 번 = 오프라인
+    출력은 정책별 최종 번역."""
+    from vapasr.data.semcommit_llm import LLM
+    S = {json.loads(l)["id"]: json.loads(l) for l in open(a.streams)}
+    al = {json.loads(l)["id"]: json.loads(l) for l in open(a.align) if '"L"' in l}
+    ids = [i for i in al if S[i]["lang"] == a.lang][: a.max_streams]
+    done = {json.loads(l)["id"] for l in open(a.out)} if os.path.exists(a.out) else set()
+    llm = LLM(a.model, a.kind, device="cuda", dtype="bfloat16"); llm.load()
+    sep = " "
+    def step(s, b, committed, max_new):
+        final = b >= s["n"]
+        prompt = llm.build_prompt(messages_partial(s["lang"], " ".join(s["src"][:b]), final)) + (committed + sep if committed else "")
+        r = llm.generate_json([prompt], max_new_tokens=max_new, batch_size=1)[0]
+        return cut_loop(r["text"].split("</think>")[-1].split("\n")[0].strip())
+    t0 = time.time()
+    with open(a.out, "a") as f:
+        for k, sid in enumerate(i for i in ids if i not in done):
+            s = S[sid]; n = s["n"]; _, C, M = units(al[sid]); rec = dict(id=sid, lang=s["lang"], n=n, out={}, commits={})
+            off = step(s, n, "", a.max_new_tokens); rec["out"]["utt_end"] = off           # 오프라인 = 발화 끝 한 번
+            cap = min(a.max_new_tokens, 2 * len(llm.encode(off)) + 8)                     # 단계별 생성 상한(반복 붕괴 방지)
+            ratio = max(len(off.split()), 1) / n                                         # 목표/원천 단어 비(wait-k 보폭)
+            pols = {"MU": M, "SEM_END": sorted(set(i for i in s["A"] if 1 <= i <= n) | {n})}
+            for name, bounds in pols.items():
+                committed, log = "", []
+                for b in sorted(set(bounds) | {n}):
+                    new = step(s, b, committed, cap)
+                    committed = (committed + sep + new).strip() if new else committed; log.append([b, new])
+                rec["out"][name] = committed; rec["commits"][name] = log
+            for K in a.wait_k:                                                           # 비율 보정 wait-k: b 단어를 읽으면 목표 floor((b−K+1)·ratio) 단어까지
+                committed, w = "", 0
+                for b in range(min(K, n), n + 1):
+                    if b < n:
+                        allow = int((b - K + 1) * ratio)
+                        if allow > w:
+                            new = step(s, b, committed, cap).split()[: allow - w]
+                            if new:
+                                committed = (committed + sep + " ".join(new)).strip(); w += len(new)
+                    else:
+                        new = step(s, b, committed, cap)
+                        committed = (committed + sep + new).strip() if new else committed
+                rec["out"][f"wait{K}"] = committed
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n"); f.flush()
+            if (k + 1) % 10 == 0:
+                print(f"{k + 1} {time.time() - t0:.0f}s", flush=True)
+    print("DONE", flush=True)
+
+
+def score(a):
+    """정책별 최종 번역 vs 참조(다른 교사의 오프라인 번역) — sacrebleu BLEU·chrF(한국어 목표는 chrF 주 지표, BLEU tokenize intl).
+    --streams 를 주면 원문과 정책별 번역·MU 확정 과정 예시를 --examples 개 출력한다(정책 간 차이가 큰 것부터 절반, 나머지는 무작위)."""
+    import sacrebleu
+    ref = {json.loads(l)["id"]: json.loads(l).get("translation") for l in open(a.ref)}
+    rows = [json.loads(l) for l in open(a.simul)]
+    rows = [r for r in rows if ref.get(r["id"])]
+    tgt = TGT[rows[0]["lang"]]
+    tokz = "intl" if tgt == "Korean" else "13a"
+    print(f"{rows[0]['lang']}→{tgt}: {len(rows)} 스트림, 참조 = {a.ref}")
+    for pol in rows[0]["out"]:
+        hyp = [r["out"][pol] for r in rows]; R = [[ref[r["id"]] for r in rows]]
+        b = sacrebleu.corpus_bleu(hyp, R, tokenize=tokz); c = sacrebleu.corpus_chrf(hyp, R)
+        same = sum(r["out"][pol] == r["out"].get("utt_end") for r in rows)
+        print(f"  {pol:8s} BLEU {b.score:5.1f}  chrF {c.score:5.1f}  길이비 {b.sys_len / max(b.ref_len, 1):.2f}  오프라인과 동일 {same}/{len(rows)}")
+    if a.streams and a.examples:
+        S = {json.loads(l)["id"]: json.loads(l) for l in open(a.streams)}
+        def gap(r):
+            o = r["out"].get("utt_end", "")
+            return 100 - sacrebleu.sentence_chrf(r["out"].get("MU", ""), [o]).score
+        ordered = sorted(rows, key=gap, reverse=True)
+        k = a.examples // 2
+        rng = random.Random(0); rest = ordered[k:]; rng.shuffle(rest)
+        for r in ordered[:k] + rest[: a.examples - k]:
+            s = S[r["id"]]; ends = s["ends"]
+            print(f"\n--- {r['id'][-16:]} ({s['set']}, {s['n']} 단어, {ends[-1]:.1f} s, MU 와 오프라인 chrF 차 {gap(r):.1f})")
+            print(f"  원문     : {' '.join(s['src'])}")
+            print(f"  참조(EXAONE): {ref[r['id']]}")
+            for pol in ("utt_end", "SEM_END", "MU"):
+                if pol in r["out"]:
+                    print(f"  {pol:8s}: {r['out'][pol]}")
+            for b, new in r.get("commits", {}).get("MU", []):
+                print(f"    MU 확정 @{ends[b - 1]:5.2f}s [{' '.join(s['src'][:b])[-40:]}] → {new}")
+
+
 def main():
     p = argparse.ArgumentParser(); sub = p.add_subparsers(dest="cmd", required=True)
     q = sub.add_parser("sample")
@@ -228,8 +337,15 @@ def main():
     q.add_argument("--batch-size", type=int, default=16); q.add_argument("--max-new-tokens", type=int, default=256)
     q = sub.add_parser("analyze")
     q.add_argument("--streams", required=True); q.add_argument("--runs", nargs="+", required=True)
+    q = sub.add_parser("simul")
+    q.add_argument("--streams", required=True); q.add_argument("--align", required=True); q.add_argument("--lang", choices=["Korean", "English"], required=True)
+    q.add_argument("--out", required=True); q.add_argument("--model", default="/soundai/Model/Qwen3.8-27B"); q.add_argument("--kind", default="qwen38", choices=["qwen38", "exaone4"])
+    q.add_argument("--max-streams", type=int, default=150); q.add_argument("--max-new-tokens", type=int, default=160); q.add_argument("--wait-k", type=int, nargs="*", default=[3, 5])
+    q = sub.add_parser("score")
+    q.add_argument("--simul", required=True); q.add_argument("--ref", required=True)
+    q.add_argument("--streams", default=None); q.add_argument("--examples", type=int, default=0)
     a = p.parse_args()
-    {"sample": sample, "run": run, "analyze": analyze}[a.cmd](a)
+    {"sample": sample, "run": run, "analyze": analyze, "simul": simul, "score": score}[a.cmd](a)
 
 
 if __name__ == "__main__":
