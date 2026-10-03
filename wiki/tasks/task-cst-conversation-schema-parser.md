@@ -31,4 +31,9 @@ sources:
   - T5 TAXI 결과: 86 세션 · 697 DP/CL 턴 중 usable 640(DP 349 · CL 291) · 52.6 분 · 6,815 단어 · 세션당 usable 턴 중앙값 7 · 턴 길이 중앙값 4.0 s(p90 9.1)
   - 매니페스트: `/Volumes/Samsung_T5/VAPKT-DB/TAXI/cst/taxi-sessions.jsonl`, 16 kHz 리샘플(전화 대역 유지): `.../cst/wav16k/`
   - 특성: 버튼(DTMF)으로 턴을 나눠 겹침이 없고 원본 턴 간 시각도 없다 → `timing="turn_order_only"`. 재배포 금지 → `redistributable=False`
-  - 남은 것: 강제 정렬로 단어 시각 만들기, 세션 타임라인(턴 간격 합성) 생성기 연결, XDailyDialog·BConTrasT 파서
+- 2026-10-04: 세션 연속 음성 생성 `vapasr/cst/timeline.py` + `experiments/cst_make_sessions.py`.
+  - 출력: 세션마다 mono 혼합·화자별 2 채널·timeline.json(턴 시작·끝, 전사, 참조)
+  - 턴 파일 앞뒤 무음(중앙값 앞 0.88 s · 뒤 0.44 s)을 에너지 기준으로 자른 뒤, 간격을 합성해 겹침 없이 이어 붙인다
+  - 간격 판: natural(약 0.2 s) 0.74 h, mediated(1–3 s, 번역을 읽고 답하는 대기) 1.0 h. 86 세션, 세션 길이 중앙값 약 25–40 s
+  - 무음 자르기는 에너지 기준이라 작은 소리가 잘릴 수 있다 → 강제 정렬 단어 시각으로 검증·대체 예정
+- 남은 것: 강제 정렬 단어 시각, 겹침 사건 생성기(L1·L2), XDailyDialog·BConTrasT 파서

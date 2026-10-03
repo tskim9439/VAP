@@ -61,3 +61,31 @@ def test_iter_sessions_roles_usable_and_roundtrip(tmp_path):
     assert Session.from_json(s.to_json()) == s
     st = stats([s])
     assert st["usable_turns"] == 2 and st["usable_DP"] == 1 and st["usable_CL"] == 1 and st["sessions_without_usable"] == 0
+
+
+def test_timeline_place_render_overlap():
+    import numpy as np
+    from types import SimpleNamespace as NS
+    from vapasr.cst.timeline import overlap_ratio, place_turns, render
+    turns = [NS(turn_id="a", speaker="DP", duration_s=1.0), NS(turn_id="b", speaker="CL", duration_s=0.5), NS(turn_id="c", speaker="CL", duration_s=0.5)]
+    p = place_turns(turns, gap="natural", seed=1)
+    assert p[0].start_s == 0.5 and p[0].gap_before_s == 0.0
+    assert all(q.start_s >= prev.end_s for prev, q in zip(p, p[1:]))                       # 겹침 없음
+    assert 0.3 <= p[2].gap_before_s <= 0.8 and 0.05 <= p[1].gap_before_s <= 1.0            # 같은 화자 쉼 · 교대 간격
+    assert place_turns(turns, seed=1) == p                                                  # 재현
+    sr = 100; audio = {t.turn_id: np.full(int(t.duration_s * sr), 0.1, np.float32) for t in turns}
+    mono, st = render(p, audio, ["DP", "CL"], sr)
+    assert st.shape[1] == 2 and abs(st[:, 0].sum() - 10.0) < 1e-3 and abs(st[:, 1].sum() - 10.0) < 1e-3 and abs(mono.sum() - 20.0) < 1e-3
+    assert overlap_ratio(p) == 0.0
+    p2 = place_turns(turns, seed=1); p2[1].start_s = p2[0].end_s - 0.5; p2[1].end_s = p2[1].start_s + 0.5   # 0.5 s 겹침
+    speech = (p2[0].end_s - p2[0].start_s) + (p2[2].end_s - p2[2].start_s)                  # b 는 a 안에 들어감 → 발화 합집합 = a + c
+    assert abs(overlap_ratio(p2) - 0.5 / speech) < 1e-6
+
+
+def test_trim_silence():
+    import numpy as np
+    from vapasr.cst.timeline import trim_silence
+    sr = 1000; x = np.zeros(3000, np.float32); x[1000:2000] = 0.5                          # 1 s 무음 + 1 s 소리 + 1 s 무음
+    i, j = trim_silence(x, sr, margin_s=0.1)
+    assert abs(i - 900) <= 20 and abs(j - 2100) <= 20
+    assert trim_silence(np.zeros(500, np.float32), sr) == (0, 500)
