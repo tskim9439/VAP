@@ -73,12 +73,16 @@ TAXI·Verbmobil 은 신청 후 답변을 기다리고 있다. 그동안 실제 �
 
 | 원천 | 언어 | 사람 번역 | 쓰임 |
 |---|---|---|---|
-| **XDailyDialog**(ACL 2023) | EN·DE·ZH·IT 병렬 | ○(사람 번역) | 일상 대화의 주 원천. EN↔DE 참조는 gold |
-| **BConTrasT**(WMT20 Chat, Taskmaster-1 기반) | EN↔DE | ○(원어민 사후 편집) | 과제형 대화(주문·예약 등 6 영역). 실제 이중언어 상황(독일어 고객 · 영어 상담원)을 상정 |
+| **XDailyDialog**(ACL 2023) | EN·DE·ZH·IT 병렬 | ○ 전문 번역가 50 여 명, 데이터 전문가 3 명이 번역가별 20 % 표본 검수 | 일상 대화의 주 원천. EN↔DE 참조는 gold. 13K 대화, 대화당 7.9 발화. **CC BY-NC-SA 4.0**(DailyDialog 파생) |
+| **BConTrasT**(WMT20 Chat, Taskmaster-1 기반) | EN↔DE | ○ Unbabel 전문 번역 + 원어민 사후 편집 | 과제형 대화(주문·예약 등 6 영역). 실제 이중언어 상황(독일어 고객 · 영어 상담원)을 상정. **CC BY-SA 4.0** |
 | 한국어판 | KO | ✕ | 영어 원문을 다중 LLM 합의 번역(§7.1) → silver |
 | 끼어들기·Barge-in·해소 턴(새로 생성) | EN → DE·KO | ✕ | 영어로 생성한 뒤 다중 LLM 합의 번역 → silver |
 
 - AI Hub 병렬 말뭉치는 재배포가 불가해서 쓰지 않는다.
+- **공개 라이선스 결론**:
+  - XDailyDialog 이 NC-SA 라서, 그 내용을 쓰는 평가셋 부분은 **CC BY-NC-SA 4.0** 으로 공개해야 한다(비상업 연구 벤치마크로는 문제 없음).
+  - BConTrasT 부분은 CC BY-SA 4.0 과 함께 쓸 수 있다.
+  - 두 원천을 합친 공개본은 가장 제한적인 NC-SA 를 따른다.
 - **오염 위험과 대응**: DailyDialog·Taskmaster 텍스트는 LLM 학습에 들어갔을 가능성이 있다.
   - 텍스트 기억이 줄 수 있는 이득은 번역 품질 쪽에만 생긴다. 이 벤치마크의 핵심(겹친 음성·타이밍·방향)과는 관계가 적다.
   - 공개 SimulST 기준선은 대화 텍스트로 학습되지 않았다.
@@ -151,31 +155,30 @@ TAXI·Verbmobil 은 신청 후 답변을 기다리고 있다. 그동안 실제 �
 
 ## 6. TTS (조건 3)
 
-### 6.1 선정 기준과 엔진
+### 6.1 선정 기준과 엔진 (2026-10-03 조사 반영)
 
 기준:
 1. EN·DE·KO 를 모두 지원해야 한다.
 2. 리뷰어가 아는 검증된 품질이어야 한다.
-3. 재현 가능하고 재배포가 가능해야 한다.
+3. 재현 가능하고 합성음 재배포가 가능해야 한다.
 4. 화자 다양성이 있어야 한다.
-5. 대화체 운율을 낼 수 있어야 한다.
+5. 단어 시각을 얻을 수 있어야 한다.
 
-| 엔진 | 언어 | 라이선스·약관 | 역할 |
+| 엔진 | 언어·검증 | 라이선스·약관 | 판단 |
 |---|---|---|---|
-| **CosyVoice 3** | 9 개(EN·DE·KO 포함) | Apache-2.0 | **공개 판**: 누구나 재생성할 수 있다(재현성). 제로샷 복제, 지시문으로 감정·속도 조절 |
-| **상용 TTS 1 개**(1 순위 Azure Neural TTS, 대안 Google Cloud TTS·ElevenLabs) | EN·DE·KO 원어민 음성 다수 | 상용 약관 — **합성음 재배포 허용 여부 확인 필요** | **상용 판**: 리뷰어가 신뢰하는 품질, 원어민 프리셋 음성(복제 불필요), SSML 로 속도·쉼 조절 |
-| Qwen3-TTS | 10 개 | Apache-2.0 | 예비(참조 복제 지원 여부 확인 필요) |
+| **CosyVoice 3**(Fun-CosyVoice3) | 9 개(EN·DE·KO 포함), 다언어·교차언어 제로샷 복제. 보고 성능 test-en WER 1.68 %, 화자 유사도 69.5 % | 코드 Apache-2.0(가중치 라이선스는 저장소에 명시가 약해 확인 필요) | **공개 판 1 순위** |
+| **Qwen3-TTS**(0.6B·1.7B Base·CustomVoice·VoiceDesign) | 10 개(EN·DE·KO 포함), 3 초 참조 복제. **독일어 WER 1.09–1.24, 한국어 1.74–1.76, 화자 유사도 DE 0.775 · KO 0.799**(1.7B) | Apache-2.0 | 공개 판 대안. DE·KO 수치를 공식 보고해 리뷰어 설득에 유리하다 |
+| **Azure Neural TTS** | en-US·de-DE·ko-KR 원어민 음성 다수, SSML 로 쉼·속도 조절. **WordBoundary 이벤트로 단어 시각**(100 ns 단위)을 준다 | 마이크로소프트 공식 답변: 유료 리소스로 자기 텍스트를 합성하면 **상업·개인 용도로 사용·배포 가능, 별도 허락 불필요**. 합성음임을 공개하라는 책임 있는 사용 지침이 있다 | **상용 판 1 순위**: 재배포 근거가 가장 명확하고 단어 시각을 바로 얻는다 |
+| Google Cloud TTS | 다수 | TTS 전용 약관 미확인. 경쟁 TTS 학습 금지로 알려짐(2 차 출처) | 예비 |
+| ElevenLabs | 다언어 | 유료 플랜은 출력 소유. **출력으로 경쟁 AI 모델 학습 금지** | 예비. 평가 전용이면 가능하지만 데이터 라이선스에 학습 금지 조항을 넣어야 한다 |
 | XTTS-v2 | 17 개 | CPML(비상업) | 제외 |
 
-- **두 판을 모두 평가셋 전체로 만든다.** 비용은 작다: 상용 TTS 는 약 100 만 자당 수십 달러 수준이고, 평가셋 전체가 100 만 자 안팎이다(약관·요금 확인 필요).
+- **권장 구성: 공개 판 CosyVoice 3(또는 Qwen3-TTS) + 상용 판 Azure.** 두 판으로 평가셋 전체를 합성한다.
   - 주 결과는 한 판으로 보고하고, 다른 판에서 **시스템 순위가 유지됨**(순위 상관)을 보인다.
-  - “특정 TTS 의 흔적에 맞춘 결과 아니냐”에 대한 답이 된다.
-- **화자**:
-  - 언어별 원어민 음성 8–12 명, 성별 균형
-  - 대화 안에서 화자 음색을 일관되게 유지한다
-  - 상용 판은 프리셋 원어민 음성을 쓴다
-  - 공개 판은 복제를 허용하는 라이선스(CC0·CC BY)의 원어민 녹음을 참조로 쓰거나 음성 설계를 쓴다. 실존 인물을 동의 없이 복제하지 않는다
-  - 교차 언어 복제(외국어 억양 음색)는 쓰지 않는다
+  - 공개 판 엔진은 S0 파일럿(언어별 50 문장, 명료도·화자 지표)에서 CosyVoice 3 와 Qwen3-TTS 중 고른다.
+- 공개 판에는 화자 참조 음성이 필요하다. 복제 허용 라이선스(CC0·CC BY)의 원어민 녹음에서 고르거나, Qwen3-TTS VoiceDesign 으로 실존 인물이 아닌 음성을 만든다.
+- 상용 판은 Azure 프리셋 원어민 음성을 쓴다. 언어별 8–12 명, 성별 균형.
+- 교차 언어 복제(외국어 억양 음색)는 쓰지 않는다.
 
 ### 6.2 합성 품질 보증(논문에 수치로 보고)
 
@@ -192,9 +195,10 @@ TAXI·Verbmobil 은 신청 후 답변을 기다리고 있다. 그동안 실제 �
 ### 7.1 참조 번역 (사람 검수 없이)
 - **gold**: XDailyDialog·BConTrasT 의 EN↔DE 사람 번역을 그대로 쓴다.
 - **silver**: 한국어 전체, 그리고 새로 생성한 끼어들기·해소 발화. 만드는 절차:
-  1. 서로 다른 번역기 **세 개**가 독립 번역한다: EXAONE-4.0, Qwen3.8-27B, 상용 MT(DeepL 등). 세 계열이 달라 한 모델 편향을 줄인다.
+  1. 서로 다른 번역기 **세 개**가 독립 번역한다: EXAONE-4.0, Qwen3.8-27B, **MADLAD-400-10B-MT**(Google, Apache-2.0, 450+ 언어, Hibiki 가 정렬에 쓴 모델). 세 계열이 달라 한 모델 편향을 줄인다.
+     - **DeepL 은 제외**: 약관 8.1.1(g) 가 출력으로 “기계 번역 알고리즘을 개발·학습”하는 것을 금지하고, (e) 는 벤치마크 시험을 금지한다. 번역 시스템 평가용 참조로 공개하는 것은 위험하다.
   2. 번역끼리 의미 일치를 검사한다:
-     - 참조 없는 품질 추정(CometKiwi / xCOMET-QE)
+     - 참조 없는 품질 추정: **MetricX-24 하이브리드**(Apache-2.0, 참조 유무 모두 채점, XXL·XL·Large)를 주로 쓰고, CometKiwi(비상업 라이선스, 허깅페이스 동의 필요)를 보조로 쓴다
      - 역번역 의미 유사도
      - 숫자·고유명사 일치
   3. 셋 중 둘 이상이 일치 기준을 넘으면 통과한다. 판정 LLM 이 그중 하나를 주 참조로 고르고, 나머지는 **다중 참조**로 함께 둔다.
@@ -205,7 +209,7 @@ TAXI·Verbmobil 은 신청 후 답변을 기다리고 있다. 그동안 실제 �
   - 참조 없는 QE 점수
   - gold 와 silver 구간을 나눠 집계해서, silver 참조가 결론을 바꾸지 않는지 보인다(EN↔DE 는 gold 와 silver 를 모두 만들어 두 점수의 시스템 순위 상관을 보고)
 - **부분 참조**: 끊긴 발화(A 멈춤)는 의미 단위 경계 c 에서만 자른다. 주 참조 번역에서 c 까지 정렬된 앞부분을 부분 참조로 쓴다. 정렬은 문맥 정렬 도구를 쓴다.
-- 필요 모델(CometKiwi·xCOMET·LaBSE 등)은 T5 에 받고, 서버 업로드는 사용자가 한다.
+- 필요 모델(MetricX-24·CometKiwi·LaBSE·MADLAD-400)은 T5 에 받고, 서버 업로드는 사용자가 한다.
 
 ### 7.2 라벨
 - **사건 라벨**: 유형·시작 시각·난이도·관련 화자, 그리고 기대 행동.
@@ -251,14 +255,34 @@ TAXI·Verbmobil 은 신청 후 답변을 기다리고 있다. 그동안 실제 �
 - 규모: 언어쌍마다 평가셋 약 10 h(층·사건 유형·난이도마다 사건 ≥ 300). 학습·개발 세트는 만들지 않는다.
 - 다만 시스템 설정(지연 단계 등)을 고르는 데 쓸 **작은 보정 분할(약 5 %)**을 평가셋과 겹치지 않게 떼어 두는 것을 권한다. 모든 기준선에 똑같이 적용한다.
 
-## 11. 결정이 필요한 것
+## 11. 결정 사항 (2026-10-03 조사 후 권고)
 
-1. 상용 TTS 엔진 선택(Azure·Google·ElevenLabs)과 합성음 재배포 약관 확인.
-2. silver 참조에 상용 MT(DeepL 등)를 세 번째 번역기로 쓸지 여부.
-3. 단일 채널 혼합을 주 조건으로 확정할지([[decision-mono-input]] 재검토와 연결).
-4. 보정 분할(약 5 %)을 둘지.
+| 항목 | 권고 | 근거 |
+|---|---|---|
+| 상용 TTS | **Azure Neural TTS** | 출력 사용·배포에 대한 공식 허용 답변. de-DE·ko-KR 원어민 음성. 단어 시각 이벤트 |
+| 공개 TTS | CosyVoice 3 또는 Qwen3-TTS(파일럿으로 결정) | 둘 다 Apache-2.0·DE·KO 지원. Qwen3-TTS 는 DE·KO 품질 수치를 공식 보고 |
+| 세 번째 번역기 | **MADLAD-400-10B-MT**(DeepL 제외) | DeepL 약관이 MT 개발·벤치마크 사용을 금지. MADLAD 는 Apache-2.0 |
+| 품질 추정 | MetricX-24(주) + CometKiwi(보조) | MetricX-24 는 Apache-2.0 이고 참조 없이도 채점 |
+| 공개 라이선스 | CC BY-NC-SA 4.0 | XDailyDialog 이 NC-SA |
+| 입력 조건 | 단일 채널 혼합(주) + 화자별 2 채널(보조) 모두 제공 | novelty 는 혼합 조건, 단일 방향 기준선 실행은 2 채널 조건. [[decision-mono-input]] 과 일치 |
+| 보정 분할 | 평가셋의 약 5 % 를 떼어 둔다 | 지연 단계 등 설정을 시험 분할로 고르면 결과가 부풀려진다. 모든 시스템에 같은 규칙을 적용 |
+
+남은 확인 사항:
+- CosyVoice 3 가중치 라이선스
+- Taskmaster-1 원 라이선스(BConTrasT 는 CC BY-SA 4.0 으로 공개됨)
+- Azure 요금(평가셋 약 100 만 자 기준)
 
 ## 출처 (관측일 2026-10-03)
+- Azure TTS 출력 사용·배포(마이크로소프트 Q&A 공식 답변): https://learn.microsoft.com/en-us/answers/questions/652774/usage-license-of-wav-mp3-generated-by-azure-text-2
+- Azure SSML·WordBoundary: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-synthesis-markup-structure
+- DeepL Pro 약관(8.1.1 e·f·g): https://www.deepl.com/en/pro-license
+- ElevenLabs 출력 권리(2 차 정리): https://terms.law/ai-output-rights/elevenlabs/
+- CosyVoice 공식 저장소: https://github.com/FunAudioLLM/CosyVoice
+- Qwen3-TTS 공식 저장소: https://github.com/QwenLM/Qwen3-TTS
+- MetricX-24: https://huggingface.co/google/metricx-24-hybrid-xxl-v2p6
+- MADLAD-400 MT: https://huggingface.co/google/madlad400-3b-mt
+- BConTrasT(CC BY-SA 4.0): https://github.com/Unbabel/BConTrasT
+- XDailyDialog(CC BY-NC-SA 4.0, 전문 번역): https://github.com/liuzeming01/XDailyDialog
 - CosyVoice 3 언어·라이선스: https://tts.ai/voices/cosyvoice3/ (2 차 정리 사이트, 공식 저장소 확인 필요)
 - Qwen3-TTS: https://rits.shanghai.nyu.edu/ai/%F0%9F%93%A2-qwen3%E2%80%91tts-open%E2%80%91source-text%E2%80%91to%E2%80%91speech-tts-family/ (2 차 정리, 확인 필요)
 - XDailyDialog(ACL 2023): https://aclanthology.org/2023.acl-long.684
