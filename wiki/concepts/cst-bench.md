@@ -83,4 +83,4 @@ joint 모델을 만들기 전에 **B3(VAP + 2× strong SimulST)가 통제 세트
 
 후보와 확보 상태는 [[task-cst-data-access]].
 
-합성음 세트(실제 대화 확보 전 주 세트) 구축 계획: [[output-cst-bench-synthetic-plan-20261003]].
+합성음 세트(실제 대화 확보 전 주 세트) 최종 계획: [[output-cst-bench-syn-final-plan-20261003]] (논의 기록 [[output-cst-bench-synthetic-plan-20261003]]).

@@ -1,6 +1,6 @@
 ---
 type: output
-status: active
+status: superseded
 created: 2026-10-03
 updated: 2026-10-03
 summary: CST-Bench 합성음 평가셋 계획 — EN↔DE(사람 번역 대화)·EN↔KO(다중 LLM 합의 참조), CosyVoice3+상용 TTS, 겹침 층화, 정보 인과 스크립트
@@ -17,6 +17,8 @@ raw_authors:
 ---
 
 # CST-Bench 합성음 세트 계획 (CST-Bench-Syn, 2026-10-03)
+
+> **최종본은 [[output-cst-bench-syn-final-plan-20261003]]** — 이 문서는 논의·조사 기록(근거·출처)으로 남긴다.
 
 > **2026-10-03 갱신(사용자 결정)**:
 > - 원어민 번역 검수는 하지 않는다 → 사람 번역이 이미 있는 대화를 쓰고, 나머지는 다중 LLM 합의 + 품질 추정으로 관리한다(§3·§7).
