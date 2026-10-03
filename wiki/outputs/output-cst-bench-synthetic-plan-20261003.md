@@ -79,10 +79,7 @@ TAXI·Verbmobil 은 신청 후 답변을 기다리고 있다. 그동안 실제 �
 | 끼어들기·Barge-in·해소 턴(새로 생성) | EN → DE·KO | ✕ | 영어로 생성한 뒤 다중 LLM 합의 번역 → silver |
 
 - AI Hub 병렬 말뭉치는 재배포가 불가해서 쓰지 않는다.
-- **공개 라이선스 결론**:
-  - XDailyDialog 이 NC-SA 라서, 그 내용을 쓰는 평가셋 부분은 **CC BY-NC-SA 4.0** 으로 공개해야 한다(비상업 연구 벤치마크로는 문제 없음).
-  - BConTrasT 부분은 CC BY-SA 4.0 과 함께 쓸 수 있다.
-  - 두 원천을 합친 공개본은 가장 제한적인 NC-SA 를 따른다.
+- **공개 라이선스 결론**: §12 참고. XDailyDialog(BY-NC-SA)와 BConTrasT(BY-SA)는 서로 호환되지 않으므로 **부분집합 두 개로 나눠 각자의 라이선스로 공개**한다.
 - **오염 위험과 대응**: DailyDialog·Taskmaster 텍스트는 LLM 학습에 들어갔을 가능성이 있다.
   - 텍스트 기억이 줄 수 있는 이득은 번역 품질 쪽에만 생긴다. 이 벤치마크의 핵심(겹친 음성·타이밍·방향)과는 관계가 적다.
   - 공개 SimulST 기준선은 대화 텍스트로 학습되지 않았다.
@@ -263,7 +260,7 @@ TAXI·Verbmobil 은 신청 후 답변을 기다리고 있다. 그동안 실제 �
 | 공개 TTS | CosyVoice 3 또는 Qwen3-TTS(파일럿으로 결정) | 둘 다 Apache-2.0·DE·KO 지원. Qwen3-TTS 는 DE·KO 품질 수치를 공식 보고 |
 | 세 번째 번역기 | **MADLAD-400-10B-MT**(DeepL 제외) | DeepL 약관이 MT 개발·벤치마크 사용을 금지. MADLAD 는 Apache-2.0 |
 | 품질 추정 | MetricX-24(주) + CometKiwi(보조) | MetricX-24 는 Apache-2.0 이고 참조 없이도 채점 |
-| 공개 라이선스 | CC BY-NC-SA 4.0 | XDailyDialog 이 NC-SA |
+| 공개 라이선스 | 부분집합별로 CC BY-NC-SA 4.0(XDailyDialog 계열)·CC BY-SA 4.0(BConTrasT 계열) | 두 ShareAlike 라이선스가 서로 호환되지 않음(§12) |
 | 입력 조건 | 단일 채널 혼합(주) + 화자별 2 채널(보조) 모두 제공 | novelty 는 혼합 조건, 단일 방향 기준선 실행은 2 채널 조건. [[decision-mono-input]] 과 일치 |
 | 보정 분할 | 평가셋의 약 5 % 를 떼어 둔다 | 지연 단계 등 설정을 시험 분할로 고르면 결과가 부풀려진다. 모든 시스템에 같은 규칙을 적용 |
 
@@ -271,6 +268,40 @@ TAXI·Verbmobil 은 신청 후 답변을 기다리고 있다. 그동안 실제 �
 - CosyVoice 3 가중치 라이선스
 - Taskmaster-1 원 라이선스(BConTrasT 는 CC BY-SA 4.0 으로 공개됨)
 - Azure 요금(평가셋 약 100 만 자 기준)
+
+## 12. 재배포 약관과 비용 (2026-10-03 조사)
+
+### 12.1 구성 요소별 재배포 가능 여부
+
+| 구성 요소 | 라이선스·약관 | 공개본에 넣을 수 있나 | 조건·조치 |
+|---|---|---|---|
+| XDailyDialog 텍스트 | CC BY-NC-SA 4.0(DailyDialog 파생) | ○ | 출처 표시, 비상업, **같은 라이선스로** 공개 |
+| BConTrasT 텍스트 | CC BY-SA 4.0. 원본 Taskmaster-1 은 CC BY 4.0 | ○ | 출처 표시, **CC BY-SA 4.0 으로** 공개 |
+| ↳ 두 텍스트를 한 저작물로 합치기 | BY-SA 와 BY-NC-SA 는 서로 다른 ShareAlike 라 **합친 2 차 저작물은 불가** | – | **부분집합 두 개로 나눠** 각자 라이선스로 배포(묶음 배포는 가능) |
+| Azure TTS 합성음 | 마이크로소프트 공식 답변: 유료 리소스로 자기(또는 적법하게 라이선스받은) 텍스트를 합성하면 상업·개인 용도로 사용·배포 가능, 허락·로열티 불필요. 무료(F0) 등급은 답변이 엇갈림 | ○ | **유료(S0, 종량제) 리소스로 생성**. 입력 텍스트 권리 확보(위 두 라이선스로 충족). 합성음임을 데이터 카드에 표시(행동 강령) |
+| CosyVoice 3 / Qwen3-TTS 합성음 | 모델 Apache-2.0(Fun-CosyVoice3-0.5B 가중치도 Apache-2.0), 출력 제한 없음 | ○ | 복제용 참조 음성은 CC0 로 하거나 CC BY 이면 출처 표시. 실존 인물 무단 복제 금지 |
+| Qwen3.8-27B 번역 | Apache-2.0 | ○ | – |
+| MADLAD-400 번역 | Apache-2.0 | ○ | – |
+| **EXAONE-4.0 번역** | EXAONE AI Model License(NC): 출력은 비상업 연구용, **라이선서 모델과 경쟁하는 모델을 개발·개선하는 데 출력 사용 금지** | △ **위험** | 공개 참조 텍스트에는 넣지 않는다. EXAONE 은 합의 판정·누설 검사 같은 **내부 판정에만** 쓰고, 공개 참조는 Qwen3.8·MADLAD 번역에서 고른다 |
+| DeepL 번역 | 약관이 MT 개발·학습·벤치마크 사용 금지 | ✕ | 쓰지 않는다 |
+| 채점 모델(MetricX-24 Apache, CometKiwi NC) | 평가에만 사용, 공개본에 포함하지 않음 | – | 논문에 버전만 명시 |
+| 잡음·잔향(혼합에 쓸 경우) | RIRS_NOISES 는 Apache-2.0, MUSAN·DEMAND 는 원천마다 다르고 일부 SA, ETSI 는 재배포 제한 가능 | △ | **깨끗한 화자별 음원 + 혼합 스크립트·잡음 목록·시드**를 공개하고 사용자가 재현하게 한다. 혼합본은 재배포 가능한 잡음만으로 만든다 |
+
+### 12.2 Azure TTS 비용
+
+| 항목 | 값(2026 기준, 2 차 출처) |
+|---|---|
+| Neural(표준) 음성 | **$16 / 100 만 자** |
+| Neural HD 음성 | $22 / 100 만 자(2026-03 인하, 이전 $30) |
+| 무료(F0) | 월 50 만 자. 단, 재배포 근거를 확실히 하려면 유료 리소스 권장 |
+| 약정 최저 단계 | 월 $960 / 8,000 만 자(필요 없음) |
+| 과금 문자 | 글자·숫자·공백·문장부호 모두. `<speak>`·`<voice>` 외 SSML 태그 안 글자도 과금. 중국어 한자는 2 자로 계산(한글이 2 자인지는 문서에 명시 없음 — 보수적으로 2 배 가정) |
+
+추정(평가셋 전체, 두 언어쌍 × 화자 배정 양방향, 약 20 h 음성):
+- 영어·독일어는 초당 약 14 자, 한국어는 초당 약 8 자이고 2 배 과금을 가정했다.
+- 재합성 20 %, 보정 분할과 파일럿, SSML 태그까지 더하면 **약 100–150 만 자 → 표준 $16–24, HD $22–33**.
+- 화자별 다른 음성을 쓰거나 판을 하나 더 만들어도 **$100 이하**다.
+- 공식 가격 페이지는 로그인 후 계산기로만 보여서, 위 단가는 2 차 출처(2026)다. 결제 전 가격 계산기로 확인한다.
 
 ## 출처 (관측일 2026-10-03)
 - Azure TTS 출력 사용·배포(마이크로소프트 Q&A 공식 답변): https://learn.microsoft.com/en-us/answers/questions/652774/usage-license-of-wav-mp3-generated-by-azure-text-2
@@ -283,6 +314,13 @@ TAXI·Verbmobil 은 신청 후 답변을 기다리고 있다. 그동안 실제 �
 - MADLAD-400 MT: https://huggingface.co/google/madlad400-3b-mt
 - BConTrasT(CC BY-SA 4.0): https://github.com/Unbabel/BConTrasT
 - XDailyDialog(CC BY-NC-SA 4.0, 전문 번역): https://github.com/liuzeming01/XDailyDialog
+- Taskmaster-1(CC BY 4.0): https://github.com/google-research-datasets/Taskmaster/blob/master/TM-1-2019/README.md
+- EXAONE AI Model License 1.2 NC: https://scancode-licensedb.aboutcode.org/exaone-ai-model-1.2-nc.html
+- Qwen3.8-27B Apache-2.0: https://www.eweek.com/news/alibaba-qwen3-8-27b-license-apac-china/
+- Fun-CosyVoice3-0.5B 가중치 Apache-2.0: https://huggingface.co/agiws/Fun-CosyVoice3-0.5B
+- Azure TTS 가격(2 차): https://texttolab.com/blog/azure-text-to-speech-pricing , 공식 페이지 https://azure.microsoft.com/en-us/pricing/details/speech/
+- Azure 과금 문자(SSML 태그): https://learn.microsoft.com/en-us/answers/questions/584662/what-characters-are-billabling-in-text-to-speech
+- Azure 상업 사용·무료 등급 답변: https://learn.microsoft.com/en-us/answers/questions/2124037/can-i-use-azure-text-to-speech-to-generate-mp3-for
 - CosyVoice 3 언어·라이선스: https://tts.ai/voices/cosyvoice3/ (2 차 정리 사이트, 공식 저장소 확인 필요)
 - Qwen3-TTS: https://rits.shanghai.nyu.edu/ai/%F0%9F%93%A2-qwen3%E2%80%91tts-open%E2%80%91source-text%E2%80%91to%E2%80%91speech-tts-family/ (2 차 정리, 확인 필요)
 - XDailyDialog(ACL 2023): https://aclanthology.org/2023.acl-long.684
