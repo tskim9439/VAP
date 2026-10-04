@@ -5,6 +5,7 @@
   cstbench render         --manifest <manifest.jsonl> --audio-root <audio dir> --config <config.json> --out <dir>
   cstbench verify         --out <rendered dir> --reference <checksums.json>
   cstbench build-taxi     --root <TAXI root> --out <dir> [--config configs/taxi_natural.json ...]
+  cstbench eval           --sessions <rendered dir>/sessions.jsonl --hyp <hyp.jsonl> [--out report.json]
 
 `render` writes per session <out>/<session>/{mix.wav, 2ch.wav, timeline.json}, <out>/sessions.jsonl and
 <out>/build_info.json (package version, config, per-session timeline digest and audio SHA-256).
@@ -140,6 +141,20 @@ def cmd_build_taxi(a):
         cmd_render(argparse.Namespace(manifest=str(man), audio_root=str(audio), config=c, out=str(out / name)))
 
 
+def cmd_eval(a):
+    from .evaluate import evaluate, load_jsonl
+    report, segments = evaluate(load_jsonl(a.sessions), load_jsonl(a.hyp), a.time_key)
+    report.update(sessions=a.sessions, hyp=a.hyp, time_key=a.time_key, cstbench_version=__version__)
+    text = json.dumps(report, ensure_ascii=False, indent=1, sort_keys=True)
+    print(text)
+    if a.out:
+        Path(a.out).write_text(text)
+    if a.segments_out:
+        with open(a.segments_out, "w", encoding="utf-8") as f:
+            for x in segments:
+                f.write(json.dumps(x, ensure_ascii=False) + "\n")
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="cstbench", description=__doc__.split("\n\n")[0])
     p.add_argument("--version", action="version", version=__version__)
@@ -156,6 +171,9 @@ def main(argv=None):
     q.add_argument("--sr", type=int, default=16000)
     q.add_argument("--config", nargs="+", default=[str(Path(__file__).resolve().parents[2] / "configs" / f) for f in ("taxi_natural.json", "taxi_mediated.json")])
     q.set_defaults(fn=cmd_build_taxi)
+    q = sub.add_parser("eval"); q.add_argument("--sessions", required=True); q.add_argument("--hyp", required=True)
+    q.add_argument("--out"); q.add_argument("--segments-out", help="per-turn src/hyp/ref/latency (e.g. for COMET)")
+    q.add_argument("--time-key", default="t", help="hyp field with the emission time (s)"); q.set_defaults(fn=cmd_eval)
     a = p.parse_args(argv)
     a.fn(a)
 

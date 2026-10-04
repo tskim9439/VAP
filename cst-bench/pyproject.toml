@@ -12,7 +12,8 @@ license = {text = "Apache-2.0"}
 dependencies = ["numpy>=1.21", "scipy>=1.7", "soundfile>=0.10"]
 
 [project.optional-dependencies]
-test = ["pytest>=7"]
+eval = ["sacrebleu>=2.0", "num2words>=0.5"]
+test = ["pytest>=7", "sacrebleu>=2.0", "num2words>=0.5"]
 
 [project.scripts]
 cstbench = "cstbench.cli:main"

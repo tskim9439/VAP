@@ -8,8 +8,8 @@ This repository does **not** contain any corpus audio or text. Several source co
 redistributed, so the benchmark is defined by *build scripts, configs and checksums*: you obtain the
 source data under its own license, run the build, and verify that you got exactly the same benchmark.
 
-> Status: v0.1 — TAXI (real German↔English telephone dialogues) is supported. The synthetic set
-> (CST-Bench-Syn), overlap/interruption event generators and evaluation metrics will be added.
+> Status: v0.1 — TAXI (real German↔English telephone dialogues) and the scorer are supported. The
+> synthetic set (CST-Bench-Syn) and the turn-end overlap condition will be added.
 
 ## Install
 
@@ -59,6 +59,38 @@ also be called separately:
 <out>/<config>/sessions.jsonl        all timelines
 <out>/<config>/build_info.json       version, config, per-session checksums
 ```
+
+## Evaluate a system
+
+A system writes one committed text piece per line (pieces are never retracted):
+
+```jsonl
+{"session": "taxi/SES0037", "lang": "English", "t": 3.42, "text": "which exit"}
+```
+
+`t` is the session time in seconds (from the start of `mix.wav`) at which the piece was emitted, `lang` the
+output language, which selects the direction (English output = German->English). An optional `turn_id`
+assigns the piece to a turn directly (oracle segmentation); otherwise the output is aligned to the reference
+turns of its direction by minimum edit distance (as mwerSegmenter). Other fields, e.g. a computation-aware
+clock, can be selected with `--time-key`.
+
+```bash
+pip install -e ".[eval]"
+cstbench eval --sessions /path/to/cstbench-taxi/taxi-natural/sessions.jsonl --hyp hyp.jsonl \
+    --out report.json --segments-out segments.jsonl
+```
+
+Per direction the report gives BLEU and chrF (sacrebleu, case-insensitive, punctuation removed, numbers
+spelled out with num2words, matching the TAXI reference style), StreamLAAL (s), the end offset (s from
+the end of a source turn to the last word of its translation: how long the listener waits after the
+speaker stopped) and the number of turns that received no output. `segments.jsonl` holds the per-turn
+source, hypothesis and reference (e.g. for COMET).
+
+## Baselines
+
+`baselines/offline_oracle.py` runs offline systems on oracle turn segments (quality upper bounds):
+reference transcript -> LLM translation, Qwen3-ASR -> LLM translation, and Whisper speech translation
+(into English only). It writes `hyp-<system>.jsonl` files for `cstbench eval`.
 
 ## Reproducibility
 
