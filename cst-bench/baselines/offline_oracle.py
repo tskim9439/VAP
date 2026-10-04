@@ -9,6 +9,8 @@ Every turn is cut from the session mix with its reference start/end and translat
     cascade   asr.jsonl transcripts -> LLM translation
     whisper   Whisper task=translate; X->English only (German turns)
 `asr` and `cascade` may run in separate processes (e.g. different Python environments) on the same --out-dir.
+Files are written atomically; a system whose output already holds one line per turn is skipped, so an
+interrupted (preempted) run can simply be started again.
 
 Outputs in --out-dir: hyp-<system>.jsonl (with turn_id, t = turn end, elapsed = t + measured compute
 time per turn) and asr.jsonl (cascade transcripts with WER against the corpus transcript).
@@ -149,11 +151,26 @@ def run_whisper(turns, path, device, batch):
     return texts, secs
 
 
+def write_jsonl(path, rows):
+    """Atomic write (tmp + rename): a file that exists is complete."""
+    tmp = Path(str(path) + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    tmp.replace(path)
+
+
+def complete(path, n):
+    if not Path(path).exists():
+        return False
+    with open(path, encoding="utf-8") as f:
+        return sum(1 for _ in f) == n
+
+
 def write_hyp(path, turns, texts, secs, system):
-    with open(path, "w", encoding="utf-8") as f:
-        for t, x, dt in zip(turns, texts, secs):
-            f.write(json.dumps(dict(session=t["session"], turn_id=t["turn_id"], lang=t["translation_lang"], t=t["end_s"],
-                                    elapsed=round(t["end_s"] + dt, 3), text=x, system=system), ensure_ascii=False) + "\n")
+    write_jsonl(path, (dict(session=t["session"], turn_id=t["turn_id"], lang=t["translation_lang"], t=t["end_s"],
+                            elapsed=round(t["end_s"] + dt, 3), text=x, system=system)
+                       for t, x, dt in zip(turns, texts, secs)))
 
 
 def main():
@@ -176,14 +193,16 @@ def main():
     meta = dict(sessions=a.sessions, systems=systems, asr_model=a.asr_model, llm_model=a.llm_model,
                 whisper_model=a.whisper_model, turns=len(turns))
 
+    todo = [x for x in systems if not complete(out / ("asr.jsonl" if x == "asr" else f"hyp-{x}.jsonl"),
+                                               sum(t["translation_lang"] == "English" for t in turns) if x == "whisper"
+                                               else len(turns))]
+    print(f"to run: {todo} (complete outputs are kept)", flush=True)
     asr, asr_s = None, None
-    if "asr" in systems:
+    if "asr" in todo:
         asr, asr_s = run_asr(turns, a.asr_model, a.device, a.batch)
-        with open(out / "asr.jsonl", "w", encoding="utf-8") as f:
-            for t, x, dt in zip(turns, asr, asr_s):
-                f.write(json.dumps(dict(session=t["session"], turn_id=t["turn_id"], lang=t["lang"], ref=t["transcript"],
-                                        hyp=x, wer=round(wer(x, t["transcript"], t["lang"]), 4), seconds=round(dt, 4)),
-                                   ensure_ascii=False) + "\n")
+        write_jsonl(out / "asr.jsonl", (dict(session=t["session"], turn_id=t["turn_id"], lang=t["lang"], ref=t["transcript"],
+                                             hyp=x, wer=round(wer(x, t["transcript"], t["lang"]), 4), seconds=round(dt, 4))
+                                        for t, x, dt in zip(turns, asr, asr_s)))
         for lang in sorted({t["lang"] for t in turns}):
             idx = [i for i, t in enumerate(turns) if t["lang"] == lang]
             errs = sum(wer(asr[i], turns[i]["transcript"], lang) * max(len(normalize(turns[i]["transcript"], lang).split()), 1)
@@ -192,14 +211,14 @@ def main():
             meta[f"asr_wer_{lang}"] = round(errs / words, 4)
             print(f"ASR WER {lang}: {meta[f'asr_wer_{lang}']:.4f} ({len(idx)} turns)", flush=True)
 
-    if "cascade" in systems and asr is None:
+    if "cascade" in todo and asr is None:
         rows = {(r["session"], r["turn_id"]): r for r in map(json.loads, open(out / "asr.jsonl", encoding="utf-8"))}
         asr = [rows[(t["session"], t["turn_id"])]["hyp"] for t in turns]
         asr_s = [rows[(t["session"], t["turn_id"])]["seconds"] for t in turns]
-    if "gold-mt" in systems or "cascade" in systems:
+    if "gold-mt" in todo or "cascade" in todo:
         tok, model = load_llm(a.llm_model, a.device)
         for name, src in (("gold-mt", [t["transcript"] for t in turns]), ("cascade", asr)):
-            if name not in systems:
+            if name not in todo:
                 continue
             ys, secs = run_mt(tok, model, [(t["lang"], t["translation_lang"], x) for t, x in zip(turns, src)], a.batch)
             if name == "cascade":
@@ -209,7 +228,7 @@ def main():
         del model
         free()
 
-    if "whisper" in systems:
+    if "whisper" in todo:
         sel = [t for t in turns if t["translation_lang"] == "English"]
         ys, secs = run_whisper(sel, a.whisper_model, a.device, a.batch)
         write_hyp(out / "hyp-whisper.jsonl", sel, ys, secs, "whisper")
