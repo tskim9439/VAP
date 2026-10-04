@@ -1,0 +1,28 @@
+% =====================================================================
+% Table A7 (tab:validity): rank-agreement checks behind the validity claims
+% (sim-to-real, TTS edition, silver references, render seeds, metric choice).
+% Included from App. C. Nothing has been run yet: every cell is \tbd.
+% =====================================================================
+\begin{table}[t]
+  \caption{Validity of system rankings (TAXI: \taxi; Syn: \syn; all L0 natural). Each row ranks the same $n$ configurations (system $\times$ wrapper $\times$ operating point $\times$ direction) in two ways and reports Kendall's $\tau_b$ with a 95\% CI from 2,000 session-bootstrap resamples. For render seeds, $\tau_b$ is the smallest pairwise value among the three renders; \cref{app:scorer} also compares their standard deviation with the CI width. Blank cells are pending.}
+  \label{tab:validity}
+  \centering
+  \small
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}llccc@{}}
+    \toprule
+    Comparison & Configurations compared & $n$ & Kendall's $\tau_b$ & 95\% CI \\
+    \midrule
+    \multicolumn{5}{@{}l}{\textit{Speech, construction and rendering (chrF rankings)}} \\
+    TAXI vs.\ Syn \pair{En}{De}                 & those run on both sets  & \tbd & \tbd & \tbd \\
+    Commercial vs.\ open TTS edition           & Syn subset              & \tbd & \tbd & \tbd \\
+    Gold vs.\ silver references                & Syn \pair{En}{De}       & \tbd & \tbd & \tbd \\
+    Render seeds 1--3 (chrF and \eo)           & TAXI                    & \tbd & \tbd & \tbd \\
+    \midrule
+    \multicolumn{5}{@{}l}{\textit{Metric choice}} \\
+    \laal vs.\ \eo                             & TAXI                    & \tbd & \tbd & \tbd \\
+    \laal vs.\ LongYAAL                        & TAXI                    & \tbd & \tbd & \tbd \\
+    COMET vs.\ chrF                            & TAXI                    & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -1,0 +1,77 @@
+% =====================================================================
+% Table A4 (tab:baselines): baseline configurations. Included from App. D.
+% Known cells only: checkpoints and parameter counts given by the model names
+% or the model cards, offline settings, directions, wrappers, and the
+% licences already verified (Qwen3.8-27B, Qwen3-ASR, Nemotron 3.5 ASR).
+% Everything else, including both values of every latency knob, is \tbd.
+% System names follow Table 3 (tab:main) and Table 6 (tab:ablation).
+% 600M (model card) and 638M (measured) count the whole Nemotron 3.5 ASR
+% model, RNN-T decoder included, not its encoder alone.
+% =====================================================================
+\begin{table}[tp]
+  \caption{Baseline configurations, named as in \cref{tab:main,tab:ablation} (LLM: Qwen3.8-27B). Params: recognition plus translation models (B: billions; \model: total; its encoder comes from Nemotron~3.5 ASR Streaming 0.6B, which has 600M parameters per its model card and 638M as measured, RNN-T decoder included). Directions: \pair{En}{De} on \taxi and, for systems with a Korean entry, on \syn; \pair{Ko}{En} on \syn only. Policy: when text is committed; LA-2: LocalAgreement-2. Latency knob: the setting swept on the \syn calibration split; its two values (low and high latency) are chosen by the rule of \cref{app:baselines} and are pending. Wrappers: O oracle segmentation, R realistic (VAD and language-ID routing), --~none (the system handles the whole mix). Not listed: the diarization cascades of \cref{tab:aux}, which do not translate (\cref{app:baselines}). $^\ast$Optional; InfiniSST only if its weights are public. Blank cells are pending.}
+  \label{tab:baselines}
+  \centering
+  \fontsize{8}{9.5}\selectfont % 8pt (ICML \footnotesize is 9pt): fits the width
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{tabular}{@{}llllllll@{}}
+    \toprule
+    System & Checkpoint\,/\,version & Params & Directions & Policy & \makecell[l]{Latency knob\\(two points)} & Wrappers & Licence \\
+    \midrule
+    \multicolumn{8}{@{}l}{\textit{Offline upper bounds: gold turns, each translated after it ends}} \\
+    Gold$\to$LLM
+      & Qwen3.8-27B & 27B
+      & \makecell[l]{\pair{En}{De}\\\pair{Ko}{En}} & turn end & -- & O & Apache-2.0 \\
+    ASR$\to$LLM
+      & \makecell[l]{Qwen/Qwen3-ASR-1.7B;\\Qwen3.8-27B} & 1.7B\,+\,27B
+      & \makecell[l]{\pair{En}{De}\\\pair{Ko}{En}} & turn end & -- & O & Apache-2.0 \\
+    Whisper ST
+      & openai/whisper-large-v3 & \tbd
+      & \makecell[l]{\dir{De}{En}\\\dir{Ko}{En}} & turn end & -- & O & \tbd \\
+    \midrule
+    \multicolumn{8}{@{}l}{\textit{Streaming bound: gold transcripts with forced-aligned word times}} \\
+    Gold$\to$LLM (MU2)
+      & Qwen3.8-27B & 27B
+      & \pair{En}{De} & MU2 units & \makecell[l]{one point\\(chrF $\geq$ 50)} & O & Apache-2.0 \\
+    \midrule
+    \multicolumn{8}{@{}l}{\textit{Pipelines built from single-direction systems}} \\
+    \makecell[l]{Consecutive\\cascade}
+      & \makecell[l]{Silero VAD; LID;\\Qwen3-ASR-1.7B;\\Qwen3.8-27B} & 1.7B\,+\,27B
+      & \makecell[l]{\pair{En}{De}\\\pair{Ko}{En}} & VAD endpoint & \makecell[l]{endpoint\\silence} & R & \tbd \\
+    SeamlessStreaming
+      & \tbd & \tbd
+      & \makecell[l]{\pair{En}{De}\\\pair{Ko}{En}} & EMMA & \makecell[l]{decision\\threshold} & O, R & \tbd \\
+    2$\times$SeamlessStreaming
+      & as above & \tbd
+      & \pair{En}{De} & EMMA & as above & -- & \tbd \\
+    \makecell[l]{Streaming\\cascade}
+      & \makecell[l]{nvidia/nemotron-3.5-\\asr-streaming-0.6b;\\Qwen3.8-27B} & 0.6B\,+\,27B
+      & \makecell[l]{\pair{En}{De}\\\pair{Ko}{En}} & LA-2 & \makecell[l]{ASR chunk,\\update step} & O, R & \makecell[l]{OpenMDW-1.1;\\Apache-2.0} \\
+    M4T v2 + AlignAtt
+      & SeamlessM4T v2 & \tbd
+      & \pair{En}{De} & AlignAtt & frames $f$ & O, R & \tbd \\
+    \makecell[l]{Canary-1B-v2\\+ AlignAtt$^\ast$}
+      & Canary-1B-v2 & 1B
+      & \pair{En}{De} & AlignAtt & frames $f$ & O, R & \tbd \\
+    StreamSpeech
+      & \tbd & \tbd
+      & \dir{De}{En} & learned & chunk size & O, R & \tbd \\
+    InfiniSST$^\ast$
+      & \tbd & \tbd
+      & \dir{En}{De} & learned (LLM) & \tbd & O, R & \tbd \\
+    \midrule
+    \multicolumn{8}{@{}l}{\textit{Cascades in the ablations (\cref{tab:ablation})}} \\
+    \makecell[l]{Same-backbone cascade\\(M1$\to$LLM)}
+      & \makecell[l]{\model M1;\\Qwen3.8-27B} & 2,336M\,+\,27B
+      & \pair{En}{De} & LA-2 & update step & -- & \makecell[l]{OpenMDW-1.1;\\Apache-2.0} \\
+    \makecell[l]{Size-matched cascade\\(ASR$\to$1.7B LLM)}
+      & \makecell[l]{Qwen3-ASR-1.7B;\\LLM of $\approx$1.7B} & 1.7B\,+\,$\approx$1.7B
+      & \pair{En}{De} & LA-2 & update step & R & \tbd \\
+    \midrule
+    \multicolumn{8}{@{}l}{\textit{Ours}} \\
+    \model
+      & \makecell[l]{Nemotron 3.5 encoder;\\Qwen3-ASR-1.7B\\thinker} & 2,336M
+      & \makecell[l]{\pair{En}{De}\\\pair{Ko}{En}} & \makecell[l]{MU2 units,\\delay $\delta_t$} & $\delta_t$ & -- & \makecell[l]{OpenMDW-1.1;\\Apache-2.0} \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -1,0 +1,109 @@
+% =====================================================================
+% Table 3 (tab:main): main results on CST-Bench-TAXI, L0 natural timing,
+% ideal clock (table*, 8pt; 529pt wide at 9pt, 480pt at 8pt). Included at the start of Sec. 6.
+% Measured so far (preliminary, \prelim): BLEU, chrF and StreamLAAL of the
+% three offline rows; their EndOffset is 0 by construction on the ideal
+% clock. They were scored with gold turn IDs (scorer oracle mode, no
+% resegmentation); the caption says so. Every other cell is pending
+% (\tbd = blank); -- marks a direction the system does not cover, and the
+% pooled columns of single-direction systems. Systems are defined in Sec. 6.1
+% (sec:exp-setup); names follow Table A5 (tab:conditions), and the caption
+% of Fig. 4 (fig:ql) maps its legend labels to them.
+% =====================================================================
+\begin{table*}[t]
+  \caption{Real dialogues: \taxi, L0 natural timing, ideal clock. Rows: upper bounds with oracle input, the consecutive cascade, streaming systems and \model (\cref{sec:exp-setup}; LLM: Qwen3.8-27B), each at its main operating point; \model M2 commits translations at turn ends, and M3 at MU2 units with a low or a high $\delta_t$. Seg.: oracle = gold turns and source language; realistic = VAD and language-ID routing; none = the system segments the stream itself. Per direction: mean \laal and median \eo in seconds; the last three columns pool both directions (switch latency: median, in seconds) and do not apply to single-direction systems, which cannot be the best pipeline (\cref{tab:factorial,fig:gap}). \Cref{tab:conditions} gives 95\% session-bootstrap CIs for the rows it repeats, except for BLEU. Blank: pending; --: direction not covered. $^\dagger$preliminary and scored by gold turn ID (oracle mode of \cref{app:scorer}), not resegmented; to be re-run under the final protocol. $^\ddagger$0 by construction: the output is emitted at the oracle turn end.}
+  \label{tab:main}
+  \centering
+  \fontsize{8}{9.5}\selectfont % 8pt (ICML \footnotesize is 9pt): fits the width
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{tabular}{@{}ll*{13}{c}@{}}
+    \toprule
+    & & \multicolumn{5}{c}{\ende} & \multicolumn{5}{c}{\deen} & \multicolumn{3}{c}{Both directions} \\
+    \cmidrule(lr){3-7}\cmidrule(lr){8-12}\cmidrule(l){13-15}
+    System & Seg.
+      & COMET & BLEU & chrF & \makecell[b]{Stream-\\LAAL} & \makecell[b]{End-\\Offset}
+      & COMET & BLEU & chrF & \makecell[b]{Stream-\\LAAL} & \makecell[b]{End-\\Offset}
+      & \makecell[b]{Wrong\\dir.\ (\%)} & \makecell[b]{Switch\\latency} & \makecell[b]{Empty\\turns (\%)} \\
+    \midrule
+    Gold$\to$LLM & oracle
+      & \tbd & \prelim{48.31} & \prelim{71.72} & \prelim{4.62} & $0^{\ddagger}$
+      & \tbd & \prelim{30.60} & \prelim{58.05} & \prelim{3.09} & $0^{\ddagger}$
+      & \tbd & \tbd & \tbd \\
+    ASR$\to$LLM & oracle
+      & \tbd & \prelim{42.66} & \prelim{67.97} & \prelim{4.62} & $0^{\ddagger}$
+      & \tbd & \prelim{28.11} & \prelim{56.61} & \prelim{3.09} & $0^{\ddagger}$
+      & \tbd & \tbd & \tbd \\
+    Whisper ST & oracle
+      & --   & --   & --   & --   & --
+      & \tbd & \prelim{30.69} & \prelim{56.67} & \prelim{3.09} & $0^{\ddagger}$
+      & --   & --   & --   \\
+    Gold$\to$LLM (MU2) & oracle
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+    \midrule
+    Consecutive cascade & realistic
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+    \midrule
+    \multirow{2}{*}{SeamlessStreaming} & oracle
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+      & realistic
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+    2$\times$SeamlessStreaming & none
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+    \multirow{2}{*}{Streaming cascade} & oracle
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+      & realistic
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+    \multirow{2}{*}{M4T v2 + AlignAtt} & oracle
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+      & realistic
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+    \multirow{2}{*}{StreamSpeech} & oracle
+      & --   & --   & --   & --   & --
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & --   & --   & --   \\
+      & realistic
+      & --   & --   & --   & --   & --
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & --   & --   & --   \\
+    \multirow{2}{*}{InfiniSST} & oracle
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & --   & --   & --   & --   & --
+      & --   & --   & --   \\
+      & realistic
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & --   & --   & --   & --   & --
+      & --   & --   & --   \\
+    \midrule
+    \model M2 & none
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+    \model M3, low $\delta_t$ & none
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+    \model M3, high $\delta_t$ & none
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd & \tbd & \tbd
+      & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}
+\end{table*}

@@ -1,0 +1,69 @@
+% =====================================================================
+% Section 4: CST-Bench (tracks, timing conditions, scorer; ~2 columns).
+% Floats: Fig. 2 (figure*, fig:bench) and Table 2 (tables/tab_bench.tex).
+% TAXI numbers are measured on the cstbench v0.1.0 build. Planned: the
+% synthetic track, the L1 renders and the scorer parts marked * in Fig. 2.
+% Details live in App. A (TAXI, rendering, seeds), B (Syn) and C (scorer;
+% the p90 convention is also stated in the caption of Table A1).
+% =====================================================================
+\section{\bench}
+\label{sec:bench}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig2_benchmark.pdf}
+  % When the figure is regenerated without draft marks, drop the last caption sentence.
+  \caption{Building and scoring \bench. Real TAXI turns and same-context synthetic dialogues (planned; dashed) are converted to one schema and rendered deterministically into continuous sessions under a timing condition: L0 natural (speaker-change gap $\sim\mathcal{N}(0.2,0.25^2)$\,s clipped to $[0.05,1.0]$\,s), L0 mediated ($\mathcal{U}[1,3]$\,s) or L1 turn-end overlap (the next turn starts 0.2--0.8\,s before the previous one ends; planned). Systems hear only \texttt{mix.wav} and emit committed, time-stamped pieces whose language encodes the direction; \scorer resegments them per direction onto the reference turns. For TAXI, only code, configurations, checksums and per-turn scores keyed by turn ID are released. $^\ast$Not yet implemented in \texttt{cstbench} v0.1.}
+  \label{fig:bench}
+\end{figure*}
+
+\subsection{Design principles and release}
+\label{sec:bench-design}
+
+\bench renders two-language dialogues as continuous single-channel sessions, varying only the turn-taking, and scores what a system commits, and when (\cref{fig:bench,tab:bench}). It serves evaluation only: a calibration split of about 5\% of the synthetic sessions sets wrapper thresholds and latency settings by one rule for all systems, and nothing is tuned on TAXI.\draftnote{the calibration split is planned with \syn} Any system that emits committed, time-stamped pieces can be scored, e.g., through simulstream \citep{gaido2025simulstream}. Code (Apache-2.0), frozen configurations and checksums define the release, with timeline digests as the reproducibility contract; TAXI audio, free under a scientific licence but not redistributable, is rebuilt from its original distribution.
+
+\subsection{Real track: BAS TAXI 2.5}
+\label{sec:bench-taxi}
+
+\input{tables/tab_bench.tex}
+
+In \taxi, speech, content, turn order and translations are real, but the timing is synthetic. TAXI~2.5 \citep{bas2001taxi,reichel2016bas} holds telephone dialogues between German-speaking taxi dispatchers and English-speaking clients, with human translations of all usable turns (those with a non-empty cleaned transcript and a translation): 640 of 697 (91.82\%) in 86 sessions. Push-to-talk recording left one file per turn, without timing or overlap. Resampled from 8 to 16\,kHz (telephone band kept) and silence-trimmed, the turns hold 40.378\,min of speech (52.631\,min of usable turn audio before trimming). Their mono mix simulates a shared device rather than the original calls, but lacks far-field room acoustics.
+
+Turns and sessions are short (median 2.86\,s, 22.5\% above 5\,s; median 7 turns and 6 direction switches per session). Language coincides with role, and the German dispatcher opens 85 of 86 sessions; as language identification also reveals a turn's direction, we include language-ID routing baselines and stress timing over direction detection. Two single-turn sessions are excluded from switch metrics, and about 3.3k reference words per direction call for session-clustered confidence intervals. A local rebuild matched all 86 timeline digests and audio hashes of both L0 configurations. No TAXI text appears in this paper (datasheet in \cref{app:taxi}).
+
+\subsection{Synthetic track: \syn}
+\label{sec:bench-syn}
+
+\draftnote{planned: nothing in this track is built yet}
+\syn is evaluation-only synthetic speech and cannot replace a real test set, but it adds overlap measurable at the word level, both speaker--language assignments (removing TAXI's first-speaker prior) and a distant pair, \pair{Ko}{En}; its \pair{En}{De} rankings are checked against \taxi (\cref{app:scorer}). Speakers $A$ and $B$ take their turns from the two language versions of one dialogue in XDailyDialog \citep{liu2023xdailydialog,li2017dailydialog}, translated professionally, or BConTrasT \citep{farajian2020findings}, machine-translated into German and post-edited by native speakers, so each version supplies the other's references. Korean text is machine-translated from English, kept where two of three systems agree under quality estimation \citep{juraska2024metricx,rei2022cometkiwi}, and released from a model family that no evaluated system uses. As one side of every pair is translationese, we never compare absolute scores across directions. A commercial TTS edition \citep{microsoft2026text}, whose word boundaries are checked against forced alignment, carries the main results and an open one \citep{du2025cosyvoice3,hu2026qwen3tts} tests rank agreement, without cloning real voices (\cref{app:syn}).
+
+\subsection{Timing conditions and deterministic rendering}
+\label{sec:bench-timing}
+
+As for simulated diarization data \citep{landini2022from}, sessions are assembled from turn audio with controlled timing, here deterministically (seeds derived from session identifiers; \cref{app:taxi}). Energy-trimmed turns, whose intervals keep 0.1\,s margins, are placed in dialogue order after a 0.5\,s lead, with $\mathcal{U}[0.3,0.8]$\,s pauses within a speaker; as pauses and gaps separate these intervals, silences between energetic frames are up to 0.2\,s longer than drawn. \emph{L0 natural} draws speaker-change gaps from $\mathcal{N}(0.2,0.25^2)$\,s clipped to $[0.05,1.0]$\,s, after the gaps of about 200\,ms found across languages \citep{levinson2015timing,stivers2009universals}; on \taxi, 23.89\% of them sit at the floor. \emph{L0 mediated} draws them from $\mathcal{U}[1,3]$\,s. Neither overlaps (ratio 0.0 in all 86 sessions), unlike real conversation \citep{heldner2010pauses}, so \emph{L1} starts each new speaker's turn $d\sim\mathcal{U}[0.2,0.8]$\,s before the previous one ends and sums the signals: real speech with synthetic overlap on \taxi. Oracle segments cut from an L1 mix then contain the other speaker, and cuts from the per-speaker channels give an oracle-separation diagnostic. Overlap is reported per turn and per word, from forced alignment \citep{shi2026qwen3asr} or TTS word boundaries.
+\draftnote{planned: L1, with a cap for short turns fixed before any baseline run, and word-level overlap; to decide: whether $d$ is measured between energetic frames or between margin-inclusive intervals, which leaves up to 0.2\,s less overlapping speech}
+
+\subsection{Scoring protocol and its validation}
+\label{sec:bench-scoring}
+
+\paragraph{Interface and resegmentation.}
+Submissions list committed pieces as (session, output language, emission time, text) on the ideal or a computation-aware clock. Per session and output language, \scorer resegments the hypothesis onto the reference translations of that direction by word-level Levenshtein alignment, as mwerSegmenter does \citep{matusov2005evaluating} in stream-level evaluation \citep{iranzosanchez2021stream,papi2024streamatt}; words keep their piece's emission time, and inserted words join the turn of the preceding word.
+
+\paragraph{Quality.}
+Per direction, we report COMET (wmt22-comet-da; \citealp{rei2020comet,rei2022comet}), chrF \citep{popovic2015chrf} and BLEU with sacreBLEU signatures \citep{papineni2002bleu,post2018call} on hypotheses normalised to the TAXI reference style (lowercase, unpunctuated, numbers spelled out). COMET is primary on TAXI only if it ranks systems as chrF does; reference-free CometKiwi \citep{rei2022cometkiwi} checks the machine-translated Korean references.
+
+\paragraph{Latency.}
+For turn $n$ of a direction, with resegmented hypothesis words $j=1,\dots,|h_n|$ emitted at $\tau_{n,j}$, let $d_{n,j}=\max(0,\tau_{n,j}-b_n)$, $L_n=e_n-b_n$ and $\rho_n=L_n/\max(|h_n|,|r_n|)$ (lengths in words). Then
+\begin{align}
+  \mathrm{StreamLAAL}_n &= \tfrac{1}{J_n}\textstyle\sum_{j=1}^{J_n}\bigl(d_{n,j}-(j-1)\,\rho_n\bigr), \label{eq:bench-laal}\\
+  \mathrm{EndOffset}_n &= \tau_{n,|h_n|}-e_n, \label{eq:bench-endoffset}\\
+  \mathrm{SwitchLatency}_n &= d_{n,1} \quad\text{for } n>1,\ s_n\neq s_{n-1}, \label{eq:bench-switch}
+\end{align}
+where $J_n$ is the first $j$ with $d_{n,j}\ge L_n$ (else $|h_n|$). \Cref{eq:bench-laal} is LAAL \citep{papi2022overgeneration}, a length-adaptive Average Lagging \citep{ma2019stacl}, on resegmented turns, i.e., \laal \citep{papi2024streamatt}: lag \emph{within} a turn. Turn-end output scores the turn duration, so offline systems on oracle turns sit at the mean turn length (4.624\,s for \ende, 3.086\,s for \deen). \laal ignores the words after $J_n$, so it misses how long a translation runs on after the speaker stops; \eo measures this wait per turn, as SimulEval's EndOffset \citep{ma2020simuleval} and the ending offset reported for SeamlessStreaming \citep{seamless2023seamless} do per segment, and switch latency is SimulEval's StartOffset at direction changes. We report means, medians and 90th percentiles over non-empty turns, always with the empty-turn rate (\cref{app:scorer}).
+
+\paragraph{Errors and auxiliary outputs.}
+A committed piece is \emph{wrong-direction}, with all its words, if turns are open at its emission time but none is translated into its language, if a text language identifier assigns it to the other language, or if it copies an open turn's transcript in its language (\cref{app:scorer}). We report such words as a share of committed words, checked against gold turn IDs where available, with empty turns and the length ratio. Auxiliary outputs are scored by WER per language, cpWER \citep{watanabe2020chime}, tcpWER \citep{vonneumann2023meeteval} and DER (collars 0 and 0.25\,s; 80\,ms frames).
+
+\paragraph{Statistics and validation.}
+Confidence intervals (95\%) and paired tests use a session-clustered paired bootstrap \citep{koehn2004statistical} with 2,000 resamples and Holm correction over main comparisons fixed in advance. Controlled perturbations of the reference output test whether each metric moves only as expected (\cref{tab:sanity}). Resegmented latency has a segmentation-related bias \citep{polak2025better} and can reward degenerate output: in a preliminary run, a copied source scored a lower \deen \laal than the reference emitted at turn ends (\prelim{2.276} vs.\ \prelim{3.086}\,s; $^\dagger$preliminary, to be re-run under the final protocol), so latency is always shown with quality, length ratio and empty turns, and also on exactly matched words. We keep \laal, the only latency metric of the IWSLT~2025 simultaneous track \citep{abdulmumin2025findings}, as it shares the resegmentation of our other metrics; \cref{app:scorer} compares it with LongYAAL \citep{polak2025better}, primary at IWSLT~2026 \citep{adelani2026speech}.
+\draftnote{scorer v0.1 computes BLEU, chrF, \laal, \eo, empty turns and wrong-language words given gold turn ids; the other metrics, the bootstrap and a pinned number normaliser are being added; rows 3--10 of \cref{tab:sanity} are planned}

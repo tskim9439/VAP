@@ -1,0 +1,31 @@
+% =====================================================================
+% Table 4 (tab:factorial): oracle-component factorial for the best
+% pipeline of Table 3 (single column, 8pt). Included in Sec. 6.3.
+% No values yet: every cell is pending (\tbd = blank); -- marks cells that
+% do not apply. Language-ID routing accuracy is reported in the text.
+% The same factorial for the second-best pipeline goes to App. E.
+% =====================================================================
+\begin{table}[t]
+  \caption{Where does the conversational loss come from? Oracle-component factorial for the best pipeline of \cref{tab:main} (by realistic-wrapper COMET on \taxi L0 natural). Oracle components (\cmark): T, gold turn segmentation (else VAD); L, gold source language for routing (else spoken language ID; with VAD segments, the language of the turn with the largest overlap); S, two-channel separation (L1 only; else segments are cut from the mono mix). Row~4 is the realistic pipeline; row~6 is \model, without oracle input. COMET is the mean of the two directions; switch latency is the median in seconds; $\Delta$COMET is COMET under L1 minus that of row~1. Blank: pending; --: not applicable.}
+  \label{tab:factorial}
+  \centering
+  \fontsize{8}{9.5}\selectfont % 8pt (ICML \footnotesize is 9pt): fits the width
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{@{}cccccccccc@{}}
+    \toprule
+    & \multicolumn{3}{c}{Oracle} & \multicolumn{2}{c}{L0 natural} & \multicolumn{4}{c}{L1 turn-end overlap} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(l){7-10}
+    \# & T & L & S
+      & COMET & \makecell[b]{Wrong\\dir.\ (\%)}
+      & COMET & \makecell[b]{Wrong\\dir.\ (\%)} & \makecell[b]{Switch\\latency} & $\Delta$COMET \\
+    \midrule
+    1 & \cmark & \cmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & --   \\
+    2 & \cmark & \xmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    3 & \xmark & \cmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    4 & \xmark & \xmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    5 & \cmark & \cmark & \cmark & --   & --   & \tbd & \tbd & \tbd & \tbd \\
+    \midrule
+    \multicolumn{4}{@{}l}{6\enspace\model} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}
+\end{table}

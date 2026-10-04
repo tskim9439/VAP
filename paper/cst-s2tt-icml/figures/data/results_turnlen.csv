@@ -1,0 +1,16 @@
+system_class,wrapper,condition,dur_bin,EndOffset_p50_s,StreamLAAL_mean_s,status
+consecutive,realistic,L0-natural,0-2,,,pending
+consecutive,realistic,L0-natural,2-4,,,pending
+consecutive,realistic,L0-natural,4-6,,,pending
+consecutive,realistic,L0-natural,6-10,,,pending
+consecutive,realistic,L0-natural,10+,,,pending
+best streaming pipeline,realistic,L0-natural,0-2,,,pending
+best streaming pipeline,realistic,L0-natural,2-4,,,pending
+best streaming pipeline,realistic,L0-natural,4-6,,,pending
+best streaming pipeline,realistic,L0-natural,6-10,,,pending
+best streaming pipeline,realistic,L0-natural,10+,,,pending
+ours,none,L0-natural,0-2,,,pending
+ours,none,L0-natural,2-4,,,pending
+ours,none,L0-natural,4-6,,,pending
+ours,none,L0-natural,6-10,,,pending
+ours,none,L0-natural,10+,,,pending

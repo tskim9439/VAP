@@ -1,0 +1,10 @@
+{
+ "sessions": "/soundai/users/tskim/VAPKT-data/data/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl",
+ "systems": [
+  "whisper"
+ ],
+ "asr_model": "Qwen/Qwen3-ASR-1.7B",
+ "llm_model": null,
+ "whisper_model": "/soundai/users/tskim/VAPKT-data/baselines/whisper-large-v3",
+ "turns": 640
+}

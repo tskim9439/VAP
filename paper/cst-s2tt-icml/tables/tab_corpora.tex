@@ -1,0 +1,81 @@
+% =====================================================================
+% Table A13 (tab:corpora): why TAXI. Real bilingual conversational speech
+% resources checked against the requirements of a real CST test set.
+% Included from App. A; the citation of every row is given in the text of App. A.
+% Uses >{...}p{} columns (array package, loaded by makecell).
+% =====================================================================
+\begin{table}[htbp]
+  \caption{Why \taxi: real bilingual conversational speech resources checked against the requirements of a real \task test set (citations in the text of \cref{app:taxi}). \cmark{} yes, \pmark{} partly, \xmark{} no; --: not assessed or not applicable.}
+  \label{tab:corpora}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{1.4cm}>{\raggedright\arraybackslash}p{1.8cm}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{1.1cm}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{2.2cm}@{}}
+    \toprule
+    Corpus & Same conversation, two languages & Real spontaneous speech & Human translations & Per-turn audio\,/\,timing & Overlap & Access\,/\,licence & Verdict \\
+    \midrule
+    BAS TAXI 2.5
+      & \cmark{} German dispatcher, English client
+      & \cmark
+      & \cmark{} both sides (TLN tier)
+      & \pmark{} per-turn files; no timing (push-to-talk)
+      & \xmark{} none
+      & free scientific licence; no redistribution
+      & \textbf{used} (real track) \\
+    \addlinespace
+    MSLT
+      & \pmark{} bilingual calls; English side discarded
+      & \cmark
+      & \pmark{} released side only
+      & one side only
+      & --
+      & --
+      & unsuitable (one-sided release) \\
+    \addlinespace
+    DRAL\,/\,mDRAL
+      & \xmark{} one language per conversation; fragments re-enacted in the other
+      & \pmark{} originals only
+      & \pmark{} spoken re-enactments
+      & paired fragments
+      & --
+      & LDC (DRAL)
+      & unsuitable (re-enacted) \\
+    \addlinespace
+    InCroMin
+      & \cmark{} meetings mediated by machine speech translation
+      & \cmark
+      & \pmark{} corrected machine translations into English
+      & per-participant tracks
+      & --
+      & CC BY 4.0
+      & related work (12 languages, no English--German pair) \\
+    \addlinespace
+    CS-Dialogue
+      & \pmark{} Mandarin--English code-switching within speakers
+      & \cmark
+      & \xmark
+      & full dialogues
+      & --
+      & --
+      & unsuitable (about 104\,h, no translations) \\
+    \addlinespace
+    Verbmobil~II interpreter volumes
+      & \cmark{} German--English and German--Japanese; human-interpreter subset
+      & \cmark
+      & --
+      & --
+      & --
+      & paid
+      & not used \\
+    \addlinespace
+    Fisher--CALLHOME Spanish--English ST
+      & \xmark{} one source language (Spanish)
+      & \cmark
+      & \cmark{} crowdsourced, into English
+      & --
+      & --
+      & LDC
+      & related (one source language) \\
+    \bottomrule
+  \end{tabular}
+\end{table}

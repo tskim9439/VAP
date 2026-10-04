@@ -1,0 +1,46 @@
+% ---------------------------------------------------------------------------
+% Project macros
+% ---------------------------------------------------------------------------
+\usepackage{xspace}
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{pifont}
+
+% Pending numbers. Table cells that wait for experiments use \tbd.
+% By default the cell stays blank (as requested); compile with \showpendingtrue
+% (see main.tex) to mark every pending cell with a grey dot while drafting.
+\newif\ifshowpending
+\showpendingfalse
+\newcommand{\tbd}{\ifshowpending\textcolor{black!35}{$\cdot$}\fi}
+% Pending number inside running text: always visible so that it cannot be missed.
+\newcommand{\tbdtext}[1][]{\textcolor{red!70!black}{[TBD#1]}}
+% Preliminary numbers (measured, but to be re-run under the final protocol).
+\newcommand{\prelim}[1]{#1$^{\dagger}$}
+
+% Names
+\newcommand{\task}{CST\xspace}
+\newcommand{\taskfull}{conversational simultaneous speech-to-text translation\xspace}
+\newcommand{\bench}{CST-Bench\xspace}
+\newcommand{\syn}{CST-Bench-Syn\xspace}
+\newcommand{\taxi}{CST-Bench-TAXI\xspace}
+\newcommand{\model}{\textsc{Model}\xspace}   % placeholder name of our model
+\newcommand{\scorer}{\texttt{cstbench eval}\xspace}
+
+% Directions and languages
+\newcommand{\dir}[2]{#1$\rightarrow$#2}
+\newcommand{\pair}[2]{#1$\leftrightarrow$#2}
+% \newcommand refuses names that start with "end", hence \def for \ende.
+\def\ende{\dir{En}{De}\xspace}
+\newcommand{\deen}{\dir{De}{En}\xspace}
+\newcommand{\enko}{\dir{En}{Ko}\xspace}
+\newcommand{\koen}{\dir{Ko}{En}\xspace}
+
+% Metrics
+\newcommand{\laal}{StreamLAAL\xspace}
+\newcommand{\eo}{EndOffset\xspace}
+
+% Marks
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+\newcommand{\pmark}{$\circ$}   % partial / not reported

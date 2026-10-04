@@ -233,7 +233,8 @@ def main():
         ys, secs = run_whisper(sel, a.whisper_model, a.device, a.batch)
         write_hyp(out / "hyp-whisper.jsonl", sel, ys, secs, "whisper")
         print("wrote hyp-whisper.jsonl", flush=True)
-    (out / f"run_info-{'-'.join(systems)}.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1))
+    if todo:                                   # a resumed run with nothing left keeps the earlier run_info (and its WER)
+        (out / f"run_info-{'-'.join(systems)}.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1))
 
 
 if __name__ == "__main__":

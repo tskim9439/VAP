@@ -1,0 +1,6 @@
+figures/*.png
+*.aux
+*.log
+*.bbl
+*.blg
+*.out

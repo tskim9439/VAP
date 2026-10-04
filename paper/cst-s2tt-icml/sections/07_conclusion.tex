@@ -1,0 +1,27 @@
+%%%%%%%% Section 7: Limitations and Conclusion %%%%%%%%
+% Every \tbdtext below must be resolved before submission.
+% If space is short, trim first the human-interpreter sentence, then the turn-boundary sentence (the latter is also covered in the TAXI appendix).
+% If space is still short, drop the InCroMin clause next (Sec. 2 and App. A give the same contrast).
+\section{Limitations and Conclusion}
+\label{sec:conclusion}
+
+\paragraph{Data.}
+\taxi has real speech, content and turn order, but its push-to-talk turns leave every gap synthetic and nothing overlapping; it is also small (about 3.3k reference words per direction), single-domain and narrowband, and ties role to language (the German dispatcher speaks first in 85 of 86 sessions).
+We know of no public recordings of two-language conversation with natural overlap and reference translations; the closest, InCroMin \citep{cechovic2025corpus}, is mediated by machine translation, recorded per participant and has no English--German pair.
+We therefore control timing, add overlap synthetically, report session-clustered confidence intervals, include language-ID routing, and render \syn with both speaker--language assignments.
+\syn lacks real disfluencies (the transcripts of the 640 TAXI turns mark 60 German and 172 English filled pauses), is translationese on one side, and has consensus-filtered machine-translated Korean; we draw only relative conclusions and test whether it ranks systems as \taxi does (\cref{tab:validity}).\draftnote{planned; \syn and the turn-end overlap renders are not built yet}
+
+\paragraph{Measurement and scope.}
+Main-text latencies use the ideal clock; real-time claims rest on \cref{tab:ca-latency}, where the 0.6B backbone still misses its 80\,ms budget at the 99th percentile.
+Energy-trimmed turn boundaries may shift latency reference points by up to about 0.1\,s until forced alignment replaces them (\cref{app:taxi}).
+Human interpreters, with an English-to-Korean ear-voice span of about 3\,s \citep{lee2002ear}, are a reference point, not a target.
+Interruptions and barge-in are excluded for lack of real recordings to validate them, and content-free backchannels (L1b) are at most an optional stress test.
+With one language per speaker, diarization reduces largely to language-aware segmentation, so DER mainly measures boundary timing (\cref{tab:aux}).
+
+\paragraph{Unified model.}
+\model learns from simulated sessions and teacher-made commit targets, which are anticipation-free only relative to the teacher's alignment; same-backbone and size-matched cascades separate design from scale (\cref{tab:ablation}).\draftnote{planned; only the streaming ASR backbone is built, and all \model results are pending}
+
+\paragraph{Conclusion.}
+\task requires deciding, from one mono stream, who speaks, which way to translate, and when to commit.
+Segmentation and routing explain \tbdtext{}\% and \tbdtext{}\% of the oracle--realistic gap (RQ1), which moves from \tbdtext{} to \tbdtext{} COMET between mediated gaps and turn-end overlap (RQ2); \model recovers \tbdtext{}\% of it without oracle input, at a median \eo of \tbdtext{}\,s (RQ3); and synthetic and real sessions give a Kendall's $\tau$ of \tbdtext{} between system rankings (RQ4).
+Next come interruptions and backchannels, real overlapped bilingual recordings, and more language pairs.

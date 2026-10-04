@@ -1,0 +1,11 @@
+{
+ "sessions": "/soundai/users/tskim/VAPKT-data/data/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl",
+ "systems": [
+  "gold-mt",
+  "cascade"
+ ],
+ "asr_model": "Qwen/Qwen3-ASR-1.7B",
+ "llm_model": "/soundai/Model/Qwen3.8-27B",
+ "whisper_model": "openai/whisper-large-v3",
+ "turns": 640
+}

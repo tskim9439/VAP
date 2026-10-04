@@ -1,0 +1,58 @@
+system_id,wrapper,condition,direction,op,BLEU,chrF,COMET,StreamLAAL_mean_s,EndOffset_p50_s,empty_turn_pct,wrong_dir_word_pct,switch_latency_p50_s,status,source
+gold_mt,oracle,L0-natural,EN->DE,-,48.31,71.72,,4.62,0,,,,preliminary,preliminary offline run; to be re-run under the final protocol; EndOffset = 0 on the ideal clock by construction (pieces emitted at the reference turn end)
+gold_mt,oracle,L0-natural,DE->EN,-,30.60,58.05,,3.09,0,,,,preliminary,preliminary offline run; to be re-run under the final protocol; EndOffset = 0 on the ideal clock by construction (pieces emitted at the reference turn end)
+asr_mt,oracle,L0-natural,EN->DE,-,42.66,67.97,,4.62,0,,,,preliminary,preliminary offline run; to be re-run under the final protocol; EndOffset = 0 on the ideal clock by construction (pieces emitted at the reference turn end)
+asr_mt,oracle,L0-natural,DE->EN,-,28.11,56.61,,3.09,0,,,,preliminary,preliminary offline run; to be re-run under the final protocol; EndOffset = 0 on the ideal clock by construction (pieces emitted at the reference turn end)
+whisper_st,oracle,L0-natural,DE->EN,-,30.69,56.67,,3.09,0,,,,preliminary,preliminary offline run; to be re-run under the final protocol; EndOffset = 0 on the ideal clock by construction (pieces emitted at the reference turn end)
+gold_mu2,oracle,L0-natural,EN->DE,tau50,,,,,,,,,pending,planned: oracle-transcript streaming bound
+consecutive,realistic,L0-natural,EN->DE,default,,,,,,,,,pending,planned: baseline run
+gold_mu2,oracle,L0-natural,DE->EN,tau50,,,,,,,,,pending,planned: oracle-transcript streaming bound
+consecutive,realistic,L0-natural,DE->EN,default,,,,,,,,,pending,planned: baseline run
+seamless_streaming,oracle,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+seamless_streaming,oracle,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+seamless_streaming,realistic,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+seamless_streaming,realistic,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+seamless_streaming,oracle,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+seamless_streaming,oracle,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+seamless_streaming,realistic,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+seamless_streaming,realistic,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+cascade_la,oracle,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+cascade_la,oracle,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+cascade_la,realistic,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+cascade_la,realistic,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+cascade_la,oracle,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+cascade_la,oracle,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+cascade_la,realistic,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+cascade_la,realistic,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+m4t_alignatt,oracle,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+m4t_alignatt,oracle,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+m4t_alignatt,realistic,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+m4t_alignatt,realistic,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+m4t_alignatt,oracle,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+m4t_alignatt,oracle,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+m4t_alignatt,realistic,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+m4t_alignatt,realistic,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+canary_alignatt,oracle,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+canary_alignatt,oracle,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+canary_alignatt,realistic,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+canary_alignatt,realistic,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+canary_alignatt,oracle,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+canary_alignatt,oracle,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+canary_alignatt,realistic,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+canary_alignatt,realistic,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+streamspeech,oracle,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+streamspeech,oracle,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+streamspeech,realistic,L0-natural,DE->EN,low,,,,,,,,,pending,planned: baseline run
+streamspeech,realistic,L0-natural,DE->EN,high,,,,,,,,,pending,planned: baseline run
+infinisst,oracle,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+infinisst,oracle,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+infinisst,realistic,L0-natural,EN->DE,low,,,,,,,,,pending,planned: baseline run
+infinisst,realistic,L0-natural,EN->DE,high,,,,,,,,,pending,planned: baseline run
+ours,none,L0-natural,EN->DE,M2-turnfinal,,,,,,,,,pending,planned: model not yet built
+ours,none,L0-natural,EN->DE,M3-dt0,,,,,,,,,pending,planned: model not yet built
+ours,none,L0-natural,EN->DE,M3-dt3,,,,,,,,,pending,planned: model not yet built
+ours,none,L0-natural,EN->DE,M3-dt6,,,,,,,,,pending,planned: model not yet built
+ours,none,L0-natural,DE->EN,M2-turnfinal,,,,,,,,,pending,planned: model not yet built
+ours,none,L0-natural,DE->EN,M3-dt0,,,,,,,,,pending,planned: model not yet built
+ours,none,L0-natural,DE->EN,M3-dt3,,,,,,,,,pending,planned: model not yet built
+ours,none,L0-natural,DE->EN,M3-dt6,,,,,,,,,pending,planned: model not yet built

@@ -1,0 +1,48 @@
+% =====================================================================
+% Table A3 (tab:sanity): metric meta-evaluation by controlled perturbations
+% of the reference output on CST-Bench-TAXI, L0 natural. Included from App. C,
+% which describes how every row is constructed.
+% Rows 1-2: preliminary scorer sanity runs (\prelim; to be re-run and recorded).
+% All other cells are pending (\tbd). W counts words (not a percentage).
+% =====================================================================
+\begin{table}[t]
+  \caption{Metric meta-evaluation on \taxi, L0 natural: controlled perturbations of the reference translations, with the change expected for each metric fixed in advance (construction of each row in \cref{app:scorer}). Q: BLEU and chrF; L: mean \laal (s); E: mean \eo (s), both over non-empty turns; W: number of wrong-direction words; $\Delta$: added delay; $L_n$, $|r_n|$: duration and reference length of turn $n$; $=$: unchanged; $\uparrow$\,/\,$\downarrow$: increases\,/\,decreases. $^\dagger$Preliminary; to be re-run under the final protocol. $^\ast$The current scorer counts such words only given gold turn IDs. Blank cells are pending.}
+  \label{tab:sanity}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}rllccccccc@{}}
+    \toprule
+    & & & \multicolumn{3}{c}{\ende} & \multicolumn{3}{c}{\deen} & \\
+    \cmidrule(lr){4-6}\cmidrule(lr){7-9}
+    & Perturbation & Expected change & BLEU\,/\,chrF & L & E & BLEU\,/\,chrF & L & E & W \\
+    \midrule
+    1  & Reference at turn end
+       & \makecell[l]{Q $=100$; L $=$ mean $L_n$;\\E $=0$; W $=0$}
+       & \prelim{100.0\,/\,100.0} & \prelim{4.624} & \prelim{0.0}
+       & \prelim{100.0\,/\,100.0} & \prelim{3.086} & \prelim{0.0} & \prelim{0} \\
+    2  & \makecell[l]{Source transcript passed\\through untranslated}
+       & \makecell[l]{Q $\approx0$; L, E not below\\row 1; W $=$ all words}
+       & \prelim{2.38\,/\,27.34} & \prelim{4.366} & \prelim{2.576}
+       & \prelim{0.39\,/\,21.86} & \prelim{2.276} & \prelim{1.421} & \prelim{0}$^\ast$ \\
+    3  & Row 1 delayed by 0.5\,s & Q $=$; L, E $+\Delta$; W $=0$ & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    4  & Row 1 delayed by 1\,s   & Q $=$; L, E $+\Delta$; W $=0$ & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    5  & Row 1 delayed by 2\,s   & Q $=$; L, E $+\Delta$; W $=0$ & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    6  & \makecell[l]{Reference spread evenly\\over the turn}
+       & \makecell[l]{Q $=$; L $=$ mean $L_n/|r_n|$;\\E $=0$; W $=0$}
+       & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    7  & \makecell[l]{Row 6 without the last\\third of each turn}
+       & \makecell[l]{vs.\ row 6: Q $\downarrow$; L $=$;\\E $\downarrow$ (below 0); W $=0$}
+       & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    8  & \makecell[l]{Turns merged across a\\speaker change (VAD)}
+       & \makecell[l]{Q $\downarrow$; E $\uparrow$; W $\uparrow$;\\more empty turns}
+       & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    9  & \makecell[l]{Output of 10\% of turns\\dropped}
+       & \makecell[l]{Q $\downarrow$; L, E $\approx$ row 1;\\10\% empty turns}
+       & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    10 & \makecell[l]{Rows 1, 3--7, 9 with gold\\turn IDs: largest change}
+       & 0 for every metric
+       & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}
+\end{table}

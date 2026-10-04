@@ -1,0 +1,52 @@
+% =====================================================================
+% Appendix E: additional results (one-column appendix).
+% Floats: Table A5 (tables/tab_conditions; two parts), Fig. A3 (fig:gap-sweep),
+% Fig. A5 (fig:turn-length), Table A6 (tables/tab_ca_latency),
+% Table A8 (tables/tab_failures).
+% Known now: the preliminary offline TAXI L0 natural rows, the offline systems'
+% batched compute, and the context timings of the single-speaker 0.6B backbone.
+% Everything else is a template: pending numbers are \tbd (tables) or
+% \tbdtext (text). Do not describe findings before the numbers exist.
+% =====================================================================
+\section{Additional Results}\label{app:results}
+
+This appendix gives the full numbers behind \cref{fig:gap,fig:gap-sweep} (\cref{tab:conditions}), a dose-response analysis over the inter-turn gap (\cref{fig:gap-sweep}), latency by source-turn duration (\cref{fig:turn-length}), computation-aware latency (\cref{tab:ca-latency}) and a failure taxonomy (\cref{tab:failures}). All analyses follow the protocol of \cref{sec:bench}: 95\% session-clustered bootstrap intervals, and no threshold or operating point tuned on TAXI. So far, only the offline rows on \taxi L0 natural (preliminary) and a few timings exist.
+\draftnote{every other cell is pending; L1, the fixed-gap renders and \syn are planned}
+
+\paragraph{Full grid.}
+For every timing condition, language pair and direction, \cref{tab:conditions} lists the systems run under it, each at its pre-registered main operating point; for \taxi L0 natural, part~(a) also gives the intervals of the corresponding rows of \cref{tab:main}. The offline systems receive gold turns and translate each turn after it ends. Their \laal therefore equals the mean source-turn duration (4.624\,s for \ende and 3.086\,s for \deen on \taxi), and their \eo is 0 on the ideal clock because their output is time-stamped at the gold turn end; \cref{tab:ca-latency} adds their compute. The gold-transcript row isolates translation quality, the Qwen3-ASR row adds the recognition of telephone-band speech, and Whisper ST covers \deen only. Under L1, an oracle segment cut from the mono mix also contains the overlapping speech of the other speaker; the oracle-separation row of \cref{tab:factorial} removes it. On \syn we interpret only rankings and effects relative to each pair's own offline bound, never absolute scores across pairs, because one side of every pair is translationese.
+
+\input{tables/tab_conditions}
+
+\paragraph{Gap dose-response.}
+Each timing condition draws its gaps from one distribution. To test whether pipelines degrade smoothly as turns follow each other more closely, we re-render \taxi with one fixed gap $g$ at every speaker change, $g\in\{-0.6,-0.4,-0.2,0.05,0.2,0.5,1.0,2.0\}$\,s, each rendering under its own configuration name and checksums; a negative gap starts the next turn $|g|$ before the previous one ends, as in L1. We run the best pipeline of \cref{tab:factorial} with both wrappers, and \model (\cref{fig:gap-sweep}; numbers in part~(c) of \cref{tab:conditions}). A smooth trend would show that the conclusions do not hinge on the chosen L0 and L1 distributions; a sharp drop would locate the gap at which VAD-based routing breaks down. From $g=2$\,s to $g=-0.6$\,s, COMET changes by \tbdtext{} with the realistic wrapper, by \tbdtext{} with oracle segmentation and by \tbdtext{} for \model.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics{figures/figA3_gap_sweep.pdf}
+  \caption{Gap dose-response: \taxi re-rendered with one fixed gap at every speaker change, from $-0.6$\,s (overlap) to 2\,s. (a)~COMET (mean of the two directions), (b)~wrong-direction words and (c)~median \eo for the best pipeline (solid: oracle segmentation; dashed: VAD and language-ID routing) and \model. Background histograms show the gaps drawn at the 540 speaker changes under L0 natural (green) and L0 mediated (pink); the shaded band is the overlap range of L1, whose next turn starts 0.2--0.8\,s before the previous one ends. Numbers in part~(c) of \cref{tab:conditions}. \protect\draftnote{results pending; the fixed-gap renders are planned}}
+  \label{fig:gap-sweep}
+\end{figure}
+
+\paragraph{Why simultaneous? Latency by turn length.}
+With oracle endpoints, offline systems reach an \eo of 0 on the ideal clock, which raises the question of why simultaneity is needed at all. A deployed consecutive system must first detect that a turn has ended, so the listener waits for the endpoint detector and, on the computation-aware clock, also for the translation of the whole turn. Lag within a turn grows with the turn as well: a system that emits a turn's translation only after the turn ends scores a \laal of at least the turn's duration (\cref{sec:bench}). \taxi turns are short (median 2.86\,s), but 22.5\% of them exceed 5\,s (\cref{tab:taxi-full}). \Cref{fig:turn-length} therefore breaks median \eo and \laal down by source-turn duration for the realistic consecutive cascade, the best realistic streaming pipeline and \model. For turns longer than 6\,s, the median \eo is \tbdtext{}\,s for the consecutive cascade, \tbdtext{}\,s for the best streaming pipeline and \tbdtext{}\,s for \model.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics{figures/figA5_turn_length.pdf}
+  \caption{Why simultaneous? Median \eo (left) and \laal (right) by source-turn duration on \taxi L0 natural, for the realistic consecutive cascade, the best realistic streaming pipeline and \model. Bars: \taxi turns per duration bin (183, 246, 107, 75 and 29 of 640). \protect\draftnote{results pending}}
+  \label{fig:turn-length}
+\end{figure}
+
+\paragraph{Computation-aware latency.}
+Main-text latencies use the ideal clock. \Cref{tab:ca-latency} times every system on one H200 GPU, as a single stream without batching, and re-scores it on the computation-aware clock, on which an emission time also counts the processing time spent until the emission \citep{ma2020simulmt}. Streaming systems receive the audio in 80\,ms chunks; we report the median and the 99th percentile of the processing time per chunk (tick) and the real-time factor (RTF). Consecutive and offline systems are timed per turn. The only timings so far were taken outside this protocol. The single-speaker backbone with the 0.6B thinker takes about 60\,ms per chunk at the median on an H200 but 100--150\,ms at the 99th percentile, so it misses the 80\,ms budget there; on an M4 Mac with the thinker in MLX (fp16), it takes 56\,ms per chunk at the median and runs at an RTF of 0.82. In the preliminary offline run, batched compute moved the median \eo of the offline systems from 0 to at most about \prelim{0.2}\,s ($^\dagger$preliminary; to be re-run under the final protocol). The 1.7B thinker has not been timed, and we claim real time only for a system with a measured RTF below 1.
+
+\input{tables/tab_ca_latency}
+
+\paragraph{Failure taxonomy.}
+\Cref{tab:failures} counts six failure types per 100 source turns. The detectors work on the scorer's alignments and timelines, so the table reports counts without showing any TAXI text, and their thresholds are fixed before any system is scored. Merged turns, in which one VAD segment or output piece spans turns of both speakers, send one speaker's words to the wrong channel or delay the switch. A truncated tail leaves the last words of a turn untranslated, for example when a segment is closed early. Hallucinations are output words without an aligned reference word and with low reference-free quality \citep{rei2022cometkiwi}, cross-checked against the critical-error spans of xCOMET \citep{guerreiro2024xcomet}. We estimate the precision of each detector by hand on 50 \syn turns per condition, and any example we show comes from \syn. Under L1, the best realistic pipeline merges \tbdtext{} turns per 100 (L0 natural: \tbdtext{}), and \model merges \tbdtext{}.
+
+\input{tables/tab_failures}
+
+\paragraph{Second-best pipeline and diarization without a collar.}
+Repeating the factorial of \cref{tab:factorial} for the second-best pipeline (\tbdtext{}) changes its COMET under L1 by \tbdtext{} when oracle turns replace VAD and by \tbdtext{} when the oracle language replaces language identification. \Cref{tab:aux} scores DER with a 0.25\,s collar. Without a collar, every boundary error counts at the 80\,ms resolution; DER on \taxi L0 natural is then \tbdtext{} for \model with $\delta_s=2$ and \tbdtext{} for the streaming diarization cascade, and \tbdtext{} and \tbdtext{} under L1.

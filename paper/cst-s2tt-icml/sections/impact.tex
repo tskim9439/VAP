@@ -1,0 +1,9 @@
+%%%%%%%% Impact Statement (required by ICML; unnumbered, placed before the references) %%%%%%%%
+\section*{Impact Statement}
+
+\task systems could let people who share no language talk through one device, and speaker-attributed transcripts could help deaf and hard-of-hearing people follow bilingual conversations.
+A mistranslated or misattributed turn can mislead in medical or legal settings, so deployments there should show the source transcript next to each translation and keep human interpreters available.
+Transcribing and attributing speech from one microphone could also enable covert monitoring; \model is designed to label speakers only by order of arrival, without identifying them, and any deployment should require the consent of everyone recorded.
+We redistribute no TAXI audio or text (only build scripts, configurations, checksums and per-turn scores), and all text examples in this paper are invented, except for one KsponSpeech transcript in \cref{fig:delta-delay}.\draftnote{check that the KsponSpeech terms allow quoting this transcript; otherwise use an invented utterance there}
+\bench is intended for evaluation only; its synthetic voices are disclosed and clone no real person, and its XDailyDialog-based subset is non-commercial.\draftnote{planned; \syn is not built yet}
+Outputs of EXAONE-4.0, whose licence is non-commercial, serve only internal evaluation and are neither released nor used for training, and \model combines components licensed under OpenMDW-1.1 and Apache~2.0 (\cref{tab:licences}).

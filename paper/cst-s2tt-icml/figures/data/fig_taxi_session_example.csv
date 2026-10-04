@@ -1,0 +1,15 @@
+config,session,turn_id,speaker,lang,start_s,end_s,gap_before_s
+natural,taxi/SES0104,0104DP01,DP,German,0.5,2.06,0.0
+natural,taxi/SES0104,0104CL02,CL,English,2.11,6.85,0.05
+natural,taxi/SES0104,0104DP03,DP,German,6.9,10.92,0.05
+natural,taxi/SES0104,0104CL04,CL,English,11.507,14.787,0.587
+natural,taxi/SES0104,0104DP05,DP,German,14.837,23.657,0.05
+natural,taxi/SES0104,0104CL06,CL,English,24.1115,25.9315,0.4545
+natural,taxi/SES0104,0104DP07,DP,German,25.9815,28.4015,0.05
+mediated,taxi/SES0104,0104DP01,DP,German,0.5,2.06,0.0
+mediated,taxi/SES0104,0104CL02,CL,English,4.1719,8.9119,2.1119
+mediated,taxi/SES0104,0104DP03,DP,German,11.7354,15.7554,2.8235
+mediated,taxi/SES0104,0104CL04,CL,English,18.6132,21.8932,2.8579
+mediated,taxi/SES0104,0104DP05,DP,German,24.4348,33.2548,2.5415
+mediated,taxi/SES0104,0104CL06,CL,English,35.8988,37.7188,2.6441
+mediated,taxi/SES0104,0104DP07,DP,German,40.5856,43.0056,2.8668

@@ -1,0 +1,51 @@
+% =====================================================================
+% Table 1 (tab:positioning): CST against the closest settings and systems.
+% Single column, \scriptsize, 10 columns; estimated natural width about
+% 228pt with \tabcolsep=2pt (ICML column: 234.87pt). If it overflows,
+% lower \tabcolsep to 1.5pt before anything else.
+% Included from Sec. 2 (sec:related); every row is cited in Sec. 1 or 2.
+% Cells checked against the cited papers: SeamlessStreaming is evaluated
+% on FLEURS; Hibiki and Hibiki-Zero release weights; STAC-ST's merged
+% Fisher-CALLHOME test channels contain cross-talk (11-12% overlap) and
+% it releases scripts, not models; DiariST is scored on single-channel
+% audio (first array channel, headset mix) with natural overlap and
+% releases its evaluation set, offline baselines and scorer, not its
+% streaming model; JSTAR uses a 5-channel smart-glasses array, tells
+% wearer from partner by the direction of speech, tests on in-house real
+% conversations and on FLEURS with simulated overlap, and releases
+% nothing; Seed LiveInterpret 2.0 depicts a two-speaker Zh-En conversation
+% (its Fig. 2) but is evaluated per direction on RealSI (annotations and
+% video links public), does not report its input channels and is closed.
+% \pmark = partial (some systems, or shown but not evaluated).
+% =====================================================================
+\begin{table}[t]
+  \caption{\task against the closest settings and systems. Spk$\times$Lang: speakers $\times$ languages in one input stream; Auto dir.: the system chooses the direction of each turn; Ovl.: overlapping speech evaluated (sim.: simulated overlap); Str.: streaming; Out.: A~transcript, T~translation, D~speaker labels or turns, S~translated speech; Pub.\ data, Open wts: public evaluation data, open weights. Segm.: pre-segmented speech (e.g., MuST-C); long: unsegmented long-form audio (e.g., IWSLT 2025--2026). \cmark~yes, \xmark~no, \pmark~partial, n.r.~not reported. $^a$TAXI under its free scientific licence from BAS, rebuilt with our scripts and checksums; \syn under CC licences.}
+  \label{tab:positioning}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{@{}lccccccccc@{}}
+    \toprule
+    Work & Input & \makecell{Spk$\times$\\Lang} & Dir. & \makecell{Auto\\dir.} & Ovl. & Str. & Out. & \makecell{Pub.\\data} & \makecell{Open\\wts} \\
+    \midrule
+    SimulST (segm.)   & mono   & 1$\times$1 & X$\to$Y               & \xmark & \xmark & \cmark & T     & \cmark & \pmark \\
+    StreamST (long)   & mono   & 1$\times$1 & X$\to$Y               & \xmark & \xmark & \cmark & T     & \cmark & \pmark \\
+    SeamlessStreaming & mono   & 1$\times$1 & X$\to$Y               & \xmark & \xmark & \cmark & T,S   & \cmark & \cmark \\
+    StreamSpeech      & mono   & 1$\times$1 & X$\to$En              & \xmark & \xmark & \cmark & A,T,S & \cmark & \cmark \\
+    Hibiki(-Zero)     & mono   & 1$\times$1 & X$\to$En              & \xmark & \xmark & \cmark & T,S   & \cmark & \cmark \\
+    STAC-ST           & mono   & 2$\times$1 & Es$\to$En             & \xmark & \cmark & \xmark & A,T,D & \cmark & \xmark \\
+    DiariST           & mono   & N$\times$1 & Zh$\to$En             & \xmark & \cmark & \cmark & T,D   & \cmark & \xmark \\
+    JSTAR             & array  & 2$\times$2 & Es$\leftrightarrow$En & \cmark & sim.   & \cmark & A,T,D & \xmark & \xmark \\
+    \makecell[l]{Seed\\LiveInterpret 2.0}
+                      & n.r.   & \pmark     & Zh$\leftrightarrow$En & \pmark & \xmark & \cmark & T,S   & \cmark & \xmark \\
+    \midrule
+    \makecell[l]{\bench{} +\\\model{} (ours)}
+                      & mono   & 2$\times$2 & \makecell{En$\leftrightarrow$De\\Ko$\leftrightarrow$En}
+                                                                    & \cmark & sim.   & \cmark & A,T,D & \cmark$^a$ & \cmark \\
+    \bottomrule
+  \end{tabular}
+  \ifshowdraftnotes
+    \par\vspace{2pt}
+    \parbox{\linewidth}{\raggedright\draftnote{planned in our row: the L1 overlap renders, \syn{} (incl.\ \pair{Ko}{En}), transcript and diarization scoring, and \model{} with its weights; the TAXI build scripts and the translation scorer exist.}}
+  \fi
+\end{table}

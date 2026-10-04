@@ -1,0 +1,27 @@
+% =====================================================================
+% Section 3: task definition (architecture-agnostic; ~0.7 column).
+% Parameters of the timing conditions: Sec. 4.4 (sec:bench-timing).
+% Metric equations: Sec. 4.5 (sec:bench-scoring).
+% =====================================================================
+\section{Conversational Simultaneous Speech-to-Text Translation}
+\label{sec:task}
+
+We define \task independently of any architecture (\cref{fig:task}), so that all systems are scored by the same rules.
+
+\begin{definition}[\task]
+\label{def:cst}
+A \emph{session} is a single-channel 16\,kHz signal $x$ on $[0,T]$ mixing two speakers, $A$ and $B$, who share one dialogue context and speak languages $\ell_A\neq\ell_B$. Unobserved by the system, it consists of turns $n=1,\dots,N$ with speaker $s_n\in\{A,B\}$, interval $[b_n,e_n]$ (turns may overlap), a transcript in $\ell_{s_n}$ and a reference translation $r_n$ into the other language. Given the pair $\{\ell_A,\ell_B\}$ but no speaker enrolment, a \task system reads $x$ as a stream and emits an append-only sequence of committed \emph{pieces} $(t_i,\lambda_i,y_i)$: emission time, output language $\lambda_i\in\{\ell_A,\ell_B\}$, which selects a channel and thus the direction, and text. Optional auxiliary channels carry a speaker-attributed transcript, as pieces $(t_j,\hat{s}_j,z_j)$ with speakers numbered by arrival, and two-speaker activity $\hat{a}(t)\in\{0,1\}^2$. Every output depends only on $x$ up to its emission time and is never revised.
+\end{definition}
+
+\paragraph{Observability and clocks.}
+A system thus decides who is speaking, which way to translate ($\lambda_i$) and when to commit ($t_i$). The pair is given, as a deployed device is configured for one pair; speakers, turn boundaries and directions are latent. A system may re-translate internally \citep{arivazhagan2020retranslation} as long as it only appends committed pieces. The ideal clock sets $t_i$ to the audio consumed at commitment; the computation-aware clock adds processing time \citep{ma2020simulmt}.
+
+\paragraph{Protocols.}
+The \emph{realistic} protocol, our main one, gives a system only $x$ and the pair. The \emph{oracle-segmentation} protocol, a diagnostic upper bound for single-direction systems, adds gold turn intervals and source languages, cutting each turn from the mix for the system that translates into the other language. Both use the same resegmentation (\cref{sec:bench-scoring}); scoring by gold turn identity is a diagnostic only.
+
+\paragraph{Timing conditions.}
+Following \citet{heldner2010pauses}, gaps and pauses are silences between and within speakers, and an overlap is simultaneous speech at a speaker change. \bench renders the same turns with everyday gaps (L0~natural), with 1--3\,s gaps as when listeners first read the translation (L0~mediated), or with turn-end overlap (L1; \cref{sec:bench-timing}). Turn timing ignores system output, so under L0~natural and L1, listeners reply as if translation were instantaneous. L1 overlaps at every speaker change, whereas about 40\% of between-speaker intervals overlap in real conversation \citep{heldner2010pauses}, so it is a stress condition. Content-free backchannels (L1b), which must neither be translated nor flip the direction, are at most an optional stress test; interruptions and barge-in are out of scope.
+\draftnote{L1 is planned; whether L1b enters the first release is undecided}
+
+\paragraph{\task as sequential prediction.}
+At each step $k$, a system commits translation and transcript tokens $Y_k$ and $Z_k$ (possibly none) and updates a latent speaker, direction and turn state $S_k$, given the audio $X_{\le k}$ and its committed output $H_k=(Y_{<k},Z_{<k})$: its policy $\pi$ models $P(Y_k,Z_k,S_k\mid X_{\le k},H_k)$. We compare policies by quality under a lag budget, $\max_\pi Q(\pi)$ s.t.\ $\mathrm{StreamLAAL}(\pi)\le\Lambda$ (\cref{app:baselines}), and report \eo, switch latency and wrong-direction words alongside. A cascade factorises $\pi$ into a segmenter and router, which fix a hard decision $\hat S_k$ without reading the translation $Y_{<k}$, and a translator, which commits under $P(Y_k\mid \hat S_k,X_{\le k},H_k)$ but cannot correct $\hat S_k$. We hypothesise that the two decisions are better made jointly: lexical completion helps to predict turn ends \citep{ekstedt2020turngpt}, and a turn end forces the rest of its translation to be committed. \Cref{sec:model} describes a model that makes both decisions from one state, and \cref{sec:exp-ablation} compares it with cascades and ablations.

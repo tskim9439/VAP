@@ -1,0 +1,30 @@
+% =====================================================================
+% Table A8 (tab:failures): failure taxonomy. Included from App. E.
+% Nothing is measured yet: every count cell is pending (\tbd = blank).
+% Detectors run on the scorer's alignments and timelines, so the table shows
+% counts only; detector thresholds are fixed before any system is scored.
+% Manual precision checks and any examples use CST-Bench-Syn only (no TAXI
+% text may appear). The optional L1b stress test would add a row for
+% translated backchannels.
+% =====================================================================
+\begin{table}[htbp]
+  \caption{Failure taxonomy: counts per 100 source turns on \taxi L0 natural (L0) and L1, found by automatic detectors on the scorer's alignments; pipelines run with the realistic wrapper. Each detector's precision is checked by hand on 50 \syn turns per condition, never on TAXI text. Consec.: consecutive cascade; Stream.\ casc.: streaming cascade (LA-2); M4T+AA: SeamlessM4T v2 + AlignAtt. Thresholds are fixed before any system is scored. If the optional L1b stress test is adopted, a row for translated backchannels is added. Blank: pending. \protect\draftnote{planned}}
+  \label{tab:failures}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{6.2cm}cccccccccc@{}}
+    \toprule
+    & & \multicolumn{2}{c}{Consec.} & \multicolumn{2}{c}{Seamless} & \multicolumn{2}{c}{\makecell{Stream.\\casc.}} & \multicolumn{2}{c}{M4T+AA} & \multicolumn{2}{c}{\model} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}\cmidrule(l){11-12}
+    Failure type & Detector & L0 & L1 & L0 & L1 & L0 & L1 & L0 & L1 & L0 & L1 \\
+    \midrule
+    Merged turns       & One VAD segment, or one output piece, spans turns of both speakers & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Wrong direction    & Words on the wrong channel for the active turn, in the wrong language, or copied from the source (scorer detector) & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Truncated tail     & The final words of the turn's reference stay unaligned & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Empty turn         & No output word is assigned to the turn & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Hallucination      & Output with no aligned reference word and low reference-free QE \citep{rei2022cometkiwi}; xCOMET critical-error spans \citep{guerreiro2024xcomet} as a cross-check & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Late switch        & Switch latency above 2\,s & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}
+\end{table}

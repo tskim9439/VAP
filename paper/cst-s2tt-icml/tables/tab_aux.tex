@@ -1,0 +1,36 @@
+% =====================================================================
+% Table 5 (tab:aux): transcription and two-speaker attribution
+% (single column, \footnotesize). Included in Sec. 6.5.
+% Layout: systems as columns, set x metric as rows (fits one column).
+% Measured so far (preliminary, \prelim): the two TAXI WERs of Qwen3-ASR-1.7B
+% on oracle turns. Every other cell is pending (\tbd = blank); -- marks
+% cells that do not apply (oracle speakers, offline output). The emission
+% delay of the earlier 0.6B models (single-speaker, measured as (k+1)*80 ms
+% - t_end, i.e. without the 80 ms encoder look-ahead) is context only and
+% stays in the caption; the Delay cells use the time stamps of Sec. 5.5.
+% =====================================================================
+\begin{table}[t]
+  \caption{Who said what: transcription and two-speaker attribution. Oracle ASR: Qwen3-ASR-1.7B on oracle turns with the language given; offline cascade: pyannote diarization, then Qwen3-ASR-1.7B; streaming cascade: Streaming Sortformer, then the Nemotron~3.5 streaming RNN-T. Error rates in \% on \taxi under L0 natural (L0) and L1, and cpCER on \syn \pair{Ko}{En} under L1; DER with a 0.25\,s collar (collar 0 in \cref{app:results}). Delay: median emission delay of transcript words; earlier 0.6B versions of the backbone have about 200\,ms at $\delta=2$ and 360\,ms at $\delta=4$ on single-speaker English and Korean, excluding the 80\,ms encoder look-ahead counted in \cref{sec:model}. Blank: pending; --: not applicable (oracle speakers or offline output). $^\dagger$preliminary; to be re-run under the final protocol.}
+  \label{tab:aux}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.6pt}
+  \begin{tabular}{@{}llccccc@{}}
+    \toprule
+    & & & & & \multicolumn{2}{c}{\model} \\
+    \cmidrule(l){6-7}
+    Set & Metric & \makecell[b]{Oracle\\ASR} & \makecell[b]{Offline\\cascade} & \makecell[b]{Streaming\\cascade} & $\delta_s{=}2$ & $\delta_s{=}4$ \\
+    \midrule
+    \multirow{5}{*}{TAXI L0} & WER En     & \prelim{13.78} & \tbd & \tbd & \tbd & \tbd \\
+                             & WER De     & \prelim{7.33}  & \tbd & \tbd & \tbd & \tbd \\
+                             & cpWER      & \tbd & \tbd & \tbd & \tbd & \tbd \\
+                             & DER        & --   & \tbd & \tbd & \tbd & \tbd \\
+                             & Delay (ms) & --   & --   & \tbd & \tbd & \tbd \\
+    \midrule
+    \multirow{2}{*}{TAXI L1} & cpWER      & \tbd & \tbd & \tbd & \tbd & \tbd \\
+                             & DER        & --   & \tbd & \tbd & \tbd & \tbd \\
+    \midrule
+    Syn L1                   & cpCER      & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}
+\end{table}

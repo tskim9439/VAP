@@ -1,0 +1,90 @@
+%%%%%%%% CST-S2TT paper draft (ICML 2026 style; switch to the ICML 2027 style files when they are released) %%%%%%%%
+% Build:  tectonic -X compile main.tex      (or: latexmk -pdf main.tex)
+% Pending numbers: \tbd (table cells, blank by default) and \tbdtext (running text, always visible).
+% Draft marks: set \showpendingtrue below to show a dot in every pending table cell;
+%              set \showdraftnotesfalse to hide \draftnote{...} remarks.
+
+\documentclass{article}
+
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Initial blind version for review:
+\usepackage{icml2026}
+% Tectonic/XeTeX builds only: use the same OT1 Type 1 Times fonts as pdfLaTeX
+% (otherwise XeTeX falls back to Latin Modern). No effect under pdfLaTeX.
+\usepackage{iftex}
+\ifXeTeX\usepackage[OT1]{fontenc}\fi
+% Preprint:      \usepackage[preprint]{icml2026}
+% Camera-ready:  \usepackage[accepted]{icml2026}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage[capitalize,noabbrev]{cleveref}
+
+\input{macros}
+
+% Draft switches
+%\showpendingtrue
+\newif\ifshowdraftnotes
+\showdraftnotestrue
+\newcommand{\draftnote}[1]{\ifshowdraftnotes{\color{blue!60!black}\footnotesize[\textit{Draft: #1}]}\fi}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\icmltitlerunning{Who Speaks, Which Way, and When? Simultaneous Speech Translation of Two-Language Conversations}
+
+\begin{document}
+
+\twocolumn[
+  \icmltitle{Who Speaks, Which Way, and When?\texorpdfstring{\\}{ }%
+    Simultaneous Speech Translation of Two-Language Conversations}
+
+  \icmlsetsymbol{equal}{*}
+  \begin{icmlauthorlist}
+    \icmlauthor{Anonymous Author(s)}{anon}
+  \end{icmlauthorlist}
+  \icmlaffiliation{anon}{Anonymous Institution}
+  \icmlcorrespondingauthor{Anonymous Author(s)}{anonymous@example.com}
+
+  \icmlkeywords{simultaneous speech translation, conversational speech, streaming speech LLM, benchmark, diarization}
+
+  \vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\input{sections/00_abstract}
+\input{sections/01_intro}
+\input{sections/02_related}
+\input{sections/03_task}
+\input{sections/04_bench}
+\input{sections/05_model}
+\input{sections/06_experiments}
+\input{sections/07_conclusion}
+
+\input{sections/impact}
+
+\bibliography{references}
+\bibliographystyle{icml2026}
+
+\newpage
+\appendix
+\onecolumn
+\input{appendix/A_taxi}
+\input{appendix/B_syn}
+\input{appendix/C_scorer}
+\input{appendix/D_baselines}
+\input{appendix/E_results}
+\input{appendix/F_model}
+\input{appendix/G_units}
+\input{appendix/H_repro}
+
+\end{document}

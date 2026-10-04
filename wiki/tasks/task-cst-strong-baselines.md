@@ -1,11 +1,11 @@
 ---
 type: task
-status: open
+status: doing
 owner: tskim
 due: TBD
 priority: p1
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-05
 summary: CST 기준선 B0–B4 — strong SimulST 선정, 2×SimulST 양방향 라우팅, VAD·VAP·Oracle 턴 경계 결합
 sources:
   - '[[source-cst-s2tt-project-spec-v0-1]]'
@@ -27,3 +27,5 @@ sources:
 
 ## 진행 기록
 - 2026-10-02: 생성.
+- 2026-10-05: 범위 변경([[decision-cst-paper-v1-scope]]) — 베이스라인은 S2TT 지원 시스템(SeamlessStreaming, 동시 캐스케이드, 오프라인 ST + AlignAtt, StreamSpeech·InfiniSST 는 한 방향만), 정답 분할·실제 조건(VAD + 언어 판별) 래퍼. VAP 라우팅은 v1 에서 뺌.
+- 2026-10-05: B0 오프라인 상한을 TAXI 에서 실행(job 80130) → [[output-cst-taxi-offline-baselines-20261005]]. SeamlessStreaming·COMET 모델은 사용자 업로드 대기.

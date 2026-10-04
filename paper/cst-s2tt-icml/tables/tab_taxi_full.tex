@@ -1,0 +1,49 @@
+% =====================================================================
+% Table A1 (tab:taxi-full): full TAXI datasheet statistics. Included from App. A.
+% All values are measured on the cstbench v0.1.0 build of BAS TAXI 2.5.
+% "--" marks cells that are not applicable or not reported (no derived sums).
+% =====================================================================
+\begin{table}[htbp]
+  \caption{Full statistics of the \taxi build (\texttt{cstbench} v0.1.0). Rendered turns are the 16\,kHz turns after silence trimming, 0.1\,s margins included; they are identical in L0 natural and L0 mediated. Untrimmed values refer to the usable source turn files. Turn files exclude pre-dialogue and hang-up items. Same-speaker successions: 9 arise because unusable turns between them were skipped, 5 are adjacent in the source. Reference words are those of the human translations of the column's turns. Marks (SpeechDat notation): * hardly recognisable, \textasciitilde{} truncated, ** unintelligible. Percentiles use linear interpolation; the scorer's p90 of $m$ values instead takes the sorted value at the 0-based index $\min(m-1,\lfloor 0.9m\rfloor)$ (\cref{app:scorer}). --: not applicable or not reported.}
+  \label{tab:taxi-full}
+  \centering
+  \small
+  \begin{tabular}{@{}lccc@{}}
+    \toprule
+    Statistic & \makecell{German\\(dispatcher)} & \makecell{English\\(client)} & All \\
+    \midrule
+    \multicolumn{4}{@{}l}{\textit{Sessions and turns}} \\
+    Sessions                                               & --                  & --                   & 86                  \\
+    Turn files                                             & 374                 & 323                  & 697                 \\
+    Usable turns                                           & 349                 & 291                  & 640 (91.82\%)       \\
+    Unusable turns (skipped when rendering)                & 25                  & 32                   & 57                  \\
+    Sessions with $\geq 1$ unusable turn                   & --                  & --                   & 40                  \\
+    Usable turns per session: median (mean; range)         & 4 (4.06; 1--9)      & 3 (3.38; 0--8)       & 7 (7.44; 1--17)     \\
+    Sessions opened by this speaker (first usable turn)    & 85                  & 1                    & --                  \\
+    Direction switches: total (per session: median; range) & --                  & --                   & 540 (6; 0--14)      \\
+    Same-speaker successions (skipped\,/\,adjacent)        & --                  & --                   & 14 (9\,/\,5)        \\
+    \midrule
+    \multicolumn{4}{@{}l}{\textit{Audio}} \\
+    Usable turn audio before trimming (min)                & 24.563              & 28.068               & 52.631              \\
+    Speech after trimming (min)                            & 17.953              & 22.425               & 40.378              \\
+    Untrimmed turn (s): mean\,/\,median\,/\,p90            & 4.223\,/\,3.64\,/\,7.02 & 5.787\,/\,4.76\,/\,10.94 & 4.934\,/\,4.0\,/\,9.064 \\
+    Rendered turn (s): mean\,/\,median                     & 3.086\,/\,2.42      & 4.624\,/\,3.38       & 3.785\,/\,2.86      \\
+    Rendered turn (s): p90\,/\,max                         & 5.492\,/\,12.64     & 9.92\,/\,17.98       & 7.76\,/\,17.98      \\
+    Rendered turns longer than 5\,s                        & --                  & --                   & 144 (22.5\%)        \\
+    Rendered turns longer than 10\,s                       & --                  & --                   & 29 (4.5\%)          \\
+    Silence removed per turn (s): median leading\,/\,trailing & 0.5\,/\,0.46     & 0.56\,/\,0.44        & 0.54\,/\,0.44       \\
+    Speaking rate (words/s): trimmed (untrimmed) audio     & 2.997 (2.19)        & 2.666 (2.13)         & --                  \\
+    \midrule
+    \multicolumn{4}{@{}l}{\textit{Text}} \\
+    Source words                                           & 3,228               & 3,587                & 6,815               \\
+    Source words per turn: mean\,/\,median\,/\,p90\,/\,max & 9.25\,/\,8\,/\,17\,/\,34 & 12.33\,/\,10\,/\,25\,/\,37 & --         \\
+    Reference words                                        & 3,339               & 3,278                & 6,617               \\
+    Reference words per turn: mean\,/\,median\,/\,max      & 9.57\,/\,8\,/\,44   & 11.26\,/\,10\,/\,38  & --                  \\
+    Vocabulary, source\,/\,reference (lowercased types)    & 472\,/\,381         & 534\,/\,602          & --                  \\
+    Filled-pause marks [fil]                               & 60                  & 172                  & --                  \\
+    Noise labels (NOI tier)                                & 235                 & 228                  & --                  \\
+    Other marks: *\,/\,\textasciitilde\,/\,**              & 53\,/\,8\,/\,1      & 61\,/\,4\,/\,11      & --                  \\
+    Turns containing markup                                & 101                 & 135                  & --                  \\
+    \bottomrule
+  \end{tabular}
+\end{table}

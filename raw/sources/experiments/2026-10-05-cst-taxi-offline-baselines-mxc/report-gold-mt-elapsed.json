@@ -1,0 +1,42 @@
+{
+ "cstbench_version": "0.1.0",
+ "directions": {
+  "English->German": {
+   "bleu": 48.31,
+   "chrf": 71.72,
+   "empty_turns": 0,
+   "end_offset_s": {
+    "mean": 0.117,
+    "median": 0.1,
+    "p90": 0.211
+   },
+   "stream_laal_s": {
+    "mean": 4.741,
+    "median": 3.479,
+    "p90": 10.093
+   },
+   "turns": 291
+  },
+  "German->English": {
+   "bleu": 30.6,
+   "chrf": 58.05,
+   "empty_turns": 0,
+   "end_offset_s": {
+    "mean": 0.107,
+    "median": 0.094,
+    "p90": 0.173
+   },
+   "stream_laal_s": {
+    "mean": 3.193,
+    "median": 2.516,
+    "p90": 5.706
+   },
+   "turns": 349
+  }
+ },
+ "hyp": "/soundai/users/tskim/VAPKT-data/results/cst-taxi-baselines/offline-oracle-80130/llm/hyp-gold-mt.jsonl",
+ "sessions": "/soundai/users/tskim/VAPKT-data/data/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl",
+ "time_key": "elapsed",
+ "unknown_sessions": [],
+ "wrong_language_words": 0
+}

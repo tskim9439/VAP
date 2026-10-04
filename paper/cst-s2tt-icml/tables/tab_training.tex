@@ -1,0 +1,51 @@
+% =====================================================================
+% Table A11 (tab:training): training stages. Included from App. F.
+% Stages 0-1 exist (Stage 1 = the one-epoch pilot behind tab:backbone).
+% Stages 2-3 are planned: their Data/Targets cells restate the design of
+% Sec. 5 (sec:model); every setting that is still open is \tbd (blank).
+% =====================================================================
+\begin{table}[t]
+  \caption{Training stages, data and hyperparameters. Stages~0 and~1 exist, and the one-epoch Stage-1 pilot is the backbone of \cref{tab:backbone}; Stages~2 and~3 are planned (M1--M3 as in \cref{sec:model}), and their open settings are blank. Hours are approximate; data sources and augmentation are detailed in \cref{app:model}. lr: peak learning rate after a linear warm-up.}
+  \label{tab:training}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \renewcommand{\arraystretch}{1.1}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.1cm}>{\raggedright\arraybackslash}p{1.9cm}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{2.9cm}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{1.35cm}>{\raggedright\arraybackslash}p{1.1cm}@{}}
+    \toprule
+    Stage & Trainable & Data & Targets & Schedule & Hardware & Status \\
+    \midrule
+    0: adapter warm-up
+      & adapter (6.3M); thinker frozen
+      & English and Korean ASR
+      & final mode only (Qwen3-ASR format)
+      & 2,000 steps, warm-up 100; 16,384-token batches
+      & 1 node
+      & built \\
+    \addlinespace
+    1: streaming and final-mode ASR
+      & encoder, adapter, thinker (2,336M)
+      & $\approx$3.8k\,h curated English and Korean speech + $\approx$4.3k\,h English and Korean ASR corpora (806\,h English); no German; augmented
+      & lexical transcripts; $\delta\in\{2,3,4,6,8\}$; final mode with probability 0.3
+      & 1 epoch = 3,980 steps; lr $6{\times}10^{-5}$ thinker (warm-up 500), $10^{-3}$ adapter, $10^{-5}$ encoder
+      & 2 nodes $\times$ 8 GPUs
+      & built (pilot) \\
+    \addlinespace
+    2 (M1): two-speaker bilingual ASR
+      & \tbd
+      & + German ASR, 8\,kHz telephone-band augmentation, simulated two-speaker \pair{En}{De} and \pair{En}{Ko} mono sessions
+      & speaker-tagged transcripts at delay $\delta_s$; two-slot speaker activity
+      & \tbd
+      & \tbd
+      & planned \\
+    \addlinespace
+    3 (M2, M3): translation streams
+      & \tbd
+      & + CoVoST~2 and MuST-C (\pair{En}{De}); silver teacher translations in four directions
+      & translations committed at turn ends (M2) or at MU2 (M3), delay $\delta_t$
+      & \tbd
+      & \tbd
+      & planned \\
+    \bottomrule
+  \end{tabular}
+\end{table}

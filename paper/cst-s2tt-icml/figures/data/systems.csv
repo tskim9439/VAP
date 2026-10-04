@@ -1,0 +1,13 @@
+system_id,label,short,kind,marker,directions,note
+gold_mt,"Gold transcript -> Qwen3.8-27B (offline, oracle turns)",Gold->LLM,offline,o,EN->DE;DE->EN;EN->KO;KO->EN,upper bound; emitted at the reference turn end
+asr_mt,"Qwen3-ASR-1.7B -> Qwen3.8-27B (offline, oracle turns)",ASR->LLM,offline,s,EN->DE;DE->EN;EN->KO;KO->EN,oracle segments and source language
+whisper_st,"Whisper-large-v3 ST (offline, oracle turns)",Whisper ST,offline,D,DE->EN;KO->EN,translates into English only
+gold_mu2,Gold transcript -> Qwen3.8-27B SimulMT with MU2 commits,Gold->LLM (MU2),bound,h,EN->DE;DE->EN,oracle-transcript streaming bound (experiment E13)
+consecutive,VAD endpoint + LID -> Qwen3-ASR-1.7B -> Qwen3.8-27B,Consecutive,consecutive,X,EN->DE;DE->EN;EN->KO;KO->EN,realistic consecutive baseline (translate after the detected endpoint)
+seamless_streaming,SeamlessStreaming,Seamless,stream,^,EN->DE;DE->EN;EN->KO;KO->EN,EMMA policy; one instance per target language behind the wrapper
+cascade_la,Streaming ASR + Qwen3.8-27B SimulMT (LocalAgreement-2),Cascade-LA,stream,v,EN->DE;DE->EN;EN->KO;KO->EN,Nemotron 3.5 streaming RNN-T front end
+m4t_alignatt,SeamlessM4T v2 + AlignAtt (simulstream),M4Tv2-AA,stream,P,EN->DE;DE->EN;EN->KO;KO->EN,offline ST model with attention policy
+canary_alignatt,Canary-1B-v2 + AlignAtt (simulstream),Canary-AA,stream,p,EN->DE;DE->EN,optional
+streamspeech,StreamSpeech,StreamSpeech,stream,<,DE->EN,single direction
+infinisst,InfiniSST,InfiniSST,stream,>,EN->DE,only if weights are available
+ours,Unified streaming model (ours),Ours,ours,o,EN->DE;DE->EN;EN->KO;KO->EN,planned; one curve over operating points
