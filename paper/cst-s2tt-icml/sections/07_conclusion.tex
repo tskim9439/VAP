@@ -12,9 +12,8 @@
 % points, recovery R, tau of Sec. 6.6) and every number stays \tbdtext until
 % its run exists. Coupling claims rest only on the decoupled twin and the
 % same-backbone cascade. "Interruptions ... await real recordings" is the
-% future-work statement that App. B points to (sec:conclusion). Backchannels
-% "remain untested": the optional L1b stress test is not in v1 and appears
-% only in draft notes (Sec. 3, tab_conditions, tab_failures); if L1b is
+% future-work statement that App. B points to (sec:conclusion). Backchannels are out of
+% scope (decided 2026-10-05; no L1b condition).
 % adopted, define it in visible text (App. B or E) before this sentence
 % refers to it. The intro's scope sentence lists what is out of scope.
 \section{Limitations and Conclusion}
@@ -23,7 +22,7 @@
 \paragraph{Limitations.}
 \taxi has real speech but synthetic timing and overlap, for want of known public two-language recordings with natural overlap and references; it is small, single-domain, narrowband and close-talk, and ties role to language (\cref{sec:related,sec:bench-taxi}).
 \syn has fluent TTS speech, translationese on one side and silver Korean references, so it supports only relative conclusions, checked against \taxi (\cref{tab:validity}).\draftnote{planned; \syn and the turn-end overlap renders are not built yet}
-Interruptions and barge-in await real recordings; backchannels remain untested.
+Interruptions, barge-in and backchannels are left for future work.
 \model learns from simulated sessions and a privileged teacher (\cref{sec:model-targets}); only the decoupled twin and the same-backbone cascade test whether coupling turn-taking and translation helps (\cref{sec:exp-ablation}).\draftnote{planned; only the streaming ASR backbone is built, and all \model results are pending}
 
 \paragraph{Conclusion.}

@@ -11,8 +11,7 @@
 % Row sets follow the experiment plan: CST-Bench-Syn runs the offline systems,
 % the three main pipelines and the model; SeamlessM4T v2 + AlignAtt and the
 % single-direction streaming systems run on TAXI L0 natural only.
-% The optional L1b stress test (not in v1) would add its own block and a
-% backchannel-leakage column. When filling cells, keep the block structure.
+% When filling cells, keep the block structure.
 % =====================================================================
 \begin{table}[!tp]
   \caption{Full results by timing condition and language pair, the numbers behind \cref{fig:gap,fig:gap-sweep} (ideal clock; each system at its main operating point, fixed before the test runs). Part~(a) covers \taxi and repeats every row of \cref{tab:main}; parts~(b) and~(c) follow. Systems and Seg.\ as in \cref{tab:main}; X is German on \taxi and \syn \pair{En}{De}, and Korean on \syn \pair{Ko}{En}. Latencies in seconds over non-empty turns: mean \laal and median \eo per direction; wrong-direction words, median switch latency and empty turns are pooled over both directions and do not apply to single-direction systems; \cref{tab:ca-latency} lists each system's encoder look-ahead $\ell_{\mathrm{enc}}$. Each estimate will carry the half-width of its 95\% session-clustered bootstrap CI as a subscript. Offline systems translate each oracle turn after it ends, so their \laal is the mean source-turn duration and their \eo is 0 by construction. $^\dagger$Preliminary, scored by gold turn ID without resegmentation (\cref{app:scorer}); to be re-run under the final protocol (same runs as \cref{tab:main}; no CIs yet). --: not applicable; blank: pending; $^\circ$optional. \protect\draftnote{L1 is not rendered yet}}
@@ -117,7 +116,7 @@
 
 \begin{table}[!tp]
   \ContinuedFloat
-  \caption[]{(continued) Part~(b), \syn \pair{Ko}{En}, and part~(c): \taxi re-rendered with one fixed gap at every speaker change (a negative gap starts the next turn before the previous one ends), the numbers behind \cref{fig:gap-sweep}, for the reference pipeline $P$ (\cref{sec:exp-setup}) under both wrappers and \model; COMET is the mean of the two directions and \eo the median over both. Blank: pending. \protect\draftnote{\syn and the fixed-gap renders are planned; if the optional L1b stress test is adopted, it adds a block with a backchannel-leakage column}}
+  \caption[]{(continued) Part~(b), \syn \pair{Ko}{En}, and part~(c): \taxi re-rendered with one fixed gap at every speaker change (a negative gap starts the next turn before the previous one ends), the numbers behind \cref{fig:gap-sweep}, for the reference pipeline $P$ (\cref{sec:exp-setup}) under both wrappers and \model; COMET is the mean of the two directions and \eo the median over both. Blank: pending. \protect\draftnote{\syn and the fixed-gap renders are planned}}
   \centering
   \footnotesize
   \setlength{\tabcolsep}{3pt}

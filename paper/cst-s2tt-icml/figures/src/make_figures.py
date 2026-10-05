@@ -7,7 +7,7 @@
     python3 make_figures.py --ql-metric COMET   # y axis of fig4 once COMET is in results_main.csv
 
 Figure ids (= file stems):
-  fig1_task (+ fig1_task_L1b variant), fig2_benchmark, fig3_model, fig4_quality_latency, fig5_oracle_gap,
+  fig1_task, fig2_benchmark, fig3_model, fig4_quality_latency, fig5_oracle_gap,
   figA1_taxi_stats, figA2_taxi_session, figA3_gap_sweep, figA4_sim2real, figA5_turn_length,
   figA6_backbone_lookahead, figA7_delta_delay, figA8_unit_quality_latency, figA9_unit_granularity
   Sizes at full width: fig1 about 2.0 in and fig3 about 2.5 in tall (limits 2.2 and 2.8 in).
@@ -154,7 +154,7 @@ def results_conditions():
     the reference pipeline under both wrappers (ASR->LLM is the consecutive cascade's oracle side) and the model."""
     hdr = ["system_id", "wrapper", "corpus", "condition", "gap_s", "direction", "op", "COMET", "chrF",
            "StreamLAAL_mean_s", "EndOffset_p50_s", "switch_latency_p50_s", "wrong_dir_word_pct", "empty_turn_pct",
-           "backchannel_leak_pct", "status"]
+           "status"]
     runs = [("gold_mt", "oracle"), ("asr_mt", "oracle"), ("whisper_st", "oracle"), ("consecutive", "realistic"),
             ("seamless_streaming", "oracle"), ("seamless_streaming", "realistic"), ("cascade_la", "oracle"),
             ("cascade_la", "realistic"), ("m4t_alignatt", "oracle"), ("m4t_alignatt", "realistic"), ("ours", "none")]
@@ -210,7 +210,7 @@ def pls():
 # ---------------------------------------------------------------------------------------------------------------
 # fig1_task: the task on a single mono stream (illustrative; invented utterances)
 # ---------------------------------------------------------------------------------------------------------------
-def fig1_task(with_l1b=False):
+def fig1_task():
     """Lanes in inch units (y) on a seconds axis (x). The speaker colours are keyed by the coloured turn bars next to
     the lane labels, so the figure needs no separate legend; the metric brackets carry side labels."""
     import matplotlib.pyplot as plt
@@ -232,7 +232,7 @@ def fig1_task(with_l1b=False):
              (yMix, "System input:\none mono mix"), ((yTA + yTB) / 2, "Output 1: speaker-\ntagged transcript"),
              (yDE, "Output 2: translation\ninto German (for B)"), (yEN, "Output 3: translation\ninto English (for A)")]
     spk_lang = {"A": "English", "B": "German"}
-    A1, B1, A2, BC = (0.30, 2.90), (2.45, 3.95), (4.25, 7.10), (5.40, 5.72)
+    A1, B1, A2 = (0.30, 2.90), (2.45, 3.95), (4.25, 7.10)
     BAR, TICK, TXT = 0.150, 0.110, 6.6                             # bar and tick heights (in), text size (pt)
 
     def turn(seg, y, spk, label=None):
@@ -276,10 +276,6 @@ def fig1_task(with_l1b=False):
     turn(B1, yB, "B", "Welcher Eingang?")
     turn(A2, yA, "A", "The north entrance, please.")
     segs = [(A1, 1.0), (B1, 0.9), (A2, 1.0)]
-    if with_l1b:
-        turn(BC, yB, "B")
-        ax.text(BC[1] + 0.06, yB, "“ja”  backchannel (L1b, optional)", ha="left", va="center", fontsize=6.2, color=INK2)
-        segs.append((BC, 0.6))
 
     rng = np.random.default_rng(0)
     t = np.linspace(0, 8, 24000)
@@ -310,9 +306,6 @@ def fig1_task(with_l1b=False):
     piece(7.40, yDE, "bitte.", "A")
     piece(3.45, yEN, "Which", "B")
     piece(4.25, yEN, "entrance?", "B")
-    if with_l1b:
-        ax.text((BC[0] + BC[1]) / 2, yEN, "nothing emitted for “ja”", ha="center", va="center", fontsize=6.2,
-                color=MUTED, style="italic")
 
     # metrics: EndOffset (end of A's turn -> last German word), switch latency (start of B's turn -> first English word)
     yEO, ySW, band = (yTB + yDE) / 2, (yDE + yEN) / 2, 0.052
@@ -332,7 +325,7 @@ def fig1_task(with_l1b=False):
     ax.spines["bottom"].set_color(RULE)
     # axis title on the tick-label line, left of the axis, so it costs no extra height
     ax.text(x0 - 0.04, -0.049, "session time (s)", ha="right", va="top", fontsize=6.6, color=INK2, clip_on=False)
-    fs.save(fig, "fig1_task_L1b" if with_l1b else "fig1_task", OUT)
+    fs.save(fig, "fig1_task", OUT)
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -1249,7 +1242,7 @@ def figA9_unit_granularity():
     fs.save(fig, "figA9_unit_granularity", OUT)
 
 
-FIGS = {"fig1": lambda: (fig1_task(False), fig1_task(True)), "fig2": fig2_benchmark, "fig3": fig3_model,
+FIGS = {"fig1": fig1_task, "fig2": fig2_benchmark, "fig3": fig3_model,
         "fig4": fig4_quality_latency, "fig5": fig5_oracle_gap, "figA1": figA1_taxi_stats, "figA2": figA2_taxi_session,
         "figA3": figA3_gap_sweep, "figA4": figA4_sim2real, "figA5": figA5_turn_length, "figA6": figA6_backbone_lookahead,
         "figA7": figA7_delta_delay, "figA8": figA8_unit_quality_latency, "figA9": figA9_unit_granularity}

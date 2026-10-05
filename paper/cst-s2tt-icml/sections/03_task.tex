@@ -33,7 +33,7 @@ A \emph{session} $x$ on $[0,T]$ is mono audio of one dialogue between speakers $
 \end{definition}
 
 This is the main, \emph{realistic} protocol; the \emph{oracle-segmentation} one, a diagnostic, not a bound (\cref{app:baselines}), reveals gold turn intervals and languages. Both use one resegmentation (\cref{sec:bench-scoring}); gold turn IDs serve diagnostics only. Turn timing ignores system output, so L0~natural gaps and the overlap stress test L1 (\cref{sec:bench-timing}) assume instant translation.
-\draftnote{L1 is planned; if the optional backchannel stress test (L1b) is adopted, content-free backchannels must neither be translated nor flip the direction}
+\draftnote{L1 is planned}
 
 \paragraph{\task as sequential prediction.}
 At step $k$, a policy $\pi$ reads audio $X_{\le k}$ and its committed output $H_k$, updates a latent speaker, direction and turn state $S_k$, and commits translation and transcript tokens $Y_k,Z_k$, if any. We compare policies by quality at a lag budget, $\max_\pi Q(\pi)$ s.t.\ $\mathrm{StreamLAAL}(\pi)\le\Lambda$. A cascade factorises $\pi$: a segmenter and router fix $\hat S_k$ without reading the translation, and a translator commits under $P(Y_k\mid\hat S_k,X_{\le k},H_k)$. We hypothesise that $S_k$ and $Y_k$ are better decided jointly, as lexical completion helps predict turn ends \citep{ekstedt2020turngpt}, which call for commits; a decoupled twin and a same-backbone cascade test this (\cref{sec:exp-ablation}).
