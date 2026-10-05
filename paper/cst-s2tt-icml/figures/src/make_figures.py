@@ -21,7 +21,8 @@ Inputs (data/):
              created on first run if missing and never overwritten; blank cell = pending. The only filled result rows
              are the preliminary offline TAXI L0-natural runs (oracle input; to be re-run under the final protocol).
 Schematics (fig1, fig2, fig3) use invented example utterances; the only numbers in them are config parameters.
-Fig. 5 and Fig. A3 show one reference pipeline (reference_pipeline()), the one of Table 4.
+Fig. 5 shows, per row, the main pipeline with the highest realistic-wrapper COMET (row_pipeline()) under both
+wrappers; Fig. A3 shows every main pipeline (MAIN_PIPES). No single reference pipeline is selected.
 """
 import argparse
 import csv
@@ -102,6 +103,7 @@ PRELIM = "preliminary offline run; to be re-run under the final protocol"
 DERIVED = "EndOffset = 0 on the ideal clock by construction (pieces emitted at the reference turn end)"
 # Under the oracle wrapper the consecutive cascade is ASR->LLM on gold turns (Sec. 6.1), so that row is its oracle side.
 ORACLE_TWIN = {"consecutive": "asr_mt"}
+MAIN_PIPES = ["consecutive", "seamless_streaming", "cascade_la"]   # decomposed on every set (Table 4)
 STREAM_BASELINES = ("seamless_streaming", "cascade_la", "m4t_alignatt", "canary_alignatt", "streamspeech",
                     "hibiki_zero", "infinisst")
 SINGLE_DIR = {"streamspeech": ["DE->EN"], "hibiki_zero": ["DE->EN"], "infinisst": ["EN->DE"]}
@@ -150,8 +152,8 @@ COND_SETS = [("taxi", "L0-mediated", ""), ("taxi", "L0-natural", ""), ("taxi", "
 
 def results_conditions():
     """Row sets follow Table A5: offline systems, the consecutive cascade and the streaming pipelines on TAXI;
-    M4T v2 + AlignAtt on TAXI only; Whisper ST (into English) on TAXI only. Fixed-gap renders: every candidate for
-    the reference pipeline under both wrappers (ASR->LLM is the consecutive cascade's oracle side) and the model."""
+    M4T v2 + AlignAtt on TAXI only; Whisper ST (into English) on TAXI only. Fixed-gap renders: every main pipeline
+    under both wrappers (ASR->LLM is the consecutive cascade's oracle side) and the model."""
     hdr = ["system_id", "wrapper", "corpus", "condition", "gap_s", "direction", "op", "COMET", "chrF",
            "StreamLAAL_mean_s", "EndOffset_p50_s", "switch_latency_p50_s", "wrong_dir_word_pct", "empty_turn_pct",
            "status"]
@@ -729,6 +731,10 @@ def fig4_quality_latency():
                 ax.axvline(xo, color=RULE, lw=0.6, zorder=0)
                 ax.text(xo - 0.12, 0.985, "turn length", transform=ax.get_xaxis_transform(), ha="right", va="top",
                         fontsize=5.2, color=MUTED)
+                # latency budgets: simultaneous regime rho <= 0.5 (main operating point), consecutive rho <= 1
+                ax.axvline(xo / 2, color=RULE, lw=0.6, ls=(0, (2, 2)), zorder=0)
+                ax.text(xo / 2 + 0.1, 0.03, "half turn", transform=ax.get_xaxis_transform(), ha="left",
+                        va="bottom", fontsize=5.2, color=MUTED)
             if off and xkey == "EndOffset_p50_s":
                 ax.text(0.05, 0.985, "oracle endpoint", transform=ax.get_xaxis_transform(), ha="left", va="top",
                         fontsize=5.2, color=MUTED)
@@ -821,13 +827,11 @@ def _cond_means(res, corpus, cond, gap=None):
     return out
 
 
-def reference_pipeline(res):
-    """The one pipeline of Table 4, Fig. 5 and Fig. A3: the highest realistic-wrapper COMET (mean of the two
-    directions) on TAXI L0 natural among pipelines that cover both directions (single-direction systems never have
-    both); None while pending. Returns (oracle key, realistic key, display name)."""
-    means = _cond_means(res, "taxi", "L0-natural")
+def row_pipeline(means):
+    """The main pipeline with the highest realistic-wrapper COMET (mean of the two directions) in one row of Fig. 5;
+    None while pending. Returns (oracle key, realistic key, display name)."""
     cands = [(sid, v["COMET"]) for (sid, wr), v in means.items()
-             if wr == "realistic" and sid != "ours" and v["COMET"] is not None]
+             if wr == "realistic" and sid in MAIN_PIPES and v["COMET"] is not None]
     if not cands:
         return None
     sid = max(cands, key=lambda kv: kv[1])[0]
@@ -838,7 +842,6 @@ def fig5_oracle_gap():
     import matplotlib.pyplot as plt
     fs.setup(7)
     res = results_conditions()
-    ref = reference_pipeline(res)
     order, ypos, y = [], {}, 0.0
     for name, corpus, conds in GAP_SETS:
         for cond in conds:
@@ -853,6 +856,7 @@ def fig5_oracle_gap():
         vals = []
         for name, corpus, cond in order:
             means = _cond_means(res, corpus, cond)
+            ref = row_pipeline(means)
             yy = ypos[(corpus, cond)]
             o = means.get(ref[0], {}).get(m) if ref else None
             rl = means.get(ref[1], {}).get(m) if ref else None
@@ -867,14 +871,13 @@ def fig5_oracle_gap():
                 ax.plot([rl], [yy], "o", ms=4.6, mfc="white", mec=MUTED, mew=1.1, zorder=3)
             if ou is not None:
                 ax.plot([ou], [yy], "D", ms=4.2, color=OURS, mec="white", mew=0.8, zorder=4)
-            planned = ref is None or any(k in means for k in ref[:2])   # False: P has no run under this condition
             if not got:
-                any_pending = any_pending or planned
-                ax.text(0.5, yy, "pending" if planned else "not run", transform=ax.get_yaxis_transform(),
+                any_pending = True
+                ax.text(0.5, yy, "pending", transform=ax.get_yaxis_transform(),
                         fontsize=6.0, color=MUTED, style="italic", ha="center", va="center")
-            elif not planned and m == GAP_METRICS[0][0]:
-                ax.text(0.02, yy, "$P$ not run", transform=ax.get_yaxis_transform(), fontsize=5.6, color=MUTED,
-                        style="italic", ha="left", va="center")
+            elif ref and m == GAP_METRICS[0][0]:
+                ax.text(0.02, yy, ref[2].replace("->", "→"), transform=ax.get_yaxis_transform(), fontsize=5.6,
+                        color=MUTED, ha="left", va="center")
         if vals:
             lo, hi = min(vals), max(vals)
             pad = 0.08 * (hi - lo or 1.0)
@@ -889,7 +892,7 @@ def fig5_oracle_gap():
         axes[0].text(-0.62, ypos[(corpus, conds[0])] + 0.72, name, transform=axes[0].get_yaxis_transform(),
                      fontsize=6.6, color=INK, weight="bold", ha="left", va="center")
     axes[0].set_ylim(min(ypos.values()) - 0.6, 1.1)
-    pipe = f"$P$ = {ref[2].replace('->', '→')}" if ref else "reference pipeline $P$"
+    pipe = "best realistic pipeline of the row"
     h = [plt.Line2D([], [], marker="o", ls="", ms=4.6, color=INK2, mec="white", label=f"{pipe}, oracle segmentation"),
          plt.Line2D([], [], marker="o", ls="", ms=4.6, mfc="white", mec=MUTED, mew=1.1,
                     label=f"{pipe}, VAD + language-ID routing"),
@@ -1002,8 +1005,8 @@ def figA3_gap_sweep():
     med = np.array([float(r["gap_s"]) for r in gaps if r["config"] == "mediated" and r["type"] == "speaker_change"])
     allres = results_conditions()
     res = [r for r in allres if r["corpus"] == "taxi" and r["condition"] == "fixed-gap"]
-    ref = reference_pipeline(allres)              # the pipeline of Table 4 / Fig. 5, under both wrappers
-    curves = ([(ref[0], "-"), (ref[1], (0, (3, 2)))] if ref else []) + [(("ours", "none"), "-")]
+    curves = [((ORACLE_TWIN.get(p, p), "oracle"), (0, (3, 2))) for p in MAIN_PIPES] + \
+             [((p, "realistic"), "-") for p in MAIN_PIPES] + [(("ours", "none"), "-")]   # every main pipeline
     gaps_s = sorted({r["gap_s"] for r in res}, key=float)
     metrics = [("COMET", "COMET (mean of directions)"), ("wrong_dir_word_pct", "wrong-direction words (%)"),
                ("EndOffset_p50_s", "EndOffset, median (s)")]

@@ -1,0 +1,47 @@
+% =====================================================================
+% Table A (tab:factorial-full): the full oracle-component factorial for
+% every main pipeline on both sets (one-column appendix, App. E).
+% Rows per pipeline: 1 gold turns + gold language; 2 gold turns + language
+% ID; 3 VAD + gold language (the language of the most-overlapping turn,
+% App. D); 4 VAD + language ID (realistic wrapper); 5 gold turns + gold
+% language + two-channel separation (L1 only). The consecutive cascade's
+% rows with gold turns are the offline ASR->LLM cascade.
+% No values yet: every cell is pending (\tbd = blank); -- = not applicable.
+% =====================================================================
+\begin{table}[t]
+  \caption{Full oracle-component factorial for every main pipeline at its main operating point (ideal clock). \cmark: oracle T (gold turns, else VAD segments), L (gold language, else spoken-language identification restricted to the pair) or S (each speaker's own channel; L1 only). Row~4 is the realistic wrapper. TAXI: \taxi; Syn: \syn. COMET (mean of both directions) and wrong-direction words (WD, \%); the effects $E_T$, $E_L$, $I$ and $E_S$ and their CIs follow from these rows (\cref{app:results}). Blank: pending; --: not applicable.}
+  \label{tab:factorial-full}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{2.6pt}
+  \begin{tabular}{@{}llcccccccccccccc@{}}
+    \toprule
+    & & \multicolumn{3}{c}{Oracle} & \multicolumn{2}{c}{TAXI L0 nat.} & \multicolumn{3}{c}{TAXI L1} & \multicolumn{2}{c}{Syn \pair{En}{De} L0} & \multicolumn{2}{c}{Syn \pair{En}{De} L1} & \multicolumn{2}{c}{Syn \pair{Ko}{En} L1} \\
+    \cmidrule(lr){3-5}\cmidrule(lr){6-7}\cmidrule(lr){8-10}\cmidrule(lr){11-12}\cmidrule(lr){13-14}\cmidrule(l){15-16}
+    Pipeline & \# & T & L & S & COMET & WD & COMET & WD & \makecell[b]{Switch\\lat.\ (s)} & COMET & WD & COMET & WD & COMET & WD \\
+    \midrule
+    \multirow{5}{*}{Consecutive cascade}
+      & 1 & \cmark & \cmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 2 & \cmark & \xmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 3 & \xmark & \cmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 4 & \xmark & \xmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 5 & \cmark & \cmark & \cmark & --   & --   & \tbd & \tbd & \tbd & --   & --   & \tbd & \tbd & \tbd & \tbd \\
+    \midrule
+    \multirow{5}{*}{SeamlessStreaming}
+      & 1 & \cmark & \cmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 2 & \cmark & \xmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 3 & \xmark & \cmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 4 & \xmark & \xmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 5 & \cmark & \cmark & \cmark & --   & --   & \tbd & \tbd & \tbd & --   & --   & \tbd & \tbd & \tbd & \tbd \\
+    \midrule
+    \multirow{5}{*}{Streaming cascade}
+      & 1 & \cmark & \cmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 2 & \cmark & \xmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 3 & \xmark & \cmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 4 & \xmark & \xmark & \xmark & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+      & 5 & \cmark & \cmark & \cmark & --   & --   & \tbd & \tbd & \tbd & --   & --   & \tbd & \tbd & \tbd & \tbd \\
+    \midrule
+    \multicolumn{5}{@{}l}{\model (no oracle input)} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}
+\end{table}

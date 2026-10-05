@@ -6,7 +6,7 @@
 % Sec. 6.3 so that Table 5 is not pushed past Sec. 7, and Table 6
 % (tables/tab_ablation.tex).
 % Fig. 5 (fig:gap) lives in App. E (appendix/E_results.tex), together with
-% the factorial-effect formulas, the second-best pipeline, tcpWER, DER
+% the factorial-effect formulas, the full factorial of every pipeline, tcpWER, DER
 % without a collar and the reference configuration of each ablation row.
 % Stated once elsewhere, not repeated here: metric definitions and the
 % bootstrap (Sec. 4.5), what M2 and M3 commit at and the model's training
@@ -19,8 +19,9 @@
 % runs exist.
 % Wording: systems with oracle input are not called bounds (no dialogue
 % history; Whisper ST already passes Gold->LLM on De->En BLEU), and
-% Gold->LLM (MU2) is non-causal. One reference pipeline P serves Table 4,
-% R and Fig. 5. Coupling is tested by the decoupled twin and the
+% Gold->LLM (MU2) is non-causal. No reference pipeline is selected: every
+% main pipeline is decomposed on both sets (Table 4); R is reported against
+% the best realistic pipeline of each set (decided 2026-10-06). Coupling is tested by the decoupled twin and the
 % same-backbone cascade, nothing else. Batched offline compute: "at most
 % about 0.2 s" (never quote a single system's value).
 % Result templates match the abstract and Sec. 7: R under L0 natural
@@ -54,22 +55,20 @@ Streaming systems are SeamlessStreaming \citep{seamless2023seamless}; a streamin
 
 \paragraph{Wrappers and operating points.}
 Single-direction systems run as one instance per target language behind a wrapper, forming a pipeline (\cref{app:baselines}): the oracle wrapper cuts gold turns from the mix and routes each by its gold language; the realistic wrapper segments the stream with Silero VAD \citep{silero2024silero} and routes each segment by spoken language identification restricted to the pair.
-Baselines are not fine-tuned; each streaming system has two operating points (one main), chosen on the \syn calibration split by a rule fixed before the test runs.
-\draftnote{decision needed: whether the low- or the high-budget point (\cref{app:baselines}) is the main one; until \syn exists, documented defaults stand in for calibrated operating points}
+Baselines are not fine-tuned. Each streaming system sweeps its latency knob, which traces a quality--latency curve (\cref{fig:ql}); tables report two operating points defined by the lag relative to turn length, $\rho=\mathrm{StreamLAAL}/\bar D$, with $\bar D$ the mean source-turn duration of the direction: a \emph{simultaneous} regime ($\rho\le0.5$, the main point; on \taxi 1.54\,s for \deen and 2.31\,s for \ende) and a \emph{consecutive} regime ($\rho\le1$, the lag of translating after each turn). Settings are fixed on the \syn calibration split, before the test runs (\cref{app:baselines}).
+\draftnote{until \syn exists, documented defaults stand in for calibrated settings}
 
 \paragraph{Ranking and the oracle gap.}
 We rank systems by COMET \citep{kocmi2021ship}; on \taxi, whose references lack case and punctuation, chrF replaces it if their rankings disagree (\cref{app:scorer}).
 Latencies use the ideal clock; \cref{tab:ca-latency} (\cref{app:results}) adds computation-aware latency, also for the ablation controls.
-The reference pipeline $P$ covers both directions and has the highest realistic-wrapper COMET on \taxi L0 natural.
-Its oracle gap $G=Q_{\mathrm{oracle}}-Q_{\mathrm{real}}$ is its COMET difference between the two wrappers; \model recovers $R=(Q_{\mathrm{ours}}-Q_{\mathrm{real}})/G$ of it, reported with a bootstrap CI only where the CI of $G$ excludes 0.
-\draftnote{decision needed: choose $P$ on the \syn calibration split by the operating-point rule, or state that $P$ is chosen post hoc on \taxi for analysis only, since \cref{sec:bench} says nothing is tuned on \taxi; either way, $P$ must run on every set of \cref{fig:gap}, which M4T v2 + AlignAtt (\taxi only) does not}
+A pipeline's oracle gap $G=Q_{\mathrm{oracle}}-Q_{\mathrm{real}}$ is its COMET difference between the two wrappers. We decompose $G$ for every main pipeline (consecutive cascade, SeamlessStreaming, streaming cascade) on both \taxi and \syn, so no pipeline is selected on test data; \model's recovery $R=(Q_{\mathrm{ours}}-Q_{\mathrm{real}})/G$ is reported against the pipeline with the highest realistic COMET on each set (all pipelines in \cref{app:results}), with a bootstrap CI only where the CI of $G$ excludes 0.
 
 \subsection{Real dialogues (RQ1, RQ3)}\label{sec:exp-real}
 
 \begin{figure}[t]
   \centering
   \includegraphics{figures/fig4_quality_latency.pdf}
-  \caption{Quality (chrF until COMET is scored) vs.\ \laal (a, b) and median \eo (c, d) on \taxi L0 natural. Black: offline systems and Gold$\to$LLM (MU2). Pending: baselines with the oracle (filled) and the realistic (hollow) wrapper, joined by arrows, and \model over $\delta_t$ (vermillion). $^\dagger$Preliminary (\cref{tab:main}).}
+  \caption{Quality (chrF until COMET is scored) vs.\ \laal (a, b) and median \eo (c, d) on \taxi L0 natural. Black: offline systems and Gold$\to$LLM (MU2). Pending: each baseline's knob sweep with the oracle (filled) and the realistic (hollow) wrapper, and \model over $\delta_t$ (vermillion). Dashed and solid verticals: the simultaneous ($\rho=0.5$, half a turn) and consecutive ($\rho=1$, one turn) budgets. $^\dagger$Preliminary (\cref{tab:main}).}
   \label{fig:ql}
 \end{figure}
 
@@ -86,12 +85,12 @@ Realistic segmentation costs the streaming systems \tbdtext{} COMET (arrows in \
 \input{tables/tab_factorial.tex}
 \input{tables/tab_aux.tex}
 
-\Cref{tab:factorial} replaces the oracle components of $P$ singly and jointly; a factor's effect averages the COMET lost by replacing its component over both settings of the other factor, so the effects of segmentation and routing sum to $G$ (\cref{app:results}).
+\Cref{tab:factorial} replaces the oracle components of each main pipeline singly and jointly; a factor's effect averages the COMET lost by replacing its component over both settings of the other factor, so the effects of segmentation and routing sum to $G$ (\cref{app:results}).
 We expect silence-based segmentation to merge turns across speaker changes, as a 500\,ms threshold captures only 18--30\% of between-speaker intervals in conversation \citep{heldner2010pauses} and \taxi L0 natural draws a median gap of 0.223\,s (\cref{tab:bench}).
-Under L0 natural, turn segmentation costs \tbdtext{} COMET and routing \tbdtext{}, at \tbdtext{}\% language-ID routing accuracy; under L1, realistic segmentation yields \tbdtext{}\% wrong-direction words, and oracle separation recovers \tbdtext{} COMET (failure types: \cref{app:results}).
+Under L0 natural, turn segmentation costs \tbdtext{}--\tbdtext{} COMET across pipelines and routing \tbdtext{}--\tbdtext{}, at \tbdtext{}\% language-ID routing accuracy; under L1, realistic segmentation yields \tbdtext{}\% wrong-direction words, and oracle separation recovers \tbdtext{} COMET (failure types: \cref{app:results}).
 
 \paragraph{Timing conditions and language pairs.}\label{sec:exp-timing}
-\Cref{app:results} contrasts $P$ under both wrappers with \model per timing condition and language pair (\cref{fig:gap}) and over fixed gaps from $-0.6$ to 2\,s (\cref{fig:gap-sweep}).
+\Cref{app:results} contrasts the best realistic pipeline of each timing condition and language pair, under both wrappers, with \model (\cref{fig:gap}) and over fixed gaps from $-0.6$ to 2\,s (\cref{fig:gap-sweep}).
 On \taxi, the oracle gap is \tbdtext{} COMET under L0 mediated, \tbdtext{} under L0 natural and \tbdtext{} under L1, where \model recovers \tbdtext{}\%; on \syn L0 natural, it is \tbdtext{} for \pair{Ko}{En} against \tbdtext{} for \pair{En}{De}.
 The unit pilot accepts far fewer commit points for \enko than for \koen (21\% vs.\ 54\%; \cref{app:units}), which verb-final Korean or a chrF threshold stricter for Korean targets may explain.
 

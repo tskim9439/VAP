@@ -5,7 +5,7 @@
 % Fig. A5 (fig:turn-length), Table A6 (tables/tab_ca_latency),
 % Table A8 (tables/tab_failures).
 % Also holds detail moved out of Sec. 6: the factorial-effect formulas, the
-% second-best pipeline, tcpWER, DER without a collar, the DER caveat and the
+% full factorial of every main pipeline (tab:factorial-full), tcpWER, DER without a collar, the DER caveat and the
 % reference configuration of each ablation row of Table 6 (paragraph
 % "Ablations", pointed to from Sec. 6.5).
 % Known now: the preliminary offline TAXI L0 natural rows, the offline systems'
@@ -19,12 +19,12 @@ This appendix gives the oracle gap by timing condition and language pair (\cref{
 \draftnote{every other cell is pending; L1, the fixed-gap renders and \syn are planned}
 
 \paragraph{Gap by timing condition and language pair.}
-\Cref{fig:gap}, summarised in \cref{sec:exp-timing}, contrasts for every timing condition and language pair the reference pipeline $P$ of \cref{sec:exp-setup} under the oracle and the realistic wrapper with \model, which receives no oracle input. One pipeline serves every row and both wrappers, so that each gap compares the same system with and without oracle segmentation and routing. COMET is averaged over the two directions; as one side of every synthetic pair is translationese (\cref{app:syn}), rows are compared only through their gaps, never through absolute COMET.
+\Cref{fig:gap}, summarised in \cref{sec:exp-timing}, contrasts for every timing condition and language pair the main pipeline with the highest realistic-wrapper COMET in that row, under the oracle and the realistic wrapper, with \model, which receives no oracle input. Both wrappers of a row use the same pipeline, so each gap compares the same system with and without oracle segmentation and routing; the gaps of all main pipelines are in \cref{tab:factorial-full}. COMET is averaged over the two directions; as one side of every synthetic pair is translationese (\cref{app:syn}), rows are compared only through their gaps, never through absolute COMET.
 
 \begin{figure}[t]
   \centering
-  \includegraphics{figures/fig5_oracle_gap.pdf}
-  \caption{Where the conversational difficulty lies (values pending; numbers will be in \cref{tab:conditions}). For each timing condition and language pair: the reference pipeline $P$ with oracle turn segmentation (filled) and with VAD and language-ID routing (hollow), and \model (diamond; no oracle input). $P$ covers both directions and has the highest realistic-wrapper COMET on \taxi L0 natural at its main operating point (\cref{sec:exp-setup}); it serves every row and both wrappers. Panels: COMET (mean of the two directions), median \eo and wrong-direction words. Rows are compared only through their gaps, not through absolute COMET.}
+  \includegraphics[width=\linewidth]{figures/fig5_oracle_gap.pdf}
+  \caption{Where the conversational difficulty lies (values pending; numbers will be in \cref{tab:conditions}). For each timing condition and language pair: the main pipeline with the highest realistic-wrapper COMET in that row (named at the left), with oracle turn segmentation (filled) and with VAD and language-ID routing (hollow), and \model (diamond; no oracle input), each at its main operating point. Panels: COMET (mean of the two directions), median \eo and wrong-direction words. Rows are compared only through their gaps, not through absolute COMET.}
   \label{fig:gap}
 \end{figure}
 
@@ -34,14 +34,16 @@ For every timing condition, language pair and direction, \cref{tab:conditions} l
 \input{tables/tab_conditions}
 
 \paragraph{Decomposing the gap.}
-Let $Q_{TL}$ be the COMET of the row of \cref{tab:factorial} with gold turns ($T{=}1$) or VAD segments ($T{=}0$) and with the gold ($L{=}1$) or the identified ($L{=}0$) source language, so that the oracle gap of \cref{sec:exp-setup} is $G=Q_{11}-Q_{00}$. The segmentation effect
+We decompose the gap of every main pipeline on every set rather than of one selected pipeline (\cref{tab:factorial-full}). For one pipeline and set, let $Q_{TL}$ be the COMET of its row with gold turns ($T{=}1$) or VAD segments ($T{=}0$) and with the gold ($L{=}1$) or the identified ($L{=}0$) source language, so that its oracle gap (\cref{sec:exp-setup}) is $G=Q_{11}-Q_{00}$. The segmentation effect
 \begin{equation*}
   E_T=\tfrac12\bigl[(Q_{11}-Q_{01})+(Q_{10}-Q_{00})\bigr]
 \end{equation*}
-and the routing effect $E_L=\tfrac12[(Q_{11}-Q_{10})+(Q_{01}-Q_{00})]$ each average the loss from replacing one oracle component over both settings of the other component. They sum to $G$, which makes them the Shapley attribution for two factors, and the interaction $I=Q_{11}-Q_{10}-Q_{01}+Q_{00}$ measures how far the two losses compound. We report $E_T$, $E_L$ and $I$ in COMET points with session-bootstrap CIs, not as shares of $G$, which are unstable when $G$ is small. Repeating the factorial for the second-best pipeline (\tbdtext{}) gives $E_T$ and $E_L$ of \tbdtext{} and \tbdtext{} COMET under L1.
+and the routing effect $E_L=\tfrac12[(Q_{11}-Q_{10})+(Q_{01}-Q_{00})]$ each average the loss from replacing one oracle component over both settings of the other component. They sum to $G$, which makes them the Shapley attribution for two factors, and the interaction $I=Q_{11}-Q_{10}-Q_{01}+Q_{00}$ measures how far the two losses compound. Under L1, the separation effect $E_S=Q_{11S}-Q_{11}$ is the COMET gained when each oracle segment is cut from its speaker's own channel instead of the mix (row~5 vs.\ row~1). We report $E_T$, $E_L$, $I$ and $E_S$ in COMET points with session-bootstrap CIs, not as shares of $G$, which are unstable when $G$ is small; \cref{tab:factorial} summarises them and \cref{tab:factorial-full} lists every row.
+
+\input{tables/tab_factorial_full}
 
 \paragraph{Gap dose-response.}
-Each timing condition draws its gaps from one distribution. To test whether pipelines degrade smoothly as turns follow each other more closely, we re-render \taxi with one fixed gap $g$ at every speaker change, $g\in\{-0.6,-0.4,-0.2,0.05,0.2,0.5,1.0,2.0\}$\,s, each rendering under its own configuration name and checksums; a negative gap starts the next turn $|g|$ before the previous one ends, as in L1. We run $P$ with both wrappers, and \model (\cref{fig:gap-sweep}; numbers in part~(c) of \cref{tab:conditions}). A smooth trend would show that the conclusions do not hinge on the chosen L0 and L1 distributions; a sharp drop would locate the gap at which VAD-based routing breaks down. From $g=2$\,s to $g=-0.6$\,s, COMET changes by \tbdtext{} with the realistic wrapper, by \tbdtext{} with oracle segmentation and by \tbdtext{} for \model.
+Each timing condition draws its gaps from one distribution. To test whether pipelines degrade smoothly as turns follow each other more closely, we re-render \taxi with one fixed gap $g$ at every speaker change, $g\in\{-0.6,-0.4,-0.2,0.05,0.2,0.5,1.0,2.0\}$\,s, each rendering under its own configuration name and checksums; a negative gap starts the next turn $|g|$ before the previous one ends, as in L1. We run every main pipeline with both wrappers, and \model (\cref{fig:gap-sweep}; numbers in part~(c) of \cref{tab:conditions}). A smooth trend would show that the conclusions do not hinge on the chosen L0 and L1 distributions; a sharp drop would locate the gap at which VAD-based routing breaks down. From $g=2$\,s to $g=-0.6$\,s, COMET changes by \tbdtext{} with the realistic wrapper, by \tbdtext{} with oracle segmentation and by \tbdtext{} for \model.
 
 \begin{figure}[t]
   \centering
