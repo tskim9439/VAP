@@ -27,13 +27,16 @@
 \usepackage{mathtools}
 \usepackage{amsthm}
 \usepackage[capitalize,noabbrev]{cleveref}
+% \FloatBarrier between appendix sections only (not [section]: that would also act in the two-column main text).
+\usepackage{placeins}
 
 \input{macros}
 
 % Draft switches
 %\showpendingtrue
 \newif\ifshowdraftnotes
-\showdraftnotestrue
+% main_nodraft.tex defines \NODRAFT to measure the submission layout (draft notes off).
+\ifdefined\NODRAFT\showdraftnotesfalse\else\showdraftnotestrue\fi
 \newcommand{\draftnote}[1]{\ifshowdraftnotes{\color{blue!60!black}\footnotesize[\textit{Draft: #1}]}\fi}
 
 \theoremstyle{definition}
@@ -78,13 +81,29 @@
 \newpage
 \appendix
 \onecolumn
+% Appendix float pages start at the top and stack their floats at \floatsep
+% (defaults centre them vertically and spread them apart).
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{\floatsep}
+\makeatother
+% Each appendix section's floats are output before the next section starts.
 \input{appendix/A_taxi}
+\FloatBarrier
 \input{appendix/B_syn}
+\FloatBarrier
 \input{appendix/C_scorer}
+\FloatBarrier
 \input{appendix/D_baselines}
+\FloatBarrier
 \input{appendix/E_results}
+\FloatBarrier
 \input{appendix/F_model}
+\FloatBarrier
 \input{appendix/G_units}
+\FloatBarrier
 \input{appendix/H_repro}
+\FloatBarrier
+\input{appendix/I_related}
 
 \end{document}

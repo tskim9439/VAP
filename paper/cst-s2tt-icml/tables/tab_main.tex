@@ -1,20 +1,25 @@
 % =====================================================================
 % Table 3 (tab:main): main results on CST-Bench-TAXI, L0 natural timing,
-% ideal clock (table*, 8pt; 529pt wide at 9pt, 480pt at 8pt). Included at the start of Sec. 6.
+% ideal clock (table*, 8pt; about 480pt wide in a 487.8pt text width).
+% Included at the start of Sec. 6. Systems are defined in Sec. 6.1
+% (sec:exp-setup); names follow Table A4 (tab:baselines), and the caption
+% of Fig. 4 (fig:ql) maps its legend labels to them. Table A5(a)
+% (tab:conditions) repeats every row with CIs.
 % Measured so far (preliminary, \prelim): BLEU, chrF and StreamLAAL of the
 % three offline rows; their EndOffset is 0 by construction on the ideal
 % clock. They were scored with gold turn IDs (scorer oracle mode, no
 % resegmentation); the caption says so. Every other cell is pending
 % (\tbd = blank); -- marks a direction the system does not cover, and the
-% pooled columns of single-direction systems. Systems are defined in Sec. 6.1
-% (sec:exp-setup); names follow Table A5 (tab:conditions), and the caption
-% of Fig. 4 (fig:ql) maps its legend labels to them.
+% pooled columns of single-direction systems. The single-direction
+% streaming systems (StreamSpeech; optional Hibiki-Zero and InfiniSST) are
+% reported only in Table A5(a), to keep this table to bidirectional
+% pipelines, the oracle-input systems and the model.
 % =====================================================================
 \begin{table*}[t]
-  \caption{Real dialogues: \taxi, L0 natural timing, ideal clock. Rows: upper bounds with oracle input, the consecutive cascade, streaming systems and \model (\cref{sec:exp-setup}; LLM: Qwen3.8-27B), each at its main operating point; \model M2 commits translations at turn ends, and M3 at MU2 units with a low or a high $\delta_t$. Seg.: oracle = gold turns and source language; realistic = VAD and language-ID routing; none = the system segments the stream itself. Per direction: mean \laal and median \eo in seconds; the last three columns pool both directions (switch latency: median, in seconds) and do not apply to single-direction systems, which cannot be the best pipeline (\cref{tab:factorial,fig:gap}). \Cref{tab:conditions} gives 95\% session-bootstrap CIs for the rows it repeats, except for BLEU. Blank: pending; --: direction not covered. $^\dagger$preliminary and scored by gold turn ID (oracle mode of \cref{app:scorer}), not resegmented; to be re-run under the final protocol. $^\ddagger$0 by construction: the output is emitted at the oracle turn end.}
+  \caption{Real dialogues: \taxi, L0 natural, ideal clock; systems of \cref{sec:exp-setup} at their main operating point. Seg.: oracle = gold turns and languages; realistic = VAD and language-ID routing; none = the system segments the stream. Latencies in seconds (\laal: mean; others: median). 95\% CIs (except BLEU) and single-direction streaming systems: \cref{tab:conditions}. Blank: pending; --: not applicable. $^\dagger$Preliminary, scored by gold turn ID without resegmentation (\cref{app:scorer}). $^\ddagger$0 by construction. $^\S$Non-causal.}
   \label{tab:main}
   \centering
-  \fontsize{8}{9.5}\selectfont % 8pt (ICML \footnotesize is 9pt): fits the width
+  \fontsize{8}{9}\selectfont % 8pt (ICML \footnotesize is 9pt): fits the width
   \setlength{\tabcolsep}{2.5pt}
   \begin{tabular}{@{}ll*{13}{c}@{}}
     \toprule
@@ -37,7 +42,7 @@
       & --   & --   & --   & --   & --
       & \tbd & \prelim{30.69} & \prelim{56.67} & \prelim{3.09} & $0^{\ddagger}$
       & --   & --   & --   \\
-    Gold$\to$LLM (MU2) & oracle
+    Gold$\to$LLM (MU2)$^\S$ & oracle
       & \tbd & \tbd & \tbd & \tbd & \tbd
       & \tbd & \tbd & \tbd & \tbd & \tbd
       & \tbd & \tbd & \tbd \\
@@ -75,22 +80,6 @@
       & \tbd & \tbd & \tbd & \tbd & \tbd
       & \tbd & \tbd & \tbd & \tbd & \tbd
       & \tbd & \tbd & \tbd \\
-    \multirow{2}{*}{StreamSpeech} & oracle
-      & --   & --   & --   & --   & --
-      & \tbd & \tbd & \tbd & \tbd & \tbd
-      & --   & --   & --   \\
-      & realistic
-      & --   & --   & --   & --   & --
-      & \tbd & \tbd & \tbd & \tbd & \tbd
-      & --   & --   & --   \\
-    \multirow{2}{*}{InfiniSST} & oracle
-      & \tbd & \tbd & \tbd & \tbd & \tbd
-      & --   & --   & --   & --   & --
-      & --   & --   & --   \\
-      & realistic
-      & \tbd & \tbd & \tbd & \tbd & \tbd
-      & --   & --   & --   & --   & --
-      & --   & --   & --   \\
     \midrule
     \model M2 & none
       & \tbd & \tbd & \tbd & \tbd & \tbd

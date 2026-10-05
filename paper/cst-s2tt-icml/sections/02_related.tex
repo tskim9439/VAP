@@ -1,45 +1,44 @@
 % =====================================================================
-% Section 2: related work (about 1.25 columns of text by a glyph-width
-% estimate, plus Table 1; the outline target was ~0.9 column).
-% Table 1 (tab:positioning) lives in tables/tab_positioning.tex and is
-% included at the top so that it floats next to the section. Each
-% paragraph ends with what the line of work lacks for CST and what we
-% reuse. Sec. 1 already outlines the SimulST lineage and the four closest
-% systems (JSTAR, DiariST, STAC-ST, Seed LiveInterpret 2.0); this section
-% adds the details and Table 1 lists the differences. Latency metrics are
-% defined in Sec. 4, corpora are compared in App. A (tab:corpora), and
-% baselines are run in Sec. 6.
-% If space is short, cut first: the transducer clause of the last
-% paragraph, then the code-switching sentence, then "and Hibiki's
-% contextual alignment". Already cut for space (re-add if room): a
-% MuST-C/IWSLT benchmark sentence (Sec. 1 makes that point) and
-% "Diarization benchmarks use monolingual calls or meetings" with
-% cieri2004fisher, canavan1997callhome and vinnikov2024notsofar.
+% Section 2: related work (budget: 0.55 page including Table 1; round 2
+% measured 32 column lines of prose plus the heading, and Table 1 about
+% 14 lines). Table 1 (tab:positioning, tables/tab_positioning.tex) is
+% input first so that it floats next to the section. Sec. 1 introduces the
+% four closest systems as the closest (citing Table 1) and cites JSTAR and
+% Seed LiveInterpret 2.0; this section gives the lineage, Table 1 the
+% differences, and App. I
+% (appendix/I_related.tex, app:related) the long version: every citation
+% cut from here (incl. the Sortformer diarization clause and the
+% multilingual turn-taking clause, cut in round 2), the source of every
+% Table 1 cell, the baselines (incl. the optional Hibiki-Zero) and what
+% Secs. 4-5 reuse. Corpora are compared in App. A (tab:corpora); Sec. 7
+% points here for the lack of real overlapped two-language recordings; the
+% diarization baselines are named in Sec. 6.5. "Others are" in the data
+% paragraph is deliberately non-exhaustive (tab:corpora also lists
+% CS-Dialogue and the paid Verbmobil II volumes).
+% Stated once elsewhere, not repeated here (round 3): the "closest systems"
+% claim (Sec. 1) and the TAXI citation (Sec. 4, sec:bench-taxi, which this
+% section points to). The scorer sentence names cstbench eval as ours and
+% credits EndOffset and StartOffset (switch latency) to SimulEval, as
+% Sec. 4 and App. C do; only per-language resegmentation and the
+% wrong-direction count are new.
+% If space is short again, cut next the turn-taking sentence (App. I keeps
+% it).
 % =====================================================================
 \section{Related Work}
 \label{sec:related}
 
 \input{tables/tab_positioning.tex}
 
-\paragraph{Simultaneous and streaming speech translation.}
-Beyond fixed wait-$k$ \citep{ma2019stacl}, learned policies use monotonic attention \citep{arivazhagan2019monotonic,ma2020monotonic} or commit at meaning units \citep{zhang2020learning}; local agreement \citep{liu2020lowlatency,polak2022cuni,machacek2023turning} and attention \citep{papi2023alignatt} run offline models simultaneously, also on unbounded audio \citep{papi2024streamatt} and with LLM translators \citep{fuxa2026alignatt4llm}.
-LLM-based systems translate streaming speech \citep{ouyang2025infinisst,guo2025streamuni,cheng2024towards}, and StreamSpeech, SeamlessStreaming and Hibiki(-Zero) also output speech \citep{zhang2024streamspeech,seamless2023seamless,labiausse2025highfidelity,labiausse2026simultaneous}.
-All of them are evaluated per direction and without speaker attribution, the setting that SimulST toolkits and latency metrics assume \citep{ma2020simuleval,gaido2025simulstream,papi2022overgeneration,polak2025better}; several serve as our baselines (\cref{sec:exp}), and we reuse \laal{}, meaning units and Hibiki's contextual alignment (\cref{sec:bench,sec:model}).
+\paragraph{Simultaneous translation.}
+Read/write policies range from wait-$k$ to local agreement and attention-guided emission \citep{ma2019stacl,liu2020lowlatency,papi2023alignatt}, and segmentation is learned inside the model \citep{zhang2023endtoend} or handled for unbounded audio (StreamST; \citealp{papi2024streamatt}).
+These methods, like StreamSpeech, SeamlessStreaming and Hibiki(-Zero) \citep{zhang2024streamspeech,seamless2023seamless,labiausse2025highfidelity,labiausse2026simultaneous}, assume one speaker and one direction, as do SimulST toolkits and latency metrics \citep{ma2020simuleval,gaido2025simulstream,polak2025better}; our scorer, \scorer, instead resegments per output language, reports SimulEval's \eo per turn and StartOffset at direction changes (switch latency), and counts wrong-direction words (\cref{sec:bench-scoring}).
+\draftnote{planned in \scorer: switch latency and the wrong-direction detector (\cref{app:scorer})}
 
-\paragraph{Joint transcription, translation and speakers.}
-Transcripts and translations can share one model \citep{chen2021direct,papi2023token}, and serialized output training transcribes overlapping speakers with one decoder, also streaming in time order (t-SOT) and with speaker attribution \citep{kanda2020serialized,kanda2022streaming,kanda2022streamingspeaker,kanda2020joint,kanda2021end}; \model reuses this time-ordered serialization.
-Speaker embeddings let streaming ST detect speaker changes \citep{wang2025streaming}.
-Of the closest systems (\cref{sec:intro}), DiariST builds on t-SOT and scores speaker-attributed BLEU on meetings translated from Chinese \citep{yang2024diarist}; STAC-ST obtains its two-speaker channel by merging the two sides of Fisher--CALLHOME calls \citep{zuluagagomez2023end}; JSTAR uses a fast--slow cascaded transducer encoder \citep{moritz2025transcribing}; and Seed LiveInterpret~2.0 \citep{cheng2025seed} is evaluated on RealSI clips cut from public videos \citep{cheng2024towards}.
-\Cref{tab:positioning} contrasts their settings with ours; none of the four covers German or Korean.
+\paragraph{Speakers and turns.}
+Serialized output training transcribes overlapping speakers in one sequence, also in time order (t-SOT) and with speaker attribution \citep{kanda2020serialized,kanda2022streaming,kanda2022streamingspeaker}.
+DiariST extends t-SOT to speaker-attributed streaming translation \citep{yang2024diarist}, and STAC-ST merges the two sides of Fisher--CALLHOME calls into one channel \citep{zuluagagomez2023end}.
+Turn-taking models predict both speakers' voice activity but learn from monolingual dyads \citep{ekstedt2022voice,inoue2024multilingual}.
 
-\paragraph{Conversational translation systems and data.}
-Conversational speech translation was studied as early as JANUS-II, which compared push-to-talk with cross-talk recording \citep{lavie1996translation}, but public test data still fall short (\cref{tab:corpora}): they are one-sided (MSLT; \citealp{federmann2016microsoft,federmann2017microsoft}), re-enacted (DRAL; \citealp{ward2023dialogs,ward2024dialogs,avila2023towards}), mediated by machine translation and recorded per participant (InCroMin; \citealp{cechovic2025corpus}), from one source language (Fisher--CALLHOME; \citealp{post2013improved}) or text-only (chat translation; \citealp{farajian2020findings,liang2021modeling}).
-Code-switched speech alternates languages within, not between, speakers \citep{weller2022end,alastruey2023towards,zhou2025csdialogue}.
-\bench therefore builds on TAXI \citep{bas2001taxi,reichel2016bas}, real German--English telephone dialogues with human translations of both sides (\cref{sec:bench}).
-
-\paragraph{Diarization, turn-taking and multistream models.}
-Neural diarization handles overlap, unknown speaker counts and streaming input \citep{fujita2019end,horiguchi2020end,xue2021online}; Sortformer orders speakers by arrival, also online \citep{park2025sortformer,medennikov2025streaming}; transducers emit speaker roles or turns \citep{elshafey2019joint,xia2022turn}.
-Turn-taking models predict both speakers' voice activity \citep{ekstedt2022voice} or turn shifts from text \citep{ekstedt2020turngpt} but learn from monolingual dyads, even when multilingual \citep{inoue2024multilingual}.
-Full-duplex dialogue models \citep{nguyen2023generative,defossez2024moshi,veluri2024beyond} and delayed or step-synchronous decoders \citep{zeghidour2025streaming,seide2024speech} run on a fixed clock.
-Our diarization baselines are pyannote \citep{bredin2023pyannote} and Streaming Sortformer (\cref{sec:exp-aux}), and \model adopts arrival-order speakers and one clock-synchronous token stream (\cref{sec:model}).
-\draftnote{planned: the baseline runs, and \model{} beyond its streaming ASR backbone}
+\paragraph{Conversational data.}
+Of the corpora in \cref{tab:corpora}, only TAXI (\cref{sec:bench-taxi}) combines real two-language dialogues, human translations of both sides and free research access; others are one-sided (MSLT; \citealp{federmann2016microsoft}), re-enacted (DRAL; \citealp{ward2024dialogs}), machine-mediated (InCroMin; \citealp{cechovic2025corpus}) or from one source language (Fisher--CALLHOME; \citealp{post2013improved}).
+\Cref{app:related} extends this section.

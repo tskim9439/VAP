@@ -1,17 +1,21 @@
 % =====================================================================
 % Table A5 (tab:conditions): full per-direction grid, the numbers behind
-% Fig. 5 (fig:gap) and Fig. A3 (fig:gap-sweep). Included from App. E.
-% Two floats: the second continues the first (\ContinuedFloat, caption package,
-% keeps the table number; it has no label of its own).
+% Fig. 5 (fig:gap, App. E) and Fig. A3 (fig:gap-sweep); part (a) also
+% repeats every row of Table 3 (tab:main) with CIs. Included from App. E.
+% Three floats: the second and third continue the first (\ContinuedFloat,
+% caption package, keeps the table number; they have no label of their own).
 % Known now: only the offline TAXI L0 natural rows (preliminary; the same runs
-% as Table 3 / tab:main). Every other cell is pending (\tbd = blank).
-% Row sets follow the experiment plan: CST-Bench-Syn runs the offline bounds,
-% the three main pipelines and the model; SeamlessM4T v2 + AlignAtt runs on TAXI.
+% as Table 3, scored by gold turn ID). Every other cell is pending (\tbd =
+% blank); -- marks directions a system does not cover and the pooled columns
+% of single-direction systems. ^\circ rows are optional runs.
+% Row sets follow the experiment plan: CST-Bench-Syn runs the offline systems,
+% the three main pipelines and the model; SeamlessM4T v2 + AlignAtt and the
+% single-direction streaming systems run on TAXI L0 natural only.
 % The optional L1b stress test (not in v1) would add its own block and a
 % backchannel-leakage column. When filling cells, keep the block structure.
 % =====================================================================
 \begin{table}[!tp]
-  \caption{Full results by timing condition and language pair: the numbers behind \cref{fig:gap,fig:gap-sweep} (ideal clock; each system at its pre-registered main operating point). Part~(a) covers \taxi; parts~(b) and~(c) follow. Seg.: oracle = gold turns and source language; realistic = VAD and language-ID routing; none = the system segments the stream itself. Offline: gold$\to$LLM and ASR$\to$LLM translate the gold or the Qwen3-ASR-1.7B transcript of each turn with Qwen3.8-27B, and Whisper ST is Whisper-large-v3 translating into English; streaming cascade: streaming ASR and Qwen3.8-27B with LocalAgreement-2; M4T v2: SeamlessM4T v2 (\cref{tab:baselines}). X is German on \taxi and \syn \pair{En}{De}, and Korean on \syn \pair{Ko}{En}. Latencies are in seconds over non-empty turns: mean \laal and median \eo per direction; wrong-direction words, median switch latency and empty turns are pooled over both directions; \cref{tab:ca-latency} lists each system's encoder look-ahead $\ell_{\mathrm{enc}}$. Each estimate will carry the half-width of its 95\% session-clustered bootstrap CI as a subscript. Offline systems translate each oracle turn after it ends, so their \laal equals the mean source-turn duration and their \eo is 0 by construction. $^\dagger$preliminary; to be re-run under the final protocol (same runs as \cref{tab:main}; no CIs yet). --: not applicable; blank: pending. \protect\draftnote{L1 is not rendered yet}}
+  \caption{Full results by timing condition and language pair, the numbers behind \cref{fig:gap,fig:gap-sweep} (ideal clock; each system at its main operating point, fixed before the test runs). Part~(a) covers \taxi and repeats every row of \cref{tab:main}; parts~(b) and~(c) follow. Systems and Seg.\ as in \cref{tab:main}; X is German on \taxi and \syn \pair{En}{De}, and Korean on \syn \pair{Ko}{En}. Latencies in seconds over non-empty turns: mean \laal and median \eo per direction; wrong-direction words, median switch latency and empty turns are pooled over both directions and do not apply to single-direction systems; \cref{tab:ca-latency} lists each system's encoder look-ahead $\ell_{\mathrm{enc}}$. Each estimate will carry the half-width of its 95\% session-clustered bootstrap CI as a subscript. Offline systems translate each oracle turn after it ends, so their \laal is the mean source-turn duration and their \eo is 0 by construction. $^\dagger$Preliminary, scored by gold turn ID without resegmentation (\cref{app:scorer}); to be re-run under the final protocol (same runs as \cref{tab:main}; no CIs yet). --: not applicable; blank: pending; $^\circ$optional. \protect\draftnote{L1 is not rendered yet}}
   \label{tab:conditions}
   \centering
   \footnotesize
@@ -23,22 +27,32 @@
     System & Seg. & COMET & chrF & \makecell{Stream-\\LAAL} & \makecell{End-\\Offset} & COMET & chrF & \makecell{Stream-\\LAAL} & \makecell{End-\\Offset} & \makecell{Wrong\\dir.\ (\%)} & \makecell{Switch\\latency} & \makecell{Empty\\turns (\%)} \\
     \midrule
     \multicolumn{13}{@{}l}{\textit{(a) \taxi, L0 natural}} \\
-    Offline: gold$\to$LLM & oracle & \tbd & \prelim{71.72} & \prelim{4.62} & 0 & \tbd & \prelim{58.05} & \prelim{3.09} & 0 & \tbd & \tbd & \tbd \\
-    Offline: ASR$\to$LLM & oracle & \tbd & \prelim{67.97} & \prelim{4.62} & 0 & \tbd & \prelim{56.61} & \prelim{3.09} & 0 & \tbd & \tbd & \tbd \\
-    Offline: Whisper ST & oracle & -- & -- & -- & -- & \tbd & \prelim{56.67} & \prelim{3.09} & 0 & \tbd & \tbd & \tbd \\
+    Gold$\to$LLM & oracle & \tbd & \prelim{71.72} & \prelim{4.62} & 0 & \tbd & \prelim{58.05} & \prelim{3.09} & 0 & \tbd & \tbd & \tbd \\
+    ASR$\to$LLM & oracle & \tbd & \prelim{67.97} & \prelim{4.62} & 0 & \tbd & \prelim{56.61} & \prelim{3.09} & 0 & \tbd & \tbd & \tbd \\
+    Whisper ST & oracle & -- & -- & -- & -- & \tbd & \prelim{56.67} & \prelim{3.09} & 0 & -- & -- & -- \\
+    Gold$\to$LLM (MU2) & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Consecutive cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    2$\times$SeamlessStreaming & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     M4T v2 + AlignAtt & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     M4T v2 + AlignAtt & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    \model & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    StreamSpeech & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
+    StreamSpeech & realistic & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
+    Hibiki-Zero$^\circ$ & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
+    Hibiki-Zero$^\circ$ & realistic & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
+    InfiniSST$^\circ$ & oracle & \tbd & \tbd & \tbd & \tbd & -- & -- & -- & -- & -- & -- & -- \\
+    InfiniSST$^\circ$ & realistic & \tbd & \tbd & \tbd & \tbd & -- & -- & -- & -- & -- & -- & -- \\
+    \model M2 & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \model M3, low $\delta_t$ & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \model M3, high $\delta_t$ & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     \midrule
     \multicolumn{13}{@{}l}{\textit{\taxi, L0 mediated}} \\
-    Offline: gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Offline: ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Offline: Whisper ST & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Whisper ST & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
     Consecutive cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
@@ -46,27 +60,14 @@
     Streaming cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     M4T v2 + AlignAtt & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     M4T v2 + AlignAtt & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    \model & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    \midrule
-    \multicolumn{13}{@{}l}{\textit{\taxi, L1 (turn-end overlap)}} \\
-    Offline: gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Offline: ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Offline: Whisper ST & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Consecutive cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    SeamlessStreaming & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    SeamlessStreaming & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Streaming cascade & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Streaming cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    M4T v2 + AlignAtt & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    M4T v2 + AlignAtt & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    \model & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \model (M3, main $\delta_t$) & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \begin{table}[!tp]
   \ContinuedFloat
-  \caption[]{(continued) Part~(b): \syn, with the columns and conventions of part~(a). Part~(c): \taxi re-rendered with one fixed gap at every speaker change (a negative gap starts the next turn before the previous one ends), the numbers behind \cref{fig:gap-sweep}; COMET is the mean of the two directions, \eo the median over both directions, and the best pipeline is that of \cref{tab:factorial}. If the optional L1b stress test is adopted, it adds a block with a backchannel-leakage column. Blank: pending. \protect\draftnote{\syn and the fixed-gap renders are planned}}
+  \caption[]{(continued) Part~(a), \taxi under L1, and part~(b), \syn \pair{En}{De}, with the columns and conventions above. \protect\draftnote{L1 and \syn are planned}}
   \centering
   \footnotesize
   \setlength{\tabcolsep}{3pt}
@@ -76,52 +77,84 @@
     \cmidrule(lr){3-6}\cmidrule(lr){7-10}\cmidrule(l){11-13}
     System & Seg. & COMET & chrF & \makecell{Stream-\\LAAL} & \makecell{End-\\Offset} & COMET & chrF & \makecell{Stream-\\LAAL} & \makecell{End-\\Offset} & \makecell{Wrong\\dir.\ (\%)} & \makecell{Switch\\latency} & \makecell{Empty\\turns (\%)} \\
     \midrule
-    \multicolumn{13}{@{}l}{\textit{(b) \syn \pair{En}{De}, L0 natural}} \\
-    Offline: gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Offline: ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \multicolumn{13}{@{}l}{\textit{(a, continued) \taxi, L1 (turn-end overlap)}} \\
+    Gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Whisper ST & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
     Consecutive cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    \model & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    M4T v2 + AlignAtt & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    M4T v2 + AlignAtt & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \model (M3, main $\delta_t$) & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \midrule
+    \multicolumn{13}{@{}l}{\textit{(b) \syn \pair{En}{De}, L0 natural}} \\
+    Gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Whisper ST & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
+    Consecutive cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    SeamlessStreaming & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    SeamlessStreaming & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Streaming cascade & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Streaming cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \model (M3, main $\delta_t$) & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     \midrule
     \multicolumn{13}{@{}l}{\textit{\syn \pair{En}{De}, L1 (turn-end overlap)}} \\
-    Offline: gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Offline: ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Whisper ST & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
     Consecutive cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    \model & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \model (M3, main $\delta_t$) & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[!tp]
+  \ContinuedFloat
+  \caption[]{(continued) Part~(b), \syn \pair{Ko}{En}, and part~(c): \taxi re-rendered with one fixed gap at every speaker change (a negative gap starts the next turn before the previous one ends), the numbers behind \cref{fig:gap-sweep}, for the reference pipeline $P$ (\cref{sec:exp-setup}) under both wrappers and \model; COMET is the mean of the two directions and \eo the median over both. Blank: pending. \protect\draftnote{\syn and the fixed-gap renders are planned; if the optional L1b stress test is adopted, it adds a block with a backchannel-leakage column}}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}llccccccccccc@{}}
+    \toprule
+    & & \multicolumn{4}{c}{\dir{En}{X}} & \multicolumn{4}{c}{\dir{X}{En}} & \multicolumn{3}{c}{Both directions} \\
+    \cmidrule(lr){3-6}\cmidrule(lr){7-10}\cmidrule(l){11-13}
+    System & Seg. & COMET & chrF & \makecell{Stream-\\LAAL} & \makecell{End-\\Offset} & COMET & chrF & \makecell{Stream-\\LAAL} & \makecell{End-\\Offset} & \makecell{Wrong\\dir.\ (\%)} & \makecell{Switch\\latency} & \makecell{Empty\\turns (\%)} \\
     \midrule
-    \multicolumn{13}{@{}l}{\textit{\syn \pair{Ko}{En}, L0 natural}} \\
-    Offline: gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Offline: ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \multicolumn{13}{@{}l}{\textit{(b, continued) \syn \pair{Ko}{En}, L0 natural}} \\
+    Gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Whisper ST & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
     Consecutive cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    \model & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \model (M3, main $\delta_t$) & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     \midrule
     \multicolumn{13}{@{}l}{\textit{\syn \pair{Ko}{En}, L1 (turn-end overlap)}} \\
-    Offline: gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Offline: ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Gold$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    ASR$\to$LLM & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Whisper ST & oracle & -- & -- & -- & -- & \tbd & \tbd & \tbd & \tbd & -- & -- & -- \\
     Consecutive cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & oracle & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Streaming cascade & realistic & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    \model & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \model (M3, main $\delta_t$) & none & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     \bottomrule
   \end{tabular}
 
   \vspace{1.2em}
   \begin{tabular}{@{}lccccccccc@{}}
     \toprule
-    & \multicolumn{3}{c}{Best pipeline, oracle} & \multicolumn{3}{c}{Best pipeline, realistic} & \multicolumn{3}{c}{\model} \\
+    & \multicolumn{3}{c}{$P$, oracle wrapper} & \multicolumn{3}{c}{$P$, realistic wrapper} & \multicolumn{3}{c}{\model} \\
     \cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(l){8-10}
     Gap (s) & COMET & \makecell{Wrong\\dir.\ (\%)} & \makecell{End-\\Offset (s)} & COMET & \makecell{Wrong\\dir.\ (\%)} & \makecell{End-\\Offset (s)} & COMET & \makecell{Wrong\\dir.\ (\%)} & \makecell{End-\\Offset (s)} \\
     \midrule

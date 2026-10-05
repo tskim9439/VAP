@@ -1,16 +1,26 @@
 % =====================================================================
-% Table A12 (tab:licences): licences, use and release of every dataset, model
-% and tool. Included from App. H. Rows follow the outline; baseline systems
-% and their licences are in tab:baselines (App. D).
-% Every entry must be checked against the licence text before submission.
+% Table A12 (tab:licences): licences, use and release of the corpora,
+% generation models and services behind CST-Bench and Model. Included from
+% App. H. Baseline systems and their licences are in tab:baselines (App. D);
+% scoring, alignment and QA models are not listed (see the caption).
+% Placed [htbp] so that it can follow App. H's text instead of leaving a
+% mostly empty page. Licence spelling: SPDX (Apache-2.0).
+% Every entry must be checked against the licence text before submission;
+% the licences of the backbone training corpora are not yet listed (only
+% Switchboard's LDC licence is recorded), so that cell names no licence and
+% none is guessed. The row cites the corpora that have verified bib entries
+% (LibriSpeech, VoxPopuli, KsponSpeech, MUSAN, DEMAND); Granary-YODAS,
+% Switchboard, NIKL, AI Hub, ETSI noise and Qwen3.8-27B have none yet.
+% Baselines (incl. the optional Hibiki-Zero, CC BY-NC-SA 4.0) are in
+% tab:baselines, not here.
 % =====================================================================
-\begin{table}[t]
-  \caption{Licences and terms of the data, models and tools we use, how we use them, and what we release. Baseline systems and their licences are listed in \cref{tab:baselines}. $^\ast$Planned: \syn and the \model weights do not exist yet.}
+\begin{table}[htbp]
+  \caption{Licences and terms of the corpora, generation models and services behind \bench and \model, how we use them, and what we release. Baseline systems are listed in \cref{tab:baselines}; scoring, alignment and quality-control models (\cref{app:scorer,app:syn}) are used unchanged under their own licences and are not redistributed. $^\ast$Planned: \syn and the \model weights do not exist yet.}
   \label{tab:licences}
   \centering
   \footnotesize
   \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{4.1cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.35cm}>{\raggedright\arraybackslash}p{4.1cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
     \toprule
     Asset & Licence\,/\,terms & How we use it & Released by us \\
     \midrule
@@ -18,60 +28,63 @@
       & Scientific licence, free of charge (commercial licence available); no redistribution, even in part, without the written permission of the copyright holders
       & \taxi, the real test track; evaluation only
       & Session and turn IDs, configurations, build scripts, checksums, per-turn scores keyed by turn ID; no audio, text or system output \\
-    \addlinespace
+    \addlinespace[1pt]
     XDailyDialog \citep{liu2023xdailydialog}
       & CC BY-NC-SA 4.0
       & \syn dialogues and English--German references; evaluation only
       & XDailyDialog-based \syn subset under CC BY-NC-SA 4.0$^\ast$ \\
-    \addlinespace
-    BConTrasT \citep{farajian2020findings}, built on Taskmaster-1
+    \addlinespace[1pt]
+    BConTrasT \citep{farajian2020findings}, built on Taskmaster-1 \citep{byrne2019taskmaster}
       & CC BY-SA 4.0 (Taskmaster-1: CC BY 4.0)
       & \syn dialogues and English--German references; evaluation only
       & BConTrasT-based \syn subset under CC BY-SA 4.0$^\ast$ \\
-    \addlinespace
+    \addlinespace[1pt]
     Nemotron 3.5 ASR Streaming 0.6B \citep{nvidia2026nemotron35asr}
       & OpenMDW-1.1
       & Streaming encoder of \model, fine-tuned
       & Encoder within the \model weights, under OpenMDW-1.1$^\ast$ \\
-    \addlinespace
+    \addlinespace[1pt]
     Qwen3-ASR \citep{shi2026qwen3asr}
-      & Apache~2.0
+      & Apache-2.0
       & Thinker LM of \model (1.7B; its audio encoder removed); Qwen3-ASR-1.7B in cascade baselines and for \syn re-recognition
-      & Thinker within the \model weights, under Apache~2.0$^\ast$ \\
-    \addlinespace
+      & Thinker within the \model weights, under Apache-2.0$^\ast$ \\
+    \addlinespace[1pt]
+    Backbone training corpora (\cref{app:model}): LibriSpeech \citep{panayotov2015librispeech}, VoxPopuli \citep{wang2021voxpopuli}, Granary-YODAS, Switchboard, KsponSpeech \citep{bang2020ksponspeech}, NIKL, AI~Hub, a curated pool; MUSAN \citep{snyder2015musan}, DEMAND \citep{thiemann2013demand} and ETSI noise
+      & Terms of each corpus (Switchboard: LDC licence)
+      & Training (Stages 0--1) and augmentation of the \model backbone; one KsponSpeech transcript is quoted in \cref{fig:delta-delay}
+      & No data; only the \model weights trained on them$^\ast$ \\
+    \addlinespace[1pt]
     Qwen3.8-27B
-      & Apache~2.0
+      & Apache-2.0
       & MT in cascade baselines; alignment, translation and verification teacher of the MU2 commit targets; one of three translators of the \syn Korean text
       & Per-turn scores of its runs; none of its translations as references \\
-    \addlinespace
-    MADLAD-400-10B-MT
-      & Apache~2.0
+    \addlinespace[1pt]
+    MADLAD-400-10B-MT \citep{kudugunta2023madlad}
+      & Apache-2.0
       & One of three translators of the \syn Korean text
-      & Korean text of \syn$^\ast$ \\
-    \addlinespace
-    EXAONE-4.0
+      & Korean text of \syn{}$^\ast$ \\
+    \addlinespace[1pt]
+    EXAONE-4.0 \citep{lgai2025exaone4}
       & EXAONE AI Model License: non-commercial; outputs may not be used to develop competing models
       & Internal evaluation only: agreement check of the \syn Korean text; references and second alignment teacher in the pilot of \cref{app:units}
       & Nothing; its outputs are neither released nor used for training \\
-    \addlinespace
+    \addlinespace[1pt]
     Azure neural TTS \citep{microsoft2026text}
       & Service terms of the provider; synthesis on a paid pay-as-you-go resource only, as statements on the free tier conflict
       & Commercial \syn edition (main results)
       & Audio of this edition$^\ast$ \\
-    \addlinespace
+    \addlinespace[1pt]
     CosyVoice~3 \citep{du2025cosyvoice3} or Qwen3-TTS \citep{hu2026qwen3tts}
-      & Apache~2.0 (weights)
+      & Apache-2.0 (weights)
       & Open \syn edition on a subset (rank agreement)
       & Audio of this edition$^\ast$ \\
-    \addlinespace
+    \addlinespace[1pt]
     \texttt{cst-bench} code and \scorer
-      & Apache~2.0
+      & Apache-2.0
       & Building \taxi and \syn; scoring every system
       & All code, configurations, checksums and wrappers \\
     \bottomrule
   \end{tabular}
-  \ifshowdraftnotes
-    \par\vspace{3pt}
-    \parbox{\linewidth}{\raggedright\draftnote{verify every entry, the TAXI copyright holders and the Azure output terms against the current licence texts before submission}}
-  \fi
+  % (integrator) The draft note on verifying these entries now follows the
+  % Licences paragraph of App. H, so that the float fits the page in both builds.
 \end{table}

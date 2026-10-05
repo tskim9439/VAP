@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 """Figure set of the CST-S2TT ICML paper (house style in figstyle.py). Run from any directory; writes ../<id>.pdf/.png.
 
-    python3 make_final_figures.py                 # draft: planned parts dashed / tagged, '*' on unimplemented metrics
-    python3 make_final_figures.py --final         # camera-ready look (no 'planned' marks, no '*')
-    python3 make_final_figures.py --only fig1,fig4
-    python3 make_final_figures.py --ql-metric COMET   # y axis of fig4 once COMET is in results_main.csv
+    python3 make_figures.py                 # draft: planned parts dashed / tagged, '*' on unimplemented metrics
+    python3 make_figures.py --final         # camera-ready look (no 'planned' marks, no '*')
+    python3 make_figures.py --only fig1,fig4
+    python3 make_figures.py --ql-metric COMET   # y axis of fig4 once COMET is in results_main.csv
 
-Figure ids (= file stems) match the outline:
-  main      fig1_task (+ fig1_task_L1b variant), fig2_benchmark, fig3_model, fig4_quality_latency, fig5_oracle_gap
-  appendix  figA1_taxi_stats, figA2_taxi_session, figA3_gap_sweep, figA4_sim2real, figA5_turn_length,
-            figA6_backbone_lookahead, figA7_delta_delay, figA8_unit_quality_latency, figA9_unit_granularity
+Figure ids (= file stems):
+  fig1_task (+ fig1_task_L1b variant), fig2_benchmark, fig3_model, fig4_quality_latency, fig5_oracle_gap,
+  figA1_taxi_stats, figA2_taxi_session, figA3_gap_sweep, figA4_sim2real, figA5_turn_length,
+  figA6_backbone_lookahead, figA7_delta_delay, figA8_unit_quality_latency, figA9_unit_granularity
+  Sizes at full width: fig1 about 2.0 in and fig3 about 2.5 in tall (limits 2.2 and 2.8 in).
 
 Inputs (data/):
-  measured   taxi_turns.csv, taxi_gaps.csv, taxi_sessions.csv, fig_taxi_session_example.csv  (aggregate TAXI statistics
-             from the cstbench-v0.1 build; no transcript or translation text, because TAXI may not be redistributed),
-             backbone_lookahead_pilot.csv (q17-s1 pilot, raw/sources/experiments/2026-10-01-stage1-pilot-eval-mxc),
-             unit_quality_latency.csv, unit_granularity.csv (raw/sources/experiments/2026-10-03-cst-unit-probe-mxc)
+  measured   taxi_turns.csv, taxi_gaps.csv, taxi_sessions.csv, fig_taxi_session_example.csv (aggregate TAXI statistics
+             of the cstbench v0.1 build; no transcript or translation text, because TAXI may not be redistributed),
+             backbone_lookahead_pilot.csv (pilot evaluation of the single-speaker backbone),
+             unit_quality_latency.csv, unit_granularity.csv (text-level commit-unit pilot)
   templates  systems.csv, results_main.csv, results_conditions.csv, results_sim2real.csv, results_turnlen.csv
              created on first run if missing and never overwritten; blank cell = pending. The only filled result rows
-             are the offline oracle upper bounds of decision D10(a) (job 80130, preliminary, not yet in the wiki).
+             are the preliminary offline TAXI L0-natural runs (oracle input; to be re-run under the final protocol).
 Schematics (fig1, fig2, fig3) use invented example utterances; the only numbers in them are config parameters.
+Fig. 5 and Fig. A3 show one reference pipeline (reference_pipeline()), the one of Table 4.
 """
 import argparse
 import csv
@@ -31,8 +33,8 @@ from pathlib import Path
 import numpy as np
 
 import figstyle as fs
-from figstyle import (C, CONFIG_COLOR, GRID, INK, INK2, LANG_COLOR, LANG_TEXT_ON, LANG_TINT, MUTED, OURS,
-                            PLANNED_LS, RULE, WASH)
+from figstyle import (CONFIG_COLOR, INK, INK2, LANG_COLOR, LANG_TEXT_ON, LANG_TINT, MUTED, OURS, PLANNED_LS, RULE,
+                      WASH)
 
 HERE = Path(__file__).resolve().parent
 DATA, OUT = HERE.parent / "data", HERE.parent
@@ -67,32 +69,46 @@ def ensure_csv(name, header, body):
 
 
 SYSTEMS = [
-    # system_id, label, short, kind, marker, directions, note
+    # system_id, label, short (= the name in Table 3; used in figure legends), kind, marker, directions, note
     ("gold_mt", "Gold transcript -> Qwen3.8-27B (offline, oracle turns)", "Gold->LLM", "offline", "o",
-     "EN->DE;DE->EN;EN->KO;KO->EN", "upper bound; emitted at the reference turn end"),
+     "EN->DE;DE->EN;EN->KO;KO->EN", "oracle input; output time-stamped at the reference turn end"),
     ("asr_mt", "Qwen3-ASR-1.7B -> Qwen3.8-27B (offline, oracle turns)", "ASR->LLM", "offline", "s",
-     "EN->DE;DE->EN;EN->KO;KO->EN", "oracle segments and source language"),
+     "EN->DE;DE->EN;EN->KO;KO->EN",
+     "oracle segments and source language; the consecutive cascade under the oracle wrapper"),
     ("whisper_st", "Whisper-large-v3 ST (offline, oracle turns)", "Whisper ST", "offline", "D", "DE->EN;KO->EN",
      "translates into English only"),
     ("gold_mu2", "Gold transcript -> Qwen3.8-27B SimulMT with MU2 commits", "Gold->LLM (MU2)", "bound", "h",
-     "EN->DE;DE->EN", "oracle-transcript streaming bound (experiment E13)"),
-    ("consecutive", "VAD endpoint + LID -> Qwen3-ASR-1.7B -> Qwen3.8-27B", "Consecutive", "consecutive", "X",
+     "EN->DE;DE->EN", "streaming with oracle input; unit boundaries chosen with the whole turn in view (non-causal)"),
+    ("consecutive", "VAD endpoint + LID -> Qwen3-ASR-1.7B -> Qwen3.8-27B", "Consecutive cascade", "consecutive", "X",
      "EN->DE;DE->EN;EN->KO;KO->EN", "realistic consecutive baseline (translate after the detected endpoint)"),
-    ("seamless_streaming", "SeamlessStreaming", "Seamless", "stream", "^", "EN->DE;DE->EN;EN->KO;KO->EN",
+    ("seamless_streaming", "SeamlessStreaming", "SeamlessStreaming", "stream", "^", "EN->DE;DE->EN;EN->KO;KO->EN",
      "EMMA policy; one instance per target language behind the wrapper"),
-    ("cascade_la", "Streaming ASR + Qwen3.8-27B SimulMT (LocalAgreement-2)", "Cascade-LA", "stream", "v",
+    ("seamless_x2", "2 x SeamlessStreaming on the whole mix, one instance per target language", "2×SeamlessStreaming",
+     "nowrap", "^", "EN->DE;DE->EN;EN->KO;KO->EN", "naive bidirectional baseline; no wrapper, no routing"),
+    ("cascade_la", "Streaming ASR + Qwen3.8-27B SimulMT (LocalAgreement-2)", "Streaming cascade", "stream", "v",
      "EN->DE;DE->EN;EN->KO;KO->EN", "Nemotron 3.5 streaming RNN-T front end"),
-    ("m4t_alignatt", "SeamlessM4T v2 + AlignAtt (simulstream)", "M4Tv2-AA", "stream", "P",
-     "EN->DE;DE->EN;EN->KO;KO->EN", "offline ST model with attention policy"),
-    ("canary_alignatt", "Canary-1B-v2 + AlignAtt (simulstream)", "Canary-AA", "stream", "p", "EN->DE;DE->EN",
-     "optional"),
+    ("m4t_alignatt", "SeamlessM4T v2 + AlignAtt (simulstream)", "M4T v2 + AlignAtt", "stream", "P",
+     "EN->DE;DE->EN;EN->KO;KO->EN", "offline ST model with attention policy; run on TAXI only"),
+    ("canary_alignatt", "Canary-1B-v2 + AlignAtt (simulstream)", "Canary-1B-v2 + AlignAtt", "stream", "p",
+     "EN->DE;DE->EN", "optional"),
     ("streamspeech", "StreamSpeech", "StreamSpeech", "stream", "<", "DE->EN", "single direction"),
+    ("hibiki_zero", "Hibiki-Zero (text output)", "Hibiki-Zero", "stream", "*", "DE->EN",
+     "optional; single direction; public weights (CC BY-NC-SA 4.0)"),
     ("infinisst", "InfiniSST", "InfiniSST", "stream", ">", "EN->DE", "only if weights are available"),
     ("ours", "Unified streaming model (ours)", "Ours", "ours", "o", "EN->DE;DE->EN;EN->KO;KO->EN",
      "planned; one curve over operating points"),
 ]
-PRELIM = "D10(a) job 80130 (2026-10-05); preliminary, not yet recorded in the wiki"
+PRELIM = "preliminary offline run; to be re-run under the final protocol"
 DERIVED = "EndOffset = 0 on the ideal clock by construction (pieces emitted at the reference turn end)"
+# Under the oracle wrapper the consecutive cascade is ASR->LLM on gold turns (Sec. 6.1), so that row is its oracle side.
+ORACLE_TWIN = {"consecutive": "asr_mt"}
+STREAM_BASELINES = ("seamless_streaming", "cascade_la", "m4t_alignatt", "canary_alignatt", "streamspeech",
+                    "hibiki_zero", "infinisst")
+SINGLE_DIR = {"streamspeech": ["DE->EN"], "hibiki_zero": ["DE->EN"], "infinisst": ["EN->DE"]}
+# offline TAXI L0-natural runs: (system, direction) -> (BLEU, chrF, StreamLAAL); EndOffset is 0 by construction
+PRELIM_ROWS = {("gold_mt", "EN->DE"): ("48.31", "71.72", "4.62"), ("gold_mt", "DE->EN"): ("30.60", "58.05", "3.09"),
+               ("asr_mt", "EN->DE"): ("42.66", "67.97", "4.62"), ("asr_mt", "DE->EN"): ("28.11", "56.61", "3.09"),
+               ("whisper_st", "DE->EN"): ("30.69", "56.67", "3.09")}
 
 
 def registry():
@@ -104,51 +120,59 @@ def registry():
 def results_main():
     hdr = ["system_id", "wrapper", "condition", "direction", "op", "BLEU", "chrF", "COMET", "StreamLAAL_mean_s",
            "EndOffset_p50_s", "empty_turn_pct", "wrong_dir_word_pct", "switch_latency_p50_s", "status", "source"]
-    body = [
-        ["gold_mt", "oracle", "L0-natural", "EN->DE", "-", "48.31", "71.72", "", "4.62", "0", "", "", "",
-         "preliminary", PRELIM + "; " + DERIVED],
-        ["gold_mt", "oracle", "L0-natural", "DE->EN", "-", "30.60", "58.05", "", "3.09", "0", "", "", "",
-         "preliminary", PRELIM + "; " + DERIVED],
-        ["asr_mt", "oracle", "L0-natural", "EN->DE", "-", "42.66", "67.97", "", "4.62", "0", "", "", "",
-         "preliminary", PRELIM + "; " + DERIVED],
-        ["asr_mt", "oracle", "L0-natural", "DE->EN", "-", "28.11", "56.61", "", "3.09", "0", "", "", "",
-         "preliminary", PRELIM + "; " + DERIVED],
-        ["whisper_st", "oracle", "L0-natural", "DE->EN", "-", "30.69", "56.67", "", "3.09", "0", "", "", "",
-         "preliminary", PRELIM + "; " + DERIVED],
-    ]
+    body = [[sid, "oracle", "L0-natural", d, "-", b, c, "", l, "0", "", "", "", "preliminary", PRELIM + "; " + DERIVED]
+            for (sid, d), (b, c, l) in PRELIM_ROWS.items()]
     blank = [""] * 8
     for d in ("EN->DE", "DE->EN"):
-        body.append(["gold_mu2", "oracle", "L0-natural", d, "tau50"] + blank + ["pending", "E13"])
-        body.append(["consecutive", "realistic", "L0-natural", d, "default"] + blank + ["pending", "E9"])
-    for sid in ("seamless_streaming", "cascade_la", "m4t_alignatt", "canary_alignatt", "streamspeech", "infinisst"):
-        dirs = {"streamspeech": ["DE->EN"], "infinisst": ["EN->DE"]}.get(sid, ["EN->DE", "DE->EN"])
-        for d in dirs:
+        body.append(["gold_mu2", "oracle", "L0-natural", d, "tau50"] + blank +
+                     ["pending", "planned: streaming run with oracle input"])
+        body.append(["consecutive", "realistic", "L0-natural", d, "default"] + blank + ["pending", "planned: baseline run"])
+    for sid in STREAM_BASELINES:
+        for d in SINGLE_DIR.get(sid, ["EN->DE", "DE->EN"]):
             for wr in ("oracle", "realistic"):
                 for op in ("low", "high"):
-                    body.append([sid, wr, "L0-natural", d, op] + blank + ["pending", "E9"])
+                    body.append([sid, wr, "L0-natural", d, op] + blank + ["pending", "planned: baseline run"])
+        if sid == "seamless_streaming":
+            for d in ("EN->DE", "DE->EN"):
+                for op in ("low", "high"):
+                    body.append(["seamless_x2", "none", "L0-natural", d, op] + blank + ["pending", "planned: baseline run"])
     for d in ("EN->DE", "DE->EN"):
-        for op in ("M2-turnfinal", "M3-dt0", "M3-dt3", "M3-dt6"):
-            body.append(["ours", "none", "L0-natural", d, op] + blank + ["pending", "E14 (model not built)"])
+        for op in ("M2-turnfinal", "M3-dt-low", "M3-dt-high"):
+            body.append(["ours", "none", "L0-natural", d, op] + blank + ["pending", "planned: model not yet built"])
     return ensure_csv("results_main.csv", hdr, body)
 
 
+COND_SETS = [("taxi", "L0-mediated", ""), ("taxi", "L0-natural", ""), ("taxi", "L1", ""),
+             ("syn-en-de", "L0-natural", ""), ("syn-en-de", "L1", ""), ("syn-ko-en", "L0-natural", ""),
+             ("syn-ko-en", "L1", "")] + [("taxi", "fixed-gap", g) for g in ("-0.6", "-0.4", "-0.2", "0.05", "0.2", "0.5",
+                                                                          "1.0", "2.0")]
+
+
 def results_conditions():
+    """Row sets follow Table A5: offline systems, the consecutive cascade and the streaming pipelines on TAXI;
+    M4T v2 + AlignAtt on TAXI only; Whisper ST (into English) on TAXI only. Fixed-gap renders: every candidate for
+    the reference pipeline under both wrappers (ASR->LLM is the consecutive cascade's oracle side) and the model."""
     hdr = ["system_id", "wrapper", "corpus", "condition", "gap_s", "direction", "op", "COMET", "chrF",
            "StreamLAAL_mean_s", "EndOffset_p50_s", "switch_latency_p50_s", "wrong_dir_word_pct", "empty_turn_pct",
            "backchannel_leak_pct", "status"]
-    conds = [("taxi", "L0-mediated", ""), ("taxi", "L0-natural", ""), ("taxi", "L1", ""),
-             ("syn-en-de", "L0-natural", ""), ("syn-en-de", "L1", ""), ("syn-ko-en", "L0-natural", ""),
-             ("syn-ko-en", "L1", "")]
-    conds += [("taxi", "fixed-gap", g) for g in ("-0.6", "-0.4", "-0.2", "0.05", "0.2", "0.5", "1.0", "2.0")]
+    runs = [("gold_mt", "oracle"), ("asr_mt", "oracle"), ("whisper_st", "oracle"), ("consecutive", "realistic"),
+            ("seamless_streaming", "oracle"), ("seamless_streaming", "realistic"), ("cascade_la", "oracle"),
+            ("cascade_la", "realistic"), ("m4t_alignatt", "oracle"), ("m4t_alignatt", "realistic"), ("ours", "none")]
     body = []
-    for sid, wrs in (("consecutive", ("realistic",)), ("seamless_streaming", ("oracle", "realistic")),
-                     ("cascade_la", ("oracle", "realistic")), ("m4t_alignatt", ("oracle", "realistic")),
-                     ("ours", ("none",))):
-        for wr in wrs:
-            for corpus, cond, gap in conds:
-                pair = ("EN->KO", "KO->EN") if corpus == "syn-ko-en" else ("EN->DE", "DE->EN")
-                for d in pair:
-                    body.append([sid, wr, corpus, cond, gap, d, "main"] + [""] * 8 + ["pending"])
+    for sid, wr in runs:
+        for corpus, cond, gap in COND_SETS:
+            if corpus != "taxi" and sid in ("whisper_st", "m4t_alignatt"):
+                continue
+            if cond == "fixed-gap" and sid in ("gold_mt", "whisper_st"):
+                continue
+            pair = ("EN->KO", "KO->EN") if corpus == "syn-ko-en" else ("EN->DE", "DE->EN")
+            for d in pair:
+                if sid == "whisper_st" and not d.endswith("->EN"):
+                    continue
+                pre = PRELIM_ROWS.get((sid, d)) if (corpus, cond) == ("taxi", "L0-natural") else None
+                vals = ["", pre[1], pre[2], "0"] if pre else [""] * 4
+                body.append([sid, wr, corpus, cond, gap, d, "main"] + vals + [""] * 4 +
+                            ["preliminary" if pre else "pending"])
     return ensure_csv("results_conditions.csv", hdr, body)
 
 
@@ -156,8 +180,8 @@ def results_sim2real():
     hdr = ["system_id", "wrapper", "op", "direction", "chrF_taxi_L0natural", "chrF_syn_L0natural_edition1",
            "chrF_syn_L0natural_edition2", "status"]
     body = []
-    for sid, wrs in (("consecutive", ("realistic",)), ("seamless_streaming", ("oracle", "realistic")),
-                     ("cascade_la", ("oracle", "realistic")), ("m4t_alignatt", ("oracle", "realistic")),
+    for sid, wrs in (("gold_mt", ("oracle",)), ("asr_mt", ("oracle",)), ("consecutive", ("realistic",)),
+                     ("seamless_streaming", ("oracle", "realistic")), ("cascade_la", ("oracle", "realistic")),
                      ("ours", ("none",))):
         for wr in wrs:
             for d in ("EN->DE", "DE->EN"):
@@ -187,43 +211,67 @@ def pls():
 # fig1_task: the task on a single mono stream (illustrative; invented utterances)
 # ---------------------------------------------------------------------------------------------------------------
 def fig1_task(with_l1b=False):
+    """Lanes in inch units (y) on a seconds axis (x). The speaker colours are keyed by the coloured turn bars next to
+    the lane labels, so the figure needs no separate legend; the metric brackets carry side labels."""
     import matplotlib.pyplot as plt
     from matplotlib.patches import FancyBboxPatch
     fs.setup(7)
-    fig, ax = plt.subplots(figsize=(fs.PAGE_W, 2.5))
-    yA, yB, yMix, yTA, yTB, yDE, yEN = 6.0, 5.1, 4.1, 3.2, 2.75, 1.75, 0.75
+    W, H = fs.PAGE_W, 1.98
+    fig = plt.figure(figsize=(W, H))
+    lane_lines = ["Speaker A: English", "Speaker B: German", "(hidden reference)", "System input:", "one mono mix",
+                  "Output 1: speaker-", "tagged transcript", "Output 2: translation", "into German (for B)",
+                  "Output 3: translation", "into English (for A)"]
+    LEFT = max(fs.text_width(fig, s_, 6.8) for s_ in lane_lines) + 3 / 72 + 0.01   # label column + tick pad
+    BOTTOM, RIGHT, TOP = 0.16, 0.03, 0.02                          # inches around the lane axes
+    aw, ah = W - LEFT - RIGHT, H - BOTTOM - TOP
+    ax = fig.add_axes([LEFT / W, BOTTOM / H, aw / W, ah / H])
+    x0, x1 = -0.05, 8.05
+    sx = aw / (x1 - x0)                                           # inches per second
+    yEN, yDE, yTB, yTA, yMix, yB, yA = 0.115, 0.400, 0.695, 0.855, 1.115, 1.380, 1.640
     lanes = [(yA, "Speaker A: English\n(hidden reference)"), (yB, "Speaker B: German\n(hidden reference)"),
              (yMix, "System input:\none mono mix"), ((yTA + yTB) / 2, "Output 1: speaker-\ntagged transcript"),
              (yDE, "Output 2: translation\ninto German (for B)"), (yEN, "Output 3: translation\ninto English (for A)")]
     spk_lang = {"A": "English", "B": "German"}
     A1, B1, A2, BC = (0.30, 2.90), (2.45, 3.95), (4.25, 7.10), (5.40, 5.72)
+    BAR, TICK, TXT = 0.150, 0.110, 6.6                             # bar and tick heights (in), text size (pt)
 
-    def turn(seg, y, spk, label=None, h=0.46):
+    def turn(seg, y, spk, label=None):
         lang = spk_lang[spk]
-        ax.add_patch(FancyBboxPatch((seg[0], y - h / 2), seg[1] - seg[0], h, boxstyle="round,pad=0,rounding_size=0.05",
-                                    mutation_aspect=1 / 2.6, fc=LANG_COLOR[lang], ec="none", zorder=2))
+        ax.add_patch(FancyBboxPatch((seg[0], y - BAR / 2), seg[1] - seg[0], BAR,
+                                    boxstyle="round,pad=0,rounding_size=0.05", mutation_aspect=sx,
+                                    fc=LANG_COLOR[lang], ec="none", zorder=2))
         if label:
-            ax.text(seg[0] + 0.07, y, label, ha="left", va="center", fontsize=6.6, color=LANG_TEXT_ON[lang], zorder=3)
+            ax.text(seg[0] + 0.07, y, label, ha="left", va="center", fontsize=TXT, color=LANG_TEXT_ON[lang], zorder=3)
 
-    def piece(t, y, text, spk, h=0.36):
+    def piece(t, y, text, spk):
         col = LANG_COLOR[spk_lang[spk]]
-        ax.plot([t, t], [y - h / 2, y + h / 2], color=col, lw=1.1, solid_capstyle="round", zorder=3)
-        ax.plot([t], [y + h / 2], "o", ms=2.4, color=col, mec="white", mew=0.4, zorder=4)
-        ax.text(t - 0.05, y, text, ha="right", va="center", fontsize=6.6, color=INK, zorder=3)
+        ax.plot([t, t], [y - TICK / 2, y + TICK / 2], color=col, lw=1.1, solid_capstyle="round", zorder=3)
+        ax.plot([t], [y + TICK / 2], "o", ms=2.4, color=col, mec="white", mew=0.4, zorder=4)
+        ax.text(t - 0.05, y, text, ha="right", va="center", fontsize=TXT, color=INK, zorder=3)
 
-    def bracket(x0, x1, y, text, above=True):
-        ax.annotate("", xy=(x0, y), xytext=(x1, y),
+    def bracket(xa, xb, y, text, side):
+        ax.annotate("", xy=(xa, y), xytext=(xb, y),
                     arrowprops=dict(arrowstyle="|-|,widthA=0.22,widthB=0.22", lw=0.6, color=INK2, shrinkA=0, shrinkB=0),
                     zorder=4)
-        ax.text((x0 + x1) / 2, y + (0.1 if above else -0.1), text, ha="center", va="bottom" if above else "top",
-                fontsize=6.2, color=INK2, zorder=4)
+        if side == "right":
+            ax.text(xb + 0.06, y, text, ha="left", va="center", fontsize=6.2, color=INK2, zorder=4)
+        else:
+            ax.text(xa - 0.06, y, text, ha="right", va="center", fontsize=6.2, color=INK2, zorder=4)
 
-    def guide(x, spans):
-        for y0, y1 in spans:
-            ax.plot([x, x], [y0, y1], color=RULE, lw=0.5, ls=(0, (2, 2)), zorder=1)
+    def guide(x, y0, y1, skip=()):
+        """Dashed guide from y0 up to y1 that leaves out the text bands listed in skip (centre, half-height)."""
+        cuts = sorted((c - h, c + h) for c, h in skip)
+        a = y0
+        for lo, hi in cuts:
+            if lo > a:
+                ax.plot([x, x], [a, min(lo, y1)], color=RULE, lw=0.5, ls=(0, (2, 2)), zorder=1)
+            a = max(a, hi)
+        if a < y1:
+            ax.plot([x, x], [a, y1], color=RULE, lw=0.5, ls=(0, (2, 2)), zorder=1)
 
-    ax.add_patch(plt.Rectangle((B1[0], yB - 0.42), A1[1] - B1[0], yA - yB + 0.84, color=WASH, lw=0, zorder=0))
-    ax.text((B1[0] + A1[1]) / 2, yA + 0.38, "turn-end overlap (L1)", ha="center", va="bottom", fontsize=6.2, color=INK2)
+    # turn-end overlap: grey band over both reference lanes, labelled at its left in the empty part of lane B
+    ax.add_patch(plt.Rectangle((B1[0], yB - 0.105), A1[1] - B1[0], yA - yB + 0.21, color=WASH, lw=0, zorder=0))
+    ax.text(B1[0] - 0.07, yB, "turn-end overlap (L1)", ha="right", va="center", fontsize=6.2, color=INK2, zorder=4)
     turn(A1, yA, "A", "I need a taxi to the station.")
     turn(B1, yB, "B", "Welcher Eingang?")
     turn(A2, yA, "A", "The north entrance, please.")
@@ -236,18 +284,18 @@ def fig1_task(with_l1b=False):
     rng = np.random.default_rng(0)
     t = np.linspace(0, 8, 24000)
 
-    def envelope(x0, x1, amp):
+    def envelope(xa, xb, amp):
         e = np.zeros_like(t)
-        c = x0 + rng.uniform(0.03, 0.12)
-        while c < x1 - 0.03:
+        c = xa + rng.uniform(0.03, 0.12)
+        while c < xb - 0.03:
             e += rng.uniform(0.45, 1.0) * np.exp(-0.5 * ((t - c) / rng.uniform(0.035, 0.07)) ** 2)
             c += rng.uniform(0.12, 0.30)
-        e[(t < x0) | (t > x1)] = 0.0
+        e[(t < xa) | (t > xb)] = 0.0
         return amp * e
 
     env = sum(envelope(*seg, a) for seg, a in segs)
     sig = env * rng.standard_normal(t.size)
-    ax.plot(t, yMix + 0.36 * sig / np.abs(sig).max(), color=MUTED, lw=0.25, zorder=2)
+    ax.plot(t, yMix + 0.105 * sig / np.abs(sig).max(), color=MUTED, lw=0.25, zorder=2)
 
     # committed pieces at their emission time (never retracted), coloured by the source speaker
     piece(1.70, yTA, "A: I need a taxi", "A")
@@ -266,28 +314,24 @@ def fig1_task(with_l1b=False):
         ax.text((BC[0] + BC[1]) / 2, yEN, "nothing emitted for “ja”", ha="center", va="center", fontsize=6.2,
                 color=MUTED, style="italic")
 
-    bracket(A1[1], 3.20, yDE + 0.42, "end offset")
-    guide(A1[1], [(yDE + 0.42, yTB - 0.25), (yTB + 0.22, yTA - 0.22), (yTA + 0.22, yA - 0.25)])
-    bracket(B1[0], 3.45, yEN - 0.48, "switch latency", above=False)
-    guide(B1[0], [(yEN - 0.48, yEN - 0.22), (yEN + 0.22, yDE - 0.22), (yDE + 0.22, yTB - 0.22),
-                  (yTB + 0.22, yTA - 0.22), (yTA + 0.22, yB - 0.25)])
+    # metrics: EndOffset (end of A's turn -> last German word), switch latency (start of B's turn -> first English word)
+    yEO, ySW, band = (yTB + yDE) / 2, (yDE + yEN) / 2, 0.052
+    bracket(A1[1], 3.20, yEO, "EndOffset", side="right")
+    guide(A1[1], yEO, yA - BAR / 2, skip=[(yTB, band), (yTA, band)])
+    bracket(B1[0], 3.45, ySW, "switch latency", side="left")
+    guide(B1[0], ySW, yB - BAR / 2, skip=[(yDE, band), (yTA, band)])
 
-    ax.set_xlim(-0.05, 8.05)
-    ax.set_ylim(-0.25, 6.75)
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(0, ah)
     ax.set_yticks([y for y, _ in lanes])
-    ax.set_yticklabels([s for _, s in lanes], fontsize=6.8, color=INK)
+    ax.set_yticklabels([s for _, s in lanes], fontsize=6.8, color=INK, linespacing=1.1)
     ax.tick_params(axis="y", length=0, pad=3)
-    ax.tick_params(axis="x", length=2, labelsize=6.6)
+    ax.tick_params(axis="x", length=2, labelsize=6.6, pad=1.5, color=RULE, labelcolor=INK2)
     for s in ("top", "right", "left"):
         ax.spines[s].set_visible(False)
     ax.spines["bottom"].set_color(RULE)
-    ax.set_xlabel("session time (s)", fontsize=6.8, color=INK2, labelpad=1.5)
-    for i, (lang, lab) in enumerate((("English", "speaker A (English)"), ("German", "speaker B (German)"))):
-        x = 5.35 + i * 1.38
-        ax.add_patch(FancyBboxPatch((x, 6.43), 0.14, 0.2, boxstyle="round,pad=0,rounding_size=0.02",
-                                    mutation_aspect=1 / 2.6, fc=LANG_COLOR[lang], ec="none", clip_on=False))
-        ax.text(x + 0.2, 6.53, lab, ha="left", va="center", fontsize=6.3, color=INK2)
-    fig.tight_layout(pad=0.2)
+    # axis title on the tick-label line, left of the axis, so it costs no extra height
+    ax.text(x0 - 0.04, -0.049, "session time (s)", ha="right", va="top", fontsize=6.6, color=INK2, clip_on=False)
     fs.save(fig, "fig1_task_L1b" if with_l1b else "fig1_task", OUT)
 
 
@@ -296,7 +340,7 @@ def fig1_task(with_l1b=False):
 # ---------------------------------------------------------------------------------------------------------------
 def fig2_benchmark():
     fs.setup(7)
-    W, H = fs.PAGE_W, 2.62
+    W, H = fs.PAGE_W, 2.51
     fig, ax = fs.canvas(W, H)
     star = "*" if DRAFT else ""
 
@@ -307,7 +351,7 @@ def fig2_benchmark():
     def bar(x0, x1, y, lang, h=0.075):
         fs.rbox(ax, x0, y - h / 2, x1 - x0, h, fc=LANG_COLOR[lang], ec="none", lw=0, r=0.02, z=3)
 
-    top, bot, hdr = 2.30, 0.30, 2.55
+    top, bot, hdr = 2.30, 0.30, 2.45
     cols = [(0.02, 1.50), (1.70, 1.28), (3.16, 1.76), (5.10, 1.63)]
     heads = ["1  Sources", "2  Common schema + audio", "3  Deterministic session renderer",
              "4  System under test + scorer"]
@@ -323,8 +367,8 @@ def fig2_benchmark():
                               "human translations, 8 kHz phone\npush-to-talk: no timing, no overlap", color=INK2)
     fs.rbox(ax, x, bot, w, ymid - bot - 0.05, ec=MUTED if DRAFT else RULE, ls=pls(), r=0.05)
     txt(x + 0.07, ymid - 0.12, "CST-Bench-Syn (evaluation only)", size=6.9, weight="bold")
-    txt(x + 0.07, ymid - 0.29, "XDailyDialog, BConTrasT dialogues\nEN↔DE: human translations\n"
-                               "KO↔EN: Korean side machine-\ntranslated, consensus-checked\nTTS speech", color=INK2)
+    txt(x + 0.07, ymid - 0.29, "XDailyDialog, BConTrasT dialogues\nEn↔De: human or post-edited MT\n"
+                               "Ko↔En: Korean side machine-\ntranslated, consensus-checked\nTTS speech", color=INK2)
     tag_planned(ax, x + w - 0.05, bot + 0.04, va="bottom")
 
     # 2 schema + audio
@@ -394,9 +438,11 @@ def fig2_benchmark():
     if DRAFT:
         txt(x4 + 0.07, bot + 0.05, "* not yet in cstbench v0.1", size=6.0, color=MUTED, va="bottom")
 
-    # footer: release model + colour key
-    txt(0.04, 0.06, "Released: code (Apache-2.0), configs and checksums only; TAXI audio and text are never "
-                    "redistributed (rebuild verified: 86/86 timeline digests).", size=6.3, color=INK2, va="bottom")
+    # No footer: the release statement is in the caption and Sec. 4.1, the rebuild check in Sec. 4.2. Crop the strip
+    # that the footer used (the canvas axes counts in full towards the tight bounding box).
+    crop = 0.24
+    fig.set_size_inches(W, H - crop)
+    ax.set_ylim(crop, H)
     fs.save(fig, "fig2_benchmark", OUT)
 
 
@@ -411,6 +457,7 @@ A_TURN, B_TURN = (0.18, 2.40), (1.98, 3.42)                                     
 A_MU = [(0, 3, "Ich brauche ein Taxi"), (4, 6, "zum Bahnhof.")]                      # >= 3 words and >= 1.0 s each
 B_MU = [(0, 1, "Which entrance?")]                                                   # whole turn (turn end forces commit)
 DS, DT = 2, 3                                                                         # delta_s, delta_t in chunks
+SEQ_CHUNKS = [30, 31, 32, 33, None, 44]                                               # chunks shown in (c); None = gap
 
 
 def emit(t_end, d):
@@ -419,110 +466,131 @@ def emit(t_end, d):
 
 
 def fig3_model():
+    """Three panels on one inch grid: (a) architecture, (b) targets on the 80 ms clock, (c) one row of the
+    serialized token sequence (computed from the same timings as (b)) with a one-line key. Commit units are labelled
+    'unit 1', 'unit 2' (not 'MU 1/2', which would collide with the policy name MU2)."""
     import matplotlib.pyplot as plt
     fs.setup(7)
-    W, H = fs.PAGE_W, 3.42
+    W, H = fs.PAGE_W, 2.42
     fig = plt.figure(figsize=(W, H))
 
     def axes_in(l, b, w, h):
-        return fig.add_axes([l / W, b / H, w / W, h / H])
+        a = fig.add_axes([l / W, b / H, w / W, h / H])
+        a.set_xlim(0, w)
+        a.set_ylim(0, h)
+        a.axis("off")
+        return a
 
-    # ---------------- (a) architecture ----------------
-    aa = axes_in(0.0, 1.1, 1.78, 2.3)
-    aa.set_xlim(0, 1.78)
-    aa.set_ylim(0, 2.3)
-    aa.axis("off")
-    aa.text(0.0, 2.29, "(a)", ha="left", va="top", fontsize=7.5, color=INK, weight="bold")
+    def panel_label(x, y, s):
+        fig.text(x / W, y / H, s, ha="left", va="top", fontsize=7.5, color=INK, weight="bold")
+
+    # ---------------- (a) architecture (inch units) ----------------
+    YA0, HA = 0.65, H - 0.65                       # (a) occupies x 0..1.74, y YA0..H
+    aa = axes_in(0.0, YA0, 1.74, HA)
+    panel_label(0.0, H, "(a)")
+    cx = 0.71                                      # centre of the stack
     rng = np.random.default_rng(3)
-    tt = np.linspace(0.12, 1.36, 420)
-    env = 0.9 * (tt < 0.86) + 0.8 * (tt > 0.70)
+    tt = np.linspace(0.10, 1.32, 420)
+    env = 0.9 * (tt < 0.84) + 0.8 * (tt > 0.68)
     sig = env * rng.standard_normal(tt.size) * np.abs(np.sin(tt * 23)) ** 0.5
-    aa.plot(tt, 0.17 + 0.065 * sig / np.abs(sig).max(), color=MUTED, lw=0.3)
-    aa.text(0.74, 0.02, "one mono mix of both speakers", ha="center", va="bottom", fontsize=5.8, color=INK2)
-    blocks = [(0.38, 0.42, "Causal FastConformer encoder", "Nemotron 3.5, 0.6B, cache-aware\n[56,0]: look-ahead ≤ 80 ms"),
-              (0.96, 0.28, "MLP adapter", "one embedding per 80 ms chunk"),
-              (1.34, 0.46, "Qwen3-ASR thinker LM (1.7B)", "decoder-only, KV cache\nover the whole session")]
+    aa.plot(tt, 0.155 + 0.05 * sig / np.abs(sig).max(), color=MUTED, lw=0.3)
+    aa.text(cx, 0.0, "one mono mix of both speakers", ha="center", va="bottom", fontsize=5.8, color=INK2)
+    blocks = [(0.27, 0.335, "Causal FastConformer encoder",
+               "Nemotron 3.5, 0.6B, cache-aware\nmeasured look-ahead ≤ 80 ms"),
+              (0.68, 0.245, "MLP adapter", "one embedding per 80 ms chunk"),
+              (1.000, 0.335, "Qwen3-ASR thinker LM (1.7B)", "decoder-only, KV cache\nover the whole session")]
     for y, h, title, sub in blocks:
-        fs.rbox(aa, 0.08, y, 1.32, h, ec=INK2, r=0.04)
-        aa.text(0.74, y + h - 0.05, title, ha="center", va="top", fontsize=6.2, color=INK, weight="bold")
-        aa.text(0.74, y + h - 0.165, sub, ha="center", va="top", fontsize=5.7, color=INK2, linespacing=1.15)
-    for y0, y1 in ((0.25, 0.38), (0.80, 0.96), (1.24, 1.34)):
-        fs.arrow(aa, 0.74, y0, 0.74, y1)
-    fs.arrow(aa, 0.74, 1.80, 0.74, 1.96)
-    aa.text(0.74, 1.98, "one token stream, see (c)", ha="center", va="bottom", fontsize=5.9, color=INK)
-    fs.rbox(aa, 1.46, 1.34, 0.31, 0.46, ec=INK2, ls=pls(), r=0.03)
-    aa.text(1.615, 1.57, "spk.\nactivity\nhead", ha="center", va="center", fontsize=5.2, color=INK2, linespacing=1.05)
-    fs.arrow(aa, 1.40, 1.57, 1.46, 1.57)
+        fs.rbox(aa, 0.06, y, 1.30, h, ec=INK2, r=0.04)
+        aa.text(cx, y + h - 0.035, title, ha="center", va="top", fontsize=6.2, color=INK, weight="bold")
+        aa.text(cx, y + h - 0.135, sub, ha="center", va="top", fontsize=5.7, color=INK2, linespacing=1.1)
+    for y0, y1 in ((0.20, 0.27), (0.605, 0.68), (0.925, 1.000)):
+        fs.arrow(aa, cx, y0, cx, y1)
+    fs.arrow(aa, cx, 1.335, cx, 1.42)
+    aa.text(cx, 1.435, "one token stream, see (c)", ha="center", va="bottom", fontsize=5.9, color=INK)
+    fs.rbox(aa, 1.42, 1.000, 0.31, 0.335, ec=INK2, ls=pls(), r=0.03)
+    aa.text(1.575, 1.1675, "spk.\nactivity\nhead", ha="center", va="center", fontsize=5.2, color=INK2, linespacing=1.0)
+    fs.arrow(aa, 1.36, 1.1675, 1.42, 1.1675)
 
-    # ---------------- (b) delayed streams on the 80 ms clock ----------------
-    ab = axes_in(2.72, 1.28, 4.0, 2.06)
-    xmax = 3.84
-    ylab = [(5.0, "speaker A, English\n(hidden reference)"), (4.0, "speaker B, German\n(hidden reference)"),
-            (3.0, "input: one audio\nembedding / 80 ms"), (2.0, "transcript stream\n(word end + $\\delta_s$)"),
-            (1.0, "translation into German\n(MU end + $\\delta_t$)"),
-            (0.0, "translation into English\n(MU end + $\\delta_t$)")]
-    fig.text(1.86 / W, 3.41 / H, "(b)", ha="left", va="top", fontsize=7.5, color=INK, weight="bold")
-    ab.add_patch(plt.Rectangle((B_TURN[0], 3.64), A_TURN[1] - B_TURN[0], 1.72, color=WASH, lw=0, zorder=0))
-    ab.text((B_TURN[0] + A_TURN[1]) / 2, 3.44, "turn-end overlap", ha="center", va="center", fontsize=5.6, color=INK2)
+    # ---------------- (b) delayed streams on the 80 ms clock (x: seconds, y: inches) ----------------
+    BX, BY, BW = 2.72, 0.78, 4.0
+    BH = H - BY - 0.02
+    ab = fig.add_axes([BX / W, BY / H, BW / W, BH / H])
+    xmin, xmax = -0.05, 3.84
+    sx = BW / (xmax - xmin)                        # inches per second
+    yEN, yDE, yTR, yIN, yB, yA = 0.085, 0.335, 0.625, 0.905, 1.155, 1.425
+    BAR, TK = 0.13, 0.115                          # speaker-bar and tick heights (in)
+    ylab = [(yA, "speaker A, English\n(hidden reference)"), (yB, "speaker B, German\n(hidden reference)"),
+            (yIN, "input: one audio\nembedding / 80 ms"), (yTR, "transcript stream\n(word end + $\\delta_s$)"),
+            (yDE, "translation into German\n(unit end + $\\delta_t$)"),
+            (yEN, "translation into English\n(unit end + $\\delta_t$)")]
+    panel_label(1.84, H, "(b)")
+    ab.add_patch(plt.Rectangle((B_TURN[0], yB - 0.095), A_TURN[1] - B_TURN[0], yA - yB + 0.19, color=WASH, lw=0,
+                               zorder=0))
+    ab.text(A_TURN[1] + 0.05, yA, "turn-end overlap", ha="left", va="center", fontsize=5.6, color=INK2, zorder=3)
 
     def turn(words, span, y, lang):
-        fs.rbox(ab, span[0], y - 0.2, span[1] - span[0], 0.4, fc=LANG_COLOR[lang], ec="none", lw=0, r=0.05,
-                aspect=1 / 2.6)
+        fs.rbox(ab, span[0], y - BAR / 2, span[1] - span[0], BAR, fc=LANG_COLOR[lang], ec="none", lw=0, r=0.05,
+                aspect=sx)
         for w_, s, e in words:
             ab.text((s + e) / 2, y, w_, ha="center", va="center", fontsize=5.8, color=LANG_TEXT_ON[lang], zorder=3)
         for w_, s, e in words[:-1]:
-            ab.plot([e + 0.006] * 2, [y - 0.2, y - 0.12], color="white", lw=0.6, zorder=3)
+            ab.plot([e + 0.006] * 2, [y - BAR / 2, y - BAR / 2 + 0.03], color="white", lw=0.6, zorder=3)
 
-    def mu_bracket(words, i0, i1, y, lang, label):
+    def unit_bracket(words, i0, i1, y, lang, label):
         x0, x1 = words[i0][1], words[i1][2]
-        ab.plot([x0, x0, x1, x1], [y + 0.25, y + 0.31, y + 0.31, y + 0.25], color=LANG_COLOR[lang], lw=0.6)
-        ab.text((x0 + x1) / 2, y + 0.33, label, ha="center", va="bottom", fontsize=5.2, color=INK2)
+        y0, y1 = y + BAR / 2 + 0.012, y + BAR / 2 + 0.032
+        ab.plot([x0, x0, x1, x1], [y0, y1, y1, y0], color=LANG_COLOR[lang], lw=0.6)
+        ab.text((x0 + x1) / 2, y1 + 0.006, label, ha="center", va="bottom", fontsize=5.2, color=INK2)
 
-    turn(A_WORDS, A_TURN, 5.0, "English")
-    turn(B_WORDS, B_TURN, 4.0, "German")
+    turn(A_WORDS, A_TURN, yA, "English")
+    turn(B_WORDS, B_TURN, yB, "German")
     for j, (i0, i1, _) in enumerate(A_MU):
-        mu_bracket(A_WORDS, i0, i1, 5.0, "English", f"MU {j + 1}")
+        unit_bracket(A_WORDS, i0, i1, yA, "English", f"unit {j + 1}")
     for j, (i0, i1, _) in enumerate(B_MU):
-        mu_bracket(B_WORDS, i0, i1, 4.0, "German", "MU 1 (= turn)")
+        unit_bracket(B_WORDS, i0, i1, yB, "German", "unit 1 (= turn)")
     for k in range(int(round(xmax / CHUNK))):
-        ab.add_patch(plt.Rectangle((k * CHUNK + 0.006, 2.82), CHUNK - 0.012, 0.36, color="#e6e6e6", lw=0, zorder=1))
+        ab.add_patch(plt.Rectangle((k * CHUNK + 0.006, yIN - 0.055), CHUNK - 0.012, 0.11, color="#e6e6e6", lw=0,
+                                   zorder=1))
 
-    def tick(tx, y, lang, h=0.38):
-        ab.plot([tx, tx], [y - h / 2, y + h / 2], color=LANG_COLOR[lang], lw=0.9, solid_capstyle="round", zorder=3)
-        ab.plot([tx], [y + h / 2], "o", ms=2.2, color=LANG_COLOR[lang], mec="white", mew=0.4, zorder=4)
+    def tick(tx, y, lang):
+        ab.plot([tx, tx], [y - TK / 2, y + TK / 2], color=LANG_COLOR[lang], lw=0.9, solid_capstyle="round", zorder=3)
+        ab.plot([tx], [y + TK / 2], "o", ms=2.2, color=LANG_COLOR[lang], mec="white", mew=0.4, zorder=4)
 
     for words, lang in ((A_WORDS, "English"), (B_WORDS, "German")):
         for _, _, e in words:
-            tick(emit(e, DS)[1], 2.0, lang)
-    ab.text(0.47, 1.62, "A: i need a taxi to the station", ha="left", va="top", fontsize=5.8, color=INK)
-    ab.text(2.66, 1.62, "B: welcher eingang", ha="left", va="top", fontsize=5.8, color=INK)
+            tick(emit(e, DS)[1], yTR, lang)
+    ab.text(0.47, yTR - TK / 2 - 0.025, "A: i need a taxi to the station", ha="left", va="top", fontsize=5.8, color=INK)
+    ab.text(2.66, yTR - TK / 2 - 0.025, "B: welcher eingang", ha="left", va="top", fontsize=5.8, color=INK)
     e_taxi = A_WORDS[3][2]
     t_taxi = emit(e_taxi, DS)[1]
-    ab.plot([e_taxi, e_taxi], [2.24, 4.78], color=RULE, lw=0.5, ls=(0, (2, 2)), zorder=1)
-    ab.annotate("", xy=(e_taxi, 2.40), xytext=(t_taxi, 2.40),
+    ybr = yTR + TK / 2 + 0.05
+    ab.plot([e_taxi, e_taxi], [ybr, yA - BAR / 2], color=RULE, lw=0.5, ls=(0, (2, 2)), zorder=0.5)
+    ab.annotate("", xy=(e_taxi, ybr), xytext=(t_taxi, ybr),
                 arrowprops=dict(arrowstyle="|-|,widthA=0.18,widthB=0.18", lw=0.55, color=INK2, shrinkA=0, shrinkB=0))
-    ab.text((e_taxi + t_taxi) / 2, 2.46, "+$\\delta_s$", ha="center", va="bottom", fontsize=5.6, color=INK2)
+    ab.text((e_taxi + t_taxi) / 2, ybr + 0.012, "+$\\delta_s$", ha="center", va="bottom", fontsize=5.6, color=INK2)
 
-    def mu_emit(words, mus, y, lang, bracket_for=None):
+    def unit_emit(words, mus, y, lang, bracket_for=None):
         for j, (i0, i1, text) in enumerate(mus):
             t_mu = words[i1][2]
             te = emit(t_mu, DT)[1]
             tick(te, y, lang)
             ab.text(te - 0.035, y, text, ha="right", va="center", fontsize=6.0, color=INK, zorder=3)
             if j == bracket_for:
-                ab.annotate("", xy=(t_mu, y + 0.36), xytext=(te, y + 0.36),
+                yb_ = y + TK / 2 + 0.05
+                ab.annotate("", xy=(t_mu, yb_), xytext=(te, yb_),
                             arrowprops=dict(arrowstyle="|-|,widthA=0.18,widthB=0.18", lw=0.55, color=INK2, shrinkA=0,
                                             shrinkB=0))
-                ab.text((t_mu + te) / 2, y + 0.42, "+$\\delta_t$", ha="center", va="bottom", fontsize=5.6, color=INK2)
-                yy = 5.0 if lang == "English" else 4.0
-                ab.plot([t_mu, t_mu], [y + 0.40, yy - 0.22], color=RULE, lw=0.5, ls=(0, (2, 2)), zorder=1)
+                ab.text((t_mu + te) / 2, yb_ + 0.012, "+$\\delta_t$", ha="center", va="bottom", fontsize=5.6,
+                        color=INK2)
+                yy = yA if lang == "English" else yB
+                ab.plot([t_mu, t_mu], [yb_, yy - BAR / 2], color=RULE, lw=0.5, ls=(0, (2, 2)), zorder=0.5)
         return emit(words[mus[-1][1]][2], DT)[1]
 
-    t_flush = mu_emit(A_WORDS, A_MU, 1.0, "English", bracket_for=1)
-    mu_emit(B_WORDS, B_MU, 0.0, "German")
-    ab.text(t_flush + 0.06, 1.0, "turn end: flush", ha="left", va="center", fontsize=5.4, color=MUTED, style="italic")
-    ab.set_xlim(-0.05, xmax)
-    ab.set_ylim(-0.45, 5.95)
+    t_flush = unit_emit(A_WORDS, A_MU, yDE, "English", bracket_for=1)
+    unit_emit(B_WORDS, B_MU, yEN, "German")
+    ab.text(t_flush + 0.06, yDE, "turn end: flush", ha="left", va="center", fontsize=5.4, color=MUTED, style="italic")
+    ab.set_xlim(xmin, xmax)
+    ab.set_ylim(0, BH)
     ab.set_yticks([y for y, _ in ylab])
     ab.set_yticklabels([s for _, s in ylab], fontsize=5.9, color=INK, linespacing=1.05)
     ab.tick_params(axis="y", length=0, pad=3)
@@ -531,14 +599,12 @@ def fig3_model():
         ab.spines[s].set_visible(False)
     ab.spines["bottom"].set_color(RULE)
     ab.set_xticks([0, 0.8, 1.6, 2.4, 3.2])
-    ab.set_xlabel("session time (s)", fontsize=5.9, color=INK2, labelpad=1)
+    ab.text(xmin - 0.03, -0.049, "session time (s)", ha="right", va="top", fontsize=5.9, color=INK2, clip_on=False)
 
     # ---------------- (c) the serialized token sequence (computed from the same timings) ----------------
-    ac = axes_in(0.0, 0.0, W, 1.02)
-    ac.set_xlim(0, W)
-    ac.set_ylim(0, 1.02)
-    ac.axis("off")
-    ac.text(0.0, 1.01, "(c)", ha="left", va="top", fontsize=7.5, color=INK, weight="bold")
+    HC = 0.60
+    ac = axes_in(0.0, 0.0, W, HC)
+    panel_label(0.0, HC + 0.005, "(c)")
     events = {}
     for words, lang, spk in ((A_WORDS, "English", "A"), (B_WORDS, "German", "B")):
         for w_, _, e in words:
@@ -550,24 +616,22 @@ def fig3_model():
     def chunk_tokens(k):
         toks = [("audio", f"$a_{{{k}}}$", None)]
         ev = events.get(k, [])
-        src = [e for e in ev if e[0] == "src"]
-        tgt = [e for e in ev if e[0] == "tgt"]
         cur = None
-        for _, w_, lang, spk in src:
+        for _, w_, lang, spk in [e for e in ev if e[0] == "src"]:
             if spk != cur:
                 toks.append(("tag", f"⟨{spk}⟩", lang))
                 cur = spk
             toks.append(("src", w_, lang))
-        for _, text, lang, t in tgt:
+        for _, text, lang, t in [e for e in ev if e[0] == "tgt"]:
             toks.append(("tag", f"⟨→{t.lower()}⟩", lang))
             toks.append(("tgt", text, lang))
         toks.append(("next", "⟨next⟩", None))
         return toks
 
-    TSZ, ph, padx, gapx = 5.9, 0.14, 0.035, 0.04
+    TSZ, ph, padx, gapx = 5.9, 0.135, 0.032, 0.035
 
-    def pill(x, y, kind, text, lang):
-        w = fs.text_width(fig, text, TSZ, style="italic" if kind == "tgt" else "normal") + 2 * padx
+    def pill(x, y, kind, text, lang, size=TSZ, h=ph, underline=True):
+        w = fs.text_width(fig, text, size, style="italic" if kind == "tgt" else "normal") + 2 * padx
         planned = kind == "tag" or kind == "tgt" or (kind == "src" and lang != "English")
         if kind == "audio":
             fc, ec, ls = WASH, RULE, "-"
@@ -579,60 +643,73 @@ def fig3_model():
             fc, ec, ls = "white", INK2, pls()
         else:
             fc, ec, ls = LANG_TINT[lang], LANG_COLOR[lang], pls()
-        fs.rbox(ac, x, y - ph / 2, w, ph, fc=fc, ec=ec, lw=0.6, ls=ls, r=0.025)
-        ac.text(x + w / 2, y - 0.003, text, ha="center", va="center", fontsize=TSZ, color=INK, zorder=4,
+        fs.rbox(ac, x, y - h / 2, w, h, fc=fc, ec=ec, lw=0.6, ls=ls, r=0.025)
+        ac.text(x + w / 2, y - 0.003, text, ha="center", va="center", fontsize=size, color=INK, zorder=4,
                 style="italic" if kind == "tgt" else "normal", weight="bold" if kind == "tag" else "normal")
-        if kind != "audio":
-            ac.plot([x + 0.015, x + w - 0.015], [y - ph / 2 - 0.03] * 2, color=INK2, lw=0.7, solid_capstyle="butt")
+        if underline and kind != "audio":
+            ac.plot([x + 0.015, x + w - 0.015], [y - h / 2 - 0.025] * 2, color=INK2, lw=0.7, solid_capstyle="butt")
         return w
 
-    ac.text(0.30, 0.94, "prefix (input only):  … language pair English–German  <DELAY_2>  <TDELAY_3>      "
+    ac.text(0.30, HC - 0.07, "prefix (input only):  … language pair English–German  ⟨DELAY_2⟩  ⟨TDELAY_3⟩;   "
             "then, per 80 ms chunk k:  audio embedding, speaker-tagged transcript, target-tagged translation, ⟨next⟩",
             ha="left", va="center", fontsize=5.8, color=INK2)
-    for y, ks in ((0.74, range(30, 34)), (0.50, range(43, 45))):
-        x = 0.30
-        ac.text(x, y, "…", ha="left", va="center", fontsize=6, color=MUTED)
-        x += 0.12
-        for k in ks:
-            for kind, text, lang in chunk_tokens(k):
-                x += pill(x, y, kind, text, lang) + gapx
-            x += 0.04
-        ac.text(x, y, "…", ha="left", va="center", fontsize=6, color=MUTED)
-    # legend
-    legend_rows = [
-        [("audio", "$a_k$", None, "audio embedding of chunk k (input, no loss)"),
-         ("next", "⟨next⟩", None, "<NEXT_AUDIO>: end of chunk, read 80 ms more"),
-         ("src", "word", "English", "transcript token (tint = speaker's language)")],
-        [("tag", "⟨A⟩", "English", "speaker tag (arrival order)"), ("tag", "⟨→de⟩", "English", "target-language tag"),
-         ("tgt", "Taxi", "English", "translation token")]]
-    for r_i, items in enumerate(legend_rows):
-        x, ly = 0.30, 0.27 - 0.17 * r_i
-        for kind, text, lang, desc in items:
-            x += pill(x, ly, kind, text, lang) + 0.05
-            ac.text(x, ly, desc, ha="left", va="center", fontsize=5.5, color=INK2)
-            x += fs.text_width(fig, desc, 5.5) + 0.2
-        if r_i == 1:
-            ac.plot([x, x + 0.16], [ly - 0.005] * 2, color=INK2, lw=0.7)
-            ac.text(x + 0.2, ly, "underline = training target", ha="left", va="center", fontsize=5.5, color=INK2)
-            if DRAFT:
-                ac.text(W - 0.02, ly, "dashed = planned, not yet built", ha="right", va="center", fontsize=5.5,
-                        color=MUTED, style="italic")
+    y, x = 0.335, 0.0
+    ac.text(x, y, "…", ha="left", va="center", fontsize=6, color=MUTED)
+    x += 0.11
+    for k in SEQ_CHUNKS:
+        if k is None:
+            ac.text(x - 0.01, y, "…", ha="left", va="center", fontsize=6, color=MUTED)
+            x += 0.12
+            continue
+        for kind, text, lang in chunk_tokens(k):
+            x += pill(x, y, kind, text, lang) + gapx
+        x += 0.035
+    ac.text(x - 0.01, y, "…", ha="left", va="center", fontsize=6, color=MUTED)
+    seq_right = x + 0.1
+    # one-line key; the caption names every token type as well
+    key = [("audio", "$a_k$", None, "audio embedding (input)"), ("next", "⟨next⟩", None, "end of chunk"),
+           ("tag", "⟨A⟩", "English", "speaker tag"), ("src", "word", "English", "transcript"),
+           ("tag", "⟨→de⟩", "English", "target tag"), ("tgt", "Taxi", "English", "translation")]
+    KSZ, ly, x = 5.5, 0.10, 0.0
+    for kind, text, lang, desc in key:
+        x += pill(x, ly, kind, text, lang, size=KSZ, h=0.12, underline=False) + 0.04
+        ac.text(x, ly, desc, ha="left", va="center", fontsize=KSZ, color=INK2)
+        x += fs.text_width(fig, desc, KSZ) + 0.11
+    ac.text(x, ly, "tint: speaker's language", ha="left", va="center", fontsize=KSZ, color=INK2)
+    x += fs.text_width(fig, "tint: speaker's language", KSZ) + 0.11
+    ac.plot([x, x + 0.14], [ly - 0.035] * 2, color=INK2, lw=0.7)
+    ac.text(x + 0.17, ly, "training target", ha="left", va="center", fontsize=KSZ, color=INK2)
+    x += 0.17 + fs.text_width(fig, "training target", KSZ) + 0.11
+    if DRAFT:
+        ac.text(x, ly, "dashed: planned", ha="left", va="center", fontsize=KSZ, color=MUTED, style="italic")
+        x += fs.text_width(fig, "dashed: planned", KSZ, style="italic")
     fig.savefig(OUT / "fig3_model.pdf")
     fig.savefig(OUT / "fig3_model.png", dpi=300)
     plt.close(fig)
-    print("wrote", OUT / "fig3_model.pdf", "| events", {k: [e[1] for e in v] for k, v in sorted(events.items())})
+    print("wrote", OUT / "fig3_model.pdf", f"| (c) row {seq_right:.2f} in, key {x:.2f} in of {W:.2f} |",
+          "events", {k: [e[1] for e in v] for k, v in sorted(events.items())})
 
 
 # ---------------------------------------------------------------------------------------------------------------
 # fig4_quality_latency: TAXI L0-natural, quality vs StreamLAAL (top) and vs EndOffset (bottom), per direction
 # ---------------------------------------------------------------------------------------------------------------
 def sys_style(reg, sid):
+    """Marker style per system. Oracle input (offline systems, Gold->LLM (MU2)): filled black with a white edge, so
+    coincident anchors stay distinguishable. Baselines: filled grey under the oracle wrapper (callers draw the
+    realistic wrapper hollow). A baseline without wrapper (2xSeamlessStreaming): half-filled. Ours: vermillion."""
     r = reg[sid]
     if r["kind"] == "ours":
-        return dict(marker="o", color=OURS, ms=3.8, mfc=OURS)
+        return dict(marker="o", color=OURS, ms=3.8, mfc=OURS, mec=OURS, fill="full")
     if r["kind"] in ("offline", "bound"):
-        return dict(marker=r["marker"], color=INK, ms=3.8, mfc="white")
-    return dict(marker=r["marker"], color=INK2, ms=3.8, mfc=INK2)
+        return dict(marker=r["marker"], color=INK, ms=4.2, mfc=INK, mec="white", fill="full")
+    if r["kind"] == "nowrap":
+        return dict(marker=r["marker"], color=INK2, ms=3.8, mfc=INK2, mec=INK2, fill="left")
+    return dict(marker=r["marker"], color=INK2, ms=3.8, mfc=INK2, mec=INK2, fill="full")
+
+
+def legend_label(reg, sid):
+    r = reg[sid]
+    return r["short"].replace("->", "→") + (" (optional)" if r["note"].startswith("optional") else "")
 
 
 def fig4_quality_latency():
@@ -642,12 +719,13 @@ def fig4_quality_latency():
     reg = registry()
     res = [r for r in results_main() if r["condition"] == "L0-natural"]
     metric = QL_METRIC
-    fig, axes = plt.subplots(2, 2, figsize=(fs.COL_W, 3.05), gridspec_kw=dict(wspace=0.36, hspace=0.75))
+    fig, axes = plt.subplots(2, 2, figsize=(fs.COL_W, 2.3),
+                             gridspec_kw=dict(wspace=0.36, hspace=0.6, top=0.95, bottom=0.13))
     xs_def = [("StreamLAAL_mean_s", "StreamLAAL (s)", 6.6), ("EndOffset_p50_s", "EndOffset, median (s)", 4.0)]
     for c, (d, dname) in enumerate((("EN->DE", "En→De"), ("DE->EN", "De→En"))):
         ys_all = [num(r[metric]) for r in res if r["direction"] == d and num(r[metric]) is not None]
         lo = (min(ys_all) - 22) if ys_all else 30
-        hi = (max(ys_all) + 4) if ys_all else 80
+        hi = (max(ys_all) + 6) if ys_all else 80
         for rr, (xkey, xlab, xmax) in enumerate(xs_def):
             ax = axes[rr][c]
             fs.style_axes(ax)
@@ -656,10 +734,10 @@ def fig4_quality_latency():
             if off and xkey == "StreamLAAL_mean_s":
                 xo = num(off[0][xkey])
                 ax.axvline(xo, color=RULE, lw=0.6, zorder=0)
-                ax.text(xo, 1.0, "turn length", transform=ax.get_xaxis_transform(), ha="center", va="bottom",
+                ax.text(xo - 0.12, 0.985, "turn length", transform=ax.get_xaxis_transform(), ha="right", va="top",
                         fontsize=5.2, color=MUTED)
             if off and xkey == "EndOffset_p50_s":
-                ax.text(0.02, 1.0, "oracle endpoint", transform=ax.get_xaxis_transform(), ha="left", va="bottom",
+                ax.text(0.05, 0.985, "oracle endpoint", transform=ax.get_xaxis_transform(), ha="left", va="top",
                         fontsize=5.2, color=MUTED)
             for sid in sorted({r["system_id"] for r in pts if reg[r["system_id"]]["kind"] in ("stream", "consecutive")}):
                 for op in sorted({r["op"] for r in pts if r["system_id"] == sid}):
@@ -679,7 +757,8 @@ def fig4_quality_latency():
                 st = sys_style(reg, r["system_id"])
                 hollow = r["wrapper"] == "realistic"
                 ax.plot(num(r[xkey]), num(r[metric]), ls="none", marker=st["marker"], ms=st["ms"], color=st["color"],
-                        mfc="white" if hollow else st["mfc"], mew=0.8, zorder=3)
+                        mfc="white" if hollow else st["mfc"], mec=st["color"] if hollow else st["mec"],
+                        fillstyle=st["fill"], markerfacecoloralt="white", mew=0.8 if hollow else 0.45, zorder=3)
             # direct labels for the offline anchors, staggered (leader line when moved)
             sep = 0.085 * (hi - lo)
             last = None
@@ -701,42 +780,46 @@ def fig4_quality_latency():
             ax.set_xlim(-0.1 if xkey == "EndOffset_p50_s" else 0, xmax)
             ax.set_ylim(lo, hi)
             ax.set_xlabel(xlab, fontsize=6.3, labelpad=1)
-            ax.set_title(f"({'abcd'[rr * 2 + c]}) {dname}", loc="left", fontsize=6.8, pad=8)
-            ax.tick_params(labelsize=5.9)
-        axes[0][0].set_ylabel(metric, fontsize=6.3)
-        axes[1][0].set_ylabel(metric, fontsize=6.3)
+            ax.set_title(f"({'abcd'[rr * 2 + c]}) {dname}", loc="left", fontsize=6.8, pad=3)
+            ax.tick_params(labelsize=5.9, pad=1.5)
+        axes[0][0].set_ylabel(metric, fontsize=6.3, labelpad=2)
+        axes[1][0].set_ylabel(metric, fontsize=6.3, labelpad=2)
     order = ["consecutive", "seamless_streaming", "cascade_la", "m4t_alignatt", "streamspeech", "infinisst",
-             "gold_mu2", "ours"]
+             "hibiki_zero", "gold_mu2", "ours"]
+    # a system outside the fixed list (e.g. 2xSeamlessStreaming) enters the legend once it has a plotted point
+    plotted = {r["system_id"] for r in res if num(r[metric]) is not None}
+    order += [sid for sid in reg if sid in plotted and sid not in order and reg[sid]["kind"] not in ("offline",)]
     hs = []
     for sid in order:
         st = sys_style(reg, sid)
         hs.append(Line2D([], [], ls="-" if sid == "ours" else "none", lw=1.1, marker=st["marker"], ms=st["ms"],
-                         color=st["color"], mfc=st["mfc"], mew=0.8, label=reg[sid]["short"].replace("->", "→")))
+                         color=st["color"], mfc=st["mfc"], mec=st["mec"], fillstyle=st["fill"],
+                         markerfacecoloralt="white", mew=0.45, label=legend_label(reg, sid)))
     hs.append(Line2D([], [], ls="none", marker="o", ms=3.8, color=INK2, mfc="white", mew=0.8,
-                     label="hollow = VAD + LID"))
-    fig.legend(handles=hs, loc="lower center", bbox_to_anchor=(0.5, -0.14), ncol=3, fontsize=5.4, handletextpad=0.3,
-               columnspacing=0.8)
+                     label="hollow = realistic wrapper\n(VAD + language ID)"))
+    fig.legend(handles=hs, loc="upper center", bbox_to_anchor=(0.5, -0.005), ncol=3, fontsize=5.3,
+               handlelength=1.0, handletextpad=0.4, columnspacing=0.9, labelspacing=0.3, borderaxespad=0.0)
     fs.save(fig, "fig4_quality_latency", OUT)
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# fig5_oracle_gap: best oracle-segmented vs best realistic pipeline vs ours, per timing condition and pair
+# fig5_oracle_gap: one reference pipeline under the oracle and the realistic wrapper vs ours, per condition and pair
 # ---------------------------------------------------------------------------------------------------------------
 GAP_SETS = [("TAXI (real speech)", "taxi", ["L0-mediated", "L0-natural", "L1"]),
-            ("Syn EN↔DE (TTS)", "syn-en-de", ["L0-natural", "L1"]),
-            ("Syn KO↔EN (TTS)", "syn-ko-en", ["L0-natural", "L1"])]
+            ("Syn En↔De (TTS)", "syn-en-de", ["L0-natural", "L1"]),
+            ("Syn Ko↔En (TTS)", "syn-ko-en", ["L0-natural", "L1"])]
 GAP_METRICS = [("COMET", "COMET (mean of the two directions)"), ("EndOffset_p50_s", "EndOffset, median (s)"),
                ("wrong_dir_word_pct", "wrong-direction words (%)")]
 COND_LABEL = {"L0-mediated": "L0 mediated", "L0-natural": "L0 natural", "L1": "L1 turn-end overlap"}
 
 
-def _cond_means(res, corpus, cond):
+def _cond_means(res, corpus, cond, gap=None):
     """Mean over the two directions for every (system, wrapper) with both directions; op == main."""
     out = {}
-    keys = {(r["system_id"], r["wrapper"]) for r in res if r["corpus"] == corpus and r["condition"] == cond}
-    for sid, wr in keys:
-        rr = [r for r in res if r["corpus"] == corpus and r["condition"] == cond and r["system_id"] == sid
-              and r["wrapper"] == wr and r["op"] == "main"]
+    sel = [r for r in res if r["corpus"] == corpus and r["condition"] == cond and r["op"] == "main"
+           and (gap is None or r["gap_s"] == gap)]
+    for sid, wr in {(r["system_id"], r["wrapper"]) for r in sel}:
+        rr = [r for r in sel if r["system_id"] == sid and r["wrapper"] == wr]
         vals = {}
         for m, _ in GAP_METRICS:
             v = [num(r[m]) for r in rr]
@@ -745,10 +828,24 @@ def _cond_means(res, corpus, cond):
     return out
 
 
+def reference_pipeline(res):
+    """The one pipeline of Table 4, Fig. 5 and Fig. A3: the highest realistic-wrapper COMET (mean of the two
+    directions) on TAXI L0 natural among pipelines that cover both directions (single-direction systems never have
+    both); None while pending. Returns (oracle key, realistic key, display name)."""
+    means = _cond_means(res, "taxi", "L0-natural")
+    cands = [(sid, v["COMET"]) for (sid, wr), v in means.items()
+             if wr == "realistic" and sid != "ours" and v["COMET"] is not None]
+    if not cands:
+        return None
+    sid = max(cands, key=lambda kv: kv[1])[0]
+    return (ORACLE_TWIN.get(sid, sid), "oracle"), (sid, "realistic"), registry()[sid]["short"]
+
+
 def fig5_oracle_gap():
     import matplotlib.pyplot as plt
     fs.setup(7)
     res = results_conditions()
+    ref = reference_pipeline(res)
     order, ypos, y = [], {}, 0.0
     for name, corpus, conds in GAP_SETS:
         for cond in conds:
@@ -764,12 +861,8 @@ def fig5_oracle_gap():
         for name, corpus, cond in order:
             means = _cond_means(res, corpus, cond)
             yy = ypos[(corpus, cond)]
-
-            def best(wr):
-                cands = [(k, v) for k, v in means.items() if k[1] == wr and k[0] != "ours" and v["COMET"] is not None]
-                return max(cands, key=lambda kv: kv[1]["COMET"])[1][m] if cands else None
-
-            o, rl = best("oracle"), best("realistic")
+            o = means.get(ref[0], {}).get(m) if ref else None
+            rl = means.get(ref[1], {}).get(m) if ref else None
             ou = means.get(("ours", "none"), {}).get(m)
             got = [v for v in (o, rl, ou) if v is not None]
             vals += got
@@ -781,10 +874,14 @@ def fig5_oracle_gap():
                 ax.plot([rl], [yy], "o", ms=4.6, mfc="white", mec=MUTED, mew=1.1, zorder=3)
             if ou is not None:
                 ax.plot([ou], [yy], "D", ms=4.2, color=OURS, mec="white", mew=0.8, zorder=4)
+            planned = ref is None or any(k in means for k in ref[:2])   # False: P has no run under this condition
             if not got:
-                any_pending = True
-                ax.text(0.5, yy, "pending", transform=ax.get_yaxis_transform(), fontsize=6.0, color=MUTED,
-                        style="italic", ha="center", va="center")
+                any_pending = any_pending or planned
+                ax.text(0.5, yy, "pending" if planned else "not run", transform=ax.get_yaxis_transform(),
+                        fontsize=6.0, color=MUTED, style="italic", ha="center", va="center")
+            elif not planned and m == GAP_METRICS[0][0]:
+                ax.text(0.02, yy, "$P$ not run", transform=ax.get_yaxis_transform(), fontsize=5.6, color=MUTED,
+                        style="italic", ha="left", va="center")
         if vals:
             lo, hi = min(vals), max(vals)
             pad = 0.08 * (hi - lo or 1.0)
@@ -799,10 +896,11 @@ def fig5_oracle_gap():
         axes[0].text(-0.62, ypos[(corpus, conds[0])] + 0.72, name, transform=axes[0].get_yaxis_transform(),
                      fontsize=6.6, color=INK, weight="bold", ha="left", va="center")
     axes[0].set_ylim(min(ypos.values()) - 0.6, 1.1)
-    h = [plt.Line2D([], [], marker="o", ls="", ms=4.6, color=INK2, mec="white", label="best oracle-segmented pipeline"),
+    pipe = f"$P$ = {ref[2].replace('->', '→')}" if ref else "reference pipeline $P$"
+    h = [plt.Line2D([], [], marker="o", ls="", ms=4.6, color=INK2, mec="white", label=f"{pipe}, oracle segmentation"),
          plt.Line2D([], [], marker="o", ls="", ms=4.6, mfc="white", mec=MUTED, mew=1.1,
-                    label="best realistic pipeline (VAD + LID)"),
-         plt.Line2D([], [], marker="D", ls="", ms=4.2, color=OURS, mec="white", label="ours (no oracle input)")]
+                    label=f"{pipe}, VAD + language-ID routing"),
+         plt.Line2D([], [], marker="D", ls="", ms=4.2, color=OURS, mec="white", label="Ours (no oracle input)")]
     fig.legend(handles=h, loc="upper center", ncol=3, fontsize=6.4, bbox_to_anchor=(0.58, 1.02), handletextpad=0.3,
                columnspacing=1.2)
     if any_pending and DRAFT:
@@ -909,7 +1007,11 @@ def figA3_gap_sweep():
     gaps = rows("taxi_gaps.csv")
     nat = np.array([float(r["gap_s"]) for r in gaps if r["config"] == "natural" and r["type"] == "speaker_change"])
     med = np.array([float(r["gap_s"]) for r in gaps if r["config"] == "mediated" and r["type"] == "speaker_change"])
-    res = [r for r in results_conditions() if r["corpus"] == "taxi" and r["condition"] == "fixed-gap"]
+    allres = results_conditions()
+    res = [r for r in allres if r["corpus"] == "taxi" and r["condition"] == "fixed-gap"]
+    ref = reference_pipeline(allres)              # the pipeline of Table 4 / Fig. 5, under both wrappers
+    curves = ([(ref[0], "-"), (ref[1], (0, (3, 2)))] if ref else []) + [(("ours", "none"), "-")]
+    gaps_s = sorted({r["gap_s"] for r in res}, key=float)
     metrics = [("COMET", "COMET (mean of directions)"), ("wrong_dir_word_pct", "wrong-direction words (%)"),
                ("EndOffset_p50_s", "EndOffset, median (s)")]
     fig, axes = plt.subplots(1, 3, figsize=(fs.PAGE_W, 1.75), gridspec_kw=dict(wspace=0.38))
@@ -926,18 +1028,19 @@ def figA3_gap_sweep():
             ax.text(-0.5, 0.97, "L1", transform=tr, ha="center", va="top", fontsize=5.8, color=INK2)
             ax.text(0.33, 0.25, "L0 natural", transform=tr, ha="left", va="bottom", fontsize=5.4, color=INK2)
             ax.text(2.0, 0.08, "L0 mediated", transform=tr, ha="center", va="bottom", fontsize=5.4, color=INK2)
-        pts = [r for r in res if num(r[m]) is not None]
-        if pts:
-            for sid in sorted({r["system_id"] for r in pts}):
-                for wr, ls in (("oracle", "-"), ("none", "-"), ("realistic", (0, (3, 2)))):
-                    rr = [r for r in pts if r["system_id"] == sid and r["wrapper"] == wr]
-                    if not rr:
-                        continue
-                    st = sys_style(reg, sid)
-                    gx = sorted({float(r["gap_s"]) for r in rr})
-                    gy = [np.mean([num(r[m]) for r in rr if float(r["gap_s"]) == gq]) for gq in gx]
-                    ax.plot(gx, gy, ls=ls, lw=1.0, color=st["color"], marker=st["marker"], ms=3.0,
-                            mfc="white" if wr == "realistic" else st["mfc"], mew=0.7)
+        ys = []
+        for (sid, wr), ls in curves:
+            pts_ = [(float(g), _cond_means(res, "taxi", "fixed-gap", gap=g).get((sid, wr), {}).get(m)) for g in gaps_s]
+            pts_ = [(g, v) for g, v in pts_ if v is not None]
+            if not pts_:
+                continue
+            ys += [v for _, v in pts_]
+            st = sys_style(reg, sid)
+            ax.plot([g for g, _ in pts_], [v for _, v in pts_], ls=ls, lw=1.0, color=st["color"], marker=st["marker"],
+                    ms=3.0, mfc="white" if wr == "realistic" else st["mfc"], mec=st["color"], mew=0.7)
+        if ys:      # leave the lower quarter to the gap histograms (drawn in axes coordinates)
+            span = (max(ys) - min(ys)) or 1.0
+            ax.set_ylim(min(ys) - 0.45 * span, max(ys) + 0.12 * span)
         else:
             fs.pending_note(ax, "pending: TAXI re-rendered with\nfixed gaps from −0.6 to 2 s", y=0.62)
             ax.set_yticks([])
@@ -968,17 +1071,17 @@ def figA4_sim2real():
             ax.plot(x, y, ls="none", marker=st["marker"], ms=st["ms"], color=st["color"],
                     mfc="white" if r["wrapper"] == "realistic" else st["mfc"], mew=0.8)
         tau = kendalltau(xs, ys).statistic
-        ax.text(0.04, 0.96, f"Kendall τ = {tau:.2f} (n = {len(pts)})", transform=ax.transAxes, ha="left", va="top",
+        ax.text(0.04, 0.96, f"Kendall $\\tau_b$ = {tau:.2f} (n = {len(pts)})", transform=ax.transAxes, ha="left", va="top",
                 fontsize=6, color=INK2)
         ax.set_xlim(lo, hi)
         ax.set_ylim(lo, hi)
     else:
         ax.plot([0, 1], [0, 1], transform=ax.transAxes, color=RULE, lw=0.6)
-        fs.pending_note(ax, "pending: one point per\nsystem × wrapper × direction\nKendall τ = [TBD]", y=0.3)
+        fs.pending_note(ax, "pending: one point per\nsystem × wrapper × direction\nKendall $\\tau_b$ = [TBD]", y=0.3)
         ax.set_xticks([])
         ax.set_yticks([])
     ax.set_xlabel("chrF on TAXI (real speech)")
-    ax.set_ylabel("chrF on Syn EN↔DE (TTS)")
+    ax.set_ylabel("chrF on Syn En↔De (TTS)")
     fs.save(fig, "figA4_sim2real", OUT)
 
 
@@ -1065,7 +1168,7 @@ def figA6_backbone_lookahead():
 
 
 def figA7_delta_delay():
-    """Re-styles the recorded worked example (backbone-figures/fig_delta_delay_interleaving.py) in the house style."""
+    """Re-styles the recorded worked example (fig_delta_delay_interleaving.py in this folder) in the house style."""
     import matplotlib.pyplot as plt
     src = HERE / "fig_delta_delay_interleaving.py"
     spec = importlib.util.spec_from_file_location("delta_delay_src", src)

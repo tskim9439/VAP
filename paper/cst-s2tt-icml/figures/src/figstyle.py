@@ -1,15 +1,17 @@
 """House style for the CST-S2TT paper figures.
 
-ICML: 10 pt Times text, 3.25 in column, 6.75 in page width;
-Okabe-Ito palette; TrueType embedding, never Type 3). Extended with ink tokens, diagram helpers and a Hangul
-fallback font (AppleMyungjo, a serif Hangul face) so that Korean text renders in the same serif look.
+ICML: 10 pt Times text, 3.25 in column, 6.75 in page width; Okabe-Ito palette; TrueType embedding, never Type 3.
+Extended with ink tokens, diagram helpers and a Hangul fallback font (AppleMyungjo, a serif Hangul face) so that
+Korean text renders in the same serif look.
 Note: a string that contains mathtext ($...$) cannot use the fallback; keep Hangul and math in separate strings.
 
 Colour semantics (identical in every figure):
   language / speaker identity : German #0072B2 (blue), English #E69F00 (orange), Korean #009E73 (green)
   timing configuration        : L0 natural #009E73, L0 mediated #CC79A7 (always direct-labelled), L1 overlap #D55E00
-  results                     : our model #D55E00 (accent); baselines in neutral inks + a fixed marker per system;
-                                offline upper bounds as hollow black markers; realistic wrapper = hollow marker
+  results                     : our model #D55E00 (vermillion accent); baselines in neutral inks + a fixed marker per
+                                system; systems with oracle input (offline, Gold->LLM (MU2)) as filled black markers
+                                with a white edge, direct-labelled; oracle wrapper = filled, realistic wrapper = hollow,
+                                no wrapper (2xSeamlessStreaming) = half-filled
 Text never wears a data colour; labels inside a coloured fill use white or ink by luminance.
 """
 import matplotlib

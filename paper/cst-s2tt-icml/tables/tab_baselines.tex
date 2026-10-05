@@ -2,14 +2,15 @@
 % Table A4 (tab:baselines): baseline configurations. Included from App. D.
 % Known cells only: checkpoints and parameter counts given by the model names
 % or the model cards, offline settings, directions, wrappers, and the
-% licences already verified (Qwen3.8-27B, Qwen3-ASR, Nemotron 3.5 ASR).
-% Everything else, including both values of every latency knob, is \tbd.
-% System names follow Table 3 (tab:main) and Table 6 (tab:ablation).
+% licences already verified (Qwen3.8-27B, Qwen3-ASR, Nemotron 3.5 ASR,
+% Hibiki-Zero). Everything else, including both values of every latency
+% knob, is \tbd. System names follow Table 3 (tab:main) and Table 6
+% (tab:ablation). Systems with oracle input are not called bounds.
 % 600M (model card) and 638M (measured) count the whole Nemotron 3.5 ASR
 % model, RNN-T decoder included, not its encoder alone.
 % =====================================================================
 \begin{table}[tp]
-  \caption{Baseline configurations, named as in \cref{tab:main,tab:ablation} (LLM: Qwen3.8-27B). Params: recognition plus translation models (B: billions; \model: total; its encoder comes from Nemotron~3.5 ASR Streaming 0.6B, which has 600M parameters per its model card and 638M as measured, RNN-T decoder included). Directions: \pair{En}{De} on \taxi and, for systems with a Korean entry, on \syn; \pair{Ko}{En} on \syn only. Policy: when text is committed; LA-2: LocalAgreement-2. Latency knob: the setting swept on the \syn calibration split; its two values (low and high latency) are chosen by the rule of \cref{app:baselines} and are pending. Wrappers: O oracle segmentation, R realistic (VAD and language-ID routing), --~none (the system handles the whole mix). Not listed: the diarization cascades of \cref{tab:aux}, which do not translate (\cref{app:baselines}). $^\ast$Optional; InfiniSST only if its weights are public. Blank cells are pending.}
+  \caption{Baseline configurations, named as in \cref{tab:main,tab:ablation} (LLM: Qwen3.8-27B). Params: recognition plus translation models (B: billions; \model: total; its encoder comes from Nemotron~3.5 ASR Streaming 0.6B, which has 600M parameters per its model card and 638M as measured, RNN-T decoder included). Directions: \pair{En}{De} on \taxi and, for systems with a Korean entry, on \syn; \pair{Ko}{En} on \syn only. Policy: when text is committed; LA-2: LocalAgreement-2. Latency knob: the setting swept on the \syn calibration split; its two values (low and high latency) are chosen by the rule of \cref{app:baselines} and are pending. Wrappers: O oracle segmentation, R realistic (VAD and language-ID routing), --~none (the system handles the whole mix). Not listed: the diarization cascades of \cref{tab:aux}, which do not translate (\cref{app:baselines}). $^\ast$Optional; InfiniSST only if its weights are public; Hibiki-Zero is scored on its text output. Blank cells are pending.}
   \label{tab:baselines}
   \centering
   \fontsize{8}{9.5}\selectfont % 8pt (ICML \footnotesize is 9pt): fits the width
@@ -18,7 +19,7 @@
     \toprule
     System & Checkpoint\,/\,version & Params & Directions & Policy & \makecell[l]{Latency knob\\(two points)} & Wrappers & Licence \\
     \midrule
-    \multicolumn{8}{@{}l}{\textit{Offline upper bounds: gold turns, each translated after it ends}} \\
+    \multicolumn{8}{@{}l}{\textit{Offline, oracle input: gold turns, each translated after it ends}} \\
     Gold$\to$LLM
       & Qwen3.8-27B & 27B
       & \makecell[l]{\pair{En}{De}\\\pair{Ko}{En}} & turn end & -- & O & Apache-2.0 \\
@@ -29,7 +30,7 @@
       & openai/whisper-large-v3 & \tbd
       & \makecell[l]{\dir{De}{En}\\\dir{Ko}{En}} & turn end & -- & O & \tbd \\
     \midrule
-    \multicolumn{8}{@{}l}{\textit{Streaming bound: gold transcripts with forced-aligned word times}} \\
+    \multicolumn{8}{@{}l}{\textit{Streaming, oracle input: gold transcripts with forced-aligned word times; non-causal unit choice}} \\
     Gold$\to$LLM (MU2)
       & Qwen3.8-27B & 27B
       & \pair{En}{De} & MU2 units & \makecell[l]{one point\\(chrF $\geq$ 50)} & O & Apache-2.0 \\
@@ -56,11 +57,17 @@
     StreamSpeech
       & \tbd & \tbd
       & \dir{De}{En} & learned & chunk size & O, R & \tbd \\
+    Hibiki-Zero$^\ast$
+      & \makecell[l]{hibiki-zero-3b-\\pytorch-bf16} & 3B
+      & \dir{De}{En} & learned & \tbd & O, R & \makecell[l]{CC BY-NC-SA\\4.0} \\
     InfiniSST$^\ast$
       & \tbd & \tbd
       & \dir{En}{De} & learned (LLM) & \tbd & O, R & \tbd \\
     \midrule
-    \multicolumn{8}{@{}l}{\textit{Cascades in the ablations (\cref{tab:ablation})}} \\
+    \multicolumn{8}{@{}l}{\textit{Controls in the ablations (\cref{tab:ablation})}} \\
+    Decoupled twin
+      & \makecell[l]{\model M1; separate\\1.7B-thinker pass} & \tbd
+      & \pair{En}{De} & \makecell[l]{MU2 units,\\delay $\delta_t$} & $\delta_t$ & -- & \makecell[l]{OpenMDW-1.1;\\Apache-2.0} \\
     \makecell[l]{Same-backbone cascade\\(M1$\to$LLM)}
       & \makecell[l]{\model M1;\\Qwen3.8-27B} & 2,336M\,+\,27B
       & \pair{En}{De} & LA-2 & update step & -- & \makecell[l]{OpenMDW-1.1;\\Apache-2.0} \\

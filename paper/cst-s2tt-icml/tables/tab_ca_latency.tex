@@ -1,18 +1,20 @@
 % =====================================================================
 % Table A6 (tab:ca-latency): computation-aware latency and real-time factor.
-% Included from App. E. Referenced from Secs. 4, 5 and 7.
+% Included from App. E. Referenced from Secs. 4, 5, 6 and 7.
 % Known now: (i) context rows = earlier measurements of the single-speaker
 % 0.6B backbone (H200: tick p50 about 60 ms, p99 100-150 ms; M4 Mac with an
 % MLX fp16 thinker: 56 ms p50, RTF 0.82), taken outside this protocol;
-% (ii) the EndOffset of the gold- and ASR-transcript offline systems (gold/ASR
-% -> LLM) with measured, batched compute from the preliminary offline run
-% (0.1-0.2 s, approximate; Whisper ST is lower and not listed); (iii) values that hold by
-% construction (offline EndOffset 0 on the ideal clock; l_enc = 80 ms, the
-% bound of the [56,0] encoder). The 1.7B thinker has not been timed.
-% Everything else is pending (\tbd = blank).
+% (ii) the EndOffset of the three offline systems with measured, batched
+% compute from the preliminary offline run: at most about 0.2 s (gold/ASR ->
+% LLM 0.1-0.2 s, Whisper ST lower; approximate; quoted only as "<= 0.2");
+% (iii) values that hold by construction (offline EndOffset 0 on the ideal
+% clock; l_enc = 80 ms, the bound of the [56,0] encoder, also for M1-based
+% controls). The 1.7B thinker has not been timed. The controls of Table 6
+% (tab:ablation) are listed because their compute differs most from the
+% model's. Everything else is pending (\tbd = blank).
 % =====================================================================
 \begin{table}[t]
-  \caption{Computation-aware latency and real-time factor (RTF) on one H200 GPU, single stream, no batching; \taxi L0 natural, pooled over both directions. $\ell_{\mathrm{enc}}$: encoder look-ahead, counted at its bound. Tick: processing time per 80\,ms input chunk; RTF: processing time over audio duration. A real-time claim needs a measured RTF below 1; a tick above 80\,ms means that the output falls behind the input for a while. Ideal clock: an emission time is the audio consumed; computation-aware (CA) clock: it also counts the processing time spent until the emission \citep{ma2020simulmt}. \laal is a mean and \eo a median over non-empty turns. The batched offline row comes from the preliminary offline run, with approximate compute; the context rows are earlier measurements of the single-speaker backbone with the 0.6B thinker (not a \task system), taken outside this protocol. $^\dagger$preliminary; to be re-run under the final protocol. --: not applicable or not reported; blank: pending. \protect\draftnote{planned except the batched offline row and the context rows}}
+  \caption{Computation-aware latency and real-time factor (RTF) on one H200 GPU, single stream, no batching; \taxi L0 natural, pooled over both directions. $\ell_{\mathrm{enc}}$: encoder look-ahead, counted at its bound. Tick: processing time per 80\,ms input chunk; RTF: processing time over audio duration. A real-time claim needs a measured RTF below 1; a tick above 80\,ms means that the output falls behind the input for a while. Ideal clock: an emission time is the audio consumed; computation-aware (CA) clock: it also counts the processing time spent until the emission \citep{ma2020simulmt}. \laal is a mean and \eo a median over non-empty turns. The batched offline row covers the three offline systems of the preliminary offline run, with approximate compute; the context rows are earlier measurements of the single-speaker backbone with the 0.6B thinker (not a \task system), taken outside this protocol. $^\dagger$preliminary; to be re-run under the final protocol. --: not applicable or not reported; blank: pending. \protect\draftnote{planned except the batched offline row and the context rows}}
   \label{tab:ca-latency}
   \centering
   \footnotesize
@@ -25,11 +27,16 @@
     \midrule
     \model (1.7B thinker)              & H200 & 80   & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     SeamlessStreaming                  & H200 & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Streaming cascade (LA-2)           & H200 & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    SeamlessM4T v2 + AlignAtt          & H200 & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Streaming cascade                  & H200 & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    M4T v2 + AlignAtt                  & H200 & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Consecutive cascade (unbatched)    & H200 & --   & --   & --   & \tbd & \tbd & \tbd & \tbd & \tbd \\
     Offline: ASR$\to$LLM, per turn (unbatched) & H200 & -- & -- & -- & \tbd & \tbd & \tbd & 0 & \tbd \\
-    Offline: gold/ASR$\to$LLM, batched & --   & --   & --   & --   & --   & --   & --   & 0 & \prelim{0.1--0.2} \\
+    Offline systems, batched           & --   & --   & --   & --   & --   & --   & --   & 0 & $\leq$\prelim{0.2} \\
+    \midrule
+    \multicolumn{10}{@{}l}{\textit{Controls of \cref{tab:ablation}}} \\
+    Decoupled twin                     & H200 & 80   & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Same-backbone cascade (M1$\to$LLM) & H200 & 80   & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Size-matched cascade (ASR$\to$1.7B LLM) & H200 & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     \midrule
     \multicolumn{10}{@{}l}{\textit{Context: single-speaker ASR backbone, 0.6B thinker (not a \task system)}} \\
     0.6B backbone                      & H200   & 80 & $\approx$60 & 100--150 & --   & -- & -- & -- & -- \\

@@ -1,10 +1,16 @@
 % =====================================================================
 % Table A1 (tab:taxi-full): full TAXI datasheet statistics. Included from App. A.
 % All values are measured on the cstbench v0.1.0 build of BAS TAXI 2.5.
+% The last block (rendered sessions) holds the per-condition rows that the
+% compact Table 2 drops; the values also appear in the App. A text.
 % "--" marks cells that are not applicable or not reported (no derived sums).
+% One pending row (\tbd): the silence between the energetic frames of two
+% turns at speaker changes, which is 0.2 s longer than the drawn gap unless a
+% margin was cut at a file edge (review: report both; computable from the
+% timelines, not measured yet). Do not fill it with drawn gap + 0.2.
 % =====================================================================
 \begin{table}[htbp]
-  \caption{Full statistics of the \taxi build (\texttt{cstbench} v0.1.0). Rendered turns are the 16\,kHz turns after silence trimming, 0.1\,s margins included; they are identical in L0 natural and L0 mediated. Untrimmed values refer to the usable source turn files. Turn files exclude pre-dialogue and hang-up items. Same-speaker successions: 9 arise because unusable turns between them were skipped, 5 are adjacent in the source. Reference words are those of the human translations of the column's turns. Marks (SpeechDat notation): * hardly recognisable, \textasciitilde{} truncated, ** unintelligible. Percentiles use linear interpolation; the scorer's p90 of $m$ values instead takes the sorted value at the 0-based index $\min(m-1,\lfloor 0.9m\rfloor)$ (\cref{app:scorer}). --: not applicable or not reported.}
+  \caption{Full statistics of the \taxi build (\texttt{cstbench} v0.1.0). Rendered turns are the 16\,kHz turns after silence trimming, 0.1\,s margins included; they are identical in L0 natural and L0 mediated. Untrimmed values refer to the usable source turn files. Turn files exclude pre-dialogue and hang-up items. Same-speaker successions: 9 arise because unusable turns between them were skipped, 5 are adjacent in the source. Reference words are those of the human translations of the column's turns. Marks (SpeechDat notation): * hardly recognisable, \textasciitilde{} truncated, ** unintelligible. Percentiles use linear interpolation; the scorer's p90 of $m$ values instead takes the sorted value at the 0-based index $\min(m-1,\lfloor 0.9m\rfloor)$ (\cref{app:scorer}). --: not applicable or not reported; blank: pending.}
   \label{tab:taxi-full}
   \centering
   \small
@@ -44,6 +50,16 @@
     Noise labels (NOI tier)                                & 235                 & 228                  & --                  \\
     Other marks: *\,/\,\textasciitilde\,/\,**              & 53\,/\,8\,/\,1      & 61\,/\,4\,/\,11      & --                  \\
     Turns containing markup                                & 101                 & 135                  & --                  \\
+    \midrule
+    \multicolumn{4}{@{}l}{\textit{Rendered sessions, L0 natural\,/\,L0 mediated (gaps as drawn, between margin-inclusive turns)}} \\
+    Session audio (h)                                      & --                  & --                   & 0.737\,/\,0.998     \\
+    Median session (s)                                     & --                  & --                   & 29.023\,/\,39.316   \\
+    Speaker-change gap (s): mean\,/\,median, natural       & --                  & --                   & 0.257\,/\,0.223     \\
+    Speaker-change gap (s): mean\,/\,median, mediated      & --                  & --                   & 1.995\,/\,2.026     \\
+    Natural gaps at the 0.05\,s floor                      & --                  & --                   & 129 (23.89\%)       \\
+    Speaker-change silence between speech (s): median      & --                  & --                   & \tbd                \\
+    Speech occupancy (\%)                                  & --                  & --                   & 91.27\,/\,67.42     \\
+    Overlap ratio                                          & --                  & --                   & 0.0\,/\,0.0         \\
     \bottomrule
   \end{tabular}
 \end{table}

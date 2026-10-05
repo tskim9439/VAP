@@ -3,9 +3,11 @@
 % Stages 0-1 exist (Stage 1 = the one-epoch pilot behind tab:backbone).
 % Stages 2-3 are planned: their Data/Targets cells restate the design of
 % Sec. 5 (sec:model); every setting that is still open is \tbd (blank).
+% The decoupled twin (Sec. 6.6, App. D) gets its own planned Stage-3 row:
+% a separate translation pass from M1 with M3's commit policy.
 % =====================================================================
 \begin{table}[t]
-  \caption{Training stages, data and hyperparameters. Stages~0 and~1 exist, and the one-epoch Stage-1 pilot is the backbone of \cref{tab:backbone}; Stages~2 and~3 are planned (M1--M3 as in \cref{sec:model}), and their open settings are blank. Hours are approximate; data sources and augmentation are detailed in \cref{app:model}. lr: peak learning rate after a linear warm-up.}
+  \caption{Training stages, data and hyperparameters. Stages~0 and~1 exist, and the one-epoch Stage-1 pilot is the backbone of \cref{tab:backbone}; Stages~2 and~3 are planned (M1--M3 as in \cref{sec:model-training}; the decoupled twin of \cref{sec:exp-ablation} also starts from M1), and their open settings are blank. Hours are approximate; data sources and augmentation are detailed in \cref{app:model}. lr: peak learning rate after a linear warm-up.}
   \label{tab:training}
   \centering
   \footnotesize
@@ -33,7 +35,7 @@
     \addlinespace
     2 (M1): two-speaker bilingual ASR
       & \tbd
-      & + German ASR, 8\,kHz telephone-band augmentation, simulated two-speaker \pair{En}{De} and \pair{En}{Ko} mono sessions
+      & + German ASR, 8\,kHz telephone-band augmentation, simulated two-speaker \pair{En}{De} and \pair{Ko}{En} mono sessions
       & speaker-tagged transcripts at delay $\delta_s$; two-slot speaker activity
       & \tbd
       & \tbd
@@ -43,6 +45,14 @@
       & \tbd
       & + CoVoST~2 and MuST-C (\pair{En}{De}); silver teacher translations in four directions
       & translations committed at turn ends (M2) or at MU2 (M3), delay $\delta_t$
+      & \tbd
+      & \tbd
+      & planned \\
+    \addlinespace
+    3 (twin): separate translation pass
+      & \tbd
+      & as Stage~3
+      & translations of the segments fixed by M1's speaker tags, at MU2 with delay $\delta_t$
       & \tbd
       & \tbd
       & planned \\

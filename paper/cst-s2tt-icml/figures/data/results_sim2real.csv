@@ -1,4 +1,8 @@
 system_id,wrapper,op,direction,chrF_taxi_L0natural,chrF_syn_L0natural_edition1,chrF_syn_L0natural_edition2,status
+gold_mt,oracle,main,EN->DE,,,,pending
+gold_mt,oracle,main,DE->EN,,,,pending
+asr_mt,oracle,main,EN->DE,,,,pending
+asr_mt,oracle,main,DE->EN,,,,pending
 consecutive,realistic,main,EN->DE,,,,pending
 consecutive,realistic,main,DE->EN,,,,pending
 seamless_streaming,oracle,main,EN->DE,,,,pending
@@ -9,9 +13,5 @@ cascade_la,oracle,main,EN->DE,,,,pending
 cascade_la,oracle,main,DE->EN,,,,pending
 cascade_la,realistic,main,EN->DE,,,,pending
 cascade_la,realistic,main,DE->EN,,,,pending
-m4t_alignatt,oracle,main,EN->DE,,,,pending
-m4t_alignatt,oracle,main,DE->EN,,,,pending
-m4t_alignatt,realistic,main,EN->DE,,,,pending
-m4t_alignatt,realistic,main,DE->EN,,,,pending
 ours,none,main,EN->DE,,,,pending
 ours,none,main,DE->EN,,,,pending

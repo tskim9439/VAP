@@ -1,12 +1,24 @@
 % =====================================================================
 % Table 2 (tab:bench): CST-Bench composition. Single column; included
-% from Sec. 4.2. TAXI L0 values are measured on the cstbench v0.1.0
+% from Sec. 4. TAXI L0 values are measured on the cstbench v0.1.0
 % build of BAS TAXI 2.5. TAXI L1 and the synthetic track are planned:
 % their condition-specific cells use \tbd (plan targets are not facts).
-% Measured natural width: 257.9pt at \footnotesize (9pt in ICML), 233.1pt at 8pt (column 234.9pt).
+% Compact version for the page budget: one header line, five rows, no
+% per-language splits (they also fixed a German-first order that clashed
+% with the En->De-first order of Tables 3 and 4). Source speech
+% (telephone, 8->16 kHz; Fig. 2, App. A), the German/English splits,
+% session audio per condition, mean turn, source and reference words,
+% turns per session, switches, median session, gap mean and occupancy
+% live in tab:taxi-full (App. A), which repeats every row here (App. A,
+% which Sec. 4 cites, points to it; the caption does not, for space).
+% Gaps are as drawn, between margin-inclusive turn intervals (Sec. 4):
+% the silence between speech is up to 0.2 s longer (two 0.1 s margins,
+% less where a margin was cut at a file edge). The caption says so, so
+% that 0.223 is not read against the ~200 ms gap of Sec. 1; at this
+% wording the caption stays at two lines (a longer clause adds a third).
 % =====================================================================
 \begin{table}[t]
-  \caption{\bench composition (TAXI: \taxi; Syn: \syn). TAXI speech, content and turn order are real; its timing is synthetic. The TAXI conditions render the same turns, so merged cells hold for all three. Pairs are \dir{De}{En}\,/\,\dir{En}{De} (German\,/\,English source turns). Speech is counted after silence trimming. Turns/session: median (mean; range); switches: total (median per session). Gaps are taken at speaker changes; occupancy is the share of session time covered by turns. $^\ast$Planned; blank cells are pending. $^\ddagger$English side human, Korean side machine-translated and consensus-checked.}
+  \caption{\bench composition. Drawn gaps exclude up to 0.2\,s of turn margins. $^\ast$Planned. $^\ddagger$Korean MT. $^\S$Partly post-edited MT.}
   \label{tab:bench}
   \centering
   \fontsize{8}{9.5}\selectfont % 8pt (ICML \footnotesize is 9pt): fits the width
@@ -15,25 +27,14 @@
     \toprule
     & \multicolumn{3}{c}{TAXI (real speech)} & \multicolumn{2}{c}{Syn (TTS)$^\ast$} \\
     \cmidrule(lr){2-4}\cmidrule(l){5-6}
-    & \makecell{L0\\natural} & \makecell{L0\\mediated} & \makecell{L1 turn-end\\overlap$^\ast$} & \pair{En}{De} & \pair{Ko}{En} \\
+    & L0 nat. & L0 med. & L1$^\ast$ & \pair{En}{De} & \pair{Ko}{En} \\
     \midrule
-    Source speech      & \multicolumn{3}{c}{telephone, 8$\to$16\,kHz}     & TTS   & TTS              \\
-    References         & \multicolumn{3}{c}{human}                         & human & mixed$^\ddagger$ \\
-    Sessions           & \multicolumn{3}{c}{86}                            & \tbd  & \tbd             \\
-    Usable turns       & \multicolumn{3}{c}{640 (349\,/\,291)}             & \tbd  & \tbd             \\
-    Speech (min)       & \multicolumn{3}{c}{40.378 (17.953\,/\,22.425)}    & \tbd  & \tbd             \\
-    Source words       & \multicolumn{3}{c}{6,815 (3,228\,/\,3,587)}       & \tbd  & \tbd             \\
-    Reference words    & \multicolumn{3}{c}{6,617 (3,339\,/\,3,278)}       & \tbd  & \tbd             \\
-    Mean turn (s)      & \multicolumn{3}{c}{3.086\,/\,4.624}               & \tbd  & \tbd             \\
-    Turns/session      & \multicolumn{3}{c}{7 (7.44; 1--17)}               & \tbd  & \tbd             \\
-    Switches           & \multicolumn{3}{c}{540 (6)}                       & \tbd  & \tbd             \\
+    References         & \multicolumn{3}{c}{human}       & human$^\S$ & mixed$^\ddagger$ \\
+    Sessions\,/\,turns & \multicolumn{3}{c}{86\,/\,640}  & \tbd  & \tbd             \\
+    Speech (min)       & \multicolumn{3}{c}{40.378}      & \tbd  & \tbd             \\
     \midrule
-    Session audio (h)  & 0.737  & 0.998  & \tbd & \tbd & \tbd \\
-    Median session (s) & 29.023 & 39.316 & \tbd & \tbd & \tbd \\
-    Gap mean (s)       & 0.257  & 1.995  & \tbd & \tbd & \tbd \\
-    Gap median (s)     & 0.223  & 2.026  & \tbd & \tbd & \tbd \\
+    Median gap (s)     & 0.223  & 2.026  & \tbd & \tbd & \tbd \\
     Overlap ratio      & 0.0    & 0.0    & \tbd & \tbd & \tbd \\
-    Occupancy (\%)     & 91.27  & 67.42  & \tbd & \tbd & \tbd \\
     \bottomrule
   \end{tabular}
 \end{table}

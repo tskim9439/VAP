@@ -1,14 +1,29 @@
 % !TEX root = ../main.tex
 % ---------------------------------------------------------------------------
 % Section 5: the unified model (conversational delayed streams).
-% Built: the streaming ASR backbone (Sec. 5.1). Planned: Secs. 5.2-5.4 and the
-% raised per-chunk token cap in Sec. 5.5; every planned part carries a \draftnote.
-% Details and backbone results: app:model (tab:backbone, tab:training,
-% fig:backbone, fig:delta-delay); commit-unit pilot: app:units.
-% Float: Fig. 3 (figure*, fig:model).
-% One sentence per line. If space is short, delete the lines that end in
-% "% optional" first; their content is repeated in the appendices. Next, Sec. 5.4
-% can shrink to its first sentence (tab:training lists the stages).
+% Built: the streaming ASR backbone (Sec. 5.1). Planned: Secs. 5.2-5.4; every
+% planned part carries a \draftnote.
+% Budget: <= 620 words of prose (wordcount.py) + Fig. 3, about 1.1 pages.
+% Moved to App. F (app:model): encoder and thinker specifications, the loss
+% weights, delay medians, backbone WERs, the [56,3] trade-off, Stage-0/1 and
+% Stage-2/3 data recipes, per-speaker forced alignment before mixing, the
+% decoding procedure and cap, the session length in audio positions,
+% licences, EXAONE exclusion, the real-time context (also in Sec. 7).
+% Moved to App. G (app:units): minimum-unit sizes, pilot LAAL/chrF values,
+% collapse counts, the TAXI turn-length comparison.
+% Stated once elsewhere, not repeated here: that the baselines, unlike the
+% model and the M1-based controls, never see simulated sessions (Sec. 6.6,
+% App. F); the decoupled twin (Sec. 6.6, App. D, App. F); that the output
+% language fixes the direction (Def. 1). Coupling claims are left to the
+% decoupled twin and the same-backbone cascade (Sec. 6.6).
+% Within a turn only verified units are committed; a turn end commits the
+% rest, so the novelty sentence says "commit units verified ...", not "only".
+% Floats: Fig. 3 (figure*, fig:model), defined in sections/04_bench.tex so
+% that it lands on the page where this section starts. One sentence per line.
+% Labels kept: sec:model, sec:model-backbone, sec:model-stream,
+% sec:model-targets and sec:model-inference (both on Sec. 5.3, which now
+% holds the latency accounting), sec:model-training, eq:chunk, eq:loss.
+% eq:delay was only referenced here; the delay rule is now inline.
 % ---------------------------------------------------------------------------
 % Special tokens of the serialized stream, e.g. \mdltok{next}, \mdltok{A}, \mdltok{{\to}de}.
 % Robust, so it also works in captions; later files may reuse it.
@@ -16,88 +31,47 @@
 
 \section{\model: Conversational Delayed Streams}\label{sec:model}
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/fig3_model.pdf}
-  \caption{\model and conversational delayed streams (illustrative timings; $\delta_s=2$ and $\delta_t=3$ chunks of 80\,ms).
-    (a)~A causal, cache-aware FastConformer encoder feeds one adapter embedding per 80\,ms chunk to a Qwen3-ASR thinker LM that keeps the whole session in its KV cache; a two-slot head gives frame-level speaker activity for DER.
-    (b)~Targets on the 80\,ms clock: a transcript word is emitted $\delta_s$ chunks after the chunk in which it ends, the translation of each verified meaning unit (numbered 1, 2, \dots{} in the figure) $\delta_t$ chunks after the chunk in which the unit ends, and a turn end forces a commit.
-    (c)~The resulting token sequence: $a_k$, audio embedding of chunk $k$; \mdltok{A}, \mdltok{B}, arrival-order speaker tags; \mdltok{{\to}de}, \mdltok{{\to}en}, target-language tags; \mdltok{next}, end of chunk; underlined tokens are training targets.
-    Dashed parts are planned and not yet built.
-    \protect\draftnote{built today: the encoder--adapter--LM backbone, trained for single-speaker English and Korean transcription}}
-  \label{fig:model}
-\end{figure*}
+% Fig. 3 (figure*, fig:model) is defined in sections/04_bench.tex, before
+% \paragraph{Scoring.}: a figure* appears at the earliest on the page after its
+% definition, so defining it here would push it one page past this section.
 
-We cast \task as serialized multi-channel emission on one clock (\cref{fig:model}): after each 80\,ms audio embedding, a causal speech LLM writes zero or more tokens for a speaker-attributed transcript and for a translation into each language.
-Each channel trails its evidence by its own delay, so the read/write policy becomes next-token prediction against targets that, relative to a teacher's alignment, do not anticipate unheard speech.
-These \emph{conversational delayed streams} extend delayed streams modeling \citep{zeghidour2025streaming}, the per-word delayed translation targets of Hibiki \citep{labiausse2025highfidelity} and serialized output training \citep{kanda2022streaming,papi2023token} to channels with their own delays and commit points.
+After each $\Delta=80$\,ms audio chunk, the causal speech LLM \model writes zero or more tokens of a speaker-tagged transcript and translations into both languages (\cref{fig:model}): reading and writing become next-token prediction.
+Unlike delayed streams modeling (one delayed text stream; \citealp{zeghidour2025streaming}), \emph{conversational delayed streams} delay each channel separately; unlike Hibiki's alignment-based per-word delays \citep{labiausse2025highfidelity}, they commit units verified by translating the source heard so far.
 \draftnote{planned: only the backbone of \cref{sec:model-backbone} is built; \cref{sec:model-stream,sec:model-targets,sec:model-training} describe the design, and no \task result exists yet}
 
 \subsection{Streaming backbone}\label{sec:model-backbone}
-The encoder, Nemotron~3.5 ASR Streaming 0.6B \citep{nvidia2026nemotron35asr}, is a cache-aware \citep{noroozi2024stateful} FastConformer \citep{gulati2020conformer,rekesh2023fast} with 24 layers, $d_{\mathrm{model}}=1024$ and 80\,ms frames; its attention context $[56,0]$ spans 4.48\,s to the left and none to the right, and a truncation test bounds its effective look-ahead by 80\,ms.
-An MLP adapter (LayerNorm, Linear, GELU, Linear) maps frame $k$ to an embedding $a_k$ that replaces an audio placeholder token of the Qwen3-ASR language model, the \emph{thinker} \citep{shi2026qwen3asr,xu2025qwen3omni}; we drop Qwen3-ASR's own non-causal audio encoder and use the 1.7B thinker (a 0.6B one also exists).
-After a prefix with the language and a delay token \mdltok{DELAY\_\delta}, each chunk holds $a_k$, the text tokens due in it, and \mdltok{next} (``read 80\,ms more''), the analogue of a transducer blank \citep{graves2012sequence,seide2024speech}.
-A word that ends at time $t$ (by forced alignment) is due, with all its BPE tokens, in chunk
-\begin{equation}\label{eq:delay}
-  k(t;\delta)=\lfloor t/\Delta\rfloor+\delta,\qquad \Delta=80\,\mathrm{ms},
-\end{equation}
-with $\delta\in\{2,3,4,6,8\}$ sampled per sequence (\cref{fig:delta-delay}).
-The labels, at positions $\mathcal{Y}$ of the token sequence $o$, are the text tokens and \mdltok{next}; as \mdltok{next} makes up 70--85\% of them, the loss is a weighted cross-entropy,
-\begin{equation}\label{eq:loss}
-  \mathcal{L}=-\frac{\sum_{m\in\mathcal{Y}}w_m\log p_\theta(o_m\mid o_{<m})}{\sum_{m\in\mathcal{Y}}w_m},
-\end{equation}
-with $w_m=1$ for text and $w_m=0.3$ (English) or $0.15$ (Korean) for \mdltok{next}; a final (non-streaming) mode is trained jointly.
-
-In earlier backbones with the 0.6B thinker, the delay token set the median emission delay $(k+1)\Delta-t$ (without encoder look-ahead) to about 200/280/360\,ms for $\delta=2/3/4$; after one epoch, the 1.7B backbone reaches an English VoxPopuli-AA WER of 7.70/7.18/6.84\% at $\delta=4$/$\delta=6$/final, against 6.88\% for the same encoder with its causal RNN-T decoder and 5.10\% for the non-causal offline Qwen3-ASR-1.7B (\cref{tab:backbone}).
-A $[56,3]$ right context and a larger $\delta$ are largely interchangeable at matched mean delay (\cref{fig:backbone}), so the encoder stays causal. % optional
-All of this is single-speaker English and Korean transcription (\cref{app:model}).
+A cache-aware FastConformer encoder from Nemotron~3.5 ASR Streaming 0.6B \citep{nvidia2026nemotron35asr}, with a measured look-ahead of at most 80\,ms, feeds one embedding $a_k$ per chunk $k$, via an MLP adapter, to the 1.7B Qwen3-ASR language model, the \emph{thinker} \citep{shi2026qwen3asr}, replacing its non-causal audio encoder (\cref{app:model}).
+After a prefix with the language and a delay token \mdltok{DELAY\_\delta}, each chunk holds $a_k$, the text tokens due in it and an end-of-chunk token \mdltok{next}; a word ending at $t$ is due in chunk $\lfloor t/\Delta\rfloor+\delta$.
 
 \subsection{One serialized stream}\label{sec:model-stream}
-\model keeps this clock (\cref{fig:model}c); its prefix names the language pair and two delays, \mdltok{DELAY\_\delta_s} for transcripts and \mdltok{TDELAY\_\delta_t} for translations, sampled per training session.
+The prefix names the language pair and two delays, $\delta_s$ for transcripts and $\delta_t$ for translations, sampled per training session.
 Chunk $k$ reads
 \begin{equation}\label{eq:chunk}
-\begin{aligned}
-  B_k = a_k\;&\mdltok{\hat s_1}\,z_1\,\mdltok{\hat s_2}\,z_2\cdots\\
-             &\mdltok{{\to}\lambda_1}\,y_1\,\mdltok{{\to}\lambda_2}\,y_2\cdots\;\mdltok{next},
-\end{aligned}
+  B_k = a_k\,\mdltok{\hat s_1}\,z_1\cdots\mdltok{{\to}\lambda_1}\,y_1\cdots\mdltok{next},
 \end{equation}
-where $z_j$ are words of speaker $\hat s_j\in\{\mathrm{A},\mathrm{B}\}$, numbered by arrival without enrolment, and $y_i$ translates one unit into language $\lambda_i$, which fixes the direction; either part may be empty.
-Each tagged segment is one committed piece (\cref{sec:task}), so the latent speaker and direction state is explicit.
-Under turn-end overlap, the words of both speakers are ordered by end time, as in t-SOT \citep{kanda2022streaming} and in JSTAR's speaker-labelled targets \citep{moritz2025transcribing}.
-Tags count as text in \cref{eq:loss}; a two-slot activity head on the audio positions adds a binary cross-entropy and serves DER, with arrival-order slots \citep{park2025sortformer} instead of permutation-free training \citep{fujita2019end}.
-The KV cache holds the whole session, so both sides of the dialogue condition every decision.
-The longest TAXI session (90.02\,s) spans about 1.1k audio positions. % optional
-\draftnote{planned: the two speaker tags are reserved in the vocabulary but untrained; translation segments, \mdltok{TDELAY\_\delta_t} and the activity head do not exist yet}
+where $z_j$ are words of speaker $\hat s_j\in\{\mathrm{A},\mathrm{B}\}$, numbered by arrival, and $y_i$ translates one unit into language $\lambda_i$.
+Each tagged segment is a committed piece (\cref{def:cst}), making the speaker and direction state explicit; under overlap, words are ordered by end time, as in t-SOT \citep{kanda2022streaming} and JSTAR \citep{moritz2025transcribing}.
+We minimise
+\begin{equation}\label{eq:loss}
+  \mathcal{L}=-\textstyle\sum_{m\in\mathcal{Y}}w_m\log p_\theta(o_m\mid o_{<m})\,\big/\sum_{m\in\mathcal{Y}}w_m
+\end{equation}
+over the labelled positions $\mathcal{Y}$ (text, tags, \mdltok{next}) of the tokens $o$, with $w_m<1$ only for \mdltok{next} (\cref{app:model}); a two-slot, arrival-order activity head \citep{park2025sortformer} adds a binary cross-entropy and serves DER.
+The session-long KV cache lets both sides condition every decision.
+\draftnote{planned: the two speaker tags are reserved in the vocabulary but untrained; translation segments, the translation delay token and the activity head do not exist yet}
 
-\subsection{Commit targets}\label{sec:model-targets}
-Transcript words are force-aligned per speaker before mixing (Qwen3-ForcedAligner; \citealp{shi2026qwen3asr}) and placed by \cref{eq:delay} with $\delta=\delta_s$.
-For translations, a teacher LLM (Qwen3.8-27B) translates the source turn $u_{1:I}$ into $v$, and contextual alignment \citep{labiausse2025highfidelity} maps target word $v_j$ to $\alpha_j=\arg\max_i\,[\phi_j(i)-\phi_j(i-1)]$, where $\phi_j(i)$ is the log-probability of $v_j$ when $v$ is force-decoded from $u_{1:i}$.
-Source position $i$ is a candidate if the words with $\alpha_j\le i$ form a prefix of $v$ longer than the committed one (the alignment analogue of meaning units; \citealp{zhang2020learning}) and if the source has grown by a minimum unit since the last commit (pilot: 2 Korean or 3 English words, and 1.0\,s).
-The teacher then translates only the new part, given the source so far and the committed text; the unit is accepted if this text is in the target language and reaches a chrF of at least 50 against the newly aligned span of $v$.
-We call accepted units verified meaning units (MU2).
-A turn end flushes the rest of the turn, so the model must learn to recognise turn ends.
-A unit whose source ends at time $e$ is written in chunk $\lfloor e/\Delta\rfloor+\delta_t$, with $\delta_t\ge\delta_s$ so that its transcript comes first.
-Relative to the teacher's alignment, no target thus anticipates unheard speech, as with Hibiki's per-word delays, whereas sentence-level targets used with prefix-to-prefix training \citep{ma2019stacl} demand anticipating German clause-final verbs or Korean predicates.
-The commit points, however, are chosen with the whole turn in view, so \model imitates a privileged teacher, which \cref{tab:main} scores on gold transcripts as Gold$\to$LLM (MU2).
-In a text-level \pair{Ko}{En} pilot with silver references (\cref{app:units}), MU2 roughly halves computation-unaware LAAL \citep{papi2022overgeneration}, here normalised by the output length, relative to commits at the utterance end (11.09$\to$5.19\,s \koen; 15.05$\to$7.33\,s \enko), while chrF falls from 61.3 to 60.2 and from 44.2 to 42.0.
-Utterance-end LAAL equals the mean utterance length, whereas \taxi turns average 3.086\,s (German) and 4.624\,s (English), which bounds what commits inside a turn can gain there (\cref{fig:turn-length}).
-Unverified alignment-only units, continued from a forced prefix, collapsed in 31 of 150 \enko outputs, MU2 in one. % optional
+\subsection{Commit targets and latency}\label{sec:model-targets}\label{sec:model-inference}
+A teacher LLM (Qwen3.8-27B) translates each source turn $u_{1:I}$ into $v$, and contextual alignment \citep{labiausse2025highfidelity} maps target word $v_j$ to $\alpha_j=\arg\max_i\,[\phi_j(i)-\phi_j(i-1)]$, $\phi_j(i)$ being its log-probability when $v$ is force-decoded from $u_{1:i}$.
+Position $i$ is a candidate if $\{j:\alpha_j\le i\}=\{1,\dots,\kappa\}$ with $\kappa$ above the committed length, as meaning units require \citep{zhang2020learning}, and the source has grown by a minimum unit.
+A candidate becomes a verified meaning unit (MU2) if the teacher's translation of the new source, given the committed text, is in the target language and reaches chrF${}\ge50$ against the newly aligned span of $v$.
+Its translation is due $\delta_t\ge\delta_s$ chunks after its source's last chunk; a turn end commits the rest of the turn, so \model must detect it.
+Relative to the teacher's alignment, targets thus never anticipate unheard speech, whereas sentence-level targets \citep{ma2019stacl} require anticipating clause-final German and Korean verbs; but commit points depend on the whole turn, so \model imitates a privileged teacher.
+In a text-level \pair{Ko}{En} pilot (silver references; utterances much longer than \taxi turns), MU2 roughly halves the lag of utterance-end commits (a LAAL variant), losing at most 2.2 chrF (\cref{app:units}).
 \draftnote{planned: MU2 targets for \pair{En}{De} and at training scale; the German minimum unit and the $\delta_t$ values are set on held-out data}
 
-\subsection{Training without real cross-lingual conversations}\label{sec:model-training}
-As TAXI is test-only and we know of no two-language conversations with overlap and translations at training scale, \model learns from single-speaker corpora and simulated sessions in stages (\cref{tab:training}).
-After an adapter-only warm-up (Stage~0), Stage~1 trained the backbone on about 3.8k\,h + 4.3k\,h of English and Korean speech. % optional
-Stage~2 trains M1, which transcribes and attributes speakers: it adds German ASR data, 8\,kHz telephone-band augmentation, speaker tags and the activity head on simulated two-speaker \pair{En}{De} and \pair{Ko}{En} mono sessions with gaps and overlaps drawn more broadly than in the benchmark \citep[cf.][]{landini2022from}.
-Stage~3 trains M2 and M3, which add translation streams committed at turn ends (M2) or at MU2 (M3), from human \pair{En}{De} speech translation data \citep{wang2021covost,digangi2019must} and silver teacher translations.
-Unlike the off-the-shelf baselines, \model thus sees benchmark-like simulated sessions, as does the same-backbone cascade through M1 (\cref{sec:exp-ablation}).
-The fixed-gap sweep (\cref{fig:gap-sweep}) tests whether \model's gains depend on the benchmark's gaps. % optional
-Training excludes TAXI, the dialogue corpora and voices of \syn, and outputs of EXAONE-4.0, an LLM we use only for evaluation (\cref{app:syn,app:units}).
-\draftnote{planned: Stages 2--3; German training data has yet to be obtained}
+A token written after chunk $k$ is time-stamped $(k+1)\Delta+\ell_{\mathrm{enc}}+c$, so on schedule its latency after evidence ending at $t$ is $q+\delta\Delta+\ell_{\mathrm{enc}}+c$: quantisation $q\in(0,\Delta]$, stream delay $\delta\in\{\delta_s,\delta_t\}$, encoder look-ahead $\ell_{\mathrm{enc}}$ (80\,ms) and compute time $c$ (zero on the ideal clock; \cref{tab:ca-latency}).
+As turn ends force commits, \eo then stays near $q+\delta_t\Delta+\ell_{\mathrm{enc}}+c$.
 
-\subsection{Inference and latency accounting}\label{sec:model-inference}
-Decoding is greedy, with one forward pass per chunk plus one per emitted token.
-A piece written after chunk $k$ is time-stamped $(k+1)\Delta+\ell_{\mathrm{enc}}+c$, so a token emitted on schedule after evidence that ends at $t$ has latency $q+\delta\Delta+\ell_{\mathrm{enc}}+c$: frame quantization $q=(\lfloor t/\Delta\rfloor+1)\Delta-t\in(0,\Delta]$, stream delay $\delta\in\{\delta_s,\delta_t\}$, encoder look-ahead $\ell_{\mathrm{enc}}$ (counted at its 80\,ms bound) and compute time $c$, which the ideal clock sets to zero.
-As a turn end forces a commit, a model that follows its targets keeps \eo near $q+\delta_t\Delta+\ell_{\mathrm{enc}}+c$.
-Real time is not yet shown on GPUs: on an H200, the 0.6B backbone needs 100--150\,ms per 80\,ms chunk at the 99th percentile, and the 1.7B thinker is unmeasured (\cref{tab:ca-latency}).
-Translation segments need a higher cap than the backbone's 8 tokens per chunk.\draftnote{planned} % optional
-The encoder is licensed under OpenMDW-1.1 and the thinker under Apache~2.0. % optional
+\subsection{Training without real cross-lingual conversations}\label{sec:model-training}
+After single-speaker English and Korean ASR training (Stages~0--1), Stage~2 trains M1 for speaker-attributed transcription on simulated sessions with gaps and overlaps drawn more broadly than the benchmark's; Stage~3 adds translations committed at turn ends (M2) or at MU2 (M3) (\cref{tab:training}).
+Training excludes \taxi and \syn dialogues and voices (\cref{app:model}).
+\draftnote{planned: Stages 2--3; German training data has yet to be obtained}

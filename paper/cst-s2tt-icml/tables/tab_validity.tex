@@ -2,9 +2,14 @@
 % Table A7 (tab:validity): rank-agreement checks behind the validity claims
 % (sim-to-real, TTS edition, silver references, render seeds, metric choice).
 % Included from App. C. Nothing has been run yet: every cell is \tbd.
+% tau_b is computed within direction x wrapper strata and averaged, so that
+% wrapper and direction differences cannot inflate agreement (review); the
+% "oracle--realistic gap" row ranks systems by their gap on each set, as the
+% paper's claims rest on gaps. A TAXI-TTS control row would be a new
+% experiment (user decision) and is not listed.
 % =====================================================================
 \begin{table}[t]
-  \caption{Validity of system rankings (TAXI: \taxi; Syn: \syn; all L0 natural). Each row ranks the same $n$ configurations (system $\times$ wrapper $\times$ operating point $\times$ direction) in two ways and reports Kendall's $\tau_b$ with a 95\% CI from 2,000 session-bootstrap resamples. For render seeds, $\tau_b$ is the smallest pairwise value among the three renders; \cref{app:scorer} also compares their standard deviation with the CI width. Blank cells are pending.}
+  \caption{Validity of system rankings (TAXI: \taxi; Syn: \syn; all L0 natural). Each row ranks the same systems at their main operating points in two ways; Kendall's $\tau_b$ is computed within each direction $\times$ wrapper stratum (each direction for gaps) and averaged over strata, with a 95\% CI from 2,000 session-bootstrap resamples; $n$ counts the ranked configurations. For render seeds, $\tau_b$ is the smallest pairwise value among the three renders; \cref{app:scorer} also compares their standard deviation with the CI width. Blank cells are pending.}
   \label{tab:validity}
   \centering
   \small
@@ -15,6 +20,7 @@
     \midrule
     \multicolumn{5}{@{}l}{\textit{Speech, construction and rendering (chrF rankings)}} \\
     TAXI vs.\ Syn \pair{En}{De}                 & those run on both sets  & \tbd & \tbd & \tbd \\
+    \quad oracle--realistic gap                 & same, ranked by gap     & \tbd & \tbd & \tbd \\
     Commercial vs.\ open TTS edition           & Syn subset              & \tbd & \tbd & \tbd \\
     Gold vs.\ silver references                & Syn \pair{En}{De}       & \tbd & \tbd & \tbd \\
     Render seeds 1--3 (chrF and \eo)           & TAXI                    & \tbd & \tbd & \tbd \\

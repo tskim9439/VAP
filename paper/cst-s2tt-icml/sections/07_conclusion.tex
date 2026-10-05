@@ -1,27 +1,31 @@
-%%%%%%%% Section 7: Limitations and Conclusion %%%%%%%%
-% Every \tbdtext below must be resolved before submission.
-% If space is short, trim first the human-interpreter sentence, then the turn-boundary sentence (the latter is also covered in the TAXI appendix).
-% If space is still short, drop the InCroMin clause next (Sec. 2 and App. A give the same contrast).
+%%%%%%%% Section 7: Limitations and Conclusion (<= 220 words by wordcount.py) %%%%%%%%
+% One limitations paragraph and a two-sentence conclusion (round 2: 167 words,
+% 13 + 10 column lines). Each fact is stated once where it belongs; this
+% section only points there: TAXI size, roles, digital close-talk mix and
+% synthetic timing (Sec. 4, App. A); the lack of public overlapped
+% two-language recordings, incl. InCroMin (Sec. 2, App. A); Syn limits
+% (App. B); the privileged teacher (Sec. 5.3). Not repeated here: the ideal
+% clock and measured compute (Sec. 6.1, App. E, tab:ca-latency); the
+% human-interpreter reference point (App. H, app:repro); DER under one
+% language per speaker (Sec. 6.4).
+% The result sentence follows Sec. 6 (reference pipeline, oracle gap in COMET
+% points, recovery R, tau of Sec. 6.6) and every number stays \tbdtext until
+% its run exists. Coupling claims rest only on the decoupled twin and the
+% same-backbone cascade. "Interruptions ... await real recordings" is the
+% future-work statement that App. B points to (sec:conclusion). Backchannels
+% "remain untested": the optional L1b stress test is not in v1 and appears
+% only in draft notes (Sec. 3, tab_conditions, tab_failures); if L1b is
+% adopted, define it in visible text (App. B or E) before this sentence
+% refers to it. The intro's scope sentence lists what is out of scope.
 \section{Limitations and Conclusion}
 \label{sec:conclusion}
 
-\paragraph{Data.}
-\taxi has real speech, content and turn order, but its push-to-talk turns leave every gap synthetic and nothing overlapping; it is also small (about 3.3k reference words per direction), single-domain and narrowband, and ties role to language (the German dispatcher speaks first in 85 of 86 sessions).
-We know of no public recordings of two-language conversation with natural overlap and reference translations; the closest, InCroMin \citep{cechovic2025corpus}, is mediated by machine translation, recorded per participant and has no English--German pair.
-We therefore control timing, add overlap synthetically, report session-clustered confidence intervals, include language-ID routing, and render \syn with both speaker--language assignments.
-\syn lacks real disfluencies (the transcripts of the 640 TAXI turns mark 60 German and 172 English filled pauses), is translationese on one side, and has consensus-filtered machine-translated Korean; we draw only relative conclusions and test whether it ranks systems as \taxi does (\cref{tab:validity}).\draftnote{planned; \syn and the turn-end overlap renders are not built yet}
-
-\paragraph{Measurement and scope.}
-Main-text latencies use the ideal clock; real-time claims rest on \cref{tab:ca-latency}, where the 0.6B backbone still misses its 80\,ms budget at the 99th percentile.
-Energy-trimmed turn boundaries may shift latency reference points by up to about 0.1\,s until forced alignment replaces them (\cref{app:taxi}).
-Human interpreters, with an English-to-Korean ear-voice span of about 3\,s \citep{lee2002ear}, are a reference point, not a target.
-Interruptions and barge-in are excluded for lack of real recordings to validate them, and content-free backchannels (L1b) are at most an optional stress test.
-With one language per speaker, diarization reduces largely to language-aware segmentation, so DER mainly measures boundary timing (\cref{tab:aux}).
-
-\paragraph{Unified model.}
-\model learns from simulated sessions and teacher-made commit targets, which are anticipation-free only relative to the teacher's alignment; same-backbone and size-matched cascades separate design from scale (\cref{tab:ablation}).\draftnote{planned; only the streaming ASR backbone is built, and all \model results are pending}
+\paragraph{Limitations.}
+\taxi has real speech but synthetic timing and overlap, for want of known public two-language recordings with natural overlap and references; it is small, single-domain, narrowband and close-talk, and ties role to language (\cref{sec:related,sec:bench-taxi}).
+\syn has fluent TTS speech, translationese on one side and silver Korean references, so it supports only relative conclusions, checked against \taxi (\cref{tab:validity}).\draftnote{planned; \syn and the turn-end overlap renders are not built yet}
+Interruptions and barge-in await real recordings; backchannels remain untested.
+\model learns from simulated sessions and a privileged teacher (\cref{sec:model-targets}); only the decoupled twin and the same-backbone cascade test whether coupling turn-taking and translation helps (\cref{sec:exp-ablation}).\draftnote{planned; only the streaming ASR backbone is built, and all \model results are pending}
 
 \paragraph{Conclusion.}
-\task requires deciding, from one mono stream, who speaks, which way to translate, and when to commit.
-Segmentation and routing explain \tbdtext{}\% and \tbdtext{}\% of the oracle--realistic gap (RQ1), which moves from \tbdtext{} to \tbdtext{} COMET between mediated gaps and turn-end overlap (RQ2); \model recovers \tbdtext{}\% of it without oracle input, at a median \eo of \tbdtext{}\,s (RQ3); and synthetic and real sessions give a Kendall's $\tau$ of \tbdtext{} between system rankings (RQ4).
-Next come interruptions and backchannels, real overlapped bilingual recordings, and more language pairs.
+\task requires deciding, from one mono stream, who speaks, which way to translate and when to commit: on \taxi, segmentation and routing account for \tbdtext{} and \tbdtext{} COMET points of the best open pipeline's oracle gap (RQ1), which moves from \tbdtext{} to \tbdtext{} between mediated gaps and turn-end overlap (RQ2), and \model recovers \tbdtext{}\% of it without oracle input at a median \eo of \tbdtext{}\,s (RQ3).
+Synthetic and real rankings give $\tau=$ \tbdtext{} (RQ4); real overlapped recordings and more language pairs come next.

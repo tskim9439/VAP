@@ -1,121 +1,120 @@
 % =====================================================================
-% Section 6: Experiments (sec:exp).
-% Floats, in numbering order: Table 3 (tables/tab_main.tex, table*),
-% Fig. 4 (fig:ql, single column, Sec. 6.2), Fig. 5 (fig:gap, figure*,
-% defined at the start of Sec. 6.3 so that it lands near Sec. 6.4),
-% Table 4 (tables/tab_factorial.tex) and Table 5 (tables/tab_aux.tex),
-% both input in Sec. 6.3 so that Table 5 is not pushed past Sec. 7,
-% and Table 6 (tables/tab_ablation.tex).
+% Section 6: Experiments (sec:exp). Budget: <= 1100 words of prose;
+% floats in numbering order: Table 3 (tables/tab_main.tex, table*),
+% Fig. 4 (fig:ql, single column, natural size), Table 4
+% (tables/tab_factorial.tex) and Table 5 (tables/tab_aux.tex), both input in
+% Sec. 6.3 so that Table 5 is not pushed past Sec. 7, and Table 6
+% (tables/tab_ablation.tex).
+% Fig. 5 (fig:gap) lives in App. E (appendix/E_results.tex), together with
+% the factorial-effect formulas, the second-best pipeline, tcpWER, DER
+% without a collar and the reference configuration of each ablation row.
+% Stated once elsewhere, not repeated here: metric definitions and the
+% bootstrap (Sec. 4.5), what M2 and M3 commit at and the model's training
+% on simulated sessions (Sec. 5.4), system settings, wrappers and the
+% diarization cascades in detail (App. D, Table A4), blank cells = pending
+% (every caption says so).
 % Measured so far (preliminary, \prelim): the offline rows of Table 3 and
 % the two ASR WERs of Table 5. Everything else is pending: the result
 % paragraphs are templates with \tbdtext; do not add findings before the
 % runs exist.
-% Wording: the offline systems and Gold->LLM (MU2) get oracle input but are
-% not called bounds (no dialogue history; Whisper ST already passes
-% Gold->LLM on De->En BLEU). R and Fig. 5 use one pipeline under both
-% wrappers, that of Table 4.
+% Wording: systems with oracle input are not called bounds (no dialogue
+% history; Whisper ST already passes Gold->LLM on De->En BLEU), and
+% Gold->LLM (MU2) is non-causal. One reference pipeline P serves Table 4,
+% R and Fig. 5. Coupling is tested by the decoupled twin and the
+% same-backbone cascade, nothing else. Batched offline compute: "at most
+% about 0.2 s" (never quote a single system's value).
+% Result templates match the abstract and Sec. 7: R under L0 natural
+% (Sec. 6.2) and L1 (Sec. 6.3), P's L1 wrong-direction share (Sec. 6.3), and
+% the Ko<->En vs En<->De gap on Syn for RQ2's distant pair.
+% Text cites main-text tables in numbering order (3, 4, 5, 6); Secs. 6.1-6.2
+% point to Sec. 6.4/6.5, not to Tables 5/6. Appendix floats get an appendix
+% pointer at their first mention here. The single-direction streaming
+% systems appear in Fig. 4 and Table A5 but not in Table 3. The consecutive
+% cascade has its own VAD (endpoint silence = its latency knob, App. D).
+% Sec. 6.5 states that only the model and its M1-based controls, not the
+% baselines, train on simulated sessions (as App. F does).
 % =====================================================================
 \section{Experiments}\label{sec:exp}
 
 \input{tables/tab_main.tex}
 
-We answer RQ1--RQ4 (\cref{sec:intro}) on real dialogues first; synthetic sessions add the distant pair and a check against real rankings. Every comparison carries a session-clustered 95\% confidence interval (CI; \cref{app:repro}), and we do not interpret differences inside it.
+We answer RQ1--RQ4 (\cref{sec:intro}) and do not interpret differences inside the 95\% CI (\cref{sec:bench-scoring}).
 \draftnote{planned: apart from the preliminary offline rows of \cref{tab:main} and ASR WERs of \cref{tab:aux}, no experiment of this section has been run}
 
 \subsection{Setup}\label{sec:exp-setup}
 
 \paragraph{Systems.}
-Every system receives the session's language pair.
-Offline systems cut each oracle turn from the mix and translate it after the turn ends, one turn per prompt and without dialogue history: Qwen3.8-27B (``LLM'') translates the gold transcript (Gold$\to$LLM) or the transcript of Qwen3-ASR-1.7B, given the language \citep[ASR$\to$LLM;][]{shi2026qwen3asr}, and Whisper-large-v3 translates speech into English \citep[Whisper ST;][]{radford2023robust}.
-Gold$\to$LLM (MU2) is a streaming variant with oracle input: the LLM reads gold transcripts at forced-aligned word times and commits at the verified meaning units (MU2) of \cref{sec:model}, whose boundaries are found with the whole turn in view (non-causal).
-The consecutive cascade detects turn ends with the realistic wrapper described below, then transcribes and translates each segment like ASR$\to$LLM.
-The streaming systems are SeamlessStreaming \citep{seamless2023seamless}, StreamSpeech \citep{zhang2024streamspeech} (\deen only), InfiniSST \citep{ouyang2025infinisst} (\ende only) and two systems that run offline translation models with a streaming policy.
-In the streaming cascade, the LLM re-translates the growing transcript of the Nemotron~3.5 streaming RNN-T \citep{nvidia2026nemotron35asr} and commits the prefix on which two consecutive outputs agree (LocalAgreement-2, LA-2; \citealp{liu2020lowlatency,polak2022cuni,machacek2023turning}).
-M4T v2 + AlignAtt runs SeamlessM4T~v2 \citep{seamless2025joint,seamless2023seamless} with the AlignAtt policy \citep{papi2023alignatt} in simulstream \citep{gaido2025simulstream}.
-As a naive bidirectional baseline, 2$\times$SeamlessStreaming runs one instance per target language on the whole mix, without routing.
-\model runs as M2, which commits translations at turn ends, and as M3, which commits at MU2 units and runs at a low and a high $\delta_t$ (\cref{sec:model}).
-\Cref{tab:baselines} lists checkpoints, sizes and licences.
-\draftnote{InfiniSST only if its weights are released; Canary-1B-v2 \citep{sekoyan2025canary} with AlignAtt is optional; Hibiki-Zero (\deen; public weights) is not yet in the plan}
+Offline systems translate each gold turn after it ends, without dialogue history (\cref{tab:baselines,app:baselines}): Qwen3.8-27B (``LLM'') translates the gold transcript (Gold$\to$LLM) or that of Qwen3-ASR-1.7B \citep[ASR$\to$LLM;][]{shi2026qwen3asr}, and Whisper-large-v3 translates into English \citep[Whisper ST;][]{radford2023robust}.
+Gold$\to$LLM (MU2) streams gold transcripts to the LLM, which commits at the verified meaning units of \cref{sec:model-targets}, chosen non-causally with the whole turn in view.
+The consecutive cascade runs ASR$\to$LLM on segments closed by its own VAD.
+Streaming systems are SeamlessStreaming \citep{seamless2023seamless}; a streaming cascade, whose LLM re-translates the growing transcript of the Nemotron~3.5 streaming RNN-T \citep{nvidia2026nemotron35asr} and commits the prefix shared by two consecutive outputs (LocalAgreement-2, LA-2; \citealp{liu2020lowlatency,polak2022cuni}); SeamlessM4T~v2 \citep{seamless2025joint} with AlignAtt \citep[M4T v2 + AlignAtt;][]{papi2023alignatt}; and, outside \cref{tab:main}, StreamSpeech \citep[\deen;][]{zhang2024streamspeech} and, optionally, Hibiki-Zero \citep[\deen, text output;][]{labiausse2026simultaneous} and InfiniSST \citep[\ende;][]{ouyang2025infinisst}.
+2$\times$SeamlessStreaming, a naive bidirectional baseline, runs one instance per target language on the whole mix, without routing.
+\model runs as M2 (turn-end commits) and M3 (MU2 commits; \cref{sec:model-training}), the latter at a low and a high $\delta_t$.
+\draftnote{optional runs: Hibiki-Zero (public weights; only its text output is scored), InfiniSST only if its weights are released, and Canary-1B-v2 \citep{sekoyan2025canary} with AlignAtt}
 
 \paragraph{Wrappers and operating points.}
-A system that translates one direction runs as one instance per target language behind a wrapper; we call the combination a pipeline (\cref{app:baselines}).
-The oracle wrapper cuts gold turns from the mix and routes each by its gold source language.
-The realistic wrapper segments the stream with Silero VAD \citep{silero2024silero} and routes each segment by spoken language identification restricted to the pair, decided at the segment start and re-routed if the decision flips.
-Baselines are not fine-tuned.
-Each streaming system has two operating points, one of them its main point, chosen once on the \syn calibration split by a rule fixed before any test run.
-\draftnote{until \syn exists, documented defaults stand in for calibrated operating points; which of the two latency budgets gives the main point is still to be fixed}
+Single-direction systems run as one instance per target language behind a wrapper, forming a pipeline (\cref{app:baselines}): the oracle wrapper cuts gold turns from the mix and routes each by its gold language; the realistic wrapper segments the stream with Silero VAD \citep{silero2024silero} and routes each segment by spoken language identification restricted to the pair.
+Baselines are not fine-tuned; each streaming system has two operating points (one main), chosen on the \syn calibration split by a rule fixed before the test runs.
+\draftnote{decision needed: whether the low- or the high-budget point (\cref{app:baselines}) is the main one; until \syn exists, documented defaults stand in for calibrated operating points}
 
-\paragraph{Metrics and statistics.}
-Per direction, we report COMET, chrF and BLEU, \laal (lag within a turn) and median \eo (the listener's wait after a turn); pooled over directions, we report wrong-direction words, median switch latency and empty turns (\cref{sec:bench}).
-We rank systems by COMET rather than BLEU \citep{kocmi2021ship}; on \taxi, whose references are lowercase and unpunctuated, chrF takes its place if the two rank systems differently (\cref{sec:exp-validity}).
-Latency uses the ideal clock; computation-aware latency, measured for one unbatched stream on one GPU type, is in \cref{tab:ca-latency}.
-The oracle-gap recovery of \model is $R=(Q_{\mathrm{ours}}-Q_{\mathrm{real}})/(Q_{\mathrm{oracle}}-Q_{\mathrm{real}})$, where $Q$ is COMET: of \model, and of the pipeline of \cref{tab:factorial} under the oracle and the realistic wrapper; $R$ comes with a bootstrap CI and is reported only where the CI of the gap excludes 0.
-Daggers mark preliminary numbers, to be re-run under the final protocol.
+\paragraph{Ranking and the oracle gap.}
+We rank systems by COMET \citep{kocmi2021ship}; on \taxi, whose references lack case and punctuation, chrF replaces it if their rankings disagree (\cref{app:scorer}).
+Latencies use the ideal clock; \cref{tab:ca-latency} (\cref{app:results}) adds computation-aware latency, also for the ablation controls.
+The reference pipeline $P$ covers both directions and has the highest realistic-wrapper COMET on \taxi L0 natural.
+Its oracle gap $G=Q_{\mathrm{oracle}}-Q_{\mathrm{real}}$ is its COMET difference between the two wrappers; \model recovers $R=(Q_{\mathrm{ours}}-Q_{\mathrm{real}})/G$ of it, reported with a bootstrap CI only where the CI of $G$ excludes 0.
+\draftnote{decision needed: choose $P$ on the \syn calibration split by the operating-point rule, or state that $P$ is chosen post hoc on \taxi for analysis only, since \cref{sec:bench} says nothing is tuned on \taxi; either way, $P$ must run on every set of \cref{fig:gap}, which M4T v2 + AlignAtt (\taxi only) does not}
 
 \subsection{Real dialogues (RQ1, RQ3)}\label{sec:exp-real}
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.89\columnwidth]{figures/fig4_quality_latency.pdf}
-  \caption{Quality vs.\ latency on \taxi (L0 natural, ideal clock), per direction: chrF against \laal (a, b) and against median \eo (c, d). Black outlines mark systems with oracle input, although drawn hollow; by construction, the labelled offline systems sit at the mean source-turn duration on \laal (`turn length') and at 0 on \eo (`oracle endpoint'). The other systems are pending: filled markers will show oracle segmentation and hollow markers VAD and language-ID routing, with grey arrows joining the two for each system, and a vermillion curve will trace \model over its $\delta_t$ operating points. Legend: Seamless = SeamlessStreaming, Cascade-LA = streaming cascade, M4Tv2-AA = M4T v2 + AlignAtt, Ours = \model. chrF stands in until COMET is in the scorer. $^\dagger$preliminary; to be re-run under the final protocol.}
+  \includegraphics{figures/fig4_quality_latency.pdf}
+  \caption{Quality (chrF until COMET is scored) vs.\ \laal (a, b) and median \eo (c, d) on \taxi L0 natural. Black: offline systems and Gold$\to$LLM (MU2). Pending: baselines with the oracle (filled) and the realistic (hollow) wrapper, joined by arrows, and \model over $\delta_t$ (vermillion). $^\dagger$Preliminary (\cref{tab:main}).}
   \label{fig:ql}
 \end{figure}
 
-\Cref{tab:main} and \cref{fig:ql} compare all systems on \taxi under L0 natural timing.
-Given oracle turns, Gold$\to$LLM reaches \prelim{48.31} BLEU and \prelim{71.72} chrF for \ende, and \prelim{30.60} and \prelim{58.05} for \deen.
-ASR transcripts cost \prelim{5.65} and \prelim{2.49} BLEU, in line with the higher WER of Qwen3-ASR-1.7B on English than on German turns (\prelim{13.78}\% vs.\ \prelim{7.33}\%; \cref{tab:aux}), and Whisper ST reaches \prelim{30.69} BLEU into English.
-These offline systems look instantaneous on \eo, at most about \prelim{0.2}\,s even with measured, batched computation (\cref{tab:ca-latency}), only because they receive oracle endpoints.
+\Cref{tab:main,fig:ql} compare systems on \taxi under L0 natural, the turn-taking that simultaneous translation should enable.
+Given oracle turns, Gold$\to$LLM reaches \prelim{48.31} (\ende) and \prelim{30.60} (\deen) BLEU, ASR transcripts cost \prelim{5.65} and \prelim{2.49} of it, in line with a higher English than German ASR WER (\cref{sec:exp-aux}), and Whisper ST reaches \prelim{30.69} into English.
+These offline systems look instantaneous on \eo, at most about \prelim{0.2}\,s even with measured, batched compute (\cref{tab:ca-latency}), only because they receive oracle endpoints.
 The consecutive cascade, which must detect endpoints, makes listeners wait a median of \tbdtext{}\,s at \tbdtext{} COMET.
-Realistic segmentation costs the streaming systems \tbdtext{} COMET (arrows in \cref{fig:ql}), and \model reaches \tbdtext{} COMET at a median \eo of \tbdtext{}\,s without oracle input.
+Realistic segmentation costs the streaming systems \tbdtext{} COMET (arrows in \cref{fig:ql}), and \model reaches \tbdtext{} COMET at a median \eo of \tbdtext{}\,s without oracle input ($R=$ \tbdtext{}\%).
 
-\subsection{Where pipelines fail (RQ1)}\label{sec:exp-fail}
-
-% Fig. 5 is discussed in Sec. 6.4; it is defined here so that the full-width
-% float can reach the top of the page that holds Sec. 6.4.
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/fig5_oracle_gap.pdf}
-  \caption{Where the conversational difficulty lies (values pending; numbers will be in \cref{tab:conditions}). For each timing condition and language pair: the best pipeline with oracle turn segmentation (filled) and with VAD and language-ID routing (hollow), and \model (diamond; no oracle input). One pipeline serves every row and both wrappers: that of \cref{tab:factorial}, with the highest realistic-wrapper COMET on \taxi L0 natural among pipelines that cover both directions, at its main operating point. Panels: COMET (mean of the two directions), median \eo and wrong-direction words.}
-  \label{fig:gap}
-\end{figure*}
+\subsection{Where pipelines fail (RQ1, RQ2)}\label{sec:exp-fail}
 
 % Table 5 (tab:aux) is input here, right after Table 4, so that it can
 % share a page with Table 4 instead of floating past Sec. 7.
 \input{tables/tab_factorial.tex}
 \input{tables/tab_aux.tex}
 
-\Cref{tab:factorial} replaces one oracle component at a time for the best pipeline of \cref{tab:main}; \cref{app:results} repeats this for the second best.
-We expect silence-based segmentation to merge turns across speaker changes: a 500\,ms threshold captures only 18--30\% of between-speaker intervals in conversational corpora \citep{heldner2010pauses}, and the median speaker-change gap of \taxi L0 natural is 0.223\,s.
-Under L0 natural, turn segmentation costs \tbdtext{} COMET and routing \tbdtext{}, at \tbdtext{}\% language-ID routing accuracy; under L1, oracle separation recovers \tbdtext{} COMET.
-Short turns are a further risk, as 59 \taxi turns have at most three words; \cref{app:results} breaks errors down by type (\cref{tab:failures}) and listener wait by source-turn duration (\cref{fig:turn-length}).
+\Cref{tab:factorial} replaces the oracle components of $P$ singly and jointly; a factor's effect averages the COMET lost by replacing its component over both settings of the other factor, so the effects of segmentation and routing sum to $G$ (\cref{app:results}).
+We expect silence-based segmentation to merge turns across speaker changes, as a 500\,ms threshold captures only 18--30\% of between-speaker intervals in conversation \citep{heldner2010pauses} and \taxi L0 natural draws a median gap of 0.223\,s (\cref{tab:bench}).
+Under L0 natural, turn segmentation costs \tbdtext{} COMET and routing \tbdtext{}, at \tbdtext{}\% language-ID routing accuracy; under L1, realistic segmentation yields \tbdtext{}\% wrong-direction words, and oracle separation recovers \tbdtext{} COMET (failure types: \cref{app:results}).
 
-\subsection{Timing conditions and language pairs (RQ2, RQ3)}\label{sec:exp-timing}
-
-\Cref{fig:gap} contrasts, for each timing condition and language pair, the best pipeline under both wrappers with \model.
-On \taxi, the oracle--realistic COMET gap is \tbdtext{} under L0 mediated, \tbdtext{} under L0 natural and \tbdtext{} under L1, and \model recovers \tbdtext{}\% of it under L1.
-Re-rendering \taxi with one fixed gap from $-0.6$ to 2\,s at every speaker change traces the dose--response (\cref{fig:gap-sweep}).
-We compare language pairs only through each pair's gap to its own oracle, never through absolute scores.
-The text-level unit pilot already shows a direction asymmetry in the distant pair: only 21\% of candidate commit points pass verification for \enko, against 54\% for \koen (\cref{app:units}).
+\paragraph{Timing conditions and language pairs.}\label{sec:exp-timing}
+\Cref{app:results} contrasts $P$ under both wrappers with \model per timing condition and language pair (\cref{fig:gap}) and over fixed gaps from $-0.6$ to 2\,s (\cref{fig:gap-sweep}).
+On \taxi, the oracle gap is \tbdtext{} COMET under L0 mediated, \tbdtext{} under L0 natural and \tbdtext{} under L1, where \model recovers \tbdtext{}\%; on \syn L0 natural, it is \tbdtext{} for \pair{Ko}{En} against \tbdtext{} for \pair{En}{De}.
+The unit pilot accepts far fewer commit points for \enko than for \koen (21\% vs.\ 54\%; \cref{app:units}), which verb-final Korean or a chrF threshold stricter for Korean targets may explain.
 
 \subsection{Who said what: transcripts and speakers}\label{sec:exp-aux}
 
-\Cref{tab:aux} scores transcripts and speaker attribution with WER per language, cpWER \citep{watanabe2020chime} and DER.
-The baselines are Qwen3-ASR-1.7B on oracle turns, an offline cascade of pyannote diarization \citep{bredin2023pyannote} and Qwen3-ASR-1.7B, and a streaming cascade of Streaming Sortformer \citep{park2025sortformer,medennikov2025streaming} and the Nemotron~3.5 streaming RNN-T.
+\Cref{tab:aux} compares \model's transcripts and speaker attribution with Qwen3-ASR-1.7B on oracle turns and with offline and streaming diarization cascades (\cref{app:baselines}) built on pyannote \citep{bredin2023pyannote} and Streaming Sortformer \citep{park2025sortformer,medennikov2025streaming}.
 \model reaches \tbdtext{}\% cpWER and \tbdtext{}\% DER on \taxi L1 at $\delta_s=2$.
-DER needs care here: in the first release each speaker keeps one language, so the language reveals the speaker, and DER mostly measures boundary timing under short gaps and overlap; speakers who switch languages, which we exclude, would break this equivalence.
+As each speaker keeps one language, the language reveals the speaker, so DER mostly measures boundary timing under short gaps and overlap.
 
 \subsection{Ablations: does the unified design help?}\label{sec:exp-ablation}
 
 \input{tables/tab_ablation.tex}
 
-\Cref{tab:ablation} changes one thing at a time from the same M1 checkpoint (\cref{sec:model}): commits at turn ends (M2) instead of MU2; target-language tags without speaker tags, which tests whether an explicit speaker channel helps translation; and, optionally, no L1 sessions in training, or fixed-$\delta_t$ models instead of $\delta_t$ conditioning.
-Two cascades keep the factorisation of \cref{sec:task} at two scales: a same-backbone cascade translates M1 transcripts with the LLM under LA-2, and a size-matched cascade pairs Qwen3-ASR-1.7B with an LLM of about 1.7B parameters.
-We fixed in advance the comparison with the same-backbone cascade as the main test of the unified design: at matched \laal, \model differs from it by \tbdtext{} COMET, \tbdtext{} points of wrong-direction words and \tbdtext{}\,s of switch latency.
-As this cascade also differs in translator size, commit policy and input, it tests the design as a whole, not the coupling of turn-taking and translation alone.
-\draftnote{undecided: a decoupled twin (same 1.7B thinker, data and MU2 commits, translating the segments fixed by M1's speaker tags) would isolate the coupling}
+\Cref{tab:ablation} changes one design choice of \model (M3) per row, starting from the same M1 checkpoint (\cref{sec:model-training}; rows: \cref{app:results}).
+Three controls keep the factorisation of \cref{sec:task}.
+The \emph{decoupled twin} fixes M1's speaker tags as hard turn and direction decisions and then translates each segment in a separate pass of the same 1.7B thinker with the same commit policy, so translation cannot revise segmentation or routing.
+The same-backbone cascade (M1$\to$LLM) translates M1 transcripts with the LLM under LA-2.
+Unlike the baselines, both share \model's training on simulated sessions through M1, so we fixed them, before the test runs, as the tests of coupling turn-taking and translation.
+A size-matched cascade (ASR$\to$1.7B LLM) separates design from scale by pairing Qwen3-ASR-1.7B with an LLM of about 1.7B parameters under LA-2.
+At matched \laal, \model differs in COMET under L0 natural and L1 by \tbdtext{} and \tbdtext{} from the twin, and by \tbdtext{} and \tbdtext{} from the same-backbone cascade.
+\draftnote{planned: the decoupled twin is a new run (\cref{app:baselines})}
 
 \subsection{Validity checks (RQ4)}\label{sec:exp-validity}
 
-\Cref{app:scorer} tests whether the conclusions hold beyond one rendering and one metric (\cref{tab:validity,fig:sim2real}).
-It reports Kendall's $\tau$ (in its tie-corrected form, $\tau_b$) between system rankings on \taxi and \syn \pair{En}{De} under L0 natural, between the two TTS editions, between gold and silver references and across render seeds, and the rank agreement of \laal, \eo and LongYAAL \citep{polak2025better}, and of COMET and chrF on \taxi's unpunctuated references.
-Synthetic and real rankings give a Kendall's $\tau$ of \tbdtext{}; we report it whatever its value.
+\Cref{app:scorer} tests rank agreement, as Kendall's $\tau$ (tie-corrected, $\tau_b$), between \taxi and \syn \pair{En}{De} under L0 natural and across TTS editions, references, render seeds and metrics (\cref{tab:validity,fig:sim2real}).
+Synthetic and real rankings give $\tau=$ \tbdtext{}, which we report whatever its value.

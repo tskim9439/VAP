@@ -1,31 +1,31 @@
 direction,metric,policy,run,value,n_streams,source
-KO→EN,words_per_unit,MU,"Qwen3.8-27B, sample v2",5.7,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,words_per_unit,MU,"EXAONE-4.0-32B, sample v2",6.73,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,words_per_unit,MU,"Qwen3.8-27B, sample seed 1",5.91,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,words_per_unit,SEM_END,"Qwen3.8-27B, sample v2",11.83,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,words_per_unit,SEM_END,"EXAONE-4.0-32B, sample v2",11.83,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,words_per_unit,SEM_END,"Qwen3.8-27B, sample seed 1",12.82,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,words_per_unit,MU,"Qwen3.8-27B, sample v2",9.93,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,words_per_unit,MU,"EXAONE-4.0-32B, sample v2",9.71,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,words_per_unit,MU,"Qwen3.8-27B, sample seed 1",9.22,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,words_per_unit,SEM_END,"Qwen3.8-27B, sample v2",24.68,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,words_per_unit,SEM_END,"EXAONE-4.0-32B, sample v2",24.68,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,words_per_unit,SEM_END,"Qwen3.8-27B, sample seed 1",26.15,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,mean_wait_s,MU,"Qwen3.8-27B, sample v2",2.85,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,mean_wait_s,MU,"EXAONE-4.0-32B, sample v2",3.25,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,mean_wait_s,MU,"Qwen3.8-27B, sample seed 1",2.59,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,mean_wait_s,SEM_END,"Qwen3.8-27B, sample v2",3.75,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,mean_wait_s,SEM_END,"EXAONE-4.0-32B, sample v2",3.75,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,mean_wait_s,SEM_END,"Qwen3.8-27B, sample seed 1",4.05,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,mean_wait_s,utt_end,"Qwen3.8-27B, sample v2",5.27,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,mean_wait_s,utt_end,"EXAONE-4.0-32B, sample v2",5.27,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-KO→EN,mean_wait_s,utt_end,"Qwen3.8-27B, sample seed 1",4.51,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,mean_wait_s,MU,"Qwen3.8-27B, sample v2",3.22,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,mean_wait_s,MU,"EXAONE-4.0-32B, sample v2",3.33,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,mean_wait_s,MU,"Qwen3.8-27B, sample seed 1",3.38,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,mean_wait_s,SEM_END,"Qwen3.8-27B, sample v2",5.2,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,mean_wait_s,SEM_END,"EXAONE-4.0-32B, sample v2",5.2,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,mean_wait_s,SEM_END,"Qwen3.8-27B, sample seed 1",5.73,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,mean_wait_s,utt_end,"Qwen3.8-27B, sample v2",7.88,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,mean_wait_s,utt_end,"EXAONE-4.0-32B, sample v2",7.88,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
-EN→KO,mean_wait_s,utt_end,"Qwen3.8-27B, sample seed 1",8.27,300,raw/sources/experiments/2026-10-03-cst-unit-probe-mxc/unit-analyze-qwen-exaone-seed1.txt
+KO→EN,words_per_unit,MU,"Qwen3.8-27B, first sample",5.7,300,text-level commit-unit pilot
+KO→EN,words_per_unit,MU,"EXAONE-4.0-32B, first sample",6.73,300,text-level commit-unit pilot
+KO→EN,words_per_unit,MU,"Qwen3.8-27B, second sample",5.91,300,text-level commit-unit pilot
+KO→EN,words_per_unit,SEM_END,"Qwen3.8-27B, first sample",11.83,300,text-level commit-unit pilot
+KO→EN,words_per_unit,SEM_END,"EXAONE-4.0-32B, first sample",11.83,300,text-level commit-unit pilot
+KO→EN,words_per_unit,SEM_END,"Qwen3.8-27B, second sample",12.82,300,text-level commit-unit pilot
+EN→KO,words_per_unit,MU,"Qwen3.8-27B, first sample",9.93,300,text-level commit-unit pilot
+EN→KO,words_per_unit,MU,"EXAONE-4.0-32B, first sample",9.71,300,text-level commit-unit pilot
+EN→KO,words_per_unit,MU,"Qwen3.8-27B, second sample",9.22,300,text-level commit-unit pilot
+EN→KO,words_per_unit,SEM_END,"Qwen3.8-27B, first sample",24.68,300,text-level commit-unit pilot
+EN→KO,words_per_unit,SEM_END,"EXAONE-4.0-32B, first sample",24.68,300,text-level commit-unit pilot
+EN→KO,words_per_unit,SEM_END,"Qwen3.8-27B, second sample",26.15,300,text-level commit-unit pilot
+KO→EN,mean_wait_s,MU,"Qwen3.8-27B, first sample",2.85,300,text-level commit-unit pilot
+KO→EN,mean_wait_s,MU,"EXAONE-4.0-32B, first sample",3.25,300,text-level commit-unit pilot
+KO→EN,mean_wait_s,MU,"Qwen3.8-27B, second sample",2.59,300,text-level commit-unit pilot
+KO→EN,mean_wait_s,SEM_END,"Qwen3.8-27B, first sample",3.75,300,text-level commit-unit pilot
+KO→EN,mean_wait_s,SEM_END,"EXAONE-4.0-32B, first sample",3.75,300,text-level commit-unit pilot
+KO→EN,mean_wait_s,SEM_END,"Qwen3.8-27B, second sample",4.05,300,text-level commit-unit pilot
+KO→EN,mean_wait_s,utt_end,"Qwen3.8-27B, first sample",5.27,300,text-level commit-unit pilot
+KO→EN,mean_wait_s,utt_end,"EXAONE-4.0-32B, first sample",5.27,300,text-level commit-unit pilot
+KO→EN,mean_wait_s,utt_end,"Qwen3.8-27B, second sample",4.51,300,text-level commit-unit pilot
+EN→KO,mean_wait_s,MU,"Qwen3.8-27B, first sample",3.22,300,text-level commit-unit pilot
+EN→KO,mean_wait_s,MU,"EXAONE-4.0-32B, first sample",3.33,300,text-level commit-unit pilot
+EN→KO,mean_wait_s,MU,"Qwen3.8-27B, second sample",3.38,300,text-level commit-unit pilot
+EN→KO,mean_wait_s,SEM_END,"Qwen3.8-27B, first sample",5.2,300,text-level commit-unit pilot
+EN→KO,mean_wait_s,SEM_END,"EXAONE-4.0-32B, first sample",5.2,300,text-level commit-unit pilot
+EN→KO,mean_wait_s,SEM_END,"Qwen3.8-27B, second sample",5.73,300,text-level commit-unit pilot
+EN→KO,mean_wait_s,utt_end,"Qwen3.8-27B, first sample",7.88,300,text-level commit-unit pilot
+EN→KO,mean_wait_s,utt_end,"EXAONE-4.0-32B, first sample",7.88,300,text-level commit-unit pilot
+EN→KO,mean_wait_s,utt_end,"Qwen3.8-27B, second sample",8.27,300,text-level commit-unit pilot

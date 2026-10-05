@@ -1,12 +1,18 @@
 % =====================================================================
-% Table 4 (tab:factorial): oracle-component factorial for the best
-% pipeline of Table 3 (single column, 8pt). Included in Sec. 6.3.
+% Table 4 (tab:factorial): oracle-component factorial for the reference
+% pipeline P of Sec. 6.1 on CST-Bench-TAXI, ideal clock (single column,
+% 8pt). Included in Sec. 6.3.
 % No values yet: every cell is pending (\tbd = blank); -- marks cells that
-% do not apply. Language-ID routing accuracy is reported in the text.
-% The same factorial for the second-best pipeline goes to App. E.
+% do not apply. Language-ID routing accuracy is reported in the text; the
+% factor effects E_T, E_L and their interaction, with their CIs, are
+% defined in App. E, and the same factorial for the second-best pipeline
+% goes to App. E. Cells carry no CIs; the caption points to App. E, not to
+% tab:conditions, which has neither rows 2, 3, 5 nor the direction mean.
+% How a VAD segment gets its gold language (the most-overlapping turn) is
+% stated in App. D (app:baselines), not in the caption.
 % =====================================================================
 \begin{table}[t]
-  \caption{Where does the conversational loss come from? Oracle-component factorial for the best pipeline of \cref{tab:main} (by realistic-wrapper COMET on \taxi L0 natural). Oracle components (\cmark): T, gold turn segmentation (else VAD); L, gold source language for routing (else spoken language ID; with VAD segments, the language of the turn with the largest overlap); S, two-channel separation (L1 only; else segments are cut from the mono mix). Row~4 is the realistic pipeline; row~6 is \model, without oracle input. COMET is the mean of the two directions; switch latency is the median in seconds; $\Delta$COMET is COMET under L1 minus that of row~1. Blank: pending; --: not applicable.}
+  \caption{Oracle-component factorial for the reference pipeline $P$ (\cref{sec:exp-setup}) on \taxi, ideal clock; factor effects with CIs: \cref{app:results}. \cmark: oracle T (gold turns, else VAD), L (gold language, else language ID; \cref{app:baselines}) or S (two-channel separation; L1 only). Row~4 is realistic. COMET: mean of both directions; $\Delta$COMET: L1 COMET minus row~1's L1 COMET.}
   \label{tab:factorial}
   \centering
   \fontsize{8}{9.5}\selectfont % 8pt (ICML \footnotesize is 9pt): fits the width

@@ -1,16 +1,20 @@
 % =====================================================================
-% Table 6 (tab:ablation): ablations of the model, one change per row
-% (single column, 8pt). Included in Sec. 6.6.
+% Table 6 (tab:ablation): ablations of the model, one change per row, and
+% three controls that keep the cascade factorisation of Sec. 3 (single
+% column, 8pt). Included in Sec. 6.6.
 % No values yet: every cell is pending (\tbd = blank).
 % Rows marked ^\circ are optional runs; if a run is cut, delete its row
-% rather than leaving it blank. Both COMET columns (L0 natural and L1) will
-% hold "En->De / De->En" pairs, e.g. x\,/\,y; with COMET x100 and one
-% decimal the filled table is 233.6pt wide in a 234.9pt column, so an eighth
-% column does not fit (EndOffset under L1: 256.6pt; the model's is in
-% tab:conditions). cpWER of the model is in tab:aux, not here.
+% rather than leaving it blank. The decoupled twin and the same-backbone
+% cascade are the two tests of coupling fixed before the test runs.
+% Both COMET columns (L0 natural and L1) will hold "En->De / De->En" pairs,
+% e.g. x\,/\,y; with COMET x100 and one decimal the filled table is 233.6pt
+% wide in a 234.9pt column, so an eighth column does not fit (EndOffset
+% under L1: 256.6pt; the model's is in tab:conditions, and the
+% computation-aware latency of the controls is in tab:ca-latency). cpWER of
+% the model is in tab:aux, not here.
 % =====================================================================
 \begin{table}[t]
-  \caption{Ablations of \model, one change per row from the same M1 checkpoint. \model (M3) commits at MU2 units, uses speaker tags and sees L1 sessions in training; the next rows commit at turn ends instead (M2), keep only target-language tags, drop the L1 sessions, or train fixed-$\delta_t$ models instead of conditioning on $\delta_t$. M1$\to$LLM: same-backbone cascade (M1 transcripts, Qwen3.8-27B, LA-2); ASR$\to$1.7B LLM: size-matched cascade (Qwen3-ASR-1.7B, an LLM of about 1.7B parameters, LA-2). COMET is given as \ende\,/\,\deen; \laal is the mean over both directions and \eo and switch latency are medians, all in seconds; wrong-direction words in \%. All cells are pending. $^\circ$Optional run.}
+  \caption{Ablations of \model and controls (\cref{sec:exp-ablation}) on \taxi, ideal clock; CIs omitted (comparisons with the controls carry CIs in the text). COMET: \dir{En}{De}\,/\,\dir{De}{En}; \laal: mean; \eo, switch latency: medians (s); wrong direction: \%. $^\circ$Optional.}
   \label{tab:ablation}
   \centering
   \fontsize{8}{9.5}\selectfont % 8pt (ICML \footnotesize is 9pt): fits the width
@@ -26,9 +30,10 @@
     \midrule
     turn-end commits                & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     no speaker tags                 & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    no L1 in training$^\circ$       & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    no L1-like sessions$^\circ$       & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     fixed-$\delta_t$ models$^\circ$ & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     \midrule
+    decoupled twin                  & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     M1$\to$LLM                      & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     ASR$\to$1.7B LLM                & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
     \bottomrule

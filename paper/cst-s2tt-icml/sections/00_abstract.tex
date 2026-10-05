@@ -1,13 +1,20 @@
 % =====================================================================
-% Abstract (one paragraph, six sentences). No preliminary numbers here:
-% every result is \tbdtext until its experiment is final.
+% Abstract (one paragraph, six sentences, at most 200 words by
+% wordcount.py). No preliminary numbers here: every result is \tbdtext
+% until its experiment is final. The result templates follow Sec. 6:
+% the COMET loss and its split into turn segmentation and routing
+% (Sec. 6.3, tab:factorial; COMET points, not percentages), wrong-direction
+% words under L1 (fig:gap), the oracle-gap recovery R of the same pipeline
+% at a median EndOffset (Sec. 6.1), and Kendall's tau (Sec. 6.7).
+% No coupling claim here: the decoupled twin and the same-backbone cascade
+% test it (Sec. 6.6).
 % =====================================================================
 \begin{abstract}
-Simultaneous speech translation is mostly built and evaluated for one speaker translated in one fixed direction.
-Machine interpreting between two people who share no language breaks both assumptions: one device hears both speakers in a single mono stream, and the system must decide in real time who is speaking, which way to translate, and when to commit text it can never retract.
-We formalise this task as \taskfull (\task) and introduce \bench, which renders two-language dialogues as continuous single-channel sessions with natural gaps, translation-mediated gaps or turn-end overlap; it pairs German--English telephone dialogues with real speech and synthetic timing (86 sessions, 640 turns with human translations), released as deterministic build scripts and checksums, with an evaluation-only synthetic track for English--German and Korean--English.
-Its session-level scorer reports per-direction translation quality, lag within a turn, the listener's wait after each turn, switch latency and wrong-direction output, plus speaker-attributed transcription and diarization errors; controlled perturbations test each metric, and Kendall's $\tau$ between system rankings on synthetic and real sessions is \tbdtext{}.
-With realistic instead of oracle segmentation, the best open pipeline loses \tbdtext{} COMET and emits \tbdtext{}\% wrong-direction words under turn-end overlap, and segmentation and routing account for \tbdtext{} and \tbdtext{} COMET points of this loss.
-We also introduce \model, an open streaming speech LLM that writes speaker-tagged transcripts and direction-tagged translations into one token stream on an 80\,ms clock, with translation commits learned from alignment-verified meaning units; without oracle input, it recovers \tbdtext{}\% of the gap between oracle and realistic segmentation at a median wait of \tbdtext{}\,s after each turn.
+Simultaneous speech translation mostly assumes one speaker and one fixed direction, but a device interpreting between two people who share no language hears both in one mono stream and must decide online who speaks, which way to translate, and when to commit text it cannot retract.
+We formalise this task, \taskfull (\task), and introduce \bench, which renders two-language dialogues as continuous single-channel sessions with natural gaps, translation-mediated gaps or turn-end overlap.
+It pairs 86 German--English telephone dialogues (real speech, synthetic timing, 640 human-translated turns), released as deterministic build scripts, with an evaluation-only synthetic English--German and Korean--English track.
+Its scorer, tested by controlled perturbations, reports per-direction quality, within-turn lag, the listener's wait after each turn, switch latency and wrong-direction output, plus speaker-attributed transcription and diarization errors; Kendall's $\tau$ between system rankings on synthetic and real sessions is \tbdtext{}.
+Without oracle segmentation, the best open pipeline loses \tbdtext{} COMET (\tbdtext{} to turn segmentation, \tbdtext{} to routing) and, under turn-end overlap, emits \tbdtext{}\% wrong-direction words.
+Our open streaming speech LLM, \model, writes speaker-tagged transcripts and direction-tagged translations into one token stream on an 80\,ms clock and learns to commit translations at alignment-verified meaning units; without oracle input, it recovers \tbdtext{}\% of this loss at a median wait of \tbdtext{}\,s.
 \draftnote{planned; the synthetic track, the overlap renders, most scorer modules and \model beyond its streaming ASR backbone are not built yet, and all results are pending}
 \end{abstract}
