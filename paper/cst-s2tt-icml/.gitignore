@@ -4,4 +4,4 @@ figures/*.png
 *.bbl
 *.blg
 *.out
-/main*.pdf
+/main_nodraft.pdf
