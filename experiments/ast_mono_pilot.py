@@ -5,8 +5,8 @@ Directions en-de, en-ko, de-en, ko-en; --n source utterances each (the English i
 Everything is generated and judged by one LLM (Qwen3.8-27B, thinking off, greedy). Per item:
   1. (a) normal translation and (b) monotonic translation (salami technique: minimal chunks kept in source order,
      JSON with the chunks); only (b) is meant for training, (a) is the comparison.
-  2. judge each translation against the source: meaning (same/minor/major), omission, addition, grammar,
-     naturalness -> gate = same meaning, no omission or addition, grammar not incorrect.
+  2. judge each translation against the source: content (same/minor/major), omission, addition, grammar,
+     naturalness -> gate = content same or minor, no omission or addition, grammar not incorrect.
   3. stable prefixes (Hoang, Axelrod & Post, arXiv 2609.05799): translate every source word prefix as a partial
      utterance in the same style; m_i = max_{j<=i} lcp(p_j, f) over target units (words for English/German targets,
      characters for Korean); a target unit is committed at the first source word i with m_i >= its index, i.e. at
@@ -15,6 +15,12 @@ Everything is generated and judged by one LLM (Qwen3.8-27B, thinking off, greedy
      committed before the source ends.
 Source text = the punctuated transcript (display_text / pnc_text) whose whitespace tokens map one-to-one onto the
 timed words; rows where they do not are skipped.
+Prompt v2 (after the v1 pilot, 2026-10-08): the full translation and the prefix translations use ONE template (plain text,
+"complete" vs "not finished yet"), as in the paper — v1 made the monotonic full translation with a JSON chunk prompt, so
+its wording differed from the prefix translations and the stable prefix committed words too late. The monotonic
+instruction now demands complete grammatical sentences (split a sentence or reorder inside a clause rather than break
+grammar) and shows one example per direction. The judge separates content errors from style (gate: no major content
+error, no omission or addition, grammar not incorrect).
 
   python experiments/ast_mono_pilot.py sample --out DIR [--n 50]                (CPU)
   python experiments/ast_mono_pilot.py run --out DIR --direction en-de          (one GPU; Qwen3.8 needs transformers 5.8)
@@ -98,38 +104,47 @@ def cmd_sample(a):
         print(f"{lang}: pool {len(pool)} -> {len(picked)} items", flush=True)
 
 
-# ───────────────────────── prompts ─────────────────────────
-def p_normal(src, tgt, text):
-    return f"Translate this {src} spoken utterance into natural, fluent {tgt}. Output only the {tgt} translation.\n\n{text}"
+# ───────────────────────── prompts (v2) ─────────────────────────
+PROMPT_VERSION = "v2"
+EXAMPLES = {   # one illustrative monotonic translation per direction (not taken from the data)
+    ("English", "German"): ("I think that we should postpone the meeting because the client has not sent the data yet.",
+                            "Ich denke, wir sollten das Treffen verschieben, denn der Kunde hat die Daten noch nicht geschickt."),
+    ("English", "Korean"): ("I will send you the report after the meeting because the deadline is tomorrow.",
+                            "보고서는 제가 보내 드릴게요, 회의 끝나고요. 마감이 내일이거든요."),
+    ("German", "English"): ("Weil der Kunde die Daten noch nicht geschickt hat, verschieben wir das Treffen.",
+                            "Because the client hasn't sent the data yet, we are postponing the meeting."),
+    ("Korean", "English"): ("회의가 끝난 뒤에 보고서를 보내 드릴게요.",
+                            "After the meeting, I'll send you the report."),
+}
 
 
-def p_mono(src, tgt, text):
-    return (f"You are a professional simultaneous interpreter. Translate the {src} utterance below into {tgt} so that "
-            f"a listener could follow the translation while the speaker is still talking.\n"
-            f"Use the salami technique:\n"
-            f"1. Split the source into the smallest chunks that still carry a meaning, in the source order.\n"
-            f"2. Translate the chunks in that same order. Never move content of a later chunk to an earlier position.\n"
-            f"3. Make the whole translation grammatical {STYLE[tgt]}. You may adjust the word order inside a chunk, "
-            f"repeat a pronoun or add a short connective, but do not reorder the chunks.\n"
-            f"Keep every piece of information: no omissions, no additions, no summarizing.\n"
-            f"Return only JSON: {{\"chunks\": [{{\"src\": \"...\", \"tgt\": \"...\"}}], \"translation\": \"...\"}}, where "
-            f"translation is the chunk translations joined into the final {tgt} text.\n\n{text}")
-
-
-def p_prefix(src, tgt, text, mono):
-    how = (f"Follow the source order as a simultaneous interpreter would (salami technique), in {STYLE[tgt]}."
-           if mono else f"Translate it into natural, fluent {tgt}.")
-    return (f"The {src} text below is the beginning of an utterance; the speaker has not finished yet. "
-            f"Translate what has been said so far into {tgt}. {how} Output only the {tgt} translation.\n\n{text}")
+def p_translate(src, tgt, text, mono, complete=True):
+    """ONE template for the full translation (complete=True) and every prefix translation (complete=False)."""
+    state = (f"The {src} utterance below is complete." if complete else
+             f"The {src} text below is the beginning of an utterance; the speaker has not finished yet. Translate only "
+             f"what has been said so far and do not guess what comes next.")
+    if mono:
+        ex_src, ex_tgt = EXAMPLES[(src, tgt)]
+        how = (f"Translate like a simultaneous interpreter: follow the source order chunk by chunk (salami technique), "
+               f"so that the listener hears each piece of information in the same order as the speaker said it. "
+               f"A chunk is a clause or phrase that carries a meaning. Every sentence you write must be a complete, "
+               f"grammatical sentence of {STYLE[tgt]}; when the source order would break the grammar, split it into two "
+               f"sentences or reorder words inside that clause, never produce broken word order. Keep every piece of "
+               f"information: no omissions, no additions, no summarizing.\n\nExample ({src} -> {tgt}):\n{ex_src}\n-> {ex_tgt}")
+    else:
+        how = f"Translate it into natural, fluent {STYLE[tgt]}."
+    return f"{state} {how}\n\nOutput only the {tgt} translation.\n\n{text}"
 
 
 def p_judge(src, tgt, src_text, tgt_text):
     return (f"Compare a {tgt} translation with its {src} source.\n\nSource: {src_text}\nTranslation: {tgt_text}\n\n"
-            f"Answer with JSON only, with these keys: \"meaning\" (\"same\" if the translation conveys exactly the same "
-            f"content, \"minor\" for a small difference in nuance, \"major\" otherwise), \"omission\" (true if any source "
-            f"information is missing), \"addition\" (true if information that is not in the source was added), "
-            f"\"grammar\" (\"correct\", \"minor\" for small errors, \"incorrect\"), \"naturalness\" (1-5, 5 = fully "
-            f"natural spoken {tgt}), \"note\" (one short sentence).")
+            f"Judge the CONTENT and the GRAMMAR separately; word choice and style are not content errors. "
+            f"Answer with JSON only, with these keys: \"content\" (\"same\" if every fact and intention is conveyed, "
+            f"\"minor\" if a nuance differs but no fact is wrong or missing, \"major\" if a fact is wrong, changed or "
+            f"missing), \"omission\" (true if any source information is missing), \"addition\" (true if information "
+            f"that is not in the source was added), \"grammar\" (\"correct\", \"minor\" for a small slip, "
+            f"\"incorrect\" for broken sentences or word order), \"naturalness\" (1-5, 5 = fully natural spoken {tgt}), "
+            f"\"note\" (one short sentence).")
 
 
 # ───────────────────────── LLM ─────────────────────────
@@ -190,8 +205,12 @@ def parse_json(s):
         return None
 
 
-def first_line(s):
-    return (s or "").strip().splitlines()[0].strip() if (s or "").strip() else ""
+def clean(s):
+    """Model output -> the translation: first non-empty line, without a leading label or surrounding quotes."""
+    lines = [l.strip() for l in (s or "").splitlines() if l.strip()]
+    t = lines[0] if lines else ""
+    t = re.sub(r"^(translation|übersetzung|번역)\s*:\s*", "", t, flags=re.I)
+    return t.strip().strip('"“”„').strip()
 
 
 # ───────────────────────── stable prefixes and latency ─────────────────────────
@@ -255,7 +274,7 @@ def latency(word_times, src_end):
 def gate(j):
     if not j:
         return False
-    return (j.get("meaning") == "same" and not j.get("omission") and not j.get("addition")
+    return (j.get("content") in ("same", "minor") and not j.get("omission") and not j.get("addition")
             and j.get("grammar") in ("correct", "minor"))
 
 
@@ -268,18 +287,15 @@ def cmd_run(a):
     if (out / "summary.json").exists():
         print("done already", out)
         return
-    items = [json.loads(l) for l in open(Path(a.out) / f"items-{src_code}.jsonl", encoding="utf-8")]
+    items = [json.loads(l) for l in open(Path(a.items or a.out) / f"items-{src_code}.jsonl", encoding="utf-8")]
     t0 = time.monotonic()
     llm = LLM(a.model, a.device)
     t_load = time.monotonic() - t0
     print(f"{a.direction}: {len(items)} items, model loaded in {t_load:.0f} s", flush=True)
 
-    normal = [first_line(x) for x in llm([p_normal(src, tgt, it["text"]) for it in items], 256, a.batch)]
-    mono_raw = llm([p_mono(src, tgt, it["text"]) for it in items], 1024, max(1, a.batch // 2))
-    mono_js = [parse_json(x) for x in mono_raw]
-    mono = [(j.get("translation") or " ".join(c.get("tgt", "") for c in j.get("chunks", []))).strip() if j else ""
-            for j in mono_js]
-    print(f"{a.direction}: translations done, monotonic JSON failures {sum(j is None for j in mono_js)}", flush=True)
+    normal = [clean(x) for x in llm([p_translate(src, tgt, it["text"], False) for it in items], 320, a.batch)]
+    mono = [clean(x) for x in llm([p_translate(src, tgt, it["text"], True) for it in items], 320, a.batch)]
+    print(f"{a.direction}: translations done, empty a/b {sum(not x for x in normal)}/{sum(not x for x in mono)}", flush=True)
 
     jp, jk = [], []
     for k, (it, n_, m_) in enumerate(zip(items, normal, mono)):
@@ -296,10 +312,10 @@ def cmd_run(a):
         for i in range(1, len(it["tokens"])):
             prefix = " ".join(it["tokens"][:i])
             for name, mono_style in (("a", False), ("b", True)):
-                pp.append(p_prefix(src, tgt, prefix, mono_style)); pk.append((k, name, i))
+                pp.append(p_translate(src, tgt, prefix, mono_style, complete=False)); pk.append((k, name, i))
     pref = {}
     for key, s in zip(pk, llm(pp, 160, a.batch)):
-        pref[key] = first_line(s)
+        pref[key] = clean(s)
     print(f"{a.direction}: prefix translations {len(pp)}", flush=True)
 
     rows = []
@@ -312,8 +328,6 @@ def cmd_run(a):
                 prefixes = [pref[(k, name, i)] for i in range(1, len(it["tokens"]))]
                 wt = stable_word_times(full, prefixes, it["times"], tgt)
                 d.update(word_times=wt, latency=latency(wt, it["times"][-1]), prefixes=prefixes)
-            if name == "b":
-                d["chunks"] = (mono_js[k] or {}).get("chunks")
             row[name] = d
         rows.append(row)
     with open(out / "results.jsonl", "w", encoding="utf-8") as f:
@@ -324,11 +338,11 @@ def cmd_run(a):
         for r in rows:
             jb = r["b"].get("judge") or {}
             f.write("\t".join([r["id"], r["source"], r["a"]["translation"], r["b"]["translation"],
-                               f"{jb.get('meaning')}/{jb.get('grammar')}/{jb.get('naturalness')} {jb.get('note', '')}",
+                               f"{jb.get('content')}/{jb.get('grammar')}/{jb.get('naturalness')} {jb.get('note', '')}",
                                str((r["a"].get("latency") or {}).get("al")), str((r["b"].get("latency") or {}).get("al"))])
                     + "\n")
     summary = summarize_rows(rows)
-    summary.update(direction=a.direction, model=a.model, load_s=round(t_load, 1), gen_s=round(llm.secs, 1),
+    summary.update(direction=a.direction, prompt_version=PROMPT_VERSION, model=a.model, load_s=round(t_load, 1), gen_s=round(llm.secs, 1),
                    out_tokens=llm.n_out, calls=dict(translations=2 * len(items), judge=len(jk), prefixes=len(pp)))
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1))
     print(json.dumps(summary, ensure_ascii=False, indent=1), flush=True)
@@ -345,7 +359,7 @@ def summarize_rows(rows):
         js = [d.get("judge") or {} for d in ds]
         s[name] = dict(translated=sum(bool(d["translation"]) for d in ds), judged=sum(bool(j) for j in js),
                        pass_gate=sum(d["pass_gate"] for d in ds),
-                       meaning={m: sum(j.get("meaning") == m for j in js) for m in ("same", "minor", "major")},
+                       content={m: sum(j.get("content") == m for j in js) for m in ("same", "minor", "major")},
                        omission=sum(bool(j.get("omission")) for j in js), addition=sum(bool(j.get("addition")) for j in js),
                        grammar={g: sum(j.get("grammar") == g for j in js) for g in ("correct", "minor", "incorrect")},
                        naturalness=mean([j.get("naturalness") for j in js if isinstance(j.get("naturalness"), (int, float))]),
@@ -361,7 +375,7 @@ def cmd_summarize(a):
         out[d.parent.name] = json.loads(d.read_text())
     (Path(a.out) / "summary.json").write_text(json.dumps(out, ensure_ascii=False, indent=1))
     for k, s in out.items():
-        print(k, "| pass a/b", s["a"]["pass_gate"], s["b"]["pass_gate"], "of", s["items"],
+        print(k, s.get("prompt_version"), "| pass a/b", s["a"]["pass_gate"], s["b"]["pass_gate"], "of", s["items"],
               "| AL a/b", s["a"]["al"], s["b"]["al"], "| first a/b", s["a"]["first"], s["b"]["first"],
               "| pre_end a/b", s["a"]["pre_end"], s["b"]["pre_end"], "| natural a/b", s["a"]["naturalness"], s["b"]["naturalness"])
 
@@ -380,6 +394,7 @@ def main():
     q.add_argument("--model", default="/soundai/Model/Qwen3.8-27B")
     q.add_argument("--device", default="cuda:0")
     q.add_argument("--batch", type=int, default=32)
+    q.add_argument("--items", default=None, help="folder with items-<lang>.jsonl (default: --out)")
     q.set_defaults(fn=cmd_run)
     q = sub.add_parser("summarize")
     q.add_argument("--out", required=True)
