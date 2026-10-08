@@ -1,0 +1,105 @@
+{
+ "delays": "4,5,6,7,8,9,10",
+ "de_words": [
+  "@/soundai/users/tskim/VAPKT-data/results/de-train-dryrun-d4to10-20261008/de.list"
+ ],
+ "sets": {
+  "en": {
+   "words_rows": 805,
+   "labeled": 0,
+   "tok_check": 32,
+   "labels_without_words": 0,
+   "padded": 804,
+   "pad_chunks": 3596,
+   "sem": 0,
+   "turn": 0,
+   "sem_free": 805,
+   "sem_free_hours": 5.921,
+   "B": 0,
+   "N": 0,
+   "words_tokens": 58904,
+   "items": 805
+  },
+  "ko": {
+   "words_rows": 7000,
+   "labeled": 0,
+   "ko_textnorm_changed": 365,
+   "ko_digit_spoken": 15,
+   "tok_check": 32,
+   "labels_without_words": 0,
+   "padded": 4969,
+   "pad_chunks": 21770,
+   "sem": 0,
+   "turn": 0,
+   "sem_free": 6998,
+   "sem_free_hours": 8.892,
+   "B": 0,
+   "N": 0,
+   "words_tokens": 111091,
+   "items": 6998
+  },
+  "short_ko": {
+   "words_rows": 5909,
+   "labeled": 0,
+   "ko_textnorm_changed": 5569,
+   "ko_digit_spoken": 26,
+   "tok_check": 32,
+   "sem_free_other_pool": 6624,
+   "labels_without_words": 0,
+   "padded": 4995,
+   "pad_chunks": 35198,
+   "sem": 0,
+   "turn": 0,
+   "sem_free": 5907,
+   "sem_free_hours": 6.584,
+   "B": 0,
+   "N": 0,
+   "words_tokens": 90513,
+   "items": 5907
+  },
+  "de": {
+   "words_rows": 325,
+   "labeled": 0,
+   "tok_check": 32,
+   "labels_without_words": 0,
+   "padded": 293,
+   "pad_chunks": 2684,
+   "sem": 0,
+   "turn": 0,
+   "sem_free": 325,
+   "sem_free_hours": 0.457,
+   "B": 0,
+   "N": 0,
+   "words_tokens": 6529,
+   "items": 325
+  }
+ },
+ "bad": {
+  "en": {},
+  "ko": {
+   "tn_digit": 2
+  },
+  "short_ko": {
+   "tn_digit": 2
+  },
+  "de": {}
+ },
+ "check": {
+  "en": {
+   "n": 64,
+   "bad": 0
+  },
+  "ko": {
+   "n": 64,
+   "bad": 0
+  },
+  "short_ko": {
+   "n": 64,
+   "bad": 0
+  },
+  "de": {
+   "n": 64,
+   "bad": 0
+  }
+ }
+}

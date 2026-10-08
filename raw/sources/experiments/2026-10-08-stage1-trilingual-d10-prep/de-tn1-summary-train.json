@@ -1,0 +1,26 @@
+{
+ "split": "train",
+ "textnorm": "asr-tn-de-v1.0.0",
+ "tokenizer": "/soundai/Model/Qwen3-ASR-1.7B",
+ "files": 4564,
+ "files_kept": 4556,
+ "rows": {
+  "ok_changed": 1286122,
+  "tn_digit": 39243,
+  "ok_same": 29257,
+  "tn_abbrev": 3406,
+  "tn_symbol": 164,
+  "tn_word_empty": 7
+ },
+ "hours": {
+  "ok_changed": 2106.45,
+  "tn_digit": 128.78,
+  "ok_same": 19.04,
+  "tn_abbrev": 13.31,
+  "tn_symbol": 0.56,
+  "tn_word_empty": 0.03
+ },
+ "kept_rows": 1315379,
+ "kept_hours": 2125.49,
+ "elapsed_s": 503.9
+}

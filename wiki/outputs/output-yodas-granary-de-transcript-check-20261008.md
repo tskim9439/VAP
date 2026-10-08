@@ -10,6 +10,7 @@ sources:
   - '[[2026-10-08-yodas-de-align-run]]'
 related:
   - '[[decision-yodas-de-asr-selection]]'
+  - '[[output-stage1-trilingual-d10-prep-20261008]]'
   - '[[output-eval-set-plan-asr-simulst-20261007]]'
   - '[[decision-eval-train-decontamination]]'
 ---
@@ -119,6 +120,6 @@ related:
 6. **합계**: **2,276.5 h**(1,363,198 발화; words train 1,358,199 행, dev 4,999 행)
 
 ## 남은 일
-- 학습 연결: `semcommit_train.py` 의 ASR 전용 셋 구성에 독일어 셋 추가(현재 en/ko 만 만든다). 40 s 항목이 들어오므로 묶음 토큰 예산 확인
+- ~~학습 연결~~ → 완료(2026-10-08): 영어 규약으로 정규화(asr-tn-de-v1.1.0, 2,125.3 h) 뒤 `--de-words` 로 학습 중 — [[output-stage1-trilingual-d10-prep-20261008]]
 - FLEURS·CoVoST2 독일어를 받으면 평가셋 겹침 검사 재실행
 - 정렬 실패 중 토큰 시각 역전(1–30 s 19,065 + 30–40 s 1,934 발화)의 원인 확인(선택)

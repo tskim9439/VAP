@@ -1,0 +1,27 @@
+## [2026-10-08] task | 영·한·독 Stage 1 학습 준비, 미리 듣기 320–1,040 ms, 0.6B 학습 시작
+
+- Changed:
+  - 코드:
+    - 새 파일: `vapasr/data/textnorm_de.py`, `experiments/yodas_de_textnorm.py`, `tests/test_textnorm_de.py`, `tests/test_semcommit_delay_ext.py`, `slurm/submit-q06-s1m3-d10.sh`, `slurm/submit-q17-s1m3-d10.sh`
+    - 수정: `vapasr/data/semcommit_tokens.py`, `vapasr/hf/__init__.py`, `vapasr/data/single_turn_eval.py`, `experiments/eval_single_turn_asr.py`, `experiments/run_single_turn_asr_mxc.sh`, `slurm/submit-semcommit-train-apex.sh`
+    - 커밋 보류: `experiments/semcommit_train.py`, `vapasr/data/semcommit_dataset.py` — Codex 미커밋 헝크와 같은 파일이고, mxc 에는 배포됨
+  - 원자료: `raw/sources/experiments/2026-10-08-stage1-trilingual-d10-prep/`
+  - 위키:
+    - `wiki/decisions/decision-stage1-lookahead-320-1040ms.md`(신규)
+    - `wiki/outputs/output-stage1-trilingual-d10-prep-20261008.md`(신규)
+    - `wiki/decisions/decision-yodas-de-asr-selection.md`: 학습 타깃이 정규화된 텍스트라는 정정과 정규화 수치
+    - `wiki/outputs/output-yodas-granary-de-transcript-check-20261008.md`
+- Reason:
+  - 사용자가 영·한·독을 함께 실시간 전사하도록 학습을 준비하라고 했다.
+  - 화자 구분을 위해 미리 듣기를 320–1,040 ms 로 정했다(인코더 [56,3] + δ4–10).
+  - 실시간성을 위해 0.6B thinker 로 학습하기로 했다.
+- 결과:
+  - 독일어 2,125.3 h 정규화(재분할 실패 0)
+  - dry-run·테스트 통과
+  - 0.6B job 82738 진행 중(5,391 step/epoch × 3, 약 1.7 s/step)
+  - 1.7B job 82730 은 사용자 취소
+- Next:
+  - 82738 완료 뒤 δ4·6·8·10·final 평가(영·한·독)
+  - 화자·언어 prefix 단계 설계 확정
+  - `semcommit_train.py`·`semcommit_dataset.py` 커밋 방식 결정(사용자)
+- By: tskim

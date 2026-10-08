@@ -1,0 +1,22 @@
+{
+  "protocol": "single-turn-asr-v1",
+  "coverage": {
+    "yodas-de-dev": {
+      "source_labels": 4861,
+      "expected_standard_count": 4861,
+      "list": "/soundai/users/tskim/VAPKT-data/data/yodas-de-v1/lists/de-words-dev-tn1.list",
+      "list_sha256": "d317dc1445593963413ad437aa38e28c4d752ad8d6cf8e28d151fab9640d74cf",
+      "available": 4861,
+      "missing": 0,
+      "audio_hours": 7.870124114583349,
+      "full_standard_set": true
+    }
+  },
+  "missing": [],
+  "manifest_digest": "06ef0a9c42b1bda40ca4cbb6f02473c745da66aeaed962f20d17ac668bf05bc2",
+  "textnorm": {
+    "textnorm_version": "asr-tn-v1.3.0",
+    "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+    "numeric_backend_version": "num2words 0.5.14"
+  }
+}
