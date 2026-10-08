@@ -20,7 +20,8 @@ while [[ $# -gt 0 ]]; do
 done
 [[ $nodes =~ ^[1-9][0-9]*$ ]] || { echo "--nodes 는 양의 정수" >&2; exit 2; }
 [[ -f "$out/prefilter/prefilter.parquet" ]] || { echo "없음: $out/prefilter/prefilter.parquet (yodas_de_prepare.py prefilter 먼저)" >&2; exit 1; }
-done_n=$(ls "$out/results" 2>/dev/null | wc -l)
+done_n=0  # results/ 는 첫 실행 전에는 없다(set -e·pipefail 에서 ls 실패로 조용히 끝나지 않게)
+[[ -d "$out/results" ]] && done_n=$(ls "$out/results" | wc -l)
 echo "제출: 완료 shard ${done_n} · 노드 ${nodes} · ${partition} · OUT=${out}" >&2
 sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} \
   --nodes="$nodes" --ntasks=$((nodes * 8)) --ntasks-per-node=8 --gres=gpu:8 --time="$time_limit" \
