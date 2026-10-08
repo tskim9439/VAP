@@ -9,7 +9,11 @@ id 정책: Phase 1(interleave_data.SPECIAL_TOKENS, 151705–151716) → Phase 2(
 SPECIAL_TOKENS 에 넣으면 from_legacy 의 sp_ids 대조와 Phase 2 id 가 모두 깨진다 → SPECIAL_TOKENS·FROZEN_REGISTRY 는 건드리지 않는다.
 mono(lanes=0) 모델에서 Phase 2 id 는 '예약'만 된다(임베딩 행은 평균+잡음, decode 차단, config.sem_reserved 에 기록 → 나중 add_phase2_tokens 가 재초기화;
 mono 에서 턴 종료로 학습한 <EOT> 는 예약에서 빠진다). 임베딩 여유 행(151936 − 151724 = 212)이 있어 resize 는 필요 없다.
-모델 쪽 적용은 VapAsrForStreamingASR.add_semantic_tokens, 재로드는 vapasr.hf.load_tokenizer(config.sem_registry)."""
+모델 쪽 적용은 VapAsrForStreamingASR.add_semantic_tokens, 재로드는 vapasr.hf.load_tokenizer(config.sem_registry).
+
+지연 확장(2026-10-08): <DELAY_9>(151724)·<DELAY_10>(151725) 를 SEM 뒤에 붙인다 — 학습 δ 4–10(인코더 [56,3] 과 함께 미리 듣기 320–1,040 ms).
+Phase 1 SPECIAL_TOKENS·FROZEN_REGISTRY 는 그대로 두고(<DELAY_1..8>) 따로 더한다(add_delay_tokens). 151724 는 v0.2 체크포인트의 <TURN_END> 와
+같은 id 라 <TURN_END> 를 가진 체크포인트에는 붙이지 않는다. 새 행은 <DELAY_8> 행을 복사해 시작한다(lm_head 는 tied), decode 에서는 차단한다."""
 from typing import Dict, Iterable, List, Optional, Tuple
 import torch
 from ..uslm.interleave_data import SPECIAL_TOKENS as PHASE1_SPECIALS
@@ -21,11 +25,45 @@ TURN_TOKEN = "<EOT>"                                            # 턴 종료 토
 LEGACY_TURN_TOKEN, LEGACY_TURN_ID = "<TURN_END>", 151724         # v0.2 체크포인트 전용(읽기·평가) — 새 tokenizer 에는 붙이지 않는다
 ALL_SEM_SPECIALS = list(PHASE1_SPECIALS) + list(PHASE2_SPECIALS) + SEM_SPECIALS
 BASE_VOCAB = 151705                                              # 첫 특수 토큰(<NEXT_AUDIO>) id = 기본 어휘 길이
+DELAY_EXT = ["<DELAY_9>", "<DELAY_10>"]                          # 지연 확장 — SEM 뒤(이 순서)
+DELAY_EXT_REGISTRY = {"<DELAY_9>": 151724, "<DELAY_10>": 151725}
+MAX_DELAY = 10
 
 def add_semantic_specials(tok) -> Dict[str, int]:
     """Phase 1 + Phase 2 + SEM 특수 토큰을 이 순서로 tokenizer 에 추가(이미 있으면 그대로) → 전체 {name: id}."""
     tok.add_tokens(ALL_SEM_SPECIALS, special_tokens=True)
     return {t: tok.convert_tokens_to_ids(t) for t in ALL_SEM_SPECIALS}
+
+def add_delay_ext_specials(tok) -> Dict[str, int]:
+    """<DELAY_9>·<DELAY_10> 를 tokenizer 에 이 순서로 추가(이미 있으면 그대로) → {name: id}. <SEM_END> 가 먼저 붙어 있어야 하고(id 순서),
+    실제 Qwen tokenizer(SEM = 151723)면 동결 id(DELAY_EXT_REGISTRY)와 대조한다."""
+    vocab = tok.get_vocab()
+    assert "<SEM_END>" in vocab, "<SEM_END> 를 먼저 붙인다(add_semantic_specials) — 지연 확장 id 는 SEM 뒤"
+    tok.add_tokens(DELAY_EXT, special_tokens=True)
+    ids = {t: tok.convert_tokens_to_ids(t) for t in DELAY_EXT}
+    sem = tok.convert_tokens_to_ids("<SEM_END>")
+    assert sem < ids["<DELAY_9>"] < ids["<DELAY_10>"], f"지연 확장 id 순서 위반: {ids}, <SEM_END>={sem}"
+    if sem == SEM_REGISTRY["<SEM_END>"]:
+        assert ids == DELAY_EXT_REGISTRY, f"지연 확장 id 불일치 (tokenizer, 동결): {ids} vs {DELAY_EXT_REGISTRY}"
+    return ids
+
+def add_delay_tokens(model, tok) -> Dict[str, int]:
+    """모델에 <DELAY_9>·<DELAY_10> 를 붙인다: tokenizer 추가, 새 임베딩 행 = <DELAY_8> 행 복사(lm_head 는 tied), config.sp_ids·special_tokens·blocked_ids
+    갱신(지연 토큰은 decode 에서 방출하지 않는다). 이미 붙어 있으면 행을 건드리지 않는다(idempotent)."""
+    cfg = model.config
+    assert LEGACY_TURN_TOKEN not in (getattr(cfg, "sem_registry", None) or {}), f"v0.2 체크포인트({LEGACY_TURN_TOKEN}={LEGACY_TURN_ID})에는 <DELAY_9> 를 붙일 수 없다"
+    ids = add_delay_ext_specials(tok)
+    W = model.get_input_embeddings().weight
+    assert max(ids.values()) < W.shape[0], f"임베딩 여유 행 없음: max id {max(ids.values())} ≥ rows {W.shape[0]}"
+    known = dict(cfg.sp_ids); bad = {n: (ids[n], known[n]) for n in ids if n in known and int(known[n]) != int(ids[n])}
+    assert not bad, f"tokenizer 와 config.sp_ids 의 지연 확장 id 가 다름 (tokenizer, config): {bad}"
+    with torch.no_grad():
+        for n in DELAY_EXT:
+            if n not in known: W[ids[n]] = W[known["<DELAY_8>"]]
+    cfg.sp_ids.update(ids); cfg.special_tokens = list(dict.fromkeys(list(cfg.special_tokens) + DELAY_EXT)); model.sp_ids = dict(cfg.sp_ids)
+    cfg.blocked_ids = sorted(set(int(b) for b in cfg.blocked_ids) | set(ids.values()))
+    model.blocked = torch.tensor(cfg.blocked_ids, dtype=torch.long, device=W.device)
+    return ids
 
 def assert_frozen_semantic(ids: Dict[str, int]) -> None:
     """실제 Qwen tokenizer 로 얻은 ids 가 동결 id(Phase 1/2 = FROZEN_REGISTRY, SEM = SEM_REGISTRY)와 같은지 검사."""

@@ -29,7 +29,7 @@ for f in "${FLAGS[@]}"; do
 done
 IFS=',' read -r -a DELTAS <<< "$DELAY_LIST"
 for delta in "${DELTAS[@]}"; do
-  [[ "$delta" =~ ^[1-8]$ ]] || { echo 'Delta must be an integer from 1 to 8.' >&2; exit 2; }
+  [[ "$delta" =~ ^([1-9]|10)$ ]] || { echo 'Delta must be an integer from 1 to 10 (9 and 10 need a model trained with <DELAY_9/10>).' >&2; exit 2; }
 done
 IFS=',' read -r -a GPUS <<< "$GPU_LIST"
 if (( ${#GPUS[@]} < 1 || ${#GPUS[@]} > 2 )); then

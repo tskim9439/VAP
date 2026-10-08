@@ -16,7 +16,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from vapasr.data.single_turn_eval import (PROTOCOL, aggregate, canonical_reference,
-    digest, fingerprint, read_jsonl, score_pair, write_json)
+    digest, fingerprint, primary_metric, read_jsonl, score_pair, score_text, write_json)
 
 
 VOXPOPULI_AA_REVISION = "07adf4a242e2e5dd955a230909c177573c978ee3"   # HF ArtificialAnalysis/VoxPopuli-Cleaned-AA, 2026-02-17
@@ -59,12 +59,45 @@ def prepare_voxpopuli_aa(root, revision, workers):
     return rows, missing, coverage
 
 
+def prepare_yodas_de_dev(list_path, out):
+    """YODAS-Granary German held-out dev (200 videos, experiments/yodas_de_prepare.py) from the asr-tn-de-v1 rows
+    (experiments/yodas_de_textnorm.py) → (rows, coverage). The audio is copied once from the shard tars to <out>/audio/yodas-de-dev/.
+    The reference is the normalised Qwen3-ASR-1.7B transcript that matched the Granary text (WER <= 3 %) — a silver in-domain
+    set; rows with digits, abbreviations or symbols are already excluded by the normalisation."""
+    import soundfile as sf
+    from vapasr.data.archive import load_audio_from_archive
+    files = [l.strip() for l in open(list_path) if l.strip()]
+    adir = Path(out) / "audio" / "yodas-de-dev"
+    adir.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for f in files:
+        for line in open(f, encoding="utf-8"):
+            w = json.loads(line)
+            seg = w["segments"][0]
+            p = adir / (seg["utt_id"] + ".wav")
+            if not p.exists():
+                x = load_audio_from_archive(seg["path"])
+                sf.write(str(p) + ".tmp.wav", x, 16000, subtype="PCM_16")
+                os.replace(str(p) + ".tmp.wav", p)
+            info = sf.info(str(p))
+            rows.append(dict(id=f"yodas-de-dev/{seg['utt_id']}", dataset="yodas-de-dev", lang="German", path=str(p),
+                             raw_reference=w["display_text"], source_path=seg["path"], sample_rate=info.samplerate,
+                             num_samples=info.frames, audio_s=info.duration, audio_format="wav",
+                             reference=canonical_reference(w["display_text"], "German")))
+            assert rows[-1]["reference"] == w["text"], f"asr-tn-de mismatch: {w['id']}"
+    return rows, dict(source_labels=len(rows), expected_standard_count=len(rows), list=str(list_path),
+                      list_sha256=hashlib.sha256(Path(list_path).read_bytes()).hexdigest())
+
+
 def prepare(a):
     import soundfile as sf
     from vapasr.data.kspon import read_trn, resolve_path
-    if not (a.voxpopuli_aa_root or a.libri_root or a.kspon_root):
-        raise SystemExit("prepare: --voxpopuli-aa-root / --kspon-root / --libri-root 중 하나 이상 필요")
+    if not (a.voxpopuli_aa_root or a.libri_root or a.kspon_root or a.yodas_de_dev_list):
+        raise SystemExit("prepare: --voxpopuli-aa-root / --kspon-root / --libri-root / --yodas-de-dev-list 중 하나 이상 필요")
     rows, missing, coverage = [], [], {}
+    if a.yodas_de_dev_list:                                      # 독일어(2026-10-08): YODAS-Granary dev, silver 참조
+        r, c = prepare_yodas_de_dev(a.yodas_de_dev_list, a.out)
+        rows += r; coverage["yodas-de-dev"] = c
     if a.voxpopuli_aa_root:                                      # 영어 기본 평가 세트(2026-09-29 부터)
         r, m, c = prepare_voxpopuli_aa(a.voxpopuli_aa_root, a.voxpopuli_aa_revision, a.workers)
         rows += r; missing += m; coverage["voxpopuli-aa-test"] = c
@@ -177,7 +210,8 @@ def run(a):
     code_root = Path(__file__).resolve().parents[1]
     code = {p: hashlib.sha256((code_root / p).read_bytes()).hexdigest() for p in
             ["experiments/eval_single_turn_asr.py", "vapasr/hf/batch_decode.py", "vapasr/data/single_turn_eval.py",
-             "vapasr/hf/modeling_vapasr.py", "vapasr/features/online.py"]}
+             "vapasr/hf/modeling_vapasr.py", "vapasr/features/online.py"]
+            + (["vapasr/data/textnorm_de.py"] if any(r["lang"] == "German" for r in rows) else [])}
     config = dict(protocol=PROTOCOL, checkpoint=str(ck), checkpoint_weights=weights,
         checkpoint_config_sha256=hashlib.sha256((ck / "config.json").read_bytes()).hexdigest(),
         manifest_digest=digest(rows), utterances=len(rows), deltas=a.deltas, tail_s=a.tail_s,
@@ -274,9 +308,7 @@ def run(a):
                         continue
                     ids = [tid for _, tid in s.emitted]
                     hyp = tok.decode(ids, skip_special_tokens=True).strip()
-                    primary = "wer" if r["lang"] == "English" else "cer_nospace"
-                    from vapasr.data.textnorm import score_en, score_ko
-                    norm = score_en if r["lang"] == "English" else lambda x: score_ko(x, False)
+                    primary, norm = primary_metric(r["lang"]), score_text(r["lang"])
                     rec = dict(id=r["id"], dataset=r["dataset"], lang=r["lang"], path=r["path"],
                         delta=delta, audio_s=r["audio_s"], tail_s=a.tail_s, K=s.K,
                         raw_reference=r["raw_reference"], reference=r["reference"], hypothesis=hyp,
@@ -297,7 +329,6 @@ def run(a):
             if a.final:                                                         # 같은 인코더 특징(인과)으로 오프라인 모드 전사
                 from vapasr.hf.offline_decode import offline_decode, offline_blocked_ids
                 from vapasr.data.offline_seq import OfflineFormat
-                from vapasr.data.textnorm import score_en, score_ko
                 if ofmt is None: ofmt = OfflineFormat(tok); oblk = torch.tensor(offline_blocked_ids(model, ofmt), device=dev)
                 dt = time.monotonic()
                 for r, f in zip(batch, feats):
@@ -305,11 +336,11 @@ def run(a):
                         continue
                     ids = offline_decode(model, tok, f[0], r["lang"], fmt=ofmt, blocked=oblk)
                     hyp = tok.decode(ids, skip_special_tokens=True).strip()
-                    norm = score_en if r["lang"] == "English" else (lambda x: score_ko(x, False))
+                    norm = score_text(r["lang"])
                     rec = dict(id=r["id"], dataset=r["dataset"], lang=r["lang"], path=r["path"], delta="final", audio_s=r["audio_s"], tail_s=a.tail_s,
                         K=int(f.shape[1]), raw_reference=r["raw_reference"], reference=r["reference"], hypothesis=hyp,
                         reference_normalized=norm(r["reference"]), hypothesis_normalized=norm(hyp),
-                        primary_metric="wer" if r["lang"] == "English" else "cer_nospace", metrics=score_pair(r["reference"], hyp, r["lang"]),
+                        primary_metric=primary_metric(r["lang"]), metrics=score_pair(r["reference"], hyp, r["lang"]),
                         token_ids=ids, emissions=[], forced=0, flush_rounds=0, post_audio_tokens=0, batch_size=1, batch_decode_s=None, batch_encode_s=encoded_s)
                     output.write(json.dumps(rec, ensure_ascii=False) + "\n"); done.add((r["id"], "final")); completed += 1
                 output.flush(); os.fsync(output.fileno())
@@ -360,6 +391,7 @@ def main():
     q.add_argument("--voxpopuli-aa-revision", default=VOXPOPULI_AA_REVISION, help="coverage.json 에 기록할 HF 리비전")
     q.add_argument("--kspon-root", default=None, help="한국어: KsponSpeech eval_clean/eval_other")
     q.add_argument("--libri-root", default=None, help="legacy 영어 비교: LibriSpeech test-clean/test-other")
+    q.add_argument("--yodas-de-dev-list", default=None, help="독일어: YODAS-Granary dev 의 asr-tn-de-v1 words 목록(lists/de-words-dev-tn1.list)")
     q.add_argument("--out", required=True)
     q.add_argument("--workers", type=int, default=32)
     q = sub.add_parser("run")

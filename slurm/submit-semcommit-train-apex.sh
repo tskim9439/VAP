@@ -13,7 +13,8 @@
 #   --epochs E(기본 2)  --lr LR(기본 6e-5)  --warmup N(기본 50)  --save-every N(기본 200)  --max-steps N(기본 0 = epochs)
 #   참고(2026-09-28 스냅숏 1,274 파트, 1 노드): 32k 예산이면 GPU 당 ≈110 스트림/step → 8 GPU ≈900 스트림/step, epoch ≈420 step.
 #   KO 오디오(databricks tar) 읽기가 병목(단일 GPU 스모크 4.6 s/step, GPU 계산 ≈1.1 s) — 노드를 늘려도 저장소 처리량 이상은 빨라지지 않는다.
-#   --delays LIST      학습 δ(지연 청크) 목록, 기본 2,3,4,6(hf-E2 와 같음). 예: 2,3,4,6,8 — <DELAY_1..8> 은 어휘에 있고, E2 가 배우지 않은 δ 는
+#   --delays LIST      학습 δ(지연 청크) 목록, 기본 2,3,4,6(hf-E2 와 같음). 예: 2,3,4,6,8 — <DELAY_1..8> 은 어휘에 있고(9·10 은 학습 스크립트가
+#                      <DELAY_9>·<DELAY_10> 을 SEM 뒤에 붙인다 — semcommit_tokens.add_delay_tokens), E2 가 배우지 않은 δ 는
 #                      이 학습에서 처음 배운다. 샘플마다 목록에서 고르게 뽑고, 꼬리 패딩은 가장 큰 δ 에 맞춘다.
 #   --extra "..."      semcommit_train.py 에 그대로 붙일 인자
 #   ASR 정확도 옵션(2026-09-29, 기본은 모두 끔 — 켜면 지문이 달라져 새 --run 이 필요하다):
@@ -27,12 +28,15 @@
 #   --asr-only         Stage 1: labels 무시, <SEM_END> 학습 안 함   --offline-frac F  final(오프라인) 모드 항목 비율(스트리밍과 함께)
 #   --freeze-thinker   Stage 0 adapter 워밍업(--offline-frac 1 과 함께)
 #   --noise-bank DIR   잡음·잔향 증강(experiments/build_noise_bank.py 뱅크; 확률·SNR 은 --extra "--noise-p 0.4 --noise-snr 5,30 --rir-p 0.2")
+#   독일어(2026-10-08):
+#   --de-list FILE     독일어 ASR words 목록(YODAS-Granary asr-tn-de-v1, experiments/yodas_de_textnorm.py) → --de-words @FILE.
+#                      라벨 없는 SEM 중립 행으로 독일어 셋을 더한다(--language-schedule balanced 면 EN·KO·DE 가 step 을 1/3 씩).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 LABELS=/soundai/users/tskim/VAPKT-data/data/semcommit-work/labels/speechlm-all19-v035
 run=""; snap=""; init=/soundai/Model/VAPASR/hf-E2/final; nodes=1; time_limit=24:00:00; partition=apex; job_name=SA_SFT_FullDuplex
 batch_tokens=32768; max_bs=256; epochs=2; lr=6e-5; warmup=50; save_every=200; max_steps=0; extra=""; delays=2,3,4,6; after=""
-train_encoder=0; spec_augment=off; speed_perturb=""; asr_list=""; asr_max_ratio=""; varlen=0; noise_bank=""; qwen_dir=""; asr_only=0; offline_frac=0; freeze_thinker=0; afterok=""; dry=0
+train_encoder=0; spec_augment=off; speed_perturb=""; asr_list=""; asr_max_ratio=""; varlen=0; noise_bank=""; qwen_dir=""; asr_only=0; offline_frac=0; freeze_thinker=0; afterok=""; dry=0; de_list=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --run) run=$2; shift 2 ;;            --snap) snap=$2; shift 2 ;;          --init) init=$2; shift 2 ;;
@@ -45,6 +49,7 @@ while [[ $# -gt 0 ]]; do
     --asr-list) asr_list=$2; shift 2 ;;  --asr-max-ratio) asr_max_ratio=$2; shift 2 ;;  --varlen) varlen=1; shift ;;
     --noise-bank) noise_bank=$2; shift 2 ;;
     --afterok) afterok=$2; shift 2 ;;  --dry-run) dry=1; shift ;;
+    --de-list) de_list=$2; shift 2 ;;
     --qwen-dir) qwen_dir=$2; shift 2 ;;  --asr-only) asr_only=1; shift ;;  --offline-frac) offline_frac=$2; shift 2 ;;  --freeze-thinker) freeze_thinker=1; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
@@ -54,11 +59,12 @@ done
 [[ -z $after || $after =~ ^[0-9]+$ ]] || { echo "--after 는 job id" >&2; exit 2; }
 [[ -z $afterok || $afterok =~ ^[0-9]+$ ]] || { echo "--afterok 는 job id" >&2; exit 2; }
 [[ -z $after || -z $afterok ]] || { echo "--after 와 --afterok 는 함께 쓰지 않는다" >&2; exit 2; }
-[[ $delays =~ ^[1-8](,[1-8])*$ ]] || { echo "--delays 는 1–8 의 쉼표 목록(<DELAY_1..8>)" >&2; exit 2; }
+[[ $delays =~ ^([1-9]|10)(,([1-9]|10))*$ ]] || { echo "--delays 는 1–10 의 쉼표 목록(<DELAY_1..8>, 9·10 은 지연 확장 토큰을 붙인다)" >&2; exit 2; }
 [[ $spec_augment =~ ^(off|light|nemo|[0-9]+,[0-9]+,[0-9]+,[0-9.]+)$ ]] || { echo "--spec-augment 는 off|light|nemo|Fm,Fw,Tm,Tw" >&2; exit 2; }
 [[ -z $speed_perturb || $speed_perturb =~ ^[0-9.]+(,[0-9.]+)*$ ]] || { echo "--speed-perturb 는 배율 쉼표 목록" >&2; exit 2; }
 [[ -z $asr_list || -f $asr_list ]] || { echo "--asr-list 파일 없음: $asr_list" >&2; exit 1; }
 [[ -z $noise_bank || ( -f $noise_bank/noise.jsonl && -f $noise_bank/rir.npy ) ]] || { echo "--noise-bank 뱅크 불완전: $noise_bank" >&2; exit 1; }
+[[ -z $de_list || -s $de_list ]] || { echo "--de-list 파일 없음·비어 있음: $de_list" >&2; exit 1; }
 snap=${snap:-$(ls -d "$LABELS"/snapshots/*/ 2>/dev/null | sort | tail -1)}; snap=${snap%/}
 for f in main-words.list main-labels.list short-words.list short-labels.list summary.json; do
   [[ -f $snap/$f ]] || { echo "스냅숏에 없음: $snap/$f" >&2; exit 1; }
@@ -79,8 +85,9 @@ args="--delays $delays --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --
 (( asr_only )) && args+=" --asr-only"
 [[ $offline_frac != 0 ]] && args+=" --offline-frac $offline_frac"
 (( freeze_thinker )) && args+=" --freeze-thinker"
+[[ -n $de_list ]] && args+=" --de-words @$de_list"
 args+=" $extra"
-echo "ASR 옵션: 인코더 $([[ $train_encoder = 1 ]] && echo 학습 || echo 동결) · SpecAugment $spec_augment · 속도 ${speed_perturb:-끔} · ASR 목록 ${asr_list:-없음} · varlen $varlen · 잡음 뱅크 ${noise_bank:-없음} · init ${qwen_dir:-$init} · ASR 전용 $asr_only · final 비율 $offline_frac · thinker 동결 $freeze_thinker" >&2
+echo "ASR 옵션: 인코더 $([[ $train_encoder = 1 ]] && echo 학습 || echo 동결) · SpecAugment $spec_augment · 속도 ${speed_perturb:-끔} · ASR 목록 ${asr_list:-없음} · varlen $varlen · 잡음 뱅크 ${noise_bank:-없음} · init ${qwen_dir:-$init} · ASR 전용 $asr_only · final 비율 $offline_frac · thinker 동결 $freeze_thinker · 독일어 ${de_list:-없음}" >&2
 echo "δ $delays · 스냅숏 $snap ($(python3 -c "import json,sys;s=json.load(open(sys.argv[1]));print(s['parts'],'파트')" "$snap/summary.json")) · init $init · 산출물 $out · $nodes 노드 × 8 GPU" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 dep=""; [[ -n $after ]] && dep="--dependency=afterany:$after"; [[ -n $afterok ]] && dep="--dependency=afterok:$afterok"

@@ -4,22 +4,39 @@ import json
 from pathlib import Path
 
 from .textnorm import score_en, score_ko, target_ko, fingerprint
+from .textnorm_de import score_de, target_de
 
 PROTOCOL = "single-turn-asr-v1"
 
 
 def canonical_reference(raw, lang):
+    if lang == "German":
+        return target_de(raw)                          # asr-tn-de-v1 (vapasr/data/textnorm_de.py)
     return target_ko(raw, "kspon") if lang == "Korean" else raw
+
+
+def primary_metric(lang):
+    return "cer_nospace" if lang == "Korean" else "wer"
+
+
+def score_text(lang):
+    """Normalisation used for the reported reference/hypothesis strings."""
+    if lang == "Korean":
+        return lambda x: score_ko(x, False)
+    return score_de if lang == "German" else score_en
 
 
 def score_pair(reference, hypothesis, lang):
     from rapidfuzz.distance import Levenshtein
     result = {}
-    variants = {"wer": (score_en(reference).split(), score_en(hypothesis).split())} if lang == "English" else {
-        "cer_nospace": (list(score_ko(reference, False)), list(score_ko(hypothesis, False))),
-        "cer_space": (list(score_ko(reference, True)), list(score_ko(hypothesis, True))),
-        "wer": (score_ko(reference, True).split(), score_ko(hypothesis, True).split()),
-    }
+    if lang == "German":
+        variants = {"wer": (score_de(reference).split(), score_de(hypothesis).split())}
+    else:
+        variants = {"wer": (score_en(reference).split(), score_en(hypothesis).split())} if lang == "English" else {
+            "cer_nospace": (list(score_ko(reference, False)), list(score_ko(hypothesis, False))),
+            "cer_space": (list(score_ko(reference, True)), list(score_ko(hypothesis, True))),
+            "wer": (score_ko(reference, True).split(), score_ko(hypothesis, True).split()),
+        }
     for name, (ref, hyp) in variants.items():
         counts = {"substitutions": 0, "deletions": 0, "insertions": 0}
         names = {"replace": "substitutions", "delete": "deletions", "insert": "insertions"}
