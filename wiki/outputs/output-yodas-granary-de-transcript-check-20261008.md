@@ -3,10 +3,12 @@ type: output
 status: active
 created: 2026-10-08
 updated: 2026-10-08
-summary: YODAS-Granary 독일어(7,925 h) 전사 점검 — 원 전사는 Whisper-v3 결과라 v3 재실행은 무의미, Qwen 과 일치는 시간 기준 절반 수준이라 ASR 필터는 필요
+summary: YODAS-Granary 독일어(7,925 h) 전사 점검 — 원 전사는 Whisper-v3 결과라 재실행 무의미, Qwen 일치는 절반 → 원 전사↔Qwen WER ≤ 3 % 선별로 결정
 sources:
   - '[[2026-10-08-yodas-de-transcript-check]]'
+  - '[[2026-10-08-yodas-de-align-smoke]]'
 related:
+  - '[[decision-yodas-de-asr-selection]]'
   - '[[output-eval-set-plan-asr-simulst-20261007]]'
   - '[[decision-eval-train-decontamination]]'
 ---
@@ -67,7 +69,40 @@ related:
 - Whisper-v2 를 세 번째 표로 더하면 유지 시간이 약 10 % 줄고 GPU 약 100 시간이 더 든다. 데이터가 충분하므로 필수는 아니다.
 - WER ≤ 3 % 로 원 전사 ↔ Qwen 일치만 써도 약 2,400 h 가 남아, 영·한 선별 데이터(약 2,360 h)와 비슷한 규모다.
 
-## 남은 결정 (사용자)
-- 판정에 Whisper-v2 를 추가할지(원안 유지) / 원 전사 ↔ Qwen 일치만 쓸지
-- 문턱(WER 3 % / 5 %, 또는 공백 무시 CER)
-- 학습 타깃 표기: 일치한 경우에도 Granary(LLM 구두점 복원, 정리된 표기) / Qwen 원출력(말 그대로, 영·한과 같은 규약)
+## 결정 (사용자 동의 2026-10-08)
+- 권장안대로 정했다: [[decision-yodas-de-asr-selection]]
+  - 판정은 원 전사 ↔ Qwen 일치만(Whisper 재전사 없음)
+  - 문턱 WER ≤ 3 %
+  - 학습 타깃은 Qwen 원출력
+
+## 전처리 파이프라인 (2026-10-08 구현·시험)
+1. **목록·사전 점검**(`experiments/yodas_de_prepare.py`, CPU, 완료): 출력 mxc `VAPKT-data/data/yodas-de-v1/`
+
+| 제외 사유 | 발화 | 시간 |
+|---|---:|---:|
+| 30 s 초과 | 143,916 | 1,451.9 h |
+| 3-gram 반복 | 12,402 | 80.2 h |
+| 중복 구간·같은 전사 | 64,592 | 37.6 h |
+| 환각 문구 | 10,404 | 34.3 h |
+| 1 s 미만 | 134,598 | 27.5 h |
+| 발화 속도 이상 | 9,023 | 14.6 h |
+| Europarl-ST 독일어 8-gram 겹침 | 2,086 | 4.0 h |
+
+   - 남은 후보: train 3,391,377 발화(6,315.7 h), dev(영상 200 개) 12,692 발화(23.0 h)
+2. **전사·선별·정렬·묶기**(`experiments/yodas_de_align.py`, GPU, parquet 1 개 = shard 1 개):
+   - Qwen3-ASR-1.7B 전사 → 원 전사와 WER ≤ 3 % 만 남김
+   - Qwen3-ForcedAligner 시각. 클립 끝을 넘는 시각은 80 ms 이하만 잘라 맞춘다(영·한과 같은 규칙)
+   - 영·한 speechlm 후보와 같은 검사로 words 행을 만들고(set `yodas-de`, 언어 `German`), 남은 오디오는 shard 별 무압축 tar 에 담는다
+3. **시험 실행**(shard 6 개, 후보 104 발화; `raw/sources/experiments/2026-10-08-yodas-de-align-smoke/`):
+   - 첫 시험에서 정렬 실패 8 건(남긴 48 건 중 17 %)이 모두 정렬기 끝 시각이 클립 길이를 넘은 경우였다
+   - 80 ms 보정을 넣은 뒤 7 건이 구제됐다. 남은 1 건은 300 ms 넘침이라 제외했다
+   - 출력 검증 위반은 0 건이었다: tar 색인, 오디오 길이, 토큰 시각, tokenizer 재분할을 보고 `SemCommitDataset` 로더로 직접 읽었다
+4. **전량 실행**: `bash slurm/submit-yodas-de-align.sh --nodes 5 --partition hpc`(사용자 제출)
+   - GPU 40 장 기준 약 3 시간 안팎으로 예상한다. 여기에 import 지연 약 11 분이 더해진다
+   - 출력 오디오는 약 280 GB 로 예상한다(16 kHz 16-bit, 약 2,400 h)
+
+## 남은 일
+- 전량 실행 뒤 `align-summary.json` 으로 실제 유지 시간 확인
+- 학습 연결: `semcommit_train.py` 의 ASR 전용 셋 구성에 독일어 셋 추가(현재 en/ko 만 만든다)
+- FLEURS·CoVoST2 독일어를 받으면 평가셋 겹침 검사 재실행
+- 30 s 초과 1,452 h 활용(정렬 후 분할) 여부

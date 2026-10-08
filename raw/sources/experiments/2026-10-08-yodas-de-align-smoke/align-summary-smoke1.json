@@ -1,0 +1,21 @@
+{
+ "shards": 6,
+ "done": 6,
+ "states": {
+  "DROP_DISAGREE": 56,
+  "ALIGNED": 40,
+  "FAIL_ALIGN": 8
+ },
+ "hours": {
+  "DROP_DISAGREE": 0.11,
+  "ALIGNED": 0.05,
+  "FAIL_ALIGN": 0.01
+ },
+ "words": {
+  "train": 35,
+  "dev": 5
+ },
+ "failed_reasons": {
+  "ValueError: invalid_or_out_of_clip_timestamp": 8
+ }
+}

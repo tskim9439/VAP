@@ -1,0 +1,52 @@
+{
+ "rows": 3750416,
+ "hours": 7925.48,
+ "videos": 60746,
+ "dev_videos": 200,
+ "params": {
+  "min_dur": 1.0,
+  "max_dur": 30.0,
+  "min_cps": 4.0,
+  "max_cps": 30.0,
+  "dev_videos": 200
+ },
+ "decon_files": [
+  "/soundai/users/tskim/VAPKT-data/data/corpora/Europarl-ST/de/en/dev/segments.de",
+  "/soundai/users/tskim/VAPKT-data/data/corpora/Europarl-ST/de/en/test/segments.de",
+  "/soundai/users/tskim/VAPKT-data/data/corpora/Europarl-ST/en/de/dev/segments.de",
+  "/soundai/users/tskim/VAPKT-data/data/corpora/Europarl-ST/en/de/test/segments.de"
+ ],
+ "eval_8grams": 103130,
+ "flag_rows": {
+  "dur_long": 143916,
+  "dur_short": 134598,
+  "duplicate": 64592,
+  "repeated_ngram": 12402,
+  "hallucination_phrase": 10404,
+  "rate_outlier": 9023,
+  "eval_overlap": 2086,
+  "text_empty": 185,
+  "non_latin": 7
+ },
+ "flag_hours": {
+  "dur_long": 1451.87,
+  "repeated_ngram": 80.24,
+  "duplicate": 37.55,
+  "hallucination_phrase": 34.3,
+  "dur_short": 27.53,
+  "rate_outlier": 14.59,
+  "eval_overlap": 4.03,
+  "text_empty": 0.05,
+  "non_latin": 0.01
+ },
+ "candidates": {
+  "train": {
+   "rows": 3391377,
+   "hours": 6315.69
+  },
+  "dev": {
+   "rows": 12692,
+   "hours": 22.99
+  }
+ }
+}

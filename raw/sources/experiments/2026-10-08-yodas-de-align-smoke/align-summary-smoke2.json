@@ -1,0 +1,21 @@
+{
+ "shards": 6,
+ "done": 6,
+ "states": {
+  "DROP_DISAGREE": 56,
+  "ALIGNED": 47,
+  "FAIL_ALIGN": 1
+ },
+ "hours": {
+  "DROP_DISAGREE": 0.11,
+  "ALIGNED": 0.05,
+  "FAIL_ALIGN": 0.0
+ },
+ "words": {
+  "train": 42,
+  "dev": 5
+ },
+ "failed_reasons": {
+  "REVIEW_80_320MS:clip_overshoot_requires_review": 1
+ }
+}
