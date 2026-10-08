@@ -1,0 +1,29 @@
+{
+ "shards": 2966,
+ "done": 2966,
+ "remaining": 0,
+ "error_files": 0,
+ "states": {
+  "DROP_DISAGREE": 2029526,
+  "ALIGNED": 1340112,
+  "FAIL_ALIGN": 34406,
+  "DROP_EMPTY": 18,
+  "HOLD_TOKEN_CAP": 7
+ },
+ "hours": {
+  "DROP_DISAGREE": 4224.53,
+  "ALIGNED": 2045.42,
+  "FAIL_ALIGN": 68.7,
+  "DROP_EMPTY": 0.01,
+  "HOLD_TOKEN_CAP": 0.03
+ },
+ "words": {
+  "train": 1335209,
+  "dev": 4903
+ },
+ "failed_reasons": {
+  "token_time_reversal": 19065,
+  "REVIEW_80_320MS:clip_overshoot_requires_review": 15072,
+  "REJECT_GT_320MS:clip_overshoot_gt_320ms": 269
+ }
+}

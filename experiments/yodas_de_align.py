@@ -12,6 +12,9 @@ Per shard:
   4. words rows built with the speechlm candidate builder's checks (build_candidate) and set "yodas-de"; the WAV
      bytes of kept rows are copied unchanged into an uncompressed tar with <tar>.index.json next to it
      ({member: [data offset, size]}, the format vapasr.data.archive reads).
+Passes: the main pass takes unflagged prefilter rows (1-30 s). `--select-flags dur_long --max-dur 40` is the long pass:
+rows flagged only dur_long (30-40 s, no other flag) in shards named <shard>-dur_long, summary align-summary-dur_long.json.
+The two passes write disjoint shard folders under the same <out> and may run at the same time.
 Outputs <out>/results/<shard>/: records.jsonl (every candidate: texts, WER, state), words-train.jsonl,
 words-dev.jsonl, failed.jsonl, audio.tar, audio.tar.index.json, summary.json. A shard is staged in <out>/work/ and
 renamed into results/ when complete, so a rerun (e.g. after preemption) skips finished shards. A shard that raises is
@@ -43,16 +46,30 @@ SOURCE = "/soundai/users/tskim/VAPKT-data/data/corpora/data/yodas_granary/data"
 SET_NAME, LANG = "yodas-de", "German"
 
 
-def shard_name(subset, task, file):
-    return f"{subset}-{task}-{Path(file).stem}"
+CODE_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
-def load_candidates(out):
+def flag_set(flags):
+    return frozenset(x for x in (flags or "").split(",") if x)
+
+
+def pass_tag(select_flags):
+    """'' for the main pass (unflagged rows); e.g. 'dur_long' for the pass over rows flagged only dur_long."""
+    return "+".join(sorted(flag_set(select_flags)))
+
+
+def shard_name(subset, task, file, tag=""):
+    return f"{subset}-{task}-{Path(file).stem}" + (f"-{tag}" if tag else "")
+
+
+def load_candidates(out, select_flags=""):
+    """Candidate rows grouped by source file: rows whose prefilter flags are exactly `select_flags` ('' = unflagged)."""
     import pyarrow.parquet as pq
     t = pq.read_table(Path(out) / "prefilter" / "prefilter.parquet").to_pydict()
+    want = flag_set(select_flags)
     shards = defaultdict(list)
     for i in range(len(t["utt_id"])):
-        if t["flags"][i]:
+        if flag_set(t["flags"][i]) != want:
             continue
         shards[(t["subset"][i], t["task"][i], t["file"][i])].append(
             dict(row_group=t["row_group"][i], row=t["row"][i], utt_id=t["utt_id"][i], duration=t["duration"][i],
@@ -179,7 +196,7 @@ def words_row(it, items, eng, tar_path, duration):
     record = dict(key=it["utt_id"], selection_state="KEEP_ASR_SILVER", split="train",
                   source_manifest=dict(split="train", num_channels=1, corpus="yodas-granary-de",
                                        original_transcript=it["ref"]))
-    row, why = build_candidate(aligned, record, tokenizer=eng.pieces)
+    row, why = build_candidate(aligned, record, tokenizer=eng.pieces, max_duration_s=it["max_dur"])
     if row is None:
         return None, why
     if qc:
@@ -212,14 +229,14 @@ def jline(f, obj):
 
 
 def process_shard(key, cands, a, eng, final_dir):
-    name = shard_name(*key)
+    name = shard_name(*key, tag=a.tag)
     # One staging folder per attempt; an attempt cut short by preemption leaves its folder behind (never deleted here).
     stage = Path(a.out) / "work" / f"{name}.{os.environ.get('SLURM_JOB_ID', 'local')}.{os.getpid()}.{int(time.time())}"
     stage.mkdir(parents=True)
     t0 = time.monotonic()
     items = read_shard(a.source, key, cands)
     for it in items:
-        it.update(shard=name, max_wer=a.max_wer)
+        it.update(shard=name, max_wer=a.max_wer, max_dur=a.max_dur)
     ok = [it for it in items if it["x"] is not None]
     for b in batches(ok, a.batch, a.batch_sec):
         for it, r in zip(b, run_split(eng.transcribe, b)):
@@ -285,8 +302,9 @@ def process_shard(key, cands, a, eng, final_dir):
     summary = dict(complete=True, shard=name, source=list(key), candidates=len(items), states=dict(states),
                    hours={k: round(v, 4) for k, v in hours.items()}, words={k: len(v) for k, v in rows.items()},
                    failed_reasons=dict(Counter(x["reason"] for x in failed)), max_wer=a.max_wer,
+                   select_flags=a.tag, max_dur=a.max_dur,
                    asr_model=a.asr_model, aligner_model=a.aligner_model, elapsed_s=round(time.monotonic() - t0, 1),
-                   code_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+                   code_sha256=CODE_SHA256)
     (stage / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1))
     final = Path(a.out) / "results" / name
     if final.exists():
@@ -298,16 +316,19 @@ def process_shard(key, cands, a, eng, final_dir):
 def cmd_worker(a):
     rank = a.rank if a.rank is not None else int(os.environ.get("SLURM_PROCID", 0))
     world = a.world if a.world is not None else int(os.environ.get("SLURM_NTASKS", 1))
-    shards = load_candidates(a.out)
+    a.tag = pass_tag(a.select_flags)
+    shards = load_candidates(a.out, a.tag)
     keys = list(shards)[rank::world]
-    todo = [k for k in keys if not (Path(a.out) / "results" / shard_name(*k) / "summary.json").exists()]
-    print(f"rank {rank}/{world}: {len(keys)} shards, {len(todo)} to do", flush=True)
+    todo = [k for k in keys if not (Path(a.out) / "results" / shard_name(*k, tag=a.tag) / "summary.json").exists()]
+    print(f"rank {rank}/{world}: pass '{a.tag or 'main'}' max_dur {a.max_dur}: {len(keys)} shards, {len(todo)} to do",
+          flush=True)
     if not todo:
         return
     eng = Engines(a)
     (Path(a.out) / "results").mkdir(parents=True, exist_ok=True)
     for k in todo:
-        final_dir = Path(a.out) / "results" / shard_name(*k)
+        name = shard_name(*k, tag=a.tag)
+        final_dir = Path(a.out) / "results" / name
         try:
             s = process_shard(k, shards[k], a, eng, final_dir)
         except Exception as exc:  # noqa: BLE001
@@ -315,21 +336,22 @@ def cmd_worker(a):
             # no results/ folder, so the next submission retries it.
             err = Path(a.out) / "errors"
             err.mkdir(exist_ok=True)
-            (err / f"{shard_name(*k)}.{os.environ.get('SLURM_JOB_ID', 'local')}.{os.getpid()}.json").write_text(
-                json.dumps(dict(shard=shard_name(*k), error=f"{type(exc).__name__}: {exc}",
+            (err / f"{name}.{os.environ.get('SLURM_JOB_ID', 'local')}.{os.getpid()}.json").write_text(
+                json.dumps(dict(shard=name, error=f"{type(exc).__name__}: {exc}",
                                 traceback=traceback.format_exc()), ensure_ascii=False, indent=1))
-            print(f"SHARD_ERROR rank={rank} {shard_name(*k)} {type(exc).__name__}: {str(exc)[:200]}", flush=True)
+            print(f"SHARD_ERROR rank={rank} {name} {type(exc).__name__}: {str(exc)[:200]}", flush=True)
             continue
         print(f"SHARD_DONE rank={rank} {s['shard']} cand={s['candidates']} states={json.dumps(s['states'])} "
               f"{s['elapsed_s']} s", flush=True)
 
 
 def cmd_summarize(a):
-    shards = load_candidates(a.out)
+    tag = pass_tag(a.select_flags)
+    shards = load_candidates(a.out, tag)
     states, hours, words, reasons = Counter(), Counter(), Counter(), Counter()
     done = 0
     for k in shards:
-        p = Path(a.out) / "results" / shard_name(*k) / "summary.json"
+        p = Path(a.out) / "results" / shard_name(*k, tag=tag) / "summary.json"
         if not p.exists():
             continue
         s = json.loads(p.read_text())
@@ -339,9 +361,10 @@ def cmd_summarize(a):
         words.update(s["words"])
         reasons.update(s["failed_reasons"])
     errors = sorted(p.name for p in (Path(a.out) / "errors").glob("*.json")) if (Path(a.out) / "errors").exists() else []
-    out = dict(shards=len(shards), done=done, remaining=len(shards) - done, error_files=len(errors), states=dict(states), hours={k: round(v, 2) for k, v in hours.items()},
+    errors = [e for e in errors if e.split(".")[0] in {shard_name(*k, tag=tag) for k in shards}]
+    out = dict(pass_name=tag or "main", shards=len(shards), done=done, remaining=len(shards) - done, error_files=len(errors), states=dict(states), hours={k: round(v, 2) for k, v in hours.items()},
                words=dict(words), failed_reasons=dict(reasons.most_common()))
-    (Path(a.out) / "align-summary.json").write_text(json.dumps(out, ensure_ascii=False, indent=1))
+    (Path(a.out) / (f"align-summary-{tag}.json" if tag else "align-summary.json")).write_text(json.dumps(out, ensure_ascii=False, indent=1))
     print(json.dumps(out, ensure_ascii=False, indent=1))
 
 
@@ -354,6 +377,9 @@ def main():
     q.add_argument("--rank", type=int)
     q.add_argument("--world", type=int)
     q.add_argument("--max-wer", type=float, default=0.03)
+    q.add_argument("--select-flags", default="", help="rows whose prefilter flags are exactly these (comma list); "
+                   "'' = unflagged rows (main pass), 'dur_long' = the long pass (30-40 s rows with no other flag)")
+    q.add_argument("--max-dur", type=float, default=30.0, help="longest kept row in seconds (40 for the long pass)")
     q.add_argument("--asr-model", default="/soundai/Model/Qwen3-ASR-1.7B")
     q.add_argument("--aligner-model", default="/soundai/Model/Qwen3-ForcedAligner-0.6B")
     q.add_argument("--batch", type=int, default=64)
@@ -361,6 +387,7 @@ def main():
     q.set_defaults(fn=cmd_worker)
     q = sub.add_parser("summarize")
     q.add_argument("--out", required=True)
+    q.add_argument("--select-flags", default="")
     q.set_defaults(fn=cmd_summarize)
     a = ap.parse_args()
     a.fn(a)

@@ -3,10 +3,11 @@ type: output
 status: active
 created: 2026-10-08
 updated: 2026-10-08
-summary: YODAS-Granary 독일어(7,925 h) 전사 점검 — 원 전사는 Whisper-v3 결과라 재실행 무의미, Qwen 일치는 절반 → 원 전사↔Qwen WER ≤ 3 % 선별로 결정
+summary: YODAS-Granary 독일어 전사 점검·전처리 — 원 전사↔Qwen WER ≤ 3 % 선별, 본 처리(1–30 s) 2,045 h 채택, 30–40 s 추가 처리 준비
 sources:
   - '[[2026-10-08-yodas-de-transcript-check]]'
   - '[[2026-10-08-yodas-de-align-smoke]]'
+  - '[[2026-10-08-yodas-de-align-run]]'
 related:
   - '[[decision-yodas-de-asr-selection]]'
   - '[[output-eval-set-plan-asr-simulst-20261007]]'
@@ -97,12 +98,23 @@ related:
    - 첫 시험에서 정렬 실패 8 건(남긴 48 건 중 17 %)이 모두 정렬기 끝 시각이 클립 길이를 넘은 경우였다
    - 80 ms 보정을 넣은 뒤 7 건이 구제됐다. 남은 1 건은 300 ms 넘침이라 제외했다
    - 출력 검증 위반은 0 건이었다: tar 색인, 오디오 길이, 토큰 시각, tokenizer 재분할을 보고 `SemCommitDataset` 로더로 직접 읽었다
-4. **전량 실행**: `bash slurm/submit-yodas-de-align.sh --nodes 5 --partition hpc`(사용자 제출)
-   - GPU 40 장 기준 약 3 시간 안팎으로 예상한다. 여기에 import 지연 약 11 분이 더해진다
-   - 출력 오디오는 약 280 GB 로 예상한다(16 kHz 16-bit, 약 2,400 h)
+4. **본 처리 전량 실행**(1–30 s, job 82542, 사용자 제출 8 노드 hpc): 13:08–14:11(약 63 분), shard 2,966 개 전부 완료, shard 오류 0
+
+| 상태 | 발화 | 시간 |
+|---|---:|---:|
+| 채택(정렬 완료) | 1,340,112 | **2,045.4 h** |
+| 불일치(WER > 3 %) | 2,029,526 | 4,224.5 h |
+| 정렬 실패 | 34,406 | 68.7 h |
+
+   - words 행 train 1,335,209, dev 4,903. 출력 약 242 GB(`VAPKT-data/data/yodas-de-v1/results/`)
+   - 정렬 실패 사유: 토큰 시각 역전 19,065, 클립 끝 넘침 80–320 ms 15,072, 320 ms 초과 269
+   - 무작위 shard 12 개(5,445 행) 검증 위반 0, 로더 bad 0. 80 ms 보정 행은 18 %
+5. **30–40 s 처리**(long pass, 사용자 요청 2026-10-08): 사전 점검에서 길이만 걸린 138,258 발화(1,394.5 h)
+   - 시험 4 shard(77 발화): 채택 14(시간 18 %), 정렬 실패 0, 검증 위반 0
+   - 제출: `bash slurm/submit-yodas-de-align.sh --long --nodes 4 --partition hpc`. 결과는 같은 `results/` 아래 `<shard>-dur_long` 폴더, 요약 `align-summary-dur_long.json`
 
 ## 남은 일
-- 전량 실행 뒤 `align-summary.json` 으로 실제 유지 시간 확인
-- 학습 연결: `semcommit_train.py` 의 ASR 전용 셋 구성에 독일어 셋 추가(현재 en/ko 만 만든다)
+- 30–40 s 처리 실행(사용자 제출) 뒤 채택 시간 확인
+- 학습 연결: `semcommit_train.py` 의 ASR 전용 셋 구성에 독일어 셋 추가(현재 en/ko 만 만든다). 40 s 항목이 들어오므로 묶음 토큰 예산 확인
 - FLEURS·CoVoST2 독일어를 받으면 평가셋 겹침 검사 재실행
-- 30 s 초과 1,452 h 활용(정렬 후 분할) 여부
+- 정렬 실패 중 토큰 시각 역전(19,065 발화)의 원인 확인(선택)

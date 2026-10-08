@@ -3,6 +3,7 @@
 # WER <= 3 % against the Granary text, Qwen3-ForcedAligner timing, words rows and audio tar shards.
 # Every node uses all 8 GPUs (one worker per GPU). Preemption or the time limit requeues the job; finished shards are
 # skipped on restart. Submit with slurm/submit-yodas-de-align.sh (inputs via sbatch --export only).
+# SELECT_FLAGS=dur_long MAX_DUR=40 runs the long pass (30-40 s rows) into separate <shard>-dur_long folders.
 #SBATCH --job-name=SA_EVAL_Fullduplex
 #SBATCH --partition=hpc
 #SBATCH --nodes=1
@@ -21,7 +22,7 @@ PROJECT=${PROJECT:-/soundai/users/tskim/VAPKT}
 PY=${PY:-/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python}
 OUT=${OUT:?OUT 를 --export 로 주세요}
 cd "$PROJECT"
-echo "[$(date '+%F %T')] job $SLURM_JOB_ID nodes=$SLURM_JOB_NUM_NODES restart=${SLURM_RESTART_COUNT:-0} OUT=$OUT"
+echo "[$(date '+%F %T')] job $SLURM_JOB_ID nodes=$SLURM_JOB_NUM_NODES restart=${SLURM_RESTART_COUNT:-0} OUT=$OUT pass=${SELECT_FLAGS:-main} max_dur=${MAX_DUR:-30}"
 test -f "$OUT/prefilter/prefilter.parquet"
 test "${SLURM_NTASKS:?}" -eq "$((SLURM_JOB_NUM_NODES * 8))"
 export PYTHONUNBUFFERED=1 PYTHONNOUSERSITE=1 TOKENIZERS_PARALLELISM=false
@@ -31,9 +32,10 @@ export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 set +e
 srun --ntasks="$SLURM_NTASKS" --ntasks-per-node=8 --cpus-per-task="$SLURM_CPUS_PER_TASK" \
     --gpus-per-task=1 --gpu-bind=single:1 --kill-on-bad-exit=1 --label \
-    "$PY" -u experiments/yodas_de_align.py worker --out "$OUT" ${MAX_WER:+--max-wer "$MAX_WER"}
+    "$PY" -u experiments/yodas_de_align.py worker --out "$OUT" ${MAX_WER:+--max-wer "$MAX_WER"} \
+    ${SELECT_FLAGS:+--select-flags "$SELECT_FLAGS"} ${MAX_DUR:+--max-dur "$MAX_DUR"}
 worker_rc=$?
-"$PY" experiments/yodas_de_align.py summarize --out "$OUT"
+"$PY" experiments/yodas_de_align.py summarize --out "$OUT" ${SELECT_FLAGS:+--select-flags "$SELECT_FLAGS"}
 summary_rc=$?
 set -e
 if (( worker_rc != 0 )); then exit "$worker_rc"; fi

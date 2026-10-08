@@ -82,7 +82,7 @@ def _token_to_word(tokens, spans, lexical_spans):
     return groups
 
 
-def build_candidate(aligned, record, min_recipe_s=8.0, max_recipe_s=30.0, tokenizer=None):
+def build_candidate(aligned, record, min_recipe_s=8.0, max_recipe_s=30.0, tokenizer=None, max_duration_s=30.0):
     source = record.get("source_manifest") or {}
     if record.get("selection_state") != "KEEP_ASR_SILVER" or record.get("split") != "train":
         return None, "not_train_silver"
@@ -95,7 +95,7 @@ def build_candidate(aligned, record, min_recipe_s=8.0, max_recipe_s=30.0, tokeni
     if aligned.get("dedup_status") != "unverified" or aligned.get("key") != record.get("key"):
         return None, "dedup_or_join"
     duration = aligned.get("duration_s")
-    if not isinstance(duration, (int, float)) or duration <= 0 or duration > 30:
+    if not isinstance(duration, (int, float)) or duration <= 0 or duration > max_duration_s:
         return None, "duration"
     target = aligned.get("target_text", "")
     matches = list(LEX.finditer(target)) if tokenizer is None else list(re.finditer(r"\S+", target))

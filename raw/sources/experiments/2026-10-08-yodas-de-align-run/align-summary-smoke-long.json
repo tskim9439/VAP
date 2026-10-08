@@ -1,0 +1,20 @@
+{
+ "pass_name": "dur_long",
+ "shards": 4,
+ "done": 4,
+ "remaining": 0,
+ "error_files": 0,
+ "states": {
+  "DROP_DISAGREE": 63,
+  "ALIGNED": 14
+ },
+ "hours": {
+  "DROP_DISAGREE": 0.63,
+  "ALIGNED": 0.14
+ },
+ "words": {
+  "train": 14,
+  "dev": 0
+ },
+ "failed_reasons": {}
+}
