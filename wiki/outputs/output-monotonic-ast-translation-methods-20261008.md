@@ -12,8 +12,10 @@ sources:
   - https://aclanthology.org/2023.acl-long.131
   - https://arxiv.org/abs/2406.08940
   - https://aclanthology.org/2026.findings-acl.2110.pdf
+  - https://arxiv.org/abs/2609.05799
 related:
   - '[[decision-stage1-lookahead-320-1040ms]]'
+  - '[[decision-ast-monotonic-data]]'
   - '[[output-stage1-trilingual-d10-prep-20261008]]'
   - '[[decision-cst-paper-v1-scope]]'
 raw_authors:
@@ -36,6 +38,7 @@ raw_authors:
 | Han 외 (WMT 2021) | 단어 정렬로 목표문을 조각 단위로 재배열한 뒤 비자기회귀 MT 로 다듬어 문법을 회복. wait-k 를 그 위에서 학습 | — | BLEU 향상, 출력 단조성 증가 |
 | Wang 외 (ACL 2023) | 기존 MT 를 교사로 2 단계 beam search 해 단조이면서 정확한 참조를 만들어 증류 | 독→영 등 | 여러 SiMT 기준선보다 좋음. 단조판 WMT15 독→영 테스트에서 이득이 가장 큼 |
 | Doi 외 (IWSLT 2024) | 영→일 통역의 어순 분석 | 영→일 | 단조 번역이 어려운 문법 구조를 정리함. 단조 참조로 평가하면 동시 모델이 더 높게 나옴 |
+| Stable prefix (Hoang·Axelrod·Post, arXiv 2609.05799, 2026-09) | 원문 prefix 마다 번역해 전체 번역과의 최장 공통 prefix 를 단조 증가로 확정하고, (원문 prefix → 안정 번역 prefix) 쌍으로 Qwen3-8B 미세조정 | 영→독·일·중 | 지연-품질 Pareto 개선, 전체 문장 COMET 도 기준 모델보다 높음. 우리는 이 확정 시점을 번역 단어 방출 시각으로 쓴다([[decision-ast-monotonic-data]]) |
 | Simul-COMET (ACL Findings 2026) | 표준 COMET 이 장거리 재배열 번역을 과대평가한다고 보고, 통역식 참조로 학습한 평가 지표 | — | 단조 번역을 평가할 때 참고 |
 
 - 공통 교훈:
