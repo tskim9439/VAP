@@ -1,0 +1,28 @@
+{
+ "pass_name": "dur_long",
+ "shards": 2899,
+ "done": 2899,
+ "remaining": 0,
+ "error_files": 0,
+ "states": {
+  "DROP_DISAGREE": 113151,
+  "ALIGNED": 23086,
+  "FAIL_ALIGN": 2017,
+  "HOLD_TOKEN_CAP": 4
+ },
+ "hours": {
+  "DROP_DISAGREE": 1142.98,
+  "ALIGNED": 231.12,
+  "FAIL_ALIGN": 20.31,
+  "HOLD_TOKEN_CAP": 0.04
+ },
+ "words": {
+  "train": 22990,
+  "dev": 96
+ },
+ "failed_reasons": {
+  "token_time_reversal": 1934,
+  "REVIEW_80_320MS:clip_overshoot_requires_review": 77,
+  "REJECT_GT_320MS:clip_overshoot_gt_320ms": 6
+ }
+}

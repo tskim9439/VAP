@@ -3,7 +3,7 @@ type: output
 status: active
 created: 2026-10-08
 updated: 2026-10-08
-summary: YODAS-Granary 독일어 전사 점검·전처리 — 원 전사↔Qwen WER ≤ 3 % 선별, 본 처리(1–30 s) 2,045 h 채택, 30–40 s 추가 처리 준비
+summary: YODAS-Granary 독일어 전사 점검·전처리 — 원 전사↔Qwen WER ≤ 3 % 선별, 1–30 s 2,045 h + 30–40 s 231 h = 2,277 h 채택
 sources:
   - '[[2026-10-08-yodas-de-transcript-check]]'
   - '[[2026-10-08-yodas-de-align-smoke]]'
@@ -111,10 +111,14 @@ related:
    - 무작위 shard 12 개(5,445 행) 검증 위반 0, 로더 bad 0. 80 ms 보정 행은 18 %
 5. **30–40 s 처리**(long pass, 사용자 요청 2026-10-08): 사전 점검에서 길이만 걸린 138,258 발화(1,394.5 h)
    - 시험 4 shard(77 발화): 채택 14(시간 18 %), 정렬 실패 0, 검증 위반 0
-   - 제출: `bash slurm/submit-yodas-de-align.sh --long --nodes 4 --partition hpc`. 결과는 같은 `results/` 아래 `<shard>-dur_long` 폴더, 요약 `align-summary-dur_long.json`
+   - 전량 실행(job 82624, 사용자 제출 8 노드 hpc): 14:42–15:05(약 23 분), shard 2,899 개 전부 완료, 오류 0
+   - **채택 231.1 h**(23,086 발화; train 22,990, dev 96). 불일치 1,143.0 h, 정렬 실패 20.3 h
+   - 정렬 실패는 WER 통과 행의 8.0 % 로 본 처리(2.5 %)보다 높다. 대부분 토큰 시각 역전(1,934)이다
+   - 무작위 long shard 40 개(371 행) 검증 위반 0, 로더 bad 0
+   - 결과: 같은 `results/` 아래 `<shard>-dur_long` 폴더, 요약 `align-summary-dur_long.json`
+6. **합계**: **2,276.5 h**(1,363,198 발화; words train 1,358,199 행, dev 4,999 행)
 
 ## 남은 일
-- 30–40 s 처리 실행(사용자 제출) 뒤 채택 시간 확인
 - 학습 연결: `semcommit_train.py` 의 ASR 전용 셋 구성에 독일어 셋 추가(현재 en/ko 만 만든다). 40 s 항목이 들어오므로 묶음 토큰 예산 확인
 - FLEURS·CoVoST2 독일어를 받으면 평가셋 겹침 검사 재실행
-- 정렬 실패 중 토큰 시각 역전(19,065 발화)의 원인 확인(선택)
+- 정렬 실패 중 토큰 시각 역전(1–30 s 19,065 + 30–40 s 1,934 발화)의 원인 확인(선택)
