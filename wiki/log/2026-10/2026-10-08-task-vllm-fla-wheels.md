@@ -1,0 +1,21 @@
+## [2026-10-08] task | AST 번역 생성 가속: vLLM 0.30.0·flash-linear-attention 휠 준비와 설치 스크립트
+
+- Changed:
+  - 코드(새 파일, mxc 에도 배포):
+    - `scripts/setup-vllm-env.sh` — `build`(호스트 로컬 디스크에 venv 설치·검사), `pack`(NFS 에 tar 하나), `stage`(노드 로컬로 풀기)
+    - `scripts/setup-teacher-fla-env.sh` — 새 venv `teacher-fla`(vapasr 상속 + transformers 5.8.0 + fla 0.5.2·fla-core 0.5.2·causal-conv1d 1.7.0)
+  - 맥 T5: `/Volumes/Samsung_T5/vapkt-wheels/vllm-0.30.0`(197 휠, 3.7 GB, `requirements.lock.txt`·`SHA256SUMS`), `fla-0.5.2`(3 휠, 190 MB)
+- Reason:
+  - Qwen3.8-27B(Gated DeltaNet 혼합)를 HF generate 로 돌리면 빠른 경로가 없어 GPU 당 초당 약 150 토큰이다. 전체 AST 생성(약 21 억 토큰)에 약 4,000 GPU 시간이 든다.
+  - 사용자가 vLLM 과 flash-linear-attention 을 둘 다 설치해 쓰자고 했다.
+- 판단:
+  - vLLM 은 torch 2.13.0(CUDA 13.0)을 고정해 학습 env(torch 2.9)와 따로 둔다. mxc 드라이버 580(CUDA 13.0)과 맞는다.
+  - 버전은 0.30.0(2026-09-22)이다. 0.31.0 은 사흘 전 배포라 피했다. 0.31.0 이 transformers 를 5.18 미만으로 묶었으므로 0.30.0 도 5.17.0 으로 고정했다.
+  - 의존성은 uv 로 리눅스(x86_64, glibc 2.39, CPython 3.11) 기준으로 풀었다. 맥에서 `pip download` 를 쓰면 `platform_system == "Linux"` 표지가 붙은 CUDA 의존성이 빠진다.
+  - 기존 `semcommit-teacher` env 는 Codex 실험이 써서 건드리지 않았다.
+  - exFAT 이라 `._*` 파일이 생겼다. 업로드 때 제외한다.
+- Next:
+  - 사용자 업로드(azcopy) → `semcommit/wheelhouse/vllm-0.30.0`·`fla-0.5.2`
+  - mxc 설치·검사 → 파일럿 50 건으로 HF·HF+fla·vLLM 속도와 결과 비교
+  - SLURM 생성 job(GPU 당 엔진 하나, 샤드 단위 재개)
+- By: tskim
