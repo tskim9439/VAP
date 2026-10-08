@@ -7,6 +7,7 @@ summary: 표준 평가셋 계획 — 스트리밍 ASR(LibriSpeech·FLEURS·Kspon
 sources:
   - '[[2026-10-07-eval-set-survey]]'
 related:
+  - '[[decision-eval-train-decontamination]]'
   - '[[output-paper-draft-cst-s2tt-icml-20261005]]'
   - '[[decision-cst-paper-v1-scope]]'
   - '[[cst-bench]]'
@@ -81,6 +82,10 @@ related:
 
 - **확인 필요(규정): AI Hub 이용 약관에는 국외 반출 시 별도 협약이 필요하다는 조항이 있다.** KsponSpeech 가 이미 mxc 에 있으므로, mxc(Azure)의 리전이 국내인지 확인해야 한다.
 - 채점기 정렬: `cstbench eval` 에 XCOMET-XL 과 LongYAAL(OmniSTEval) 을 추가해 IWSLT26 과 같은 숫자를 낸다. 장문 재분할은 IWSLT26 이 SoftSegmenter 를, 기존 연구가 mwerSegmenter 를 쓴다. 우리 채점기는 mwerSegmenter 방식이므로 두 방식을 모두 보고할 수 있게 한다.
+
+## 4-1. 확보 결과와 겹침 (2026-10-08)
+- 사용자가 Europarl-ST v1.1(영↔독)과 YODAS-Granary 독일어(2,966 파일, 약 844 GB, 원본 목록과 일치)를 mxc `VAPKT-data/data/corpora/` 에 받았다.
+- Europarl-ST 영→독 test 의 영어 연설 일부가 백본 학습(VoxPopuli 영어)과 겹친다 → [[decision-eval-train-decontamination]]
 
 ## 5. 논문 반영 (안)
 - 본문 6 절에 "Standard tasks" 표 하나:
