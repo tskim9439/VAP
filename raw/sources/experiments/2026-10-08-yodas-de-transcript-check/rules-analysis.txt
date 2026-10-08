@@ -1,0 +1,17 @@
+agreement medians (CER, space-insensitive):
+  GQ    median 0.044  <=2% 0.43  <=5% 0.52
+  GWv2  median 0.027  <=2% 0.48  <=5% 0.56
+  GWv3  median 0.000  <=2% 0.69  <=5% 0.74
+  QWv2  median 0.061  <=2% 0.39  <=5% 0.47
+  QWv3  median 0.044  <=2% 0.43  <=5% 0.51
+
+rule: A = G within t of Q and W -> Granary text; B = else Q within t of W -> Qwen text; else drop
+metric thr  teacher | kept% (utts)  kept% (hours: all / asr_only / ast)  A% B%
+wer 0.03 v2     | 33.6%         21.8% / 12.0% / 28.5%        28.7%  4.9%
+wer 0.03 v3     | 37.9%         24.7% / 12.9% / 32.7%        34.0%  3.8%
+wer 0.05 v2     | 36.3%         28.9% / 13.2% / 39.6%        31.3%  5.0%
+wer 0.05 v3     | 40.7%         32.4% / 15.2% / 44.0%        36.8%  3.9%
+cer 0.03 v2     | 42.1%         37.0% / 18.9% / 49.3%        36.5%  5.6%
+cer 0.03 v3     | 46.0%         39.3% / 19.4% / 52.9%        42.3%  3.8%
+cer 0.05 v2     | 48.1%         46.9% / 26.8% / 60.6%        42.2%  6.0%
+cer 0.05 v3     | 51.9%         48.2% / 24.5% / 64.4%        48.1%  3.9%
