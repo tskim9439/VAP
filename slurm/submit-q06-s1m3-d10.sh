@@ -7,6 +7,9 @@
 #   bash slurm/submit-q06-s1m3-d10.sh --dry-run          # sbatch 없이 명령만 출력
 #   bash slurm/submit-q06-s1m3-d10.sh                    # 제출(apex 2 노드)
 #   bash slurm/submit-q06-s1m3-d10.sh --after <JOBID>    # 그 job 이 끝난 뒤 시작
+# 데이터 로더 worker 는 GPU 당 4 개(--num-workers 4): job 82738 이 8 개로 돌다 노드 메모리 부족(oom_kill)으로 세 번 죽었다 —
+#   독일어 1.3M 항목이 더해져 worker 마다 복사되는 데이터셋이 커졌다. 같은 --run 으로 다시 내면 마지막 checkpoint 에서 이어서 한다.
+#   주의: --extra 를 다시 주면 위 --extra 가 통째로 바뀐다(인코더 [56,3] 고정 옵션이 빠짐).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 SNAP=/soundai/users/tskim/VAPKT-data/data/semcommit-work/labels/speechlm-all19-v035/snapshots/20260929-1637
@@ -18,4 +21,4 @@ exec bash slurm/submit-semcommit-train-apex.sh --run q06-s1m3-d10 --snap "$SNAP"
   --asr-only --offline-frac 0.3 --asr-list "$ASR" --de-list "$DE" \
   --train-encoder --spec-augment 2,27,2,0.03 --speed-perturb 0.9,1.0,1.1 --noise-bank "$NB" --varlen \
   --delays 4,5,6,7,8,9,10 --batch-tokens 16384 --lr 6e-5 --warmup 500 --epochs 3 --save-every 1000 \
-  --nodes 2 --extra "--encoder-right-context 3 --encoder-context-sampling fixed" "$@"
+  --nodes 2 --extra "--encoder-right-context 3 --encoder-context-sampling fixed --num-workers 4" "$@"
