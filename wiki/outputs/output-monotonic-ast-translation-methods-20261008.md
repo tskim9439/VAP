@@ -2,7 +2,7 @@
 type: output
 status: active
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 summary: 어순을 원문에 맞춘(단조) 번역으로 AST 학습 데이터 만들기 — 선행 연구(Simul-MuST-C 등)와 우리 데이터용 생성·선별 절차 제안
 sources:
   - https://aclanthology.org/2024.emnlp-main.1238/
@@ -14,6 +14,7 @@ sources:
   - https://aclanthology.org/2026.findings-acl.2110.pdf
   - https://arxiv.org/abs/2609.05799
   - '[[2026-10-08-ast-mono-pilot]]'
+  - '[[2026-10-09-ast-vllm-bench]]'
 related:
   - '[[decision-stage1-lookahead-320-1040ms]]'
   - '[[decision-ast-monotonic-data]]'
@@ -94,6 +95,11 @@ raw_authors:
   - v2 는 한 템플릿으로 두 번역을 만들고, 문법을 강조하고, 예시를 넣었다.
 - **남은 실패:** 깨진 원문 전사, 단어 오역, 판정 LLM 의 실수
 - **속도:** GPU 당 초당 약 150 토큰이다. 전체 규모(약 12,500 h, 21 억 토큰)는 약 4,000 GPU 시간이 걸려 vLLM 이나 빠른 커널이 필요하다.
+  - 2026-10-09 측정(en-ko, H200 한 장, [[2026-10-09-ast-vllm-bench]]):
+    - vLLM 0.30.0: 초당 1,072 토큰(50 문장) · 1,145 토큰(400 문장). HF 의 약 7.5 배이고, 관문 통과와 AL 은 같은 수준이다(단조 42/50, 400 문장에서는 345/400).
+    - HF + flash-linear-attention: 초당 115 토큰으로 오히려 느렸다. 생성 루프의 파이썬 부담이 그대로라 커널만으로는 이득이 없다.
+  - 단조 번역만 만들면 400 문장 측정 기준으로 오디오 1 시간당 약 145 GPU 초다. 전체 12,500 h 는 **약 500 GPU 시간**(H200 8 장 노드 4 개로 약 16 시간)으로 추정된다.
+  - 이 추정은 4–15 s 단일 문장 기준이다. 앞부분 번역 비용은 단어 수의 제곱에 가깝게 늘어난다. 그래서 긴 발화는 문장 단위로 끊어 번역해야 이 수준이 유지된다.
 - 원자료 `raw/sources/experiments/2026-10-08-ast-mono-pilot/`, 사용자 검토표 [Claude Docs](https://claude.ai/code/artifact/0c43a8c8-198e-44c1-a9e2-abbe889076f5)
 
 ## 다음 단계 제안

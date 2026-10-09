@@ -24,6 +24,7 @@ error, no omission or addition, grammar not incorrect).
 
   python experiments/ast_mono_pilot.py sample --out DIR [--n 50]                (CPU)
   python experiments/ast_mono_pilot.py run --out DIR --direction en-de          (one GPU; Qwen3.8 needs transformers 5.8)
+      --engine vllm: run with the vLLM env python (scripts/setup-vllm-env.sh) and CUDA_VISIBLE_DEVICES=<one GPU>
   python experiments/ast_mono_pilot.py summarize --out DIR
 Outputs: DIR/items-<lang>.jsonl, DIR/<direction>/results.jsonl + summary.json + review.tsv, DIR/summary.json.
 """
@@ -193,6 +194,29 @@ class LLM:
         return out
 
 
+class VLLMEngine:
+    """Same interface as LLM, on vLLM (env from scripts/setup-vllm-env.sh); one GPU = CUDA_VISIBLE_DEVICES.
+    vLLM schedules all prompts itself, so `batch` is ignored; greedy, thinking off, text only."""
+
+    def __init__(self, path, max_num_seqs=256):
+        from vllm import LLM as _LLM
+        self.llm = _LLM(model=path, dtype="bfloat16", max_model_len=4096, gpu_memory_utilization=0.90,
+                        max_num_seqs=max_num_seqs, limit_mm_per_prompt={"image": 0, "video": 0}, seed=0)
+        self.tok = self.llm.get_tokenizer()
+        self.n_out = 0
+        self.secs = 0.0
+
+    def __call__(self, prompts, max_new_tokens, batch):
+        from vllm import SamplingParams
+        texts = [self.tok.apply_chat_template([{"role": "user", "content": p}], tokenize=False,
+                                              add_generation_prompt=True, enable_thinking=False) for p in prompts]
+        t0 = time.monotonic()
+        res = self.llm.generate(texts, SamplingParams(temperature=0.0, max_tokens=max_new_tokens), use_tqdm=False)
+        self.secs += time.monotonic() - t0
+        self.n_out += sum(len(r.outputs[0].token_ids) for r in res)
+        return [r.outputs[0].text.split("</think>")[-1].strip() for r in res]
+
+
 def parse_json(s):
     if not s:
         return None
@@ -289,9 +313,9 @@ def cmd_run(a):
         return
     items = [json.loads(l) for l in open(Path(a.items or a.out) / f"items-{src_code}.jsonl", encoding="utf-8")]
     t0 = time.monotonic()
-    llm = LLM(a.model, a.device)
+    llm = VLLMEngine(a.model, a.max_num_seqs) if a.engine == "vllm" else LLM(a.model, a.device)
     t_load = time.monotonic() - t0
-    print(f"{a.direction}: {len(items)} items, model loaded in {t_load:.0f} s", flush=True)
+    print(f"{a.direction}: {len(items)} items, {a.engine} model loaded in {t_load:.0f} s", flush=True)
 
     normal = [clean(x) for x in llm([p_translate(src, tgt, it["text"], False) for it in items], 320, a.batch)]
     mono = [clean(x) for x in llm([p_translate(src, tgt, it["text"], True) for it in items], 320, a.batch)]
@@ -342,7 +366,8 @@ def cmd_run(a):
                                str((r["a"].get("latency") or {}).get("al")), str((r["b"].get("latency") or {}).get("al"))])
                     + "\n")
     summary = summarize_rows(rows)
-    summary.update(direction=a.direction, prompt_version=PROMPT_VERSION, model=a.model, load_s=round(t_load, 1), gen_s=round(llm.secs, 1),
+    summary.update(direction=a.direction, prompt_version=PROMPT_VERSION, model=a.model, engine=a.engine,
+                   load_s=round(t_load, 1), gen_s=round(llm.secs, 1),
                    out_tokens=llm.n_out, calls=dict(translations=2 * len(items), judge=len(jk), prefixes=len(pp)))
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1))
     print(json.dumps(summary, ensure_ascii=False, indent=1), flush=True)
@@ -394,6 +419,9 @@ def main():
     q.add_argument("--model", default="/soundai/Model/Qwen3.8-27B")
     q.add_argument("--device", default="cuda:0")
     q.add_argument("--batch", type=int, default=32)
+    q.add_argument("--engine", default="hf", choices=["hf", "vllm"],
+                   help="hf = transformers generate (fast GDN path only with fla + causal-conv1d); vllm = one GPU via CUDA_VISIBLE_DEVICES")
+    q.add_argument("--max-num-seqs", type=int, default=256, help="vllm: concurrent sequences")
     q.add_argument("--items", default=None, help="folder with items-<lang>.jsonl (default: --out)")
     q.set_defaults(fn=cmd_run)
     q = sub.add_parser("summarize")

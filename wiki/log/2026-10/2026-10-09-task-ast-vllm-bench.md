@@ -1,0 +1,24 @@
+## [2026-10-09] task | vLLM·fla 설치와 AST 생성 속도 비교
+
+- Changed:
+  - 코드:
+    - `experiments/ast_mono_pilot.py`: `--engine vllm`(`VLLMEngine`, 같은 호출 방식, GPU 하나), `--max-num-seqs`, summary 에 engine 기록
+    - `scripts/setup-teacher-fla-env.sh`: causal-conv1d 휠은 파일명 버전(+cu12…)과 메타데이터 버전(1.7.0)이 달라 pip 가 거부한다. 이름을 맞춘 사본으로 설치하게 고쳤다.
+  - mxc:
+    - vLLM env `/tmp/sa_tskim/vllm-0.30`(호스트 로컬, 8.1 GB)과 `conda/envs/vllm-0.30.tar`(8.5 GB)
+    - `conda/envs/teacher-fla`
+    - 결과 폴더 3 개(원자료 README 참고)
+  - 원자료: `raw/sources/experiments/2026-10-09-ast-vllm-bench/`
+  - 위키: `wiki/outputs/output-monotonic-ast-translation-methods-20261008.md`(속도 항목), `wiki/decisions/decision-ast-monotonic-data.md`(비용 주의)
+- Reason:
+  - 사용자가 휠을 올렸다(`semcommit/wheelhouse/vllm-0.30.0`·`fla-0.5.2`).
+  - 설치 뒤 파일럿으로 세 방식을 비교했다.
+- 결과:
+  - vLLM: 초당 1,072–1,145 토큰, HF 152 의 약 7.5 배다. 관문 통과와 AL 은 같은 수준이다.
+  - HF + fla: 초당 115 토큰으로 이득이 없었다.
+  - 단조 번역만 만들면 전체 12,500 h 에 약 500 GPU 시간으로 추정된다.
+  - vLLM 은 `VLLM_USE_FLASHINFER_SAMPLER=0` 과 venv bin 을 PATH 에 넣는 설정이 필요하다(샘플러 JIT 빌드가 ninja 를 못 찾음).
+- Next:
+  - 전체 생성 job 을 설계한다(SLURM, GPU 당 엔진 하나, 샤드 재개). 긴 발화는 문장 단위로 나누고, 단조 번역만 만든다. 판정은 같은 모델로 한다.
+  - 사용자 확인: 규모·방향 우선순위, 앞부분 번역 간격
+- By: tskim

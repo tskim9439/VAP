@@ -5,7 +5,7 @@ decision_status: accepted
 owner: tskim
 review: 2026-11-08
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 summary: AST 학습 데이터 — 전체 ASR 전사를 Qwen3.8-27B 로 단조(원문 어순) 번역만 만들어 쓰고, 번역 단어 시각은 stable prefix 로 정함, prefix 는 화자별 언어 → 화자별 목표 언어
 sources:
   - '[[output-monotonic-ast-translation-methods-20261008]]'
@@ -45,6 +45,11 @@ related:
 - 비용 주의:
   - prefix 마다 LLM 을 부르므로 문장당 호출이 단어 수만큼 늘어난다.
   - 전체 규모에서는 prefix 간격(단어마다 → 0.3–0.5 s 마다)과 vLLM 같은 빠른 추론 엔진이 필요하다. vLLM 은 현재 teacher env 에 없고, 설치 파일은 사용자가 받아 올려야 한다.
+  - 2026-10-09:
+    - vLLM 0.30.0 을 설치했다(`scripts/setup-vllm-env.sh`, 별도 env, 노드에서는 tar 를 풀어 쓴다).
+    - HF 보다 약 7.5 배 빨랐고 품질은 같았다.
+    - 단조 번역만 만들면 전체 약 500 GPU 시간으로 추정된다([[output-monotonic-ast-translation-methods-20261008]] 속도 항목).
+    - flash-linear-attention 은 HF 경로를 빠르게 하지 못해 쓰지 않는다(`teacher-fla` env 는 남겨 둠).
 
 ## 재검토
 - 파일럿(방향별 50 건) 결과 뒤: 관문 통과율, AL 감소, 사용자 검토를 보고 프롬프트와 규모 계획을 확정한다.

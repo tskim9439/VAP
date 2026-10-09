@@ -19,8 +19,13 @@ if [[ ! -e "$ENV/pyvenv.cfg" ]]; then
   "$VAPASR_PY" -m venv --system-site-packages "$ENV"
 fi
 "$ENV/bin/python" -m pip install --no-index --find-links "$TF_WHEELS" 'transformers==5.8.0'
+# causal-conv1d 릴리스 휠은 파일명에 로컬 버전(+cu12torch2.9…)이 붙었지만 메타데이터는 1.7.0 이라 pip 가 거부한다
+# → 이름만 맞춘 사본(env 안, 덮어쓰지 않음)으로 설치한다.
+CC=causal_conv1d-1.7.0+cu12torch2.9cxx11abiTRUE-cp311-cp311-linux_x86_64.whl
+mkdir -p "$ENV/wheels"
+cp -n "$FLA_WHEELS/$CC" "$ENV/wheels/causal_conv1d-1.7.0-cp311-cp311-linux_x86_64.whl"
 "$ENV/bin/python" -m pip install --no-index --no-deps --find-links "$FLA_WHEELS" \
-  'flash-linear-attention==0.5.2' 'fla-core==0.5.2' 'causal-conv1d==1.7.0'
+  'flash-linear-attention==0.5.2' 'fla-core==0.5.2' "$ENV/wheels/causal_conv1d-1.7.0-cp311-cp311-linux_x86_64.whl"
 
 "$ENV/bin/python" - <<'PY'
 from importlib.metadata import version
