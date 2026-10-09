@@ -1,0 +1,237 @@
+{
+ "single-turn-vpaa-kspon-q06-s1m3-d10": {
+  "complete": true,
+  "predictions": 31575,
+  "aa_wer": {
+   "voxpopuli-aa-test/delta-10": {
+    "utterances": 628,
+    "empty_ref": 0,
+    "substitutions": 418,
+    "deletions": 292,
+    "insertions": 164,
+    "errors": 874,
+    "n_ref": 18072,
+    "wer_micro": 0.04836210712704737,
+    "wer_duration_weighted": 0.04816945640112485,
+    "audio_s": 7122.378374999999
+   },
+   "voxpopuli-aa-test/delta-4": {
+    "utterances": 628,
+    "empty_ref": 0,
+    "substitutions": 514,
+    "deletions": 318,
+    "insertions": 166,
+    "errors": 998,
+    "n_ref": 18072,
+    "wer_micro": 0.05522355024347056,
+    "wer_duration_weighted": 0.055015337266468636,
+    "audio_s": 7122.378374999999
+   },
+   "voxpopuli-aa-test/delta-6": {
+    "utterances": 628,
+    "empty_ref": 0,
+    "substitutions": 445,
+    "deletions": 287,
+    "insertions": 145,
+    "errors": 877,
+    "n_ref": 18072,
+    "wer_micro": 0.048528109783089864,
+    "wer_duration_weighted": 0.048361569316568986,
+    "audio_s": 7122.378374999999
+   },
+   "voxpopuli-aa-test/delta-8": {
+    "utterances": 628,
+    "empty_ref": 0,
+    "substitutions": 429,
+    "deletions": 295,
+    "insertions": 155,
+    "errors": 879,
+    "n_ref": 18072,
+    "wer_micro": 0.048638778220451526,
+    "wer_duration_weighted": 0.04837912266800133,
+    "audio_s": 7122.378374999999
+   },
+   "voxpopuli-aa-test/delta-final": {
+    "utterances": 628,
+    "empty_ref": 0,
+    "substitutions": 394,
+    "deletions": 324,
+    "insertions": 202,
+    "errors": 920,
+    "n_ref": 18072,
+    "wer_micro": 0.05090748118636565,
+    "wer_duration_weighted": 0.05134819927204934,
+    "audio_s": 7122.378374999999
+   }
+  },
+  "groups": {
+   "kspon-eval_clean/delta-4": {
+    "utterances": 3000,
+    "forced": 2,
+    "rates": {
+     "cer_nospace": 0.09600366521585206,
+     "cer_space": 0.10078097644891683,
+     "wer": 0.25870911554093284
+    }
+   },
+   "kspon-eval_clean/delta-6": {
+    "utterances": 3000,
+    "forced": 0,
+    "rates": {
+     "cer_nospace": 0.08534121910077261,
+     "cer_space": 0.09030706228020766,
+     "wer": 0.2355815753822334
+    }
+   },
+   "kspon-eval_clean/delta-8": {
+    "utterances": 3000,
+    "forced": 3,
+    "rates": {
+     "cer_nospace": 0.08542451946104666,
+     "cer_space": 0.09048974682966188,
+     "wer": 0.23592026320882523
+    }
+   },
+   "kspon-eval_clean/delta-10": {
+    "utterances": 3000,
+    "forced": 0,
+    "rates": {
+     "cer_nospace": 0.084466565317895,
+     "cer_space": 0.08957632408239073,
+     "wer": 0.2343235920263209
+    }
+   },
+   "kspon-eval_clean/delta-final": {
+    "utterances": 3000,
+    "forced": 0,
+    "rates": {
+     "cer_nospace": 0.07642808055144838,
+     "cer_space": 0.08070089972140607,
+     "wer": 0.2085833172053416
+    }
+   },
+   "kspon-eval_other/delta-4": {
+    "utterances": 2687,
+    "forced": 1,
+    "rates": {
+     "cer_nospace": 0.09505248346245289,
+     "cer_space": 0.10507359100155558,
+     "wer": 0.307802521696414
+    }
+   },
+   "kspon-eval_other/delta-6": {
+    "utterances": 2687,
+    "forced": 1,
+    "rates": {
+     "cer_nospace": 0.08682010060004205,
+     "cer_space": 0.09535718559291612,
+     "wer": 0.2811527755035205
+    }
+   },
+   "kspon-eval_other/delta-8": {
+    "utterances": 2687,
+    "forced": 2,
+    "rates": {
+     "cer_nospace": 0.08507334745831244,
+     "cer_space": 0.09402895775996171,
+     "wer": 0.2772228590142459
+    }
+   },
+   "kspon-eval_other/delta-10": {
+    "utterances": 2687,
+    "forced": 5,
+    "rates": {
+     "cer_nospace": 0.08442640185026444,
+     "cer_space": 0.09320330262055762,
+     "wer": 0.2762813165220239
+    }
+   },
+   "kspon-eval_other/delta-final": {
+    "utterances": 2687,
+    "forced": 0,
+    "rates": {
+     "cer_nospace": 0.0758867198240308,
+     "cer_space": 0.08297235850185473,
+     "wer": 0.24430980841657116
+    }
+   },
+   "voxpopuli-aa-test/delta-4": {
+    "utterances": 628,
+    "forced": 1,
+    "rates": {
+     "wer": 0.07457000392178834
+    }
+   },
+   "voxpopuli-aa-test/delta-6": {
+    "utterances": 628,
+    "forced": 1,
+    "rates": {
+     "wer": 0.06835116813266849
+    }
+   },
+   "voxpopuli-aa-test/delta-8": {
+    "utterances": 628,
+    "forced": 0,
+    "rates": {
+     "wer": 0.06823911703736904
+    }
+   },
+   "voxpopuli-aa-test/delta-10": {
+    "utterances": 628,
+    "forced": 0,
+    "rates": {
+     "wer": 0.06823911703736904
+    }
+   },
+   "voxpopuli-aa-test/delta-final": {
+    "utterances": 628,
+    "forced": 0,
+    "rates": {
+     "wer": 0.06969578127626197
+    }
+   }
+  }
+ },
+ "single-turn-yodas-de-q06-s1m3-d10": {
+  "complete": true,
+  "predictions": 24305,
+  "aa_wer": null,
+  "groups": {
+   "yodas-de-dev/delta-4": {
+    "utterances": 4861,
+    "forced": 4,
+    "rates": {
+     "wer": 0.044446589624072594
+    }
+   },
+   "yodas-de-dev/delta-6": {
+    "utterances": 4861,
+    "forced": 5,
+    "rates": {
+     "wer": 0.037399674545604986
+    }
+   },
+   "yodas-de-dev/delta-8": {
+    "utterances": 4861,
+    "forced": 5,
+    "rates": {
+     "wer": 0.035675869487271424
+    }
+   },
+   "yodas-de-dev/delta-10": {
+    "utterances": 4861,
+    "forced": 5,
+    "rates": {
+     "wer": 0.0342416636787379
+    }
+   },
+   "yodas-de-dev/delta-final": {
+    "utterances": 4861,
+    "forced": 0,
+    "rates": {
+     "wer": 0.023747138483603165
+    }
+   }
+  }
+ }
+}

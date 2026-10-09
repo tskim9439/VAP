@@ -1,0 +1,31 @@
+kspon-eval_clean       δfinal | new   7.64 (n=3000) | q06-s1   9.27 Δ[-2.01,-1.29]* | q17-s1m-r3   6.94 Δ[+0.47,+0.94]*
+kspon-eval_clean       δ1     | new     - | q06-s1 - | q17-s1m-r3  13.55
+kspon-eval_clean       δ2     | new     - | q06-s1  15.72 | q17-s1m-r3   9.91
+kspon-eval_clean       δ3     | new     - | q06-s1 - | q17-s1m-r3   8.60
+kspon-eval_clean       δ4     | new   9.60 (n=3000) | q06-s1  10.55 Δ[-1.27,-0.64]* | q17-s1m-r3   8.02 Δ[+1.29,+1.87]*
+kspon-eval_clean       δ6     | new   8.53 (n=3000) | q06-s1  10.24 Δ[-2.00,-1.38]* | q17-s1m-r3   7.83 Δ[+0.46,+0.93]*
+kspon-eval_clean       δ8     | new   8.54 (n=3000) | q06-s1 - | q17-s1m-r3 -
+kspon-eval_clean       δ10    | new   8.45 (n=3000) | q06-s1 - | q17-s1m-r3 -
+kspon-eval_other       δfinal | new   7.59 (n=2687) | q06-s1   9.22 Δ[-1.86,-1.39]* | q17-s1m-r3   6.99 Δ[+0.38,+0.82]*
+kspon-eval_other       δ1     | new     - | q06-s1 - | q17-s1m-r3  13.85
+kspon-eval_other       δ2     | new     - | q06-s1  16.13 | q17-s1m-r3  10.20
+kspon-eval_other       δ3     | new     - | q06-s1 - | q17-s1m-r3   8.82
+kspon-eval_other       δ4     | new   9.51 (n=2687) | q06-s1  10.87 Δ[-1.65,-1.09]* | q17-s1m-r3   8.14 Δ[+1.12,+1.62]*
+kspon-eval_other       δ6     | new   8.68 (n=2687) | q06-s1  10.47 Δ[-2.05,-1.52]* | q17-s1m-r3   8.01 Δ[+0.44,+0.93]*
+kspon-eval_other       δ8     | new   8.51 (n=2687) | q06-s1 - | q17-s1m-r3 -
+kspon-eval_other       δ10    | new   8.44 (n=2687) | q06-s1 - | q17-s1m-r3 -
+voxpopuli-aa-test      δfinal | new   6.97 (n=628) | q06-s1   7.14 Δ[-0.49,+0.17] | q17-s1m-r3   7.33 Δ[-0.76,+0.03]
+voxpopuli-aa-test      δ1     | new     - | q06-s1 - | q17-s1m-r3  12.16
+voxpopuli-aa-test      δ2     | new     - | q06-s1  11.86 | q17-s1m-r3   9.69
+voxpopuli-aa-test      δ3     | new     - | q06-s1 - | q17-s1m-r3   8.26
+voxpopuli-aa-test      δ4     | new   7.46 (n=628) | q06-s1   7.73 Δ[-0.71,+0.22] | q17-s1m-r3   8.01 Δ[-1.19,+0.03]
+voxpopuli-aa-test      δ6     | new   6.84 (n=628) | q06-s1   7.18 Δ[-0.72,+0.03] | q17-s1m-r3   7.61 Δ[-1.19,-0.39]*
+voxpopuli-aa-test      δ8     | new   6.82 (n=628) | q06-s1 - | q17-s1m-r3 -
+voxpopuli-aa-test      δ10    | new   6.82 (n=628) | q06-s1 - | q17-s1m-r3 -
+yodas-de-dev           δfinal | new   2.37 (n=4861) | q06-s1 - | q17-s1m-r3 -
+yodas-de-dev           δ4     | new   4.44 (n=4861) | q06-s1 - | q17-s1m-r3 -
+yodas-de-dev           δ6     | new   3.74 (n=4861) | q06-s1 - | q17-s1m-r3 -
+yodas-de-dev           δ8     | new   3.57 (n=4861) | q06-s1 - | q17-s1m-r3 -
+yodas-de-dev           δ10    | new   3.42 (n=4861) | q06-s1 - | q17-s1m-r3 -
+
+[exited with code 0]

@@ -2,7 +2,7 @@
 type: output
 status: active
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 summary: 영·한·독 Stage 1 학습 준비 — 독일어 정규화 2,125 h, 학습·평가 스크립트 독일어 지원, 지연 δ4–10(<DELAY_9/10>), 0.6B run 82738 진행
 sources:
   - '[[2026-10-08-stage1-trilingual-d10-prep]]'
@@ -83,5 +83,6 @@ raw_authors:
 
 ## 남은 일
 - 82738 완료 뒤 평가: 영어·한국어(`single-turn-vpaa-kspon-v1`)·독일어(`single-turn-yodas-de-dev-v1`), δ4·6·8·10 + final. 비교 대상은 q06-s1·q17-s1m-r3.
+  - 완료(2026-10-09): 학습은 82844 로 이어서 끝났다. 결과는 [[output-stage1-q06-d10-eval-20261009]] 에 있다.
 - 다음 단계: 화자·언어 prefix(`<SPK_A><EN><SPK_B><DE>`, A/B 무작위), 언어 토큰 추가, 두 언어 혼합·2 화자 스트림([[decision-stage1-lookahead-320-1040ms]])
 - `semcommit_train.py`·`semcommit_dataset.py` 의 변경은 Codex 미커밋 헝크와 같은 파일이라 커밋 방식이 미정이다(mxc 에는 배포됨).

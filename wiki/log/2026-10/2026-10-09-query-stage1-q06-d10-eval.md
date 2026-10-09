@@ -1,0 +1,24 @@
+## [2026-10-09] query | 0.6B 영·한·독 Stage 1(q06-s1m3-d10) 평가
+
+- Changed:
+  - 원자료: `raw/sources/experiments/2026-10-09-stage1-q06-d10-eval/`(비교·bootstrap, 칸별 요약)
+  - 위키:
+    - `wiki/outputs/output-stage1-q06-d10-eval-20261009.md`(신규)
+    - `wiki/decisions/decision-stage1-lookahead-320-1040ms.md`(재검토 결과)
+    - `wiki/outputs/output-stage1-trilingual-d10-prep-20261008.md`(남은 일 완료 표시)
+  - mxc 결과:
+    - `results/single-turn-vpaa-kspon-q06-s1m3-d10/`
+    - `results/single-turn-yodas-de-q06-s1m3-d10/`
+- Reason:
+  - 사용자: 0.6B(82844) 평가도 진행하라고 했다.
+- 결과:
+  - VoxPopuli WER 는 δ4 7.46, δ6 6.84, δ8 6.82, δ10 6.82, final 6.97 이다.
+  - Kspon CER 는 clean 9.60/8.53/8.54/8.45/7.64, other 9.51/8.68/8.51/8.44/7.59 다.
+  - YODAS-de WER 는 4.44/3.74/3.57/3.42/2.37 이다(silver).
+  - 0.6B 파일럿보다 한국어가 유의하게 좋다.
+  - 1.7B 와 비교하면 영어는 같거나 낫고, 한국어는 뒤진다.
+  - δ8 부터는 거의 좋아지지 않는다.
+- Next:
+  - 실제 독일어 평가셋으로 다시 잰다.
+  - 다음 단계의 시작 체크포인트와 크기를 사용자가 정한다.
+- By: tskim
