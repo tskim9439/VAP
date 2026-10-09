@@ -9,6 +9,7 @@ updated: 2026-10-09
 summary: AST 학습 데이터 — 전체 ASR 전사를 Qwen3.8-27B 로 단조(원문 어순) 번역만 만들어 쓰고, 번역 단어 시각은 stable prefix 로 정함, prefix 는 화자별 언어 → 화자별 목표 언어
 sources:
   - '[[output-monotonic-ast-translation-methods-20261008]]'
+  - '[[output-ast-mono-generation-20261009]]'
   - https://arxiv.org/abs/2609.05799
 related:
   - '[[decision-stage1-lookahead-320-1040ms]]'
@@ -34,6 +35,14 @@ related:
      - Qwen3-ASR 원 형식 `language English<asr_text>` 의 `language` 줄을 그대로 쓴다.
      - 화자는 이미 있는 `<SPK_A>`/`<SPK_B>` 로, 언어는 Qwen 이 아는 이름 그대로 쓴다. 그래서 `<EN>` 같은 새 언어 토큰은 필요 없다.
      - 화자가 한 명이면 한 쌍만 쓰고, ASR 만 할 때는 `translate` 줄을 뺀다. A/B 는 항목마다 무작위로 정한다([[decision-stage1-lookahead-320-1040ms]]).
+
+## 결정 (사용자, 2026-10-09)
+6. **4 방향을 한 번에** 생성한다.
+7. **stable prefix 는 원문 단어마다** 만든다(가장 정확). 0.3–0.5 s 간격으로 줄이지 않는다.
+- 구현과 비용: [[output-ast-mono-generation-20261009]]
+  - Stage 1 학습 행 568 만 개 → 번역 단위 733 만 개, prefix 호출 약 8,700 만 번
+  - 약 675 GPU 시간
+  - 프롬프트는 파일럿 v2 그대로이고 일반 번역은 만들지 않는다.
 
 ## stable prefix 적용 (arXiv 2609.05799)
 - 논문: 문장 전체 번역 f 와 원문 prefix 마다의 번역 pᵢ 를 만든다. mᵢ = max_{j≤i} lcp(pⱼ, f) 까지를 "안정된 prefix" 로 확정한다(영→독은 단어 단위, 영→일·중은 글자 단위). 이 데이터로 Qwen3-8B 를 미세조정해 지연-품질 균형이 좋아졌다(영→독·일·중; FLEURS·WMT24++·CoVoST2).

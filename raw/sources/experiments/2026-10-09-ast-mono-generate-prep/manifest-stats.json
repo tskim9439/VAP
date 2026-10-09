@@ -1,0 +1,145 @@
+{
+ "created": "2026-10-09 15:10:41",
+ "lists": {
+  "main": "/soundai/users/tskim/VAPKT-data/data/semcommit-work/labels/speechlm-all19-v035/snapshots/20260929-1637/main-words.list",
+  "short": "/soundai/users/tskim/VAPKT-data/data/semcommit-work/labels/speechlm-all19-v035/snapshots/20260929-1637/short-words.list",
+  "asr": "/soundai/users/tskim/VAPKT-data/data/semcommit-work/asr-words-v1/lists/asr-words-20260929.list",
+  "de": "/soundai/users/tskim/VAPKT-data/data/yodas-de-v1/lists/de-words-train-tn2.list"
+ },
+ "max_words": 40,
+ "shard_words": 25000,
+ "seed": 0,
+ "code_sha256": "cfbdf3b0b3a8fa61",
+ "stats": {
+  "de/yodas-de": {
+   "rows": 1315348,
+   "hours": 2125.32,
+   "units": 1692739,
+   "words": 19739272,
+   "src_display_text": 1315348
+  },
+  "en/librispeech-960": {
+   "rows": 60913,
+   "hours": 448.32,
+   "units": 158510,
+   "words": 4080750,
+   "src_raw_text": 130286
+  },
+  "en/librispeech-960-rg": {
+   "rows": 126952,
+   "hours": 576.81,
+   "units": 204515,
+   "words": 5257808,
+   "src_raw_text": 147154
+  },
+  "en/swbd-train": {
+   "rows": 43643,
+   "hours": 134.99,
+   "units": 52554,
+   "words": 1391051,
+   "src_raw_text": 43619,
+   "src_words": 24
+  },
+  "en/swbd-train-rg": {
+   "rows": 27332,
+   "hours": 152.33,
+   "units": 133573,
+   "words": 902995,
+   "src_raw_text": 133520,
+   "src_words": 51
+  },
+  "en/voxpopuli-train": {
+   "rows": 121151,
+   "hours": 477.36,
+   "units": 161222,
+   "words": 3782216,
+   "src_pnc_text": 119671,
+   "src_raw_text": 1333,
+   "src_words": 147
+  },
+  "en/voxpopuli-train-rg": {
+   "rows": 14763,
+   "hours": 73.08,
+   "units": 48135,
+   "words": 548126,
+   "src_raw_text": 45802,
+   "src_words": 123
+  },
+  "en/yodas-en129": {
+   "rows": 45948,
+   "hours": 188.28,
+   "units": 84442,
+   "words": 1489459,
+   "src_pnc_text": 43033,
+   "src_raw_text": 2579,
+   "src_words": 336
+  },
+  "en/yodas-en129-rg": {
+   "rows": 16191,
+   "hours": 92.2,
+   "units": 83057,
+   "words": 688001,
+   "src_raw_text": 76215,
+   "src_words": 609
+  },
+  "ko/aihub-bc-train": {
+   "rows": 431447,
+   "hours": 706.55,
+   "units": 550309,
+   "words": 3745110,
+   "src_raw_text": 429260,
+   "src_words": 2187
+  },
+  "ko/aihub71631-train": {
+   "rows": 228264,
+   "hours": 238.22,
+   "units": 229676,
+   "words": 1039828,
+   "src_raw_text": 228256,
+   "src_words": 8
+  },
+  "ko/kspon-full": {
+   "rows": 619034,
+   "hours": 1186.0,
+   "units": 978364,
+   "words": 6267556,
+   "src_raw_text": 617332,
+   "src_words": 1702
+  },
+  "ko/nikl-1000": {
+   "rows": 1205360,
+   "hours": 1392.86,
+   "units": 1244778,
+   "words": 7172278,
+   "src_raw_text": 1205360
+  },
+  "ko/speechlm-partial": {
+   "rows": 1424279,
+   "hours": 2613.62,
+   "units": 1710233,
+   "words": 12610154,
+   "src_display_text": 1424279
+  }
+ },
+ "errors": [],
+ "totals": {
+  "en": {
+   "shards": 725,
+   "units": 926008,
+   "words": 18140406,
+   "rows": 456893
+  },
+  "ko": {
+   "shards": 1234,
+   "units": 4713360,
+   "words": 30834926,
+   "rows": 3908384
+  },
+  "de": {
+   "shards": 790,
+   "units": 1692739,
+   "words": 19739272,
+   "rows": 1315348
+  }
+ }
+}

@@ -203,7 +203,7 @@ class VLLMEngine:
         self.llm = _LLM(model=path, dtype="bfloat16", max_model_len=4096, gpu_memory_utilization=0.90,
                         max_num_seqs=max_num_seqs, limit_mm_per_prompt={"image": 0, "video": 0}, seed=0)
         self.tok = self.llm.get_tokenizer()
-        self.n_out = 0
+        self.n_out = self.n_prompt = self.n_cached = self.n_truncated = 0
         self.secs = 0.0
 
     def __call__(self, prompts, max_new_tokens, batch):
@@ -214,6 +214,9 @@ class VLLMEngine:
         res = self.llm.generate(texts, SamplingParams(temperature=0.0, max_tokens=max_new_tokens), use_tqdm=False)
         self.secs += time.monotonic() - t0
         self.n_out += sum(len(r.outputs[0].token_ids) for r in res)
+        self.n_prompt += sum(len(r.prompt_token_ids or ()) for r in res)
+        self.n_cached += sum(r.num_cached_tokens or 0 for r in res)            # prefix-cache hits
+        self.n_truncated += sum(r.outputs[0].finish_reason == "length" for r in res)
         return [r.outputs[0].text.split("</think>")[-1].strip() for r in res]
 
 

@@ -1,0 +1,24 @@
+## [2026-10-09] task | AST 단조 번역 전체 생성 준비: 원문 단위 733 만 개, 4 방향 vLLM SLURM job
+
+- Changed:
+  - 코드(새 파일, mxc 배포):
+    - `experiments/ast_mono_generate.py`(prepare·run·status)
+    - `tests/test_ast_mono_generate.py`
+    - `slurm/ast-mono-generate.sbatch`, `slurm/submit-ast-mono-generate.sh`
+  - 코드(수정): `experiments/ast_mono_pilot.py` — `VLLMEngine` 이 프롬프트·캐시 적중·출력 한도 도달 토큰 수를 센다
+  - mxc: `VAPKT-data/data/ast-mono-v1/units/`(샤드 2,749 개 + manifest.json), 시험 결과 `gen/en-de/u-00000`, `gen/ko-en/u-00000`
+  - 원자료: `raw/sources/experiments/2026-10-09-ast-mono-generate-prep/`
+  - 위키:
+    - `wiki/outputs/output-ast-mono-generation-20261009.md`(신규)
+    - `wiki/decisions/decision-ast-monotonic-data.md`(사용자 결정 6·7 추가)
+- Reason:
+  - 사용자: 4 방향을 한 번에 돌리고, stable prefix 는 가장 정확하게 단어마다 만든다.
+- 결과:
+  - prepare: 행 568 만 개 → 단위 733 만 개, 원문 단어 6,871 만 개, 호스트 CPU 12 분, 오류 0
+  - 실제 크기 시험: en-de 770 s·관문 76 %, ko-en 617 s·관문 84 %
+  - 전체 추정은 약 675 GPU 시간이다. prefix cache 적중은 0 이었다.
+  - 계산 노드의 gcc 유무는 확인하지 못했다(Triton 이 실행 중에 C 런처를 빌드함). job 이 노드마다 먼저 검사하게 했다.
+- Next:
+  - 사용자 제출: `bash slurm/submit-ast-mono-generate.sh --nodes N --partition P`
+  - 생성 뒤: 조각 원문을 인정하는 판정으로 다시 판정, 탈락 단위 수리, 행 단위 AST 타깃 조립
+- By: tskim
