@@ -65,6 +65,40 @@ def add_delay_tokens(model, tok) -> Dict[str, int]:
     model.blocked = torch.tensor(cfg.blocked_ids, dtype=torch.long, device=W.device)
     return ids
 
+# AST 출력 형식 ast-v1(2026-10-09, wiki decision-ast-monotonic-data 9): 번역 구간을 여는 <TRANS> 를 <DELAY_10> 뒤에 붙인다.
+# 화자 태그 <SPK_A>/<SPK_B>(Phase 1 행)는 이 형식에서 처음 출력으로 배우므로 decode 차단을 푼다(mono 체크포인트는 막아 두었다).
+TRANS_TOKEN = "<TRANS>"
+TRANS_REGISTRY = {TRANS_TOKEN: 151726}
+AST_FORMAT = "ast-v1"
+
+def add_trans_special(tok) -> Dict[str, int]:
+    """<TRANS> 를 tokenizer 에 추가(이미 있으면 그대로) → {name: id}. <DELAY_10> 이 먼저 붙어 있어야 하고(id 순서),
+    실제 Qwen tokenizer(<DELAY_10> = 151725)면 동결 id(TRANS_REGISTRY)와 대조한다."""
+    vocab = tok.get_vocab()
+    assert "<DELAY_10>" in vocab, "<DELAY_9/10> 를 먼저 붙인다(add_delay_ext_specials) — <TRANS> id 는 그 뒤"
+    tok.add_tokens([TRANS_TOKEN], special_tokens=True)
+    i, d10 = tok.convert_tokens_to_ids(TRANS_TOKEN), tok.convert_tokens_to_ids("<DELAY_10>")
+    assert i > d10, f"<TRANS> id 순서 위반: {i} ≤ <DELAY_10> {d10}"
+    if d10 == DELAY_EXT_REGISTRY["<DELAY_10>"]:
+        assert i == TRANS_REGISTRY[TRANS_TOKEN], f"<TRANS> id 불일치 (tokenizer, 동결): {i} vs {TRANS_REGISTRY[TRANS_TOKEN]}"
+    return {TRANS_TOKEN: i}
+
+def add_ast_tokens(model, tok, seed: int = 0, runaway_cap: int = 32) -> Dict[str, int]:
+    """모델을 AST 출력 형식(ast-v1)으로: <TRANS> 추가(새 행 = mean(W[:기본 어휘]) + 0.02·randn, lm_head 는 tied), <SPK_A>/<SPK_B>/<TRANS> decode 차단 해제,
+    청크당 방출 상한 runaway_cap 상향(한 청크에 전사와 번역이 함께 나온다), config.ast_format 기록. 반복 호출해도 결과가 같다(idempotent)."""
+    cfg = model.config
+    ids = add_trans_special(tok)
+    W = model.get_input_embeddings().weight
+    assert ids[TRANS_TOKEN] < W.shape[0], f"임베딩 여유 행 없음: {ids[TRANS_TOKEN]} ≥ rows {W.shape[0]}"
+    init_rows_mean_noise(W, new_special_rows(ids, cfg.sp_ids), upto=BASE_VOCAB, seed=seed)
+    cfg.sp_ids.update(ids); cfg.special_tokens = list(dict.fromkeys(list(cfg.special_tokens) + [TRANS_TOKEN])); model.sp_ids = dict(cfg.sp_ids)
+    free = {int(cfg.sp_ids["<SPK_A>"]), int(cfg.sp_ids["<SPK_B>"]), int(ids[TRANS_TOKEN])}
+    cfg.blocked_ids = sorted(set(int(b) for b in cfg.blocked_ids) - free)
+    model.blocked = torch.tensor(cfg.blocked_ids, dtype=torch.long, device=W.device)
+    cfg.runaway_cap = max(int(getattr(cfg, "runaway_cap", None) or 8), int(runaway_cap))
+    cfg.ast_format = AST_FORMAT
+    return ids
+
 def assert_frozen_semantic(ids: Dict[str, int]) -> None:
     """실제 Qwen tokenizer 로 얻은 ids 가 동결 id(Phase 1/2 = FROZEN_REGISTRY, SEM = SEM_REGISTRY)와 같은지 검사."""
     want = {**FROZEN_REGISTRY, **SEM_REGISTRY}; bad = {k: (ids.get(k), v) for k, v in want.items() if ids.get(k) != v}

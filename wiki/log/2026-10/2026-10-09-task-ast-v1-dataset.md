@@ -1,0 +1,31 @@
+## [2026-10-09] task | ast-v1 학습 형식 구현: <TRANS> 토큰, 행 단위 번역 타깃, 전사·번역 함께 출력하는 데이터셋
+
+- Changed:
+  - 코드(새 파일):
+    - `vapasr/data/ast_dataset.py`(`AstStreamDataset`, `build_ast_sequence`, `load_ast_targets`)
+    - `experiments/ast_build_targets.py`(생성 결과 → 행 단위 번역 토큰·확정 시각)
+    - `tests/test_ast_dataset.py`
+  - 코드(수정):
+    - `vapasr/data/semcommit_tokens.py`: `<TRANS>`=151726, `add_trans_special`, `add_ast_tokens`(<SPK_A>/<SPK_B>/<TRANS> decode 차단 해제, runaway_cap 32)
+    - `vapasr/hf/__init__.py`: `load_tokenizer` 가 `<TRANS>` 를 복원한다
+  - 커밋 보류(Codex 미커밋 헝크와 같은 파일, mxc 에는 배포):
+    - `experiments/semcommit_train.py`: `--ast-targets/--ast-frac/--ast-format`
+    - 모델에 `add_ast_tokens` 를 적용하고, 데이터셋 클래스를 고르고, 지문에 `ast_format·ast_frac·ast_targets_sha256` 을 넣는다
+  - mxc:
+    - `VAPKT-data/data/ast-mono-v1/targets-gen-v3-bf16/`(생성이 끝난 383 샤드분)
+    - dry-run `VAPKT-data/tmp-ast-dryrun-20261009/`
+- Reason:
+  - 사용자가 다음 단계를 0.6B 에서 시작하고, 번역 모드에서 전사와 번역을 함께 내기로((b)) 했다.
+  - 출력 시퀀스 규칙을 확정했다([[decision-ast-monotonic-data]] 9).
+- 결과:
+  - 테스트 11 개 통과(mxc, 실제 Qwen tokenizer). 확정 예시의 청크 배치가 그대로 나온다.
+  - 확정 때 보인 예시에는 태그를 넣는 위치에 실수가 있었다. 결정 문서에 정정을 적었다.
+  - 학습 스크립트 dry-run(영·한·짧은 한국어·독 표본): 4 셋 × 64 항목 × δ4–10 에서 번역 모드 변형까지 불일치 0 이다.
+  - 실제 행에서 독→영·영→독 시퀀스를 눈으로 확인했다.
+  - 번역 타깃(지금까지 생성된 샤드): 모든 단위가 관문을 통과한 행의 비율은 de-en 88 %, ko-en 78 %, en-de 63 %, en-ko 56 % 다. 영어는 여러 단위로 된 행이 많아 낮다.
+- Next:
+  - 생성(job 83350)이 끝나면 전체 타깃을 조립한다.
+  - 영어 행 회수: 조각 원문을 인정하는 재판정, 탈락 단위 수리
+  - 평가 스크립트에 ast-v1 prefix 와 번역 평가를 넣는다.
+  - 학습 제출 래퍼를 만든다(0.6B q06-s1m3-d10/final 시작).
+- By: tskim
