@@ -278,6 +278,106 @@ def p_translate_v3(src, tgt, text, complete=True):
     return p_system_v3(src, tgt), f"{state}\n\n{text}"
 
 
+# ───────────────────────── judge v3 + repair (2026-10-09) ─────────────────────────
+# The v2 judge failed many units whose SOURCE is an unfinished fragment (data segments cut mid-sentence) or an unpunctuated
+# transcript with fillers: it called the faithful fragment translation "incomplete" or "broken". v3 states these facts and
+# shows labelled examples (two that must pass, four that must fail) in a fixed per-direction system message longer than one
+# vLLM block (784 tokens) so it is cached like the translation prompt v3. The gate is unchanged.
+_J = lambda c, o, a, g, n, note: json.dumps(dict(content=c, omission=o, addition=a, grammar=g, naturalness=n, note=note), ensure_ascii=False)
+JUDGE_EXAMPLES_V3 = {
+    ("English", "German"): [
+        ("so what we are trying to do here is", "Was wir hier also versuchen, ist",
+         _J("same", False, False, "correct", 4, "Unfinished source; the translation stops at the same point and is well-formed.")),
+        ("uh i i think we should uh wait", "Ich denke, wir sollten warten.",
+         _J("same", False, False, "correct", 5, "Fillers and the repeated 'i' are dropped; no information is lost.")),
+        ("we met on monday and again on tuesday", "Wir haben uns am Montag getroffen.",
+         _J("major", True, False, "correct", 5, "The second meeting on Tuesday is missing.")),
+        ("she called me", "Sie hat mich gestern angerufen.",
+         _J("minor", False, True, "correct", 5, "'gestern' (yesterday) is not in the source.")),
+        ("the prices went down last year", "Die Preise sind letztes Jahr gestiegen.",
+         _J("major", False, False, "correct", 5, "'gestiegen' means went up; the source says went down.")),
+        ("because the client has not sent the data", "denn der Kunde nicht hat die Daten geschickt",
+         _J("same", False, False, "incorrect", 2, "Broken German word order ('nicht hat')."))],
+    ("English", "Korean"): [
+        ("so what we are trying to do here is", "그러니까 저희가 여기서 하려는 건",
+         _J("same", False, False, "correct", 4, "Unfinished source; the translation stops at the same point and is well-formed.")),
+        ("uh i i think we should uh wait", "제 생각엔 기다려야 할 것 같아요.",
+         _J("same", False, False, "correct", 5, "Fillers and the repeated 'i' are dropped; no information is lost.")),
+        ("we met on monday and again on tuesday", "저희는 월요일에 만났어요.",
+         _J("major", True, False, "correct", 5, "The second meeting on Tuesday is missing.")),
+        ("she called me", "그분이 어제 저한테 전화했어요.",
+         _J("minor", False, True, "correct", 5, "'어제' (yesterday) is not in the source.")),
+        ("the prices went down last year", "작년에 가격이 올랐어요.",
+         _J("major", False, False, "correct", 5, "'올랐어요' means went up; the source says went down.")),
+        ("because the client has not sent the data", "왜냐하면 고객이 데이터를 보냈 않았거든요",
+         _J("same", False, False, "incorrect", 2, "Broken verb form ('보냈 않았거든요')."))],
+    ("German", "English"): [
+        ("Also, was wir hier eigentlich machen wollen, ist", "So what we actually want to do here is",
+         _J("same", False, False, "correct", 4, "Unfinished source; the translation stops at the same point and is well-formed.")),
+        ("äh ich ich glaube, wir sollten äh warten", "I think we should wait.",
+         _J("same", False, False, "correct", 5, "Fillers and the repeated 'ich' are dropped; no information is lost.")),
+        ("Wir haben uns am Montag und dann noch mal am Dienstag getroffen.", "We met on Monday.",
+         _J("major", True, False, "correct", 5, "The second meeting on Tuesday is missing.")),
+        ("Sie hat mich angerufen.", "She called me yesterday.",
+         _J("minor", False, True, "correct", 5, "'yesterday' is not in the source.")),
+        ("Die Preise sind letztes Jahr gesunken.", "Prices rose last year.",
+         _J("major", False, False, "correct", 5, "'rose' means went up; the source says went down.")),
+        ("weil der Kunde die Daten nicht geschickt hat", "because the client the data not has sent",
+         _J("same", False, False, "incorrect", 2, "Broken English word order."))],
+    ("Korean", "English"): [
+        ("그러니까 저희가 여기서 하려는 건", "So what we are trying to do here is",
+         _J("same", False, False, "correct", 4, "Unfinished source; the translation stops at the same point and is well-formed.")),
+        ("어 그 그러니까 기다리는 게 좋을 것 같아요", "So I think it would be better to wait.",
+         _J("same", False, False, "correct", 5, "Fillers are dropped and the implicit subject 'I' is made explicit; no information is added.")),
+        ("월요일에 만나고 화요일에 또 만났어요", "We met on Monday.",
+         _J("major", True, False, "correct", 5, "The second meeting on Tuesday is missing.")),
+        ("그분이 저한테 전화했어요", "She called me yesterday.",
+         _J("minor", False, True, "correct", 5, "'yesterday' is not in the source.")),
+        ("작년에 가격이 내려갔어요", "Prices went up last year.",
+         _J("major", False, False, "correct", 5, "'went up' is the opposite of the source (went down).")),
+        ("고객이 데이터를 아직 안 보내서요", "Because the client not yet sent the data has.",
+         _J("same", False, False, "incorrect", 2, "Broken English word order."))],
+}
+
+
+def p_judge_system_v3(src, tgt):
+    ex = "\n\n".join(f"Source: {s}\nTranslation: {t}\n-> {j}" for s, t, j in JUDGE_EXAMPLES_V3[(src, tgt)])
+    return (f"You check translations made by a simultaneous interpreter from {src} into {tgt}. The interpreter deliberately "
+            f"follows the source order chunk by chunk, so judge the CONTENT and the GRAMMAR, not the style or the word order "
+            f"choices.\n\n"
+            f"About the source:\n"
+            f"- It is a transcript of speech: it may have no punctuation or capital letters, and it may contain fillers, "
+            f"repetitions, false starts or self-corrections.\n"
+            f"- It may be an unfinished fragment: the recording can start or stop in the middle of a sentence.\n"
+            f"- Names and numbers may be written in lowercase or spelled out as words; judge the meaning, not the spelling.\n\n"
+            f"Answer with JSON only, with exactly these keys:\n"
+            f"- \"content\": \"same\" if every fact and intention of the source is conveyed, \"minor\" if a nuance differs but "
+            f"no fact is wrong or missing, \"major\" if a fact is wrong, changed or missing.\n"
+            f"- \"omission\": true if information of the source is missing. Dropping fillers, repetitions or false starts is "
+            f"not an omission.\n"
+            f"- \"addition\": true if information that is not in the source was added. Making a subject, object or connective "
+            f"explicit because {tgt} grammar needs it is not an addition.\n"
+            f"- \"grammar\": \"correct\", \"minor\" for a small slip, or \"incorrect\" for broken word order or ungrammatical "
+            f"sentences in spoken {tgt}. When the source is an unfinished fragment, a translation that stops at the same point "
+            f"is correct as long as the words that are there are well-formed {tgt}.\n"
+            f"- \"naturalness\": 1-5, 5 = fully natural spoken {tgt}.\n"
+            f"- \"note\": one short sentence.\n\n"
+            f"Examples:\n\n{ex}")
+
+
+def p_judge_v3(src, tgt, src_text, tgt_text):
+    """-> (system, user): fixed per-direction system message (cached), user = the pair to judge."""
+    return p_judge_system_v3(src, tgt), f"Source: {src_text}\nTranslation: {tgt_text}"
+
+
+def p_repair_v3(src, tgt, text, prev, note):
+    """Repair: the v3 translation system message (cached) + the complete source, the earlier translation and the problem."""
+    return p_system_v3(src, tgt), (f"The {src} utterance below is complete.\n\n{text}\n\n"
+                                   f"An earlier translation had this problem: {note or 'it was judged wrong.'}\n"
+                                   f"Earlier translation: {prev or '(none)'}\n\n"
+                                   f"Translate the utterance again without that problem, following all the rules.")
+
+
 def chat(p):
     """prompt -> chat messages: a str is one user message, a (system, user) pair is two messages."""
     if isinstance(p, tuple):

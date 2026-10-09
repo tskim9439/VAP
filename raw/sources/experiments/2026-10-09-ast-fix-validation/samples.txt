@@ -1,0 +1,183 @@
+
+######## en-de: flips 127 repairs 60 v2pass_v3fail 17
+- [voxpopuli-train] SRC: You cannot identify shortcomings with implementation and then make it more wide—ranging, less specific, more complex and harder to implement.
+  TGT: Man kann nicht Mängel bei der Umsetzung feststellen und dann den Rahmen weiter ausdehnen, ihn weniger spezifisch, komplexer und schwerer umsetzbar machen.
+  v2: minor/om=True/add=False/correct The translation omits the specific nuance of 'wide-ranging' (using 'weiter ausdehnen' instead) and slightly alters the flow of the list, but
+  v3: same/correct The translation accurately conveys the meaning, using 'Rahmen' (scope/framework) to effectively translate 'wide-ranging' in this context.
+- [librispeech-960-rg] SRC: the necessity of allowing for falsehood makes it impossible to regard belief as a relation of the mind to a single object which could be said to be what is beli
+  TGT: Die Notwendigkeit, Falsches zuzulassen, macht es unmöglich, den Glauben als eine Beziehung des Geistes zu einem einzigen Objekt zu betrachten, das man als das b
+  v2: major/om=False/add=False/correct The translation misinterprets the source's 'what is believed' (the content of the belief) as 'what is called/designated as believed' (a labe
+  v3: minor/correct The translation uses 'bezeichnet' (designated/named) where the source implies 'is' (identifies as), slightly shifting the nuance of the phil
+- [voxpopuli-train] SRC: I am fully aware of your request to open formal consultations with Korea on its commitment to freedom of association and collective bargaining.
+  TGT: Ich bin mir Ihrer Bitte, formelle Konsultationen mit Südkorea über dessen Verpflichtung zur Vereinigungsfreiheit und zum kollektiven Tarifabschluss zu eröffnen,
+  v2: major/om=False/add=False/incorrect The translation incorrectly changes 'Korea' to 'South Korea' and uses the ungrammatical and unnatural phrase 'voll und ganz bewusst' instead
+  v3: minor/correct 'Tarifabschluss' (conclusion of a collective agreement) is a specific legal term that differs slightly from the broader 'collective bargaini
+- [librispeech-960-rg] SRC: a minute's delay i shall be glad to share my secret with you sir the lady sir whom i am so happy as to love and in whom my dreams of life long happiness are cen
+  TGT: Eine Minute Verspätung, und ich werde mich freuen, mein Geheimnis mit Ihnen zu teilen, Sir. Die Dame, Sir, die ich so glücklich bin zu lieben und in der sich me
+  v2: major/om=True/add=False/correct The translation incorrectly renders the idiom 'a minute's delay' as 'Verspätung' (lateness) instead of 'Verzögerung' (delay), and omits the 
+  v3: same/correct The translation is accurate and grammatically correct, though the phrasing is very formal and literary, fitting the source's dramatic tone.
+- [librispeech-960-rg] SRC: that was elected in eighteen seventy one was as follows total membership one hundred and fifteen republicans sixty six democrats forty nine colored members thir
+  TGT: Der im Jahr 1871 gewählte [Kongress] sah wie folgt aus: Die Gesamtzahl der Mitglieder betrug 115, davon 66 Republikaner und 49 Demokraten. Es gab 38 farbige Mit
+  v2: same/om=False/add=True/correct The translation is accurate and natural, though it adds the word 'Kongress' (Congress) in brackets to clarify the subject implied in the sou
+  v3: same/correct The bracketed '[Kongress]' is a necessary grammatical addition to make the sentence coherent in German, and all numerical facts are accurate
+- [voxpopuli-train] SRC: We, as the Presidency, are convinced that you understand how crucial PNR information is in detecting travel movements and patterns, and, in particular, monitori
+  TGT: Wir, als Ratspräsidentschaft, sind überzeugt, dass Sie verstehen, wie entscheidend PNR-Daten sind, um Reisebewegungen und -muster zu erkennen, und insbesondere,
+  v2: major/om=False/add=False/correct The translation incorrectly changes 'foreign terrorist fighters and returnees' to 'foreign terrorists and returnees', omitting the specific 
+  v3: minor/correct The translation omits the specific qualifier 'foreign terrorist fighters' (Kämpfer), rendering it as 'foreign terrorists', which slightly sh
+- [voxpopuli-train] SRC: Mr President, the possible introduction of roadworthiness testing for tractors and light trailers holds inherent dangers for farmers and businesses across the E
+  TGT: Herr Präsident, die mögliche Einführung von Tüv-Prüfungen für Traktoren und leichte Anhänger birgt inhärente Gefahren für Landwirte und Unternehmen in der gesam
+  v2: minor/om=False/add=True/correct The translation replaces the generic 'roadworthiness testing' with the specific German term 'Tüv-Prüfungen', which adds a specific instituti
+  v3: same/correct The translation accurately conveys the source meaning, using 'Tüv-Prüfungen' as a natural equivalent for roadworthiness testing in this cont
+- [librispeech-960-rg] SRC: floor and before he knows what you're going to do make a sudden leap for the bed never walk near the bed
+  TGT: Boden, und bevor er weiß, was Sie tun werden, springen Sie plötzlich auf das Bett zu, gehen Sie niemals in der Nähe des Bettes.
+  v2: same/om=False/add=False/incorrect The translation uses a comma splice to join two independent clauses and lacks the necessary conjunction or punctuation to separate the final
+  v3: same/correct The translation accurately conveys the imperative instructions and the warning, maintaining the source's meaning and structure.
+  --- repairs
+- SRC: we don't get enough to do we're spenders and wasters not always from choice
+  OLD: Wir bekommen nicht genug, um zu überleben, wir sind Verschwender und Verschleuderer, und das nicht immer aus eigener Wahl.
+  NEW: Wir bekommen nicht genug, wir sind Ausgeber und Verschwender, und das nicht immer aus eigener Wahl.
+  v3: same/correct The translation accurately conveys the meaning, though 'Ausgeber' is a slightly less common term for 'spenders' in this 
+- SRC: The EIB is propping up economies which are structurally unsound as a result of their membership of the euro in Greece the EIB has invested 10 of Greek
+  OLD: Die EIB stützt Volkswirtschaften, die aufgrund ihrer Euro-Mitgliedschaft strukturell nicht tragfähig sind; in Griechenland hat die EIB zehn Prozent de
+  NEW: Die EIB stützt Volkswirtschaften, die aufgrund ihrer Euro-Mitgliedschaft strukturell nicht tragfähig sind; in Griechenland hat die EIB zehn des griech
+  v3: minor/correct The source likely contains a transcription error ('10 of' instead of '10% of'); the translation faithfully renders the l
+- SRC: as if she were a princess and accustomed all her life to go to court
+  OLD: als wäre sie eine Prinzessin und hätte ihr ganzes Leben lang am Hofe gedient
+  NEW: als wäre sie eine Prinzessin und hätte ihr ganzes Leben lang am Hofe verbracht
+  v3: minor/correct The translation shifts the nuance from being accustomed to the act of going to court to having spent her life at court.
+- SRC: but my heart is glad to see you by the mass lad i thought ye were sped where hid ye it matters not returned matcham
+  OLD: Aber mein Herz ist froh, dich bei der Messe zu sehen, mein Junge. Ich dachte, du wärst fort. Wo hast du dich versteckt? Das ist nicht wichtig. Komm zu
+  NEW: Aber mein Herz ist froh, dich bei der Messe zu sehen, mein Junge. Ich dachte, du wärst tot. Wo hast du dich versteckt? Das macht nichts. Du bist zurüc
+  v3: same/correct The archaic dialect ('sped', 'ye', 'lad') is correctly rendered into standard German while preserving the meaning and em
+  --- v2 pass, v3 fail
+- SRC: times greater than the cost of the CO emissions it prevents, because surely that is a subsidy to be aware of.
+  TGT: mal so hoch wie die Kosten der CO2-Emissionen, die es verhindert, denn das ist sicher eine Subvention, die man kennen sollte.
+  v3: major/om=False/add=False/correct The translation omits the comparative 'greater than' (rendering it as 'as high as') and changes the nuance of 'to be aware of' to 'to know'.
+- SRC: and growing cooler in a moment added with only sarcastic dryness
+  TGT: und wird in einem Moment kühler, nur mit einer sarkastischen Trockenheit hinzugefügt
+  v3: minor/om=False/add=False/incorrect The phrase 'in a moment' is mistranslated as 'in einem Moment' (in one moment) instead of 'in einem Augenblick' or similar, and the word ord
+- SRC: Under the still existing English Constitution, the Head of State cannot be subject to a higher political authority.
+  TGT: Nach der noch bestehenden englischen Verfassung kann der Staatsoberhaupt nicht einer höheren politischen Autorität unterstellt werden.
+  v3: same/om=False/add=False/incorrect The article 'der' is incorrect; 'Staatsoberhaupt' is neuter and requires 'das'.
+
+######## en-ko: flips 147 repairs 59 v2pass_v3fail 15
+- [voxpopuli-train] SRC: Finally, this past weekend, there was good news from Morocco, with a referendum endorsing the new constitution on Saturday.
+  TGT: 마지막으로, 지난 주말에 모로코에서 좋은 소식이 있었는데요, 토요일에 새로운 헌법을 지지하는 국민투표가 실시되었습니다.
+  v2: major/om=False/add=False/correct The translation incorrectly states that the referendum was held on Saturday, whereas the source says the referendum (which endorsed the cons
+  v3: minor/correct The translation uses '실시되었습니다' (was held) instead of 'endorsing' (supported/approved), which slightly shifts the focus from the result to th
+- [librispeech-960-rg] SRC: sausages the honest soul had never been taken out of his warm bed and dragg'd to the inquisition
+  TGT: 소시지, 그 정직한 영혼은 따뜻한 침대에서 꺼내져 심문대에 끌려간 적이 한 번도 없었거든요.
+  v2: major/om=False/add=False/incorrect The translation incorrectly attributes the action of being dragged to the inquisition to the 'honest soul' (sausages) rather than the person
+  v3: same/correct The translation accurately conveys the meaning and maintains a natural spoken tone, though the passive voice is slightly less idiomatic than
+- [librispeech-960-rg] SRC: as for the prince he soon awoke and looked about the palace garden where he was lying under the tree how did i get here
+  TGT: 공자님은 금세 깨어났어요, 그리고 궁원 주위를 둘러보셨죠, 나무 아래에 누워 계셨는데요. “내가 여기 어떻게 온 거지?
+  v2: major/om=False/add=False/incorrect The translation incorrectly identifies 'the prince' as 'Confucius' (공자님) and uses a run-on sentence structure with mismatched politeness lev
+  v3: same/correct The translation accurately conveys the narrative sequence and the internal monologue, using appropriate honorifics for the prince.
+- [voxpopuli-train] SRC: After ratification, we are also looking forward to strengthening political dialogue with our Vietnamese colleagues through the establishment of a joint parliame
+  TGT: 비준 이후에도 저희는 베트남 동료들과의 정치적 대화를 강화하는 것을 기대하고 있습니다. 이를 위해 의회 간 협력 프레임워크를 구축할 예정입니다.
+  v2: minor/om=True/add=False/correct The translation omits the specific detail that the cooperation framework is 'joint' (공동) and slightly shifts the logical connection between 
+  v3: minor/correct The translation splits the single sentence into two and adds '이를 위해' (to this end), which is a slight logical addition not explicitly in the
+- [librispeech-960-rg] SRC: and she knew that in all probability o'donnell had tapped in immediately on learning that she had been released from jail
+  TGT: 그리고 그녀는 오도넬이 그녀가 감옥에서 풀려났다는 걸 알게 되는 즉시, 거의 확실하게 바로 개입했을 거라는 걸 알고 있었어요.
+  v2: major/om=False/add=False/correct The translation incorrectly renders 'tapped in' (likely meaning 'got involved' or 'stepped in') as '개입' (intervene/interfere), which changes
+  v3: same/correct The translation accurately conveys the complex nested structure and the meaning of 'tapped in' (개입) and 'in all probability' (거의 확실하게).
+- [voxpopuli-train] SRC: and also on modelisation of the committed Member States' assets.
+  TGT: 그리고 또한, 약속을 한 회원국들의 자산에 대한 모델링도 포함됩니다.
+  v2: minor/om=False/add=True/correct The translation adds the verb 'is included' (포함됩니다) which is not present in the source fragment, and 'modelisation' is rendered as 'modeling
+  v3: minor/correct The source is a fragment ('and also on...') while the translation is a complete sentence ('...is included'), and 'committed' is interpreted 
+- [librispeech-960-rg] SRC: the necessity of allowing for falsehood makes it impossible to regard belief as a relation of the mind to a single object which could be said to be what is beli
+  TGT: 거짓을 허용해야 한다는 필요성 때문에, 믿음을 마음과 단일 대상 사이의 관계로 보는 것은 불가능해져요. 그 대상을 ‘믿는 것’이라고 부를 수 있는 관계가 아니게 되거든요.
+  v2: major/om=True/add=False/correct The translation omits the crucial clause 'which could be said to be what is believed' and incorrectly restructures the sentence to imply the
+  v3: minor/correct The translation conveys the core meaning but slightly distorts the logical structure of the final clause ('which could be said to be what is
+- [librispeech-960-rg] SRC: in fact he soon learned that of all the orange dwellers who are born
+  TGT: 사실 그는 곧 알게 되었어요, 태어나는 모든 오렌지 거주자들 중에서
+  v2: major/om=True/add=False/incorrect The translation is a literal fragment that omits the main clause 'he soon learned' and incorrectly translates 'orange dwellers' as 'orange r
+  v3: same/correct The translation is a faithful, literal rendering of the fragment, though the word order is stiff for natural spoken Korean.
+  --- repairs
+- SRC: We have spoken about the new horizontal social clause Article 9 that obliges the Union to consider the social consequences of decisions when making it
+  OLD: 저희가 새로운 수평적 사회 조항인 9조를 이야기했는데요, 이 조항은 연방이 정책을 수립할 때 결정의 사회적 결과를 고려하도록 의무를 지우는 내용이에요.
+  NEW: 저희가 새로운 수평적 사회 조항인 9조에 대해 이야기했는데요, 이 조항은 유럽연합이 정책을 수립할 때 결정의 사회적 결과를 고려하도록 의무를 지우는 내용이에요.
+  v3: same/correct The translation accurately conveys the meaning of the complex sentence, including the specific legal terminology and the
+- SRC: the unfortunate traveler wrapped up his parcel as he best might
+  OLD: 불운한 여행자가 최선을 다해 짐을 싸기 시작했어요.
+  NEW: 불운한 여행자가 할 수 있는 한 최선을 다해 짐을 쌌어요.
+  v3: same/correct The translation accurately conveys the meaning of 'as he best might' using '할 수 있는 한 최선을 다해'.
+- SRC: each diademed with its green and argent of eternal ice and snow and all the valley was carpeted with the blue poppies in wide unbroken fields luminous
+  OLD: 각 봉우리는 영원한 얼음과 눈의 초록색과 은빛으로 관을 쓰고 있었고, 계곡 전체는 6월 중순의 아침 하늘처럼 빛나는 파란 유채꽃으로 넓고 끊김 없이 뒤덮여 있었습니다.
+  NEW: 각 봉우리는 영원한 얼음과 눈의 초록색과 은빛으로 관을 쓰고 있었고, 계곡 전체는 6월 중순의 아침 하늘처럼 빛나는 파란 양귀비꽃으로 넓고 끊김 없이 뒤덮여 있었습니다.
+  v3: same/correct The translation accurately conveys the poetic imagery and facts, though the sentence structure is quite long and complex
+- SRC: a central plan of action involving taking waste legislation in the european union to the next level with ambitious
+  OLD: 유럽연합의 폐기물 관련 입법을 한 단계 더 끌어올리는, 야심 찬
+  NEW: 핵심적인 행동 계획인데, 유럽연합의 폐기물 관련 입법을 야심 찬 수준으로 한 단계 더 끌어올리는 내용이에요.
+  v3: minor/correct The source is an unfinished fragment ending with 'ambitious', but the translation completes the thought with 'ambitious 
+  --- v2 pass, v3 fail
+- SRC: I'm not sure how well I can treat your words there, because obviously we see a lot of retweeting by you and other Brexiteers of a lot of Russian disin
+  TGT: 거기서 제가 어떻게 말씀하신 내용을 다뤄야 할지 잘 모르겠어요. 왜냐하면 분명히 보시는 것처럼, 러시아의 허위 정보에 대해 브렉시트 지지자분들, 특히 여러분이 많이 리트윗하고 있으니까요.
+  v3: minor/om=False/add=True/correct The addition of 'especially' (특히) slightly shifts the nuance of 'you and other Brexiteers' to a hierarchy, but the core facts remain.
+- SRC: apparently the place was a harmless rooming house of fairly good quality not a sign of caroline smith appeared even during the second day
+  TGT: 그곳은 Apparently 꽤 품질이 좋은, 무해한 여관이었어요. 캐롤라인 스미스의 흔적은 두 번째 날에도 전혀 나타나지 않았어요.
+  v3: same/om=False/add=False/incorrect The English word 'Apparently' is left untranslated, and '두 번째 날' is an unnatural calque for 'the second day'.
+- SRC: and missus sellers looked actually distressed but the next moment the head of the house was himself again and exclaimed
+  TGT: 그리고 셀러 부인은 실제로 괴로워해 보였는데, 바로 다음 순간 가장은 다시 원래의 모습으로 돌아와서 외쳤어요.
+  v3: major/om=False/add=False/correct The translation uses '가장' (oldest son) instead of '가장' (head of the household), which changes the identity of the subject.
+
+######## ko-en: flips 534 repairs 102 v2pass_v3fail 11
+- [speechlm-partial] SRC: 새로 옮긴 회사가 대형 연립 근처라고 했었죠.
+  TGT: You said that the new company is located near a large apartment complex, right?
+  v2: major/om=False/add=False/correct The translation incorrectly interprets '회사' (company) as the subject, whereas the source implies the speaker's new residence or office is ne
+  v3: minor/correct The source refers to a 'large row house/terraced house' (대형 연립), whereas the translation uses 'apartment complex', which is a different type
+- [speechlm-partial] SRC: 예약되어 있던 내용이 마침.
+  TGT: The content that had been scheduled, just in time.
+  v2: major/om=True/add=False/incorrect The translation misinterprets '마침' (which means 'finished' or 'ended' in this context) as 'just in time' and fails to convey the completion 
+  v3: minor/correct The translation is a fragment that mirrors the source, but 'just in time' is a slightly loose interpretation of the abrupt ending '마침' (whic
+- [speechlm-partial] SRC: 안녕하세요 기사님.
+  TGT: Hello, driver.
+  v2: minor/om=True/add=False/correct The translation omits the honorific nuance of '기사님' (polite 'driver') and the specific greeting '안녕하세요' is simplified to 'Hello'.
+  v3: same/correct Accurate and natural translation of the greeting.
+- [speechlm-partial] SRC: 여기 감산 스위트빌 쪽인데 찾으러 오시겠어요?
+  TGT: We're at the Gam-san Sweet Villa here. Would you like to come pick it up?
+  v2: major/om=False/add=False/correct The translation incorrectly interprets the location marker '쪽' (side/area) as a specific building name 'Sweet Villa' and misinterprets the i
+  v3: minor/correct The translation changes the meaning of 'find/locate' (찾으러) to 'pick up' and adds a specific object 'it' not present in the source.
+- [speechlm-partial] SRC: 안녕하세요 기사님.
+  TGT: Hello, driver.
+  v2: minor/om=True/add=False/correct The translation omits the honorific nuance of '기사님' (polite 'driver') and the specific greeting '안녕하세요' is simplified to 'Hello'.
+  v3: same/correct Accurate and natural translation of the greeting.
+- [speechlm-partial] SRC: 여기 청실빌라 큰길인데요.
+  TGT: This is the main road in front of Cheongsil Villa.
+  v2: minor/om=False/add=True/correct The translation adds the preposition 'in front of' which is not explicitly present in the source text, though it is a plausible contextual i
+  v3: same/correct The translation accurately conveys the location and the nature of the road.
+- [speechlm-partial] SRC: 안녕하십니까.
+  TGT: Hello.
+  v2: minor/om=True/add=False/correct The source is a formal greeting, while the translation is a neutral 'Hello', losing the specific register of formality.
+  v3: same/correct The formal greeting is accurately translated into a standard English greeting.
+- [speechlm-partial] SRC: 아빠가 오라고 해도 싫다고요.
+  TGT: Even if Dad tells him to come, he says no.
+  v2: major/om=False/add=True/correct The translation incorrectly changes the subject from the speaker ('I') to a third person ('he').
+  v3: same/correct The implicit subject and object are correctly inferred from context, and the translation is natural spoken English.
+  --- repairs
+- SRC: 진우주택 옆에 있는 마트 이번주까지 특별 할인 안 돼요.
+  OLD: The special discount at the mart next to Jinwoo Housing is not available until the end of this week.
+  NEW: The special discount at the mart next to Jinwoo Housing is not available through the end of this week.
+  v3: same/correct The translation accurately conveys the location and the duration of the discount.
+- SRC: 강원도 시군 의회 의장 협의회는 오늘부터 삼박 사일 일정으로 제주도로 현장 비교 견학을 떠난다고 합니다.
+  OLD: The Council of Mayors of the City and County Councils in Gangwon Province is set to depart for Jeju Island today for a three-night, four-day on-site c
+  NEW: The Council of Speakers of the City and County Councils in Gangwon Province is set to depart for Jeju Island today for a three-night, four-day on-site
+  v3: same/correct The translation accurately conveys the subject, destination, duration, and purpose of the trip.
+- SRC: 이 고전 시가에는 새 호배 밥과 다섯 호배 죽을 만드는데 연기가 많구나라는 구절이 나온다.
+  OLD: In this classical poem, there is a line that says, "Make rice with five new scoops and porridge with five scoops, and there is a lot of smoke.
+  NEW: In this classical poem, there is a line that says, “Make one scoop of rice and five scoops of porridge, and there is a lot of smoke.
+  v3: same/correct The translation accurately conveys the content of the poem and the meta-commentary, though the quoted line is slightly l
+- SRC: 해 주시던데.
+  OLD: They are doing it for us.
+  NEW: They are doing it, apparently.
+  v3: minor/correct The source implies a habitual or ongoing action ('have been doing'), while the translation uses the present continuous (
+  --- v2 pass, v3 fail
+- SRC: 아니요 이번에는 천 후 명품빌 비동 앞으로 배송 부탁합니다.
+  TGT: No, this time, please deliver it to the front of the Cheon-hu Luxury Villa.
+  v3: major/om=True/add=False/correct The specific building name 'Bee-dong' (비동) is omitted from the address.
+- SRC: 현대카드 0053033300595244으로 소비지원금을 신청하고 보니 실적 기준이 76만 9천 원이네요.
+  TGT: I applied for the consumption support fund using Hyundai Card number 0053033300595244, and I see that the performance criterion is 769,000 won.
+  v3: None/om=None/add=None/None None
+- SRC: 손님 반도 하이츠 타운 쪽으로 가는 대리운전 부른 거 맞으신가요?
+  TGT: Did you call a designated driver to go to the side of Hando Heights Town?
+  v3: major/om=False/add=False/correct The translation incorrectly renders '반도' (Band) as 'Hando' and '쪽' (direction/side) as 'side of', distorting the location name and meaning.

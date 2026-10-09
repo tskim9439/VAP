@@ -1,0 +1,8 @@
+de-en/u-00000.jsonl.gz {'v2fail': 217, 'flip_same': 142, 'flip_minor': 35, 'repaired': 40, 'repair_ok': 26} units 2145 · v2 0.899 · current 0.993 · strict(est) 0.988 · repair success 0.65
+de-en/u-00001.jsonl.gz {'v2fail': 251, 'flip_same': 171, 'flip_minor': 40, 'repaired': 40, 'repair_ok': 23} units 2250 · v2 0.888 · current 0.992 · strict(est) 0.985 · repair success 0.57
+en-de/u-00000.jsonl.gz {'v2fail': 225, 'repair_ok': 60, 'repaired': 98, 'flip_same': 87, 'flip_minor': 40} units 1024 · v2 0.780 · current 0.963 · strict(est) 0.948 · repair success 0.61
+en-de/u-00001.jsonl.gz {'v2fail': 222, 'flip_same': 140, 'repaired': 48, 'repair_ok': 31, 'flip_minor': 34} units 1342 · v2 0.835 · current 0.987 · strict(est) 0.978 · repair success 0.65
+en-ko/u-00000.jsonl.gz {'v2fail': 285, 'repair_ok': 59, 'repaired': 138, 'flip_same': 82, 'flip_minor': 65} units 1024 · v2 0.722 · current 0.923 · strict(est) 0.887 · repair success 0.43
+en-ko/u-00001.jsonl.gz {'v2fail': 245, 'flip_minor': 52, 'repaired': 69, 'repair_ok': 43, 'flip_same': 124} units 1342 · v2 0.817 · current 0.981 · strict(est) 0.966 · repair success 0.62
+ko-en/u-00000.jsonl.gz {'v2fail': 700, 'flip_same': 396, 'flip_minor': 138, 'repaired': 166, 'repair_ok': 102} units 4518 · v2 0.845 · current 0.986 · strict(est) 0.974 · repair success 0.61
+ko-en/u-00001.jsonl.gz {'v2fail': 589, 'flip_minor': 119, 'repair_ok': 88, 'repaired': 127, 'flip_same': 343} units 3676 · v2 0.840 · current 0.989 · strict(est) 0.979 · repair success 0.69

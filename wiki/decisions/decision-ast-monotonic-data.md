@@ -11,6 +11,7 @@ sources:
   - '[[output-monotonic-ast-translation-methods-20261008]]'
   - '[[output-ast-mono-generation-20261009]]'
   - '[[2026-10-09-ast-mono-speedup]]'
+  - '[[2026-10-09-ast-fix-validation]]'
   - https://arxiv.org/abs/2609.05799
 related:
   - '[[decision-stage1-lookahead-320-1040ms]]'
@@ -67,6 +68,10 @@ related:
         - 예(δ4): 청크 77 `<SPK_A> it <TRANS> Es`, 78 `<SPK_A> is`, 81 `about <TRANS> geht um`, 86 `<SPK_A> shared`, 92 `values <TRANS> gemeinsame Werte`(각 청크 끝 `<NEXT_AUDIO>`)
         - 정정(2026-10-09): 확정 때 보인 예시에는 81·92 청크에도 `<SPK_A>` 가 있었다. 그러나 바로 앞 구간이 이미 전사라 규칙상 태그가 없다. 구현과 테스트(`tests/test_ast_dataset.py`)는 규칙을 따른다.
      4. **텍스트:** 전사는 정규형(소문자·무구두점)이다. 번역은 생성된 표기형(구두점·대소문자)이다.
+
+10. **재판정·수리**(사용자, 2026-10-09: 생성이 끝나면 바로 진행):
+    - v2 탈락 단위를 판정 v3 로 다시 판정한다. 엇갈리면 v3 내용 "same" 만 인정하고, 나머지는 한 번 수리한 뒤 다시 판정한다.
+    - 근거와 수치: [[output-ast-mono-generation-20261009]] 수리 단계 절
 
 ## stable prefix 적용 (arXiv 2609.05799)
 - 논문: 문장 전체 번역 f 와 원문 prefix 마다의 번역 pᵢ 를 만든다. mᵢ = max_{j≤i} lcp(pⱼ, f) 까지를 "안정된 prefix" 로 확정한다(영→독은 단어 단위, 영→일·중은 글자 단위). 이 데이터로 Qwen3-8B 를 미세조정해 지연-품질 균형이 좋아졌다(영→독·일·중; FLEURS·WMT24++·CoVoST2).

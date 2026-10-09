@@ -392,6 +392,95 @@ def cmd_run(a):
               f"tok={s['out_tokens']} {s['elapsed_s']} s ({s['out_tokens'] / max(1e-9, s['gen_s']):.0f} tok/s)", flush=True)
 
 
+# ───────────────────────── fix: judge v3 + repair (GPU) ─────────────────────────
+def process_fix(eng, root, gen_dir, direction, name, out_path, validate=False):
+    """Units that failed the v2 gate: judge again with judge v3 (fragments and fillers stated, labelled examples); those still
+    failing get ONE repair translation (the judge note as feedback) that is judged with v3 again. Emission times of a repaired
+    translation come from the original prefix translations (stable prefix against the new full translation).
+    A unit the two judges disagree on is accepted as is only when judge v3 says content "same" (plus no omission/addition and
+    grammar not incorrect); a v3 "minor" goes to repair instead (2026-10-09 validation: v3 alone also lets some real omissions
+    through as "minor"). The repaired translation passes with the normal gate.
+    validate=True also re-judges the units that passed v2 (agreement check with the normal gate; nothing is repaired for them).
+    final per unit: v2 (passed before) | v3 (passes judge v3, content same) | repair (repaired translation passes) | fail."""
+    src_code, tgt_code = direction.split("-")
+    src, tgt = P.LANG[src_code], P.LANG[tgt_code]
+    rows = [json.loads(l) for l in gzip.open(root / gen_dir / direction / f"{name}.jsonl.gz", "rt", encoding="utf-8")]
+    t0, s0, n0 = time.monotonic(), eng.secs, eng.n_out
+    pick = rows if validate else [r for r in rows if not r["pass_gate"]]
+    jt = [r for r in pick if r["translation"]]
+    j1 = dict(zip([r["uid"] for r in jt], (P.parse_json(x) for x in
+                                            eng([P.p_judge_v3(src, tgt, r["source"], r["translation"]) for r in jt], 200, None))))
+    ok3 = lambda r: P.gate(j1.get(r["uid"])) and (r["pass_gate"] or (j1.get(r["uid"]) or {}).get("content") == "same")
+    rep = [r for r in pick if not r["pass_gate"] and not ok3(r)]
+    note = lambda r: (j1.get(r["uid"]) or {}).get("note") or (r.get("judge") or {}).get("note")
+    new = dict(zip([r["uid"] for r in rep], (P.clean(x) for x in
+                                             eng([P.p_repair_v3(src, tgt, r["source"], r["translation"], note(r)) for r in rep], 320, None))))
+    rj = [r for r in rep if new[r["uid"]]]
+    j2 = dict(zip([r["uid"] for r in rj], (P.parse_json(x) for x in
+                                            eng([P.p_judge_v3(src, tgt, r["source"], new[r["uid"]]) for r in rj], 200, None))))
+    out, n = [], Counter()
+    for r in pick:
+        u = r["uid"]
+        d = dict(uid=u, row=r["row"], k=r["k"], n=r["n"], set=r["set"], direction=direction, pass_v2=r["pass_gate"],
+                 judge_v3=j1.get(u), pass_v3=ok3(r))
+        if u in new:
+            d.update(repair_translation=new[u], repair_judge=j2.get(u), pass_repair=P.gate(j2.get(u)))
+            if new[u]:
+                wt = P.stable_word_times(new[u], r["prefixes"], r["times"], tgt)
+                d.update(repair_word_times=wt, repair_latency=P.latency(wt, r["times"][-1]))
+        d["final"] = "v2" if r["pass_gate"] else "v3" if d["pass_v3"] else "repair" if d.get("pass_repair") else "fail"
+        n[d["final"]] += 1
+        if validate: n[f"v2{'pass' if r['pass_gate'] else 'fail'}_v3{'pass' if d['pass_v3'] else 'fail'}"] += 1
+        out.append(d)
+    tmp = out_path.with_name(out_path.name + f".partial-{os.environ.get('SLURM_JOB_ID', 'local')}-{os.getpid()}")
+    with gzip.open(tmp, "wt", encoding="utf-8") as f:
+        for d in out:
+            f.write(json.dumps(d, ensure_ascii=False) + "\n")
+    summ = dict(direction=direction, shard=name, units=len(rows), picked=len(pick), repaired=len(rep), validate=validate,
+                counts=dict(n), out_tokens=eng.n_out - n0, gen_s=round(eng.secs - s0, 1), elapsed_s=round(time.monotonic() - t0, 1),
+                prompt_tokens=None, judge="v3", code_sha256=code_sha(), job=os.environ.get("SLURM_JOB_ID"), host=os.uname().nodename,
+                finished=time.strftime("%F %T"))
+    out_path.with_name(name + ".summary.json").write_text(json.dumps(summ, ensure_ascii=False, indent=1))
+    os.replace(tmp, out_path)
+    return summ
+
+
+def cmd_fix(a):
+    root = Path(a.root)
+    man = json.loads((root / "units" / "manifest.json").read_text())
+    rank = a.rank if a.rank is not None else int(os.environ.get("SLURM_PROCID", 0))
+    world = a.world if a.world is not None else int(os.environ.get("SLURM_NTASKS", 1))
+    fix = root / a.fix_dir
+    items = [(d, n) for d, n in work_items(man) if (root / a.gen_dir / d / f"{n}.jsonl.gz").exists()]
+    if a.limit:
+        per = Counter(); keep = []
+        for d, n in items:
+            if per[d] < a.limit:
+                keep.append((d, n)); per[d] += 1
+        items = keep
+    mine = items[rank::world]
+    todo = [(d, n) for d, n in mine if not (fix / d / f"{n}.jsonl.gz").exists()]
+    print(f"rank {rank}/{world}: {len(mine)} generated items, {len(todo)} to fix ({a.fix_dir}, validate {a.validate})", flush=True)
+    if not todo:
+        return
+    eng = P.VLLMEngine(a.model, a.max_num_seqs, a.quantization, a.gpu_memory_utilization)
+    for d, n in todo:
+        out = fix / d / f"{n}.jsonl.gz"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            s = process_fix(eng, root, a.gen_dir, d, n, out, a.validate)
+        except Exception as exc:  # noqa: BLE001
+            err = root / "errors"
+            err.mkdir(exist_ok=True)
+            (err / f"fix.{d}.{n}.{os.environ.get('SLURM_JOB_ID', 'local')}.{os.getpid()}.json").write_text(
+                json.dumps(dict(direction=d, shard=n, error=f"{type(exc).__name__}: {exc}", traceback=traceback.format_exc()),
+                           ensure_ascii=False, indent=1))
+            print(f"FIX_ERROR rank={rank} {d}/{n} {type(exc).__name__}: {str(exc)[:200]}", flush=True)
+            continue
+        print(f"FIX_DONE rank={rank} {d}/{n} picked={s['picked']} repaired={s['repaired']} {json.dumps(s['counts'])} "
+              f"{s['elapsed_s']} s", flush=True)
+
+
 # ───────────────────────── status ─────────────────────────
 def cmd_status(a):
     root = Path(a.root)
@@ -441,6 +530,19 @@ def main():
     q.add_argument("--rank", type=int, default=None)
     q.add_argument("--world", type=int, default=None)
     q.set_defaults(fn=cmd_run)
+    q = sub.add_parser("fix")
+    q.add_argument("--root", required=True)
+    q.add_argument("--gen-dir", default="gen-v3-bf16")
+    q.add_argument("--fix-dir", default="fix-gen-v3-bf16", help="output folder under --root")
+    q.add_argument("--validate", action="store_true", help="also re-judge units that passed v2 (agreement check)")
+    q.add_argument("--limit", type=int, default=0, help="at most this many generated shards per direction (validation)")
+    q.add_argument("--model", default="/soundai/Model/Qwen3.8-27B")
+    q.add_argument("--max-num-seqs", type=int, default=1024)
+    q.add_argument("--quantization", default=None)
+    q.add_argument("--gpu-memory-utilization", type=float, default=0.95)
+    q.add_argument("--rank", type=int, default=None)
+    q.add_argument("--world", type=int, default=None)
+    q.set_defaults(fn=cmd_fix)
     q = sub.add_parser("status")
     q.add_argument("--root", required=True)
     q.add_argument("--gen-dir", default="gen")

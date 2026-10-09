@@ -6,6 +6,9 @@ stable-prefix commit time of its word (row/stream time, s). This is the translat
 
 A row is kept only when every unit is present, translated, judged and passes the gate (content same/minor, no omission or
 addition, grammar not incorrect); otherwise it is dropped with a reason (the row stays an ASR-only item in training).
+--fix-dir overlays the fix step (ast_mono_generate.py fix: judge v3, then one repair): a unit that failed v2 counts when it
+passes judge v3 (original translation) or when its repaired translation passes (repaired text and emission times). Shards
+whose fix file is not there yet are not built.
 
   python experiments/ast_build_targets.py --root DIR [--gen-dir gen-v3-bf16] [--tokenizer CKPT] [--procs 32]
 Output: DIR/targets-<gen-dir>/<direction>/u-NNNNN.jsonl.gz rows {id, set, direction, src, tgt, n_units, text, tokens: [[tid, t]],
@@ -74,13 +77,37 @@ def row_target(units):
                                pre_end=round(sum(pre) / len(pre), 3) if pre else None)), None
 
 
+def apply_fix(u, f):
+    """unit + its fix record (or None) -> (unit as used for the targets, how it passes: v2 | v3 | repair | fail)."""
+    if u["pass_gate"]:
+        return u, "v2"
+    if f is None or f["final"] == "fail":
+        return u, "fail"
+    if f["final"] == "v3":
+        return dict(u, pass_gate=True, judge=f["judge_v3"]), "v3"
+    return dict(u, pass_gate=True, translation=f["repair_translation"], word_times=f["repair_word_times"],
+                latency=f.get("repair_latency"), judge=f["repair_judge"]), "repair"
+
+
+def load_rows(gen_path, fix_path=None):
+    """gen shard (+ fix shard) -> ({row id: [units]}, unit Counter by how they pass)."""
+    fx = {}
+    if fix_path:
+        for line in gzip.open(fix_path, "rt", encoding="utf-8"):
+            f = json.loads(line); fx[f["uid"]] = f
+    rows, how = defaultdict(list), Counter()
+    for line in gzip.open(gen_path, "rt", encoding="utf-8"):
+        u0 = json.loads(line)
+        u, h = apply_fix(u0, fx.get(u0["uid"]))
+        rows[u["row"]].append(u); how[f"unit_{h}"] += 1
+    return rows, how
+
+
 def process(job):
-    src_path, out_path, direction = job
+    src_path, out_path, direction, fix_path = job
     s, t = direction.split("-")
-    rows, reasons, n_tok = defaultdict(list), Counter(), 0
-    for line in gzip.open(src_path, "rt", encoding="utf-8"):
-        u = json.loads(line)
-        rows[u["row"]].append(u)
+    reasons, n_tok = Counter(), 0
+    rows, _ = load_rows(src_path, fix_path)
     kept = []
     for rid, us in rows.items():
         r, why = row_target(us)
@@ -106,16 +133,20 @@ def main():
     ap.add_argument("--gen-dir", default="gen-v3-bf16")
     ap.add_argument("--tokenizer", default=CKPT, help="training tokenizer (the starting checkpoint)")
     ap.add_argument("--procs", type=int, default=32)
+    ap.add_argument("--fix-dir", default=None, help="overlay the fix step (e.g. fix-gen-v3-bf16); output targets-<fix-dir>")
     a = ap.parse_args()
     root = Path(a.root)
-    gen, out = root / a.gen_dir, root / f"targets-{a.gen_dir}"
+    gen = root / a.gen_dir
+    fix = root / a.fix_dir if a.fix_dir else None
+    out = root / f"targets-{a.fix_dir or a.gen_dir}"
+    fix_of = lambda d, name: (fix / d / name) if fix else None
     jobs = []
     for d in sorted(p.name for p in gen.iterdir() if p.is_dir()):
         (out / d).mkdir(parents=True, exist_ok=True)
         for f in sorted((gen / d).glob("u-*.jsonl.gz")):
             dst = out / d / f.name
-            if not dst.exists():
-                jobs.append((str(f), dst, d))
+            if not dst.exists() and (fix is None or fix_of(d, f.name).exists()):
+                jobs.append((str(f), dst, d, str(fix_of(d, f.name)) if fix else None))
     print(f"{len(jobs)} shards to build -> {out}", flush=True)
     t0 = time.monotonic()
     if jobs:
@@ -131,9 +162,8 @@ def main():
             if not (out / d / f.name).exists():
                 continue
             s["shards"] += 1
-            rows = defaultdict(list)
-            for line in gzip.open(f, "rt", encoding="utf-8"):
-                u = json.loads(line); rows[u["row"]].append(u)
+            rows, how = load_rows(f, fix_of(d, f.name))
+            s.update(how)
             for us in rows.values():
                 r, why = row_target(us)
                 s["rows"] += 1
@@ -141,7 +171,7 @@ def main():
             for line in gzip.open(out / d / f.name, "rt", encoding="utf-8"):
                 s["tokens"] += len(json.loads(line)["tokens"])
     summ = {d: dict(s, kept_share=round(s["kept"] / max(1, s["rows"]), 4)) for d, s in summ.items()}
-    (out / "summary.json").write_text(json.dumps(dict(gen_dir=a.gen_dir, tokenizer=a.tokenizer, built=time.strftime("%F %T"),
+    (out / "summary.json").write_text(json.dumps(dict(gen_dir=a.gen_dir, fix_dir=a.fix_dir, tokenizer=a.tokenizer, built=time.strftime("%F %T"),
                                                       directions=summ), ensure_ascii=False, indent=1))
     print(json.dumps(summ, ensure_ascii=False, indent=1))
 

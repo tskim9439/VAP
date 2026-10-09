@@ -82,3 +82,55 @@ def test_v3_prompt_is_cacheable():
         msgs = P.chat(a)
         assert [m["role"] for m in msgs] == ["system", "user"]
     assert P.chat("x") == [{"role": "user", "content": "x"}]
+
+
+class _FakeEngine:
+    """Answers by prompt kind: judge v3 -> canned JSON per translation, repair -> canned new translation."""
+    def __init__(self, judge, repair):
+        self.judge, self.repair, self.secs, self.n_out = judge, repair, 0.0, 0
+
+    def __call__(self, prompts, max_new_tokens, batch):
+        out = []
+        for system, user in prompts:
+            if user.startswith("Source: "):
+                out.append(G.json.dumps(self.judge[user.split("Translation: ", 1)[1]]))
+            else:
+                out.append(self.repair[user.split("\n\n")[1]])
+        return out
+
+
+def _j(content, grammar="correct", omission=False, addition=False):
+    return dict(content=content, omission=omission, addition=addition, grammar=grammar, naturalness=4, note="n")
+
+
+def test_fix_strict_flip_and_repair(tmp_path):
+    import gzip
+    times = [0.5, 1.0, 1.5]
+    base = dict(set="s", n=1, k=0, seg=0, src="pnc_text", direction="en-de", times=times,
+                prefixes=["Ich", "Ich habe"], word_times=[0.5, 1.0, 1.5], latency=None)
+    rows = [dict(base, uid="a#0", row="a", source="I have time", translation="Ich habe Zeit", judge=_j("same"), pass_gate=True),
+            dict(base, uid="b#0", row="b", source="I have time", translation="Ich habe Zeitt", judge=_j("major"), pass_gate=False),
+            dict(base, uid="c#0", row="c", source="I have it", translation="Ich habe es", judge=_j("major"), pass_gate=False),
+            dict(base, uid="d#0", row="d", source="I have no", translation="Ich habe kein", judge=_j("major"), pass_gate=False)]
+    g = tmp_path / "gen" / "en-de"; g.mkdir(parents=True)
+    with gzip.open(g / "u-00000.jsonl.gz", "wt", encoding="utf-8") as f:
+        for r in rows:
+            f.write(G.json.dumps(r) + "\n")
+    judge = {"Ich habe Zeit": _j("same"), "Ich habe Zeitt": _j("same"),          # b: v3 same -> accepted as is
+             "Ich habe es": _j("minor"),                                          # c: v3 minor -> repaired
+             "Ich habe es wirklich": _j("same"),
+             "Ich habe kein": _j("major", omission=True), "Ich habe nichts": _j("major")}   # d: repair fails too
+    eng = _FakeEngine(judge, {"I have it": "Ich habe es wirklich", "I have no": "Ich habe nichts"})
+    out = tmp_path / "fix" / "en-de" / "u-00000.jsonl.gz"; out.parent.mkdir(parents=True)
+    s = G.process_fix(eng, tmp_path, "gen", "en-de", "u-00000", out)
+    fx = {x["uid"]: x for x in (G.json.loads(l) for l in gzip.open(out, "rt", encoding="utf-8"))}
+    assert set(fx) == {"b#0", "c#0", "d#0"} and s["counts"] == {"v3": 1, "repair": 1, "fail": 1}
+    assert fx["b#0"]["final"] == "v3" and fx["c#0"]["final"] == "repair" and fx["d#0"]["final"] == "fail"
+    assert fx["c#0"]["repair_translation"] == "Ich habe es wirklich" and len(fx["c#0"]["repair_word_times"]) == 4
+    assert fx["c#0"]["repair_word_times"][:2] == [0.5, 1.0]                      # 'Ich habe' stays stable from the prefixes
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "experiments"))
+    import ast_build_targets as B
+    rows_t, how = B.load_rows(str(g / "u-00000.jsonl.gz"), str(out))
+    assert how == {"unit_v2": 1, "unit_v3": 1, "unit_repair": 1, "unit_fail": 1}
+    assert rows_t["c"][0]["translation"] == "Ich habe es wirklich" and rows_t["c"][0]["pass_gate"]
+    assert B.row_target(rows_t["d"])[1] == "gate" and B.row_target(rows_t["b"])[0] is not None
