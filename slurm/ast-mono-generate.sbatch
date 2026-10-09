@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # Monotonic AST targets, GPU stage (experiments/ast_mono_generate.py run): Qwen3.8-27B on vLLM 0.30.0, one engine per GPU,
-# four directions over the prepared source units. Every node first unpacks the vLLM env tar to its local /tmp
-# (scripts/setup-vllm-env.sh stage), then runs 8 workers. Preemption or the time limit requeues the job; finished
-# work items (gen/<direction>/u-NNNNN.jsonl.gz) are skipped on restart. Submit with slurm/submit-ast-mono-generate.sh
+# four directions over the prepared source units. Settings via --export: PROMPT (v2|v3), QUANT (e.g. fp8, empty = bf16),
+# GEN_DIR (output folder under ROOT), MEM_UTIL, MAX_SEQS. Every node first unpacks the vLLM env tar to its local /tmp
+# (scripts/setup-vllm-env.sh stage), then runs 8 workers. Preemption requeues the job (a time-limit stop needs a resubmit);
+# finished work items (<GEN_DIR>/<direction>/u-NNNNN.jsonl.gz) are skipped on restart. Submit with slurm/submit-ast-mono-generate.sh
 # (inputs via sbatch --export only).
-#SBATCH --job-name=SA_EVAL_Fullduplex
-#SBATCH --partition=hpc
+#SBATCH --job-name=SA_SFT_FullDuplex
+#SBATCH --partition=apex
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
 #SBATCH --gres=gpu:8
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=0
-#SBATCH --time=24:00:00
 #SBATCH --requeue
 #SBATCH --open-mode=append
 #SBATCH --exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4
@@ -21,8 +21,11 @@ set -euo pipefail
 PROJECT=${PROJECT:-/soundai/users/tskim/VAPKT}
 ROOT=${ROOT:?ROOT 를 --export 로 주세요}
 VLLM_ENV=${VLLM_ENV:-/tmp/sa_tskim/vllm-0.30}
+PROMPT=${PROMPT:-v3}; QUANT=${QUANT-}; GEN_DIR=${GEN_DIR:-gen-v3-bf16}; MEM_UTIL=${MEM_UTIL:-0.95}; MAX_SEQS=${MAX_SEQS:-1024}
+export PROMPT QUANT GEN_DIR MEM_UTIL MAX_SEQS
 cd "$PROJECT"
 echo "[$(date '+%F %T')] job $SLURM_JOB_ID nodes=$SLURM_JOB_NUM_NODES ($SLURM_JOB_NODELIST) restart=${SLURM_RESTART_COUNT:-0} ROOT=$ROOT"
+echo "  prompt=$PROMPT quantization=${QUANT:-bf16} gen_dir=$GEN_DIR mem_util=$MEM_UTIL max_seqs=$MAX_SEQS"
 test -f "$ROOT/units/manifest.json"
 test "${SLURM_NTASKS:?}" -eq "$((SLURM_JOB_NUM_NODES * 8))"
 export VLLM_ENV
@@ -41,8 +44,9 @@ srun --ntasks="$SLURM_NTASKS" --ntasks-per-node=8 --cpus-per-task="$SLURM_CPUS_P
     --gpus-per-task=1 --gpu-bind=single:1 --kill-on-bad-exit=0 --label \
     /bin/bash -c 'C=/tmp/sa_tskim/cache/r$SLURM_LOCALID; mkdir -p $C;
       VLLM_CACHE_ROOT=$C/vllm TRITON_CACHE_DIR=$C/triton XDG_CACHE_HOME=$C TORCHINDUCTOR_CACHE_DIR=$C/inductor \
-      exec "$VLLM_ENV/bin/python" -u experiments/ast_mono_generate.py run --root "$ROOT"'
+      exec "$VLLM_ENV/bin/python" -u experiments/ast_mono_generate.py run --root "$ROOT" --prompt "$PROMPT" \
+        --gen-dir "$GEN_DIR" ${QUANT:+--quantization "$QUANT"} --gpu-memory-utilization "$MEM_UTIL" --max-num-seqs "$MAX_SEQS"'
 worker_rc=$?
-"$VLLM_ENV/bin/python" experiments/ast_mono_generate.py status --root "$ROOT"
+"$VLLM_ENV/bin/python" experiments/ast_mono_generate.py status --root "$ROOT" --gen-dir "$GEN_DIR"
 set -e
 exit "$worker_rc"

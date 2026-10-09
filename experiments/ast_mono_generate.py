@@ -5,6 +5,10 @@ Same recipe as the v2 pilot (experiments/ast_mono_pilot.py, decision-ast-monoton
 thinking off; per source unit one monotonic translation (salami prompt v2), a judge verdict (gate) and a translation of
 EVERY source word prefix; the stable prefix (Hoang, Axelrod & Post, arXiv 2609.05799) gives each target word the end
 time of the source word at which it became stable. Only monotonic translations are made (no normal translation).
+--prompt v3 (chosen 2026-10-09) puts the instruction and examples in a fixed system message per direction that is longer
+than one vLLM block (784 tokens for Qwen3.8), so ~93 % of prompt tokens come from the prefix cache: 2.98x faster than v2
+on a real shard (with --gpu-memory-utilization 0.95 --max-num-seqs 1024) and +2 points gate pass; fp8 adds 1.2x but
+loses ~1.3 points (wiki output-ast-mono-generation-20261009).
 
 Source units. Rows come from the lists of the 0.6B Stage 1 run (q06-s1m3-d10): speechlm main + ASR words (English,
 Korean), speechlm short (Korean), YODAS-de tn2 (German); deduplicated by row id. Per row segment the source text is
@@ -302,16 +306,18 @@ def work_items(man):
     return items
 
 
-def process(eng, root, direction, name, out_path):
+def process(eng, root, direction, name, out_path, prompt="v2"):
     src_code, tgt_code = direction.split("-")
     src, tgt = P.LANG[src_code], P.LANG[tgt_code]
+    tr = ((lambda x, c=True: P.p_translate_v3(src, tgt, x, c)) if prompt == "v3"
+          else (lambda x, c=True: P.p_translate(src, tgt, x, True, c)))
     units = [json.loads(l) for l in gzip.open(root / "units" / src_code / f"{name}.jsonl.gz", "rt", encoding="utf-8")]
     t0, s0, n0, p0, c0, x0 = time.monotonic(), eng.secs, eng.n_out, eng.n_prompt, eng.n_cached, eng.n_truncated
     prompts, keys = [], []
     for k, u in enumerate(units):
-        prompts.append(P.p_translate(src, tgt, " ".join(u["tokens"]), True)); keys.append((k, 0))
+        prompts.append(tr(" ".join(u["tokens"]))); keys.append((k, 0))
         for i in range(1, len(u["tokens"])):
-            prompts.append(P.p_translate(src, tgt, " ".join(u["tokens"][:i]), True, complete=False)); keys.append((k, i))
+            prompts.append(tr(" ".join(u["tokens"][:i]), False)); keys.append((k, i))
     full, pref = [""] * len(units), [[None] * (len(u["tokens"]) - 1) for u in units]
     # full translations (320 new tokens) and prefixes (160) in one engine call per length budget
     for budget, sel in ((320, [j for j, (_, i) in enumerate(keys) if i == 0]), (160, [j for j, (_, i) in enumerate(keys) if i > 0])):
@@ -346,7 +352,7 @@ def process(eng, root, direction, name, out_path):
                 pass_gate=n_pass, al_mean=round(sum(lat) / len(lat), 3) if lat else None,
                 out_tokens=eng.n_out - n0, prompt_tokens=eng.n_prompt - p0, cached_tokens=eng.n_cached - c0,
                 truncated=eng.n_truncated - x0, gen_s=round(eng.secs - s0, 1), elapsed_s=round(time.monotonic() - t0, 1),
-                prompt_version=P.PROMPT_VERSION, code_sha256=code_sha(), job=os.environ.get("SLURM_JOB_ID"),
+                prompt_version=prompt, engine=eng.config, code_sha256=code_sha(), job=os.environ.get("SLURM_JOB_ID"),
                 host=os.uname().nodename, finished=time.strftime("%F %T"))
     out_path.with_name(name + ".summary.json").write_text(json.dumps(summ, ensure_ascii=False, indent=1))
     os.replace(tmp, out_path)                                  # the gen file appears last = item done
@@ -359,18 +365,21 @@ def cmd_run(a):
     rank = a.rank if a.rank is not None else int(os.environ.get("SLURM_PROCID", 0))
     world = a.world if a.world is not None else int(os.environ.get("SLURM_NTASKS", 1))
     mine = work_items(man)[rank::world]
-    todo = [(d, n) for d, n in mine if not (root / "gen" / d / f"{n}.jsonl.gz").exists()]
-    print(f"rank {rank}/{world}: {len(mine)} items, {len(todo)} to do", flush=True)
+    gen = root / a.gen_dir
+    todo = [(d, n) for d, n in mine if not (gen / d / f"{n}.jsonl.gz").exists()]
+    print(f"rank {rank}/{world}: {len(mine)} items, {len(todo)} to do ({a.gen_dir}, prompt {a.prompt}, "
+          f"quantization {a.quantization})", flush=True)
     if not todo:
         return
-    eng = P.VLLMEngine(a.model, a.max_num_seqs)
+    eng = P.VLLMEngine(a.model, a.max_num_seqs, a.quantization, a.gpu_memory_utilization)
+    eng.config = dict(quantization=a.quantization, max_num_seqs=a.max_num_seqs, gpu_memory_utilization=a.gpu_memory_utilization)
     for d, n in todo:
-        out = root / "gen" / d / f"{n}.jsonl.gz"
+        out = gen / d / f"{n}.jsonl.gz"
         if out.exists():
             continue
         out.parent.mkdir(parents=True, exist_ok=True)
         try:
-            s = process(eng, root, d, n, out)
+            s = process(eng, root, d, n, out, a.prompt)
         except Exception as exc:  # noqa: BLE001  (one bad item must not stop the other ranks)
             err = root / "errors"
             err.mkdir(exist_ok=True)
@@ -393,8 +402,8 @@ def cmd_status(a):
     for d, n in items:
         p = per.setdefault(d, Counter())
         p["items"] += 1; p["words"] += words[(d.split("-")[0], n)]
-        sp = root / "gen" / d / f"{n}.summary.json"
-        if (root / "gen" / d / f"{n}.jsonl.gz").exists() and sp.exists():
+        sp = root / a.gen_dir / d / f"{n}.summary.json"
+        if (root / a.gen_dir / d / f"{n}.jsonl.gz").exists() and sp.exists():
             s = json.loads(sp.read_text())
             p["done"] += 1; p["done_words"] += s["words"]; p["units"] += s["units"]; p["pass"] += s["pass_gate"]
             p["gpu_s"] += s["elapsed_s"]; p["tok"] += s["out_tokens"]
@@ -425,11 +434,16 @@ def main():
     q.add_argument("--root", required=True)
     q.add_argument("--model", default="/soundai/Model/Qwen3.8-27B")
     q.add_argument("--max-num-seqs", type=int, default=512)
+    q.add_argument("--quantization", default=None, help="e.g. fp8 (online weight quantization)")
+    q.add_argument("--gpu-memory-utilization", type=float, default=0.90)
+    q.add_argument("--prompt", default="v2", choices=["v2", "v3"])
+    q.add_argument("--gen-dir", default="gen", help="output folder under --root (one per prompt/engine setting)")
     q.add_argument("--rank", type=int, default=None)
     q.add_argument("--world", type=int, default=None)
     q.set_defaults(fn=cmd_run)
     q = sub.add_parser("status")
     q.add_argument("--root", required=True)
+    q.add_argument("--gen-dir", default="gen")
     q.set_defaults(fn=cmd_status)
     a = ap.parse_args()
     a.fn(a)

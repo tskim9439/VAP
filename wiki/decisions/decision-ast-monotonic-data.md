@@ -10,6 +10,7 @@ summary: AST 학습 데이터 — 전체 ASR 전사를 Qwen3.8-27B 로 단조(�
 sources:
   - '[[output-monotonic-ast-translation-methods-20261008]]'
   - '[[output-ast-mono-generation-20261009]]'
+  - '[[2026-10-09-ast-mono-speedup]]'
   - https://arxiv.org/abs/2609.05799
 related:
   - '[[decision-stage1-lookahead-320-1040ms]]'
@@ -42,7 +43,11 @@ related:
 - 구현과 비용: [[output-ast-mono-generation-20261009]]
   - Stage 1 학습 행 568 만 개 → 번역 단위 733 만 개, prefix 호출 약 8,700 만 번
   - 약 675 GPU 시간
-  - 프롬프트는 파일럿 v2 그대로이고 일반 번역은 만들지 않는다.
+  - 일반 번역은 만들지 않는다.
+- 2026-10-09 가속 검토(사용자: 노드 2 개, 메모리 효율 검토 요청):
+  - 프롬프트를 **v3** 로 바꾼다. v2 지시를 방향별 고정 시스템 메시지로 옮기고 예시를 늘려 공통 앞부분을 784 토큰 블록 너머로 맞춘 것이다(prefix cache).
+  - bf16 으로, 메모리 0.95·동시 1,024 로 돌린다. v2 대비 2.98 배 빠르고 관문 통과는 +2 %p 다. fp8 은 1.3 %p 낮아 쓰지 않는다.
+  - 약 226 GPU 시간, 2 노드 약 14 시간
 
 ## stable prefix 적용 (arXiv 2609.05799)
 - 논문: 문장 전체 번역 f 와 원문 prefix 마다의 번역 pᵢ 를 만든다. mᵢ = max_{j≤i} lcp(pⱼ, f) 까지를 "안정된 prefix" 로 확정한다(영→독은 단어 단위, 영→일·중은 글자 단위). 이 데이터로 Qwen3-8B 를 미세조정해 지연-품질 균형이 좋아졌다(영→독·일·중; FLEURS·WMT24++·CoVoST2).

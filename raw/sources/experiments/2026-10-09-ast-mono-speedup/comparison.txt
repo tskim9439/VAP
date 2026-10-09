@@ -1,0 +1,12 @@
+# en-de u-00000 (1,024 units), same units for every setting
+gen             769.7 s  pass 779  AL 4.321  pre_end 0.646  prompt 6919611  cached 0  trunc 8  same-as-v2bf16 1024/1024  voxpopuli-train 456/540 librispeech-960-rg 323/484
+gen-t-fp8v2     495.5 s  pass 766  AL 4.363  pre_end 0.636  prompt 6919534  cached 0  trunc 7  same-as-v2bf16 608/1024  voxpopuli-train 447/540 librispeech-960-rg 319/484
+gen-t-bf16v3    270.7 s  pass 798  AL 4.515  pre_end 0.602  prompt 21157233  cached 19615680  trunc 10  same-as-v2bf16 216/1024  voxpopuli-train 463/540 librispeech-960-rg 335/484
+gen-t-bf16v3m   258.2 s  pass 795  AL 4.514  pre_end 0.603  prompt 21157214  cached 19615680  trunc 8  same-as-v2bf16 217/1024  voxpopuli-train 460/540 librispeech-960-rg 335/484
+gen-t-fp8v3     215.5 s  pass 778  AL 4.57  pre_end 0.589  prompt 21157257  cached 19615680  trunc 4  same-as-v2bf16 207/1024  voxpopuli-train 456/540 librispeech-960-rg 322/484
+
+# monotonic (b) quality on pilot sets: v2 bf16 vs v3 fp8 vs v3 bf16
+en-ko 400  | v2bf16: pass 345 AL 4.263 pre_end 0.414 nat 4.397 major 31 gram_bad 13 | fp8v3: pass 349 AL 4.354 pre_end 0.359 nat 4.397 major 36 gram_bad 12 | bf16v3: pass 354 AL 4.296 pre_end 0.368 nat 4.407 major 29 gram_bad 12
+en-de 50   | v2bf16: pass 41 AL 2.575 pre_end 0.631 nat 4.14 major 4 gram_bad 5 | fp8v3: pass 43 AL 2.494 pre_end 0.565 nat 4.18 major 4 gram_bad 2 | bf16v3: pass 41 AL 2.56 pre_end 0.547 nat 4.34 major 4 gram_bad 3
+de-en 50   | v2bf16: pass 44 AL 1.138 pre_end 0.672 nat 4.34 major 3 gram_bad 2 | fp8v3: pass 46 AL 1.223 pre_end 0.68 nat 4.388 major 0 gram_bad 1 | bf16v3: pass 45 AL 1.343 pre_end 0.69 nat 4.36 major 1 gram_bad 1
+ko-en 50   | v2bf16: pass 36 AL 4.026 pre_end 0.433 nat 4.102 major 10 gram_bad 1 | fp8v3: pass 39 AL 3.997 pre_end 0.436 nat 4.2 major 11 gram_bad 1 | bf16v3: pass 40 AL 4.693 pre_end 0.398 nat 4.102 major 8 gram_bad 2

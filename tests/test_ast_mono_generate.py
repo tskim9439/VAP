@@ -69,3 +69,16 @@ def test_row_units_prefers_punctuated_text():
     units, srcs = G.row_units(multi, 40)
     assert srcs == {"raw_text": 2}
     assert [(u["seg"], u["tokens"]) for u in units] == [(0, ["and", "so", "on"]), (1, ["right"])]
+
+
+def test_v3_prompt_is_cacheable():
+    P = G.P
+    assert set(P.EXAMPLES_V3) == {("English", "German"), ("English", "Korean"), ("German", "English"), ("Korean", "English")}
+    for src, tgt in P.EXAMPLES_V3:
+        a = P.p_translate_v3(src, tgt, "one two", True)
+        b = P.p_translate_v3(src, tgt, "three", False)
+        assert a[0] == b[0] == P.p_system_v3(src, tgt)          # one fixed system message per direction
+        assert a[1].endswith("one two") and "has not finished yet" in b[1]
+        msgs = P.chat(a)
+        assert [m["role"] for m in msgs] == ["system", "user"]
+    assert P.chat("x") == [{"role": "user", "content": "x"}]

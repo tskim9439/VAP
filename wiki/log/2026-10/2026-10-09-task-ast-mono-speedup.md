@@ -1,0 +1,23 @@
+## [2026-10-09] task | AST 생성 가속: prefix cache 를 쓰는 v3 프롬프트로 약 3 배, 2 노드 apex 제출 준비
+
+- Changed:
+  - 코드:
+    - `experiments/ast_mono_pilot.py`: v3 프롬프트(`EXAMPLES_V3`, `p_system_v3`, `p_translate_v3`, `chat`), `VLLMEngine` 의 quantization·메모리·prefix cache 옵션, pilot `--prompt/--quantization/--gpu-memory-utilization`
+    - `experiments/ast_mono_generate.py`: `--prompt/--quantization/--gpu-memory-utilization/--gen-dir`, status `--gen-dir`, summary 에 engine 설정
+    - `slurm/ast-mono-generate.sbatch`·`slurm/submit-ast-mono-generate.sh`: 기본 apex·SA_SFT_FullDuplex·2 노드·v3·bf16·0.95·1024, 결과 폴더 `gen-<prompt>-<quant>`
+    - `tests/test_ast_mono_generate.py`: v3 시스템 메시지가 방향마다 고정인지 확인
+  - mxc 시험 결과: `ast-mono-v1/gen-t-*`, `results/ast-mono-{bench,pilot}-{fp8v3,bf16v3}-20261009/`
+  - 원자료: `raw/sources/experiments/2026-10-09-ast-mono-speedup/`
+  - 위키: `output-ast-mono-generation-20261009`(가속 검토 절), `decision-ast-monotonic-data`(v3·bf16 선택)
+- Reason:
+  - 사용자: 노드는 2 개뿐이다. 메모리를 효율적으로 써서 더 빠르게 할 수 있는지 검토한 뒤 제출 명령(apex, SA_SFT_FullDuplex)을 달라고 했다.
+- 결과:
+  - prefill 이 병목이었고, vLLM 의 784 토큰 블록 때문에 캐시 적중이 0 이었다.
+  - v3 로 캐시 적중 93 % 가 됐다. en-de 샤드 770 s → 258 s(2.98 배), 관문 통과 779 → 795 다.
+  - fp8 은 216 s 지만 관문 통과가 1.3 %p 낮아 쓰지 않는다.
+  - 전체 약 226 GPU 시간, 2 노드 약 14 시간
+- Next:
+  - 사용자 제출: `bash slurm/submit-ast-mono-generate.sh --nodes 2 --partition apex --job-name SA_SFT_FullDuplex`
+  - 진행 확인(status `--gen-dir gen-v3-bf16`)
+  - 생성 뒤 판정 재검토와 AST 타깃 조립
+- By: tskim

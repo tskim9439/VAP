@@ -3,10 +3,11 @@ type: output
 status: active
 created: 2026-10-09
 updated: 2026-10-09
-summary: AST 단조 번역 전체 생성 준비 — Stage 1 학습 행 568 만 개를 번역 단위 733 만 개로 나누고, 4 방향·단어마다 stable prefix 를 vLLM SLURM job 으로 만든다(약 675 GPU 시간)
+summary: AST 단조 번역 전체 생성 준비 — Stage 1 학습 행 568 만 개를 번역 단위 733 만 개로 나누고, 4 방향·단어마다 stable prefix 를 vLLM SLURM job 으로 만든다; v3 프롬프트(prefix cache)로 약 3 배 빨라져 약 226 GPU 시간(2 노드 약 14 시간)
 sources:
   - '[[2026-10-09-ast-mono-generate-prep]]'
   - '[[2026-10-09-ast-vllm-bench]]'
+  - '[[2026-10-09-ast-mono-speedup]]'
 related:
   - '[[decision-ast-monotonic-data]]'
   - '[[output-monotonic-ast-translation-methods-20261008]]'
@@ -71,9 +72,39 @@ raw_authors:
 - **관문 탈락의 상당수는 원문 자체가 문장 조각인 경우다.** 원 데이터 구간이 문장 중간에서 잘린 것으로, 판정 LLM 이 조각 번역을 "불완전·문법 오류"로 본다. 소문자·무구두점 LibriSpeech 에서 탈락이 많다.
   - 판정은 번역과 따로 저장된다. 그래서 생성이 끝난 뒤 조각 원문을 인정하는 판정으로 다시 판정하거나(비용 약 3 %), 탈락 단위만 고쳐 번역할 수 있다. 앞부분 번역은 다시 만들 필요가 없다.
 
+## 가속 검토 (노드 2 개 조건, 2026-10-09)
+- 사용자: 노드는 2 개(GPU 16 장)뿐이다. 메모리를 최대한 효율적으로 써서 더 빠르게 할 수 있는지 검토하라고 했다. v2 bf16 그대로면 약 42 시간이다.
+- **진단:** 시험 항목 하나의 프롬프트가 692 만 토큰으로 출력(62 만)의 11 배다. 그래서 prefill 연산이 병목이다.
+  - 호출마다 공통인 지시문(약 85 %)을 매번 다시 계산했다.
+  - vLLM 은 Qwen3.8(Gated DeltaNet 혼합)의 attention 블록을 784 토큰으로 잡는다. linear attention 상태 페이지와 크기를 맞추기 위해서다. 캐시는 이 단위로만 재사용되는데, 공통 부분(약 230 토큰)이 블록 하나를 못 채워 적중이 0 이었다.
+- **v3 프롬프트:**
+  - v2 단조 지시를 방향별 고정 시스템 메시지로 옮겼다.
+  - 예시를 늘렸다. 완결 9–10 개, 미완결 3–4 개이고 구어 전사 예시를 포함한다.
+  - 공통 앞부분이 784 토큰을 막 넘게 맞췄다(완결 호출 784–786, 앞부분 호출 811–813).
+  - 그래서 프롬프트 토큰의 93 % 가 캐시에서 온다. 호출마다 계산하는 토큰은 약 270 개에서 약 55 개로 줄었다.
+- **비교:**
+
+| 설정 | en-de 샤드 시간 | 속도 | 관문 통과(샤드 1,024) | 관문 통과(파일럿 세트 합, 550) | AL(샤드) |
+|---|---:|---:|---:|---:|---:|
+| v2 bf16 (기존) | 770 s | 1.00× | 779 | 466 | 4.32 s |
+| v2 fp8 | 496 s | 1.55× | 766 | — | 4.36 s |
+| v3 bf16, 메모리 0.90·동시 512 | 271 s | 2.84× | 798 | — | 4.52 s |
+| **v3 bf16, 메모리 0.95·동시 1,024** | **258 s** | **2.98×** | **795** | **480** | 4.51 s |
+| v3 fp8, 메모리 0.95·동시 1,024 | 216 s | 3.57× | 778 | 477 | 4.57 s |
+
+  - 파일럿 세트는 en-ko 400 과 en-de·de-en·ko-en 각 50 이다. v3 bf16 값은 메모리 0.90·동시 512 로 쟀다(같은 프롬프트).
+    - 방향별: v2 345/41/44/36, v3 fp8 349/43/46/39, v3 bf16 354/41/45/40.
+  - FP8 은 가중치가 52 GB 에서 27 GB 로 줄어 KV 캐시가 50 만 토큰에서 66 만 토큰(메모리 0.95 면 71 만)으로 늘었다.
+  - AL 은 v3 에서 샤드 기준 +0.2 s 다. 파일럿 세트에서는 방향마다 ±이고 일정한 방향이 없다.
+- **선택:** v3 bf16, `--gpu-memory-utilization 0.95 --max-num-seqs 1024`
+  - 품질이 가장 좋다(v2 대비 관문 통과 +2 %p).
+  - fp8 은 1.2 배 더 빠르지만 관문 통과가 1.3 %p 낮다.
+  - 전체 추정은 약 226 GPU 시간이다(675 × 258/770, 다른 방향도 같은 비율이라고 가정). 2 노드(16 GPU)로 약 14 시간이다. fp8 이면 약 12 시간이다.
+  - 결과 폴더는 `gen-v3-bf16` 이다. 설정마다 폴더가 달라 섞이지 않는다. v2 시험 결과(`gen/`)와 가속 시험 결과(`gen-t-*`)는 남겨 두었다.
+
 ## 다음
-- 사용자 제출: `bash slurm/submit-ast-mono-generate.sh --nodes N --partition P`
-- 진행 확인: `python3 experiments/ast_mono_generate.py status --root /soundai/users/tskim/VAPKT-data/data/ast-mono-v1`
+- 사용자 제출(apex, SA_SFT_FullDuplex, 2 노드): `bash slurm/submit-ast-mono-generate.sh --nodes 2 --partition apex --job-name SA_SFT_FullDuplex`
+- 진행 확인: `python3 experiments/ast_mono_generate.py status --root /soundai/users/tskim/VAPKT-data/data/ast-mono-v1 --gen-dir gen-v3-bf16`
 - 생성 뒤:
   - 판정 재검토(조각 원문)·탈락 단위 수리
   - 행 단위 AST 타깃 조립(⌊t/80 ms⌋ + δ)

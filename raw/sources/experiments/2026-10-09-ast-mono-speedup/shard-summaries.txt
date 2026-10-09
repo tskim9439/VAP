@@ -1,0 +1,135 @@
+== gen
+{
+ "direction": "en-de",
+ "shard": "u-00000",
+ "units": 1024,
+ "words": 25022,
+ "calls": 26046,
+ "translated": 1024,
+ "judged": 1016,
+ "pass_gate": 779,
+ "al_mean": 4.321,
+ "out_tokens": 622214,
+ "prompt_tokens": 6919611,
+ "cached_tokens": 0,
+ "truncated": 8,
+ "gen_s": 767.1,
+ "elapsed_s": 769.7,
+ "prompt_version": "v2",
+ "code_sha256": "cfbdf3b0b3a8fa61",
+ "job": null,
+ "host": "ip-0AF92108",
+ "finished": "2026-10-09 15:26:50"
+}
+== gen-t-fp8v2
+{
+ "direction": "en-de",
+ "shard": "u-00000",
+ "units": 1024,
+ "words": 25022,
+ "calls": 26046,
+ "translated": 1024,
+ "judged": 1017,
+ "pass_gate": 766,
+ "al_mean": 4.363,
+ "out_tokens": 623704,
+ "prompt_tokens": 6919534,
+ "cached_tokens": 0,
+ "truncated": 7,
+ "gen_s": 492.8,
+ "elapsed_s": 495.5,
+ "prompt_version": "v2",
+ "engine": {
+  "quantization": "fp8",
+  "max_num_seqs": 512,
+  "gpu_memory_utilization": 0.9
+ },
+ "code_sha256": "bc9e9fd56b73ad61",
+ "job": null,
+ "host": "ip-0AF92108",
+ "finished": "2026-10-09 16:48:03"
+}
+== gen-t-bf16v3
+{
+ "direction": "en-de",
+ "shard": "u-00000",
+ "units": 1024,
+ "words": 25022,
+ "calls": 26046,
+ "translated": 1024,
+ "judged": 1014,
+ "pass_gate": 798,
+ "al_mean": 4.515,
+ "out_tokens": 619812,
+ "prompt_tokens": 21157233,
+ "cached_tokens": 19615680,
+ "truncated": 10,
+ "gen_s": 267.1,
+ "elapsed_s": 270.7,
+ "prompt_version": "v3",
+ "engine": {
+  "quantization": null,
+  "max_num_seqs": 512,
+  "gpu_memory_utilization": 0.9
+ },
+ "code_sha256": "bc9e9fd56b73ad61",
+ "job": null,
+ "host": "ip-0AF92108",
+ "finished": "2026-10-09 16:44:01"
+}
+== gen-t-bf16v3m
+{
+ "direction": "en-de",
+ "shard": "u-00000",
+ "units": 1024,
+ "words": 25022,
+ "calls": 26046,
+ "translated": 1024,
+ "judged": 1016,
+ "pass_gate": 795,
+ "al_mean": 4.514,
+ "out_tokens": 619721,
+ "prompt_tokens": 21157214,
+ "cached_tokens": 19615680,
+ "truncated": 8,
+ "gen_s": 254.9,
+ "elapsed_s": 258.2,
+ "prompt_version": "v3",
+ "engine": {
+  "quantization": null,
+  "max_num_seqs": 1024,
+  "gpu_memory_utilization": 0.95
+ },
+ "code_sha256": "bc9e9fd56b73ad61",
+ "job": null,
+ "host": "ip-0AF92108",
+ "finished": "2026-10-09 16:55:19"
+}
+== gen-t-fp8v3
+{
+ "direction": "en-de",
+ "shard": "u-00000",
+ "units": 1024,
+ "words": 25022,
+ "calls": 26046,
+ "translated": 1024,
+ "judged": 1020,
+ "pass_gate": 778,
+ "al_mean": 4.57,
+ "out_tokens": 618371,
+ "prompt_tokens": 21157257,
+ "cached_tokens": 19615680,
+ "truncated": 4,
+ "gen_s": 211.9,
+ "elapsed_s": 215.5,
+ "prompt_version": "v3",
+ "engine": {
+  "quantization": "fp8",
+  "max_num_seqs": 1024,
+  "gpu_memory_utilization": 0.95
+ },
+ "code_sha256": "bc9e9fd56b73ad61",
+ "job": null,
+ "host": "ip-0AF92108",
+ "finished": "2026-10-09 16:43:55"
+}
