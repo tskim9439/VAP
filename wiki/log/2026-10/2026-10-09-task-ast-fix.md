@@ -20,3 +20,8 @@
   - 생성(job 83350)이 끝나면 사용자가 `bash slurm/submit-ast-mono-generate.sh --nodes 2 --partition apex --job-name SA_SFT_FullDuplex --fix` 로 제출한다.
   - 제출 뒤 `ast_build_targets.py --fix-dir fix-gen-v3-bf16` 로 타깃을 조립한다.
 - By: tskim
+
+- 정정(2026-10-10 00:10):
+  - sbatch 에 수리 모드를 넣으며 환경변수 줄(`\` 로 이어짐) 뒤에 `if` 문을 끼워 `bash -c` 안쪽이 문법 오류가 됐다. 그래서 재제출한 생성 job 83560(hpc 4 노드)의 워커 32 개가 바로 종료 코드 2 로 끝났다. 결과 파일 손상은 없다.
+  - 환경변수를 `export` 로 바꿔 고쳤다. 안쪽 명령을 sbatch 에서 그대로 꺼내 가짜 python 으로 실행해 run·fix × bf16·fp8 의 인자를 확인했다.
+  - `bash -n` 은 `bash -c '…'` 안의 문자열을 검사하지 않는다.

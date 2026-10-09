@@ -44,8 +44,8 @@ export PATH="$VLLM_ENV/bin:$PATH"
 set +e
 srun --ntasks="$SLURM_NTASKS" --ntasks-per-node=8 --cpus-per-task="$SLURM_CPUS_PER_TASK" \
     --gpus-per-task=1 --gpu-bind=single:1 --kill-on-bad-exit=0 --label \
-    /bin/bash -c 'C=/tmp/sa_tskim/cache/r$SLURM_LOCALID; mkdir -p $C;
-      VLLM_CACHE_ROOT=$C/vllm TRITON_CACHE_DIR=$C/triton XDG_CACHE_HOME=$C TORCHINDUCTOR_CACHE_DIR=$C/inductor \
+    /bin/bash -c 'C=/tmp/sa_tskim/cache/r$SLURM_LOCALID; mkdir -p $C
+      export VLLM_CACHE_ROOT=$C/vllm TRITON_CACHE_DIR=$C/triton XDG_CACHE_HOME=$C TORCHINDUCTOR_CACHE_DIR=$C/inductor
       if [ "$MODE" = fix ]; then set -- fix --fix-dir "$FIX_DIR"; else set -- run --prompt "$PROMPT"; fi
       exec "$VLLM_ENV/bin/python" -u experiments/ast_mono_generate.py "$@" --root "$ROOT" \
         --gen-dir "$GEN_DIR" ${QUANT:+--quantization "$QUANT"} --gpu-memory-utilization "$MEM_UTIL" --max-num-seqs "$MAX_SEQS"'
