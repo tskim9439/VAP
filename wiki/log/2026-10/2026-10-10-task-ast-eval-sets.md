@@ -37,3 +37,7 @@
     - 타깃 593 만 행을 불러왔다. 번역 타깃이 붙은 항목은 96–99 % 다.
     - 4 셋 × 64 항목 × δ4–10 에서 불일치 0 이다.
   - 학습 제출 래퍼 `slurm/submit-q06-s2-ast.sh`(q06-s1m3-d10/final 시작, --ast-frac 0.5, Stage 1 레시피). epoch·노드는 사용자가 정한다.
+  - 평가셋 완성: `data/evaluation/ast-fleurs-covost2-v1/`(31,424 행)
+    - CoVoST 2 en-de 15,531·de-en 13,511(전체)
+    - FLEURS en-de 641·en-ko 497·de-en 862·ko-en 382
+    - 원자료 `raw/sources/experiments/2026-10-10-ast-eval-sets/`

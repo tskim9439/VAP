@@ -1,0 +1,60 @@
+{
+  "protocol": "single-turn-asr-v1",
+  "coverage": {
+    "fleurs-de-en": {
+      "source_labels": 862,
+      "expected_standard_count": 862,
+      "available": 862,
+      "missing": 0,
+      "audio_hours": 3.1525833333333373,
+      "full_standard_set": true
+    },
+    "fleurs-en-de": {
+      "source_labels": 647,
+      "expected_standard_count": 647,
+      "available": 641,
+      "missing": 0,
+      "audio_hours": 1.7527333333333335,
+      "full_standard_set": false
+    },
+    "fleurs-en-ko": {
+      "source_labels": 647,
+      "expected_standard_count": 647,
+      "available": 497,
+      "missing": 0,
+      "audio_hours": 1.3417722222222221,
+      "full_standard_set": false
+    },
+    "fleurs-ko-en": {
+      "source_labels": 382,
+      "expected_standard_count": 382,
+      "available": 382,
+      "missing": 0,
+      "audio_hours": 1.3346999999999984,
+      "full_standard_set": true
+    },
+    "covost2-en-de": {
+      "source_labels": 15531,
+      "expected_standard_count": 15531,
+      "available": 15531,
+      "missing": 0,
+      "audio_hours": 24.650666666666798,
+      "full_standard_set": true
+    },
+    "covost2-de-en": {
+      "source_labels": 13511,
+      "expected_standard_count": 13511,
+      "available": 13511,
+      "missing": 0,
+      "audio_hours": 21.545893333333353,
+      "full_standard_set": true
+    }
+  },
+  "missing": [],
+  "manifest_digest": "b5de47d2b84636b0543c3c4db9e4c39268505ce9056262cdf6189588495bb2e2",
+  "textnorm": {
+    "textnorm_version": "asr-tn-v1.3.0",
+    "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+    "numeric_backend_version": "num2words 0.5.14"
+  }
+}
