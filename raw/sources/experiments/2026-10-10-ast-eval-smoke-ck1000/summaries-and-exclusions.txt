@@ -1,0 +1,240 @@
+{
+ "ast-smoke-ck1000-st": {
+  "groups": {
+   "covost2-de-en/delta-6": {
+    "wer": 0.11363636363636363
+   },
+   "covost2-de-en/delta-final": {
+    "wer": 0.08333333333333333
+   },
+   "covost2-en-de/delta-6": {
+    "wer": 0.6792452830188679
+   },
+   "covost2-en-de/delta-final": {
+    "wer": 11.735849056603774
+   },
+   "fleurs-de-en/delta-6": {
+    "wer": 0.13054830287206268
+   },
+   "fleurs-de-en/delta-final": {
+    "wer": 0.1174934725848564
+   },
+   "fleurs-en-de/delta-6": {
+    "wer": 0.09574468085106383
+   },
+   "fleurs-en-de/delta-final": {
+    "wer": 0.09042553191489362
+   },
+   "fleurs-en-ko/delta-6": {
+    "wer": 0.28125
+   },
+   "fleurs-en-ko/delta-final": {
+    "wer": 0.08806818181818182
+   },
+   "fleurs-ko-en/delta-6": {
+    "cer_nospace": 0.16480793060718713,
+    "cer_space": 0.16966824644549763,
+    "wer": 0.29545454545454547
+   },
+   "fleurs-ko-en/delta-final": {
+    "cer_nospace": 0.15489467162329615,
+    "cer_space": 0.15829383886255924,
+    "wer": 0.24621212121212122
+   }
+  },
+  "translation": {
+   "covost2-de-en/delta-6": {
+    "bleu": 19.74,
+    "chrf": 47.03,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "laal_s": 0.849,
+    "al_s": 0.775,
+    "pre_end": 0.953,
+    "latency_n": 16,
+    "empty_translations": 0
+   },
+   "covost2-de-en/delta-final": {
+    "bleu": 34.67,
+    "chrf": 54.87,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "empty_translations": 0
+   },
+   "covost2-en-de/delta-6": {
+    "bleu": 8.11,
+    "chrf": 39.21,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "laal_s": -0.548,
+    "al_s": -0.631,
+    "pre_end": 0.932,
+    "latency_n": 16,
+    "empty_translations": 0
+   },
+   "covost2-en-de/delta-final": {
+    "bleu": 16.13,
+    "chrf": 41.07,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "empty_translations": 1
+   },
+   "fleurs-de-en/delta-6": {
+    "bleu": 19.33,
+    "chrf": 52.81,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "laal_s": 0.958,
+    "al_s": 0.863,
+    "pre_end": 0.995,
+    "latency_n": 16,
+    "empty_translations": 0
+   },
+   "fleurs-de-en/delta-final": {
+    "bleu": 30.36,
+    "chrf": 58.29,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "empty_translations": 0
+   },
+   "fleurs-en-de/delta-6": {
+    "bleu": 17.9,
+    "chrf": 54.11,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "laal_s": 0.992,
+    "al_s": 0.799,
+    "pre_end": 0.998,
+    "latency_n": 16,
+    "empty_translations": 0
+   },
+   "fleurs-en-de/delta-final": {
+    "bleu": 21.44,
+    "chrf": 55.34,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "empty_translations": 0
+   },
+   "fleurs-en-ko/delta-6": {
+    "bleu": 14.54,
+    "chrf": 14.2,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "laal_s": 4.0,
+    "al_s": 3.63,
+    "pre_end": 0.923,
+    "latency_n": 13,
+    "empty_translations": 3
+   },
+   "fleurs-en-ko/delta-final": {
+    "bleu": 23.66,
+    "chrf": 20.87,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "empty_translations": 0
+   },
+   "fleurs-ko-en/delta-6": {
+    "bleu": 5.29,
+    "chrf": 39.17,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "laal_s": 2.432,
+    "al_s": 1.989,
+    "pre_end": 1.0,
+    "latency_n": 16,
+    "empty_translations": 0
+   },
+   "fleurs-ko-en/delta-final": {
+    "bleu": 7.74,
+    "chrf": 40.13,
+    "n": 16,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "empty_translations": 0
+   }
+  }
+ },
+ "ast-smoke-ck1000-asr": {
+  "groups": {
+   "kspon-eval_clean/delta-6": {
+    "cer_nospace": 0.08712121212121213,
+    "cer_space": 0.08516483516483517,
+    "wer": 0.23275862068965517
+   },
+   "kspon-eval_clean/delta-final": {
+    "cer_nospace": 0.07575757575757576,
+    "cer_space": 0.07142857142857142,
+    "wer": 0.1896551724137931
+   },
+   "kspon-eval_other/delta-6": {
+    "cer_nospace": 0.0668693009118541,
+    "cer_space": 0.07964601769911504,
+    "wer": 0.2158273381294964
+   },
+   "kspon-eval_other/delta-final": {
+    "cer_nospace": 0.05167173252279635,
+    "cer_space": 0.061946902654867256,
+    "wer": 0.18705035971223022
+   },
+   "voxpopuli-aa-test/delta-6": {
+    "wer": 0.08488612836438923
+   },
+   "voxpopuli-aa-test/delta-final": {
+    "wer": 0.09109730848861283
+   }
+  },
+  "translation": null
+ }
+}
+{
+ "rule": "CoVoST 2 audio_s > 30 s 제외(음성·문장 불일치 — 2026-10-10 확인), FLEURS 는 그대로",
+ "dropped": [
+  [
+   "covost2-en-de/common_voice_en_10428",
+   142.5,
+   "The shop was busy, and the man asked the shepherd to wait until the afternoon."
+  ],
+  [
+   "covost2-en-de/common_voice_en_125010",
+   66.6,
+   "It was such a gradual movement that he found it only by noticing the dots."
+  ],
+  [
+   "covost2-en-de/common_voice_en_20290",
+   49.2,
+   "As they sat down at the only table in the place, the crystal merchant laughed."
+  ],
+  [
+   "covost2-en-de/common_voice_en_485578",
+   51.6,
+   "For some reason, we were blocked from entering."
+  ],
+  [
+   "covost2-en-de/common_voice_en_510875",
+   68.5,
+   "\"\"\"You are almost at the end of your journey,\"\" said the alchemist.\""
+  ],
+  [
+   "covost2-en-de/common_voice_en_57331",
+   105.7,
+   "The Englishman was unable to sleep one night."
+  ],
+  [
+   "covost2-en-de/common_voice_en_637910",
+   66.1,
+   "It was about you."
+  ]
+ ],
+ "rows": 31417
+}

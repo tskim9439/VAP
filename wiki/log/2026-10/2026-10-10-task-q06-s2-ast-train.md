@@ -1,0 +1,27 @@
+## [2026-10-10] task | 다음 단계 학습(q06-s2-ast) 시작, ast-v1 평가 경로 시험
+
+- Changed:
+  - 학습: job 83866(hpc 2 노드, 사용자 제출, `slurm/submit-q06-s2-ast.sh --epochs 2 --nodes 2 --partition hpc`), 산출물 `/soundai/Model/VAPASR/semcommit-q06-s2-ast`
+  - 코드: `vapasr/data/ast_eval.py`(LAAL·AL 중앙값)
+  - mxc: `data/evaluation/ast-fleurs-covost2-v1/manifest-max30s.jsonl`(+ exclusions.json), `results/ast-smoke-ck1000-{st,asr}/`
+  - 원자료: `raw/sources/experiments/2026-10-10-ast-eval-smoke-ck1000/`
+- Reason:
+  - 사용자가 다음 단계를 0.6B 에서 hpc 2 노드·2 epoch 로 시작했다(hpc 유지는 사용자 결정).
+- 결과:
+  - hpc 선점이 잦아 데이터셋 구성 중에 다섯 번 선점됐다(17:55–20:26).
+    - 여섯 번째 실행(20:31, restart=5)에서 학습이 시작됐다.
+    - 데이터셋 검사(4 셋 × 64 × δ4–10)는 매번 불일치 0 이었다.
+  - 번역 타깃이 붙은 항목:
+    - 영어 441,082/456,893
+    - 한국어 2,868,890/2,956,210
+    - 짧은 한국어 929,381/945,016
+    - 독일어 1,303,230/1,315,348
+  - epoch 당 7,144 step(Stage 1 은 5,391)이다. step 1,000 기준 약 0.75–1.0 s/step, 텍스트 손실 5.65 → 0.56, top1 0.84 다.
+  - checkpoint-1000 으로 평가 경로를 시험했다. parity 를 통과했고 전사·번역 분리와 BLEU·chrF·LAAL 이 동작한다.
+  - CoVoST 2 영어의 음성·문장 불일치 발화 7 개를 평가에서 뺐다.
+- Next:
+  - 학습 완료(선점이 없으면 10/11 새벽) 뒤 final 로 전체 평가:
+    - 번역: `manifest-max30s.jsonl`
+    - 받아쓰기: VoxPopuli·Kspon·YODAS-de
+    - δ4·6·8·10 + final
+- By: tskim

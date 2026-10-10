@@ -77,9 +77,11 @@ def translation_report(rows: List[dict]) -> Dict[str, dict]:
         rep = corpus_scores([r["translation_hypothesis"] for r in rs], [r["translation_reference"] for r in rs], rs[0]["tgt_lang"])
         lat = [r for r in rs if r.get("translation_laal") is not None]
         if lat:
+            import statistics
             mean = lambda k: round(sum(r[k] for r in lat) / len(lat), 3)
-            rep.update(laal_s=mean("translation_laal"), al_s=mean("translation_al"),
-                       pre_end=round(sum(r["translation_pre_end"] for r in lat) / len(lat), 3), latency_n=len(lat))
+            med = lambda k: round(statistics.median(r[k] for r in lat), 3)                  # 이상치(음성·문장 불일치 발화 등)에 강한 대표값
+            rep.update(laal_s=mean("translation_laal"), laal_median_s=med("translation_laal"), al_s=mean("translation_al"),
+                       al_median_s=med("translation_al"), pre_end=round(sum(r["translation_pre_end"] for r in lat) / len(lat), 3), latency_n=len(lat))
         rep["empty_translations"] = sum(not r["translation_hypothesis"] for r in rs)
         out[key] = rep
     return out
