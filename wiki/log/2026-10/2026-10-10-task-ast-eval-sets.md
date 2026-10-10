@@ -1,0 +1,27 @@
+## [2026-10-10] task | 음성번역 평가: FLEURS·CoVoST 2 내려받기, 평가 스크립트 ast-v1 지원
+
+- Changed:
+  - 맥 T5:
+    - `vapkt-corpora/fleurs/data/{en_us,de_de,ko_kr}/`(test·dev tsv 와 음성 tar, ko·de train tsv)
+    - `vapkt-corpora/covost2-fixie/{en_de,de_en}/test-*.parquet`(Common Voice 4 mp3 포함)
+    - 2.9 GB, 큰 파일은 HF sha256 으로, tsv 는 크기로 검증했다.
+  - 코드:
+    - `experiments/eval_single_turn_asr.py`:
+      - prepare `--fleurs-root/--covost-root`(번역 참조·16 kHz wav 풀기)
+      - run: 체크포인트 config 의 ast_format 이 ast-v1 이면 prefix `language <SPK_A>Lang[\ntranslate <SPK_A>Tgt]<asr_text>` 로 바꾸고, 출력을 전사·번역 구간으로 나눈다. final 모드는 태그 차단을 풀고 출력 상한을 K+64 로 늘린다.
+      - summarize: translation 절(BLEU·chrF·LAAL·AL)
+    - `vapasr/data/ast_eval.py`(새 파일), `tests/test_ast_eval.py`
+- Reason:
+  - 사용자가 번역 평가에 공개 평가셋을 쓰기로 했다((나)). CoVoST 2 도 쓰자고 했다.
+- 판단:
+  - 4 방향을 모두 덮는 공개 음성번역셋은 FLEURS 다(같은 FLoRes 문장을 언어마다 녹음했다).
+    - 영→한은 한국어에 없는 문장이 있어 647 발화 중 497 개만 참조가 있다. train 전사를 더해도 늘지 않았다.
+    - 영→독은 641/647 이다.
+  - CoVoST 2 는 영↔독만 있다(test 15,531·13,511 발화). 번역문 라이선스는 CC BY-NC 4.0 이다.
+  - mxc `data/corpora/Europarl-ST` 는 쓰지 않는다. 유럽의회 발화라 학습 데이터 VoxPopuli 와 출처가 겹칠 수 있다.
+  - 한국어 목표는 mecab 이 없어 BLEU 를 글자 단위로 낸다. 주 지표는 chrF 로 본다.
+- Next:
+  - 사용자 업로드: `data/corpora/fleurs`, `data/corpora/covost2-fixie`
+  - prepare → `data/evaluation/ast-fleurs-covost2-v1/`
+  - 학습 설정(epoch·노드)이 정해지면 제출 래퍼를 만든다.
+- By: tskim
