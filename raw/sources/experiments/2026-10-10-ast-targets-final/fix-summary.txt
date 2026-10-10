@@ -1,0 +1,6 @@
+de-en: units 1692739 · v2 pass 0.905 · v3 same 105606 · repaired ok 42118/54364 · fail 12246 · unit pass after fix 0.993
+en-de: units 926008 · v2 pass 0.775 · v3 same 95232 · repaired ok 79084/113352 · fail 34268 · unit pass after fix 0.963
+en-ko: units 926008 · v2 pass 0.715 · v3 same 96557 · repaired ok 99786/167049 · fail 67263 · unit pass after fix 0.927
+ko-en: units 4713360 · v2 pass 0.815 · v3 same 490617 · repaired ok 277500/381417 · fail 103917 · unit pass after fix 0.978
+GPU time (sum of item elapsed) 19.8 h
+

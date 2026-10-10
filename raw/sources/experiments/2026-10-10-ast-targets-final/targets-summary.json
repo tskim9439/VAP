@@ -1,0 +1,60 @@
+{
+ "gen_dir": "gen-v3-bf16",
+ "fix_dir": "fix-gen-v3-bf16",
+ "tokenizer": "/soundai/Model/VAPASR/semcommit-q06-s1m3-d10/final",
+ "built": "2026-10-10 12:26:49",
+ "directions": {
+  "de-en": {
+   "shards": 790,
+   "unit_v3": 105606,
+   "unit_v2": 1532769,
+   "unit_repair": 42118,
+   "unit_fail": 12246,
+   "rows": 1315348,
+   "kept": 1303230,
+   "drop_gate": 11613,
+   "drop_no_judge": 505,
+   "tokens": 25110944,
+   "kept_share": 0.9908
+  },
+  "en-de": {
+   "shards": 725,
+   "unit_v2": 717424,
+   "unit_repair": 79084,
+   "unit_v3": 95232,
+   "unit_fail": 34268,
+   "rows": 456893,
+   "kept": 424117,
+   "drop_gate": 32052,
+   "tokens": 28452497,
+   "drop_no_judge": 724,
+   "kept_share": 0.9283
+  },
+  "en-ko": {
+   "shards": 725,
+   "unit_repair": 99786,
+   "unit_v2": 662402,
+   "unit_v3": 96557,
+   "unit_fail": 67263,
+   "rows": 456893,
+   "kept": 395109,
+   "drop_gate": 60902,
+   "drop_no_judge": 882,
+   "tokens": 29256848,
+   "kept_share": 0.8648
+  },
+  "ko-en": {
+   "shards": 1234,
+   "unit_v2": 3841326,
+   "unit_v3": 490617,
+   "unit_repair": 277500,
+   "unit_fail": 103917,
+   "rows": 3908384,
+   "kept": 3805073,
+   "drop_gate": 99932,
+   "drop_no_judge": 3379,
+   "tokens": 62346001,
+   "kept_share": 0.9736
+  }
+ }
+}

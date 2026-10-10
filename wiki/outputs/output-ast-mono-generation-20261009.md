@@ -2,13 +2,14 @@
 type: output
 status: active
 created: 2026-10-09
-updated: 2026-10-09
+updated: 2026-10-10
 summary: AST 단조 번역 전체 생성 준비 — Stage 1 학습 행 568 만 개를 번역 단위 733 만 개로 나누고, 4 방향·단어마다 stable prefix 를 vLLM SLURM job 으로 만든다; v3 프롬프트(prefix cache)로 약 3 배 빨라져 약 226 GPU 시간(2 노드 약 14 시간)
 sources:
   - '[[2026-10-09-ast-mono-generate-prep]]'
   - '[[2026-10-09-ast-vllm-bench]]'
   - '[[2026-10-09-ast-mono-speedup]]'
   - '[[2026-10-09-ast-fix-validation]]'
+  - '[[2026-10-10-ast-targets-final]]'
 related:
   - '[[decision-ast-monotonic-data]]'
   - '[[output-monotonic-ast-translation-methods-20261008]]'
@@ -127,6 +128,22 @@ raw_authors:
     - v3 는 v2 가 놓친 오류도 잡았다. 예: 관사 오류, 번역 안 된 "Apparently", '가장' 오역.
   - 수리 성공률은 43–69 % 다.
   - 비용: 검증 모드(모든 단위 판정)에서 샤드당 29–87 s 였다. 실제 수리는 탈락 단위만 다루므로 전체 약 10–15 GPU 시간, 2 노드로 약 1 시간으로 추정된다.
+
+## 최종 결과 (2026-10-10)
+- **생성:** 3,474 항목 모두 완료, 오류 0, 255.8 GPU 시간이 들었다.
+  - job 이력: 83350(apex 2 노드) → 사용자가 hpc 4 노드로 옮김 → 83560(제 sbatch 문법 오류로 즉시 종료) → 83563(00:09–06:34, 선점 1 회 뒤 자동 재시작)
+- **수리:** job 83564(06:37–07:35)가 19.8 GPU 시간 걸렸다.
+- **번역 타깃:** `ast-mono-v1/targets-fix-gen-v3-bf16/`([[2026-10-10-ast-targets-final]])
+
+| 방향 | 단위 통과 생성 직후 → 수리 뒤 | 행 보존(전 단위 통과) | 보존 행 | 번역 토큰 |
+|---|---|---:|---:|---:|
+| de-en | 90.5 % → 99.3 % | 99.1 % | 1,303,230 / 1,315,348 | 2,511 만 |
+| en-de | 77.5 % → 96.3 % | 92.8 % | 424,117 / 456,893 | 2,845 만 |
+| en-ko | 71.5 % → 92.7 % | 86.5 % | 395,109 / 456,893 | 2,926 만 |
+| ko-en | 81.5 % → 97.8 % | 97.4 % | 3,805,073 / 3,908,384 | 6,235 만 |
+
+- 수리 전(생성된 383 샤드 기준) 행 보존은 en-de 63 %, en-ko 56 % 였다. 수리로 대부분 회복했다.
+- 남은 탈락 행은 학습에서 화자·언어 prefix 의 ASR 항목으로만 쓰인다.
 
 ## 다음
 - 사용자 제출(apex, SA_SFT_FullDuplex, 2 노드): `bash slurm/submit-ast-mono-generate.sh --nodes 2 --partition apex --job-name SA_SFT_FullDuplex`
