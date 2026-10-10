@@ -25,3 +25,15 @@
   - prepare → `data/evaluation/ast-fleurs-covost2-v1/`
   - 학습 설정(epoch·노드)이 정해지면 제출 래퍼를 만든다.
 - By: tskim
+
+- 이어서(2026-10-10 오후):
+  - 업로드 확인: mxc `data/corpora/{fleurs,covost2-fixie}` 30 파일이 맥과 크기까지 같다. 숨김 파일은 없다.
+  - prepare: `data/evaluation/ast-fleurs-covost2-v1/`. CoVoST mp3 → 16 kHz wav 변환이 NFS 쓰기에 묶여 초당 약 15 개다.
+  - 번역 타깃 묶음:
+    - `ast_build_targets.py --pack-only` → `targets-fix-gen-v3-bf16/pack/<direction>/`(ids int32·times float32·offsets npy + rows.txt)
+    - `load_ast_targets` 가 mmap 으로 읽는다. 학습 프로세스마다 JSON 2,739 개를 파싱하지 않고, 노드 안에서 한 벌을 공유한다.
+    - 메모리 대책: 0.6B 학습이 노드 메모리 부족으로 죽은 적이 있다(job 82738).
+  - 학습 dry-run(묶은 타깃, 영·한·짧은 한국어·독 표본):
+    - 타깃 593 만 행을 불러왔다. 번역 타깃이 붙은 항목은 96–99 % 다.
+    - 4 셋 × 64 항목 × δ4–10 에서 불일치 0 이다.
+  - 학습 제출 래퍼 `slurm/submit-q06-s2-ast.sh`(q06-s1m3-d10/final 시작, --ast-frac 0.5, Stage 1 레시피). epoch·노드는 사용자가 정한다.

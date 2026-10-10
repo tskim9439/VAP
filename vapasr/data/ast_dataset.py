@@ -57,14 +57,36 @@ def build_ast_sequence(ev_src: list, ev_tr: list, K: int, prefix: List[int], aud
 
 
 def load_ast_targets(paths: Sequence[str], keep_ids: Optional[set] = None) -> Tuple[Dict[str, Dict[str, tuple]], Counter, str]:
-    """ast_build_targets 산출물(targets-*/<direction>/u-*.jsonl.gz, 또는 그 폴더·파일 목록) → ({행 id: {목표 언어: (ids array, 시각 array)}}, 통계,
-    지문 = sha256(파일 경로·크기 목록) — 학습 지문에 넣는다). keep_ids 가 있으면 그 행만 읽는다(메모리). 같은 (행, 목표 언어)가 두 번 나오면 처음 것을 쓴다."""
+    """ast_build_targets 산출물 → ({행 id: {목표 언어: (ids, 시각)}}, 통계, 지문). 폴더에 pack/ 이 있으면 묶은 형태(npy, mmap)를 읽고
+    (ids·시각 = 공유 배열의 조각), 없으면 targets-*/<direction>/u-*.jsonl.gz(또는 그 파일 목록)를 파싱한다(array). 지문(학습 지문에 넣는다)은
+    묶은 형태면 방향별 행·토큰 수·묶은 시각, 아니면 파일 경로·크기 목록의 sha256. keep_ids 가 있으면 그 행만 읽는다. 같은 (행, 목표 언어)가 두 번 나오면 처음 것."""
     import hashlib, os
+    import numpy as np
+    out: Dict[str, Dict[str, tuple]] = {}; st = Counter()
+    packed = [p for p in paths if os.path.isdir(os.path.join(p, "pack"))]
+    if packed:                                                                       # 묶은 형태(ast_build_targets --pack): mmap 으로 노드 안 프로세스가 한 벌을 공유
+        metas = []
+        for p in packed:
+            for d in sorted(glob.glob(os.path.join(p, "pack", "*", "meta.json"))):
+                pd = os.path.dirname(d); meta = json.load(open(d)); metas.append(meta)
+                ids = np.load(os.path.join(pd, "ids.npy"), mmap_mode="r"); ts = np.load(os.path.join(pd, "times.npy"), mmap_mode="r")
+                off = np.load(os.path.join(pd, "offsets.npy")); rows = open(os.path.join(pd, "rows.txt"), encoding="utf-8").read().split("\n")[:-1]
+                assert len(rows) + 1 == len(off) == meta["rows"] + 1, f"pack 불일치: {pd}"
+                st["files"] += 1
+                for j, rid in enumerate(rows):
+                    st["rows"] += 1
+                    if keep_ids is not None and rid not in keep_ids: st["not_in_dataset"] += 1; continue
+                    dd = out.setdefault(rid, {})
+                    if meta["tgt"] in dd: st["dup"] += 1; continue
+                    a0, a1 = int(off[j]), int(off[j + 1]); dd[meta["tgt"]] = (ids[a0:a1], ts[a0:a1]); st[f"tgt_{meta['tgt']}"] += 1
+        fp = hashlib.sha256(json.dumps(sorted((m["direction"], m["rows"], m["tokens"], m["packed"]) for m in metas)).encode()).hexdigest()
+        paths = [p for p in paths if p not in packed]
+        if not paths: return out, st, fp
     files: List[str] = []
     for p in paths:
         files += sorted(glob.glob(f"{p}/**/u-*.jsonl.gz", recursive=True)) if not p.endswith(".gz") else [p]
     fp = hashlib.sha256(json.dumps([(f, os.path.getsize(f)) for f in files]).encode()).hexdigest()
-    out: Dict[str, Dict[str, tuple]] = {}; st = Counter(files=len(files))
+    st["files"] += len(files)
     for f in files:
         for line in gzip.open(f, "rt", encoding="utf-8"):
             r = json.loads(line); st["rows"] += 1
@@ -93,13 +115,14 @@ class AstStreamDataset(SemCommitDataset):
         targets = ast_targets or {}; n_ast = Counter()
         for it in self.items:
             tg = targets.get(it["id"])
-            t_end = max((float(x[1]) for x in it["tokens"]), default=0.0)
+            t_end = float(it["tokens"][-1][1]) if it["tokens"] else 0.0                     # 이벤트열은 시간순(check_words)
             extra = 4                                                                               # 화자 태그(prefix + 첫 방출) — ASR 항목
             if tg:
                 it["ast"] = {}
                 for lang, (ids, ts) in sorted(tg.items()):
-                    clamp = sum(1 for t in ts if t > t_end + 1e-6)
-                    if clamp: n_ast["clamped_tokens"] += clamp; ts = array("d", (min(t, t_end) for t in ts))   # 확정 시각은 원문 단어 끝 이내여야 한다
+                    if len(ts) and float(ts[-1]) > t_end + 1e-6:                                # 시각은 오름차순 — 마지막만 보면 된다
+                        n_ast["clamped_tokens"] += sum(1 for t in ts if t > t_end + 1e-6)
+                        ts = array("d", (min(float(t), t_end) for t in ts))                       # 확정 시각은 원문 단어 끝 이내여야 한다
                     it["ast"][lang] = (ids, ts); n_ast[f"items_{lang}"] += 1; n_ast["tr_tokens"] += len(ids)
                 extra = 16 + 3 * max(len(v[0]) for v in it["ast"].values())                         # translate 줄 + 번역 토큰 + 구간 태그(보수적)
             it["est_extra"] = int(it.get("est_extra", 0)) + extra

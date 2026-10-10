@@ -37,3 +37,26 @@ def test_laal_and_al():
     assert al(times, 4.0) == pytest.approx(((1 - 0) + (2 - 1) + (3 - 2) + (5 - 3)) / 4)
     assert laal(times, 4.0, 8) == pytest.approx(((1 - 0) + (2 - 0.5) + (3 - 1) + (5 - 1.5)) / 4)
     assert laal([], 4.0, 3) is None
+
+
+def test_pack_and_load_targets(tmp_path):
+    import gzip, json, sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "experiments"))
+    import ast_build_targets as B
+    from vapasr.data.ast_dataset import load_ast_targets
+    out = tmp_path / "targets-x"
+    for d, tgt, rows in (("en-de", "German", [("r1", [[5, 0.5], [6, 1.0]]), ("r2", [[7, 0.3]])]),
+                         ("en-ko", "Korean", [("r1", [[8, 0.6]])])):
+        (out / d).mkdir(parents=True)
+        with gzip.open(out / d / "u-00000.jsonl.gz", "wt", encoding="utf-8") as f:
+            for rid, toks in rows:
+                f.write(json.dumps(dict(id=rid, tgt=tgt, tokens=toks)) + "\n")
+    B.pack_targets(out)
+    jsonl, st1, _ = load_ast_targets([str(out / "en-de"), str(out / "en-ko")])
+    packed, st2, fp = load_ast_targets([str(out)])
+    assert set(packed) == {"r1", "r2"} and set(packed["r1"]) == {"German", "Korean"} and st2["rows"] == 3 and fp
+    for rid, d in jsonl.items():
+        for tgt, (ids, ts) in d.items():
+            assert list(map(int, packed[rid][tgt][0])) == list(ids)
+            assert [round(float(x), 3) for x in packed[rid][tgt][1]] == [round(x, 3) for x in ts]

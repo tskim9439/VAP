@@ -13,6 +13,9 @@ whose fix file is not there yet are not built.
   python experiments/ast_build_targets.py --root DIR [--gen-dir gen-v3-bf16] [--tokenizer CKPT] [--procs 32]
 Output: DIR/targets-<gen-dir>/<direction>/u-NNNNN.jsonl.gz rows {id, set, direction, src, tgt, n_units, text, tokens: [[tid, t]],
 al, pre_end} + summary.json (per direction: rows, kept, reasons, tokens). Finished shards (same name) are skipped.
+--pack (or `pack` alone with --pack-only) also writes the training form: targets-.../pack/<direction>/{ids.npy int32, times.npy
+float32, offsets.npy int64 (rows+1), rows.txt (row ids), meta.json}. vapasr/data/ast_dataset.load_ast_targets reads it with
+np.load(mmap_mode="r"), so every training process on a node shares one copy in the page cache instead of parsing JSON.
 """
 import argparse
 import bisect
@@ -127,6 +130,31 @@ def process(job):
     return direction, len(rows), len(kept), reasons, n_tok
 
 
+def pack_targets(out):
+    """targets-<...>/<direction>/u-*.jsonl.gz -> targets-<...>/pack/<direction>/ (ids·times·offsets npy, rows.txt, meta.json)."""
+    import numpy as np
+    for d in sorted(p.name for p in out.iterdir() if p.is_dir() and p.name != "pack"):
+        dst = out / "pack" / d
+        if (dst / "meta.json").exists():
+            print("packed already", dst); continue
+        dst.mkdir(parents=True, exist_ok=True)
+        ids, times, offsets, rows, tgt = [], [], [0], [], None
+        for f in sorted((out / d).glob("u-*.jsonl.gz")):
+            for line in gzip.open(f, "rt", encoding="utf-8"):
+                r = json.loads(line)
+                tgt = r["tgt"]; rows.append(r["id"])
+                ids.extend(t[0] for t in r["tokens"]); times.extend(t[1] for t in r["tokens"]); offsets.append(len(ids))
+        tmp = dst / ".partial"
+        tmp.mkdir(exist_ok=True)
+        np.save(tmp / "ids.npy", np.asarray(ids, dtype=np.int32)); np.save(tmp / "times.npy", np.asarray(times, dtype=np.float32))
+        np.save(tmp / "offsets.npy", np.asarray(offsets, dtype=np.int64)); (tmp / "rows.txt").write_text("\n".join(rows) + "\n")
+        for n in ("ids.npy", "times.npy", "offsets.npy", "rows.txt"):
+            os.replace(tmp / n, dst / n)
+        (dst / "meta.json").write_text(json.dumps(dict(direction=d, tgt=tgt, rows=len(rows), tokens=len(ids),
+                                                       shards=len(list((out / d).glob("u-*.jsonl.gz"))), packed=time.strftime("%F %T"))))
+        print(f"packed {d}: {len(rows)} rows, {len(ids)} tokens -> {dst}", flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--root", required=True)
@@ -134,12 +162,16 @@ def main():
     ap.add_argument("--tokenizer", default=CKPT, help="training tokenizer (the starting checkpoint)")
     ap.add_argument("--procs", type=int, default=32)
     ap.add_argument("--fix-dir", default=None, help="overlay the fix step (e.g. fix-gen-v3-bf16); output targets-<fix-dir>")
+    ap.add_argument("--pack", action="store_true", help="also write the packed training form (pack/<direction>/)")
+    ap.add_argument("--pack-only", action="store_true", help="only pack the targets already built")
     a = ap.parse_args()
     root = Path(a.root)
     gen = root / a.gen_dir
     fix = root / a.fix_dir if a.fix_dir else None
     out = root / f"targets-{a.fix_dir or a.gen_dir}"
     fix_of = lambda d, name: (fix / d / name) if fix else None
+    if a.pack_only:
+        pack_targets(out); return
     jobs = []
     for d in sorted(p.name for p in gen.iterdir() if p.is_dir()):
         (out / d).mkdir(parents=True, exist_ok=True)
@@ -174,6 +206,8 @@ def main():
     (out / "summary.json").write_text(json.dumps(dict(gen_dir=a.gen_dir, fix_dir=a.fix_dir, tokenizer=a.tokenizer, built=time.strftime("%F %T"),
                                                       directions=summ), ensure_ascii=False, indent=1))
     print(json.dumps(summ, ensure_ascii=False, indent=1))
+    if a.pack:
+        pack_targets(out)
 
 
 if __name__ == "__main__":
