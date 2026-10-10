@@ -1,0 +1,24 @@
+## [2026-10-11] query | 0.6B Stage 1(q06-s1m3-d10) LibriSpeech test 평가
+
+- Changed:
+  - 위키: [[output-stage1-q06-d10-eval-20261009]] 에 LibriSpeech 절 추가
+  - 원자료: `raw/sources/experiments/2026-10-10-stage1-q06-d10-librispeech/`
+  - mxc:
+    - `data/evaluation/single-turn-librispeech-v1/manifest-test-{clean,other}.jsonl`(single-turn-v1 에서 LibriSpeech 행만)
+    - `results/single-turn-librispeech-{clean,other}-q06-s1m3-d10/`
+- Reason:
+  - 사용자가 최근 학습한 0.6B 스트리밍 ASR 모델의 LibriSpeech test 평가를 요청했다.
+- 결과:
+  - WER, test-clean / test-other:
+    - δ4 3.31 / 7.90
+    - δ6 2.81 / 6.79
+    - δ8 2.67 / 6.55
+    - δ10 2.65 / 6.40
+    - final 2.26 / 5.46
+  - 이전 0.6B 스트리밍 모델(35000·E2·v035-d8)보다 모든 칸에서 유의하게 낮다(상대 −30~−46 %).
+    - 미리 듣기를 맞춰도(새 δ4 560 ms vs v035-d8 δ8 640 ms) −27~−29 % 다.
+  - final 은 Qwen3-ASR-0.6B 오프라인과 비교했다. clean 은 같고(2.26 vs 2.30), other 는 0.8 %p 뒤진다.
+  - 학습에 들어간 LibriSpeech 는 train 분할뿐이고, test 화자와 겹치지 않는다.
+- Next:
+  - q06-s2-ast(job 83866) 최종 체크포인트도 같은 manifest 로 평가해 Stage 1 과 비교한다.
+- By: tskim

@@ -1,0 +1,3 @@
+v035 snapshot (main+short): librispeech files=401 rows=103982 splits={'train-clean-100': 10885, 'train-other-500': 53732, 'train-clean-360': 39365} speakers=2338 overlap_with_test_speakers=0
+Stage1 ASR words: librispeech files=284 rows=83883 splits={'train-clean-360': 32116, 'train-other-500': 42892, 'train-clean-100': 8875} speakers=2337 overlap_with_test_speakers=0
+test speakers 73

@@ -1,0 +1,176 @@
+{
+ "single-turn-librispeech-clean-q06-s1m3-d10": {
+  "groups": {
+   "librispeech-test-clean/delta-4": {
+    "utterances": 2620,
+    "audio_s": 19452.480625000037,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 1359,
+      "deletions": 92,
+      "insertions": 289,
+      "n_ref": 52576,
+      "n_hyp": 52773,
+      "errors": 1740,
+      "rate": 0.033094948265368226
+     }
+    }
+   },
+   "librispeech-test-clean/delta-6": {
+    "utterances": 2620,
+    "audio_s": 19452.480625000037,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 1183,
+      "deletions": 93,
+      "insertions": 202,
+      "n_ref": 52576,
+      "n_hyp": 52685,
+      "errors": 1478,
+      "rate": 0.02811168594035301
+     }
+    }
+   },
+   "librispeech-test-clean/delta-8": {
+    "utterances": 2620,
+    "audio_s": 19452.480625000037,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 1131,
+      "deletions": 84,
+      "insertions": 189,
+      "n_ref": 52576,
+      "n_hyp": 52681,
+      "errors": 1404,
+      "rate": 0.026704199634814366
+     }
+    }
+   },
+   "librispeech-test-clean/delta-10": {
+    "utterances": 2620,
+    "audio_s": 19452.480625000037,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 1124,
+      "deletions": 79,
+      "insertions": 192,
+      "n_ref": 52576,
+      "n_hyp": 52689,
+      "errors": 1395,
+      "rate": 0.02653301886792453
+     }
+    }
+   },
+   "librispeech-test-clean/delta-final": {
+    "utterances": 2620,
+    "audio_s": 19452.480625000037,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 962,
+      "deletions": 84,
+      "insertions": 142,
+      "n_ref": 52576,
+      "n_hyp": 52634,
+      "errors": 1188,
+      "rate": 0.02259586122945831
+     }
+    }
+   }
+  },
+  "complete": true,
+  "predictions": 13100,
+  "expected_predictions": 13100
+ },
+ "single-turn-librispeech-other-q06-s1m3-d10": {
+  "groups": {
+   "librispeech-test-other/delta-4": {
+    "utterances": 2939,
+    "audio_s": 19229.570124999966,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 3132,
+      "deletions": 334,
+      "insertions": 668,
+      "n_ref": 52343,
+      "n_hyp": 52677,
+      "errors": 4134,
+      "rate": 0.07897904208776722
+     }
+    }
+   },
+   "librispeech-test-other/delta-6": {
+    "utterances": 2939,
+    "audio_s": 19229.570124999966,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 2784,
+      "deletions": 308,
+      "insertions": 464,
+      "n_ref": 52343,
+      "n_hyp": 52499,
+      "errors": 3556,
+      "rate": 0.06793649580650708
+     }
+    }
+   },
+   "librispeech-test-other/delta-8": {
+    "utterances": 2939,
+    "audio_s": 19229.570124999966,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 2695,
+      "deletions": 298,
+      "insertions": 434,
+      "n_ref": 52343,
+      "n_hyp": 52479,
+      "errors": 3427,
+      "rate": 0.06547198288214279
+     }
+    }
+   },
+   "librispeech-test-other/delta-10": {
+    "utterances": 2939,
+    "audio_s": 19229.570124999966,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 2640,
+      "deletions": 289,
+      "insertions": 419,
+      "n_ref": 52343,
+      "n_hyp": 52473,
+      "errors": 3348,
+      "rate": 0.06396270752536155
+     }
+    }
+   },
+   "librispeech-test-other/delta-final": {
+    "utterances": 2939,
+    "audio_s": 19229.570124999966,
+    "forced": 0,
+    "metrics": {
+     "wer": {
+      "substitutions": 2278,
+      "deletions": 238,
+      "insertions": 343,
+      "n_ref": 52343,
+      "n_hyp": 52448,
+      "errors": 2859,
+      "rate": 0.05462048411439925
+     }
+    }
+   }
+  },
+  "complete": true,
+  "predictions": 14695,
+  "expected_predictions": 14695
+ }
+}
