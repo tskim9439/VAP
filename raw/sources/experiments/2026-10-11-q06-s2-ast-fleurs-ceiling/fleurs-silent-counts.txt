@@ -1,0 +1,19 @@
+fleurs-en-de δ4: n=641 silent(no tokens)=156 transcript-only=4
+fleurs-en-de δ6: n=641 silent(no tokens)=141 transcript-only=2
+fleurs-en-de δ8: n=641 silent(no tokens)=104 transcript-only=3
+fleurs-en-de δ10: n=641 silent(no tokens)=86 transcript-only=4
+fleurs-en-ko δ4: n=497 silent(no tokens)=87 transcript-only=16
+fleurs-en-ko δ6: n=497 silent(no tokens)=82 transcript-only=13
+fleurs-en-ko δ8: n=497 silent(no tokens)=62 transcript-only=10
+fleurs-en-ko δ10: n=497 silent(no tokens)=51 transcript-only=5
+fleurs-de-en δ4: n=862 silent(no tokens)=0 transcript-only=0
+fleurs-de-en δ6: n=862 silent(no tokens)=0 transcript-only=0
+fleurs-de-en δ8: n=862 silent(no tokens)=0 transcript-only=0
+fleurs-de-en δ10: n=862 silent(no tokens)=0 transcript-only=0
+fleurs-ko-en δ4: n=382 silent(no tokens)=0 transcript-only=0
+fleurs-ko-en δ6: n=382 silent(no tokens)=0 transcript-only=0
+fleurs-ko-en δ8: n=382 silent(no tokens)=0 transcript-only=0
+fleurs-ko-en δ10: n=382 silent(no tokens)=0 transcript-only=0
+en-de δ4 silent by duration bucket(s): {0: '16/28', 5: '104/334', 10: '35/228', 15: '1/41', 20: '0/8', 25: '0/2'}
+silent en-de∩en-ko ids: 87 en-de silent among en-ko ids: 108 en-ko silent: 87
+single-turn-vpaa-kspon-q06-s2-ast {'kspon-eval_clean/δ10': '1/3000', 'kspon-eval_clean/δ4': '1/3000', 'kspon-eval_clean/δ6': '2/3000', 'kspon-eval_clean/δ8': '1/3000', 'kspon-eval_clean/δfinal': '0/3000', 'kspon-eval_other/δ10': '0/2687', 'kspon-eval_other/δ4': '0/2687', 'kspon-eval_other/δ6': '0/2687', 'kspon-eval_other/δ8': '0/2687', 'kspon-eval_other/δfinal': '0/2687', 'voxpopuli-aa-test/δ10': '0/628', 'voxpopuli-aa-test/δ4': '0/628', 'voxpopuli-aa-test/δ6': '0/628', 'voxpopuli-aa-test/δ8': '0/628', 'voxpopuli-aa-test/δfinal': '0/628'}

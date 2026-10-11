@@ -1,0 +1,28 @@
+fleurs-de-en   free-raw               n= 862 BLEU  42.46 chrF  68.08 empty=0
+fleurs-de-en   model-d10              n= 862 BLEU  27.24 chrF  59.01 empty=0
+fleurs-de-en   model-final            n= 862 BLEU  32.94 chrF  62.29 empty=0
+fleurs-de-en   mono-asr               n= 862 BLEU  37.87 chrF  66.13 empty=0
+fleurs-de-en   mono-norm              n= 862 BLEU  40.10 chrF  67.98 empty=0
+fleurs-de-en   mono-raw               n= 862 BLEU  43.22 chrF  69.53 empty=0
+fleurs-en-de   free-raw               n= 641 BLEU  36.77 chrF  64.66 empty=0
+fleurs-en-de   model-d10              n= 641 BLEU  19.32 chrF  46.69 empty=90
+fleurs-en-de   model-final            n= 641 BLEU  27.63 chrF  57.40 empty=0
+fleurs-en-de   model-peak05-d10       n= 641 BLEU  22.57 chrF  53.04 empty=4
+fleurs-en-de   model-peak05-final     n= 641 BLEU  28.03 chrF  58.04 empty=0
+fleurs-en-de   mono-asr               n= 641 BLEU  31.88 chrF  61.40 empty=0
+fleurs-en-de   mono-norm              n= 641 BLEU  38.17 chrF  65.30 empty=0
+fleurs-en-de   mono-raw               n= 641 BLEU  38.31 chrF  65.42 empty=0
+fleurs-en-ko   free-raw               n= 497 BLEU  41.99 chrF  35.91 BLEU13a 13.80 empty=0
+fleurs-en-ko   model-d10              n= 497 BLEU  22.84 chrF  21.25 BLEU13a  4.73 empty=56
+fleurs-en-ko   model-final            n= 497 BLEU  31.70 chrF  26.98 BLEU13a  7.68 empty=0
+fleurs-en-ko   model-peak05-d10       n= 497 BLEU  25.73 chrF  23.15 BLEU13a  5.99 empty=8
+fleurs-en-ko   model-peak05-final     n= 497 BLEU  32.36 chrF  27.69 BLEU13a  7.92 empty=0
+fleurs-en-ko   mono-asr               n= 497 BLEU  35.11 chrF  29.91 BLEU13a  8.81 empty=0
+fleurs-en-ko   mono-norm              n= 497 BLEU  36.71 chrF  31.91 BLEU13a 10.18 empty=0
+fleurs-en-ko   mono-raw               n= 497 BLEU  36.83 chrF  32.09 BLEU13a 10.41 empty=0
+fleurs-ko-en   free-raw               n= 382 BLEU  29.85 chrF  59.42 empty=0
+fleurs-ko-en   model-d10              n= 382 BLEU  15.23 chrF  48.08 empty=0
+fleurs-ko-en   model-final            n= 382 BLEU  19.52 chrF  51.93 empty=1
+fleurs-ko-en   mono-asr               n= 382 BLEU  26.71 chrF  58.20 empty=0
+fleurs-ko-en   mono-norm              n= 382 BLEU  29.55 chrF  60.31 empty=0
+fleurs-ko-en   mono-raw               n= 382 BLEU  30.47 chrF  60.64 empty=0

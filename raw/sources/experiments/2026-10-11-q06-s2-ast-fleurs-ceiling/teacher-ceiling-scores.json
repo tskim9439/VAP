@@ -1,0 +1,234 @@
+{
+ "fleurs-de-en/free-raw": {
+  "bleu": 42.46,
+  "chrf": 68.08,
+  "n": 862,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-de-en/model-d10": {
+  "bleu": 27.24,
+  "chrf": 59.01,
+  "n": 862,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-de-en/model-final": {
+  "bleu": 32.94,
+  "chrf": 62.29,
+  "n": 862,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-de-en/mono-asr": {
+  "bleu": 37.87,
+  "chrf": 66.13,
+  "n": 862,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-de-en/mono-norm": {
+  "bleu": 40.1,
+  "chrf": 67.98,
+  "n": 862,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-de-en/mono-raw": {
+  "bleu": 43.22,
+  "chrf": 69.53,
+  "n": 862,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-en-de/free-raw": {
+  "bleu": 36.77,
+  "chrf": 64.66,
+  "n": 641,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-en-de/model-d10": {
+  "bleu": 19.32,
+  "chrf": 46.69,
+  "n": 641,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 90
+ },
+ "fleurs-en-de/model-final": {
+  "bleu": 27.63,
+  "chrf": 57.4,
+  "n": 641,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-en-de/model-peak05-d10": {
+  "bleu": 22.57,
+  "chrf": 53.04,
+  "n": 641,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 4
+ },
+ "fleurs-en-de/model-peak05-final": {
+  "bleu": 28.03,
+  "chrf": 58.04,
+  "n": 641,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-en-de/mono-asr": {
+  "bleu": 31.88,
+  "chrf": 61.4,
+  "n": 641,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-en-de/mono-norm": {
+  "bleu": 38.17,
+  "chrf": 65.3,
+  "n": 641,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-en-de/mono-raw": {
+  "bleu": 38.31,
+  "chrf": 65.42,
+  "n": 641,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-en-ko/free-raw": {
+  "bleu": 41.99,
+  "chrf": 35.91,
+  "n": 497,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "bleu_13a": 13.8,
+  "empty": 0
+ },
+ "fleurs-en-ko/model-d10": {
+  "bleu": 22.84,
+  "chrf": 21.25,
+  "n": 497,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "bleu_13a": 4.73,
+  "empty": 56
+ },
+ "fleurs-en-ko/model-final": {
+  "bleu": 31.7,
+  "chrf": 26.98,
+  "n": 497,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "bleu_13a": 7.68,
+  "empty": 0
+ },
+ "fleurs-en-ko/model-peak05-d10": {
+  "bleu": 25.73,
+  "chrf": 23.15,
+  "n": 497,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "bleu_13a": 5.99,
+  "empty": 8
+ },
+ "fleurs-en-ko/model-peak05-final": {
+  "bleu": 32.36,
+  "chrf": 27.69,
+  "n": 497,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "bleu_13a": 7.92,
+  "empty": 0
+ },
+ "fleurs-en-ko/mono-asr": {
+  "bleu": 35.11,
+  "chrf": 29.91,
+  "n": 497,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "bleu_13a": 8.81,
+  "empty": 0
+ },
+ "fleurs-en-ko/mono-norm": {
+  "bleu": 36.71,
+  "chrf": 31.91,
+  "n": 497,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "bleu_13a": 10.18,
+  "empty": 0
+ },
+ "fleurs-en-ko/mono-raw": {
+  "bleu": 36.83,
+  "chrf": 32.09,
+  "n": 497,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "bleu_13a": 10.41,
+  "empty": 0
+ },
+ "fleurs-ko-en/free-raw": {
+  "bleu": 29.85,
+  "chrf": 59.42,
+  "n": 382,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-ko-en/model-d10": {
+  "bleu": 15.23,
+  "chrf": 48.08,
+  "n": 382,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-ko-en/model-final": {
+  "bleu": 19.52,
+  "chrf": 51.93,
+  "n": 382,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 1
+ },
+ "fleurs-ko-en/mono-asr": {
+  "bleu": 26.71,
+  "chrf": 58.2,
+  "n": 382,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-ko-en/mono-norm": {
+  "bleu": 29.55,
+  "chrf": 60.31,
+  "n": 382,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ },
+ "fleurs-ko-en/mono-raw": {
+  "bleu": 30.47,
+  "chrf": 60.64,
+  "n": 382,
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+  "empty": 0
+ }
+}
