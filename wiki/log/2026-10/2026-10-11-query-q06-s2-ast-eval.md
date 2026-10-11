@@ -1,0 +1,26 @@
+## [2026-10-11] query | q06-s2-ast 전체 평가 결과 정리
+
+- Changed:
+  - 위키: [[output-q06-s2-ast-eval-20261011]] 신규
+  - 원자료: `raw/sources/experiments/2026-10-11-q06-s2-ast-eval/`
+  - mxc `results/`:
+    - `ast-{fleurs,fleurs-en-peak05,covost2}-q06-s2-ast/`
+    - `single-turn-{vpaa-kspon,yodas-de,librispeech-clean,librispeech-other}-q06-s2-ast/`
+    - `evalq-q06-s2-ast/`
+- Reason:
+  - 학습(job 83866)이 끝나 계획대로 final 체크포인트를 전체 평가했다. 사용자가 진행 상황과 수치를 물었다.
+- 결과:
+  - **받아쓰기:** Stage 1 대비 30 칸 모두에서 유의하게 나빠진 곳이 없다. 독일어 5 칸(−0.21~−0.28 %p)과 Kspon clean final(−0.27)은 유의하게 좋아졌다.
+  - **번역(δ10 BLEU, LAAL):**
+    - FLEURS: 독→영 27.2(1.72 s), 영→독 22.6(음량 보정, 2.45 s), 영→한 25.7(글자, 4.43 s), 한→영 15.2(2.59 s)
+    - CoVoST 2: 독→영 29.6(1.60 s), 영→독 22.4(1.83 s)
+  - SeamlessStreaming(FLEURS)보다 영↔독이 7–8 BLEU 낮다. 교사 상한은 그보다 높아, 손실은 학생 모델·스트리밍·ASR 쪽이다.
+  - 문제 셋:
+    - 작은 음량에서 침묵
+    - 짧은 문장에서 번역 누락(CoVoST 영→독 δ4 4.4 %, final 은 0)
+    - Kspon δ10 반복 루프 1 건
+- Next:
+  - q06-s3-ast 제출(사용자)
+  - 학습이 끝나면 같은 대기열로 다시 평가하고 이 페이지와 비교한다. 특히 짧은 문장 번역 누락이 줄었는지 본다.
+  - 영어 낭독 데이터(Common Voice English 등)는 사용자가 받기로 하면 준비한다.
+- By: tskim

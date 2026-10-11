@@ -1,0 +1,15 @@
+en-de δ4: n=15524 silent=65 transcript-only=684
+  silent  n=65 RMS median -55.4 dBFS, peak median 0.018, frac RMS<-50dB 0.57, dur median 5.1s
+  ok      n=200 RMS median -26.0 dBFS, peak median 0.460, frac RMS<-50dB 0.03, dur median 2.8s
+  all en (every 20th, n=777): frac RMS<-50 dBFS 0.028
+transcript-only by duration (s): {0: '2/90', 2: '181/3481', 4: '272/5729', 6: '157/4170', 8: '59/1688', 10: '9/259', 12: '4/107'}
+transcript words: [(1, 3), (2, 7), (3, 22), (4, 59), (5, 75), (6, 68), (7, 84), (8, 93), (9, 78), (10, 195)]
+also empty at δ10: 272 / 684
+  2.1s REF 'My keyboard is filled with dust.' | HYP 'might give bodies filled with thirst' | final TR 'Meine Tastatur ist voller Staub.' | flush 1 post 0
+  2.3s REF 'But you want to know something?' | HYP 'continued to have something' | final TR 'Also, es kann etwas haben.' | flush 1 post 0
+  2.5s REF 'Want to know what it is?' | HYP 'want to know what it is' | final TR 'Ich möchte wissen, was es ist.' | flush 1 post 0
+  2.6s REF 'Stop beating around the bush.' | HYP 'stop beating around the bush' | final TR 'Hör auf, herumzureden.' | flush 1 post 0
+  2.6s REF '"Won\'t you sit down?"' | HYP 'want you sit down' | final TR 'Wollen Sie sich nicht setzen?' | flush 1 post 0
+  2.7s REF 'Write at once or you may forget it.' | HYP 'right at one three may forget it' | final TR 'Sofort können wir es vergessen.' | flush 1 post 0
+  2.7s REF 'Fly by night and you waste little time.' | HYP 'fly by night and you waste little time' | final TR 'Fliegen Sie nachts, und Sie verschwenden Ihre Zeit' | flush 1 post 1
+  2.8s REF '"""Shining Through"" and ""Stop!"' | HYP 'shining through and stopped' | final TR 'scheinen und aufhören' | flush 1 post 0

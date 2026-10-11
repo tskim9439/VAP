@@ -1,0 +1,60 @@
+09:15:39 gpu=0 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-q06-s2-ast 4 0
+09:15:39 gpu=1 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-q06-s2-ast 4 1
+09:15:39 gpu=2 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-q06-s2-ast 4 2
+09:15:40 gpu=5 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-q06-s2-ast 4 3
+09:56:04 gpu=5 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-q06-s2-ast 4 3
+09:56:04 gpu=5 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-vpaa-kspon-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-vpaa-kspon-q06-s2-ast 4 0
+09:56:51 gpu=2 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-q06-s2-ast 4 2
+09:56:51 gpu=2 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-vpaa-kspon-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-vpaa-kspon-q06-s2-ast 4 1
+09:57:27 gpu=1 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-q06-s2-ast 4 1
+09:57:28 gpu=1 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-vpaa-kspon-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-vpaa-kspon-q06-s2-ast 4 2
+09:59:37 gpu=0 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-q06-s2-ast 4 0
+09:59:38 gpu=0 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-vpaa-kspon-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-vpaa-kspon-q06-s2-ast 4 3
+10:28:17 gpu=1 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-vpaa-kspon-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-vpaa-kspon-q06-s2-ast 4 2
+10:28:17 gpu=1 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-yodas-de-dev-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-yodas-de-q06-s2-ast 4 0
+10:29:20 gpu=2 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-vpaa-kspon-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-vpaa-kspon-q06-s2-ast 4 1
+10:29:20 gpu=2 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs-en-peak05.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-en-peak05-q06-s2-ast 2 0
+10:29:22 gpu=5 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-vpaa-kspon-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-vpaa-kspon-q06-s2-ast 4 0
+10:29:22 gpu=5 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs-en-peak05.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-en-peak05-q06-s2-ast 2 1
+10:31:27 gpu=0 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-vpaa-kspon-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-vpaa-kspon-q06-s2-ast 4 3
+10:31:27 gpu=0 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-yodas-de-dev-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-yodas-de-q06-s2-ast 4 1
+10:56:44 gpu=1 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-yodas-de-dev-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-yodas-de-q06-s2-ast 4 0
+10:56:44 gpu=1 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-yodas-de-dev-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-yodas-de-q06-s2-ast 4 2
+10:59:47 gpu=0 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-yodas-de-dev-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-yodas-de-q06-s2-ast 4 1
+10:59:47 gpu=0 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-yodas-de-dev-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-yodas-de-q06-s2-ast 4 3
+11:01:15 gpu=2 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs-en-peak05.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-en-peak05-q06-s2-ast 2 0
+11:01:16 gpu=2 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-librispeech-v1/manifest-test-clean.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-clean-q06-s2-ast 2 0
+11:01:30 gpu=5 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs-en-peak05.jsonl /soundai/users/tskim/VAPKT-data/results/ast-fleurs-en-peak05-q06-s2-ast 2 1
+11:01:30 gpu=5 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-librispeech-v1/manifest-test-clean.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-clean-q06-s2-ast 2 1
+11:24:39 gpu=1 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-yodas-de-dev-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-yodas-de-q06-s2-ast 4 2
+11:24:40 gpu=1 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-librispeech-v1/manifest-test-other.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-other-q06-s2-ast 2 0
+11:28:46 gpu=0 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-yodas-de-dev-v1/manifest.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-yodas-de-q06-s2-ast 4 3
+11:28:47 gpu=0 start /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-librispeech-v1/manifest-test-other.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-other-q06-s2-ast 2 1
+11:32:22 gpu=2 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-librispeech-v1/manifest-test-clean.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-clean-q06-s2-ast 2 0
+11:32:22 gpu=2 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 0
+11:32:24 gpu=5 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-librispeech-v1/manifest-test-clean.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-clean-q06-s2-ast 2 1
+11:32:24 gpu=5 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 1
+11:54:16 gpu=1 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-librispeech-v1/manifest-test-other.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-other-q06-s2-ast 2 0
+11:54:16 gpu=1 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 2
+11:58:47 gpu=0 done /soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-librispeech-v1/manifest-test-other.jsonl /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-other-q06-s2-ast 2 1
+11:58:47 gpu=0 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 3
+12:02:54 gpu=6 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 4
+12:03:14 gpu=6 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 5
+12:03:34 gpu=6 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 6
+12:03:54 gpu=6 start /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 7
+13:00:48 gpu=2 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 0
+13:02:33 gpu=5 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 1
+13:26:13 gpu=1 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 2
+13:29:36 gpu=0 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 3
+13:29:58 summarized /soundai/users/tskim/VAPKT-data/results/ast-fleurs-q06-s2-ast
+13:30:08 summarized /soundai/users/tskim/VAPKT-data/results/single-turn-vpaa-kspon-q06-s2-ast
+13:30:16 summarized /soundai/users/tskim/VAPKT-data/results/single-turn-yodas-de-q06-s2-ast
+13:30:27 summarized /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-clean-q06-s2-ast
+13:30:39 summarized /soundai/users/tskim/VAPKT-data/results/single-turn-librispeech-other-q06-s2-ast
+13:31:43 SUMMARY FAIL /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast
+13:31:43 ALL DONE
+14:00:05 gpu=6 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 4
+14:01:21 gpu=6 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 5
+14:03:04 gpu=6 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 6
+14:03:37 gpu=6 done /soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2.jsonl /soundai/users/tskim/VAPKT-data/results/ast-covost2-q06-s2-ast 8 7
+14:03:37 gpu=6 extra workers finished

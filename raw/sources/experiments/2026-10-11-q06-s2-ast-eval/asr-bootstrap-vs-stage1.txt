@@ -1,0 +1,31 @@
+set                        δ          n  Stage1  s2-ast     Δ%p            95% CI
+kspon-eval_clean           δ4      3000    9.60    9.37   -0.24 [ -0.50,  +0.02]
+kspon-eval_clean           δ6      3000    8.53    8.63   +0.09 [ -0.11,  +0.30]
+kspon-eval_clean           δ8      3000    8.54    8.43   -0.11 [ -0.34,  +0.13]
+kspon-eval_clean           δ10     3000    8.45    9.71   +1.26 [ -0.27,  +4.20]
+kspon-eval_clean           δfinal  3000    7.64    7.37   -0.27 [ -0.45,  -0.11] *
+kspon-eval_other           δ4      2687    9.51    9.56   +0.05 [ -0.21,  +0.37]
+kspon-eval_other           δ6      2687    8.68    8.62   -0.07 [ -0.32,  +0.22]
+kspon-eval_other           δ8      2687    8.51    8.54   +0.03 [ -0.16,  +0.25]
+kspon-eval_other           δ10     2687    8.44    8.78   +0.33 [ -0.23,  +1.33]
+kspon-eval_other           δfinal  2687    7.59    7.62   +0.04 [ -0.31,  +0.56]
+voxpopuli-aa-test          δ4       628    7.46    7.32   -0.13 [ -0.51,  +0.21]
+voxpopuli-aa-test          δ6       628    6.84    6.81   -0.03 [ -0.32,  +0.24]
+voxpopuli-aa-test          δ8       628    6.82    6.59   -0.24 [ -0.53,  +0.06]
+voxpopuli-aa-test          δ10      628    6.82    6.58   -0.24 [ -0.56,  +0.04]
+voxpopuli-aa-test          δfinal   628    6.97    7.05   +0.08 [ -0.25,  +0.41]
+yodas-de-dev               δ4      4861    4.44    4.17   -0.28 [ -0.42,  -0.14] *
+yodas-de-dev               δ6      4861    3.74    3.49   -0.25 [ -0.38,  -0.12] *
+yodas-de-dev               δ8      4861    3.57    3.32   -0.25 [ -0.37,  -0.13] *
+yodas-de-dev               δ10     4861    3.42    3.19   -0.23 [ -0.37,  -0.11] *
+yodas-de-dev               δfinal  4861    2.37    2.17   -0.21 [ -0.31,  -0.11] *
+librispeech-test-clean     δ4      2620    3.31    3.26   -0.05 [ -0.15,  +0.05]
+librispeech-test-clean     δ6      2620    2.81    2.76   -0.05 [ -0.15,  +0.06]
+librispeech-test-clean     δ8      2620    2.67    2.65   -0.02 [ -0.13,  +0.08]
+librispeech-test-clean     δ10     2620    2.65    2.58   -0.07 [ -0.17,  +0.02]
+librispeech-test-clean     δfinal  2620    2.26    2.23   -0.02 [ -0.12,  +0.07]
+librispeech-test-other     δ4      2939    7.90    7.89   -0.01 [ -0.19,  +0.17]
+librispeech-test-other     δ6      2939    6.79    6.68   -0.11 [ -0.31,  +0.08]
+librispeech-test-other     δ8      2939    6.55    6.45   -0.10 [ -0.24,  +0.05]
+librispeech-test-other     δ10     2939    6.40    6.27   -0.12 [ -0.31,  +0.05]
+librispeech-test-other     δfinal  2939    5.46    5.35   -0.11 [ -0.26,  +0.03]
