@@ -5,7 +5,7 @@ decision_status: accepted
 owner: tskim
 review: 2026-11-08
 created: 2026-10-08
-updated: 2026-10-09
+updated: 2026-10-11
 summary: AST 학습 데이터 — 전체 ASR 전사를 Qwen3.8-27B 로 단조(원문 어순) 번역만 만들어 쓰고, 번역 단어 시각은 stable prefix 로 정함, prefix 는 화자별 언어 → 화자별 목표 언어
 sources:
   - '[[output-monotonic-ast-translation-methods-20261008]]'
@@ -72,6 +72,16 @@ related:
 10. **재판정·수리**(사용자, 2026-10-09: 생성이 끝나면 바로 진행):
     - v2 탈락 단위를 판정 v3 로 다시 판정한다. 엇갈리면 v3 내용 "same" 만 인정하고, 나머지는 한 번 수리한 뒤 다시 판정한다.
     - 근거와 수치: [[output-ast-mono-generation-20261009]] 수리 단계 절
+
+## 결정 (사용자, 2026-10-11, q06-s2-ast 평가 뒤)
+11. **번역 모드 학습량을 늘린다.**
+    - q06-s2-ast/final 에서 이어 2 epoch 를 더 학습한다(run q06-s3-ast).
+    - 번역 모드 비율(`--ast-frac`)을 0.5 에서 0.8 로 올린다. 번역 모드에서도 전사 흐름을 함께 내므로 ASR 학습은 계속된다.
+    - 근거: FLEURS 교사 상한 대비 손실이 교사→학생(−2.7~−7.2 BLEU)과 스트리밍(−4.3~−6.6)에서 컸다([[2026-10-11-q06-s2-ast-fleurs-ceiling]]).
+12. **영어 음량 증강을 넣는다.**
+    - 영어 학습 항목의 50 % 를 파형 RMS 가 [−70, −20] dBFS 의 무작위 목표가 되게 맞춘다.
+    - 잡음·잔향 뒤에 이득만 바꾼다(`vapasr/data/ast_dataset.apply_gain`, `--gain-augment 0.5,-70,-20 --gain-augment-langs English`).
+    - 근거: FLEURS 영어 test 는 원본이 아주 작다(RMS 약 −60 dBFS). 그래서 스트리밍 모델(Stage 1 포함)이 영→독 δ4 기준 25 % 발화에서 통째로 침묵했다. 음량만 맞추면 침묵이 없어졌다.
 
 ## stable prefix 적용 (arXiv 2609.05799)
 - 논문: 문장 전체 번역 f 와 원문 prefix 마다의 번역 pᵢ 를 만든다. mᵢ = max_{j≤i} lcp(pⱼ, f) 까지를 "안정된 prefix" 로 확정한다(영→독은 단어 단위, 영→일·중은 글자 단위). 이 데이터로 Qwen3-8B 를 미세조정해 지연-품질 균형이 좋아졌다(영→독·일·중; FLEURS·WMT24++·CoVoST2).

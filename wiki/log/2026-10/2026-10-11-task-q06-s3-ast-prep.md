@@ -1,0 +1,23 @@
+## [2026-10-11] task | 다음 학습(q06-s3-ast) 준비: 번역 모드 0.8, 영어 음량 증강
+
+- Changed:
+  - 코드:
+    - `vapasr/data/ast_dataset.py`: `apply_gain`, AstStreamDataset 의 `gain_aug`·`gain_aug_langs`
+    - `experiments/semcommit_train.py`: `--gain-augment`, `--gain-augment-langs`, 지문 키(gain_augment·gain_augment_langs). Codex 변경이 섞인 파일이라 커밋하지 않고 mxc 에만 배포했다.
+    - `tests/test_ast_dataset.py`: apply_gain 테스트
+    - `slurm/submit-q06-s3-ast.sh`
+  - 위키: [[decision-ast-monotonic-data]] 결정 11·12
+- Reason:
+  - 사용자 결정: 번역 모드 학습량을 늘리고, 영어 AST 에 음량 증강을 넣는다.
+- 결과:
+  - 테스트: 로컬 8 통과·2 건너뜀, mxc 10 통과.
+  - 실제 항목 점검(mxc):
+    - 영어 LibriSpeech 항목은 RMS 가 −65~−22 dBFS 로 무작위로 바뀐다. 가장 작은 것은 최대 진폭 0.005 로 FLEURS 영어 수준이다.
+    - 한국어 Kspon 항목은 그대로다.
+  - 학습 dry-run(작은 목록, init q06-s2-ast/final): 4 셋 × 64 항목 × δ4–10 불일치 0. 지문에 ast_frac 0.8, gain_augment [0.5, −70, −20], ['English'] 이 들어갔다.
+  - 배포 순서: 진행 중인 평가(evalq-q06-s2-ast)가 shard 마다 `ast_dataset.py` 해시를 기록한다.
+    - 그래서 남은 CoVoST shard 4 개를 GPU 6 에서 먼저 시작해 8 개 설정이 모두 같게 고정한 뒤 배포했다(`results/evalq-q06-s2-ast/extra_gpu6.sh`).
+- Next:
+  - 사용자가 `bash slurm/submit-q06-s3-ast.sh --partition hpc`(또는 apex)로 제출한다.
+  - q06-s2-ast 평가를 마무리하고 결과 페이지로 정리한다.
+- By: tskim

@@ -11,16 +11,21 @@ prefix(assistant 머리 뒤):  language <SPK_x>{원문 언어}[\\ntranslate <SPK
 final(오프라인) 모드: 머리(language … <asr_text>) 뒤에 <SPK_x> 전사 [<TRANS> 번역] <|im_end|>.
 <TRANS> 는 sp_ids 밖에서 trans_id 로 받는다 — SemCommitDataset 의 check_sem_ids 는 SEM 뒤 id 를 지연 확장만 허용한다.
 번역 타깃(ast_targets): {행 id: {목표 언어: [(token id, 시각 s), ...]}} — load_ast_targets 가 ast_build_targets 산출물을 읽는다.
+음량 증강(gain_aug, 2026-10-11 사용자 결정): FLEURS 영어 test 는 원본이 아주 작아(RMS 약 −60 dBFS) 스트리밍 모델이 통째로 침묵했다
+(raw/sources/experiments/2026-10-11-q06-s2-ast-fleurs-ceiling). 학습 항목의 언어가 gain_aug_langs 면 확률 p 로 파형 RMS 를 [lo, hi] dBFS
+의 무작위 목표로 맞춘다(잡음·잔향 뒤, 이득만 — 시각·K 그대로).
 """
 import glob
 import gzip
 import json
+import math
 import random
 from array import array
 from collections import Counter
 from types import SimpleNamespace
 from typing import Dict, List, Optional, Sequence, Tuple
 
+import numpy as np
 import torch
 
 from .interleave import Specials
@@ -98,19 +103,35 @@ def load_ast_targets(paths: Sequence[str], keep_ids: Optional[set] = None) -> Tu
     return out, st, fp
 
 
+def apply_gain(wav: np.ndarray, target_rms_db: float, peak_cap: float = 0.99) -> Tuple[np.ndarray, float]:
+    """파형 RMS 를 target_rms_db(dBFS)로 맞춘다(이득만). 봉우리가 peak_cap 을 넘으면 그만큼 이득을 줄인다. 무음이면 그대로. → (파형, 이득 dB)"""
+    x = np.asarray(wav, dtype=np.float32)
+    rms = float(np.sqrt(np.mean(np.square(x, dtype=np.float64)))) if x.size else 0.0
+    if rms < 1e-8: return x, 0.0
+    g = 10.0 ** (target_rms_db / 20.0) / rms; peak = float(np.abs(x).max())
+    if peak * g > peak_cap: g = peak_cap / peak
+    return (x * g).astype(np.float32), 20.0 * math.log10(g)
+
+
 class AstStreamDataset(SemCommitDataset):
     """SemCommitDataset(ASR 전용: ignore_labels + sem_free_unlabeled, 표기형 끔) + ast-v1 prefix·번역 흐름.
     ast_targets: load_ast_targets 결과(없으면 화자·언어 prefix 만 붙인 ASR). ast_frac: 번역 타깃이 있는 항목을 이 확률로 번역 모드로 낸다
-    (목표 언어가 여럿이면 균등하게 하나). trans_id: <TRANS> id. 화자 태그는 sp_ids 의 <SPK_A>/<SPK_B>."""
+    (목표 언어가 여럿이면 균등하게 하나). trans_id: <TRANS> id. 화자 태그는 sp_ids 의 <SPK_A>/<SPK_B>.
+    gain_aug: (p, lo_db, hi_db) — online 학습에서 gain_aug_langs 항목을 확률 p 로 RMS [lo, hi] dBFS 에 맞춘다(apply_gain). None 이면 끔(난수를 더 뽑지 않는다)."""
 
     def __init__(self, *args, ast_targets: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.5, trans_id: Optional[int] = None,
-                 **kw):
+                 gain_aug: Optional[Sequence[float]] = None, gain_aug_langs: Sequence[str] = ("English",), **kw):
         if float(kw.get("written_frac", 0) or 0) > 0: raise ValueError("ast-v1 은 표기형(written_frac)과 함께 쓰지 않는다 — 전사는 정규형")
         if not (kw.get("ignore_labels") and kw.get("sem_free_unlabeled")): raise ValueError("ast-v1 은 ASR 전용(ignore_labels + sem_free_unlabeled)")
         if trans_id is None: raise ValueError("trans_id(<TRANS>) 가 필요하다")
         if not 0.0 <= float(ast_frac) <= 1.0: raise ValueError(f"ast_frac {ast_frac} 는 [0, 1] 범위")
+        if gain_aug is not None:
+            gain_aug = tuple(float(x) for x in gain_aug)
+            if len(gain_aug) != 3 or not 0.0 <= gain_aug[0] <= 1.0 or not gain_aug[1] <= gain_aug[2] <= 0.0:
+                raise ValueError(f"gain_aug (p, lo_db, hi_db): 0 ≤ p ≤ 1, lo ≤ hi ≤ 0 dBFS — {gain_aug}")
         super().__init__(*args, **kw)
         self.trans_id = int(trans_id); self.ast_frac = float(ast_frac)
+        self.gain_aug = gain_aug; self.gain_aug_langs = frozenset(gain_aug_langs)
         self.spk_ids = tuple(int(self.sp_ids[n]) for n in SPK_NAMES)
         targets = ast_targets or {}; n_ast = Counter()
         for it in self.items:
@@ -217,6 +238,8 @@ class AstStreamDataset(SemCommitDataset):
         offline = self.offline_frac > 0 and random.random() < self.offline_frac
         if offline: s = self.ast_offline_sequence(j, K, spk, tgt)
         if self.noise_aug is not None and self.online: wav = self.noise_aug(wav, random)
+        if self.gain_aug is not None and self.online and it["lang"] in self.gain_aug_langs and random.random() < self.gain_aug[0]:
+            wav, _ = apply_gain(wav, random.uniform(self.gain_aug[1], self.gain_aug[2]))       # 잡음·잔향 뒤 전체 음량(SNR 그대로)
         out = dict(wav=torch.from_numpy(wav), ids=torch.tensor(s["ids"]), is_audio=torch.tensor([c >= 0 for c in s["chunk_of"]]), chunk_of=torch.tensor(s["chunk_of"]),
                    labels=torch.tensor(s["labels"]), pos_weight=torch.tensor(s["pos_weight"], dtype=torch.float32), lang=it["lang"], delay=delay, name=it["name"], id=it["id"],
                    n_text=s["st"].tokens, overflow=s["st"].overflow_tokens, n_flush=s["n_flush"], K=K, rounds=s["n_rounds"],

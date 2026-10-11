@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from vapasr.data.ast_dataset import AstStreamDataset, ast_head_text, build_ast_sequence
+from vapasr.data.ast_dataset import AstStreamDataset, apply_gain, ast_head_text, build_ast_sequence
 from vapasr.data.interleave import Specials
 
 QWEN = "/soundai/Model/Qwen3-ASR-1.7B"
@@ -119,3 +119,16 @@ def test_dataset_sequences_and_items(tmp_path):
     off = ds.ast_offline_sequence(i1, ds.items[i1]["K"], 0, "German")
     body = tok.decode([t for t, inp in zip(off["ids"], off["is_input"]) if not inp])
     assert body.startswith("<SPK_A>it is about shared values<TRANS>Es geht um gemeinsame Werte.")
+
+
+def test_apply_gain_target_rms_peak_cap_and_silence():
+    import numpy as np
+    x = (0.5 * np.sin(np.linspace(0, 200 * np.pi, 16000))).astype(np.float32)          # RMS 0.354 (−9.0 dBFS)
+    y, g = apply_gain(x, -60.0)                                                           # FLEURS 영어 수준으로 작게
+    assert y.dtype == np.float32 and abs(20 * np.log10(np.sqrt(np.mean(y.astype(np.float64) ** 2))) + 60.0) < 0.01
+    assert abs(g - (-60.0 - 20 * np.log10(np.sqrt(np.mean(x.astype(np.float64) ** 2))))) < 0.01
+    y, g = apply_gain(x, -1.0)                                                            # 목표대로면 봉우리 1.26 → 0.99 로 묶는다
+    assert abs(float(np.abs(y).max()) - 0.99) < 1e-6 and g < 20 * np.log10(0.99 / 0.5) + 1e-6
+    z = np.zeros(800, np.float32)
+    y, g = apply_gain(z, -30.0)
+    assert g == 0.0 and not y.any()
