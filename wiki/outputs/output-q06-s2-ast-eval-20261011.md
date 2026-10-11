@@ -89,6 +89,22 @@ FLEURS, SeamlessStreaming 은 논문 수치다([[output-eval-set-plan-asr-simuls
 - 우리 final(오프라인)조차 Seamless 의 스트리밍 결과보다 낮다.
 - 한→영은 지연이 1 s 이상 짧은 지점이라 직접 비교가 어렵다.
 
+### 오프라인 공개 모델과 비교 (논문 자체 보고 수치)
+같은 테스트셋이지만 각 논문이 직접 보고한 수치다. BLEU 계산 방식(정규화·대소문자)이 우리와 같다는 보장은 없다.
+
+| 테스트셋·방향 | 우리 δ10 (스트리밍) | 우리 final (오프라인) | 비교 모델 (오프라인, 크기) |
+|---|---|---|---|
+| CoVoST 2 영→독 | 22.4 | 27.6 | Qwen2-Audio(7B) 29.9 · Qwen-Audio 25.1 · SALMONN 18.6 · BLSP 14.1 |
+| CoVoST 2 독→영 | 29.6 | 34.8 | Whisper large-v2(1.55B) 36.3 · Qwen2-Audio 35.2 · Qwen-Audio 33.9 · SpeechLLaMA 27.1 |
+| FLEURS 독→영 | 27.2 | 32.9 | Whisper large-v2 34.6 |
+| FLEURS 한→영 | 15.2 | 19.5 | Whisper large-v2 21.3 |
+
+- 출처:
+  - Qwen2-Audio Technical Report(arXiv 2407.10759) S2TT 표
+  - Whisper(arXiv 2212.04356) 부록 Table 14(FLEURS)·15(CoVoST 2)
+- 우리 final(약 1.2B: thinker 0.6B + 인코더 0.6B)은 오프라인 7B 음성 LLM(Qwen2-Audio)과 독→영이 비슷하다(34.8 대 35.2). 영→독은 2.3 BLEU 낮다.
+- 스트리밍 δ10(LAAL 1.6–1.8 s)은 오프라인 모델보다 5–7 BLEU 낮다. 스트리밍 비교 대상은 아직 SeamlessStreaming 논문 수치뿐이다(위 표).
+
 ### 교사 상한으로 본 손실 위치 (FLEURS BLEU)
 Qwen3.8-27B 로 FLEURS 원문 텍스트를 번역해 상한을 쟀다([[2026-10-11-q06-s2-ast-fleurs-ceiling]]). "교사·정답"은 학습 타깃과 같은 단조 프롬프트로, 정규화된 정답 원문을 번역한 값이다.
 
