@@ -79,9 +79,28 @@ source_type: source-drop
   - SimulStreaming 재실행(`simulstreaming-vac`)
 - `scores-all.json`·`tables.txt` 는 보정 전 첫 판이다.
 
+## xCOMET (scores-xcomet-xl.json)
+- 모델: Unbabel/XCOMET-XL rev 6a123c5e8e6dccab25e5fcffa3c8b417abadb462
+  - 체크포인트 sha256 b644a48a…fcd716
+  - CC BY-NC-SA 4.0, 사용자가 HF 에서 약관에 동의함
+- 받기·올리기: 맥에서 T5 로 받고, 사용자가 `upload-xcomet.sh` 로 `vapkt-baselines/xcomet/` 에 올렸다.
+  - 함께 올린 것: COMET 휠 3 개, XLM-R XL/XXL 토크나이저·config(HF 캐시 형태)
+- 환경: `scripts/setup-baseline-envs.sh comet`. vapasr env 위 overlay venv 에 unbabel-comet 2.2.7·jsonargparse 3.13.1·entmax 1.3 을 --no-deps 로 얹었다.
+  - torch 2.9.0, lightning 2.6.5, numpy 2.4.6
+  - `layer_transformation: sparsemax_patch` 는 COMET 코드에서 softmax 로 처리된다.
+- 입력 삼중항: src = 평가 manifest 의 `raw_reference`(원문 전사), mt = 시스템 번역, ref = 참조 번역
+- 채점 대상: s3 δ4·δ10·final(보정 폴더 `ours-s3-enc4`, 번역 문장은 보정 전과 같다), Seamless 2 설정, IWSLT 2 설정, Hibiki, SimulStreaming(VAC)
+  - 예측 64,137 행, 서로 다른 삼중항 50,165 개
+- **빈 번역은 0 점이다.** XCOMET-XL 이 빈 mt 에 1.0 을 줘서다.
+  - 확인 사례(`xcomet_smoke2.py`): 독·영·한 모두 빈 mt 1.0, '.' 0.5, 한 단어 약 0.52, 무관한 번역 0.23~0.68
+  - 빈 mt 는 모델에 넣지 않고 그룹마다 따로 셌다.
+- 실행: 호스트 GPU 2 에서 8,192 개를 채점한 뒤, GPU 2·1·5 의 3 shard 로 나눠 마쳤다(16:36–17:11, batch 32, fp32).
+  - 캐시: mxc `results/xcomet-20261012/cache-xcomet-xl*.jsonl`(49,964 줄)
+
 ## 파일
 - `scores-all.json`: 시스템/설정/데이터셋별 BLEU·chrF·LAAL·AL·빈 번역 수(122 칸)
 - `tables.txt`: 위 파일을 세트·방향별로 정리. `python make_tables.py scores-all.json > tables.txt`
 - `scores-all-v2.json`·`tables-v2.txt`: 지연 보정 + SimulStreaming 재실행 판(위 절)
+- `scores-xcomet-xl.json`: (system, setting, dataset) 별 xCOMET(×100)·문장 수·빈 번역 수
 - mxc 예측 원본: `VAPKT-data/results/simulst-baselines-20261011/{ours,ours-s3,seamless,iwslt,hibiki,simulstreaming,simulstreaming-vac}/`
   - IWSLT 예측은 채점 때 `/tmp/sa_tskim/score-iwslt` 에 모아 읽었다.
