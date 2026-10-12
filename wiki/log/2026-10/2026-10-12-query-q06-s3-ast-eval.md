@@ -1,0 +1,27 @@
+## [2026-10-12] query | q06-s3-ast 학습 완료와 평가
+
+- Changed:
+  - 위키: [[output-q06-s3-ast-eval-20261012]] 신규
+  - 원자료: `raw/sources/experiments/2026-10-12-q06-s3-ast-eval/`
+  - 코드:
+    - `slurm/eval-single-turn-queue.sbatch`(평가를 노드 GPU 8 장에 나눔)
+    - `slurm/submit-eval-q06-s3-ast.sh`
+  - mxc `results/`:
+    - `ast-{fleurs,fleurs-en-peak05,covost2-sub7}-q06-s3-ast/`
+    - `single-turn-{vpaa-kspon,yodas-de,librispeech-clean,librispeech-other}-q06-s3-ast/`
+    - `evalq-q06-s3-ast/tasks.txt`
+- Reason:
+  - 사용자가 제출한 q06-s3-ast(job 84802)가 끝나, 계획대로 s2 와 같은 평가로 비교했다. 평가는 사용자가 job 85088 로 제출했다.
+- 결과:
+  - **학습:** hpc 선점으로 다섯 번 시작했다. checkpoint-4000 에서 재개해 07:30 에 끝났다(parity 통과).
+  - **번역:**
+    - FLEURS 영어 원본의 침묵이 사라졌다(영→독 δ4 156 → 0). 영→독·영→한 δ4 BLEU 가 +5.7·+4.6 올랐다.
+    - 스트리밍 번역은 대부분 +0.3~1.9 BLEU 다.
+    - 짧은 문장 번역 누락은 CoVoST 영→독 δ4 105 → 91 로 조금만 줄었다.
+  - **받아쓰기:** VoxPopuli δ10 +0.30 %p 하나 외에 유의한 퇴행이 없다. Kspon·YODAS-de 일부는 개선됐다.
+  - **일치 검사:** 직렬/배치 일치 검사 1 건이 실패했다(근소한 점수 경합에서 토큰 순서가 바뀜). 그 shard 는 검사 없이 마쳤다.
+  - **속도 저하:** 호스트 영어 정렬의 저장소 입출력이 학습을 약 4 s/step 까지 늦췄다. 정렬을 멈추자 0.63 s/step 으로 돌아왔다.
+- Next:
+  - Common Voice 영어 타깃 생성(job 85149·85150)이 끝나면 s4 학습을 준비한다.
+  - 짧은 문장 번역 누락 대책을 정한다.
+- By: tskim

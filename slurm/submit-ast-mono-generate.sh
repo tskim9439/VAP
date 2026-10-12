@@ -36,13 +36,14 @@ done
 [[ -f "$root/units/manifest.json" ]] || { echo "없음: $root/units/manifest.json (ast_mono_generate.py prepare 먼저)" >&2; exit 1; }
 [[ -f /soundai/users/tskim/VAPKT-data/conda/envs/vllm-0.30.tar ]] || { echo "없음: vLLM env tar (scripts/setup-vllm-env.sh pack)" >&2; exit 1; }
 gen_dir="gen-${prompt}-${quant}"; q=""; [[ $quant == fp8 ]] && q=fp8
+total=$(python3 -c "import json,sys; m=json.load(open(sys.argv[1])); print(sum(len(v) * {'en': 2}.get(k, 1) for k, v in m['shards'].items()))" "$root/units/manifest.json")   # 작업 수 = shard × 방향(영어 원문은 en-de·en-ko)
 done_n=0
 if [[ -d "$root/$gen_dir" ]]; then done_n=$(find "$root/$gen_dir" -name 'u-*.jsonl.gz' | wc -l); fi
 if [[ $mode == fix ]]; then
   fix_n=0; [[ -d "$root/fix-$gen_dir" ]] && fix_n=$(find "$root/fix-$gen_dir" -name 'u-*.jsonl.gz' | wc -l)
-  echo "제출(수리): ${gen_dir} 생성 완료 ${done_n}/3474 · 수리 완료 ${fix_n} · 노드 ${nodes} · ${partition} · ${job_name}" >&2
+  echo "제출(수리): ${gen_dir} 생성 완료 ${done_n}/${total} · 수리 완료 ${fix_n} · 노드 ${nodes} · ${partition} · ${job_name}" >&2
 else
-  echo "제출: ${gen_dir} 완료 항목 ${done_n}/3474 · 노드 ${nodes} · ${partition} · ${job_name}" >&2
+  echo "제출: ${gen_dir} 완료 항목 ${done_n}/${total} · 노드 ${nodes} · ${partition} · ${job_name}" >&2
 fi
 sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} ${time_limit:+--time="$time_limit"} \
   --nodes="$nodes" --ntasks=$((nodes * 8)) --ntasks-per-node=8 --gres=gpu:8 \

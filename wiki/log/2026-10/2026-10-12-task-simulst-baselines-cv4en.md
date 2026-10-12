@@ -1,0 +1,32 @@
+## [2026-10-12] task | 스트리밍 번역 베이스라인 실행 환경과 영어 낭독 데이터(Common Voice 4) 준비
+
+- Changed:
+  - 코드:
+    - `experiments/simulst_{common,seamless,iwslt,hibiki,simulstreaming}.py`: 같은 평가셋·같은 입력(원 발화 + 1 s 무음)·같은 LAAL/BLEU 로 베이스라인을 재는 실행기와 채점
+    - `scripts/setup-baseline-envs.sh`(오프라인 env 3 개)
+    - `experiments/cv_en_align.py` + `slurm/{cv-en-align.sbatch,submit-cv-en-align.sh}`(영어 낭독 정렬)
+    - `experiments/ast_mono_generate.py`: prepare 에 `--list`·`--text-keys` 추가
+    - `slurm/submit-ast-mono-generate.sh`: 작업 수 표시를 manifest 로 계산
+    - `tests/test_simulst_baselines.py`
+  - mxc:
+    - `VAPKT-data/vapkt-baselines/`: 사용자 업로드. 가중치·휠·코드, 구성은 README
+    - `results/simulst-baselines-20261011/`
+    - `data/cv4-en-v1/`, `data/ast-mono-cv4en-v1/`
+- Reason:
+  - 사용자 결정: 스트리밍 기준 모델과 비교(SeamlessStreaming·IWSLT26 연결형·Hibiki-Zero·SimulStreaming), 영어 낭독 데이터 추가.
+- 결과:
+  - 베이스라인:
+    - SeamlessStreaming(임계 0.5·0.7)·Hibiki-Zero·IWSLT26(c960·c640)이 끝났다. SimulStreaming(Whisper large-v3 + EuroLLM-9B)은 마무리 중이다.
+    - 비교표는 [[output-q06-s2-ast-eval-20261011]] 의 후속 페이지로 정리한다.
+  - 공식 코드와 다르게 한 점(재현용, 실행기 docstring 에 기록):
+    - Seamless: 앞뒤 무음 제거(VAD) 끔, 목표 언어를 행마다 줌
+    - IWSLT26: 모델 경로를 로컬로, LLM 최대 길이 2048, 첫 대기 1 s, 3.11 문법 한 곳은 불러올 때 바꿈
+    - SimulStreaming: Whisper 직접 번역은 large-v3 에서 '.' 만 내 연결형을 씀. transformers 4.57 의 chat template 은 dict 로 받게 감쌈. Whisper 토크나이저 결함은 문장 단위로 잡음
+  - Common Voice 4 영어(CoVoST 2 en_de train):
+    - 289,430 행 → 평가 문장 중복 1,045 개 제외 → Qwen 대조(WER ≤ 10 %)·정렬 통과 238,342 개(351 h; train 232,845 / dev 5,497)
+    - 교사 단조 번역 타깃: prepare 233,388 단위(원문은 사람 문장 raw_text 99.99 %). 생성 job 85149, 수리 job 85150(사용자 제출)
+  - FLEURS 영어 train 은 업로드 대기다(첫 시도는 대상 경로 끝 '/' 가 없어 다른 이름으로 올라갔을 수 있음).
+- Next:
+  - 타깃 생성·수리가 끝나면 pack 을 만들고 s4 학습(기존 데이터 + CV4 영어)을 준비한다.
+  - 베이스라인 비교표를 위키에 정리한다.
+- By: tskim

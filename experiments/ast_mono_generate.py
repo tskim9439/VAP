@@ -226,8 +226,12 @@ def cmd_prepare(a):
     man_path = root / "units" / "manifest.json"
     if man_path.exists():
         sys.exit(f"already prepared: {man_path}")
+    global TEXT_KEYS
+    lists = dict(x.split("=", 1) for x in a.list) if a.list else LISTS     # --list NAME=PATH: 다른 행 목록(예: 영어 낭독 cv4-en, 2026-10-12)
+    if a.text_keys:
+        TEXT_KEYS = tuple(x for x in a.text_keys.split(",") if x)          # Pool 이 fork 하기 전에 바꾼다(작업 프로세스가 물려받는다)
     jobs = []
-    for name, lst in LISTS.items():
+    for name, lst in lists.items():
         langs = {"German"} if name == "de" else {"English", "Korean"}
         files = [l.strip() for l in open(lst) if l.strip()]
         jobs += [(f, langs, a.max_words) for f in files]
@@ -280,7 +284,7 @@ def cmd_prepare(a):
     for code, w in writers.items():
         flush(code, w)
     stats = {k: {kk: (round(vv, 2) if isinstance(vv, float) else vv) for kk, vv in v.items()} for k, v in sorted(stats.items())}
-    man = dict(created=time.strftime("%F %T"), lists=LISTS, max_words=a.max_words, shard_words=a.shard_words,
+    man = dict(created=time.strftime("%F %T"), lists=lists, text_keys=list(TEXT_KEYS), max_words=a.max_words, shard_words=a.shard_words,
                seed=a.seed, code_sha256=code_sha(), shards=shards, stats=stats, errors=errors,
                totals={c: dict(shards=len(v), units=sum(x["units"] for x in v), words=sum(x["words"] for x in v),
                                rows=sum(x["rows"] for x in v)) for c, v in shards.items()})
@@ -518,6 +522,8 @@ def main():
     q.add_argument("--max-words", type=int, default=40)
     q.add_argument("--shard-words", type=int, default=25000, help="source words per shard (~8 GPU min per direction)")
     q.add_argument("--seed", type=int, default=0)
+    q.add_argument("--list", action="append", default=[], help="NAME=PATH(행 목록 파일, 반복) — 주면 Stage 1 목록(LISTS) 대신 쓴다")
+    q.add_argument("--text-keys", default="", help="원문 필드 우선순위(쉼표 목록) — 기본 pnc_text,display_text,raw_text")
     q.set_defaults(fn=cmd_prepare)
     q = sub.add_parser("run")
     q.add_argument("--root", required=True)
