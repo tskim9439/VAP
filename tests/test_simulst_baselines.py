@@ -51,3 +51,15 @@ def test_encoder_chunk_times_waits_for_whole_encoder_chunk():
     times = [round((k + 1) * 0.08, 3) for k in (0, 3, 4, 7, 8, 9, 10, 12)]
     assert C.encoder_chunk_times(times, K, 4) == [0.32, 0.32, 0.64, 0.64, 0.8, 0.8, 0.88, 1.04]
     assert C.encoder_chunk_times(times, K, 1) == times
+
+
+def test_stream_rtf_queue_times_backlog_and_per_chunk_encoder_cost():
+    # 10 frames → chunks [0-3] arrive 0.32 s, [4-7] 0.64 s, [8-9] 0.80 s (input end); 100 ms per frame makes a 400 ms chunk that backs up
+    import stream_rtf as R
+    ticks = [100.0] * 10
+    t, chunk_ms, backlog = R.queue_times(10, ticks, [0.0, 20.0, 0.0], 1, 50.0)
+    assert chunk_ms == [400.0, 420.0, 200.0]
+    assert t[3] == pytest.approx(0.72) and t[4] == pytest.approx(0.72 + 0.12)      # chunk 1 waits for chunk 0 to finish
+    assert t[9] == pytest.approx(1.14 + 0.2) and t[10] == pytest.approx(1.34 + 0.05)
+    assert backlog == pytest.approx(1.34 - 0.8)
+    assert R.queue_times(10, ticks, 0.0, 0, 0.0)[1] == [400.0, 400.0, 200.0]          # scalar encoder cost per chunk

@@ -4,9 +4,13 @@ created: 2026-10-12
 source_type: source-drop
 ---
 
-# q06-s3-ast 한 스트림 실시간성(RTF) — mxc 호스트 예비 측정 (2026-10-12 14:16–14:53)
+# q06-s3-ast 한 스트림 실시간성(RTF) — mxc 호스트 측정 (2026-10-12)
 
-## 방법 (`experiments/stream_rtf.py`)
+두 번 쟀다.
+1. 평가 경로 그대로(HF eager 디코드): 14:16–14:53. 실시간이 안 됐다.
+2. 사용자 요청("vLLM 등 최적화 진행 후 측정")으로 만든 실시간 경로: 15:37–15:50. 실시간이 된다(아래 '최적화 실시간 경로' 절).
+
+## 1. 평가 경로 그대로 — 방법 (`experiments/stream_rtf.py`, 기본값 `--engine hf --encoder-mode full`)
 - 모델·입력·디코드: q06-s3-ast/final. 평가와 같은 입력(원 발화 + 꼬리 무음 1 s)·prefix(번역 모드, δ4·δ10)·직렬 디코드(`stream_decode`)를 쓴다. batch 1, fp32
 - 문장: FLEURS 4 방향에서 길이 순으로 고르게 24 개씩(96 문장 × δ 2 개)
 - 계산 시간:
@@ -21,7 +25,7 @@ source_type: source-drop
   - 측정 중 GPU 사용률은 약 18 % 였다.
   - 처음 띄운 GPU 0 에는 측정 직전 다른 사용자 작업(85 GB)이 올라와, 측정 전에 GPU 5 로 옮겼다.
 
-## 결과 (fp32, `host-summary-float32.json`)
+## 1. 결과 (fp32, `host-summary-float32.json`)
 | 세트/δ | RTF(하한–상한) | 80 ms step p50/p95 (ms) | 320 ms 청크 p50/p95/max (ms) | 청크 320 ms 초과 | LAAL eval → enc → ca(lo–hi) |
 |---|---|---|---|---|---|
 | 독→영 δ4 | 0.86–0.95 | 55 / 155 | 231 / 454 / 1064 | 20.6 % | 1.17 → 1.29 → 1.78–1.95 |
@@ -43,16 +47,62 @@ source_type: source-drop
   - 따라서 이 값은 부하 큰 공유 호스트 + 최적화하지 않은 HF eager 디코드의 상한으로 본다.
 - 표본 24 문장의 LAAL(eval)은 전체 평가값과 조금 다르다(표본 차이). 영→한 δ4 처럼 enc 가 eval 보다 작은 경우가 있다. 늦어진 단어가 원 발화 끝을 넘으면 LAAL 의 합산 구간(τ)이 줄기 때문이다.
 
+## 2. 최적화 실시간 경로 (`--engine graph --encoder-mode stream`, `vapasr/hf/realtime.py`)
+- vLLM 은 쓰지 않았다.
+  - 실행 중인 요청에 입력을 덧붙여 KV 캐시를 이어 쓰는 API 가 없어, 80 ms 마다 지난 입력 전체를 다시 prefill 해야 한다.
+  - 대신 vLLM 이 빠른 이유(고정 KV 캐시 + CUDA graph)를 디코더에 직접 넣었다.
+- **디코더(GraphThinker):**
+  - thinker 언어모델은 Qwen3 와 같은 구조다. 위치가 1 차원이라 interleaved MRoPE 는 보통 RoPE 와 같다.
+  - 레이어의 Linear·RMSNorm·MLP 모듈을 그대로 부르고, 어텐션 core·KV 쓰기·RoPE 표만 직접 한다.
+  - 고정 KV 캐시는 2,048 위치다. 입력 위치 1·2 개 forward 를 CUDA graph 로 잡고, 차단 토큰 −∞·argmax 까지 graph 안에서 한다.
+  - `<NEXT_AUDIO>` 를 넣는 forward 의 logits 는 원래 버려지므로, 다음 오디오 위치와 한 forward 로 합쳤다. 출력 규칙은 같다.
+- **인코더(StreamingEncoder):**
+  - NeMo `cache_aware_stream_step` 으로 320 ms 청크마다 돈다. 특징 자르기는 NeMo `CacheAwareStreamingAudioBuffer` 와 같다.
+  - 정상 상태 step 은 NeMo `set_streaming_cuda_graphs` 로 CUDA graph 로 돈다.
+  - mel 은 파일 전체에서 한 번 계산한다(NeMo 스트리밍 시뮬레이션과 같다). 시간은 청크 수로 나눠 청크마다 더했다.
+- **계산 시간 포함 지연(ca):** 청크마다 실측 인코더 시간 + 그 청크 4 프레임의 디코더 시간으로 대기열을 돌렸다.
+- 환경: 호스트 GPU 1(H200). CPU 부하는 그대로 컸다(load 200~230 / 96 코어). fp32 는 평가와 같은 정밀도다.
+
+| 세트/δ | RTF | 80 ms 프레임 p50/p95 (ms) | 320 ms 청크 p50/p95/max (ms) | 320 ms 초과 | LAAL eval → enc → ca |
+|---|---|---|---|---|---|
+| 독→영 δ4 | 0.144 | 7.7 / 22.6 | 36 / 75 / 178 | 0 % | 1.17 → 1.29 → 1.36 |
+| 독→영 δ10 | 0.143 | 7.7 / 22.4 | 36 / 75 / 138 | 0 % | 1.84 → 1.98 → 2.05 |
+| 영→독 δ4 | 0.153 | 7.7 / 22.3 | 41 / 82 / 314 | 0 % | 2.03 → 2.22 → 2.33 |
+| 영→독 δ10 | 0.152 | 7.7 / 22.7 | 41 / 80 / 344 | 0.1 % | 2.73 → 2.86 → 2.91 |
+| 영→한 δ4 | 0.148 | 7.7 / 13.4 | 41 / 85 / 197 | 0 % | 3.08 → 3.07 → 3.19 |
+| 영→한 δ10 | 0.146 | 7.7 / 12.8 | 39 / 75 / 205 | 0 % | 3.98 → 4.21 → 4.35 |
+| 한→영 δ4 | 0.146 | 7.7 / 22.4 | 37 / 76 / 195 | 0 % | 2.12 → 2.25 → 2.33 |
+| 한→영 δ10 | 0.147 | 7.7 / 22.4 | 37 / 75 / 214 | 0 % | 3.02 → 3.14 → 3.25 |
+
+- **실시간으로 돈다.** RTF 는 0.14~0.15 로, 평가 경로(0.86~1.05)보다 약 6.5 배 빠르다.
+  - 320 ms 청크 계산의 p95 는 75~85 ms 로, 예산의 약 1/4 이다.
+  - 예산을 넘긴 청크는 7,704 개 중 1 개(영→독 δ10, 344 ms)뿐이고, 밀림은 바로 풀렸다.
+  - 입력이 끝난 뒤 마지막 청크까지 끝나는 데 최대 0.06~0.07 s 더 걸린다.
+- 계산 시간 포함 LAAL 은 계산 시간 제외(enc)보다 0.05~0.14 s 크다. 평가 경로에서는 0.5~1.3 s 였다.
+- **스트리밍 인코더:**
+  - 청크 계산 p50 5.2 ms, p95 5.3~5.9 ms. 처음 몇 개는 graph 캡처 전이라 최대 94 ms 다.
+  - 파일 전체 인코딩과의 최대 차이는 5.7×10⁻⁶ 다.
+- 80 ms 프레임 시간(p50 7.7 ms)에서 GPU 계산과 CPU 쪽(토큰마다 argmax 를 읽는 동기화·Python 루프) 몫은 따로 재지 않았다. p95·max 가 튀는 것은 호스트 CPU 경합으로 본다.
+- **토큰 대조**(`--parity`, 16:00–16:47 에 같은 192 디코드를 다시 돌림): 192 개 모두 같다. 출력 토큰은 모두 14,441 개다.
+  - same_ref: 실시간 경로 전체(스트리밍 인코더 + graph 디코드)가 평가 경로(파일 전체 인코딩 + stream_decode)와 같다.
+  - same_engine: 같은 특징에서 graph 디코드가 stream_decode 와 같다.
+  - same_encoder: graph 디코드에서 스트리밍 특징과 파일 전체 특징의 출력이 같다.
+  - 따라서 실시간 경로의 번역·받아쓰기 품질은 평가 점수와 같다(fp32).
+  - 이 실행의 시간은 RTF 0.156~0.165 로, 시간만 잰 실행과 비슷하다. 대조용 HF 디코드가 같은 프로세스에서 번갈아 돈다.
+
 ## 다음
 - 전용 노드 측정: `bash slurm/submit-stream-rtf.sh --partition hpc`(사용자 제출)
-  - 노드를 통째로 잡아 GPU 0 은 fp32, GPU 1 은 bf16 으로 동시에 잰다.
+  - 노드를 통째로 잡아 세 가지를 동시에 잰다: 평가 경로 fp32, 실시간 경로 fp32(+ 토큰 대조), 실시간 경로 bf16
   - 결과 폴더: `results/stream-rtf-q06-s3-ast-node/`
-- 디코드 최적화 후보:
-  - `<NEXT_AUDIO>` 와 다음 오디오 위치를 한 forward 로 합친다(step 당 forward 2 → 1).
-  - 정적 KV 캐시 + CUDA graph(torch.compile)로 forward 당 실행 오버헤드를 줄인다.
 
 ## 파일
-- `host-summary-float32.json`: 세트·δ 별 요약
-- `host-rows-float32.jsonl`: 문장마다 step 시간·청크 시간·LAAL
-- `host-run-float32.log`
-- mxc: `VAPKT-data/results/stream-rtf-q06-s3-ast-20261012/`(bf16 은 측정 중)
+- 평가 경로:
+  - `host-summary-float32.json`: 세트·δ 별 요약
+  - `host-rows-float32.jsonl`: 문장마다 step 시간·청크 시간·LAAL
+  - `host-run-float32.log`
+- 실시간 경로: `host-summary-graph-stream-float32.json`, `host-rows-graph-stream-float32.jsonl`, `host-run-graph-stream-float32.log`
+- 토큰 대조: `host-parity-summary-graph-stream-float32.json`, `host-parity-rows-graph-stream-float32.jsonl`, `host-parity-run.log`
+- mxc:
+  - `VAPKT-data/results/stream-rtf-q06-s3-ast-20261012/`(평가 경로)
+    - bf16 은 139/192 에서 멈췄다(`status`). 빨라지지 않아 실시간 경로 측정으로 넘어갔다.
+  - `VAPKT-data/results/stream-rtf-q06-s3-ast-realtime-20261012/`(실시간 경로, `parity/`)

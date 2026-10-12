@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # q06-s3-ast/final 의 한 스트림 실시간성 측정 제출(2026-10-12) — 스케줄러 셸에서 `bash slurm/submit-stream-rtf.sh [--partition P]`.
-# 결과: results/stream-rtf-q06-s3-ast-node/{rows,summary}-{float32,bfloat16}.json(l). 같은 폴더에 다시 내면 덮어쓴다(run 로그 포함).
+# 결과: results/stream-rtf-q06-s3-ast-node/{rows,summary}-{float32,graph-stream-float32,graph-stream-bfloat16}.json(l). 같은 폴더에 다시 내면 덮어쓴다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 partition=hpc

@@ -1,0 +1,35 @@
+## [2026-10-12] task | 실시간 디코드 경로(CUDA graph + NeMo 스트리밍 인코더)와 RTF 재측정, xCOMET 채점 준비
+
+- Changed:
+  - 코드:
+    - `vapasr/hf/realtime.py` 신규
+      - GraphThinker: 고정 KV 캐시 + 입력 위치 1·2 개 CUDA graph, 차단 토큰·argmax 를 graph 안에서
+      - realtime_decode: stream_decode 와 같은 규칙. `<NEXT_AUDIO>` 를 다음 위치와 합친다
+      - StreamingEncoder: NeMo `cache_aware_stream_step` + `set_streaming_cuda_graphs`
+    - `experiments/stream_rtf.py`: `--engine graph`, `--encoder-mode stream`, `--parity`
+    - `experiments/xcomet_score.py`: 빈 번역 0 점, 여러 캐시, `--shard`
+    - `slurm/stream-rtf.sbatch`: 노드에서 평가 경로·실시간 경로 fp32·bf16 을 동시에
+    - `scripts/setup-baseline-envs.sh`: `comet` overlay env
+    - `tests/test_simulst_baselines.py`
+  - 원자료: `raw/sources/experiments/2026-10-12-q06-s3-ast-rtf/` 에 실시간 경로·토큰 대조 결과
+  - 위키: [[output-simulst-baselines-20261012]] 실시간성 절
+  - mxc:
+    - `results/stream-rtf-q06-s3-ast-realtime-20261012/`, `results/xcomet-20261012/`
+    - 호스트 `/tmp/sa_tskim/bl-envs/comet`
+  - 사용자 업로드: `vapkt-baselines/xcomet/`(XCOMET-XL rev 6a123c5, sha256 일치)
+- Reason:
+  - 사용자 요청: "RTF 는 vLLM 등 최적화 진행 후 측정", "XCOMET-XL 약관 동의"
+- 결과:
+  - **vLLM 은 쓰지 않았다.** 실행 중인 요청에 입력을 덧붙여 KV 를 이어 쓰는 API 가 없어, 80 ms 마다 전체를 다시 prefill 해야 한다. 같은 효과(고정 KV + CUDA graph)를 직접 넣었다.
+  - **호스트 H200 fp32 결과:**
+    - RTF 0.86~1.05 → 0.14~0.15
+    - 320 ms 청크 p95 440~510 → 75~85 ms
+    - 예산 초과 청크 11~27 % → 7,704 개 중 1 개
+    - 계산 시간 포함 LAAL 증가 +0.5~1.3 → +0.05~0.14 s
+  - **토큰 대조:** 192 디코드(토큰 14,441 개) 모두 평가 경로와 같다. 디코더만 바꾼 경우, 인코더만 바꾼 경우, 둘 다 바꾼 경우 모두다.
+  - **스트리밍 인코더:** 청크당 약 5 ms 다. 파일 전체 인코딩과의 최대 차이는 5.7×10⁻⁶ 다.
+  - **xCOMET:** XCOMET-XL 은 빈 mt 에 1.0 을 준다(독·영·한 모두 확인). 그래서 빈 번역은 0 점으로 둔다. 채점 진행 중이다(삼중항 49,964 개, GPU 3 장).
+- Next:
+  - xCOMET 결과를 비교표에 더한다.
+  - 사용자: 전용 노드 RTF(`bash slurm/submit-stream-rtf.sh --partition hpc`)는 원하면 제출한다.
+- By: tskim

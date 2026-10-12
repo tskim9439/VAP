@@ -1,0 +1,23 @@
+nemotron encoder 학습: 서브샘플링 Triton 커널 끔(fuse_triton=False)
+START 96 행 × δ[4, 10] · graph-stream-float32 · NVIDIA H200 · att_context [56, 3] chunked_limited
+[NeMo I 2026-10-12 15:58:15 streaming_encoder_cuda_graphs:302] Captured CUDA graph for streaming encoder step: signal=(1, 128, 41), att_context_size=(56, 3) (1/8 graphs)
+인코더 창 4.80 s 재인코딩: 중앙 28.9 ms · p95 36.9 ms
+[NeMo I 2026-10-12 15:58:17 streaming_encoder_cuda_graphs:302] Captured CUDA graph for streaming encoder step: signal=(1, 128, 25), att_context_size=(56, 3) (2/8 graphs)
+PROGRESS 1/96 fleurs-de-en 3.6s rtf 0.186 chunk p95 83 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+PROGRESS 11/96 fleurs-de-en 10.8s rtf 0.156 chunk p95 78 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+PROGRESS 21/96 fleurs-de-en 20.1s rtf 0.140 chunk p95 66 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+PROGRESS 31/96 fleurs-en-de 7.3s rtf 0.160 chunk p95 77 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+PROGRESS 41/96 fleurs-en-de 11.0s rtf 0.172 chunk p95 94 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+PROGRESS 51/96 fleurs-en-ko 5.8s rtf 0.170 chunk p95 78 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+PROGRESS 61/96 fleurs-en-ko 9.6s rtf 0.141 chunk p95 50 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+PROGRESS 71/96 fleurs-en-ko 16.4s rtf 0.171 chunk p95 111 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+PROGRESS 81/96 fleurs-ko-en 11.1s rtf 0.153 chunk p95 67 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+PROGRESS 91/96 fleurs-ko-en 15.2s rtf 0.151 chunk p95 94 ms parity {'same_ref': True, 'same_engine': True, 'same_encoder': True}
+fleurs-de-en/d4        RTF 0.156 · step p50/p95/max 8.3/24.9/167.6 ms · 320ms 청크(ca) p50/p95/max 38.9/82.9/198.1 ms · 초과 0.0% · LAAL eval 1.17 enc 1.29 ca 1.36 · same_ref 100.0% · same_engine 100.0% · same_encoder 100.0%
+fleurs-de-en/d10       RTF 0.156 · step p50/p95/max 8.3/24.9/123.1 ms · 320ms 청크(ca) p50/p95/max 38.9/82.8/153.6 ms · 초과 0.0% · LAAL eval 1.84 enc 1.98 ca 2.05 · same_ref 100.0% · same_engine 100.0% · same_encoder 100.0%
+fleurs-en-de/d4        RTF 0.165 · step p50/p95/max 8.3/24.8/184.4 ms · 320ms 청크(ca) p50/p95/max 44.3/88.7/351.4 ms · 초과 0.2% · LAAL eval 2.03 enc 2.22 ca 2.34 · same_ref 100.0% · same_engine 100.0% · same_encoder 100.0%
+fleurs-en-de/d10       RTF 0.165 · step p50/p95/max 8.3/24.9/184.5 ms · 320ms 청크(ca) p50/p95/max 44.3/88.6/384.8 ms · 초과 0.1% · LAAL eval 2.73 enc 2.86 ca 2.92 · same_ref 100.0% · same_engine 100.0% · same_encoder 100.0%
+fleurs-en-ko/d4        RTF 0.161 · step p50/p95/max 8.3/15.1/193.1 ms · 320ms 청크(ca) p50/p95/max 44.2/93.5/224.5 ms · 초과 0.0% · LAAL eval 3.08 enc 3.07 ca 3.20 · same_ref 100.0% · same_engine 100.0% · same_encoder 100.0%
+fleurs-en-ko/d10       RTF 0.159 · step p50/p95/max 8.3/13.9/185.1 ms · 320ms 청크(ca) p50/p95/max 41.5/83.0/229.5 ms · 초과 0.0% · LAAL eval 3.98 enc 4.21 ca 4.37 · same_ref 100.0% · same_engine 100.0% · same_encoder 100.0%
+fleurs-ko-en/d4        RTF 0.156 · step p50/p95/max 8.3/24.8/184.2 ms · 320ms 청크(ca) p50/p95/max 39.0/83.2/214.8 ms · 초과 0.0% · LAAL eval 2.12 enc 2.25 ca 2.34 · same_ref 100.0% · same_engine 100.0% · same_encoder 100.0%
+fleurs-ko-en/d10       RTF 0.157 · step p50/p95/max 8.3/24.7/183.3 ms · 320ms 청크(ca) p50/p95/max 39.0/83.0/229.3 ms · 초과 0.0% · LAAL eval 3.02 enc 3.14 ca 3.33 · same_ref 100.0% · same_engine 100.0% · same_encoder 100.0%
