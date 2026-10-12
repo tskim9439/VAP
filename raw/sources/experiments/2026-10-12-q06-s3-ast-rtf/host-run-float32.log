@@ -1,0 +1,26 @@
+stage: /soundai/Model/VAPASR/semcommit-q06-s3-ast/final → /tmp/sa_tskim/vapasr-stage/soundai__Model__VAPASR__semcommit-q06-s3-ast__final (8 파일, 86s)
+stage: /soundai/Model/nemotron-3.5-asr-streaming-0.6b → /tmp/sa_tskim/vapasr-stage/soundai__Model__nemotron-3.5-asr-streaming-0.6b (6 파일, 184s)
+OneLogger: Setting error_handling_strategy to DISABLE_QUIETLY_AND_REPORT_METRIC_ERROR for rank (rank=0) with OneLogger disabled. To override: explicitly set error_handling_strategy parameter.
+Final configuration contains 0 exporter(s)
+No exporters were provided. This means that no telemetry data will be collected.
+nemotron encoder 학습: 서브샘플링 Triton 커널 끔(fuse_triton=False)
+START 96 행 × δ[4, 10] · float32 · NVIDIA H200 · att_context [56, 3] chunked_limited
+인코더 창 4.80 s 재인코딩: 중앙 29.6 ms · p95 35.6 ms
+PROGRESS 1/96 fleurs-de-en 3.6s rtf_lo 0.913 chunk p95 376 ms
+PROGRESS 11/96 fleurs-de-en 10.8s rtf_lo 0.892 chunk p95 423 ms
+PROGRESS 21/96 fleurs-de-en 20.1s rtf_lo 0.772 chunk p95 347 ms
+PROGRESS 31/96 fleurs-en-de 7.3s rtf_lo 0.910 chunk p95 418 ms
+PROGRESS 41/96 fleurs-en-de 11.0s rtf_lo 0.971 chunk p95 491 ms
+PROGRESS 51/96 fleurs-en-ko 5.8s rtf_lo 0.838 chunk p95 372 ms
+PROGRESS 61/96 fleurs-en-ko 9.6s rtf_lo 0.681 chunk p95 249 ms
+PROGRESS 71/96 fleurs-en-ko 16.4s rtf_lo 1.046 chunk p95 650 ms
+PROGRESS 81/96 fleurs-ko-en 11.1s rtf_lo 0.954 chunk p95 447 ms
+PROGRESS 91/96 fleurs-ko-en 15.2s rtf_lo 0.876 chunk p95 525 ms
+fleurs-de-en/d4        RTF 0.858–0.948 · step p50/p95/max 55/155/890 ms · 320ms 청크 p95/max 454/1064 (상한 483/1092) ms · 초과 20.6%/26.4% · LAAL eval 1.17 enc 1.29 ca 1.78–1.95
+fleurs-de-en/d10       RTF 0.862–0.952 · step p50/p95/max 55/147/616 ms · 320ms 청크 p95/max 453/782 (상한 482/810) ms · 초과 21.7%/28.7% · LAAL eval 1.84 enc 1.98 ca 2.44–2.62
+fleurs-en-de/d4        RTF 0.918–1.008 · step p50/p95/max 56/138/1099 ms · 320ms 청크 p95/max 498/1726 (상한 524/1754) ms · 초과 19.2%/27.6% · LAAL eval 2.03 enc 2.22 ca 3.14–3.28
+fleurs-en-de/d10       RTF 0.915–1.005 · step p50/p95/max 56/150/1096 ms · 320ms 청크 p95/max 491/2132 (상한 520/2161) ms · 초과 22.2%/28.9% · LAAL eval 2.73 enc 2.86 ca 3.38–3.53
+fleurs-en-ko/d4        RTF 0.872–0.961 · step p50/p95/max 55/102/1122 ms · 320ms 청크 p95/max 459/1317 (상한 487/1345) ms · 초과 12.8%/17.9% · LAAL eval 3.08 enc 3.07 ca 3.74–3.83
+fleurs-en-ko/d10       RTF 0.869–0.958 · step p50/p95/max 55/100/1132 ms · 320ms 청크 p95/max 441/1414 (상한 469/1443) ms · 초과 11.1%/17.9% · LAAL eval 3.98 enc 4.21 ca 5.10–5.22
+fleurs-ko-en/d4        RTF 0.960–1.049 · step p50/p95/max 62/146/1137 ms · 320ms 청크 p95/max 509/1318 (상한 537/1347) ms · 초과 26.5%/36.6% · LAAL eval 2.12 enc 2.25 ca 3.12–3.50
+fleurs-ko-en/d10       RTF 0.957–1.046 · step p50/p95/max 61/141/1237 ms · 320ms 청크 p95/max 502/1439 (상한 531/1467) ms · 초과 24.4%/36.3% · LAAL eval 3.02 enc 3.14 ca 4.14–4.46

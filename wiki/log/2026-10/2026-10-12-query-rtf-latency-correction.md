@@ -1,0 +1,37 @@
+## [2026-10-12] query | 실시간성(RTF) 측정, 인코더 청크 지연 보정, SimulStreaming 재실행 결과, xCOMET 준비
+
+- Changed:
+  - 위키:
+    - [[output-simulst-baselines-20261012]] 갱신: 지연 보정, SimulStreaming 행, 실시간성 절
+    - [[output-q06-s3-ast-eval-20261012]] 에 LAAL 보정 주석
+  - 원자료:
+    - `raw/sources/experiments/2026-10-12-q06-s3-ast-rtf/` 신규
+    - `raw/sources/experiments/2026-10-12-simulst-baselines/` 에 `scores-all-v2.json`·`tables-v2.txt` 추가, README 갱신
+  - 코드:
+    - `experiments/simulst_common.py`: `encoder_chunk_times`, `from-ours --encoder-chunk`(필수 인자)
+    - `experiments/stream_rtf.py`: 한 스트림 RTF·청크 시간·계산 시간 포함 LAAL
+    - `experiments/xcomet_score.py`
+    - `slurm/{stream-rtf.sbatch,submit-stream-rtf.sh}`
+    - `tests/test_simulst_baselines.py`
+  - mxc:
+    - `results/simulst-baselines-20261011/{ours-s3-enc4,ours-s2-enc4,queue-simul-vac-retry}/`
+    - `results/stream-rtf-q06-s3-ast-20261012/`
+  - T5: `vapkt-baselines/xcomet/`(COMET 휠, XLM-R XL/XXL 토크나이저·config), `upload-xcomet.sh`
+- Reason:
+  - 사용자 요청: 모델의 실시간성(RTF)과 xCOMET 수치.
+- 결과:
+  - **지연 보정:** 우리 평가의 방출 시각((k+1)·80 ms)에 인코더 lookahead 가 빠져 있었다.
+    - 인코더 설정은 chunked_limited [56,3] 이다. 프레임은 320 ms 청크가 다 들어와야 나온다.
+    - 청크 경계로 옮기니 LAAL 이 +0.11~0.15 s 늘었다. 비교표를 보정값으로 바꿨다.
+  - **SimulStreaming 재실행(VAC):**
+    - 영→독 FLEURS 30.3, 영→한 34.3 으로 가장 높다. 독→영 28.2, CoVoST 33.3 이다.
+    - 한→영은 37 행이 공식 코드의 한국어 유니코드 오류로 빈 번역이다.
+  - **RTF(호스트 예비, fp32):**
+    - RTF 0.86~1.05, 320 ms 청크의 11~27 % 가 시간 초과로, 실시간을 못 맞춘다.
+    - GPU 사용률 약 18 %, bf16 도 빨라지지 않았다. CPU 쪽(Python 루프·커널 실행)이 병목이고, 호스트 부하가 매우 컸다.
+  - **xCOMET:** Unbabel/XCOMET-XL 은 HF 게이트(CC BY-NC-SA 4.0)라 403 이다. 사용자 약관 동의가 필요하다.
+- Next:
+  - 사용자: XCOMET-XL 약관 동의 → 체크포인트를 T5 에 받고 `upload-xcomet.sh` 로 업로드 → 채점
+  - 사용자: `bash slurm/submit-stream-rtf.sh --partition hpc`(전용 노드 RTF)
+  - 디코드 최적화(forward 합치기, CUDA graph) 검토
+- By: tskim

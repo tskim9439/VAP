@@ -42,3 +42,12 @@ def test_cv_en_eval_texts_and_shard_name(tmp_path):
     assert V.eval_texts([str(m)]) == ["He said hi.", "Good day."]
     assert V.shard_name("train-00003-of-00008.parquet", 7) == "train-00003-of-00008-b007"
     assert V._ngrams("a b c".split(), 2) == {"a b", "b c"}
+
+
+def test_encoder_chunk_times_waits_for_whole_encoder_chunk():
+    # chunked_limited [56,3]: frames 0-3 arrive together at 0.32 s, 4-7 at 0.64 s; the last partial chunk at the input end (K frames);
+    # flush rounds (k >= K) keep their time; chunk 1 leaves times unchanged
+    K = 10
+    times = [round((k + 1) * 0.08, 3) for k in (0, 3, 4, 7, 8, 9, 10, 12)]
+    assert C.encoder_chunk_times(times, K, 4) == [0.32, 0.32, 0.64, 0.64, 0.8, 0.8, 0.88, 1.04]
+    assert C.encoder_chunk_times(times, K, 1) == times
