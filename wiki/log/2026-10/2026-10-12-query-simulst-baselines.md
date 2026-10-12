@@ -1,0 +1,21 @@
+## [2026-10-12] query | 스트리밍 번역 베이스라인 비교표와 SimulStreaming 재실행
+
+- Changed:
+  - 위키: [[output-simulst-baselines-20261012]] 신규, [[output-q06-s3-ast-eval-20261012]] 의 다음 항목에 링크
+  - 원자료: `raw/sources/experiments/2026-10-12-simulst-baselines/`(점수 전체, 표, 표 스크립트, SimulStreaming 무효 근거)
+  - 코드: `experiments/simulst_simulstreaming.py` 에 공식 권장 VAC(Silero VAD)를 기본으로 넣음(`--no-vac` 로 끔, 설정 이름 `-vac`)
+  - mxc:
+    - `results/simulst-baselines-20261011/{ours-s3,simulstreaming-vac,queue-simul-vac}/`
+    - 호스트 `/tmp/sa_tskim/torch-hub/`(Silero VAD 복사본)
+- Reason:
+  - 사용자 요청: 평가 결과를 베이스라인과 비교한 표.
+- 결과:
+  - SeamlessStreaming 이 대부분 방향에서 앞선다: 독→영 +3.5~5, 영→독 +6~7 BLEU.
+  - s3 는 IWSLT26 연결형·Hibiki-Zero 보다 대체로 낫다.
+  - 영→한 지연(LAAL 3.7~4.4 s)이 가장 큰 약점이다.
+  - s3 final(오프라인)은 Seamless 스트리밍과 같은 수준이다. 격차는 스트리밍 정책과 짧은 문장 번역 누락에서 온다.
+  - SimulStreaming 첫 실행은 무효다: VAC 없이 무음을 Whisper 에 넣어 환각·반복이 생겼다(4 문장 대조로 확인). VAC 를 켜고 GPU 6·0 에서 재실행 중이다(11:01 시작).
+- Next:
+  - SimulStreaming 재실행이 끝나면 채점해 비교표에 더한다.
+  - 영→한 지연 원인을 분해한다.
+- By: tskim

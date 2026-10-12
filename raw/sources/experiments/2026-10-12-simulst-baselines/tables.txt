@@ -1,0 +1,130 @@
+== fleurs-de-en (n=862)
+   hibiki-zero/default-seed42             BLEU  22.89 chrF  56.24 LAAL  2.95 (중앙  2.62) AL  2.86 빈 번역 0
+   iwslt26-cascade/c640-ms1               BLEU  23.59 chrF  58.13 LAAL  1.81 (중앙  2.00) AL  1.76 빈 번역 0
+   iwslt26-cascade/c960-ms1               BLEU  27.57 chrF  60.79 LAAL  2.78 (중앙  2.84) AL  2.71 빈 번역 0
+   q06-s2-ast/d10                         BLEU  27.24 chrF  59.01 LAAL  1.72 (중앙  1.58) AL  1.62 빈 번역 0
+   q06-s2-ast/d4                          BLEU  24.64 chrF  57.50 LAAL  1.35 (중앙  1.10) AL  1.25 빈 번역 0
+   q06-s2-ast/d6                          BLEU  25.99 chrF  58.31 LAAL  1.46 (중앙  1.27) AL  1.36 빈 번역 0
+   q06-s2-ast/d8                          BLEU  26.88 chrF  58.80 LAAL  1.58 (중앙  1.42) AL  1.50 빈 번역 0
+   q06-s2-ast/final                       BLEU  32.94 chrF  62.29 (오프라인) 빈 번역 0
+   q06-s3-ast/d10                         BLEU  28.24 chrF  59.36 LAAL  1.81 (중앙  1.62) AL  1.72 빈 번역 0
+   q06-s3-ast/d4                          BLEU  26.26 chrF  58.20 LAAL  1.39 (중앙  1.18) AL  1.30 빈 번역 0
+   q06-s3-ast/d6                          BLEU  27.26 chrF  58.97 LAAL  1.50 (중앙  1.32) AL  1.41 빈 번역 0
+   q06-s3-ast/d8                          BLEU  27.97 chrF  59.28 LAAL  1.66 (중앙  1.47) AL  1.57 빈 번역 0
+   q06-s3-ast/final                       BLEU  33.66 chrF  62.82 (오프라인) 빈 번역 0
+   seamless-streaming/t0.5-fp32           BLEU  31.78 chrF  59.01 LAAL  2.08 (중앙  2.06) AL  1.76 빈 번역 0
+   seamless-streaming/t0.7-fp32           BLEU  32.03 chrF  59.44 LAAL  2.24 (중앙  2.19) AL  1.95 빈 번역 0
+   simulstreaming-cascade/c1000-ft25      BLEU   1.60 chrF  18.55 LAAL  5.06 (중앙  3.84) AL  4.75 빈 번역 0  ← 무효(VAC 없이 실행, 재실행 중)
+== covost2-de-en (n=1931)
+   hibiki-zero/default-seed42             BLEU  20.72 chrF  52.27 LAAL  2.49 (중앙  2.33) AL  2.43 빈 번역 0
+   iwslt26-cascade/c640-ms1               BLEU  22.53 chrF  55.81 LAAL  2.13 (중앙  2.04) AL  2.10 빈 번역 0
+   iwslt26-cascade/c960-ms1               BLEU  26.46 chrF  57.91 LAAL  3.19 (중앙  3.01) AL  3.16 빈 번역 0
+   q06-s2-ast/d10                         BLEU  30.02 chrF  57.27 LAAL  1.60 (중앙  1.45) AL  1.51 빈 번역 0
+   q06-s2-ast/d4                          BLEU  27.49 chrF  55.58 LAAL  1.06 (중앙  0.95) AL  0.98 빈 번역 1
+   q06-s2-ast/d6                          BLEU  28.87 chrF  56.43 LAAL  1.23 (중앙  1.11) AL  1.15 빈 번역 1
+   q06-s2-ast/d8                          BLEU  29.51 chrF  56.94 LAAL  1.42 (중앙  1.29) AL  1.33 빈 번역 0
+   q06-s2-ast/final                       BLEU  35.69 chrF  61.13 (오프라인) 빈 번역 0
+   q06-s3-ast/d10                         BLEU  31.21 chrF  58.09 LAAL  1.64 (중앙  1.48) AL  1.55 빈 번역 0
+   q06-s3-ast/d4                          BLEU  28.75 chrF  56.36 LAAL  1.10 (중앙  0.96) AL  1.00 빈 번역 2
+   q06-s3-ast/d6                          BLEU  30.80 chrF  57.77 LAAL  1.28 (중앙  1.14) AL  1.19 빈 번역 0
+   q06-s3-ast/d8                          BLEU  30.81 chrF  57.78 LAAL  1.45 (중앙  1.31) AL  1.35 빈 번역 0
+   q06-s3-ast/final                       BLEU  35.76 chrF  61.16 (오프라인) 빈 번역 0
+   seamless-streaming/t0.5-fp32           BLEU  36.26 chrF  60.25 LAAL  2.16 (중앙  2.02) AL  2.03 빈 번역 0
+   seamless-streaming/t0.7-fp32           BLEU  36.70 chrF  60.67 LAAL  2.29 (중앙  2.12) AL  2.17 빈 번역 0
+   simulstreaming-cascade/c1000-ft25      BLEU   2.24 chrF  23.63 LAAL  3.50 (중앙  3.30) AL  3.46 빈 번역 0  ← 무효(VAC 없이 실행, 재실행 중)
+== fleurs-en-de (n=641)
+   iwslt26-cascade/c640-ms1               BLEU  17.61 chrF  53.85 LAAL  1.99 (중앙  1.91) AL  1.93 빈 번역 0
+   iwslt26-cascade/c960-ms1               BLEU  21.60 chrF  55.88 LAAL  2.89 (중앙  2.80) AL  2.81 빈 번역 0
+   q06-s2-ast/d10                         BLEU  19.32 chrF  46.69 LAAL  2.55 (중앙  1.80) AL  2.19 빈 번역 90
+   q06-s2-ast/d4                          BLEU  14.15 chrF  40.25 LAAL  2.14 (중앙  1.52) AL  1.73 빈 번역 160
+   q06-s2-ast/d6                          BLEU  15.19 chrF  41.55 LAAL  2.25 (중앙  1.59) AL  1.80 빈 번역 143
+   q06-s2-ast/d8                          BLEU  18.00 chrF  45.31 LAAL  2.40 (중앙  1.66) AL  2.02 빈 번역 107
+   q06-s2-ast/final                       BLEU  27.63 chrF  57.40 (오프라인) 빈 번역 0
+   q06-s3-ast/d10                         BLEU  22.59 chrF  53.11 LAAL  2.41 (중앙  1.84) AL  2.07 빈 번역 5
+   q06-s3-ast/d4                          BLEU  19.87 chrF  50.18 LAAL  2.04 (중앙  1.54) AL  1.64 빈 번역 11
+   q06-s3-ast/d6                          BLEU  21.73 chrF  51.92 LAAL  2.09 (중앙  1.56) AL  1.71 빈 번역 6
+   q06-s3-ast/d8                          BLEU  22.89 chrF  52.87 LAAL  2.23 (중앙  1.70) AL  1.90 빈 번역 6
+   q06-s3-ast/final                       BLEU  28.76 chrF  58.60 (오프라인) 빈 번역 0
+   seamless-streaming/t0.5-fp32           BLEU  28.42 chrF  58.95 LAAL  1.99 (중앙  1.92) AL  1.72 빈 번역 0
+   seamless-streaming/t0.7-fp32           BLEU  28.86 chrF  59.22 LAAL  2.12 (중앙  2.04) AL  1.87 빈 번역 0
+   simulstreaming-cascade/c1000-ft25      BLEU   4.38 chrF  40.78 LAAL  3.37 (중앙  2.94) AL  3.32 빈 번역 0  ← 무효(VAC 없이 실행, 재실행 중)
+== fleurs-en-de-peak05 (n=641)
+   iwslt26-cascade/c640-ms1               BLEU  18.59 chrF  54.43 LAAL  2.07 (중앙  2.00) AL  2.00 빈 번역 0
+   iwslt26-cascade/c960-ms1               BLEU  21.91 chrF  55.83 LAAL  3.12 (중앙  3.00) AL  3.04 빈 번역 0
+   q06-s2-ast/d10                         BLEU  22.57 chrF  53.04 LAAL  2.45 (중앙  1.72) AL  2.11 빈 번역 4
+   q06-s2-ast/d4                          BLEU  19.42 chrF  50.74 LAAL  2.02 (중앙  1.43) AL  1.63 빈 번역 10
+   q06-s2-ast/d6                          BLEU  21.01 chrF  51.64 LAAL  2.10 (중앙  1.48) AL  1.70 빈 번역 7
+   q06-s2-ast/d8                          BLEU  21.91 chrF  52.30 LAAL  2.31 (중앙  1.66) AL  1.93 빈 번역 7
+   q06-s2-ast/final                       BLEU  28.03 chrF  58.04 (오프라인) 빈 번역 0
+   q06-s3-ast/d10                         BLEU  22.51 chrF  53.03 LAAL  2.37 (중앙  1.78) AL  2.03 빈 번역 4
+   q06-s3-ast/d4                          BLEU  20.17 chrF  50.53 LAAL  2.02 (중앙  1.49) AL  1.62 빈 번역 8
+   q06-s3-ast/d6                          BLEU  21.80 chrF  51.97 LAAL  2.06 (중앙  1.46) AL  1.67 빈 번역 7
+   q06-s3-ast/d8                          BLEU  22.69 chrF  52.93 LAAL  2.21 (중앙  1.66) AL  1.88 빈 번역 5
+   q06-s3-ast/final                       BLEU  28.99 chrF  58.96 (오프라인) 빈 번역 0
+   seamless-streaming/t0.5-fp32           BLEU  29.31 chrF  59.86 LAAL  2.03 (중앙  1.96) AL  1.78 빈 번역 0
+   seamless-streaming/t0.7-fp32           BLEU  30.04 chrF  60.23 LAAL  2.16 (중앙  2.07) AL  1.92 빈 번역 0
+   simulstreaming-cascade/c1000-ft25      BLEU   5.09 chrF  42.68 LAAL  3.40 (중앙  3.00) AL  3.37 빈 번역 0  ← 무효(VAC 없이 실행, 재실행 중)
+== covost2-en-de (n=2217)
+   iwslt26-cascade/c640-ms1               BLEU  14.38 chrF  49.51 LAAL  2.12 (중앙  2.05) AL  2.09 빈 번역 0
+   iwslt26-cascade/c960-ms1               BLEU  17.89 chrF  51.58 LAAL  3.06 (중앙  2.89) AL  3.04 빈 번역 2
+   q06-s2-ast/d10                         BLEU  22.39 chrF  48.53 LAAL  1.85 (중앙  1.67) AL  1.71 빈 번역 69
+   q06-s2-ast/d4                          BLEU  17.74 chrF  43.84 LAAL  1.27 (중앙  1.16) AL  1.09 빈 번역 112
+   q06-s2-ast/d6                          BLEU  20.21 chrF  46.18 LAAL  1.44 (중앙  1.32) AL  1.27 빈 번역 107
+   q06-s2-ast/d8                          BLEU  21.59 chrF  47.76 LAAL  1.63 (중앙  1.48) AL  1.49 빈 번역 85
+   q06-s2-ast/final                       BLEU  27.64 chrF  53.71 (오프라인) 빈 번역 0
+   q06-s3-ast/d10                         BLEU  23.18 chrF  49.18 LAAL  1.84 (중앙  1.69) AL  1.70 빈 번역 50
+   q06-s3-ast/d4                          BLEU  18.38 chrF  43.98 LAAL  1.31 (중앙  1.20) AL  1.09 빈 번역 94
+   q06-s3-ast/d6                          BLEU  20.53 chrF  46.42 LAAL  1.47 (중앙  1.35) AL  1.27 빈 번역 87
+   q06-s3-ast/d8                          BLEU  22.30 chrF  48.37 LAAL  1.65 (중앙  1.50) AL  1.48 빈 번역 65
+   q06-s3-ast/final                       BLEU  28.00 chrF  54.21 (오프라인) 빈 번역 0
+   seamless-streaming/t0.5-fp32           BLEU  29.79 chrF  56.46 LAAL  1.99 (중앙  1.93) AL  1.86 빈 번역 0
+   seamless-streaming/t0.7-fp32           BLEU  30.50 chrF  56.89 LAAL  2.11 (중앙  2.04) AL  1.98 빈 번역 0
+   simulstreaming-cascade/c1000-ft25      BLEU   2.71 chrF  30.33 LAAL  3.33 (중앙  3.06) AL  3.31 빈 번역 0  ← 무효(VAC 없이 실행, 재실행 중)
+== fleurs-en-ko (n=497)
+   iwslt26-cascade/c640-ms1               BLEU  25.75 chrF  24.29 LAAL  2.44 (중앙  2.39) AL  2.42 빈 번역 1
+   iwslt26-cascade/c960-ms1               BLEU  28.33 chrF  25.90 LAAL  3.50 (중앙  3.41) AL  3.45 빈 번역 0
+   q06-s2-ast/d10                         BLEU  22.84 chrF  21.25 LAAL  4.29 (중앙  3.56) AL  3.74 빈 번역 56
+   q06-s2-ast/d4                          BLEU  19.42 chrF  19.02 LAAL  3.70 (중앙  3.11) AL  3.03 빈 번역 103
+   q06-s2-ast/d6                          BLEU  20.42 chrF  19.97 LAAL  3.78 (중앙  3.22) AL  3.10 빈 번역 95
+   q06-s2-ast/d8                          BLEU  22.24 chrF  20.96 LAAL  4.06 (중앙  3.36) AL  3.51 빈 번역 72
+   q06-s2-ast/final                       BLEU  31.70 chrF  26.98 (오프라인) 빈 번역 0
+   q06-s3-ast/d10                         BLEU  26.27 chrF  23.56 LAAL  4.36 (중앙  3.73) AL  3.79 빈 번역 5
+   q06-s3-ast/d4                          BLEU  23.97 chrF  21.94 LAAL  3.75 (중앙  3.08) AL  2.94 빈 번역 17
+   q06-s3-ast/d6                          BLEU  24.99 chrF  22.78 LAAL  3.90 (중앙  3.16) AL  3.17 빈 번역 11
+   q06-s3-ast/d8                          BLEU  25.92 chrF  23.38 LAAL  4.11 (중앙  3.42) AL  3.47 빈 번역 6
+   q06-s3-ast/final                       BLEU  33.41 chrF  28.56 (오프라인) 빈 번역 0
+   seamless-streaming/t0.5-fp32           BLEU  30.65 chrF  27.13 LAAL  2.69 (중앙  2.53) AL  2.32 빈 번역 0
+   seamless-streaming/t0.7-fp32           BLEU  31.88 chrF  27.87 LAAL  2.88 (중앙  2.70) AL  2.51 빈 번역 0
+   simulstreaming-cascade/c1000-ft25      BLEU   7.04 chrF  15.06 LAAL  3.91 (중앙  3.52) AL  3.87 빈 번역 0  ← 무효(VAC 없이 실행, 재실행 중)
+== fleurs-en-ko-peak05 (n=497)
+   iwslt26-cascade/c640-ms1               BLEU  26.01 chrF  24.29 LAAL  2.54 (중앙  2.44) AL  2.49 빈 번역 0
+   iwslt26-cascade/c960-ms1               BLEU  28.57 chrF  25.97 LAAL  3.77 (중앙  3.54) AL  3.73 빈 번역 0
+   q06-s2-ast/d10                         BLEU  25.73 chrF  23.15 LAAL  4.43 (중앙  3.68) AL  3.84 빈 번역 8
+   q06-s2-ast/d4                          BLEU  24.39 chrF  22.05 LAAL  3.75 (중앙  3.13) AL  3.06 빈 번역 19
+   q06-s2-ast/d6                          BLEU  24.54 chrF  22.39 LAAL  4.00 (중앙  3.35) AL  3.29 빈 번역 20
+   q06-s2-ast/d8                          BLEU  25.80 chrF  23.19 LAAL  4.21 (중앙  3.56) AL  3.63 빈 번역 13
+   q06-s2-ast/final                       BLEU  32.36 chrF  27.69 (오프라인) 빈 번역 0
+   q06-s3-ast/d10                         BLEU  26.15 chrF  23.44 LAAL  4.30 (중앙  3.75) AL  3.73 빈 번역 8
+   q06-s3-ast/d4                          BLEU  24.78 chrF  22.58 LAAL  3.75 (중앙  3.07) AL  2.97 빈 번역 14
+   q06-s3-ast/d6                          BLEU  25.10 chrF  22.87 LAAL  3.91 (중앙  3.20) AL  3.19 빈 번역 13
+   q06-s3-ast/d8                          BLEU  25.36 chrF  22.95 LAAL  4.09 (중앙  3.37) AL  3.46 빈 번역 10
+   q06-s3-ast/final                       BLEU  33.58 chrF  28.72 (오프라인) 빈 번역 0
+   seamless-streaming/t0.5-fp32           BLEU  33.77 chrF  29.71 LAAL  2.79 (중앙  2.62) AL  2.50 빈 번역 0
+   seamless-streaming/t0.7-fp32           BLEU  34.69 chrF  30.16 LAAL  2.95 (중앙  2.81) AL  2.66 빈 번역 0
+   simulstreaming-cascade/c1000-ft25      BLEU   7.90 chrF  16.31 LAAL  3.88 (중앙  3.64) AL  3.85 빈 번역 0  ← 무효(VAC 없이 실행, 재실행 중)
+== fleurs-ko-en (n=382)
+   iwslt26-cascade/c640-ms1               BLEU   8.40 chrF  33.13 LAAL  2.80 (중앙  2.60) AL  0.93 빈 번역 4
+   iwslt26-cascade/c960-ms1               BLEU   6.42 chrF  29.54 LAAL  4.00 (중앙  3.84) AL  1.78 빈 번역 9
+   q06-s2-ast/d10                         BLEU  15.23 chrF  48.08 LAAL  2.59 (중앙  2.35) AL  2.33 빈 번역 0
+   q06-s2-ast/d4                          BLEU  14.13 chrF  47.50 LAAL  1.97 (중앙  1.76) AL  1.76 빈 번역 0
+   q06-s2-ast/d6                          BLEU  14.42 chrF  48.11 LAAL  2.08 (중앙  1.88) AL  1.90 빈 번역 0
+   q06-s2-ast/d8                          BLEU  14.95 chrF  48.39 LAAL  2.35 (중앙  2.11) AL  2.17 빈 번역 0
+   q06-s2-ast/final                       BLEU  19.52 chrF  51.93 (오프라인) 빈 번역 1
+   q06-s3-ast/d10                         BLEU  16.95 chrF  50.10 LAAL  2.60 (중앙  2.42) AL  2.44 빈 번역 0
+   q06-s3-ast/d4                          BLEU  14.98 chrF  48.36 LAAL  1.99 (중앙  1.84) AL  1.78 빈 번역 1
+   q06-s3-ast/d6                          BLEU  15.71 chrF  49.22 LAAL  2.15 (중앙  2.00) AL  1.95 빈 번역 0
+   q06-s3-ast/d8                          BLEU  16.20 chrF  49.71 LAAL  2.33 (중앙  2.18) AL  2.16 빈 번역 0
+   q06-s3-ast/final                       BLEU  20.56 chrF  52.45 (오프라인) 빈 번역 2
+   seamless-streaming/t0.5-fp32           BLEU  19.82 chrF  47.00 LAAL  3.67 (중앙  3.50) AL  3.15 빈 번역 0
+   seamless-streaming/t0.7-fp32           BLEU  20.09 chrF  47.41 LAAL  3.86 (중앙  3.68) AL  3.40 빈 번역 0
+   simulstreaming-cascade/c1000-ft25      BLEU   0.86 chrF  12.29 LAAL  6.21 (중앙  5.88) AL  6.00 빈 번역 19  ← 무효(VAC 없이 실행, 재실행 중)

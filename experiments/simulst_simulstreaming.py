@@ -5,11 +5,14 @@
 한 프로세스 안에서 잇는다: Whisper 의 process_iter 출력(새로 확정된 전사, 방출 시각 = 그때까지 넣은 오디오 길이)을 같은 jsonl 행 형식으로
 simulation_update 에 넣고, 끝에서 is_final 행(finish)으로 마무리·초기화한다. 번역 쪽은 공식 기본값(시스템 프롬프트·init 문장, min_chunk_size 1 단어,
 min_len 1, sentences 버퍼, 길이 임계 없음)이다. 확정 번역의 방출 시각 = 그것을 확정시킨 입력 행의 방출 시각(계산 시간 제외).
+Whisper 쪽은 README 가 권장(Recommended)하는 VAC(Silero VAD, --vac, 0.04 s 조각)를 켠다: 음성 구간만 Whisper 에 넣고, 음성이 끝나면(무음 500 ms)
+그 구간을 마무리해 is_final 행을 낸다(번역 쪽은 그때 finish·초기화). VAC 없이 돌린 첫 실행(c1000-ft25, 2026-10-12)은 첫 1 s 청크의 무음에서
+없는 말을 지어내고("Gut", "Hallo! Ich bin der Chef …") 끝에서 같은 문장을 되풀이해 BLEU 0.9–7.9 로 무효 처리했다.
 Whisper 직접 번역(--task translate)은 large-v3 에서 '.' 만 내 쓰지 않는다(2026-10-11 확인: 같은 파일의 transcribe 는 정상).
 transformers 4.57 차이 하나를 맞춘다: apply_chat_template(tokenize=True) 를 dict 로 받게 감싼다(_dict_chat_template).
 바꾼 것: 입력은 원 발화 + 꼬리 무음.
 
-usage: python experiments/simulst_simulstreaming.py --manifest M [M ...] --out DIR --ct2-dir CT2 --chunk 1.0 [--rank r --world n]
+usage: python experiments/simulst_simulstreaming.py --manifest M [M ...] --out DIR --ct2-dir CT2 --chunk 1.0 [--no-vac] [--rank r --world n]
 """
 import argparse
 import json
@@ -47,11 +50,16 @@ def main():
     ap.add_argument("--ct2-dir", required=True, help="ct2-transformers-converter 로 바꾼 EuroLLM-9B-Instruct")
     ap.add_argument("--chunk", type=float, default=1.0, help="Whisper min_chunk_size(s)")
     ap.add_argument("--frame-threshold", type=int, default=25, help="AlignAtt frame_threshold(프레임 = 20 ms)")
+    ap.add_argument("--vac", action=argparse.BooleanOptionalAction, default=True, help="Silero VAD 로 음성 구간만 Whisper 에 넣는다(공식 권장)")
+    ap.add_argument("--vac-chunk", type=float, default=0.04, help="VAC 에 넣는 조각 길이(s, 공식 기본)")
+    ap.add_argument("--torch-hub", default="/tmp/sa_tskim/torch-hub",
+                    help="snakers4_silero-vad_master 가 있는 쓰기 가능한 torch.hub 폴더(오프라인). torch.hub 가 trusted_list 를 쓰므로 읽기 전용인 "
+                         "{BL}/torch-hub 에서 호스트 로컬로 복사해 쓴다")
     ap.add_argument("--tail-s", type=float, default=C.TAIL_S)
     ap.add_argument("--rank", type=int, default=0)
     ap.add_argument("--world", type=int, default=1)
     a = ap.parse_args()
-    setting = f"c{int(round(a.chunk * 1000))}-ft{a.frame_threshold}"
+    setting = f"c{int(round(a.chunk * 1000))}-ft{a.frame_threshold}" + ("-vac" if a.vac else "")
     os.makedirs(a.out, exist_ok=True)
     dest = os.path.join(a.out, f"predictions-{setting}-r{a.rank}of{a.world}.jsonl")
     rows = C.shard(C.load_rows(a.manifest, a.datasets), a.rank, a.world)
@@ -60,10 +68,13 @@ def main():
     print(f"START {SYSTEM} {setting} rank={a.rank}/{a.world} rows={len(rows)} todo={len(todo)}", flush=True)
     if not todo: return
     import argparse as _ap
+    import torch
     from simulstreaming_whisper import simul_asr_factory
+    from simulstreaming.whisper.whisper_streaming.vac_online_processor import VACOnlineASRProcessor
+    torch.hub.set_dir(a.torch_hub)
     import simulstreaming_translate as T
     asr = {}; mt = {}
-    n = int(round(a.chunk * C.SR))
+    n = int(round((a.vac_chunk if a.vac else a.chunk) * C.SR))                 # 한 번에 넣는 오디오 조각
     with open(dest, "a", encoding="utf-8") as f:
         for i, r in enumerate(todo):
             src, tgt = LAN[r["lang"]], LAN[r["tgt_lang"]]
@@ -73,6 +84,8 @@ def main():
                     log_level="WARNING", decoder=None, beams=1, model_path=WHISPER, cif_ckpt_path=None, frame_threshold=a.frame_threshold,
                     audio_min_len=0.0, audio_max_len=30.0, task="transcribe", never_fire=False, init_prompt=None, static_init_prompt=None,
                     max_context_tokens=None, logdir=None, lan=src, min_chunk_size=a.chunk))[1]
+                if a.vac:
+                    asr[src] = VACOnlineASRProcessor(a.chunk, asr[src])
             if (src, tgt) not in mt:
                 p = _ap.ArgumentParser(); T.translate_args(p)
                 targs = p.parse_args(["--src-lan", src, "--tgt-lan", tgt, "--model-dir", a.ct2_dir, "--tokenizer-dir", EUROLLM, "-l", "WARNING"])
@@ -94,15 +107,15 @@ def main():
                 for s in range(0, len(wav), n):
                     online.insert_audio_chunk(wav[s:s + n])
                     o = online.process_iter()
-                    if o and o.get("text"):
-                        T.simulation_update(simul, [dict(text=o["text"], emission_time=min(s + n, len(wav)) / C.SR, end=o.get("end"), is_final=False)],
-                                            timer, out_handler=keep)
+                    if o and (o.get("text") or o.get("is_final")):                   # VAC: 음성 구간 끝(is_final)은 글자가 없어도 넘겨 번역을 마무리한다
+                        T.simulation_update(simul, [dict(text=o.get("text") or "", emission_time=min(s + n, len(wav)) / C.SR, end=o.get("end"),
+                                                         is_final=bool(o.get("is_final")))], timer, out_handler=keep)
                 o = online.finish()
                 T.simulation_update(simul, [dict(text=(o or {}).get("text", ""), emission_time=len(wav) / C.SR, end=None, is_final=True)],
                                     timer, out_handler=keep)
             except Exception as exc:  # noqa: BLE001  (예: Whisper 토크나이저 split_tokens_on_unicode 의 IndexError — 그 문장만 실패로 남긴다)
                 err = f"{type(exc).__name__}: {str(exc)[:300]}"; incs = []
-                online.init(); online.model.refresh_segment(complete=True); simul.init()
+                online.init(); simul.init()                                             # init 이 Whisper 구간도 새로 연다(refresh_segment)
             text, times = C.words_with_times(incs)
             f.write(json.dumps(C.pred_row(SYSTEM, setting, r, text, times, a.tail_s, **({"error": err} if err else {})), ensure_ascii=False) + "\n"); f.flush()
             if i % 100 == 0: print(f"PROGRESS {i + 1}/{len(todo)} {r['dataset']} | {text[:80]}", flush=True)

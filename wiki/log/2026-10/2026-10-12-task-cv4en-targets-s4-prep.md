@@ -1,0 +1,26 @@
+## [2026-10-12] task | Common Voice 4 영어 번역 타깃 조립과 s4 학습 준비
+
+- Changed:
+  - 코드: `slurm/submit-q06-s4-ast.sh` 신규
+    - q06-s3-ast/final 에서 시작한다.
+    - s3 데이터·레시피에 CV4 영어 words 목록과 CV4 번역 타깃을 더한다.
+  - mxc:
+    - `data/ast-mono-cv4en-v1/targets-fix-gen-v3-bf16/`(타깃 + `pack/`)
+    - `results/s4-train-dryrun-20261012/`
+- Reason:
+  - 사용자 결정: 영어 낭독 데이터 추가. 베이스라인 비교에서 영→독·영→한이 가장 약했다([[output-simulst-baselines-20261012]]).
+- 결과:
+  - 생성(job 85149)·수리(job 85150): 186 단위 묶음 모두 끝났고 오류 0 이다.
+  - 타깃 조립(`ast_build_targets.py --fix-dir fix-gen-v3-bf16 --pack`):
+    - 영→독 230,083 / 232,845 행(98.8 %)
+    - 영→한 228,474 행(98.1 %)
+    - 탈락은 대부분 판정 게이트다.
+  - 학습 dry-run(CPU, 표본 목록 + 전체 타깃):
+    - 번역 타깃 593만 → 639만 행(영→독 42.4만 → 65.4만, 영→한 39.5만 → 62.4만)
+    - CV4 항목에 번역 타깃이 붙는다(표본 영어 셋 98 %).
+    - 4 셋 × 64 항목 × δ4–10 에서 불일치 0 이다.
+  - 영어 셋은 항목 +51 %(45.7만 → 68.9만), 시간 약 +16 %(2,143 h 에 CV4 train 약 343 h)가 된다.
+- Next:
+  - 사용자가 `bash slurm/submit-q06-s4-ast.sh --partition hpc` 로 제출한다.
+  - 학습이 끝나면 s3 와 같은 평가·베이스라인 비교를 한다.
+- By: tskim
