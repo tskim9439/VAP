@@ -14,6 +14,8 @@ related:
 raw_authors:
   - tskim
 ---
+> **단계 번호 대체(2026-10-14):** 이 문서의 단계 번호(Stage 2 = `<SEM_END>`)는 [[decision-cst-training-stages-and-speaker-slots]] 로 대체됐다. 지금 번호는 Stage 1 ASR → 2 AST → 3 2 인 대화(화자 귀속 + ASR + EOT) → 4 교차 언어 대화 + 번역이다. `<SEM_END>` 학습 위치는 그 결정의 열린 질문이다.
+
 
 # 학습 단계 재설계와 1.7B 파일럿 (2026-10-01)
 

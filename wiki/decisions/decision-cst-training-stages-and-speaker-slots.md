@@ -1,12 +1,12 @@
 ---
 type: decision
 status: active
-decision_status: proposed
+decision_status: accepted
 owner: tskim
 review: 2026-10-20
 created: 2026-10-13
-updated: 2026-10-13
-summary: CST 학습 5 단계(ASR→AST→2인 화자귀속+ASR→+번역→교차언어), 언어 고정 화자 슬롯, 교차언어 학습 데이터 3 갈래 제안
+updated: 2026-10-14
+summary: CST 학습 4 단계 확정(ASR→AST→2인 같은 언어 대화 화자귀속+ASR+EOT→교차언어 대화+번역), 언어 고정 화자 슬롯 + 턴 끝 EOT, 다자 회의는 2 화자만 골라 사용
 sources:
   - '[[decision-cst-paper-v1-scope]]'
   - '[[decision-phase2-canonical-lane-plan]]'
@@ -20,9 +20,32 @@ related:
   - '[[decision-multi-speaker-scope]]'
   - '[[output-staged-training-plan-20261001]]'
   - '[[output-simulst-baselines-20261012]]'
+  - '[[output-stage3-prep-plan-20261014]]'
+  - '[[decision-eot-immediate-soft-label]]'
 ---
 
-# CST 학습 단계와 화자 슬롯 형식 (초안, 2026-10-13)
+# CST 학습 단계와 화자 슬롯 형식 (2026-10-13 초안, 2026-10-14 확정)
+
+## 확정 내용 (2026-10-14, 사용자 결정)
+아래 '결정 (제안)'에서 바뀐 점을 먼저 적는다. 나머지는 제안대로 확정이다.
+1. **Stage 4·5 를 합친다. 단계는 넷이다.**
+   1. Stage 1 ASR(완료)
+   2. Stage 2 단일 화자 AST(완료, q06-s4-ast)
+   3. **Stage 3 2 인 같은 언어 대화: 화자 귀속 + ASR + 턴 끝 `<EOT>`**
+      - Stage 2 번역 데이터를 일정 비율 섞어 번역 능력을 유지한다.
+      - Stage 4 에 쓸 대화 번역 타깃을 미리 만든다.
+   4. **Stage 4 교차 언어 2 인 대화 + 번역**
+      - 같은 언어 대화의 번역도 이 단계에서 함께 섞는다.
+2. **출력 형식:** ast-v1 태그 확장(언어 고정 두 슬롯) **+ 턴 끝 `<EOT>`**.
+   - `<EOT>` 의 시점과 soft label 은 Phase 2 규칙([[decision-eot-immediate-soft-label]], `vapasr/data/eot_soft.py`)을 따른다.
+   - lane 토큰·`<ONSET>`·활동 헤드는 쓰지 않는다.
+3. **3 인 이상 대화도 쓴다.** 화자별 채널이 있는 회의(AMI·ICSI·NOTSOFAR)에서 두 화자만 골라 그 둘의 채널만 섞는다.
+   - 화자 채널에 다른 화자 음성이 새어 들어간 정도(누설)를 먼저 검사한다.
+4. **독일어 대화를 확보했다.** 새로 받은 BAS 코퍼스를 쓴다. 상세는 [[output-stage3-prep-plan-20261014]] 에 있다.
+   - KEC: 남부 독일어 자유 대화, 40 h, 79 명, 화자별 채널, 사람 전사
+   - ZTC: 스위스식 표준 독일어 과제 대화, 42 h, 29 쌍, 화자별 채널, 사람 전사 + MAuS 정렬
+   - NSC: 전사가 없고 상대가 거의 한 사람이라 뒤로 미룬다.
+
 
 ## 맥락
 - **지금까지:**
@@ -62,7 +85,7 @@ related:
 | **C. 이중 언어 대화 통째 합성** | 병렬 대화 코퍼스나 LLM 이 만든 대화를 화자별 언어로 나눠 공개 TTS 로 합성한다 | 문맥·참조·타이밍을 모두 통제한다 | TTS 음향 차이가 있다. 평가셋(CST-Bench-Syn)과 겹칠 위험이 있다 |
 | 실제 교차 언어 대화(TAXI·Verbmobil 등) | 그대로 쓴다 | 진짜 조건이다 | 양이 적고 한↔영은 없다 → 평가 전용 |
 
-## 결정 (제안)
+## 결정 (제안 당시, 2026-10-13 — 바뀐 점은 위 '확정 내용')
 1. **단계:**
    1. Stage 1 ASR(완료)
    2. Stage 2 단일 화자 AST(진행 중)
@@ -135,4 +158,4 @@ related:
 
 ## 재검토
 - 2026-10-20: s4 평가와 Stage 3 원천 조사를 보고 단계·비율을 확정한다.
-- 받아들여지면 `decision_status: accepted` 로 바꾸고 [[output-staged-training-plan-20261001]] 에 대체 표시를 단다.
+- 2026-10-14 확정했다. [[output-staged-training-plan-20261001]] 에 대체 표시를 달았다.
