@@ -1,0 +1,484 @@
+{
+ "meta": {
+  "checkpoint": "/soundai/users/tskim/VAPKT-data/vapkt-baselines/xcomet/models/Unbabel__XCOMET-XL/checkpoints/model.ckpt",
+  "manifests": [
+   "/soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs.jsonl",
+   "/soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-fleurs-en-peak05.jsonl",
+   "/soundai/users/tskim/VAPKT-data/data/evaluation/ast-fleurs-covost2-v1/manifest-max30s-covost2-sub7.jsonl"
+  ],
+  "pred_dirs": [
+   "/soundai/users/tskim/VAPKT-data/results/simulst-baselines-20261011/ours-s4-enc4",
+   "/soundai/users/tskim/VAPKT-data/results/simulst-baselines-20261011/ours-s3-enc4",
+   "/soundai/users/tskim/VAPKT-data/results/simulst-baselines-20261011/seamless",
+   "/tmp/sa_tskim/score-iwslt",
+   "/soundai/users/tskim/VAPKT-data/results/simulst-baselines-20261011/hibiki",
+   "/soundai/users/tskim/VAPKT-data/results/simulst-baselines-20261011/simulstreaming-vac"
+  ],
+  "keep": [
+   "q06-s4-ast/d4",
+   "q06-s4-ast/d10",
+   "q06-s4-ast/final",
+   "q06-s3-ast/d4",
+   "q06-s3-ast/d10",
+   "q06-s3-ast/final",
+   "seamless-streaming",
+   "iwslt26-cascade",
+   "hibiki-zero",
+   "simulstreaming-cascade"
+  ],
+  "triples": 65773,
+  "empty_mt_score": 0.0
+ },
+ "groups": {
+  "hibiki-zero/default-seed42/covost2-de-en": {
+   "xcomet": 70.32,
+   "n": 1931,
+   "empty_translations": 0
+  },
+  "hibiki-zero/default-seed42/fleurs-de-en": {
+   "xcomet": 66.71,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c640-ms1/covost2-de-en": {
+   "xcomet": 75.38,
+   "n": 1931,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c640-ms1/covost2-en-de": {
+   "xcomet": 70.87,
+   "n": 2217,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c640-ms1/fleurs-de-en": {
+   "xcomet": 62.94,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c640-ms1/fleurs-en-de": {
+   "xcomet": 56.62,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c640-ms1/fleurs-en-de-peak05": {
+   "xcomet": 62.63,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c640-ms1/fleurs-en-ko": {
+   "xcomet": 38.34,
+   "n": 497,
+   "empty_translations": 1
+  },
+  "iwslt26-cascade/c640-ms1/fleurs-en-ko-peak05": {
+   "xcomet": 40.77,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c640-ms1/fleurs-ko-en": {
+   "xcomet": 47.87,
+   "n": 382,
+   "empty_translations": 4
+  },
+  "iwslt26-cascade/c960-ms1/covost2-de-en": {
+   "xcomet": 83.28,
+   "n": 1931,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c960-ms1/covost2-en-de": {
+   "xcomet": 79.4,
+   "n": 2217,
+   "empty_translations": 2
+  },
+  "iwslt26-cascade/c960-ms1/fleurs-de-en": {
+   "xcomet": 73.21,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c960-ms1/fleurs-en-de": {
+   "xcomet": 70.11,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c960-ms1/fleurs-en-de-peak05": {
+   "xcomet": 73.12,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c960-ms1/fleurs-en-ko": {
+   "xcomet": 47.38,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c960-ms1/fleurs-en-ko-peak05": {
+   "xcomet": 49.11,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "iwslt26-cascade/c960-ms1/fleurs-ko-en": {
+   "xcomet": 47.23,
+   "n": 382,
+   "empty_translations": 9
+  },
+  "q06-s3-ast/d10/covost2-de-en": {
+   "xcomet": 88.31,
+   "n": 1931,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/d10/covost2-en-de": {
+   "xcomet": 81.29,
+   "n": 2217,
+   "empty_translations": 50
+  },
+  "q06-s3-ast/d10/fleurs-de-en": {
+   "xcomet": 84.49,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/d10/fleurs-en-de": {
+   "xcomet": 78.3,
+   "n": 641,
+   "empty_translations": 5
+  },
+  "q06-s3-ast/d10/fleurs-en-de-peak05": {
+   "xcomet": 78.44,
+   "n": 641,
+   "empty_translations": 4
+  },
+  "q06-s3-ast/d10/fleurs-en-ko": {
+   "xcomet": 58.94,
+   "n": 497,
+   "empty_translations": 5
+  },
+  "q06-s3-ast/d10/fleurs-en-ko-peak05": {
+   "xcomet": 59.14,
+   "n": 497,
+   "empty_translations": 8
+  },
+  "q06-s3-ast/d10/fleurs-ko-en": {
+   "xcomet": 75.44,
+   "n": 382,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/d4/covost2-de-en": {
+   "xcomet": 85.9,
+   "n": 1931,
+   "empty_translations": 2
+  },
+  "q06-s3-ast/d4/covost2-en-de": {
+   "xcomet": 74.87,
+   "n": 2217,
+   "empty_translations": 94
+  },
+  "q06-s3-ast/d4/fleurs-de-en": {
+   "xcomet": 80.92,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/d4/fleurs-en-de": {
+   "xcomet": 72.13,
+   "n": 641,
+   "empty_translations": 11
+  },
+  "q06-s3-ast/d4/fleurs-en-de-peak05": {
+   "xcomet": 72.93,
+   "n": 641,
+   "empty_translations": 8
+  },
+  "q06-s3-ast/d4/fleurs-en-ko": {
+   "xcomet": 55.09,
+   "n": 497,
+   "empty_translations": 17
+  },
+  "q06-s3-ast/d4/fleurs-en-ko-peak05": {
+   "xcomet": 56.55,
+   "n": 497,
+   "empty_translations": 14
+  },
+  "q06-s3-ast/d4/fleurs-ko-en": {
+   "xcomet": 70.57,
+   "n": 382,
+   "empty_translations": 1
+  },
+  "q06-s3-ast/final/covost2-de-en": {
+   "xcomet": 91.79,
+   "n": 1931,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/final/covost2-en-de": {
+   "xcomet": 88.28,
+   "n": 2217,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/final/fleurs-de-en": {
+   "xcomet": 91.61,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/final/fleurs-en-de": {
+   "xcomet": 88.37,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/final/fleurs-en-de-peak05": {
+   "xcomet": 89.35,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/final/fleurs-en-ko": {
+   "xcomet": 76.37,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/final/fleurs-en-ko-peak05": {
+   "xcomet": 77.13,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "q06-s3-ast/final/fleurs-ko-en": {
+   "xcomet": 83.34,
+   "n": 382,
+   "empty_translations": 2
+  },
+  "q06-s4-ast/d10/covost2-de-en": {
+   "xcomet": 87.47,
+   "n": 1931,
+   "empty_translations": 1
+  },
+  "q06-s4-ast/d10/covost2-en-de": {
+   "xcomet": 87.25,
+   "n": 2217,
+   "empty_translations": 4
+  },
+  "q06-s4-ast/d10/fleurs-de-en": {
+   "xcomet": 85.69,
+   "n": 862,
+   "empty_translations": 1
+  },
+  "q06-s4-ast/d10/fleurs-en-de": {
+   "xcomet": 82.03,
+   "n": 641,
+   "empty_translations": 1
+  },
+  "q06-s4-ast/d10/fleurs-en-de-peak05": {
+   "xcomet": 83.81,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/d10/fleurs-en-ko": {
+   "xcomet": 66.19,
+   "n": 497,
+   "empty_translations": 1
+  },
+  "q06-s4-ast/d10/fleurs-en-ko-peak05": {
+   "xcomet": 68.15,
+   "n": 497,
+   "empty_translations": 1
+  },
+  "q06-s4-ast/d10/fleurs-ko-en": {
+   "xcomet": 71.19,
+   "n": 382,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/d4/covost2-de-en": {
+   "xcomet": 85.26,
+   "n": 1931,
+   "empty_translations": 1
+  },
+  "q06-s4-ast/d4/covost2-en-de": {
+   "xcomet": 83.55,
+   "n": 2217,
+   "empty_translations": 6
+  },
+  "q06-s4-ast/d4/fleurs-de-en": {
+   "xcomet": 81.33,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/d4/fleurs-en-de": {
+   "xcomet": 79.04,
+   "n": 641,
+   "empty_translations": 1
+  },
+  "q06-s4-ast/d4/fleurs-en-de-peak05": {
+   "xcomet": 79.07,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/d4/fleurs-en-ko": {
+   "xcomet": 64.12,
+   "n": 497,
+   "empty_translations": 1
+  },
+  "q06-s4-ast/d4/fleurs-en-ko-peak05": {
+   "xcomet": 65.79,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/d4/fleurs-ko-en": {
+   "xcomet": 69.39,
+   "n": 382,
+   "empty_translations": 1
+  },
+  "q06-s4-ast/final/covost2-de-en": {
+   "xcomet": 91.32,
+   "n": 1931,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/final/covost2-en-de": {
+   "xcomet": 90.83,
+   "n": 2217,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/final/fleurs-de-en": {
+   "xcomet": 91.92,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/final/fleurs-en-de": {
+   "xcomet": 90.41,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/final/fleurs-en-de-peak05": {
+   "xcomet": 90.68,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/final/fleurs-en-ko": {
+   "xcomet": 79.63,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/final/fleurs-en-ko-peak05": {
+   "xcomet": 79.83,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "q06-s4-ast/final/fleurs-ko-en": {
+   "xcomet": 81.66,
+   "n": 382,
+   "empty_translations": 1
+  },
+  "seamless-streaming/t0.5-fp32/covost2-de-en": {
+   "xcomet": 91.75,
+   "n": 1931,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.5-fp32/covost2-en-de": {
+   "xcomet": 90.81,
+   "n": 2217,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.5-fp32/fleurs-de-en": {
+   "xcomet": 85.25,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.5-fp32/fleurs-en-de": {
+   "xcomet": 90.41,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.5-fp32/fleurs-en-de-peak05": {
+   "xcomet": 91.14,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.5-fp32/fleurs-en-ko": {
+   "xcomet": 64.89,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.5-fp32/fleurs-en-ko-peak05": {
+   "xcomet": 69.73,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.5-fp32/fleurs-ko-en": {
+   "xcomet": 72.49,
+   "n": 382,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.7-fp32/covost2-de-en": {
+   "xcomet": 91.97,
+   "n": 1931,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.7-fp32/covost2-en-de": {
+   "xcomet": 91.4,
+   "n": 2217,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.7-fp32/fleurs-de-en": {
+   "xcomet": 86.23,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.7-fp32/fleurs-en-de": {
+   "xcomet": 90.71,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.7-fp32/fleurs-en-de-peak05": {
+   "xcomet": 91.18,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.7-fp32/fleurs-en-ko": {
+   "xcomet": 65.74,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.7-fp32/fleurs-en-ko-peak05": {
+   "xcomet": 70.78,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "seamless-streaming/t0.7-fp32/fleurs-ko-en": {
+   "xcomet": 73.42,
+   "n": 382,
+   "empty_translations": 0
+  },
+  "simulstreaming-cascade/c1000-ft25-vac/covost2-de-en": {
+   "xcomet": 88.24,
+   "n": 1931,
+   "empty_translations": 1
+  },
+  "simulstreaming-cascade/c1000-ft25-vac/covost2-en-de": {
+   "xcomet": 83.93,
+   "n": 2217,
+   "empty_translations": 8
+  },
+  "simulstreaming-cascade/c1000-ft25-vac/fleurs-de-en": {
+   "xcomet": 87.63,
+   "n": 862,
+   "empty_translations": 0
+  },
+  "simulstreaming-cascade/c1000-ft25-vac/fleurs-en-de": {
+   "xcomet": 86.47,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "simulstreaming-cascade/c1000-ft25-vac/fleurs-en-de-peak05": {
+   "xcomet": 88.45,
+   "n": 641,
+   "empty_translations": 0
+  },
+  "simulstreaming-cascade/c1000-ft25-vac/fleurs-en-ko": {
+   "xcomet": 69.94,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "simulstreaming-cascade/c1000-ft25-vac/fleurs-en-ko-peak05": {
+   "xcomet": 71.34,
+   "n": 497,
+   "empty_translations": 0
+  },
+  "simulstreaming-cascade/c1000-ft25-vac/fleurs-ko-en": {
+   "xcomet": 67.49,
+   "n": 382,
+   "empty_translations": 38
+  }
+ }
+}

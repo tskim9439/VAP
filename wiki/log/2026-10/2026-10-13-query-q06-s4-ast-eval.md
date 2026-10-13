@@ -1,0 +1,28 @@
+## [2026-10-13] query | q06-s4-ast 학습 완료와 평가
+
+- Changed:
+  - 위키:
+    - [[output-q06-s4-ast-eval-20261013]] 신규
+    - [[output-simulst-baselines-20261012]] 에 s4 행(BLEU·LAAL·xCOMET)
+  - 원자료:
+    - `raw/sources/experiments/2026-10-13-q06-s4-ast-eval/`
+    - `raw/sources/experiments/2026-10-12-simulst-baselines/{scores-all-v3.json,tables-v3.txt,scores-xcomet-xl-v2.json}`
+  - mxc:
+    - `results/*-q06-s4-ast/`(평가 job 85953)
+    - `results/simulst-baselines-20261011/ours-s4-enc4/`
+    - `results/xcomet-20261012/`(s4 캐시)
+- Reason:
+  - 사용자 제출 학습(85484 → 85823 → 85952)과 평가(85953)가 끝났다.
+- 결과:
+  - **영→독·영→한:** 모든 칸에서 유의하게 올랐다.
+    - BLEU +1.3~5.7, xCOMET +3.7~9.0, LAAL −0.2~−0.9 s
+    - 짧은 문장 번역 누락: CoVoST 영→독 δ4 94 → 6
+  - **독→영:** 그대로다.
+  - **한→영:** δ10 만 −2.0 BLEU 로 유의하게 떨어졌다. 번역 모드 한국어 전사가 앞부분만 내고 끊기는 실패가 3 → 9 개로 늘었고, 원인은 확인하지 않았다.
+  - **받아쓰기:** 유의한 퇴행이 없다. LibriSpeech other δ4·δ6 은 좋아졌다.
+  - **베이스라인 대비:** FLEURS 영→한 δ10 은 BLEU 29.7(Seamless 30.6), xCOMET 66.2(64.9)다. 영→독 δ10 은 Seamless 와 BLEU 4.1, xCOMET 8.4 차이다.
+- Next:
+  - 한→영 δ10 하락 원인을 본다.
+  - 영→한 지연을 분해한다.
+  - Stage 3 결정 초안을 확정한다([[decision-cst-training-stages-and-speaker-slots]]).
+- By: tskim

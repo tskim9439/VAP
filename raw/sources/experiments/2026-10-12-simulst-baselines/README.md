@@ -102,5 +102,7 @@ source_type: source-drop
 - `tables.txt`: 위 파일을 세트·방향별로 정리. `python make_tables.py scores-all.json > tables.txt`
 - `scores-all-v2.json`·`tables-v2.txt`: 지연 보정 + SimulStreaming 재실행 판(위 절)
 - `scores-xcomet-xl.json`: (system, setting, dataset) 별 xCOMET(×100)·문장 수·빈 번역 수
+- `scores-all-v3.json`·`tables-v3.txt`: v2 + q06-s4-ast(`ours-s4-enc4`, 보정 LAAL) + s2 보정판(2026-10-13)
+- `scores-xcomet-xl-v2.json`: xCOMET 에 q06-s4-ast δ4·δ10·final 추가(2026-10-13, s4 캐시 `cache-xcomet-xl-s4-*.jsonl`, GPU 0·3·1 shard)
 - mxc 예측 원본: `VAPKT-data/results/simulst-baselines-20261011/{ours,ours-s3,seamless,iwslt,hibiki,simulstreaming,simulstreaming-vac}/`
   - IWSLT 예측은 채점 때 `/tmp/sa_tskim/score-iwslt` 에 모아 읽었다.

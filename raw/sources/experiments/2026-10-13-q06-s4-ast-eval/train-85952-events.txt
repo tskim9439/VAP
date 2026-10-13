@@ -1,0 +1,59 @@
+[2026-10-13 11:04:58] job 85952 nodes=2 (slurmmxch200v5-hpc-[53-54]) restart=0 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai/
+[2026-10-13 11:23:16] job 85952 nodes=2 (slurmmxch200v5-hpc-[10,33]) restart=2 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai/
+[11:46:45] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 11:54:56] job 85952 nodes=2 (slurmmxch200v5-hpc-[88,97]) restart=3 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai/
+재개 ← /soundai/Model/VAPASR/semcommit-q06-s4-ast/checkpoint-8000 · 지문 일치
+[13:06:14] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 13:09:41] job 85952 nodes=2 (slurmmxch200v5-hpc-[43-44]) restart=4 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai/
+재개 ← /soundai/Model/VAPASR/semcommit-q06-s4-ast/checkpoint-9000 · 지문 일치
+[14:42:09] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 14:48:42] job 85952 nodes=2 (slurmmxch200v5-hpc-[20,104]) restart=5 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai
+[14:51:51] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 14:59:45] job 85952 nodes=2 (slurmmxch200v5-hpc-[33,103]) restart=6 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai
+[15:01:00] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 15:23:16] job 85952 nodes=2 (slurmmxch200v5-hpc-[33,90]) restart=7 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai/
+[15:26:38] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 15:31:10] job 85952 nodes=2 (slurmmxch200v5-hpc-[24-25]) restart=8 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai/
+[15:32:18] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 15:38:43] job 85952 nodes=2 (slurmmxch200v5-hpc-[3,22]) restart=9 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai/u
+[15:42:47] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 15:47:14] job 85952 nodes=2 (slurmmxch200v5-hpc-[33,55]) restart=10 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai
+[15:48:11] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 15:58:43] job 85952 nodes=2 (slurmmxch200v5-hpc-[81,89]) restart=11 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai
+[16:22:27] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 16:27:51] job 85952 nodes=2 (slurmmxch200v5-hpc-[33,57]) restart=12 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/soundai
+재개 ← /soundai/Model/VAPASR/semcommit-q06-s4-ast/checkpoint-11000 · 지문 일치
+[17:41:34] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 18:29:44] job 85952 nodes=2 (slurmmxch200v5-hpc-[104,106]) restart=13 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/sound
+[18:38:43] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-13 18:50:14] job 85952 nodes=2 (slurmmxch200v5-hpc-[106,123]) restart=14 OUT=/soundai/Model/VAPASR/semcommit-q06-s4-ast SNAP=/sound
+재개 ← /soundai/Model/VAPASR/semcommit-q06-s4-ast/checkpoint-12000 · 지문 일치
+[20:35:30] 학습 완료 → DONE (parity: /soundai/Model/VAPASR/semcommit-q06-s4-ast/parity.json)
+{
+ "parity": true,
+ "semcommit_config_ok": true,
+ "memory": {
+  "loss": 0.32976,
+  "loss_next": 0.12298,
+  "loss_text": 0.40894,
+  "top1_text": 0.87097,
+  "sem_fp": 0.0
+ },
+ "reloaded": {
+  "loss": 0.32944,
+  "loss_next": 0.12283,
+  "loss_text": 0.40855,
+  "top1_text": 0.87097,
+  "sem_fp": 0.0
+ },
+ "missing": [],
+ "extra": [],
+ "shape_mismatch": [],
+ "value_diff": [],
+ "encoder_keys": 638,
+ "encoder_diff": [],
+ "encoder_saved_keys": 638,
+ "tokenizer_reload_ok": true,
+ "tokenizer_reload_error": null,
+ "batch_n_sem": 0
+}
