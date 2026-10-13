@@ -6,7 +6,13 @@
   AMI               : <root>/<meeting>/<meeting>.Headset-<ch>.wav + ami_public_manual_1.6.2.zip (segments·words, agent→channel = corpusResources/meetings.xml).
   NOTSOFAR-1        : <meeting>/close_talk/CT_*.wav + gt_transcription.json(단어 시각) + gt_meeting_metadata.json.
   ICSI              : <root>/<meeting>/chan*.sph + ICSI_core_NXT.zip(Segments/Words, participant) + ICSI_original_transcripts.zip(.mrt: participant→channel).
-텍스트는 raw 로 두고 TN 은 builder(experiments/p2_build_dialogues.py)에서 `textnorm.target` 으로 건다. 시각은 라벨값이며 정렬(p2_align)로 다시 뽑는다.
+  KEC (독일어)      : BAS Karl-Eberhard-Corpus. rec_<pair>/rec_<pair>_<AS|IS>_id_<subject>_<part>.wav(44.1 kHz, 화자마다 다른 방음 부스) + 같은 이름 TextGrid
+                      ('words' 층: MAuS/SFA 단어 시각, <P> 쉼). 발화 층이 없어 쉼 ≥ KEC_GAP_S 로 단어를 묶는다. 숫자 part 하나 = Dialogue 하나(두 화자 모두
+                      있는 part 만; 한 화자에만 있는 'Art1–3' 은 건너뛴다).
+  ZTC (독일어)      : BAS Zurich Tangram Corpus. <dyad><session>/<bundle>_<speaker>.wav(44.1 kHz) + TextGrid('TRN' 층 = 발화, 'ORT' 층 = MAuS 단어).
+                      bundle(과제) 하나 = Dialogue 하나. 스위스식 표준 독일어.
+텍스트는 raw 로 두고 TN 은 builder(experiments/p2_build_dialogues.py)에서 `textnorm.target`(독일어는 `textnorm_de.target_de`)으로 건다.
+로더가 붙인 flags(말 끊김·알아듣기 어려움 등)는 builder 가 TN flags 와 합쳐 그 발화의 전사 감독을 뺀다. 시각은 라벨값이며 정렬(p2_align)로 다시 뽑는다.
 """
 import os, re, json, glob, zipfile, unicodedata
 import xml.etree.ElementTree as ET
@@ -223,3 +229,158 @@ def iter_turnbench(parquet_dir: str, audio_out: str, split: str = "heldout", con
                 dur = max(u.end for u in utts) + 0.5; md = row.get("metadata") or {}
                 yield Dialogue(conv_id=f"turnbench:{cid}", corpus="TurnBench", lang="English", split=split, duration_s=dur, speakers=sorted(chans), utterances=utts, channels=chans,
                                meta=dict(labels=labels, consensus_utts=consensus, tracks=tracks, conversation_type=md.get("conversation_type"), genders={"1": md.get("speaker_1_actor_gender"), "2": md.get("speaker_2_actor_gender")}))
+
+
+# ───────────────────────────── 독일어: KEC · ZTC (BAS) ─────────────────────────────
+def read_textgrid(path: str) -> Dict[str, List[Tuple[float, float, str]]]:
+    """Praat TextGrid(긴 형식, IntervalTier)를 {층 이름: [(xmin, xmax, text)]} 로 읽는다. 텍스트의 "" 는 " 로 푼다."""
+    t = open(path, encoding="utf-8", errors="replace").read(); out: Dict[str, List[Tuple[float, float, str]]] = {}
+    for blk in re.split(r"\n\s*item \[\d+\]:", t)[1:]:
+        name = re.search(r'name = "([^"]*)"', blk)
+        if not name or 'class = "IntervalTier"' not in blk: continue
+        ivs = re.findall(r'xmin = ([\d.eE+-]+)\s*\n\s*xmax = ([\d.eE+-]+)\s*\n\s*text = "((?:[^"]|"")*)"', blk)
+        out[name.group(1)] = [(float(a), float(b), x.replace('""', '"')) for a, b, x in ivs]
+    return out
+
+def _wav_dur(path: str) -> float:
+    import soundfile as sf
+    info = sf.info(path); return info.frames / info.samplerate
+
+KEC_GAP_S = 0.5            # 이 길이 이상의 쉼(<P>)·비음성 표시에서 발화를 끊는다
+KEC_MAX_S = 20.0           # 발화가 이보다 길면 KEC_SPLIT_S 이상 쉼에서도 끊는다
+KEC_SPLIT_S = 0.15         # 긴 발화를 끊는 짧은 쉼(부동소수 오차를 피하려고 0.2 보다 조금 낮게)
+KEC_FILLERS = {"<HÄSITATION>", "<HESITATION>", "<HESITSION>"}   # 머뭇거림 → ZTC 처럼 'äh' 로 적는다(오탈자 변형 포함)
+KEC_ANON = re.compile(r"(?:NA)+")                                 # 'NANA'·'NANANA' = 익명화(그 자리는 −20 dB 일정 음, 2026-10-14 실측)
+
+def kec_utterances(words: List[Tuple[float, float, str]], speaker: str, prefix: str) -> List[Utterance]:
+    """KEC 'words' 층 → 발화. [x] 는 괄호만 벗긴다(문서에 정의 없음, 그 화자 채널의 말). '#고친말#끊긴말'(말 끊김)·<UNVERSTÄNDLICH> 가 든 발화는
+    flags 로 전사 감독에서 뺀다(시각은 유지). 웃음·숨·입소리 같은 비음성 표시는 발화 구간에 넣지 않는다."""
+    utts: List[Utterance] = []; cur: List[Tuple[float, float, str]] = []; flags: set = set()
+
+    def close():
+        nonlocal cur, flags
+        if cur:
+            utts.append(Utterance(speaker=speaker, start=cur[0][0], end=cur[-1][1], raw=" ".join(w for _, _, w in cur if w), utt_id=f"{prefix}_{len(utts):05d}",
+                                  word_timing=[(w, s, e) for s, e, w in cur if w], flags=sorted(flags) or None))
+        cur, flags = [], set()
+    for s, e, x in words:
+        x = x.strip()
+        if not x: continue
+        if x.startswith("[") and x.endswith("]"): x = x[1:-1].strip()
+        if x == "<P>" or (x.startswith("<") and x not in KEC_FILLERS and "UNVERST" not in x):
+            if e - s >= KEC_GAP_S or (cur and cur[-1][1] - cur[0][0] > KEC_MAX_S and e - s >= KEC_SPLIT_S): close()
+            continue
+        if x in KEC_FILLERS: cur.append((s, e, "äh")); continue
+        if KEC_ANON.fullmatch(x): cur.append((s, e, "")); continue            # 익명화된 이름·지명: 오디오가 일정 음(−20 dB)이라 전사에서 뺀다(구간은 유지)
+        if "UNVERST" in x: flags.add("unintelligible"); cur.append((s, e, "")); continue
+        if x.startswith("#"): flags.add("discontinued"); cur.append((s, e, x.strip("#").split("#")[-1])); continue
+        cur.append((s, e, x))
+    close()
+    return [u for u in utts if u.raw.strip() or u.flags]
+
+def load_kec_part(rec_dir: str, part: str, split: str = "train") -> Optional[Dialogue]:
+    rec = os.path.basename(rec_dir.rstrip("/")); utts: List[Utterance] = []; chans: Dict[str, ChannelRef] = {}; dur = 0.0; subjects = {}
+    for wav in sorted(glob.glob(os.path.join(rec_dir, f"{rec}_*_id_*_{part}.wav"))):
+        m = re.match(rf"{rec}_(AS|IS)_id_(\d+)_{part}\.wav$", os.path.basename(wav)); tg = wav[:-4] + ".TextGrid"
+        if not m or not os.path.exists(tg): continue
+        spk = f"{m.group(1)}_{m.group(2)}"; subjects[spk] = m.group(2); chans[spk] = ChannelRef(path=wav, sr=44100); dur = max(dur, _wav_dur(wav))
+        utts += kec_utterances(read_textgrid(tg).get("words", []), spk, f"{spk}_p{part}")
+    if len(chans) != 2: return None
+    return Dialogue(conv_id=f"kec:{rec}_p{part}", corpus="KEC", lang="German", split=split, duration_s=float(dur), speakers=sorted(chans), utterances=utts, channels=chans,
+                    meta=dict(pair=rec, part=part, subjects=subjects))
+
+def iter_kec(root: str, split: str = "train") -> Iterator[Dialogue]:
+    for rec_dir in sorted(glob.glob(os.path.join(root, "rec_*"))):
+        parts = sorted({m.group(1) for p in glob.glob(os.path.join(rec_dir, "*.wav")) if (m := re.match(r".*_(\d+)\.wav$", p))}, key=int)   # 숫자 파트만('Art1–3' 은 한 화자만 있어 짝이 없다)
+        for part in parts:
+            d = load_kec_part(rec_dir, part, split)
+            if d is not None: yield d
+
+# 독일어 구어 축약 표기 → 표준 철자 (Stage 3, 2026-10-14). KEC 는 강제 정렬기 때문에 축약형(nich·is·hab·des·n…)을 그대로 적었고(KEC_Information §3.4),
+# Stage 1·2 독일어 타깃은 표준 철자다. 같은 발화의 ASR 가설(p2_asr_check)을 단어 정렬해, 축약형 자리에 정렬된 가설 단어가 허용된 표준형이면 그것을 쓴다.
+DE_CANON = {"nich": "nicht", "net": "nicht", "is": "ist", "isch": "ist", "desch": "das ist", "hab": "habe", "ham": "haben", "glaub": "glaube", "grad": "gerade",
+            "grade": "gerade", "dis": "das", "un": "und", "au": "auch", "aso": "also", "ok": "okay", "oke": "okay", "nen": "einen", "nem": "einem", "ner": "einer",
+            "se": "sie", "sin": "sind", "nix": "nichts", "heut": "heute", "eilich": "eigentlich", "vleicht": "vielleicht", "jets": "jetzt", "weisch": "weißt",
+            "wär": "wäre", "würd": "würde", "hätt": "hätte", "hatt": "hatte", "dacht": "dachte", "werd": "werde", "son": "so ein", "sone": "so eine",
+            "weißte": "weißt du", "haste": "hast du", "biste": "bist du", "kannste": "kannst du", "willste": "willst du", "siehste": "siehst du",
+            "naja": "na ja", "achso": "ach so", "ahso": "ah so", "ahja": "ah ja", "jaja": "ja ja", "nochmal": "noch mal", "schonmal": "schon mal", "sowas": "so was",
+            "gibts": "gibt's", "gehts": "geht's", "hats": "hat's", "wenns": "wenn's", "wars": "war's", "habs": "hab's", "machts": "macht's", "stimmts": "stimmt's"}
+DE_GUIDED = {"des": {"das", "es"}, "s": {"es", "das", "ist"}, "n": {"ein", "einen", "eine", "den"}, "ne": {"eine", "nein", "nee"}, "m": {"dem", "einem"},
+             "ma": {"mal", "man"}, "mer": {"wir", "man"}, "äh": {"ähm", "öhm", "öh", "hm", "hmm", "mhm", "ehm"},
+             "das": {"dass"}, "dass": {"das"}}            # 모호한 축약형·같은 소리(das/dass 는 문법으로 가른다): ASR 가 고른 후보만 쓴다
+DE_CORPUS_CANON = {"ztc": {"ehm": "ähm", "ehmm": "ähm", "eh": "äh", "hmh": "mhm", "kuck": "guck", "kucke": "gucke", "kuckt": "guckt", "kucken": "gucken",
+                           "parallelogram": "parallelogramm"}}   # 코퍼스 고유 표기(ZTC 간투사 철자·변이 철자·오탈자)
+DE_FILLERS = {"äh", "ähm", "öh", "öhm", "hm", "hmm", "mhm", "eh", "ehm", "em", "äm"}
+
+def _align_words(r: List[str], h: List[str]) -> List[Tuple[Optional[int], Optional[int]]]:
+    """편집 거리 정렬 → [(ref 위치 | None, hyp 위치 | None)] (일치·치환은 둘 다, 삭제는 hyp None, 삽입은 ref None)."""
+    n, m = len(r), len(h); D = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n + 1): D[i][0] = i
+    for j in range(m + 1): D[0][j] = j
+    for i in range(1, n + 1):
+        for j in range(1, m + 1): D[i][j] = min(D[i - 1][j] + 1, D[i][j - 1] + 1, D[i - 1][j - 1] + (r[i - 1] != h[j - 1]))
+    out, i, j = [], n, m
+    while i or j:
+        if i and j and D[i][j] == D[i - 1][j - 1] + (r[i - 1] != h[j - 1]): out.append((i - 1, j - 1)); i -= 1; j -= 1
+        elif i and D[i][j] == D[i - 1][j] + 1: out.append((i - 1, None)); i -= 1
+        else: out.append((None, j - 1)); j -= 1
+    return out[::-1]
+
+def de_word_err(ref: str, hyp: str) -> float:
+    """간투사를 뺀 단어 오류율(정렬 결손 판정용). 두 문자열 모두 asr-tn-de 정규화를 거친 것."""
+    r, h = [w for w in ref.split() if w not in DE_FILLERS], [w for w in hyp.split() if w not in DE_FILLERS]
+    if not r: return 0.0 if not h else 1.0
+    return sum(1 for i, j in _align_words(r, h) if i is None or j is None or r[i] != h[j]) / len(r)
+
+def canon_de(text: str, hyp: Optional[str], extra: Optional[Dict[str, str]] = None) -> Tuple[str, Dict[str, int]]:
+    """asr-tn-de 타깃 `text` 의 구어 축약형을 표준 철자로 바꾼다. hyp = 같은 발화의 ASR 가설(asr-tn-de 정규화), 없으면 고정 대응만 쓴다.
+    단어마다: 정렬된 가설 단어 g 가 DE_GUIDED 후보면 g → DE_CANON(+ extra = 코퍼스 고유 대응) 이면 고정값 → g 가 끝 e 탈락(glaub→glaube)·접어 's(gibts→gibt's)·스위스식 ss → ß(gross→groß) 차이만 나면 g → 그대로.
+    반환: (새 text, 바뀐 종류별 개수)."""
+    r = text.split(); h = hyp.split() if hyp else []; got = {}; fixed = {**DE_CANON, **(extra or {})}
+    for i, j in _align_words(r, h):
+        if i is not None and j is not None: got[i] = h[j]
+    out, st = [], {}
+    for i, w in enumerate(r):
+        g = got.get(i); new, how = w, None
+        if g is not None and g != w and g in DE_GUIDED.get(w, ()): new, how = g, "guided"
+        elif w in fixed: new, how = fixed[w], "fixed"
+        elif g is not None and g != w and (g == w + "e" or (w.endswith("s") and g == w[:-1] + "'s") or ("ß" in g and g.replace("ß", "ss") == w)):
+            new, how = g, "variant"
+        if how: st[how] = st.get(how, 0) + 1
+        out.append(new)
+    return " ".join(out), st
+
+def ztc_text(x: str) -> Tuple[str, set]:
+    """ZTC TRN 발화 → (raw, flags). '(단어)'(전사자 불확실)는 괄호만 벗기고, '???'(알아듣기 어려움)·'-' 로 끝나거나 시작하는 끊긴 단어는 flags."""
+    out, flags = [], set()
+    for w in x.split():
+        if "???" in w: flags.add("unintelligible"); continue
+        w = w.strip("()")
+        if not w: continue
+        if w.endswith("-") or w.startswith("-"): flags.add("fragment"); continue
+        out.append(w)
+    return " ".join(out), flags
+
+def load_ztc_bundle(session_dir: str, bundle: str, split: str = "train") -> Optional[Dialogue]:
+    utts: List[Utterance] = []; chans: Dict[str, ChannelRef] = {}; dur = 0.0
+    for wav in sorted(glob.glob(os.path.join(session_dir, f"{bundle}_*.wav"))):
+        spk = os.path.basename(wav)[len(bundle) + 1:-4]; tg = wav[:-4] + ".TextGrid"
+        if not os.path.exists(tg): continue
+        tiers = read_textgrid(tg); chans[spk] = ChannelRef(path=wav, sr=44100); dur = max(dur, _wav_dur(wav))
+        words = [(w, s, e) for s, e, w in tiers.get("ORT", []) if w.strip()]
+        for k, (s, e, x) in enumerate(t for t in tiers.get("TRN", []) if t[2].strip()):
+            raw, fl = ztc_text(x)
+            if not raw and not fl: continue
+            utts.append(Utterance(speaker=spk, start=s, end=e, raw=raw, utt_id=f"{spk}_{k:05d}", word_timing=[(w, a, b) for w, a, b in words if a >= s - 1e-3 and b <= e + 1e-3],
+                                  flags=sorted(fl) or None))
+    if len(chans) != 2: return None
+    sess = os.path.basename(session_dir.rstrip("/"))
+    return Dialogue(conv_id=f"ztc:{bundle}", corpus="ZTC", lang="German", split=split, duration_s=float(dur), speakers=sorted(chans), utterances=utts, channels=chans,
+                    meta=dict(dyad=re.sub(r"\d+$", "", sess), session=sess, bundle=bundle))
+
+def iter_ztc(root: str, split: str = "train") -> Iterator[Dialogue]:
+    for sd in sorted(d for d in glob.glob(os.path.join(root, "*")) if os.path.isdir(d)):
+        bundles = sorted({re.sub(r"_[^_]+\.wav$", "", os.path.basename(p)) for p in glob.glob(os.path.join(sd, "*.wav"))})
+        for b in bundles:
+            d = load_ztc_bundle(sd, b, split)
+            if d is not None: yield d

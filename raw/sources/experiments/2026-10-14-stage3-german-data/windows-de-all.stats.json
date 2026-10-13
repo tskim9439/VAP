@@ -1,0 +1,122 @@
+{
+ "kec": {
+  "dialogues": 171,
+  "dialogue_hours": 29.2,
+  "windows": 2444,
+  "window_hours": 20.3,
+  "yield_ratio": 0.695,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 7825,
+   "sparse": 37,
+   "untranscribed": 0,
+   "with_mask": 1791
+  },
+  "sampled": 1000,
+  "mask_frac": {
+   "mean": 0.118,
+   "p50": 0.087,
+   "p90": 0.285,
+   "share_zero": 0.277,
+   "share_gt_half": 0.015
+  },
+  "text_tokens_per_window": {
+   "mean": 111.2,
+   "p10": 62.0,
+   "p90": 160.0
+  },
+  "tags_per_window": 37.4,
+  "eot_per_window": 11.9,
+  "soft_eot_per_window": 8.8,
+  "speakers_per_window": {
+   "1": 53,
+   "2": 947
+  },
+  "reassigned_per_sampled_window": 0.0,
+  "sec": 2.8
+ },
+ "ztc": {
+  "dialogues": 373,
+  "dialogue_hours": 41.9,
+  "windows": 5877,
+  "window_hours": 48.8,
+  "yield_ratio": 1.164,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 8662,
+   "sparse": 7,
+   "untranscribed": 0,
+   "with_mask": 5114
+  },
+  "sampled": 1000,
+  "mask_frac": {
+   "mean": 0.122,
+   "p50": 0.102,
+   "p90": 0.259,
+   "share_zero": 0.132,
+   "share_gt_half": 0.001
+  },
+  "text_tokens_per_window": {
+   "mean": 73.6,
+   "p10": 43.0,
+   "p90": 108.0
+  },
+  "tags_per_window": 36.5,
+  "eot_per_window": 14.9,
+  "soft_eot_per_window": 11.3,
+  "speakers_per_window": {
+   "1": 59,
+   "2": 941
+  },
+  "reassigned_per_sampled_window": 0.0,
+  "sec": 3.3
+ },
+ "nsc": {
+  "dialogues": 276,
+  "dialogue_hours": 34.8,
+  "windows": 4261,
+  "window_hours": 35.7,
+  "yield_ratio": 1.027,
+  "hop_s": 10.0,
+  "window_s": [
+   20.0,
+   40.0
+  ],
+  "skipped": {
+   "no_start": 7474,
+   "sparse": 372,
+   "untranscribed": 0,
+   "with_mask": 4318
+  },
+  "sampled": 1000,
+  "mask_frac": {
+   "mean": 0.231,
+   "p50": 0.214,
+   "p90": 0.446,
+   "share_zero": 0.07,
+   "share_gt_half": 0.054
+  },
+  "text_tokens_per_window": {
+   "mean": 68.6,
+   "p10": 27.0,
+   "p90": 110.0
+  },
+  "tags_per_window": 23.8,
+  "eot_per_window": 10.5,
+  "soft_eot_per_window": 6.2,
+  "speakers_per_window": {
+   "1": 8,
+   "2": 992
+  },
+  "reassigned_per_sampled_window": 0.0,
+  "sec": 2.1
+ }
+}

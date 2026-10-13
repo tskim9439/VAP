@@ -1,0 +1,45 @@
+{
+ "utts": 84235,
+ "dialogues": 373,
+ "speakers_total": 746,
+ "missing_pieces": 0,
+ "n_speakers=2": 373,
+ "quarantined": 254,
+ "hours": 41.93,
+ "textnorm": "asr-tn-de-v1",
+ "flags": {
+  "unintelligible": 210,
+  "digit": 15,
+  "abbrev": 7,
+  "empty": 2,
+  "fragment": 4,
+  "symbol": 16,
+  "control": 2
+ },
+ "canon": {
+  "fixed": 11082,
+  "utts_changed": 13623,
+  "variant": 2436,
+  "guided": 809,
+  "guided_rows": 71555,
+  "err_median": 0.0,
+  "share_err_ge_0_2": 0.3087
+ },
+ "args": {
+  "corpus": "ztc",
+  "year": "2020",
+  "index_cache": null,
+  "root": "/soundai/users/tskim/VAPKT-data/data/ZTC",
+  "audio_root": null,
+  "label_root": null,
+  "crop_dir": null,
+  "annotations": null,
+  "transcripts": null,
+  "out": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "limit": null,
+  "split": "train",
+  "workers": 1,
+  "asr_guide": "/soundai/users/tskim/VAPKT-data/data/phase2/asrcheck/ztc.utts.jsonl"
+ },
+ "sec": 24.2
+}

@@ -13,7 +13,8 @@ from vapasr.data.dialogue import CHUNK_S
 ap = argparse.ArgumentParser(); ap.add_argument("--dir", required=True); ap.add_argument("--tokenizer", default=os.environ.get("MXC_QWEN_ASR_DIR", "Qwen/Qwen3-ASR-0.6B"))
 ap.add_argument("--corpora", default="aihub71631,aihub134-1,aihub134-2,otoSpeech,ami,notsofar,icsi"); ap.add_argument("--hop", type=float, default=10.0); ap.add_argument("--window", type=float, nargs=2, default=(20.0, 40.0))
 ap.add_argument("--sample", type=int, default=1000); ap.add_argument("--overfit", type=int, default=32); ap.add_argument("--delay", type=int, default=4); ap.add_argument("--seed", type=int, default=0)
-a = ap.parse_args(); out = os.path.join(a.dir, "windows"); os.makedirs(out, exist_ok=True)
+ap.add_argument("--out", default=None, help="출력 폴더(기본 <dir>/windows). 다른 코퍼스 묶음(예: 독일어)을 만들 때 기존 all.stats.json·overfit32 를 덮지 않게 따로 준다")
+a = ap.parse_args(); out = a.out or os.path.join(a.dir, "windows"); os.makedirs(out, exist_ok=True)
 from transformers import AutoTokenizer
 tok = AutoTokenizer.from_pretrained(a.tokenizer)
 OVERFIT_QUOTA = {"aihub71631": 6, "aihub134-1": 5, "aihub134-2": 4, "otoSpeech": 5, "ami": 4, "notsofar": 4, "icsi": 4}

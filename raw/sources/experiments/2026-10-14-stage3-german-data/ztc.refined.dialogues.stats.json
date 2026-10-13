@@ -1,0 +1,17 @@
+{
+ "dialogues": 373,
+ "utts": 84235,
+ "split": 4974,
+ "tightened_s": 1863.2,
+ "no_vad": 3912,
+ "unaligned": 0,
+ "implausible": 259,
+ "asr_disagree": 11933,
+ "asr_unchecked": 12414,
+ "asr_bad_speaker": 2,
+ "dur_median_before": 0.86,
+ "dur_median_after": 0.79,
+ "out": "/soundai/users/tskim/VAPKT-data/data/phase2/ztc.refined.dialogues.jsonl",
+ "workers": 12,
+ "sec": 24.0
+}

@@ -1,0 +1,17 @@
+{
+ "dialogues": 276,
+ "utts": 40543,
+ "split": 15863,
+ "tightened_s": 8607.5,
+ "no_vad": 6143,
+ "unaligned": 0,
+ "implausible": 518,
+ "asr_disagree": 0,
+ "asr_unchecked": 0,
+ "asr_bad_speaker": 0,
+ "dur_median_before": 1.78,
+ "dur_median_after": 1.1,
+ "out": "/soundai/users/tskim/VAPKT-data/data/phase2/nsc.refined.dialogues.jsonl",
+ "workers": 12,
+ "sec": 43.4
+}

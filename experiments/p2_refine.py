@@ -12,6 +12,8 @@ ap = argparse.ArgumentParser(); ap.add_argument("--dialogues", required=True); a
 ap.add_argument("--workers", type=int, default=0, help="대화 병렬 처리 프로세스 수(0 = min(16, CPU/2)). 채널 VAD 가 대화당 수 초라 순차로는 1,500 대화에 2 시간")
 ap.add_argument("--min-cps", type=float, default=1.5, help="KO 글자/초(EN 은 /2.2) 하한 — 1 s 이상 발화에서 이보다 성기면 라벨 결손 의심(예: 71631 의 3.9 s 짜리 '이')")
 ap.add_argument("--asr-flags", help="p2_asr_check 의 *.utts.jsonl — err ≥ --asr-thr 면 전사 감독 제외(asr_disagree; 시각·활동·ONSET/EOT 는 유지, Dataset 이 그 구간 손실을 마스크)"); ap.add_argument("--asr-thr", type=float, default=0.2)
+ap.add_argument("--asr-spk-thr", type=float, default=None, help="대화 안 한 화자의 발화 err 중앙값이 이 이상이면(대조 발화 20 개 이상) 그 화자 발화 전부 asr_disagree — "
+                "전사·시각이 통째로 어긋난 채널(예: KEC rec_026_p4 IS_051, 중앙값 1.0). 기본 끔")
 a = ap.parse_args()
 asr = {}
 if a.asr_flags:
@@ -22,7 +24,15 @@ tot = dict(dialogues=0, utts=0, split=0, tightened_s=0.0, no_vad=0, unaligned=0)
 
 def one(line):
     """대화 한 줄 → (refined json line, 통계). 워커 프로세스에서 실행(fork: aligned/asr 를 공유)."""
-    d = Dialogue.from_json(line); toks = aligned.get(d.conv_id, {}); st = dict(unaligned=0, implausible=0, asr_disagree=0, asr_unchecked=0); bef = []
+    d = Dialogue.from_json(line); toks = aligned.get(d.conv_id, {}); st = dict(unaligned=0, implausible=0, asr_disagree=0, asr_unchecked=0, asr_bad_speaker=0); bef = []
+    bad = set()
+    if a.asr_spk_thr is not None:
+        per = {}
+        for u in d.utterances:
+            r = asr.get((d.conv_id, u.utt_id))
+            if r: per.setdefault(u.speaker, []).append(r["err"])
+        bad = {s for s, v in per.items() if len(v) >= 20 and float(np.median(v)) >= a.asr_spk_thr}; st["asr_bad_speaker"] = len(bad)
+        if bad: d.meta["asr_bad_speakers"] = sorted(bad)
     for u in d.utterances:
         if u.utt_id in toks: u.tokens = toks[u.utt_id]
         elif u.text: st["unaligned"] += 1
@@ -30,7 +40,7 @@ def one(line):
         if u.text and dur >= 1.0 and cps < (a.min_cps if d.lang == "Korean" else a.min_cps * 2.2):
             u.flags = (u.flags or []) + ["implausible_rate"]; u.text = ""; u.tokens = None; st["implausible"] += 1
         r = asr.get((d.conv_id, u.utt_id))
-        if r and u.text and r["err"] >= a.asr_thr:
+        if u.text and ((r and r["err"] >= a.asr_thr) or u.speaker in bad):
             u.flags = (u.flags or []) + ["asr_disagree"]; u.text = ""; u.tokens = None; st["asr_disagree"] += 1
         elif a.asr_flags and u.text and r is None: st["asr_unchecked"] += 1
     vad = {s: [] for s in d.speakers} if a.no_vad else channel_vad(d)

@@ -12,6 +12,7 @@ from qwen_asr import Qwen3ASRModel
 from vapasr.data.dialogue import Dialogue
 from vapasr.data.streams import load_utt_audio, SR
 from vapasr.data.textnorm import score_ko, score_en
+from vapasr.data.textnorm_de import score_de
 QWEN = os.environ.get("MXC_QWEN_ASR_DIR", "Qwen/Qwen3-ASR-0.6B")
 
 def ed(a, b):
@@ -24,6 +25,7 @@ def ed(a, b):
     return prev[-1]
 def err(lang, ref, hyp):
     if lang == "Korean": r, h = score_ko(ref, False), score_ko(hyp, False); return ed(list(r), list(h)) / max(1, len(r))
+    if lang == "German": r, h = score_de(ref).split(), score_de(hyp).split(); return ed(r, h) / max(1, len(r))      # 독일어(Stage 3 KEC·ZTC): asr-tn-de 채점 정규화 WER
     r, h = score_en(ref).split(), score_en(hyp).split(); return ed(r, h) / max(1, len(r))
 
 def utt_audio(d, u):

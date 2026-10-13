@@ -1,0 +1,18 @@
+{
+ "utts": 40543,
+ "kept": 27411,
+ "quarantined": 13132,
+ "flag_asr_disagree": 12678,
+ "flag_digit": 478,
+ "flag_symbol": 5,
+ "flag_abbrev": 318,
+ "dialogues": 276,
+ "interlocutor=amsterdam": 254,
+ "flag_empty": 17,
+ "interlocutor=aden": 20,
+ "flag_charset": 5,
+ "interlocutor=amsterdam+aden": 2,
+ "hours": 34.79,
+ "textnorm": "asr-tn-de-v1",
+ "max_wer": 0.2
+}

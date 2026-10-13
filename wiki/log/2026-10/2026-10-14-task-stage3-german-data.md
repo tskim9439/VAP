@@ -1,0 +1,50 @@
+## [2026-10-14] task | Stage 3 P1 — 독일어 대화 KEC·ZTC·NSC 준비 완료(106 h, 전사 감독 62 h, 창 12,582 개)
+
+- Changed:
+  - [[output-stage3-prep-plan-20261014]]: 데이터 표의 독일어 행, held-out, "P1 독일어 결과" 절, 열린 질문 2 개
+  - [[2026-10-14-stage3-german-data]] 신규
+  - 코드:
+    - `vapasr/data/dialogue_corpora.py`: KEC·ZTC 로더, 익명화 처리, `canon_de`·`de_word_err`
+    - `experiments/p2_build_dialogues.py`: `--asr-guide`
+    - `experiments/p2_asr_check.py`: 독일어 WER
+    - `experiments/p2_refine.py`: `--asr-spk-thr`
+    - `experiments/p2_build_windows.py`: `--out`
+    - `experiments/p2_make_split.py`: v2
+    - `experiments/nsc_pseudo_label.py` 신규
+    - `tests/test_dialogue_corpora_de.py`
+  - mxc `data/phase2/`:
+    - `{kec,ztc,nsc}.dialogues.jsonl`·`.refined.dialogues.jsonl`
+    - `align-asr-tn-de-v1/`
+    - `mono/{KEC,ZTC,NSC}`
+    - `windows-de/`
+    - `splits/v2.json`
+- Reason: 사용자 지시 "그래 P1 진행해줘"
+- 결과:
+  - **KEC 전사는 축약 표기(nich·is·hab·des·n)다.**
+    - ASR 대조 오류율 중앙값이 0.25 였고, 59 % 가 0.2 이상이었다.
+    - ASR 가설로 모호한 것을 가리는 표준 철자 변환을 거쳐 0.083 이 됐다. ZTC 도 같은 방식으로 스위스식 ss → ß 를 바꿔 0.111 → 0.0 이 됐다.
+  - **KEC 의 `NANA` 는 익명화된 이름·지명(−20 dB 일정 음)이다.** 전사에서 뺐다.
+  - **사람 전사인 KEC·ZTC 는 불일치 0.5 이상만 전사 감독에서 뺐다.**
+    - 남은 불일치는 대부분 ASR 오류다.
+    - 화자 통째 어긋남 1 건(KEC rec_026_p4 IS_051)은 화자 단위로 뺐다.
+  - **NSC 는 교사 두 모델(Qwen3-ASR-1.7B·Whisper large-v3)이 일치한 67.6 % 를 전사 감독에 쓴다.**
+    - 번들 Whisper 가 large-v3 에서 영어 번역을 내는 결함을 스모크에서 잡아 고쳤다(토크나이저 언어 수 99 가정).
+  - 전사 감독 시간: KEC 21.8 h(발화의 89 %), ZTC 24.1 h(89 %), NSC 16.4 h(71 %)
+  - 창(20–40 s): KEC 2,444, ZTC 5,877, NSC 4,261
+  - 로더 경로 점검:
+    - 정렬 토큰이 발화 ±0.3 s 안에 드는 비율 96.8–99.7 %
+    - 40 창 조립 오류 0
+  - split v2 = v1(그대로) + 독일어 held-out
+    - KEC 4 쌍 3.5 h
+    - ZTC 3 덩어리 4.5 h
+    - NSC aden 22 세션 3.3 h
+- 남긴 것(지우지 않음):
+  - `align-asr-tn-v1/{kec,ztc}`: 축약 표기본 정렬
+  - `*.verbatim.dialogues.jsonl`
+  - `nsc-work/nsc-segments.merge0.3.jsonl`
+  - `/tmp/sa_tskim/nsc-smoke{,2}`
+- Next:
+  - 표본 청취(사용자)
+  - P2 회의 2 화자 창 생성기·누설 검사
+  - P3 직렬화(2 슬롯 prefix·soft `<EOT>`)
+- By: tskim

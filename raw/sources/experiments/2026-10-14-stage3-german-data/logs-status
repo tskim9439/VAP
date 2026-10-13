@@ -1,0 +1,17 @@
+[2026-10-14 01:09:49] kec asr check
+{"corpus": "kec", "n": 34076, "err_median": 0.25, "share_ge_0_2": 0.5940544664866768, "share_ge_0_3": 0.43499823922995656}
+[2026-10-14 01:21:38] kec align
+[2026-10-14 01:25:00] kec align done
+[2026-10-14 01:25:00] ztc asr check
+{"corpus": "ztc", "n": 71555, "err_median": 0.111, "share_ge_0_2": 0.4297952623855775, "share_ge_0_3": 0.3348053944518203}
+[2026-10-14 01:36:32] ztc align
+[2026-10-14 01:41:38] ztc align done
+[2026-10-14 01:41:38] GPU STAGES DONE
+[2026-10-14 01:45:26] nsc asr start (9 shards)
+[2026-10-14 01:49:47] kec align (de-v1)
+[2026-10-14 02:03:10] kec align (de-v1) done
+[2026-10-14 02:03:10] ztc align (de-v1)
+[2026-10-14 02:13:38] nsc asr done: 276 sessions
+[2026-10-14 02:16:29] ztc align (de-v1) done
+[2026-10-14 02:17:17] nsc align (de-v1)
+[2026-10-14 02:20:53] nsc align (de-v1) done
