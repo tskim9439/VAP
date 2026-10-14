@@ -1,0 +1,668 @@
+{
+ "args": {
+  "data": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "tokenizer": "/soundai/Model/VAPASR/semcommit-q06-s4-ast/final",
+  "split": "/soundai/users/tskim/VAPKT-data/data/phase2/splits/v2.json",
+  "corpora": "aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc",
+  "delays": "4,5,6,7,8,9,10",
+  "out": "/soundai/users/tskim/VAPKT-data/results/cst-stage3-dryrun-20261014/dryrun.json",
+  "audio_sample": 20,
+  "procs": 7,
+  "max_windows": 0,
+  "seed": 0
+ },
+ "corpora": {
+  "aihub71631": {
+   "corpus": "aihub71631",
+   "held_out_dialogues": 59,
+   "stats": {
+    "dialogues": 757,
+    "windows": 22426,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 2961,
+    "no_start": 44239,
+    "windows_with_mask": 24109,
+    "random_start": 0,
+    "cst_windows": 20540,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 698,
+    "cst_excluded": 59
+   },
+   "sec_init": 13.0,
+   "prefix": {
+    "text": "language <SPK_A>Korean <SPK_B>Korean<asr_text>",
+    "ok": true,
+    "n_tokens": 19,
+    "slot_ids": {
+     "<SPK_A>": 151707,
+     "<SPK_B>": 151708
+    },
+    "eot_id": 151722
+   },
+   "episode_outcomes": {
+    "both": 71496,
+    "shift": 60430,
+    "hold_short": 42014,
+    "hold_long": 27650,
+    "unobserved": 1633,
+    "silence": 15515
+   },
+   "windows_checked": 20540,
+   "windows_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "seq_len": {
+    "p50": 840.0,
+    "p90": 1054.0,
+    "p99": 1144.0,
+    "p100": 1265.0
+   },
+   "over_16384": 0,
+   "text_tokens": {
+    "p10": 22.0,
+    "p50": 59.0,
+    "p90": 110.0
+   },
+   "eot_per_window": 5.94,
+   "soft_per_window": 4.92,
+   "tag_decisions": 308,
+   "soft_total": 100973,
+   "soft_p_end": {
+    "0.0": 26953,
+    "0.3": 18209,
+    "0.5": 21677,
+    "0.8": 10577,
+    "1.0": 23557
+   },
+   "flush_tokens": {
+    "p50": 0.0,
+    "p90": 4.0,
+    "p100": 20.0
+   },
+   "masked_label_frac": {
+    "p50": 0.269,
+    "p90": 0.595
+   },
+   "speakers_per_window": {
+    "2": 19118,
+    "1": 1422
+   },
+   "eot_window_stats": {
+    "eot": 121953,
+    "eot_truncated": 12934,
+    "eot_no_tokens": 81103
+   },
+   "sec_check": 27.7,
+   "audio_sample": {
+    "n": 20,
+    "len_ok": true,
+    "rms_db": {
+     "p10": -37.53,
+     "p50": -28.25
+    },
+    "bad": []
+   },
+   "sec": 44.0
+  },
+  "aihub134-1": {
+   "corpus": "aihub134-1",
+   "held_out_dialogues": 155,
+   "stats": {
+    "dialogues": 1492,
+    "windows": 29528,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 3796,
+    "no_start": 88370,
+    "windows_with_mask": 31354,
+    "random_start": 0,
+    "cst_windows": 26465,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 1337,
+    "cst_excluded": 155
+   },
+   "sec_init": 25.9,
+   "prefix": {
+    "text": "language <SPK_A>Korean <SPK_B>Korean<asr_text>",
+    "ok": true,
+    "n_tokens": 19,
+    "slot_ids": {
+     "<SPK_A>": 151707,
+     "<SPK_B>": 151708
+    },
+    "eot_id": 151722
+   },
+   "episode_outcomes": {
+    "shift": 102764,
+    "hold_short": 84876,
+    "both": 147667,
+    "hold_long": 35956,
+    "unobserved": 1845,
+    "silence": 12301
+   },
+   "windows_checked": 26465,
+   "windows_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "seq_len": {
+    "p50": 854.0,
+    "p90": 1077.0,
+    "p99": 1161.0,
+    "p100": 1282.0
+   },
+   "over_16384": 0,
+   "text_tokens": {
+    "p10": 33.0,
+    "p50": 76.0,
+    "p90": 124.0
+   },
+   "eot_per_window": 6.89,
+   "soft_per_window": 5.39,
+   "tag_decisions": 715,
+   "soft_total": 142654,
+   "soft_p_end": {
+    "0.0": 40643,
+    "0.3": 18618,
+    "0.5": 42161,
+    "0.8": 6813,
+    "1.0": 34419
+   },
+   "flush_tokens": {
+    "p50": 0.0,
+    "p90": 5.0,
+    "p100": 21.0
+   },
+   "masked_label_frac": {
+    "p50": 0.266,
+    "p90": 0.645
+   },
+   "speakers_per_window": {
+    "2": 24294,
+    "1": 2171
+   },
+   "eot_window_stats": {
+    "eot": 182356,
+    "eot_truncated": 19772,
+    "eot_no_tokens": 95617
+   },
+   "sec_check": 36.2,
+   "audio_sample": {
+    "n": 20,
+    "len_ok": true,
+    "rms_db": {
+     "p10": -30.2,
+     "p50": -25.75
+    },
+    "bad": []
+   },
+   "sec": 64.7
+  },
+  "aihub134-2": {
+   "corpus": "aihub134-2",
+   "held_out_dialogues": 223,
+   "stats": {
+    "dialogues": 1649,
+    "windows": 49911,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 21675,
+    "no_start": 69919,
+    "windows_with_mask": 68235,
+    "random_start": 0,
+    "cst_windows": 43749,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 1426,
+    "cst_excluded": 223
+   },
+   "sec_init": 24.4,
+   "prefix": {
+    "text": "language <SPK_A>Korean <SPK_B>Korean<asr_text>",
+    "ok": true,
+    "n_tokens": 19,
+    "slot_ids": {
+     "<SPK_A>": 151707,
+     "<SPK_B>": 151708
+    },
+    "eot_id": 151722
+   },
+   "episode_outcomes": {
+    "silence": 48619,
+    "hold_short": 67074,
+    "both": 110929,
+    "shift": 120498,
+    "hold_long": 57125,
+    "unobserved": 1515
+   },
+   "windows_checked": 43749,
+   "windows_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "seq_len": {
+    "p50": 830.0,
+    "p90": 1035.0,
+    "p99": 1120.0,
+    "p100": 1241.0
+   },
+   "over_16384": 0,
+   "text_tokens": {
+    "p10": 15.0,
+    "p50": 42.0,
+    "p90": 91.0
+   },
+   "eot_per_window": 5.2,
+   "soft_per_window": 4.13,
+   "tag_decisions": 510,
+   "soft_total": 180730,
+   "soft_p_end": {
+    "0.0": 36347,
+    "0.3": 33077,
+    "0.5": 38839,
+    "0.8": 24942,
+    "1.0": 47525
+   },
+   "flush_tokens": {
+    "p50": 0.0,
+    "p90": 4.0,
+    "p100": 20.0
+   },
+   "masked_label_frac": {
+    "p50": 0.309,
+    "p90": 0.586
+   },
+   "speakers_per_window": {
+    "2": 40970,
+    "1": 2779
+   },
+   "eot_window_stats": {
+    "eot": 227445,
+    "eot_truncated": 22188,
+    "eot_no_tokens": 205376
+   },
+   "sec_check": 55.0,
+   "audio_sample": {
+    "n": 20,
+    "len_ok": true,
+    "rms_db": {
+     "p10": -32.97,
+     "p50": -26.45
+    },
+    "bad": []
+   },
+   "sec": 81.9
+  },
+  "otoSpeech": {
+   "corpus": "otoSpeech",
+   "held_out_dialogues": 38,
+   "stats": {
+    "dialogues": 420,
+    "windows": 12522,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 1840,
+    "no_start": 22794,
+    "windows_with_mask": 1165,
+    "random_start": 0,
+    "cst_windows": 11414,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 382,
+    "cst_excluded": 38
+   },
+   "sec_init": 5.6,
+   "prefix": {
+    "text": "language <SPK_A>English <SPK_B>English<asr_text>",
+    "ok": true,
+    "n_tokens": 17,
+    "slot_ids": {
+     "<SPK_A>": 151707,
+     "<SPK_B>": 151708
+    },
+    "eot_id": 151722
+   },
+   "episode_outcomes": {
+    "both": 20208,
+    "shift": 23044,
+    "hold_short": 26237,
+    "hold_long": 8374,
+    "silence": 8302,
+    "unobserved": 694
+   },
+   "windows_checked": 11414,
+   "windows_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "seq_len": {
+    "p50": 849.0,
+    "p90": 1062.0,
+    "p99": 1152.0,
+    "p100": 1547.0
+   },
+   "over_16384": 0,
+   "text_tokens": {
+    "p10": 22.0,
+    "p50": 66.0,
+    "p90": 114.0
+   },
+   "eot_per_window": 7.15,
+   "soft_per_window": 7.08,
+   "tag_decisions": 377,
+   "soft_total": 80773,
+   "soft_p_end": {
+    "0.0": 22906,
+    "0.3": 8476,
+    "0.5": 17227,
+    "0.8": 10759,
+    "1.0": 21405
+   },
+   "flush_tokens": {
+    "p50": 1.0,
+    "p90": 4.0,
+    "p100": 43.0
+   },
+   "masked_label_frac": {
+    "p50": 0.0,
+    "p90": 0.0
+   },
+   "speakers_per_window": {
+    "2": 10014,
+    "1": 1400
+   },
+   "eot_window_stats": {
+    "eot": 81615,
+    "eot_truncated": 6744,
+    "eot_no_tokens": 751
+   },
+   "sec_check": 14.8,
+   "audio_sample": {
+    "n": 20,
+    "len_ok": true,
+    "rms_db": {
+     "p10": -27.57,
+     "p50": -24.85
+    },
+    "bad": []
+   },
+   "sec": 23.5
+  },
+  "kec": {
+   "corpus": "kec",
+   "held_out_dialogues": 21,
+   "stats": {
+    "dialogues": 171,
+    "windows": 2444,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 37,
+    "no_start": 7825,
+    "windows_with_mask": 1791,
+    "random_start": 0,
+    "cst_windows": 2165,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 150,
+    "cst_excluded": 21
+   },
+   "sec_init": 3.1,
+   "prefix": {
+    "text": "language <SPK_A>German <SPK_B>German<asr_text>",
+    "ok": true,
+    "n_tokens": 17,
+    "slot_ids": {
+     "<SPK_A>": 151707,
+     "<SPK_B>": 151708
+    },
+    "eot_id": 151722
+   },
+   "episode_outcomes": {
+    "hold_short": 5217,
+    "both": 16453,
+    "shift": 9253,
+    "hold_long": 2956,
+    "unobserved": 239,
+    "silence": 514
+   },
+   "windows_checked": 2165,
+   "windows_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "seq_len": {
+    "p50": 898.0,
+    "p90": 1147.6,
+    "p99": 1232.72,
+    "p100": 1391.0
+   },
+   "over_16384": 0,
+   "text_tokens": {
+    "p10": 68.0,
+    "p50": 119.0,
+    "p90": 170.6
+   },
+   "eot_per_window": 9.45,
+   "soft_per_window": 8.68,
+   "tag_decisions": 70,
+   "soft_total": 18785,
+   "soft_p_end": {
+    "0.0": 3008,
+    "0.3": 2007,
+    "0.5": 8506,
+    "0.8": 445,
+    "1.0": 4819
+   },
+   "flush_tokens": {
+    "p50": 2.0,
+    "p90": 6.0,
+    "p100": 18.0
+   },
+   "masked_label_frac": {
+    "p50": 0.082,
+    "p90": 0.275
+   },
+   "speakers_per_window": {
+    "2": 2030,
+    "1": 135
+   },
+   "eot_window_stats": {
+    "eot": 20461,
+    "eot_truncated": 1739,
+    "eot_no_tokens": 3552
+   },
+   "sec_check": 3.0,
+   "audio_sample": {
+    "n": 20,
+    "len_ok": true,
+    "rms_db": {
+     "p10": -29.1,
+     "p50": -24.55
+    },
+    "bad": []
+   },
+   "sec": 9.1
+  },
+  "ztc": {
+   "corpus": "ztc",
+   "held_out_dialogues": 39,
+   "stats": {
+    "dialogues": 373,
+    "windows": 5877,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 7,
+    "no_start": 8662,
+    "windows_with_mask": 5114,
+    "random_start": 0,
+    "cst_windows": 5206,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 334,
+    "cst_excluded": 39
+   },
+   "sec_init": 4.1,
+   "prefix": {
+    "text": "language <SPK_A>German <SPK_B>German<asr_text>",
+    "ok": true,
+    "n_tokens": 17,
+    "slot_ids": {
+     "<SPK_A>": 151707,
+     "<SPK_B>": 151708
+    },
+    "eot_id": 151722
+   },
+   "episode_outcomes": {
+    "hold_short": 15697,
+    "shift": 12312,
+    "both": 28227,
+    "hold_long": 8589,
+    "silence": 1544,
+    "unobserved": 824
+   },
+   "windows_checked": 5206,
+   "windows_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "seq_len": {
+    "p50": 863.0,
+    "p90": 1090.0,
+    "p99": 1169.9,
+    "p100": 1230.0
+   },
+   "over_16384": 0,
+   "text_tokens": {
+    "p10": 52.0,
+    "p50": 85.0,
+    "p90": 126.0
+   },
+   "eot_per_window": 12.29,
+   "soft_per_window": 10.88,
+   "tag_decisions": 65,
+   "soft_total": 56617,
+   "soft_p_end": {
+    "0.0": 14349,
+    "0.3": 8876,
+    "0.5": 21338,
+    "0.8": 1639,
+    "1.0": 10415
+   },
+   "flush_tokens": {
+    "p50": 1.0,
+    "p90": 4.0,
+    "p100": 16.0
+   },
+   "masked_label_frac": {
+    "p50": 0.112,
+    "p90": 0.263
+   },
+   "speakers_per_window": {
+    "2": 4939,
+    "1": 267
+   },
+   "eot_window_stats": {
+    "eot": 63958,
+    "eot_truncated": 3172,
+    "eot_no_tokens": 10599
+   },
+   "sec_check": 7.1,
+   "audio_sample": {
+    "n": 20,
+    "len_ok": true,
+    "rms_db": {
+     "p10": -31.49,
+     "p50": -28.9
+    },
+    "bad": []
+   },
+   "sec": 14.1
+  },
+  "nsc": {
+   "corpus": "nsc",
+   "held_out_dialogues": 22,
+   "stats": {
+    "dialogues": 276,
+    "windows": 4261,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 372,
+    "no_start": 7474,
+    "windows_with_mask": 4318,
+    "random_start": 0,
+    "cst_windows": 3850,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 254,
+    "cst_excluded": 22
+   },
+   "sec_init": 2.1,
+   "prefix": {
+    "text": "language <SPK_A>German <SPK_B>German<asr_text>",
+    "ok": true,
+    "n_tokens": 17,
+    "slot_ids": {
+     "<SPK_A>": 151707,
+     "<SPK_B>": 151708
+    },
+    "eot_id": 151722
+   },
+   "episode_outcomes": {
+    "both": 15952,
+    "shift": 14619,
+    "hold_short": 4171,
+    "hold_long": 2696,
+    "silence": 1860,
+    "unobserved": 433
+   },
+   "windows_checked": 3850,
+   "windows_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "seq_len": {
+    "p50": 861.0,
+    "p90": 1073.0,
+    "p99": 1152.02,
+    "p100": 1230.0
+   },
+   "over_16384": 0,
+   "text_tokens": {
+    "p10": 30.0,
+    "p50": 75.0,
+    "p90": 121.0
+   },
+   "eot_per_window": 6.81,
+   "soft_per_window": 5.89,
+   "tag_decisions": 36,
+   "soft_total": 22692,
+   "soft_p_end": {
+    "0.0": 3043,
+    "0.3": 1889,
+    "0.5": 8092,
+    "0.8": 759,
+    "1.0": 8909
+   },
+   "flush_tokens": {
+    "p50": 1.0,
+    "p90": 5.0,
+    "p100": 20.0
+   },
+   "masked_label_frac": {
+    "p50": 0.209,
+    "p90": 0.429
+   },
+   "speakers_per_window": {
+    "2": 3816,
+    "1": 34
+   },
+   "eot_window_stats": {
+    "eot": 26237,
+    "eot_truncated": 2608,
+    "eot_no_tokens": 11556
+   },
+   "sec_check": 4.9,
+   "audio_sample": {
+    "n": 20,
+    "len_ok": true,
+    "rms_db": {
+     "p10": -38.01,
+     "p50": -33.4
+    },
+    "bad": []
+   },
+   "sec": 10.1
+  }
+ },
+ "all_ok": true
+}

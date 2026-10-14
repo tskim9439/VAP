@@ -86,7 +86,8 @@ class VapAsrForStreamingASR(PreTrainedModel):
         return torch.where(is_audio[..., None], g, E)
 
     def forward(self, ids=None, is_audio=None, chunk_of=None, labels=None, mask=None, wav=None, wav_len=None, K=None, feats=None, next_weight: Optional[float] = None, return_dict: bool = True,
-                labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, position_ids=None, sem_mask=None, **_):
+                labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, position_ids=None, sem_mask=None,
+                sem_only_mask=None, **_):
         """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight.
         Phase 2(config.lanes>0): labels_alt/soft_w 가 있으면 EOT 후보 위치의 label 을 (labels: w, labels_alt: 1−w) 두 점 분포로 학습(정본 §5.2),
         activity (B,K,R)·activity_mask (B,K) 가 있으면 audio 위치 hidden 으로 lane 활동 BCE 를 더한다(정본 §6). EOT 위치 가중 config.eot_weight.
@@ -95,6 +96,8 @@ class VapAsrForStreamingASR(PreTrainedModel):
         결정 위치가 이벤트 타깃에 떨어지지 않게 하는 것은 데이터셋 책임이다.
         sem_mask (B,L) bool(labels 와 같은 인덱싱; packing 이면 (1,N)): True 인 위치는 softmax 에서 <SEM_END>·턴 종료 logit 을 −∞ 로 뺀다 — SEM 라벨이 없는 ASR 행
         (SemCommitDataset sem_free)이 텍스트·NEXT 는 그대로 배우면서 'SEM 아님' 음성 신호는 주지 않게. 그 위치에 이벤트 타깃이 있으면 AssertionError. sem_fp 통계는 그 위치를 분모에 넣는다.
+        sem_only_mask (B,L) bool(같은 인덱싱): True 인 위치는 <SEM_END> logit 만 뺀다 — 턴 종료(<EOT>)는 학습하는 Stage 3 대화 행(vapasr/data/cst_dialogue.collate_cst).
+        labels_alt/soft_w(두 점 soft target)는 lanes 와 무관하게 받는다(Stage 3 mono <EOT> soft label).
         position_ids (1, N) 가 있으면 packing 경로(vapasr/hf/packing.py): thinker 입력은 여러 샘플을 이은 한 줄, 샘플마다 0 부터 다시 세는 위치,
         attention_mask 없음 → transformers 가 블록 대각 causal mask 를 만든다. 인코더 출력은 (1, B·Kmax) 로 펴고 activity 도 같이 편다.
         thinker 가 varlen attention(vapasr/hf/varlen_attention.py, --attn-impl varlen)이면: packing 은 position_ids 로 cu_seqlens 를 만들어 넘기고(Σnᵢ² attention),
@@ -132,6 +135,11 @@ class VapAsrForStreamingASR(PreTrainedModel):
             assert not (sm & torch.isin(t, torch.tensor(ev_ids, device=t.device))).any(), "sem_mask 위치에 <SEM_END>/턴 종료 타깃 — SEM 중립 행에 이벤트 라벨이 있으면 안 된다"
             col = torch.zeros(logits.shape[1], dtype=torch.bool, device=logits.device); col[ev_ids] = True
             logits = logits.masked_fill(sm[:, None] & col[None, :], float("-inf"))
+        if sem_only_mask is not None and sem_id >= 0:                                # Stage 3 대화 행: <SEM_END> 만 중립, <EOT> 는 학습
+            so = sem_only_mask[:, 1:][sel].bool()
+            assert not (so & (t == sem_id)).any(), "sem_only_mask 위치에 <SEM_END> 타깃 — 그 행은 SEM 을 쓰지 않아야 한다"
+            col = torch.zeros(logits.shape[1], dtype=torch.bool, device=logits.device); col[sem_id] = True
+            logits = logits.masked_fill(so[:, None] & col[None, :], float("-inf"))
         evt = {i: float(getattr(self.config, k, 1.0)) for i, k in ((sem_id, "sem_weight"), (turn_id, "turn_weight")) if i >= 0} or None
         pw = pos_weight[:, 1:][sel] if pos_weight is not None else None
         loss, st = soft_ce(logits, t, alt, w, self.next_audio, nw, eot_id=eot_id, eot_weight=self.config.eot_weight if eot_id >= 0 else 1.0, tag_ids=tag_ids, tag_weight=getattr(self.config, "tag_weight", 1.0),
@@ -182,20 +190,24 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if self.act_head is None: self.act_head = nn.Sequential(nn.Linear(self.config.hidden_size, self.config.act_hidden), nn.GELU(), nn.Linear(self.config.act_hidden, R)).to(W.device)
         return ids
 
-    def add_semantic_tokens(self, tok, seed: int = 0, block_reserved_phase2: bool = True, check_frozen: bool = True, turn: bool = False) -> Dict[str, int]:
+    def add_semantic_tokens(self, tok, seed: int = 0, block_reserved_phase2: bool = True, check_frozen: bool = True, turn: bool = False,
+                            reinit_turn: bool = False) -> Dict[str, int]:
         """semantic commit 토큰 <SEM_END> 를 더한다(add_phase2_tokens 와 같은 방식, vapasr/data/semcommit_tokens.py).
         tokenizer 에 Phase 1 + Phase 2 + SEM 을 이 순서로 추가 → SEM=151723 (check_frozen: 동결 id 대조 — 실제 Qwen tokenizer 에서만 의미).
         config.sp_ids 에 없던 행만 mean(W[:기본 어휘]) + 0.02·randn(seed) 으로 초기화(기존 Phase 1/2 행은 그대로). mono(lanes=0) 에서는 Phase 2 id 가 예약만 되므로
         block_reserved_phase2 면 decode 차단 목록에 넣는다(학습되지 않은 행 방출 방지). SEM 은 차단하지 않는다. 반복 호출해도 결과가 같다(idempotent).
         turn(mono 전용): 턴 종료를 <EOT>(Phase 2 와 같은 토큰)로 함께 학습 → config.sem_registry 에 <EOT> 를 넣고 차단·예약에서 뺀다(<TURN_END> 는 폐기).
-        mono 에서 이번에 예약만 한 Phase 2 이름은 config.sem_reserved 에 적는다 → 나중에 add_phase2_tokens 가 그 행을 다시 초기화한다."""
+        mono 에서 이번에 예약만 한 Phase 2 이름은 config.sem_reserved 에 적는다 → 나중에 add_phase2_tokens 가 그 행을 다시 초기화한다.
+        reinit_turn(turn 과 함께): <EOT> 가 예약(sem_reserved)만 돼 있던 행이면 mean+noise 로 다시 초기화한다 — 예약 행은 tied lm_head 의 full-vocab
+        softmax 음성으로만 학습돼 logit 이 깊이 눌려 있다(Stage 1·2 체크포인트에서 Stage 3 <EOT> 를 켤 때). 한 번 켠 뒤에는 예약이 아니므로 다시 하지 않는다."""
         from ..data.semcommit_tokens import add_semantic_specials, assert_frozen_semantic, init_rows_mean_noise, semantic_blocked_ids, new_special_rows, PHASE2_SPECIALS, SEM_SPECIALS, BASE_VOCAB, TURN_TOKEN
         assert not (turn and self.config.lanes > 0), "turn 은 mono 전용 — Phase 2 모델은 <EOT> 를 phase2_registry 로 이미 학습한다"
         ids = add_semantic_specials(tok)
         if check_frozen: assert_frozen_semantic(ids)
         W = self.get_input_embeddings().weight; assert max(ids.values()) < W.shape[0], f"임베딩 여유 행 없음: max id {max(ids.values())} ≥ rows {W.shape[0]}"
-        init_rows_mean_noise(W, new_special_rows(ids, self.config.sp_ids), upto=min(BASE_VOCAB, min(ids.values())), seed=seed)
         old_res = set(getattr(self.config, "sem_reserved", None) or [])
+        stale = [ids[TURN_TOKEN]] if (turn and reinit_turn and self.config.lanes == 0 and TURN_TOKEN in old_res) else []
+        init_rows_mean_noise(W, sorted(set(new_special_rows(ids, self.config.sp_ids)) | set(stale)), upto=min(BASE_VOCAB, min(ids.values())), seed=seed)
         self.config.sem_reserved = [n for n in PHASE2_SPECIALS if (n not in self.config.sp_ids or n in old_res) and not (turn and n == TURN_TOKEN)] if self.config.lanes == 0 else []
         self.config.sp_ids.update(ids); self.config.special_tokens = list(dict.fromkeys(self.config.special_tokens + PHASE2_SPECIALS + SEM_SPECIALS)); self.sp_ids = dict(self.config.sp_ids)
         self.config.sem_registry = {n: ids[n] for n in SEM_SPECIALS + ([TURN_TOKEN] if turn else [])}

@@ -9,6 +9,7 @@ sources:
   - '[[output-phase2-training-db]]'
   - '[[output-phase2-lane-plan]]'
   - '[[2026-10-14-stage3-german-data]]'
+  - '[[2026-10-14-stage3-p3-serialization]]'
 related:
   - '[[decision-eot-immediate-soft-label]]'
   - '[[output-phase2-eval-plan]]'
@@ -94,7 +95,7 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
 | P0 점검 | Phase 2 산출물 재확인(창·마스크·오디오 조립을 로더 경로로 표본 점검), held-out 대화가 Stage 1·2 학습 목록에 없는지 대조(71631 발화 crop 이 Stage 1·2 에 들어가 있다) | 누설 0, 조립 오류 0 |
 | P1 독일어 | KEC·ZTC 어댑터(TextGrid → dialogues.jsonl), NSC 의사 전사(교사 ASR 두 모델 일치), 정제·정렬·혼합·창, 화자 기준 split | 표본 청취·정렬 검사 통과 — **2026-10-14 완료**(정렬·로더 점검 통과. 정렬은 세 코퍼스 모두 Qwen3-ForcedAligner 로 다시 했고 ZTC 의 MAuS 는 쓰지 않았다. 청취는 사용자 확인 필요) |
 | P2 회의 2 화자 | 화자 쌍 선택 창 생성기, 채널 누설 검사(다른 화자 구간의 채널 에너지) | 누설 기준 통과한 쌍만 사용 |
-| P3 직렬화 | 2 슬롯 prefix + 화자 태그 + soft `<EOT>` 데이터셋, fixture 테스트, 모델 forward 의 soft label 일반화, 전 코퍼스 dry-run | 불일치 0, 형식 테스트 통과 |
+| P3 직렬화 | 2 슬롯 prefix + 화자 태그 + soft `<EOT>` 데이터셋, fixture 테스트, 모델 forward 의 soft label 일반화, 전 코퍼스 dry-run | 불일치 0, 형식 테스트 통과 — **2026-10-14 완료**(113,389 창 불일치 0, GPU 스모크 통과. 학습 스크립트 연결은 P5) |
 | P4 평가 | held-out 묶음·지표 도구(ORC-WER·cpWER·EOT) | 오라클 입력에서 지표 sanity |
 | P5 파일럿 | 소규모 학습(32 창 overfit → 수천 step), replay·언어 비율 정하기 | 단일 화자 퇴행 없음, cpWER·EOT 학습 곡선 |
 | P6 본 학습 | 사용자 제출 | – |
@@ -135,9 +136,37 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
   - 40 창 조립 오류 0
   - 청취 점검은 하지 않았다.
 
+## P3 직렬화 결과 (2026-10-14)
+- 원자료: [[2026-10-14-stage3-p3-serialization]]
+- 코드:
+  - `vapasr/data/cst_dialogue.py`(데이터셋·collate)
+  - 모델 `forward(sem_only_mask=)`·`add_semantic_tokens(turn=True, reinit_turn=True)`
+  - trainer·packing 이 soft label 키를 넘긴다.
+- **위 '형식' 절에 더한 구현 규칙:**
+  - EOT 결과(p_end)는 창이 아니라 대화 전체 시간축으로 정한다. Phase 2 는 창 안 episode 만 봐서 창 끝 근처 교대를 놓쳤다.
+  - 다른 화자가 먼저 말해 EOT 앞에 화자 태그를 새로 열어야 하면 soft 결정은 그 태그 위치에 둔다(soft 결정의 0.1–0.5 %).
+  - 창 끝을 넘는 episode 와 창 안 토큰이 없는 episode 는 EOT 를 내지 않는다.
+  - flush(창 끝 뒤 방출)에도 화자 태그를 넣는다. 기존 래퍼는 flush 에 태그를 넣지 않았다.
+  - `<SEM_END>` 는 대화 행에서 중립(`sem_only_mask`)이다. replay(단일 화자) 행은 기존 `sem_mask` 로 SEM·EOT 둘 다 중립이다.
+  - Stage 2 체크포인트의 `<EOT>` 행은 예약만 된 행이라 켤 때 다시 초기화한다.
+- **전 코퍼스 dry-run:**
+  - 2 인 대화 7 코퍼스(split v2 held-out 제외) 113,389 창에서 불일치 0 이다.
+  - 시퀀스 길이 p50 830–898, 최대 1,547 토큰이다.
+  - 창당 EOT 5.2–12.3 개, 한 화자만 말하는 창 0.9–12.3 % 다.
+- **GPU 스모크(s4 final):**
+  - Stage 3 배치 forward·backward 가 유한하다. `<SEM_END>` 행 grad 는 0 이다.
+  - 패딩과 packing 의 eval 손실 차이는 0.0014 이하다.
+  - 처음 loss_turn 은 6–7 이다(`<EOT>` 미학습).
+- **맞장구 영향:**
+  - 지금 규칙(Phase 2)에서는 상대 맞장구 때문에 결과의 24–50 % 가 both(0.5)다.
+  - 1 s·3 토큰 이하를 맞장구로 빼면 11–32 % 로 줄고, 대부분 hold 로 옮겨 간다.
+  - `backchannel=(1.0, 3)` 선택으로 비교할 수 있게 했다(기본 끔).
+
 ## 열린 질문
 - `<EOT>` 를 soft 로 할지, 처음에는 hard(p_end ≥ 0.5)로 단순하게 시작할지(P5 에서 비교)
 - 맞장구 처리: CST 첫 논문 범위에서는 사건으로 다루지 않는다. 전사로는 그대로 내고 `<EOT>` 대상에서는 뺄지 정해야 한다.
+  - P3 측정: 맞장구를 빼면 both(0.5) 결과가 24–50 % → 11–32 % 로 준다. `CstDialogueDataset(backchannel=)` 로 P5 에서 비교한다.
+- Stage 3 학습 스크립트: `experiments/semcommit_train.py` 에 대화 셋·replay 셋을 넣어야 한다. 그 파일에 다른 작업의 커밋 안 된 변경이 있어 연결 방식(같은 파일 확장 또는 별도 스크립트)을 정해야 한다.
 - 창 길이(20–40 s)를 그대로 쓸지, Stage 2 의 30 s 상한과 맞출지
 - 134-2 의 높은 마스크 비율(평균 32 %)을 어떻게 다룰지(결손 구간 학습 제외 규칙은 Phase 2 그대로)
 - 독일어 간투사: KEC·ZTC 는 사람 전사의 "äh"·"ähm" 을 남기고, NSC(교사 전사)와 Stage 1 독일어는 거의 내지 않는다. 같은 언어 안에서 간투사 표기가 섞인다.

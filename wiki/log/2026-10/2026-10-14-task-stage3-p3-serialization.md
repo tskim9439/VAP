@@ -1,0 +1,34 @@
+## [2026-10-14] task | Stage 3 P3 — 두 슬롯 직렬화·soft `<EOT>` 데이터셋, 모델 연결, 전 코퍼스 dry-run(113,389 창 불일치 0)
+
+- Changed:
+  - [[output-stage3-prep-plan-20261014]]: P3 결과 절, 관문 표, 열린 질문
+  - [[2026-10-14-stage3-p3-serialization]] 신규
+  - 코드:
+    - `vapasr/data/cst_dialogue.py`(신규)
+    - `vapasr/hf/modeling_vapasr.py`: `sem_only_mask`, `reinit_turn`
+    - `vapasr/hf/trainer.py`: soft label·`sem_only_mask` 전달
+    - `vapasr/hf/packing.py`: `ROW_KEYS`
+    - `experiments/cst_stage3_dryrun.py`(신규)
+    - `tests/test_cst_dialogue.py`(신규)
+- Reason: 사용자 지시 "시작해."(P3 시작)
+- 결과:
+  - **형식:**
+    - prefix: `language <SPK_A>{L} <SPK_B>{L}<asr_text><DELAY_d>`. 먼저 말한 화자가 A 다.
+    - 화자 태그는 바뀔 때만 낸다.
+    - episode 끝마다 `<EOT>` 를 둔다. 위치는 Phase 2 와 같다.
+    - soft label 결과는 대화 전체 시간축으로 정한다.
+    - flush 에도 화자 태그를 넣는다.
+  - **dry-run:** 2 인 7 코퍼스 113,389 창 불일치 0, 최대 1,547 토큰
+  - **GPU 스모크(s4):**
+    - `<EOT>` 를 켜고 다시 초기화했다.
+    - forward·backward 가 유한하다. `<SEM_END>` 행 grad 0 이다.
+    - 패딩/packing eval 손실 차이 ≤ 0.0014
+  - **맞장구:**
+    - 지금 규칙에서는 both(0.5)가 24–50 % 다.
+    - 1 s·3 토큰 이하를 빼면 11–32 % 가 된다.
+    - 선택 인자로 두었다(기본 끔).
+- Next:
+  - P5 학습 스크립트 연결 방식 결정. `semcommit_train.py` 에 다른 작업의 커밋 안 된 변경이 있다.
+  - P4 평가 도구(두 슬롯 스트리밍 디코드, ORC-WER·cpWER·EOT)
+  - P2 회의 2 화자 창
+- By: tskim
