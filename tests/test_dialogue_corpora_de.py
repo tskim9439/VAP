@@ -109,3 +109,17 @@ def test_make_split_v2_german_units(tmp_path):
     held = set(sp["ztc"]["heldout"])
     assert ({"ztc:AWAVa", "ztc:AWAKa"} <= held) or not ({"ztc:AWAVa", "ztc:AWAKa"} & held)  # AW 를 공유하는 두 dyad 는 함께 움직인다
     assert sp["nsc"]["heldout"] == ["nsc:m000", "nsc:m001"]
+
+
+def test_otospeech_merges_repeated_subsegments(tmp_path):
+    import numpy as np, soundfile as sf
+    d = tmp_path / "421"; d.mkdir(); (d / "metadata.json").write_text('{"task_id": "421"}')
+    for c in (1, 2): sf.write(str(d / f"speaker_{c}_audio.wav"), np.zeros(16000 * 10, dtype=np.float32), 16000)
+    srt = ("1\n00:00:01,000 --> 00:00:01,200\n[Filler] I like it, really.\n\n2\n00:00:01,201 --> 00:00:03,000\n[Normal Turn] I like it, really.\n\n"
+           "3\n00:00:03,001 --> 00:00:03,100\n[Channel Bleed] noise\n\n4\n00:00:05,000 --> 00:00:05,400\n[Acknowledgement Backchannel] yeah\n\n"
+           "5\n00:00:06,000 --> 00:00:06,300\n[Acknowledgement Backchannel] yeah\n\n6\n00:00:07,000 --> 00:00:08,000\n[Strong Floor Hold] it's, yeah\n\n"
+           "7\n00:00:08,500 --> 00:00:08,700\n[Non-Speech Noise] mic bump\n")
+    (d / "speaker_1_annotation_a.srt").write_text(srt); (d / "speaker_2_annotation_a.srt").write_text("")
+    dl = C.load_otospeech_dialogue(str(d))
+    assert [(u.start, u.end, u.raw, u.utt_id) for u in dl.utterances] == [(1.0, 3.0, "I like it, really.", "s1_00000"), (5.0, 5.4, "yeah", "s1_00003"), (6.0, 6.3, "yeah", "s1_00004"),
+                                                                              (7.0, 8.0, "it's, yeah", "s1_00005")]   # 비음성 밖 라벨은 발화, 잡음은 아님

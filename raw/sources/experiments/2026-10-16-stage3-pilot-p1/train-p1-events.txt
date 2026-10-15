@@ -1,0 +1,44 @@
+[2026-10-15 13:30:43] job 88116 nodes=1 (slurmmxch200v5-hpc-125) restart=0/20 OUT=/soundai/Model/VAPASR/stage3-st3-p1-base
+[13:59:35] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-15 14:03:10] job 88116 nodes=1 (slurmmxch200v5-hpc-38) restart=1/20 OUT=/soundai/Model/VAPASR/stage3-st3-p1-base
+[14:07:22] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-15 14:16:21] job 88116 nodes=1 (slurmmxch200v5-hpc-38) restart=2/20 OUT=/soundai/Model/VAPASR/stage3-st3-p1-base
+[14:25:24] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-15 18:06:26] job 88116 nodes=1 (slurmmxch200v5-hpc-115) restart=3/20 OUT=/soundai/Model/VAPASR/stage3-st3-p1-base
+[18:07:23] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-15 18:12:26] job 88116 nodes=1 (slurmmxch200v5-hpc-27) restart=4/20 OUT=/soundai/Model/VAPASR/stage3-st3-p1-base
+재개 ← /soundai/Model/VAPASR/stage3-st3-p1-base/checkpoint-500 · 지문 일치
+[18:30:24] 신호 수신 → PREEMPT 표시, 저장 대기
+[2026-10-15 19:44:02] job 88116 nodes=1 (slurmmxch200v5-hpc-38) restart=5/20 OUT=/soundai/Model/VAPASR/stage3-st3-p1-base
+재개 ← /soundai/Model/VAPASR/stage3-st3-p1-base/checkpoint-500 · 지문 일치
+train 종료: step 2000/2000 완료 · {'train_runtime': 1430.2611, 'train_samples_per_second': 11.187, 'train_steps_per_second': 1.398, 'train_loss': 0.22252676665782928, 'epoch': 1.2798634812286689}
+check-save: 누락 [] · 추가 [] · shape [] · 값 차이 0 [] · 인코더 저장 키 638 · 손실 메모리 {'loss': 0.27231, 'loss_next': 0.18142, 'loss_text': 0.28445, 'top1_text': 0.91213, 'loss_turn': 0.57061} / 재로드 {'loss': 0.27107, 'loss_next': 0.1815, 'loss_text': 0.28275, 'top1_t
+PARITY OK
+[20:21:42] 학습 완료 → DONE (parity: /soundai/Model/VAPASR/stage3-st3-p1-base/parity.json)
+{
+ "parity": true,
+ "stage3_config_ok": true,
+ "eot_registry_ok": true,
+ "memory": {
+  "loss": 0.27231,
+  "loss_next": 0.18142,
+  "loss_text": 0.28445,
+  "top1_text": 0.91213,
+  "loss_turn": 0.57061
+ },
+ "reloaded": {
+  "loss": 0.27107,
+  "loss_next": 0.1815,
+  "loss_text": 0.28275,
+  "top1_text": 0.91632,
+  "loss_turn": 0.56717
+ },
+ "missing": [],
+ "extra": [],
+ "shape_mismatch": [],
+ "value_diff": [],
+ "encoder_saved_keys": 638,
+ "tokenizer_reload_ok": true,
+ "tokenizer_reload_error": null,
+ "batch_n_soft": 16
+}

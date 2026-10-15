@@ -1,0 +1,25 @@
+## [2026-10-16] task | Stage 3 파일럿 p1 학습·평가, otoSpeech 데이터 결함 두 가지 수정, 파일럿 p1b–p5 제출
+
+- Changed:
+  - [[output-stage3-prep-plan-20261014]]: otoSpeech 행, "P5 파일럿 p1" 절
+  - [[2026-10-16-stage3-pilot-p1]] 신규
+  - 코드:
+    - `vapasr/data/dialogue_corpora.load_otospeech_dialogue`: 맞닿은 같은 전사 하위 구간 합치기, 비음성 밖 모든 라벨을 발화로
+    - 테스트 추가
+  - mxc `data/phase2/`:
+    - `otoSpeech.dialogues.jsonl`·`.refined.dialogues.jsonl` 재빌드
+    - 옛 산출은 `otoSpeech.v1-dupsrt.*`·`otoSpeech.v2-mergeonly.*` 로 남김
+    - 정렬 `align-asr-tn-v1-oto3`
+- Reason:
+  - p1 평가에서 otoSpeech 영어 WER 이 s4 부터 54–56 % 로 비정상이었다.
+  - 원인을 찾다 SRT 하위 구간 전사 반복과 발화 라벨 누락(약 21 h)을 발견했다.
+- 결과:
+  - **p1(job 88116, low_p_hpc):** 선점 5 번 뒤 완료, parity OK
+  - **대화 평가 cp:** 한국어 55–61 → 26–37, 독일어 42–78 → 32–36. EOT 재현율 0.58–0.80, 지연 설계 위치
+  - **단일 화자 축약 평가:** 받아쓰기 0.3–1.4 pt, 번역 BLEU 0.1–3.2 약한 퇴행
+  - **otoSpeech 재빌드:** 발화 86,893 → 109,211, Stage 3 직렬화 7,245 창 불일치 0. 고친 참조로 s4 agn 22–23 %, p1 23.5–25.3 %
+  - **사용자 제출(apex):** p1b 88406, p2 88407, p3 88408, p4 88409, p5 88410
+- Next:
+  - 각 파일럿이 끝나면 대화 평가와 단일 화자 축약 평가(호스트 GPU)를 돌린다.
+  - 비교표로 EOT 규칙·맞장구·언어 비율·replay 비율을 정한다.
+- By: tskim

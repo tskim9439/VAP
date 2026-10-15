@@ -1,0 +1,40 @@
+{
+ "otoSpeech/d4": {
+  "windows": 200,
+  "ref_units": 16258,
+  "err_slot": 54.4,
+  "err_cp": 38.04,
+  "err_agn": 25.31,
+  "swap_share": 0.21,
+  "eot_hyp": 935,
+  "eot_pos": 563,
+  "eot_recall": 0.5062,
+  "eot_precision": 0.5786,
+  "eot_hold_fire": 0.1679,
+  "eot_lat_median": 0.288,
+  "eot_lat_p90": 0.468,
+  "exposure": "unseen",
+  "unit": "WER",
+  "one_speaker_windows": 10,
+  "forced_tokens": 0
+ },
+ "otoSpeech/d10": {
+  "windows": 200,
+  "ref_units": 16231,
+  "err_slot": 53.74,
+  "err_cp": 35.86,
+  "err_agn": 23.52,
+  "swap_share": 0.22,
+  "eot_hyp": 853,
+  "eot_pos": 559,
+  "eot_recall": 0.576,
+  "eot_precision": 0.694,
+  "eot_hold_fire": 0.1142,
+  "eot_lat_median": 0.752,
+  "eot_lat_p90": 0.848,
+  "exposure": "unseen",
+  "unit": "WER",
+  "one_speaker_windows": 10,
+  "forced_tokens": 0
+ }
+}

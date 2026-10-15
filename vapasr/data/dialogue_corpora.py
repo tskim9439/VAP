@@ -2,7 +2,7 @@
 
   aihub71631 stereo : 대화 wav(2ch, 채널 = 화자) + 라벨 JSON. 화자↔채널은 corpora.load_aihub 의 채널 VAD 판정을 재사용.
   aihub crops       : 134-1(성인)·134-2(청소년) 화자별 조각 `<stem>_<n>.wav`(n = Conversation 순번, 1부터) + 라벨 JSON. 조각을 원 시각에 놓는다(pieces).
-  otoSpeech         : speaker_{1,2}_audio.wav + annotation_a.srt (SPEECH_LABELS 만 발화).
+  otoSpeech         : speaker_{1,2}_audio.wav + speaker_{1,2}_annotation_a.srt (비음성 라벨 밖 전부 발화, 맞닿은 같은 전사 하위 구간은 합침).
   AMI               : <root>/<meeting>/<meeting>.Headset-<ch>.wav + ami_public_manual_1.6.2.zip (segments·words, agent→channel = corpusResources/meetings.xml).
   NOTSOFAR-1        : <meeting>/close_talk/CT_*.wav + gt_transcription.json(단어 시각) + gt_meeting_metadata.json.
   ICSI              : <root>/<meeting>/chan*.sph + ICSI_core_NXT.zip(Segments/Words, participant) + ICSI_original_transcripts.zip(.mrt: participant→channel).
@@ -66,16 +66,24 @@ def iter_aihub_crops(label_root: str, crop_dir: str, corpus: str, split: str = "
         if limit and n >= limit: return
 
 # ───────────────────────────── otoSpeech ─────────────────────────────
+OTO_MERGE_GAP_S = 0.05   # otoSpeech SRT 는 한 턴을 라벨([Filler]·[Normal Turn] …)마다 하위 구간으로 나누고 하위 구간마다 턴 전체 전사를 되풀이한다(경계 간격 1 ms).
+                         # 같은 화자의 맞닿은(간격 < 이 값) 같은 전사 구간을 한 발화로 합친다 — 합치지 않으면 전사가 구간 수만큼 반복된다(2026-10-15, 토큰의 6.4 %).
+                         # 쉼을 두고 실제로 되풀이한 말('yeah … yeah')은 간격이 이보다 커서 따로 남는다.
+# 발화로 쓰는 SRT 라벨 = 비음성(NONSPEECH_LABELS: Non-Speech Noise·Channel Bleed)이 아닌 모든 라벨(2026-10-15). corpora.SPEECH_LABELS 는 Normal Turn·맞장구·
+# Filler 등 6 개뿐이라 Strong Floor Hold(12.8 h)·Overlap(4.2 h)·Reaction Backchannel·끼어들기 4 종·Bounded Response·Awkward Silence — 전사가 있는 독립 발화
+# 약 21 h(라벨 시간의 22 %) — 가 빠졌다(Phase 2 부터). 빠진 말은 마스크도 없이 '말 없음' 으로 학습됐다. corpora.SPEECH_LABELS 는 Phase 1 경로가 써서 그대로 둔다.
+
 def load_otospeech_dialogue(d: str, split: str = "train") -> Dialogue:
-    from .corpora import parse_srt, SPEECH_LABELS
+    from .corpora import parse_srt, NONSPEECH_LABELS
     import soundfile as sf
     meta = json.load(open(os.path.join(d, "metadata.json"))); utts = []; chans = {}; dur = 0.0
     for c in (0, 1):
         wav = os.path.join(d, f"speaker_{c+1}_audio.wav"); info = sf.info(wav); dur = max(dur, info.frames / info.samplerate)
-        chans[str(c)] = ChannelRef(path=wav)
+        chans[str(c)] = ChannelRef(path=wav); cur = None
         for k, (s, e, label, text) in enumerate(parse_srt(os.path.join(d, f"speaker_{c+1}_annotation_a.srt"))):
-            if label in SPEECH_LABELS and text.strip():
-                utts.append(Utterance(speaker=str(c), start=s, end=e, raw=text, utt_id=f"s{c+1}_{k:05d}"))
+            if label not in NONSPEECH_LABELS and text.strip():
+                if cur is not None and text == cur.raw and s - cur.end < OTO_MERGE_GAP_S: cur.end = max(cur.end, e); continue
+                cur = Utterance(speaker=str(c), start=s, end=e, raw=text, utt_id=f"s{c+1}_{k:05d}"); utts.append(cur)
     tid = meta.get("task_id", os.path.basename(d.rstrip("/")))
     return Dialogue(conv_id=f"oto:{tid}", corpus="otoSpeech", lang="English", split=split, duration_s=float(dur), speakers=["0", "1"], utterances=utts, channels=chans,
                     meta=dict(actors=[meta.get("speaker_1_actor_id"), meta.get("speaker_2_actor_id")], conversation_type=meta.get("conversation_type"), src=d))
