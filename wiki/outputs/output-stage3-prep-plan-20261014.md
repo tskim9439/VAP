@@ -2,7 +2,7 @@
 type: output
 status: active
 created: 2026-10-14
-updated: 2026-10-14
+updated: 2026-10-15
 summary: Stage 3(2 인 같은 언어 대화의 화자 귀속 + ASR + 턴 끝 EOT) 준비 계획 — Phase 2 정제 대화·정렬·혼합·창을 다시 직렬화하고, 독일어 KEC·ZTC·NSC 를 새로 붙이고(P1 완료: 106 h, 전사 감독 62 h, 창 12,582 개), 회의 코퍼스는 2 화자만 골라 섞는다
 sources:
   - '[[decision-cst-training-stages-and-speaker-slots]]'
@@ -10,6 +10,7 @@ sources:
   - '[[output-phase2-lane-plan]]'
   - '[[2026-10-14-stage3-german-data]]'
   - '[[2026-10-14-stage3-p3-serialization]]'
+  - '[[2026-10-15-stage3-train-smoke]]'
 related:
   - '[[decision-eot-immediate-soft-label]]'
   - '[[output-phase2-eval-plan]]'
@@ -96,8 +97,8 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
 | P1 독일어 | KEC·ZTC 어댑터(TextGrid → dialogues.jsonl), NSC 의사 전사(교사 ASR 두 모델 일치), 정제·정렬·혼합·창, 화자 기준 split | 표본 청취·정렬 검사 통과 — **2026-10-14 완료**(정렬·로더 점검 통과. 정렬은 세 코퍼스 모두 Qwen3-ForcedAligner 로 다시 했고 ZTC 의 MAuS 는 쓰지 않았다. 청취는 사용자 확인 필요) |
 | P2 회의 2 화자 | 화자 쌍 선택 창 생성기, 채널 누설 검사(다른 화자 구간의 채널 에너지) | 누설 기준 통과한 쌍만 사용 |
 | P3 직렬화 | 2 슬롯 prefix + 화자 태그 + soft `<EOT>` 데이터셋, fixture 테스트, 모델 forward 의 soft label 일반화, 전 코퍼스 dry-run | 불일치 0, 형식 테스트 통과 — **2026-10-14 완료**(113,389 창 불일치 0, GPU 스모크 통과. 학습 스크립트 연결은 P5) |
-| P4 평가 | held-out 묶음·지표 도구(ORC-WER·cpWER·EOT) | 오라클 입력에서 지표 sanity |
-| P5 파일럿 | 소규모 학습(32 창 overfit → 수천 step), replay·언어 비율 정하기 | 단일 화자 퇴행 없음, cpWER·EOT 학습 곡선 |
+| P4 평가 | held-out 묶음·지표 도구(ORC-WER·cpWER·EOT) | 오라클 입력에서 지표 sanity — **2026-10-15 통과**(slot·cp 0, EOT 재현율 1) |
+| P5 파일럿 | 소규모 학습(32 창 overfit → 수천 step), replay·언어 비율 정하기 | 단일 화자 퇴행 없음, cpWER·EOT 학습 곡선 — **2026-10-15 준비됨**(학습·평가 스모크 통과, 제출 대기) |
 | P6 본 학습 | 사용자 제출 | – |
 | 병행 | Stage 4 용 대화 번역 타깃(턴 단위 교사 번역, 간투사·말 끊김 규칙) | 교사 품질 검사 |
 
@@ -162,11 +163,47 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
   - 1 s·3 토큰 이하를 맞장구로 빼면 11–32 % 로 줄고, 대부분 hold 로 옮겨 간다.
   - `backchannel=(1.0, 3)` 선택으로 비교할 수 있게 했다(기본 끔).
 
+## P4·P5 준비 (2026-10-15)
+- 원자료: [[2026-10-15-stage3-train-smoke]]
+- **사용자 결정(2026-10-15):**
+  - Stage 3 학습은 별도 스크립트로 한다.
+  - 섞는 비율과 EOT 규칙은 파일럿에서 비교해 정한다.
+- **학습:** `experiments/stage3_train.py`
+  - 셋:
+    - 대화: `dlg_ko`·`dlg_en`·`dlg_de`
+    - Stage 2 replay: `rep_ko`·`rep_en`·`rep_de`. `<SEM_END>`·`<EOT>` 중립
+  - step 마다 셋을 가중치로 고른다(`--weights`, `vapasr/hf/stage3.WeightedRoundRobinLoader`).
+  - 레시피는 q06-s4-ast 와 같다.
+  - 제출: `slurm/submit-stage3-train.sh`(산출 `/soundai/Model/VAPASR/stage3-<run>`)
+- **스모크(단일 GPU 20 step):**
+  - 대화 `<EOT>` 손실 4.97 → 1.2–1.7
+  - final 재로드 parity OK
+  - 실데이터 dry-run 에서 대화 창 KO 90,799 · EN 11,414 · DE 11,195, 6 셋 불변식 0
+- **평가:** `experiments/cst_stage3_eval.py`
+  - held-out 창을 두 슬롯 스트리밍 디코드로 잰다.
+  - 지표: slot·cp(화자 귀속)·agn(화자 무시) 오류율, 슬롯 뒤집힘, EOT 재현율·정밀도·보류 오방출·지연
+  - 참조와 가설 모두 전사 없는 음성 청크를 뺀다.
+  - 오라클 점검에서 slot·cp 0, EOT 재현율 1 이다.
+- **파일럿 비교안(각 1 노드, 2,000 step):**
+  - 추정: step 당 대화 창 약 110 개(GPU 당 16,384 토큰 ÷ 창 약 900 토큰 × 8 GPU). 대화 step 은 약 1,330 회다.
+  - 언어 1:1:1 이면 언어마다 약 5 만 창이다. KO 는 약 0.55 epoch, EN·DE 는 약 4.4 epoch 반복이다(그래서 p4 를 비교한다).
+
+  | run | 바꾸는 것 | 보는 것 |
+  |---|---|---|
+  | p1 기준 | 대화 KO·EN·DE 1:1:1, replay 각 0.5(대화 2/3·replay 1/3), soft EOT, 맞장구 규칙 끔, 무음 격자 창 | 모든 비교의 기준 |
+  | p2 | `--eot-mode hard` | EOT 정밀도·재현율·보류 오방출 |
+  | p3 | `--backchannel 1.0,3` | EOT 보류 오방출, 맞장구 전사 |
+  | p4 | 언어 비율 KO 2 · EN 0.7 · DE 0.7(창 수의 제곱근 비례) | 언어별 cp·agn |
+  | p5 | replay 각 0.25(replay 약 1/5) | Stage 2 퇴행 vs 대화 성능 |
+
+  - p1 을 먼저 내 전체 규모의 로딩 시간과 s/step 을 확인한 뒤 나머지를 낸다.
+  - 평가는 `cst_stage3_eval.py` 로 held-out 을 재고, Stage 2 평가 묶음으로 단일 화자 퇴행을 잰다.
+
 ## 열린 질문
 - `<EOT>` 를 soft 로 할지, 처음에는 hard(p_end ≥ 0.5)로 단순하게 시작할지(P5 에서 비교)
 - 맞장구 처리: CST 첫 논문 범위에서는 사건으로 다루지 않는다. 전사로는 그대로 내고 `<EOT>` 대상에서는 뺄지 정해야 한다.
   - P3 측정: 맞장구를 빼면 both(0.5) 결과가 24–50 % → 11–32 % 로 준다. `CstDialogueDataset(backchannel=)` 로 P5 에서 비교한다.
-- Stage 3 학습 스크립트: `experiments/semcommit_train.py` 에 대화 셋·replay 셋을 넣어야 한다. 그 파일에 다른 작업의 커밋 안 된 변경이 있어 연결 방식(같은 파일 확장 또는 별도 스크립트)을 정해야 한다.
+- (해결 2026-10-15) Stage 3 학습 스크립트는 별도로 만들었다(`experiments/stage3_train.py`).
 - 창 길이(20–40 s)를 그대로 쓸지, Stage 2 의 30 s 상한과 맞출지
 - 134-2 의 높은 마스크 비율(평균 32 %)을 어떻게 다룰지(결손 구간 학습 제외 규칙은 Phase 2 그대로)
 - 독일어 간투사: KEC·ZTC 는 사람 전사의 "äh"·"ähm" 을 남기고, NSC(교사 전사)와 Stage 1 독일어는 거의 내지 않는다. 같은 언어 안에서 간투사 표기가 섞인다.

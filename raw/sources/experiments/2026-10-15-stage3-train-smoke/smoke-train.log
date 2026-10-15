@@ -1,0 +1,491 @@
+OneLogger: Setting error_handling_strategy to DISABLE_QUIETLY_AND_REPORT_METRIC_ERROR for rank (rank=0) with OneLogger disabled. To override: explicitly set error_handling_strategy parameter.
+Final configuration contains 0 exporter(s)
+No exporters were provided. This means that no telemetry data will be collected.
+[NeMo I 2026-10-15 12:46:45 mixins:195] Tokenizer SentencePieceTokenizer initialized with 13087 tokens
+[NeMo W 2026-10-15 12:46:49 modelPT:288] You tried to register an artifact under config key=tokenizer.model_path but an artifact for it has already been registered.
+[NeMo W 2026-10-15 12:46:49 modelPT:288] You tried to register an artifact under config key=tokenizer.vocab_path but an artifact for it has already been registered.
+[NeMo I 2026-10-15 12:46:49 mixins:195] Tokenizer SentencePieceTokenizer initialized with 13087 tokens
+[NeMo W 2026-10-15 12:46:54 modelPT:176] If you intend to do training or fine-tuning, please call the ModelPT.setup_training_data() method and provide a valid configuration file to setup the train data loader.
+    Train config : 
+    manifest_filepath: null
+    sample_rate: 16000
+    use_lhotse: true
+    shard_manifests: true
+    batch_duration: 200
+    quadratic_duration: 15
+    num_buckets: 30
+    shuffle: true
+    num_workers: 8
+    pin_memory: true
+    max_duration: 20
+    min_duration: 0.1
+    is_tarred: true
+    tarred_audio_filepaths: null
+    shuffle_n: 2048
+    slice_length: 100
+    bucketing_strategy: fully_randomized
+    bucketing_batch_size: null
+    bucket_buffer_size: 10000
+    shuffle_buffer_size: 10000
+    prompt_field: target_lang
+    prompt_dictionary:
+      en-US: 0
+      en: 0
+      en-GB: 1
+      enGB: 1
+      es-ES: 2
+      esES: 2
+      es-US: 3
+      es: 3
+      zh-CN: 4
+      zh-ZH: 4
+      zh-TW: 5
+      hi-IN: 6
+      hi: 6
+      hi-HI: 6
+      ar-AR: 7
+      ar: 7
+      fr-FR: 8
+      fr: 8
+      de-DE: 9
+      de: 9
+      ja-JP: 10
+      ja-JA: 10
+      ru-RU: 11
+      ru: 11
+      pt-BR: 12
+      pt-PT: 13
+      pt: 13
+      ko-KR: 14
+      ko: 14
+      ko-KO: 14
+      it-IT: 15
+      it: 15
+      nl-NL: 16
+      nl: 16
+      pl-PL: 17
+      pl: 17
+      tr-TR: 18
+      tr: 18
+      uk-UA: 19
+      uk: 19
+      ro-RO: 20
+      ro: 20
+      el-GR: 21
+      el: 21
+      cs-CZ: 22
+      cs: 22
+      hu-HU: 23
+      hu: 23
+      sv-SE: 24
+      sv: 24
+      da-DK: 25
+      da: 25
+      fi-FI: 26
+      fi: 26
+      no-NO: 27
+      'no': 27
+      nb-NO: 103
+      nb: 103
+      nn-NO: 104
+      nn: 104
+      sk-SK: 28
+      sk: 28
+      hr-HR: 29
+      hr: 29
+      bg-BG: 30
+      bg: 30
+      lt-LT: 31
+      lt: 31
+      et-EE: 60
+      et: 60
+      lv-LV: 61
+      lv: 61
+      sl-SI: 62
+      sl: 62
+      th-TH: 32
+      vi-VN: 33
+      id-ID: 34
+      ms-MY: 35
+      bn-IN: 36
+      ur-PK: 37
+      fa-IR: 38
+      ta-IN: 39
+      te-IN: 40
+      mr-IN: 41
+      gu-IN: 42
+      kn-IN: 43
+      ml-IN: 44
+      si-LK: 45
+      ne-NP: 46
+      km-KH: 47
+      sw-KE: 48
+      am-ET: 49
+      ha-NG: 50
+      zu-ZA: 51
+      yo-NG: 52
+      ig-NG: 53
+      af-ZA: 54
+      rw-RW: 55
+      so-SO: 56
+      ny-MW: 57
+      ln-CD: 58
+      or-KE: 59
+      he-IL: 64
+      ku-TR: 65
+      az-AZ: 66
+      ka-GE: 67
+      hy-AM: 68
+      uz-UZ: 69
+      tg-TJ: 70
+      ky-KG: 71
+      qu-PE: 80
+      ay-BO: 81
+      gn-PY: 82
+      nah-MX: 83
+      mi-NZ: 96
+      haw-US: 97
+      sm-WS: 98
+      to-TO: 99
+      fr-CA: 100
+      mt-MT: 102
+      auto: 101
+    num_prompts: 128
+    subsampling_factor: 8
+    lang_field: target_lang
+    training_mode: true
+    input_cfg: null
+    use_bucketing: true
+    defer_setup: true
+    
+[NeMo W 2026-10-15 12:46:54 modelPT:183] If you intend to do validation, please call the ModelPT.setup_validation_data() or ModelPT.setup_multiple_validation_data() method and provide a valid configuration file to setup the validation data loader(s). 
+    Validation config : 
+    manifest_filepath: null
+    sample_rate: 16000
+    batch_size: 2
+    shuffle: false
+    use_start_end_token: false
+    num_workers: 2
+    pin_memory: true
+    batch_duration: null
+    use_lhotse: true
+    use_bucketing: false
+    max_cuts: 8
+    prompt_field: target_lang
+    prompt_dictionary:
+      en-US: 0
+      en: 0
+      en-GB: 1
+      enGB: 1
+      es-ES: 2
+      esES: 2
+      es-US: 3
+      es: 3
+      zh-CN: 4
+      zh-ZH: 4
+      zh-TW: 5
+      hi-IN: 6
+      hi: 6
+      hi-HI: 6
+      ar-AR: 7
+      ar: 7
+      fr-FR: 8
+      fr: 8
+      de-DE: 9
+      de: 9
+      ja-JP: 10
+      ja-JA: 10
+      ru-RU: 11
+      ru: 11
+      pt-BR: 12
+      pt-PT: 13
+      pt: 13
+      ko-KR: 14
+      ko: 14
+      ko-KO: 14
+      it-IT: 15
+      it: 15
+      nl-NL: 16
+      nl: 16
+      pl-PL: 17
+      pl: 17
+      tr-TR: 18
+      tr: 18
+      uk-UA: 19
+      uk: 19
+      ro-RO: 20
+      ro: 20
+      el-GR: 21
+      el: 21
+      cs-CZ: 22
+      cs: 22
+      hu-HU: 23
+      hu: 23
+      sv-SE: 24
+      sv: 24
+      da-DK: 25
+      da: 25
+      fi-FI: 26
+      fi: 26
+      no-NO: 27
+      'no': 27
+      nb-NO: 103
+      nb: 103
+      nn-NO: 104
+      nn: 104
+      sk-SK: 28
+      sk: 28
+      hr-HR: 29
+      hr: 29
+      bg-BG: 30
+      bg: 30
+      lt-LT: 31
+      lt: 31
+      et-EE: 60
+      et: 60
+      lv-LV: 61
+      lv: 61
+      sl-SI: 62
+      sl: 62
+      th-TH: 32
+      vi-VN: 33
+      id-ID: 34
+      ms-MY: 35
+      bn-IN: 36
+      ur-PK: 37
+      fa-IR: 38
+      ta-IN: 39
+      te-IN: 40
+      mr-IN: 41
+      gu-IN: 42
+      kn-IN: 43
+      ml-IN: 44
+      si-LK: 45
+      ne-NP: 46
+      km-KH: 47
+      sw-KE: 48
+      am-ET: 49
+      ha-NG: 50
+      zu-ZA: 51
+      yo-NG: 52
+      ig-NG: 53
+      af-ZA: 54
+      rw-RW: 55
+      so-SO: 56
+      ny-MW: 57
+      ln-CD: 58
+      or-KE: 59
+      he-IL: 64
+      ku-TR: 65
+      az-AZ: 66
+      ka-GE: 67
+      hy-AM: 68
+      uz-UZ: 69
+      tg-TJ: 70
+      ky-KG: 71
+      qu-PE: 80
+      ay-BO: 81
+      gn-PY: 82
+      nah-MX: 83
+      mi-NZ: 96
+      haw-US: 97
+      sm-WS: 98
+      to-TO: 99
+      fr-CA: 100
+      mt-MT: 102
+      auto: 101
+    num_prompts: 128
+    subsampling_factor: 8
+    training_mode: true
+    name: null
+    
+[NeMo W 2026-10-15 12:46:54 modelPT:190] Please call the ModelPT.setup_test_data() or ModelPT.setup_multiple_test_data() method and provide a valid configuration file to setup the test data loader(s).
+    Test config : 
+    manifest_filepath: null
+    sample_rate: 16000
+    batch_size: 16
+    shuffle: false
+    use_start_end_token: false
+    num_workers: 8
+    pin_memory: true
+    use_lhotse: true
+    use_bucketing: false
+    prompt_field: target_lang
+    prompt_dictionary:
+      en-US: 0
+      en: 0
+      en-GB: 1
+      enGB: 1
+      es-ES: 2
+      esES: 2
+      es-US: 3
+      es: 3
+      zh-CN: 4
+      zh-ZH: 4
+      zh-TW: 5
+      hi-IN: 6
+      hi: 6
+      hi-HI: 6
+      ar-AR: 7
+      ar: 7
+      fr-FR: 8
+      fr: 8
+      de-DE: 9
+      de: 9
+      ja-JP: 10
+      ja-JA: 10
+      ru-RU: 11
+      ru: 11
+      pt-BR: 12
+      pt-PT: 13
+      pt: 13
+      ko-KR: 14
+      ko: 14
+      ko-KO: 14
+      it-IT: 15
+      it: 15
+      nl-NL: 16
+      nl: 16
+      pl-PL: 17
+      pl: 17
+      tr-TR: 18
+      tr: 18
+      uk-UA: 19
+      uk: 19
+      ro-RO: 20
+      ro: 20
+      el-GR: 21
+      el: 21
+      cs-CZ: 22
+      cs: 22
+      hu-HU: 23
+      hu: 23
+      sv-SE: 24
+      sv: 24
+      da-DK: 25
+      da: 25
+      fi-FI: 26
+      fi: 26
+      no-NO: 27
+      'no': 27
+      nb-NO: 103
+      nb: 103
+      nn-NO: 104
+      nn: 104
+      sk-SK: 28
+      sk: 28
+      hr-HR: 29
+      hr: 29
+      bg-BG: 30
+      bg: 30
+      lt-LT: 31
+      lt: 31
+      et-EE: 60
+      et: 60
+      lv-LV: 61
+      lv: 61
+      sl-SI: 62
+      sl: 62
+      th-TH: 32
+      vi-VN: 33
+      id-ID: 34
+      ms-MY: 35
+      bn-IN: 36
+      ur-PK: 37
+      fa-IR: 38
+      ta-IN: 39
+      te-IN: 40
+      mr-IN: 41
+      gu-IN: 42
+      kn-IN: 43
+      ml-IN: 44
+      si-LK: 45
+      ne-NP: 46
+      km-KH: 47
+      sw-KE: 48
+      am-ET: 49
+      ha-NG: 50
+      zu-ZA: 51
+      yo-NG: 52
+      ig-NG: 53
+      af-ZA: 54
+      rw-RW: 55
+      so-SO: 56
+      ny-MW: 57
+      ln-CD: 58
+      or-KE: 59
+      he-IL: 64
+      ku-TR: 65
+      az-AZ: 66
+      ka-GE: 67
+      hy-AM: 68
+      uz-UZ: 69
+      tg-TJ: 70
+      ky-KG: 71
+      qu-PE: 80
+      ay-BO: 81
+      gn-PY: 82
+      nah-MX: 83
+      mi-NZ: 96
+      haw-US: 97
+      sm-WS: 98
+      to-TO: 99
+      fr-CA: 100
+      mt-MT: 102
+      auto: 101
+    num_prompts: 128
+    subsampling_factor: 8
+    training_mode: false
+    
+[NeMo I 2026-10-15 12:47:02 rnnt_models:227] Using RNNT Loss : warprnnt_numba
+    Loss warprnnt_numba_kwargs: {'fastemit_lambda': 0.005, 'clamp': -1.0}
+[NeMo I 2026-10-15 12:47:02 rnnt_models:227] Using RNNT Loss : warprnnt_numba
+    Loss warprnnt_numba_kwargs: {'fastemit_lambda': 0.005, 'clamp': -1.0}
+[NeMo I 2026-10-15 12:47:02 rnnt_models:227] Using RNNT Loss : warprnnt_numba
+    Loss warprnnt_numba_kwargs: {'fastemit_lambda': 0.005, 'clamp': -1.0}
+[NeMo I 2026-10-15 12:47:02 rnnt_bpe_models_prompt:147] Model with prompt feature has been initialized (RNNT-only)
+[NeMo I 2026-10-15 12:47:04 save_restore_connector:288] Model EncDecRNNTBPEModelWithPrompt was successfully restored from /soundai/Model/nemotron-3.5-asr-streaming-0.6b/nemotron-3.5-asr-streaming-0.6b.nemo.
+nemotron encoder 캐시 저장 → /tmp/sa_tskim/vapasr-stage/nemotron-encoder-2368284501-1788531999.pt
+nemotron encoder 학습: 서브샘플링 Triton 커널 끔(fuse_triton=False)
+인코더 학습 att_context 고정 [56, 3]
+SpecAugment freq 2×27, time 2×0.03
+varlen with padded batches: the model unpads each batch into one packed thinker row (same thinker work as packing)
+We set the attention implementation for the sub-config `audio_config` to `vapasr_varlen` without finding the associated sub-model. For this reason we could not check if the model supports it. You may encounter undefined behavior.
+thinker attention: vapasr_varlen
+liger: {'rms_norm': 113, 'swiglu': 28, 'rope': 1}
+model ← /soundai/Model/VAPASR/semcommit-q06-s4-ast/final (283s) · 학습 1209.4M · 인코더 학습(init 인코더 저장됨=True) · <EOT>=151722 켬(turn_weight 2.0) · grad ckpt True · liger True
+  dlg_ko ['aihub71631', 'aihub134-1', 'aihub134-2']: 300 창 · held-out 제외 437 대화 · stats {'dialogues': 3898, 'windows': 101902, 'skipped_untranscribed': 0, 'skipped_unaligned': 0, 'skipped_sparse': 28395, 'no_start': 202528, 'windows_with_mask': 123678, 'random_start': 0, 'cst_windows': 90799, 'cst_dropped_speakers': 0, 'cst_dialogues': 3461, 'cst_excluded': 437}
+  dlg_en ['otoSpeech']: 300 창 · held-out 제외 38 대화 · stats {'dialogues': 420, 'windows': 12522, 'skipped_untranscribed': 0, 'skipped_unaligned': 0, 'skipped_sparse': 1840, 'no_start': 22794, 'windows_with_mask': 1165, 'random_start': 0, 'cst_windows': 11414, 'cst_dropped_speakers': 0, 'cst_dialogues': 382, 'cst_excluded': 38}
+  dlg_de ['kec', 'ztc', 'nsc']: 300 창 · held-out 제외 82 대화 · stats {'dialogues': 820, 'windows': 12554, 'skipped_untranscribed': 0, 'skipped_unaligned': 0, 'skipped_sparse': 444, 'no_start': 23961, 'windows_with_mask': 11209, 'random_start': 0, 'cst_windows': 11195, 'cst_dropped_speakers': 0, 'cst_dialogues': 738, 'cst_excluded': 82}
+  replay 번역 타깃 {'files': 6, 'rows': 6386086, 'tgt_English': 5108303, 'tgt_German': 654200, 'tgt_Korean': 623583} · 번역 모드 0.8 · words 파일 EN·KO 36 · DE 45 (frac 0.01)
+  rep_en: 300 항목 · 번역 타깃 있는 항목 295
+  rep_ko: 300 항목 · 번역 타깃 있는 항목 282
+  rep_de: 300 항목 · 번역 타깃 있는 항목 298
+  check dlg_ko: 8 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check dlg_en: 8 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check dlg_de: 8 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check rep_en: 8 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check rep_ko: 8 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check rep_de: 8 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+섞기: steps/epoch 76 · 비중 {'dlg_ko': 0.2237, 'dlg_en': 0.2237, 'dlg_de': 0.2237, 'rep_en': 0.1184, 'rep_ko': 0.1053, 'rep_de': 0.1053} · 셋 배치/epoch {'dlg_ko': 17, 'dlg_en': 17, 'dlg_de': 17, 'rep_en': 11, 'rep_ko': 7, 'rep_de': 8} · world 1
+실행 기록 → /tmp/sa_tskim/stage3-smoke/run-20261015-125148-844638.json
+Could not estimate the number of tokens of the input, floating-point operations will not be computed
+{'loss': 1.4336, 'grad_norm': 9.986882209777832, 'learning_rate': 0.0, 'loss_dlg': 1.4336, 'loss_turn_dlg': 4.9744, 'soft_per_dlg_step': 88.0, 'loss_next': 0.2213, 'loss_text': 1.7069, 'top1_text': 0.7889, 'loss_turn': 4.9744, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 6006, 'step': 1, 'pct': 5.0, 'lr_thinker': 1.2e-05, 'epoch': 0.013157894736842105}
+{'loss': 1.419, 'grad_norm': 9.644490242004395, 'learning_rate': 0.0002, 'loss_dlg': 1.419, 'loss_turn_dlg': 4.3119, 'soft_per_dlg_step': 141.0, 'loss_next': 0.1825, 'loss_text': 2.7919, 'top1_text': 0.642, 'loss_turn': 4.3119, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 7951, 'step': 2, 'pct': 10.0, 's_per_step': 3.969, 'eta_h': 0.02, 'lr_thinker': 2.4e-05, 'epoch': 0.02631578947368421}
+{'loss': 0.9259, 'grad_norm': 2.3630902767181396, 'learning_rate': 0.0006, 'loss_dlg': 1.54, 'loss_turn_dlg': 4.2719, 'soft_per_dlg_step': 158.0, 'loss_rep': 0.3119, 'loss_next': 0.1787, 'loss_text': 1.4324, 'top1_text': 0.7521, 'loss_turn': 4.2719, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 5868, 'step': 4, 'pct': 20.0, 's_per_step': 4.101, 'eta_h': 0.02, 'lr_thinker': 4.8e-05, 'epoch': 0.05263157894736842}
+{'loss': 0.3339, 'grad_norm': 2.0560007095336914, 'learning_rate': 0.001, 'loss_rep': 0.3339, 'loss_next': 0.2089, 'loss_text': 0.3678, 'top1_text': 0.8871, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 4402, 'step': 6, 'pct': 30.0, 's_per_step': 4.303, 'eta_h': 0.02, 'lr_thinker': 5.934442802201417e-05, 'epoch': 0.07894736842105263}
+{'loss': 1.008, 'grad_norm': 5.343310356140137, 'learning_rate': 0.0009567727288213005, 'loss_dlg': 1.008, 'loss_turn_dlg': 4.4636, 'soft_per_dlg_step': 89.0, 'loss_next': 0.2728, 'loss_text': 1.2219, 'top1_text': 0.7026, 'loss_turn': 4.4636, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 6438, 'step': 8, 'pct': 40.0, 's_per_step': 3.215, 'eta_h': 0.01, 'lr_thinker': 5.427050983124843e-05, 'epoch': 0.10526315789473684}
+{'loss': 0.8524, 'grad_norm': 4.838292598724365, 'learning_rate': 0.0008345653031794292, 'loss_dlg': 0.8524, 'loss_turn_dlg': 3.0504, 'soft_per_dlg_step': 104.0, 'loss_next': 0.1508, 'loss_text': 1.154, 'top1_text': 0.7369, 'loss_turn': 3.0504, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 5850, 'step': 10, 'pct': 50.0, 's_per_step': 2.636, 'eta_h': 0.01, 'lr_thinker': 4.5e-05, 'epoch': 0.13157894736842105}
+{'loss': 0.6614, 'grad_norm': 3.637960195541382, 'learning_rate': 0.0006545084971874737, 'loss_dlg': 0.6614, 'loss_turn_dlg': 2.0732, 'soft_per_dlg_step': 117.5, 'loss_next': 0.1507, 'loss_text': 1.2361, 'top1_text': 0.7259, 'loss_turn': 2.0732, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 7043, 'step': 12, 'pct': 60.0, 's_per_step': 2.249, 'eta_h': 0.0, 'lr_thinker': 3.313585389802961e-05, 'epoch': 0.15789473684210525}
+{'loss': 0.5119, 'grad_norm': 5.594947814941406, 'learning_rate': 0.00044773576836617336, 'loss_rep': 0.5119, 'loss_next': 0.1515, 'loss_text': 0.6454, 'top1_text': 0.8029, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 4261, 'step': 14, 'pct': 70.0, 's_per_step': 1.971, 'eta_h': 0.0, 'lr_thinker': 2.072949016875158e-05, 'epoch': 0.18421052631578946}
+{'loss': 0.521, 'grad_norm': 4.218082427978516, 'learning_rate': 0.0002500000000000001, 'loss_rep': 0.3069, 'loss_dlg': 0.7352, 'loss_turn_dlg': 1.6662, 'soft_per_dlg_step': 93.0, 'loss_next': 0.1502, 'loss_text': 0.6579, 'top1_text': 0.8241, 'loss_turn': 1.6662, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 4102, 'step': 16, 'pct': 80.0, 's_per_step': 1.784, 'eta_h': 0.0, 'lr_thinker': 9.926081809234262e-06, 'epoch': 0.21052631578947367}
+{'loss': 0.7478, 'grad_norm': 5.545670986175537, 'learning_rate': 9.549150281252633e-05, 'loss_dlg': 0.7478, 'loss_turn_dlg': 1.2246, 'soft_per_dlg_step': 155.0, 'loss_next': 0.2427, 'loss_text': 1.2308, 'top1_text': 0.7133, 'loss_turn': 1.2246, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 7603, 'step': 18, 'pct': 90.0, 's_per_step': 1.634, 'eta_h': 0.0, 'lr_thinker': 2.5936362707219708e-06, 'epoch': 0.23684210526315788}
+{'loss': 0.683, 'grad_norm': 2.9700045585632324, 'learning_rate': 1.0926199633097156e-05, 'loss_dlg': 0.683, 'loss_turn_dlg': 1.4904, 'soft_per_dlg_step': 92.0, 'loss_next': 0.1732, 'loss_text': 1.1735, 'top1_text': 0.7177, 'loss_turn': 1.4904, 'sem_fp': 0.0, 'sem_per_step': 0.0, 'labels_per_step': 6498, 'step': 20, 'pct': 100.0, 's_per_step': 1.517, 'eta_h': 0.0, 'lr_thinker': 0.0, 'epoch': 0.2631578947368421}
+{'train_runtime': 59.8605, 'train_samples_per_second': 0.334, 'train_steps_per_second': 0.334, 'train_loss': 0.7671714097261428, 'epoch': 0.2631578947368421}
+train 종료: step 20/20 완료 · {'train_runtime': 59.8605, 'train_samples_per_second': 0.334, 'train_steps_per_second': 0.334, 'train_loss': 0.7671714097261428, 'epoch': 0.2631578947368421}
+nemotron encoder 학습: 서브샘플링 Triton 커널 끔(fuse_triton=False)
+check-save: 누락 [] · 추가 [] · shape [] · 값 차이 0 [] · 인코더 저장 키 638 · 손실 메모리 {'loss': 0.46555, 'loss_next': 0.18748, 'loss_text': 0.46468, 'top1_text': 0.87879, 'loss_turn': 1.61814} / 재로드 {'loss': 0.46535, 'loss_next': 0.18772, 'loss_text': 0.46388, 'top1_text': 0.87879, 'loss_turn': 1.62077} · tokenizer OK · config.stage3 OK · <EOT> 등록 OK
+PARITY OK
+final → /tmp/sa_tskim/stage3-smoke/final
+[W1015 12:53:59.280689745 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+EXIT 0

@@ -1,0 +1,27 @@
+## [2026-10-15] task | Stage 3 P4·P5 준비 — 별도 학습 스크립트·셋 가중 섞기·평가 도구(오라클 통과), 파일럿 제출 대기
+
+- Changed:
+  - [[output-stage3-prep-plan-20261014]]: P4·P5 관문, "P4·P5 준비" 절(파일럿 비교안), 열린 질문
+  - [[2026-10-15-stage3-train-smoke]] 신규
+  - 코드:
+    - `experiments/stage3_train.py`(신규)
+    - `vapasr/hf/stage3.py`(신규)
+    - `vapasr/data/cst_dialogue.py`: `eot_mode`, `chunk_at`
+    - `experiments/cst_stage3_eval.py`(신규)
+    - `vapasr/data/cst_eval.py`(신규)
+    - `slurm/stage3-train-apex.sbatch`·`slurm/submit-stage3-train.sh`(신규)
+    - 테스트 3 개 파일
+- Reason: 사용자 결정 "결정 1. 별도 스크립트를 만들어. 결정 3. 파일럿에서 비교해서 정해 그럼."
+- 결과:
+  - **학습:**
+    - 실데이터 dry-run: 대화 창 KO 90,799 · EN 11,414 · DE 11,195, 불변식 0
+    - 단일 GPU 20 step 스모크: 대화 `<EOT>` 손실 4.97 → 1.2–1.7, final 재로드 parity OK
+  - **평가:**
+    - 20 step 체크포인트로 직렬/배치 대조를 통과했다.
+    - 오라클 점검에서 참조 정의 결함(마스크 청크 토큰을 참조에만 남김)을 찾아 고쳤다. 고친 뒤 slot·cp 0, EOT 재현율 1 이다.
+  - **s4 기준점 평가:** 진행 중이다(held-out 창 200 개 × 7 코퍼스 × δ4·10, 호스트 GPU 0). 고치기 전 규칙으로 시작했으므로 `--from-predictions` 로 다시 채점한다.
+- Next:
+  - 사용자 제출: 파일럿 p1(기준)
+  - s4 기준점 재채점
+  - p1 결과를 보고 p2–p5 제출
+- By: tskim

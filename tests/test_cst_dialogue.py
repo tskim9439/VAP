@@ -106,6 +106,16 @@ def test_dataset_sequences_are_consistent(tmp_path):
     p = pack_batch(c); assert p["sem_only_mask"].shape == p["ids"].shape == p["labels_alt"].shape
 
 
+def test_dataset_hard_eot_mode(tmp_path):
+    q = make(tmp_path)
+    soft = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, seed=1)
+    hard = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, seed=1, eot_mode="hard")
+    for i in range(len(soft)):
+        a, b = soft.cst_sequence(i, 4), hard.cst_sequence(i, 4)
+        assert a["soft_pos"] == b["soft_pos"] and [b["soft_w"][d] for d in b["soft_pos"]] == [float(a["soft_w"][d] >= 0.5) for d in a["soft_pos"]]
+    with pytest.raises(ValueError): CstDialogueDataset([q], FakeTok(), delays=(4,), eot_mode="x")
+
+
 def test_dataset_drops_three_speaker_windows_and_excludes(tmp_path):
     q = make(tmp_path, third=True)
     ds = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, seed=1)

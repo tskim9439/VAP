@@ -1,0 +1,101 @@
+{
+ "sizes": {
+  "dlg_ko": 90799,
+  "dlg_en": 11414,
+  "dlg_de": 11195,
+  "rep_en": 33990,
+  "rep_ko": 145665,
+  "rep_de": 53315
+ },
+ "check": {
+  "dlg_ko": {
+   "n": 32,
+   "bad": 0,
+   "examples": []
+  },
+  "dlg_en": {
+   "n": 32,
+   "bad": 0,
+   "examples": []
+  },
+  "dlg_de": {
+   "n": 32,
+   "bad": 0,
+   "examples": []
+  },
+  "rep_en": {
+   "n": 32,
+   "bad": 0,
+   "examples": []
+  },
+  "rep_ko": {
+   "n": 32,
+   "bad": 0,
+   "examples": []
+  },
+  "rep_de": {
+   "n": 32,
+   "bad": 0,
+   "examples": []
+  }
+ },
+ "stage3": {
+  "format": "cst-v1",
+  "corpora": [
+   "aihub71631",
+   "aihub134-1",
+   "aihub134-2",
+   "otoSpeech",
+   "kec",
+   "ztc",
+   "nsc"
+  ],
+  "split_sha256": "6a61db381ebfa32048719eef98f6a4588eb2a85e7c932adb129a452476dd8b14",
+  "dialogues": "6b020cac97911eaf749743455a31e3091e0b9e9a8e56a313dab707484ad6c330",
+  "window": [
+   20.0,
+   40.0
+  ],
+  "hop": 10.0,
+  "start_mode": "grid",
+  "random_frac": null,
+  "eot_mode": "soft",
+  "backchannel": null,
+  "decision_weight": 2.0,
+  "turn_weight": 2.0,
+  "weights": {
+   "dlg_ko": 1.0,
+   "dlg_en": 1.0,
+   "dlg_de": 1.0,
+   "rep_ko": 0.5,
+   "rep_en": 0.5,
+   "rep_de": 0.5
+  },
+  "delays": [
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "next_weight": 0.3,
+  "next_weight_ko": 0.15,
+  "replay_words": "d44b8b936a7ddf449f877ce0ab5a0495952efa05d6b9354c5b1e0b025143c2dc",
+  "replay_de_words": "249a612d828af6a010ed6cbbb6fda84a09bdb6b7ce52cd94bceb8d975f8e8f83",
+  "replay_files_frac": 0.05,
+  "replay_max_items": 0,
+  "ast_targets_sha256": "42d1e778134e6e402921404790980f70fde6b1c768a28c45d499fdc6b91a2c6c",
+  "ast_frac": 0.8,
+  "offline_frac": 0.3,
+  "gain_augment": null,
+  "speed_perturb": null,
+  "noise_aug": null,
+  "spec_augment": "off",
+  "max_windows": 0,
+  "seed": 0,
+  "vocab_sha256": "85b6c466cb70b3b6f80a5d060f861d26720381e18c55743a5a6bacec4238c5a2",
+  "init": "/soundai/Model/VAPASR/semcommit-q06-s4-ast/final"
+ }
+}
