@@ -1,0 +1,4 @@
+# 테스트·도구 전용 (서버 런타임은 쓰지 않는다): pytest, tools/client_file.py 의 soundfile, 검증 도구의 safetensors
+pytest==9.1.1
+soundfile==0.14.0
+safetensors==0.8.0

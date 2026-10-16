@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>VAPKT 실시간 전사·번역</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script type="module" src="/static/app.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <h1>VAPKT 실시간 전사·번역</h1>
+  <span id="model-chip" class="chip">모델 확인 중…</span>
+  <span id="state-chip" class="chip state" data-state="connecting"><span class="dot"></span><span id="state-text">연결 중…</span></span>
+</header>
+
+<section class="controls" aria-label="설정">
+  <div class="row">
+    <label class="field">원문 <select id="src-lang"></select></label>
+    <div class="field modes" role="radiogroup" aria-label="모드">
+      <span class="lbl">모드</span>
+      <label class="pill"><input type="radio" name="mode" value="asr" checked><span>전사</span></label>
+      <label class="pill"><input type="radio" name="mode" value="translate"><span>전사 + 번역</span></label>
+    </div>
+    <label class="field">번역 <select id="tgt-lang"></select></label>
+    <label class="field">지연 δ <select id="delay"></select></label>
+    <span id="delay-hint" class="hint"></span>
+    <span id="pending-chip" class="chip warn" hidden>다음 세그먼트부터 적용</span>
+  </div>
+  <div class="row">
+    <label class="field">마이크 <select id="mic"><option value="">기본 마이크</option></select></label>
+    <button id="btn-mic" class="primary" type="button" disabled>● 마이크 시작</button>
+    <span class="sep" aria-hidden="true"></span>
+    <label class="field file">파일 <input id="file" type="file" accept="audio/*,.wav,.flac,.mp3,.m4a,.ogg"></label>
+    <button id="btn-play" type="button" disabled>▶ 실시간 재생</button>
+    <span class="field">
+      <select id="fast-mode" aria-label="빠르게 재생 속도">
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+        <option value="0" selected>최대</option>
+        <option value="eval">평가 방식(분할 없음)</option>
+      </select>
+      <button id="btn-fast" type="button" disabled>⏩ 빠르게</button>
+    </span>
+    <label class="check"><input id="listen" type="checkbox"> 소리 듣기</label>
+    <button id="btn-abort" class="danger" type="button" hidden>■ 중단</button>
+    <span id="file-state" class="hint"></span>
+  </div>
+  <div class="row meter-row">
+    <span class="lbl">입력</span>
+    <canvas id="meter" height="18" aria-label="입력 레벨"></canvas>
+    <span id="clip-led" class="led" title="클리핑"></span>
+    <span id="meter-text" class="hint mono">—</span>
+    <button id="btn-adv" class="link" type="button" aria-expanded="false" aria-controls="adv">▸ 고급</button>
+  </div>
+  <div class="notes">
+    <span>전사는 정규형(소문자·구두점 없음, 숫자는 말한 대로)으로 나옵니다.</span>
+    <span id="note-koen" class="note-warn" hidden>한→영 번역 모드에서는 한국어 전사가 앞부분에서 끊기는 경우가 있습니다(s4 알려진 약점).</span>
+    <span id="note-hold" class="note-warn" hidden>긴 발화: +0.64 s 대기</span>
+  </div>
+</section>
+
+<section id="adv" class="adv" hidden>
+  <fieldset>
+    <legend>브라우저 (마이크, 다음 시작부터)</legend>
+    <label class="check"><input id="opt-ec" type="checkbox"> <span id="lbl-ec">브라우저 에코 제거</span></label>
+    <label class="check"><input id="opt-ns" type="checkbox"> <span id="lbl-ns">브라우저 잡음 억제</span></label>
+    <label class="check"><input id="opt-agc" type="checkbox"> <span id="lbl-agc">브라우저 자동 이득</span></label>
+  </fieldset>
+  <fieldset>
+    <legend>서버</legend>
+    <label class="check"><input id="opt-gain" type="checkbox" checked> 서버 음량 자동 맞춤</label>
+    <label class="field">분할
+      <select id="opt-seg"><option value="vad">자동(VAD)</option><option value="none">없음(평가 방식, 파일만)</option></select>
+    </label>
+    <label class="field">끝 멈춤 <input id="opt-pause" type="number" min="300" max="2000" step="50" value="800"> ms</label>
+    <label class="field">최대 길이 <input id="opt-max" type="number" min="10" max="30" step="1" value="25"> s</label>
+    <label class="check"><input id="opt-final" type="checkbox"> 세그먼트 끝 final 재디코드</label>
+    <label class="check"><input id="opt-debug" type="checkbox"> 토큰 로그 표시</label>
+    <label class="check"><input id="opt-save" type="checkbox"> 세션 오디오 저장</label>
+    <span id="opt-msg" class="hint warn-text" aria-live="polite"></span>
+  </fieldset>
+  <div class="adv-info mono small">
+    <div id="track-info">트랙 설정: —</div>
+    <div id="rtt-info">RTT: —</div>
+    <div id="server-info">서버: —</div>
+  </div>
+</section>
+
+<div id="banners" aria-live="polite"></div>
+
+<main id="panes-wrap">
+  <div id="panes" class="panes asr-only">
+    <div class="pane-head seg-row"><div class="meta">구간</div><div class="cell src">원문 전사</div><div class="cell tr" id="tr-head">번역</div></div>
+    <div id="rows"></div>
+    <div id="empty" class="empty">마이크를 시작하거나 파일을 재생하세요. 단축키: Space 시작·정지, Esc 중단</div>
+  </div>
+</main>
+<button id="to-bottom" type="button" hidden>맨 아래로 ↓</button>
+
+<footer class="statusbar" aria-label="상태">
+  <span id="st-lag" class="stat">처리 지연 —</span>
+  <span id="st-backlog" class="stat">밀림 —</span>
+  <span id="st-rtf" class="stat">RTF —</span>
+  <span id="st-ms" class="stat">인코더 — · 디코더 —</span>
+  <span class="stat budget-wrap" title="청크 계산 시간 p95 / 실시간 예산 320 ms"><span class="budget"><span id="st-budget"></span></span><span id="st-chunk">청크 —/320 ms</span></span>
+  <span id="st-tok" class="stat">토큰/s —</span>
+  <span id="st-kv" class="stat">KV —</span>
+  <span id="st-mem" class="stat">메모리 —</span>
+  <span id="st-input" class="stat">입력 경로 —</span>
+</footer>
+
+<section class="tools">
+  <button id="btn-copy" type="button">텍스트 복사</button>
+  <button id="btn-json" type="button">JSON 저장</button>
+  <button id="btn-clear" type="button">화면 지우기</button>
+  <span id="tool-msg" class="hint"></span>
+</section>
+
+<section id="debug" class="debug" hidden>
+  <h2>토큰 로그</h2>
+  <div id="tok-log" class="mono small"></div>
+</section>
+</body>
+</html>

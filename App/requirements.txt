@@ -1,0 +1,9 @@
+# VAPKT 실시간 앱 런타임 (MLX 전용). torch / transformers / nemo / mlx_lm 은 넣지 않는다 (audio-ui-spec §8).
+# 2026-10-16 vapasr-local(Python 3.11.16 arm64)에서 확인한 버전. mlx·mlx-metal 휠은 macOS 버전별로 따로 배포된다.
+# Python 3.11–3.14 (numpy 2.4.6 은 3.11+, aiohttp 3.14.3 은 3.14 까지 휠), macOS 14 이상 (mlx 0.32.2 휠은 macOS 14/15/26 arm64 만).
+mlx==0.32.2
+mlx-metal==0.32.2
+numpy==2.4.6
+tokenizers==0.22.2
+aiohttp==3.14.3
+soxr==1.1.0

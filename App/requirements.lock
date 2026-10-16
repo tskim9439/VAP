@@ -1,0 +1,40 @@
+# pip freeze of a fresh ~/.vapkt-app/venv (Python 3.12.14 arm64, macOS 26.3) built by setup.sh from requirements.txt + requirements-dev.txt, 2026-10-16.
+# setup.sh installs this file when present (--only-binary :all:). Versions only: mlx/mlx-metal wheels are per-macOS, so no hashes.
+# Resolves (pip install --dry-run --only-binary :all:, 2026-10-16) for CPython 3.11–3.14 on macOS 14/15/26 arm64; fails on 3.10 (filelock 4.2.0, numpy 2.4.6),
+# 3.15 (aiohttp 3.14.3) and macOS 13 (mlx 0.32.2). setup.sh enforces the same range.
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.3
+aiosignal==1.4.0
+anyio==4.15.1
+attrs==26.1.0
+certifi==2026.7.22
+cffi==2.1.1
+click==8.5.0
+filelock==4.2.0
+frozenlist==1.8.0
+fsspec==2026.9.0
+h11==0.16.0
+hf-xet==1.7.0
+httpcore==1.0.9
+httpx==0.28.1
+huggingface_hub==1.33.0
+idna==3.20
+iniconfig==2.3.1
+mlx==0.32.2
+mlx-metal==0.32.2
+multidict==6.9.1
+numpy==2.4.6
+packaging==26.3
+pluggy==1.7.0
+propcache==0.5.4
+pycparser==3.11
+Pygments==2.21.0
+pytest==9.1.1
+PyYAML==6.0.3
+safetensors==0.8.0
+soundfile==0.14.0
+soxr==1.1.0
+tokenizers==0.22.2
+tqdm==4.70.1
+typing_extensions==4.16.0
+yarl==1.25.1

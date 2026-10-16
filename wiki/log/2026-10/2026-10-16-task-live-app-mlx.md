@@ -1,0 +1,24 @@
+## [2026-10-16] task | q06-s4-ast 실시간 마이크 전사·번역 앱(App/, MLX)
+
+- Changed:
+  - 코드: `App/` 신규(engine/·server.py·audio_pipeline.py·text_stream.py·web/·tools/·tests/·docs/·setup.sh·run.sh)
+  - 위키: [[output-live-app-mlx-20261016]] 신규
+  - T5: `/Volumes/Samsung_T5/vapkt-models/app-work/golden-s4/`(torch fp32 기준 39 케이스), 같은 폴더의 편집 경계·스트레스 자료
+- Reason:
+  - 사용자 요청(2026-10-15): s4 체크포인트로 MacBook Pro 에서 마이크로 실시간 전사·번역을 시험하는 앱. 실시간을 위해 추론 최적화.
+- 결과:
+  - MLX 전용 엔진(인코더·어댑터·thinker)이 torch 기준과 골든 39/39 토큰 일치한다(정밀도 조합 4 가지, 서버 경로 전체).
+  - 기본 M4 1× 실시간: auto(fp16/fp16 + q4 초안) 번역 RTF 0.29·청크 p95 198 ms, 전사 RTF 0.24.
+  - 테스트 820 통과.
+- 작업 방식:
+  - 명세 4 개(디코드 계약·인코더·thinker·오디오/UI)를 쓰고 적대 검토했다.
+  - 5 갈래로 병렬 구현하고, 실가중치 검증·통합을 거쳤다.
+  - 7 관점 리뷰(52 건) → 검증 → 수정 → 회귀를 했다.
+- 운영 메모:
+  - Mac mini 의 `~/Desktop/VAPKT-models` 는 `.nosync` 체크포인트 외에 전부 dataless 다.
+  - 사용자가 `~/Desktop/VAPKT` 를 "다운로드된 상태로 유지"로 고정했다.
+- Next:
+  - MacBook Pro 에서 `bash App/setup.sh && bash App/run.sh`, 시작 로그의 "자동 정밀도" 줄과 마이크 시험.
+  - `App/` 커밋·푸시(사용자 확인 필요).
+  - 실제 방 소음에서의 VAD 확인.
+- By: tskim
