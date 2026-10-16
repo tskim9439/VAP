@@ -1,0 +1,27 @@
+세트/δ                                           s4 |   p7-rep75 | r1@ck2000 | r1@ck3000
+fleurs-de-en/delta-10 wer                    7.75 |           9.07 |           9.44 |           8.89
+fleurs-de-en/delta-4 wer                    10.99 |          11.08 |          11.26 |          11.13
+fleurs-en-de/delta-10 wer                    7.87 |           8.54 |           8.31 |           7.87
+fleurs-en-de/delta-4 wer                     8.81 |           9.39 |           9.70 |           8.85
+fleurs-en-ko/delta-10 wer                    9.34 |          10.26 |          10.17 |          10.08
+fleurs-en-ko/delta-4 wer                    10.90 |          11.96 |          11.09 |          11.18
+fleurs-ko-en/delta-10 cer_nospace           10.79 |           8.66 |           8.84 |           8.73
+fleurs-ko-en/delta-4 cer_nospace            10.84 |           9.35 |           9.65 |           9.48
+fleurs-de-en/delta-10 BLEU·LAAL      32.47· 1.71 |   29.63· 1.62 |   29.95· 1.74 |   30.19· 1.81
+fleurs-de-en/delta-4 BLEU·LAAL       27.98· 1.33 |   26.61· 1.31 |   27.88· 1.51 |   27.83· 1.41
+fleurs-en-de/delta-10 BLEU·LAAL      26.82· 1.99 |   26.48· 1.94 |   24.71· 1.96 |   25.93· 1.89
+fleurs-en-de/delta-4 BLEU·LAAL       25.02· 1.38 |   22.62· 1.56 |   21.52· 1.41 |   22.90· 1.41
+fleurs-en-ko/delta-10 BLEU·LAAL      30.86· 3.71 |   29.68· 3.33 |   30.80· 3.64 |   29.55· 3.43
+fleurs-en-ko/delta-4 BLEU·LAAL       29.64· 2.88 |   29.16· 2.70 |   29.42· 2.79 |   29.80· 2.73
+fleurs-ko-en/delta-10 BLEU·LAAL      13.77· 2.67 |   14.39· 2.54 |   13.77· 2.52 |   14.73· 2.67
+fleurs-ko-en/delta-4 BLEU·LAAL       13.12· 2.12 |   13.52· 2.12 |   13.06· 1.91 |   13.79· 2.06
+kspon-eval_clean/delta-10 cer_nospace          10.63 |          10.82 |          10.39 |           9.83
+kspon-eval_clean/delta-4 cer_nospace          12.11 |          11.56 |          12.11 |          12.48
+kspon-eval_other/delta-10 cer_nospace           7.16 |           6.98 |           7.73 |           7.11
+kspon-eval_other/delta-4 cer_nospace           7.91 |           8.17 |           8.53 |           9.19
+voxpopuli-aa-test/delta-10 wer               6.85 |           6.78 |           7.13 |           7.45
+voxpopuli-aa-test/delta-4 wer                7.59 |           7.45 |           7.80 |           8.26
+yodas-de-dev/delta-10 wer                    3.26 |           3.86 |           3.92 |           3.44
+yodas-de-dev/delta-4 wer                     4.76 |           5.01 |           5.07 |           4.89
+librispeech-test-other/delta-10 wer           7.21 |           7.81 |           7.37 |           7.37
+librispeech-test-other/delta-4 wer           8.03 |           8.42 |           8.80 |           8.09

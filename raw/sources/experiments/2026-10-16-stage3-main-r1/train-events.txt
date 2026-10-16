@@ -1,0 +1,37 @@
+[2026-10-16 19:58:44] job 89001 nodes=2 (slurmmxch200v5-hpc-[29-30]) restart=0/5 OUT=/soundai/Model/VAPASR/stage3-q06-st3-r1
+[19:59:31] 실패 rc=1 → requeue (0/5)
+[2026-10-16 20:04:25] job 89001 nodes=2 (slurmmxch200v5-hpc-[18-19]) restart=1/5 OUT=/soundai/Model/VAPASR/stage3-q06-st3-r1
+[20:05:04] 로컬 env 사용 /tmp/sa_tskim/vapasr-env
+[20:05:04] torchrun × 2 노드 × 8 GPU (rdzv 10.249.33.60:29001): --nemotron-dir /soundai/Model/nemotron-3.5-asr-streaming-0.6b --out-dir /soundai/Model/VAPASR/stage3-q06-st3-r1 --init /soundai/Model/VAPASR/semcommit-q06-s4-ast/final --data /soundai/users/tskim/VAPKT-data/data/phase2 --split /soun
+섞기: steps/epoch 625 · 비중 {'dlg_ko': 0.3536, 'dlg_en': 0.1248, 'dlg_de': 0.1232, 'rep_en': 0.1328, 'rep_ko': 0.1328, 'rep_de': 0.1328} · 셋 배치/epoch {'dlg_ko': 312, 'dlg_en': 25, 'dlg_de': 39, 'rep_en': 311, 'rep_ko': 764, 'rep_de': 327} · world 16
+train 종료: step 4000/4000 완료 · {'train_runtime': 4497.4407, 'train_samples_per_second': 14.23, 'train_steps_per_second': 0.889, 'train_loss': 0.27528909003734586, 'epoch': 6.4}
+check-save: 누락 [] · 추가 [] · shape [] · 값 차이 0 [] · 인코더 저장 키 638 · 손실 메모리 {'loss': 0.15325, 'loss_next': 0.1553, 'loss_text': 0.13441, 'top1_text': 0.94979, 'loss_turn': 0.31571} / 재로드 {'loss': 0.15304, 'loss_next': 0.15565, 'loss_text': 0.13391, 'top1_t
+PARITY OK
+[21:37:34] 학습 완료 → DONE (parity: /soundai/Model/VAPASR/stage3-q06-st3-r1/parity.json)
+{
+ "parity": true,
+ "stage3_config_ok": true,
+ "eot_registry_ok": true,
+ "memory": {
+  "loss": 0.15325,
+  "loss_next": 0.1553,
+  "loss_text": 0.13441,
+  "top1_text": 0.94979,
+  "loss_turn": 0.31571
+ },
+ "reloaded": {
+  "loss": 0.15304,
+  "loss_next": 0.15565,
+  "loss_text": 0.13391,
+  "top1_text": 0.94979,
+  "loss_turn": 0.31508
+ },
+ "missing": [],
+ "extra": [],
+ "shape_mismatch": [],
+ "value_diff": [],
+ "encoder_saved_keys": 638,
+ "tokenizer_reload_ok": true,
+ "tokenizer_reload_error": null,
+ "batch_n_soft": 13
+}
