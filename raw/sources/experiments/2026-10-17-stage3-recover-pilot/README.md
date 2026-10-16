@@ -81,7 +81,12 @@ source_type: source-drop
 - **final 재로드 parity OK.** 지문 `config.stage3.recover` = {p 0.5, boundary_frac 0.5, max_lag 8, max_boundaries 2}
 - 스모크는 단어 첫 토큰 제한을 mxc 에 올리던 무렵 시작해, 어느 판으로 돌았는지 확실하지 않다. 제한은 후보 위치만 바꾸고 학습 경로는 같다.
 
-## 파일럿 st3-p8-recover (제출 대기 — 사용자)
+## 파일럿 st3-p8-recover (사용자 제출: job 89638, 2026-10-17 08:41)
+- **경과:**
+  - 08:41 hpc-29·30 에서 시작했다. r1 첫 시작이 NCCL SIGSEGV 로 끝난 노드였는데 이번에는 통과했다.
+  - 학습 전 점검: 원래·뒤집은 시퀀스와 replay 모두 불일치 0
+  - 섞기는 r1 과 같다(steps/epoch 625).
+  - 08:54 step 10 에 이르렀다. `flip_per_dlg_step` 6–7 이다.
 - **비교 대상:** q06-st3-r1 checkpoint-2000(Stage 3 최종). 레시피를 똑같이 두고 `--recover-p 0.5` 만 더한다.
 - **같은 LR 일정을 쓴다:** r1 과 같이 `--max-steps 4000`(cosine)·2 노드로 내고 checkpoint-2000 끼리 비교한다.
   - 2,000 step 으로 줄이면 cosine 이 끝까지 내려가 r1 ck2000 과 일정이 달라진다.

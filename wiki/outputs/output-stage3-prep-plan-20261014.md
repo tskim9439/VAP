@@ -350,7 +350,7 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
   - 뒤집은 창의 가려진 label 은 평균 10–13 % 다.
   - dry-run 점검 불일치 0
   - GPU 20 step 스모크 parity OK
-- **파일럿 st3-p8-recover(사용자 제출 대기):** r1 레시피 그대로 + `--recover-p 0.5`, 2 노드, `--max-steps 4000`(r1 과 같은 cosine 일정)
+- **파일럿 st3-p8-recover(사용자 제출 job 89638, 2026-10-17 08:41 시작, 08:54 step 10):** r1 레시피 그대로 + `--recover-p 0.5`, 2 노드, `--max-steps 4000`(r1 과 같은 cosine 일정)
   - checkpoint-2000 을 r1 ck2000 과 비교한다. 이어짐 4.5 pt·cp 28.6 이 주는지, agn·EOT·퇴행이 나빠지지 않는지 본다.
   - 평가 큐(호스트 GPU 1)가 checkpoint-2000·3000·final 을 기다린다. 대화 평가 → 오류 유형 분해 → 단일 화자 퇴행 순서다.
 
