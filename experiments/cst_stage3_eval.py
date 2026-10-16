@@ -39,11 +39,35 @@ def windows_of(a, tok):
     return sets, out
 
 
+def words_of(tok, toks):
+    """[(시각, tid)] → [(단어, 그 단어 마지막 바이트 토큰의 시각)]."""
+    import bisect, re
+    from vapasr.data.ast_eval import token_bytes
+    if not toks: return []
+    bs = token_bytes(tok, [t for _, t in toks]); raw = b"".join(bs); cum, c = [], 0
+    for b in bs: c += len(b); cum.append(c)
+    return [(m.group().decode("utf-8", "replace"), toks[min(bisect.bisect_left(cum, m.end()), len(toks) - 1)][0]) for m in re.finditer(rb"\S+", raw)]
+
+
+def window_ref(ds, i, delta, eot_id, tok):
+    """창 i·δ 의 참조 → (슬롯별 [(단어, 시각)], [(슬롯, 끝 시각, p_end)] EOT, 마스크 청크 집합, 화자 순서).
+    참조 = 그 δ 의 타깃 시퀀스에서 마스크 청크 밖 원소(학습 label 과 같은 범위)."""
+    from vapasr.data.cst_dialogue import window_speakers, window_streams
+    cid, t0w, L = ds.items[i]; d = ds.dlgs[cid]; K = int(round(L / 0.08))
+    eps = ds.eps[cid]; sp_order = window_speakers(eps, t0w, L)
+    streams, eot_p, _ = window_streams(eps, sp_order, t0w, L, eot_id)
+    q = ds.cst_sequence(i, delta); mask = ds.mask_chunks(d, t0w, L, K, delta); ref_tok = [[], []]; ref_eot = []
+    for pos, src in enumerate(q["src_at"]):
+        if src is None or (0 <= q["chunk_at"][pos] < K and q["chunk_at"][pos] in mask): continue
+        x = streams[src[0]][src[1]]
+        if len(x) == 3: ref_eot.append((src[0], x[1], eot_p.get((src[0], src[1]))))
+        else: ref_tok[src[0]].append((x[1], x[0]))
+    return [words_of(tok, ref_tok[0]), words_of(tok, ref_tok[1])], ref_eot, mask, sp_order
+
+
 def run(a):
     import numpy as np, torch
-    from vapasr.data.cst_dialogue import window_speakers, window_streams
     from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, emitted_from_sequence
-    from vapasr.data.ast_eval import token_bytes
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
     prev = {}
     if a.from_predictions:
@@ -74,14 +98,7 @@ def run(a):
     dest = os.path.join(out, f"predictions-rank{a.rank}.jsonl")
     done = {(r["id"], r["delta"]) for r in map(json.loads, open(dest))} if os.path.exists(dest) else set()
     dev = next(model.parameters()).device if model is not None else None; checked = set(); t0 = time.time(); n = 0
-
-    def words(toks):
-        """[(시각, tid)] → [(단어, 그 단어 마지막 바이트 토큰의 시각)]."""
-        if not toks: return []
-        bs = token_bytes(tok, [t for _, t in toks]); raw = b"".join(bs); cum, c = [], 0
-        for b in bs: c += len(b); cum.append(c)
-        import bisect, re
-        return [(m.group().decode("utf-8", "replace"), toks[min(bisect.bisect_left(cum, m.end()), len(toks) - 1)][0]) for m in re.finditer(rb"\S+", raw)]
+    words = lambda toks: words_of(tok, toks)
 
     with open(dest, "a", buffering=1) as fo, torch.inference_mode():
         for c in dict.fromkeys(x[0] for x in items):
@@ -118,15 +135,7 @@ def run(a):
                         checked.add(key); print(f"PARITY {key} PASS", flush=True)
                     for (i, cid, t0w, L, K, d), s in zip(meta, states):
                         if (f"{cid}@{t0w}", delta) in done: continue
-                        eps = ds.eps[cid]; sp_order = window_speakers(eps, t0w, L)
-                        streams, eot_p, wst = window_streams(eps, sp_order, t0w, L, EOT)
-                        q = ds.cst_sequence(i, delta); mask = ds.mask_chunks(d, t0w, L, K, delta); ref_tok = [[], []]; ref_eot = []
-                        for pos, src in enumerate(q["src_at"]):                      # 참조 = 타깃 시퀀스에서 마스크 청크 밖 원소(학습 label 과 같은 범위)
-                            if src is None or (0 <= q["chunk_at"][pos] < K and q["chunk_at"][pos] in mask): continue
-                            x = streams[src[0]][src[1]]
-                            if len(x) == 3: ref_eot.append((src[0], x[1], eot_p.get((src[0], src[1]))))
-                            else: ref_tok[src[0]].append((x[1], x[0]))
-                        ref_w = [words(ref_tok[0]), words(ref_tok[1])]
+                        ref_w, ref_eot, mask, sp_order = window_ref(ds, i, delta, EOT, tok)
                         hs, he = parse_emitted(s.emitted, spk, EOT, drop_chunks=mask)
                         sc = score_window(ref_w[:2], [words(hs[0]), words(hs[1])], d.lang)
                         sc["eot"] = match_eot(ref_eot, he, sc["perm"], eot_tol(delta))

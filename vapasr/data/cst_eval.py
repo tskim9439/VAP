@@ -104,3 +104,76 @@ def pool(rows: Sequence[Dict]) -> Dict:
                 eot_hyp=nh, eot_pos=npos, eot_recall=round(sum(r["eot"]["hit_pos"] for r in rows) / max(1, npos), 4), eot_precision=round(good / max(1, nh), 4),
                 eot_hold_fire=round(sum(r["eot"]["hit_hold"] for r in rows) / max(1, nhold), 4), eot_lat_median=round(statistics.median(e), 3) if e else None,
                 eot_lat_p90=round(sorted(e)[int(0.9 * (len(e) - 1))], 3) if e else None)
+
+
+def align(a: Sequence, b: Sequence) -> List[Tuple[Optional[int], Optional[int]]]:
+    """ed 와 같은 비용의 정렬 역추적 → [(i, j)]: 둘 다 있으면 일치·치환, j None = 삭제, i None = 삽입. 비용이 같으면 대각 > 삭제 > 삽입."""
+    n, m = len(a), len(b); D = [list(range(m + 1))] + [[i] + [0] * m for i in range(1, n + 1)]
+    for i in range(1, n + 1):
+        x, Di, Dp = a[i - 1], D[i], D[i - 1]
+        for j in range(1, m + 1): Di[j] = min(Dp[j] + 1, Di[j - 1] + 1, Dp[j - 1] + (x != b[j - 1]))
+    out: List[Tuple[Optional[int], Optional[int]]] = []; i, j = n, m
+    while i or j:
+        if i and j and D[i][j] == D[i - 1][j - 1] + (a[i - 1] != b[j - 1]): out.append((i - 1, j - 1)); i -= 1; j -= 1
+        elif i and D[i][j] == D[i - 1][j] + 1: out.append((i - 1, None)); i -= 1
+        else: out.append((None, j - 1)); j -= 1
+    return out[::-1]
+
+
+ATTR_TYPES = ("whole_short", "whole_long", "late", "early", "inner")
+
+
+def attr_errors(ref: Sequence[Sequence[Tuple[str, float]]], hyp: Sequence[Sequence[Tuple[str, float]]], lang: str, perm: Sequence[int],
+                busy: Optional[Sequence[Sequence[Tuple[float, float]]]] = None, short_words: int = 3) -> Dict:
+    """화자 귀속 오류 유형. ref·hyp: 슬롯별 [(단어, 시각)], perm: 가설 슬롯 → 참조 슬롯(score_window 의 cp 순열), busy: 참조 슬롯별 말하는 구간(창 기준 s).
+    화자 무시 정렬(score_window 의 agn 과 같은 시각순·같은 비용)에서 짝지은(일치·치환) 단위의 슬롯이 참조와 다르면 오배정이다.
+    참조 run = 시각순으로 같은 슬롯이 이어진 구간(한 화자의 턴 조각). run 안에서 이어진 오배정 덩어리를 위치로 나눈다:
+      whole_short·whole_long : run 전체 — 턴을 통째로 다른 화자에 붙임(short = run 이 short_words 단어 이하, 맞장구·짧은 응답)
+      late  : run 첫머리부터 — 교대를 늦게 바꿈(새 턴 첫머리를 직전 화자로)
+      early : run 끝까지 — 교대를 일찍 바꿈(턴 끝을 다음 화자로)
+      inner : run 가운데 — 턴 중간의 헛교대
+    겹침(ov) = 그 단위 시각에 다른 슬롯 화자도 말하고 있음(busy), 아니면 solo.
+    통째 오배정 run 은 다시 나눈다: 홀로(앞뒤 run 은 통째로 틀리지 않음 — 턴 하나를 주변 화자에 삼킴) / 이어짐(연속 run 이 통째로 틀림 — 여러 턴의 정체가 뒤바뀜).
+    → dict(n_ref, agn, n_pair, n_mis, units{'유형/ov|solo': 단위 수}, runs, runs_short, whole_short_runs, whole_long_runs, whole_iso_units, whole_streak_units,
+           whole_streak_edge_units(이어짐 중 창 처음·끝 run 에 닿는 것), ref_changes, hyp_changes, late_words)."""
+    rw = sorted([(t, s, k, w) for s in (0, 1) for k, (w, t) in enumerate(ref[s])], key=lambda x: x[0])
+    R = [(u, s, (s, k), t) for t, s, k, w in rw for u in units(w, lang)]
+    hw = sorted([(t, perm[s], w) for s in (0, 1) for w, t in hyp[s]], key=lambda x: x[0])
+    H = [(u, s) for _, s, w in hw for u in units(w, lang)]
+    pairs = align([x[0] for x in R], [x[0] for x in H])
+    lab: List[Optional[int]] = [None] * len(R)
+    for i, j in pairs:
+        if i is not None and j is not None: lab[i] = H[j][1]
+    runs: List[List[int]] = []
+    for i, x in enumerate(R):
+        if runs and R[runs[-1][-1]][1] == x[1]: runs[-1].append(i)
+        else: runs.append([i])
+    ov = lambda i: busy is not None and any(a - 1e-9 <= R[i][3] <= b + 1e-9 for a, b in busy[1 - R[i][1]])
+    cnt: Dict[str, int] = {}; late_words: List[int] = []; whole = {"whole_short": 0, "whole_long": 0}; n_short = 0; whole_n = [0] * len(runs)
+    for ri, run in enumerate(runs):
+        short = len({R[i][2] for i in run}) <= short_words; n_short += short
+        al = [i for i in run if lab[i] is not None]; mis = [lab[i] != R[i][1] for i in al]; k = 0
+        while k < len(al):
+            if not mis[k]: k += 1; continue
+            e = k
+            while e + 1 < len(al) and mis[e + 1]: e += 1
+            first, last = k == 0, e == len(al) - 1
+            typ = ("whole_short" if short else "whole_long") if first and last else "late" if first else "early" if last else "inner"
+            if typ in whole: whole[typ] += 1; whole_n[ri] = e - k + 1
+            if typ == "late": late_words.append(len({R[al[x]][2] for x in range(k, e + 1)}))
+            for x in range(k, e + 1):
+                key = f"{typ}/{'ov' if ov(al[x]) else 'solo'}"; cnt[key] = cnt.get(key, 0) + 1
+            k = e + 1
+    iso = streak = streak_edge = 0; ri = 0                               # 통째 오배정 run 이 홀로(앞뒤 run 은 맞음 = 턴 하나를 삼킴)인지, 이어지는지(여러 턴 정체가 뒤바뀜)
+    while ri < len(runs):
+        if not whole_n[ri]: ri += 1; continue
+        e = ri
+        while e + 1 < len(runs) and whole_n[e + 1]: e += 1
+        if e == ri: iso += whole_n[ri]
+        else:
+            streak += sum(whole_n[ri:e + 1])
+            if ri == 0 or e == len(runs) - 1: streak_edge += sum(whole_n[ri:e + 1])     # 창 끝까지(또는 처음부터) 이어짐 = 되돌아오지 않음
+        ri = e + 1
+    return dict(n_ref=len(R), agn=sum(1 for i, j in pairs if i is None or j is None or R[i][0] != H[j][0]), n_pair=sum(x is not None for x in lab),
+                n_mis=sum(cnt.values()), units=cnt, runs=len(runs), runs_short=n_short, whole_short_runs=whole["whole_short"], whole_long_runs=whole["whole_long"],
+                whole_iso_units=iso, whole_streak_units=streak, whole_streak_edge_units=streak_edge, ref_changes=max(0, len(runs) - 1), hyp_changes=sum(H[j][1] != H[j - 1][1] for j in range(1, len(H))), late_words=late_words)

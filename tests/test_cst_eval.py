@@ -1,5 +1,5 @@
 """Stage 3 평가 도우미(vapasr/data/cst_eval.py) — 출력 해석, 화자 귀속 오류율(slot·cp·화자 무시), EOT 짝·합산. CPU."""
-from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, pool, ed
+from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, pool, ed, align, attr_errors
 
 A, B, EOT = 900, 901, 902
 
@@ -44,3 +44,30 @@ def test_emitted_from_sequence_matches_decode_layout():
     is_input = [True, True, True, False, False, False, True, False, True, False, False, False, True, False]
     chunk_of = [-1, -1, 0, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1]
     assert emitted_from_sequence(ids, is_input, chunk_of, NEXT, EMPTY) == [(0, A), (0, 5), (2, 6), (2, EOT)]   # flush 는 k = K(=2)
+
+
+def test_align_matches_ed():
+    assert align("abc", "abd") == [(0, 0), (1, 1), (2, 2)] and align("ab", "b") == [(0, None), (1, 0)] and align("", "x") == [(None, 0)]
+    for a, b in (("kitten", "sitting"), ("abcd", "dcba"), ("", "")):
+        pr = align(a, b); assert sum(1 for i, j in pr if i is None or j is None or a[i] != b[j]) == ed(a, b)
+
+
+def test_attr_errors_types_and_overlap():
+    w = lambda s, ts: [(x, t) for x, t in zip(s.split(), ts)]
+    ref = [w("a b c d e f", (1, 2, 3, 4, 8, 9)), w("x y z", (5, 6, 7))]                       # run A[a–d] · B[x–z] · A[e f]
+    hyp = [w("a c x", (1, 3, 5)), w("b d y z e f", (2, 4, 6, 7, 8, 9))]                        # b 헛교대 · d 일찍 · x 늦게 · e f 통째
+    busy = [[(0.5, 4.2), (7.8, 9.2)], [(3.9, 7.2)]]                                            # d(4.0)는 B 와 겹친다
+    r = attr_errors(ref, hyp, "English", [0, 1], busy)
+    assert r["units"] == {"inner/solo": 1, "early/ov": 1, "late/solo": 1, "whole_short/solo": 2} and r["n_mis"] == 5 and r["agn"] == 0
+    assert (r["runs"], r["runs_short"], r["whole_short_runs"], r["whole_long_runs"], r["ref_changes"], r["hyp_changes"], r["late_words"]) == (3, 2, 1, 0, 2, 5, [1])
+    assert (r["whole_iso_units"], r["whole_streak_units"]) == (2, 0)
+    ab = [w("a b c d e f g h", (1, 2, 3, 4, 9, 10, 11, 12)), w("w x y z", (5, 6, 7, 8))]
+    fl = attr_errors(ab, [w("a b c d w x y z", (1, 2, 3, 4, 5, 6, 7, 8)), w("e f g h", (9, 10, 11, 12))], "English", [0, 1])
+    assert fl["units"] == {"whole_long/solo": 8} and (fl["whole_iso_units"], fl["whole_streak_units"], fl["whole_streak_edge_units"]) == (0, 8, 8)   # 둘째 턴부터 정체가 뒤바뀜
+    long = attr_errors([w("a b c d", (1, 2, 3, 4)), []], [[], w("a b c d", (1, 2, 3, 4))], "English", [0, 1])
+    assert long["units"] == {"whole_long/solo": 4} and long["whole_long_runs"] == 1
+    assert attr_errors([w("a b c d", (1, 2, 3, 4)), []], [[], w("a b c d", (1, 2, 3, 4))], "English", [1, 0])["n_mis"] == 0   # cp 순열 적용
+    gap = attr_errors([w("a b c", (1, 2, 3)), []], [w("a c", (1, 3)), []], "English", [0, 1])
+    assert gap["n_mis"] == 0 and gap["agn"] == 1 and gap["n_pair"] == 2                       # 빠진 단어는 귀속 오류가 아니다
+    ko = attr_errors([[("안녕 하세요", 1.0)], []], [[], [("안녕하세요", 1.0)]], "Korean", [0, 1])
+    assert ko["n_ref"] == 5 and ko["units"] == {"whole_short/solo": 5}                         # 글자 단위로 세고, short 는 단어(2 개) 기준
