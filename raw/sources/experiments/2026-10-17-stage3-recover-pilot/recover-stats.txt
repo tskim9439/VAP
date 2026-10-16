@@ -1,0 +1,9 @@
+# recover_stats.py (2026-10-17, 단어 첫 토큰 제한 적용 뒤): 학습 대화 셋 창 800 개 × δ4·10, p = 1, 기본 Recover(boundary_frac 0.5, max_lag 8, max_boundaries 2)
+dlg_ko: 창 90799 · 표본 800×δ2 = 1600 · 뒤집기 성공 0.959 · 점검 불일치 0 []
+   종류 {'missed/boundary': 0.137, 'missed/inrun': 0.192, 'spurious/boundary': 0.223, 'spurious/inrun': 0.449} · 구간 원소 중앙값 5.0 p90 17 · 가려진 label 비율(창 대비) 중앙값 0.068 평균 0.130
+dlg_en: 창 7245 · 표본 800×δ2 = 1600 · 뒤집기 성공 1.000 · 점검 불일치 0 []
+   종류 {'missed/boundary': 0.226, 'missed/inrun': 0.224, 'spurious/boundary': 0.248, 'spurious/inrun': 0.302} · 구간 원소 중앙값 5.0 p90 22 · 가려진 label 비율(창 대비) 중앙값 0.053 평균 0.102
+dlg_de: 창 11195 · 표본 800×δ2 = 1600 · 뒤집기 성공 1.000 · 점검 불일치 0 []
+   종류 {'missed/boundary': 0.213, 'missed/inrun': 0.226, 'spurious/boundary': 0.235, 'spurious/inrun': 0.326} · 구간 원소 중앙값 5.0 p90 22 · 가려진 label 비율(창 대비) 중앙값 0.058 평균 0.108
+# 시작·회복 지점이 단어 첫 토큰이 아닌 경우(not_word_start) 0 — 점검 불일치 목록에 함께 센다.
+# 첫 판(끝 종류를 나중에 고름): 경계 회복 KO 23 % · EN 37 % · DE 34 % → 끝 종류를 먼저 고르게 바꿈(위 결과 KO 36 % · EN 47 % · DE 45 %).

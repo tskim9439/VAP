@@ -14,6 +14,7 @@ sources:
   - '[[2026-10-16-stage3-pilot-p1]]'
   - '[[2026-10-16-stage3-pilots]]'
   - '[[2026-10-16-stage3-main-r1]]'
+  - '[[2026-10-17-stage3-recover-pilot]]'
 related:
   - '[[decision-eot-immediate-soft-label]]'
   - '[[output-phase2-eval-plan]]'
@@ -333,6 +334,25 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
      - `--start-mode mixed`
   5. 화자별 이득·음색 증강: 지금 대화 행은 mono 캐시라 증강이 없다.
   - 경계 시점(늦은·이른 교대)과 겹침 처리는 몫이 작아 우선순위에서 내린다.
+
+### 정체 회복 학습 파일럿 준비 (2026-10-17, [[2026-10-17-stage3-recover-pilot]])
+- **사용자 결정:** "1번 구현해서 파일럿 준비해줘"
+- **구현:** `CstDialogueDataset(recover=Recover(p, …))`, `stage3_train.py --recover-p`, `submit-stage3-train.sh --recover-p`. 기본은 끔이고, 끄면 이전 run 지문 그대로다.
+  - 학습 창의 p 비율에서 방출 원소 한 구간의 문맥 슬롯을 뒤집어 태그를 다시 단다.
+  - 시작은 놓친 교대 / 헛 교대다. 단어 첫 토큰에서만 시작한다.
+  - 구간 출력 label 은 가린다. 회복 지점만 정답이다.
+    - 다음 교대 경계면 태그 없이 이어 쓴다(목소리로 정체 판단).
+    - run 안이면 바로잡는 태그를 낸다.
+  - 평가 경로는 뒤집지 않는다.
+- **점검:**
+  - 테스트 18 개 통과
+  - 실데이터 창 4,800 개(p = 1): 점검 불일치 0, 뒤집기 성공 96–100 %, 경계 회복 36–47 %
+  - 뒤집은 창의 가려진 label 은 평균 10–13 % 다.
+  - dry-run 점검 불일치 0
+  - GPU 20 step 스모크 parity OK
+- **파일럿 st3-p8-recover(사용자 제출 대기):** r1 레시피 그대로 + `--recover-p 0.5`, 2 노드, `--max-steps 4000`(r1 과 같은 cosine 일정)
+  - checkpoint-2000 을 r1 ck2000 과 비교한다. 이어짐 4.5 pt·cp 28.6 이 주는지, agn·EOT·퇴행이 나빠지지 않는지 본다.
+  - 평가 큐(호스트 GPU 1)가 checkpoint-2000·3000·final 을 기다린다. 대화 평가 → 오류 유형 분해 → 단일 화자 퇴행 순서다.
 
 ## 열린 질문
 - (해결 2026-10-16) `<EOT>` 는 soft 다. hard 는 보류 오방출이 0.17 → 0.28 로 커졌다(p2).

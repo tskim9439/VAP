@@ -1,0 +1,25 @@
+## [2026-10-17] task | Stage 3 정체 회복 학습(태그 뒤집기) 구현과 파일럿 st3-p8-recover 준비 — 점검·스모크 통과, 제출 대기
+
+- Changed:
+  - `vapasr/data/cst_dialogue.py`:
+    - `Recover`·`pick_flip`·`retag`, `build_cst_sequence(recover, rng, word_start)`
+    - `CstDialogueDataset(recover=)`·`word_start`, 뒤집은 시퀀스 점검(`problems_of`)
+    - 한 화자 창 점검을 슬롯 B 까지 넓혔다.
+    - `collate_cst` `n_flip`
+  - `experiments/stage3_train.py`: `--recover-p`·`--recover-boundary-frac`·`--recover-max-lag`·`--recover-max-boundaries`, 학습 전 뒤집기 점검, 지문 `recover`(켤 때만), 로그 `flip_per_dlg_step`, dry-run 뒤집은 예
+  - `slurm/submit-stage3-train.sh`: `--recover-p`
+  - `tests/test_cst_dialogue.py`: 테스트 7 개 추가(전체 18)
+  - raw `raw/sources/experiments/2026-10-17-stage3-recover-pilot/`([[2026-10-17-stage3-recover-pilot]]): 설계·실데이터 점검·dry-run·스모크·제출 명령·평가 큐
+  - [[output-stage3-prep-plan-20261014]]: "정체 회복 학습 파일럿 준비" 절
+- Reason: 사용자 요청 "1번 구현해서 파일럿 준비해줘". 오류 유형 분해에서 통째 오배정의 60 % 가 교대 하나를 놓친 뒤 회복하지 못한 연속 뒤바뀜이었다.
+- 결과:
+  - 실데이터 창 4,800 개(p = 1)에서 점검 불일치 0, 뒤집기 성공 96–100 %, 경계 회복 36–47 % 다.
+  - 뒤집은 창의 가려진 label 은 평균 10–13 % 다.
+  - dry-run 점검 0, GPU 20 step 스모크 parity OK
+  - 단어 중간 태그가 보여 시작·회복 지점을 단어 첫 토큰으로 제한했다.
+  - 경계 회복이 적어(KO 23 %) 끝 종류를 먼저 고르게 바꿨다.
+- Next:
+  - 사용자가 st3-p8-recover 를 제출한다(2 노드, 4,000 step, `--recover-p 0.5`).
+  - 평가 큐(호스트 GPU 1)가 checkpoint-2000·3000·final 을 잰다.
+  - r1 ck2000 과 이어짐·cp·agn·EOT·퇴행을 비교한다.
+- By: tskim

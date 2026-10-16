@@ -3,7 +3,7 @@
 import json
 import numpy as np, pytest, torch, torch.nn.functional as F
 from vapasr.data.cst_dialogue import (cst_head_text, build_cst_sequence, read_back, tag_flush, window_speakers, window_streams, dialogue_episodes, is_backchannel,
-                                      CstDialogueDataset, collate_cst)
+                                      CstDialogueDataset, collate_cst, Recover, pick_flip, retag)
 from vapasr.data.dialogue import Dialogue, Utterance, ChannelRef, chunk_of
 from vapasr.data.interleave import Specials
 from vapasr.data.semcommit_dataset import build_interleaved_events
@@ -69,6 +69,75 @@ def test_unobserved_and_masked_eot_have_no_label():
     assert s2["soft_pos"] == [s2["eot_pos"][1]]                                                  # EOT 청크(24)가 마스크 밖이면 soft 는 남는다
 
 
+# ── 정체 회복 학습(태그 뒤집기)
+class R:                                                           # 각본대로 고르는 rng: random() 값 목록, choice(seq) → seq[각본 index]
+    def __init__(self, rand, pick): self.rand, self.pick = list(rand), list(pick)
+    def random(self): return self.rand.pop(0)
+    def choice(self, seq): return seq[self.pick.pop(0)]
+
+
+ST3 = [[(10, 0.5), (11, 1.0), (12, 2.6), (13, 3.0)], [(20, 1.6), (21, 2.0)]]                     # run A[10 11] · B[20 21] · A[12 13]
+RC = Recover(p=1.0, boundary_frac=0.5, max_lag=8, max_boundaries=2)
+
+
+def flip_seq(rng):
+    return build_cst_sequence(ST3, {}, 50, PRE, PAD, SP, delay=2, recover=RC, rng=rng)
+
+
+def lab_of(s, tid):
+    return s["labels"][s["ids"].index(tid)]
+
+
+def masked_between(s, a, b):
+    return all(s["labels"][p] == -100 for p in range(s["ids"].index(a), s["ids"].index(b)) if not s["is_input"][p])
+
+
+def test_retag_without_flip_is_identity():
+    for st in (ST3, [[(10, 0.5), (11, 1.0), ev(1.1)], [(20, 1.15), (21, 2.0), ev(2.1)]], [[(10, 0.2), (11, 0.75), ev(0.8)], [(20, 0.5), ev(0.55)]]):
+        for K, dl in ((50, 2), (12, 4)):
+            chunks, _, srcs = build_interleaved_events([list(x) for x in st], (K - 0.5) * 0.08, SP, delay_frames=dl, with_src=True); tag_flush(chunks, srcs, K, SP)
+            assert retag(chunks, srcs, set(), SP) == (chunks, srcs)
+
+
+def test_flip_missed_change_recovers_at_next_boundary_without_tag():
+    s = flip_seq(R([0.0, 0.0], [0, 0, 0]))                                                     # missed(n0 = 20) → boundary(n1 = 12)
+    assert s["flip"]["kind"] == "missed/boundary" and [t for t in body(s) if t != NEXT] == [A, 10, 11, 20, 21, 12, 13]
+    assert lab_of(s, 20) == lab_of(s, 21) == -100 and masked_between(s, 20, 12) and lab_of(s, 12) == 12   # 목소리 A 가 돌아오면 태그 없이 A 로 이어 쓴다
+    assert s["flip"]["p_end"] == s["ids"].index(12) and read_back(s["ids"], s["is_input"], SP, EOT)[0] == [[10, 11, 20, 21, 12, 13], []]
+
+
+def test_flip_missed_change_recovers_inside_run_with_tag():
+    s = flip_seq(R([0.0, 0.99], [0, 0, 0]))                                                    # missed(n0 = 20) → inrun(n1 = 21)
+    assert s["flip"]["kind"] == "missed/inrun" and [t for t in body(s) if t != NEXT] == [A, 10, 11, 20, B, 21, A, 12, 13]
+    pb = s["ids"].index(B); assert lab_of(s, 20) == -100 and s["labels"][pb] == B and s["flip"]["p_end"] == pb   # 늦게라도 바로잡는 B 태그
+    assert lab_of(s, 21) == 21 and s["labels"][s["ids"].index(A, pb)] == A
+
+
+def test_flip_spurious_change_masks_wrong_tag_and_recovers():
+    s = flip_seq(R([0.0, 0.0], [1, 0, 0]))                                                     # spurious(n0 = 11) → boundary(n1 = 20)
+    assert s["flip"]["kind"] == "spurious/boundary" and [t for t in body(s) if t != NEXT] == [A, 10, B, 11, 20, 21, A, 12, 13]
+    pb = s["ids"].index(B); assert s["labels"][pb] == -100 and lab_of(s, 11) == -100 and s["flip"]["p_start"] == pb   # 헛 태그는 문맥에만
+    assert lab_of(s, 20) == 20 and lab_of(s, 10) == 10                                         # 문맥이 이미 B → 태그 없이 B 의 말
+
+
+def test_flip_points_are_word_starts():
+    s = build_cst_sequence(ST3, {}, 50, PRE, PAD, SP, delay=2, recover=RC, rng=R([0.0, 0.0], [1, 0, 0]), word_start=lambda t: t != 11)   # 11 = 단어 중간
+    assert s["flip"]["kind"] == "spurious/boundary" and s["flip"]["n0"] == (1, 1) and [t for t in body(s) if t != NEXT] == [A, 10, 11, B, 20, A, 21, 12, 13]
+    assert lab_of(s, 21) == -100 and lab_of(s, 12) == 12 and lab_of(s, 11) == 11
+
+
+def test_pick_flip_respects_mask_text_and_probability():
+    seq = [(0, True, True), (0, True, True), (1, True, False), (1, False, True), (0, True, True)]   # 교대 지점 2 는 마스크, 3 은 EOT
+    for k in range(50):
+        r = pick_flip(seq, __import__("random").Random(k), RC)
+        assert r is None or (seq[r[0]][1] and seq[r[0]][2] and seq[r[1]][1] and seq[r[1]][2] and r[0] < r[1])
+    assert pick_flip([(0, True, True)], R([0.0], []), RC) is None                               # 원소 하나 — 고를 곳이 없다
+    long_a = [(0, True, True)] * 30 + [(1, True, True)] * 3                                     # 교대 경계가 하나뿐인 창도 경계 회복을 고를 수 있다
+    r = pick_flip(long_a, R([0.0], [0, 0, 0]), RC); assert r == (1, 30, "spurious/boundary")
+    s = build_cst_sequence(ST3, {}, 50, PRE, PAD, SP, delay=2, recover=Recover(p=0.3), rng=R([0.5], []))
+    assert s["flip"] is None and s == build_cst_sequence(ST3, {}, 50, PRE, PAD, SP, delay=2)    # 확률 밖이면 원래 시퀀스
+
+
 # ── 데이터셋(가짜 tokenizer · 합성 wav)
 sf = pytest.importorskip("soundfile")
 from test_dialogue_dataset import FakeTok  # noqa: E402
@@ -106,6 +175,23 @@ def test_dataset_sequences_are_consistent(tmp_path):
     p = pack_batch(c); assert p["sem_only_mask"].shape == p["ids"].shape == p["labels_alt"].shape
 
 
+def test_dataset_recover_flips_only_with_rng(tmp_path):
+    import random
+    q = make(tmp_path); base = CstDialogueDataset([q], FakeTok(), delays=(2, 4), window_s=(20.0, 20.0), hop_s=5.0, seed=1, decision_weight=2.0)
+    ds = CstDialogueDataset([q], FakeTok(), delays=(2, 4), window_s=(20.0, 20.0), hop_s=5.0, seed=1, decision_weight=2.0, recover=Recover(p=1.0))
+    kinds = set()
+    for i in range(len(ds)):
+        assert ds.cst_sequence(i, 4)["ids"] == base.cst_sequence(i, 4)["ids"]                     # rng 없음(평가·점검) = 뒤집지 않음
+        s0 = base.cst_sequence(i, 2); assert retag(s0["chunks"], s0["srcs"], set(), ds.csp) == (s0["chunks"], s0["srcs"])
+        for k in range(6):
+            for dl in (2, 4):
+                s = ds.cst_sequence(i, dl, rng=random.Random(100 * i + k)); assert ds.problems_of(s) == [], (ds.items[i], dl, k, s["flip"] and s["flip"]["kind"])
+                if s["flip"]: kinds.add(s["flip"]["kind"])
+    assert kinds == {"missed/boundary", "missed/inrun", "spurious/boundary", "spurious/inrun"}
+    random.seed(0); b = [ds[i] for i in range(3)]; c = collate_cst(b); assert c["n_flip"] == sum(x["n_flip"] for x in b) > 0
+    with pytest.raises(ValueError): CstDialogueDataset([q], FakeTok(), delays=(4,), recover=Recover(p=1.5))
+
+
 def test_dataset_hard_eot_mode(tmp_path):
     q = make(tmp_path)
     soft = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, seed=1)
@@ -123,6 +209,8 @@ def test_dataset_drops_three_speaker_windows_and_excludes(tmp_path):
     assert len(CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, exclude={"c1"})) == 0
     ds2 = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), windows=[("c1", 2.5, 20.0), ("nope", 0.0, 20.0)])
     assert ds2.items == [("c1", 2.5, 20.0)] and ds2.cst_sequence(0, 4)["speakers"][0] == "y"     # 2.5 s 시작: y(3 s) 가 먼저 → A
+    ds3 = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), windows=[("c1", 36.0, 2.5)])   # x 만 말하는 창(36–38.5 s)
+    assert ds3.cst_sequence(0, 4)["speakers"] == ["x"] and ds3.target_problems(0, 4) == []
 
 
 def test_backchannel_option_changes_outcome_and_drops_its_eot():
