@@ -1,0 +1,12 @@
+== 88965
+[2026-10-16 16:03:07] job 88965 nodes=1 (slurmmxch200v5-hpc-1) restart=0/5 OUT=/soundai/Model/VAPASR/stage3-st3-p6-combo
+섞기: steps/epoch 1087 · 비중 {'dlg_ko': 0.4085, 'dlg_en': 0.1426, 'dlg_de': 0.1426, 'rep_en': 0.1021, 'rep_ko': 0.1021, 'rep_de': 0.1021} · 셋 배치/epoch {'dlg_ko': 624, 'dlg_en': 51, 'dlg_de': 79, 'rep_en': 623, 'rep_ko': 1528, 'rep_de': 655} · wor
+train 종료: step 2000/2000 완료 · {'train_runtime': 2085.6461, 'train_samples_per_second': 7.671, 'train_steps_per_second': 0.959, 'train_loss': 0.3388250527381897, 'epoch': 1.8399264029438822}
+check-save: 누락 [] · 추가 [] · shape [] · 값 차이 0 [] · 인코더 저장 키 638 · 손실 메모리 {'loss': 0.18457, 'loss_next': 0.16705, 'loss_text': 0.17256, 'top1_text': 0.94142, 'loss_turn': 0.38729} / 재로드 {'loss': 0.18425, 'loss_next
+PARITY OK
+== 88966
+[2026-10-16 16:03:08] job 88966 nodes=1 (slurmmxch200v5-hpc-41) restart=0/5 OUT=/soundai/Model/VAPASR/stage3-st3-p7-rep75
+섞기: steps/epoch 1253 · 비중 {'dlg_ko': 0.3543, 'dlg_en': 0.1237, 'dlg_de': 0.1237, 'rep_en': 0.1333, 'rep_ko': 0.1325, 'rep_de': 0.1325} · 셋 배치/epoch {'dlg_ko': 624, 'dlg_en': 51, 'dlg_de': 79, 'rep_en': 623, 'rep_ko': 1528, 'rep_de': 655} · wor
+train 종료: step 2000/2000 완료 · {'train_runtime': 2034.8183, 'train_samples_per_second': 7.863, 'train_steps_per_second': 0.983, 'train_loss': 0.33940775561332703, 'epoch': 1.596169193934557}
+check-save: 누락 [] · 추가 [] · shape [] · 값 차이 0 [] · 인코더 저장 키 638 · 손실 메모리 {'loss': 0.2071, 'loss_next': 0.17761, 'loss_text': 0.20375, 'top1_text': 0.93305, 'loss_turn': 0.39328} / 재로드 {'loss': 0.20653, 'loss_next'
+PARITY OK

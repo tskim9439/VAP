@@ -1,0 +1,5 @@
+p1b-base  δ10 맞장구 참조: cp 33.1 · EOT R 0.747 P 0.394 hold 0.261
+p2-hard   δ10 맞장구 참조: cp 31.9 · EOT R 0.799 P 0.362 hold 0.381
+p3-bc     δ10 맞장구 참조: cp 31.4 · EOT R 0.660 P 0.566 hold 0.194
+p4-lang   δ10 맞장구 참조: cp 31.4 · EOT R 0.776 P 0.407 hold 0.261
+p5-rep    δ10 맞장구 참조: cp 34.2 · EOT R 0.748 P 0.397 hold 0.259
