@@ -375,7 +375,7 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
 - **점검:**
   - 테스트: mxc 95 개, 로컬 68 개 통과
   - 2 GPU torchrun 스모크: replay step 도 DDP 정상, `spk_acc` 0.53 → 0.70(20 step), 헤드 포함 parity OK
-- **파일럿 st3-p9-spkhead(사용자 제출 대기):** r1 레시피 + `--spk-act-weight 0.5`, 2 노드, 4,000 step
+- **파일럿 st3-p9-spkhead(사용자 제출 job 89868, 2026-10-17 14:58 시작, 15:12 step 10):** r1 레시피 + `--spk-act-weight 0.5`, 2 노드, 4,000 step
   - checkpoint-2000 을 r1 ck2000 과 비교한다.
   - 평가 큐 3 개(GPU 1·2·4)가 ck2000·3000·final 을 기다린다.
 

@@ -49,7 +49,11 @@ source_type: source-drop
   - `loss_act` 메모리 0.595 / 재로드 0.595
   - 저장 키 `spk_head.{0,2}.{weight,bias}`, config `spk_slots` 2·`spk_weight` 0.5·`stage3.spk_act_weight` 0.5
 
-## 파일럿 st3-p9-spkhead (제출 대기 — 사용자)
+## 파일럿 st3-p9-spkhead (사용자 제출: job 89868, 2026-10-17 14:58)
+- **경과:**
+  - 14:58 hpc-44·55 에서 시작했다. 모델 로드 156 s, 화자 슬롯 헤드 켬(가중 0.5)
+  - 학습 전 점검은 대화·replay 모두 불일치 0 이다. 섞기는 r1 과 같다(steps/epoch 625, world 16).
+  - 15:12 step 10 에 이르렀다. `loss_spk` 0.94 → 0.88, `spk_acc` 0.42 다(warmup 초반).
 - **비교 대상:** r1 checkpoint-2000(Stage 3 최종). 레시피를 똑같이 두고 `--spk-act-weight 0.5` 만 더한다.
 - **일정:** r1 과 같은 cosine 일정(`--max-steps 4000`, 2 노드)으로 내고 checkpoint-2000 끼리 비교한다.
 - **제출 명령(mxc, 사용자):**
