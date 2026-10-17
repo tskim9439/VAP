@@ -1,0 +1,23 @@
+## [2026-10-17] task | Stage 3 화자 정체 헤드 파일럿 st3-p9-spkhead 결과 — 같은 step 끼리 cp −3–4 pt(agn 그대로), ck3000 이 δ10 cp 26.8 로 지금까지 최선
+
+- Changed:
+  - raw `raw/sources/experiments/2026-10-17-stage3-spk-head/`([[2026-10-17-stage3-spk-head]]): 결과·읽기 절, 비교·bootstrap·퇴행·평가 요약·헤드 추이
+  - [[output-stage3-prep-plan-20261014]]: 화자 정체 헤드 파일럿 결과
+  - mxc: r1 ck3000 오류 유형 분해를 더 돌렸다(`results/stage3-attr-errors-q06-st3-r1-ck3000`).
+- Reason:
+  - 사용자 제출 job 89868(2026-10-17 15:03 – 16:35, parity OK)
+  - 평가 큐(호스트 GPU 1·2·4)가 18:24 에 끝났다.
+- 결과(대화 단위 짝 bootstrap 95 % 구간, δ10):
+  - p9 − r1 같은 step:
+    - ck3000: cp −3.95 [−5.22, −2.71], cp − agn −4.07, agn +0.13(구간 안)
+    - final: cp −2.91, cp − agn −3.04
+  - p9 ck2000: agn +2.48·교대 과다(1.29). 덜 된 상태다.
+  - p9 ck3000 − r1 ck2000(현재 최종): cp −1.76 [−3.10, −0.50], cp − agn −2.81, agn +1.05
+  - 단일 화자: Kspon other δ4 CER 8.5 → 10.0, 나머지는 비슷하다.
+- Next:
+  - 사용자가 Stage 3 최종을 p9 ck3000 으로 바꿀지 정한다.
+  - 후보 개선:
+    - p9 의 ck2500·3500 평가(최선 step 확인)
+    - 헤드 + 과적합 완화(데이터 늘리기)
+    - 헤드 lr·가중 조정(초반 agn 흔들림)
+- By: tskim
