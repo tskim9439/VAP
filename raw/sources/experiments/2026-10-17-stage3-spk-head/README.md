@@ -136,6 +136,30 @@ source_type: source-drop
   - agn 증가는 헤드 탓이 아니다. r1 도 step 2,000 → 3,000 에 같은 만큼 오른다(17.0 → 17.9). 영어·독일어 대화 창을 되풀이한 과적합 탓으로 본다.
 - **단일 화자:** Kspon other δ4 가 학습이 길수록 나빠진다(9.3 → 10.0 → 10.3). 나머지는 r1 과 비슷하다.
 
+## 청취·열람 묶음 (2026-10-17, `experiments/cst_listen_bundle.py`, `listen-cases.json`)
+- 사용자 요청: "잘 된 케이스와 안 좋은 케이스를 직접 보고 듣고 하고 싶어"
+- **비교:** r1 ck2000(기준) vs p9 ck3000(후보), δ10, held-out 창
+- **사례:** 4 범주 × 6 = 24 사례. 범주마다 KO·EN·DE 2 개씩, 대화당 한 창이다.
+  - 개선: 후보 cp 가 가장 많이 준 창(agn 차이 ≤ 5 pt)
+  - 악화: 후보 cp 가 가장 많이 는 창
+  - 둘 다 귀속 실패: 두 run 모두 귀속 몫 ≥ 15 %
+  - 둘 다 잘 됨: 두 run 모두 cp ≤ 10 %, 교대 많은 순
+- **사례마다 담긴 것:**
+  - 모델 입력 mono 오디오, 화자별 스테레오(왼쪽 A · 오른쪽 B)
+  - 지표: cp·agn·귀속 몫·이어짐·교대 수·슬롯 뒤집음
+  - 정답 / r1 / p9 의 시간 줄. 출력 단어에 화자 틀림·전사 틀림을 표시한다.
+- **위치:**
+  - mxc `results/stage3-listen-r1ck2000-vs-p9ck3000/`(72 MB)
+  - 로컬 `/Volumes/Samsung_T5/vapkt-review/stage3-listen-r1ck2000-vs-p9ck3000/index.html`
+  - 코퍼스 음성이라 외부에 올리지 않았다.
+- **극단 사례의 모양(슬롯별 단어 수):** 개선·악화 상위는 거의 두 형태다.
+  - 한 화자가 길게 말하는 창에서 그 말을 두 슬롯으로 쪼갠다.
+    - 예: 악화 DE 정답 47·3 → p9 27·23
+    - 예: 개선 KO 정답 39·5 → r1 22·22
+  - 소수 화자의 말을 다수 화자 슬롯으로 흡수한다.
+    - 예: 악화 EN 정답 41·34 → p9 62·10
+  - 사례별 cp 차이는 50–80 pt 다. 창 하나에서 매핑이 한 번 뒤집히면 이렇게 커진다.
+
 ## 파일
 - `stage3_smoke_spk.sh`·`smoke-train.txt`·`smoke-parity.txt`: 2 GPU 스모크
 - `train-events.txt`·`spk-head-trend.txt`: 학습 경과·parity·헤드 추이
@@ -143,3 +167,4 @@ source_type: source-drop
 - `attr-errors-vs-r1.txt`(`cmp_attr_p9.py`)·`attr-errors-*-summary.json`(`attr-errors-r1-ck3000-summary.json` 포함): 오류 유형
 - `bootstrap-vs-r1.txt`(`boot_p9.py`): 짝 bootstrap(언어별 포함)
 - `regress-vs-r1.txt`: 단일 화자 퇴행
+- `listen-cases.json`: 청취 묶음 사례 목록·지표(오디오는 mxc·T5 에만)

@@ -1,0 +1,1159 @@
+{
+ "base": "r1@2000",
+ "cand": "p9@3000",
+ "delta": 10,
+ "cases": [
+  {
+   "cat": "better",
+   "id": "aihub134-1:2_3912G2A5_3913G1A2_T2_2D10T0429C000233_018921@250.0",
+   "corpus": "aihub134-1",
+   "lang": "KO",
+   "t0": 250.0,
+   "L": 37.881,
+   "delta": 10,
+   "speakers": [
+    "0",
+    "1"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 83.0,
+     "agn": 10.0,
+     "attr": 73.0,
+     "mislabel": 37.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 1,
+     "ref_changes": 2,
+     "text": [
+      "그렇게 되면 이제 조금만 크잖아 그럼 내가 또 돈 벌어서 줘야 될 조카들이 또 너무 많아져 음 가뿐이만큼 거두고 거둔만큼 뿌려야 돼",
+      "뭐 장단점은 있는 법이지 어딜 가나 하다못해 그 미국에 가서 고모 어 고모 할머니들이 한국에 사셨으면 뭐 어디가 명절 때 용돈도 좀"
+     ]
+    },
+    "p9@3000": {
+     "cp": 8.0,
+     "agn": 8.0,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 2,
+     "ref_changes": 2,
+     "text": [
+      "그렇게 되면 이제 조금만 크잖아 그럼 내가 또 돈 벌어서 줘야 될 조카들이 또 너무 많아져 음 밥 뿌린 만큼 거두고 거둔 만큼 뿌려야 돼 아담못 해 그 미국에 가서 고모 어 고모 할머니들이 한국에 사셨으면 뭐 니가 명절 때 용돈도 좀",
+      "뭐 장단점은 있는 법이지 어딜 가나"
+     ]
+    }
+   },
+   "stem": "better-01-KO",
+   "overlap": 0.0253,
+   "changes_per_min": 9.5,
+   "n_ref": 100,
+   "unit": "글자"
+  },
+  {
+   "cat": "better",
+   "id": "oto:365@60.0",
+   "corpus": "otoSpeech",
+   "lang": "EN",
+   "t0": 60.0,
+   "L": 32.302,
+   "delta": 10,
+   "speakers": [
+    "1",
+    "0"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 65.9,
+     "agn": 20.7,
+     "attr": 45.1,
+     "mislabel": 30.5,
+     "streak": 29.3,
+     "swap": false,
+     "hyp_changes": 3,
+     "ref_changes": 12,
+     "text": [
+      "oh sure and i appreciate that yeah i'll go first yeah i'm fine with that it says talk freely about your daily little joys well my little daily really joys i i know the the well i actually now that i think about it i like um like playing video games that um oh really oh yeah definitely i'm good",
+      "yeah me too i like that i'm good yes that actually makes me feel happy actually i actually just before i came on i was actually playing some"
+     ]
+    },
+    "p9@3000": {
+     "cp": 15.9,
+     "agn": 18.3,
+     "attr": -2.4,
+     "mislabel": 3.7,
+     "streak": 2.4,
+     "swap": false,
+     "hyp_changes": 12,
+     "ref_changes": 12,
+     "text": [
+      "oh sure and i appreciate that yeah i'll go first yeah i'm fine with that it says talk freely about your daily little joys well my little daily really joys i know the well actually now that i think about it i like playing video games that was oh really oh yeah definitely yes that actually makes me feel happy actually i actually just before i came on i was actually playing",
+      "yeah those are yeah me too i like that yeah"
+     ]
+    }
+   },
+   "stem": "better-02-EN",
+   "overlap": 0.0582,
+   "changes_per_min": 14.86,
+   "n_ref": 82,
+   "unit": "단어"
+  },
+  {
+   "cat": "better",
+   "id": "ztc:JLJW1a@540.0",
+   "corpus": "ZTC",
+   "lang": "DE",
+   "t0": 540.0,
+   "L": 24.917,
+   "delta": 10,
+   "speakers": [
+    "JL",
+    "JW"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 85.0,
+     "agn": 5.0,
+     "attr": 80.0,
+     "mislabel": 42.5,
+     "streak": 42.5,
+     "swap": true,
+     "hyp_changes": 2,
+     "ref_changes": 3,
+     "text": [
+      "aber ja ich weiß nicht ob du den kopf und den schwanz gleich siehst wie ich ah ähm hat es ach nein ähm also der kopf ist in dem fall so wie ein ähm wie sagt man dem ein paar",
+      "aha ähm"
+     ]
+    },
+    "p9@3000": {
+     "cp": 2.5,
+     "agn": 2.5,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 3,
+     "ref_changes": 3,
+     "text": [
+      "aber ja ich weiß nicht ob du den kopf und den schwanz gleich siehst wie ich ähm",
+      "aha ah ähm hat es ach nein ähm also der kopf ist in dem fall so wie ein ähm wie sagt man dem ein"
+     ]
+    }
+   },
+   "stem": "better-03-DE",
+   "overlap": 0.0,
+   "changes_per_min": 12.04,
+   "n_ref": 40,
+   "unit": "단어"
+  },
+  {
+   "cat": "better",
+   "id": "aihub134-2:1_6970G2A1_6969G2A1_T2_1D05T0184C000244_036444@290.0",
+   "corpus": "aihub134-2",
+   "lang": "KO",
+   "t0": 290.0,
+   "L": 30.712,
+   "delta": 10,
+   "speakers": [
+    "1",
+    "0"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 95.7,
+     "agn": 11.8,
+     "attr": 83.9,
+     "mislabel": 48.4,
+     "streak": 6.5,
+     "swap": false,
+     "hyp_changes": 5,
+     "ref_changes": 6,
+     "text": [
+      "집에 가는 거야 어 응 아",
+      "좀 어바웃 타임 같은 그런 크리스마스 그런 영화를 보면 좀 설레지 않을까 어 크리스마스 느낌이 나 날 거 같아 나는 약간 아 그런 날엔 별로 오히려 특별하게 지내고 싶지 않아 왠지 내가 기대했다가 실망할 거 같아"
+     ]
+    },
+    "p9@3000": {
+     "cp": 21.5,
+     "agn": 8.6,
+     "attr": 12.9,
+     "mislabel": 7.5,
+     "streak": 0.0,
+     "swap": true,
+     "hyp_changes": 5,
+     "ref_changes": 6,
+     "text": [
+      "집에 가는 거야 어 어 나는 약간 아 그런 날엔 별로 오히려 특별하게 지내고 싶지 않아 왠지 내가 기대했다가 실망할 거 같아",
+      "좀 어바웃 타임 같은 그런 크리스마스 그런 영화를 보면 좀 설레지 않을까 어 크리스마스 느낌이 나 날 것 같아 아"
+     ]
+    }
+   },
+   "stem": "better-04-KO",
+   "overlap": 0.0511,
+   "changes_per_min": 7.81,
+   "n_ref": 93,
+   "unit": "글자"
+  },
+  {
+   "cat": "better",
+   "id": "oto:145@430.0",
+   "corpus": "otoSpeech",
+   "lang": "EN",
+   "t0": 430.0,
+   "L": 27.067,
+   "delta": 10,
+   "speakers": [
+    "0",
+    "1"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 56.9,
+     "agn": 8.6,
+     "attr": 48.3,
+     "mislabel": 24.1,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 4,
+     "ref_changes": 5,
+     "text": [
+      "it's always nice to have like two different like thought paths processes too like you don't want to have like the same idea because then you can like teamwork mm hmm yes it does yes absolutely yeah because i was thinking okay maybe what we could do we could",
+      "exactly yes and they always say teamwork makes the dreamwork"
+     ]
+    },
+    "p9@3000": {
+     "cp": 8.6,
+     "agn": 8.6,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 5,
+     "ref_changes": 5,
+     "text": [
+      "it's always nice to have like two different like thought paths thought processes too like you don't want to have like the same idea because then you can like team work mm hmm yes it does",
+      "exactly yes and they always say teamwork makes the dream work yes absolutely yeah because i was thinking okay maybe what we could do we"
+     ]
+    }
+   },
+   "stem": "better-05-EN",
+   "overlap": 0.0,
+   "changes_per_min": 11.08,
+   "n_ref": 58,
+   "unit": "단어"
+  },
+  {
+   "cat": "better",
+   "id": "ztc:JLJW3c@420.0",
+   "corpus": "ZTC",
+   "lang": "DE",
+   "t0": 420.0,
+   "L": 36.265,
+   "delta": 10,
+   "speakers": [
+    "JL",
+    "JW"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 79.2,
+     "agn": 6.9,
+     "attr": 72.2,
+     "mislabel": 45.8,
+     "streak": 44.4,
+     "swap": true,
+     "hyp_changes": 12,
+     "ref_changes": 14,
+     "text": [
+      "ähm rechts schaut ja okay ja macht er gerade einen schritt mit dem rücken ähm das zweite könnte aussehen wie ein fuchs der nach links schaut der schwanz ist rechts ein parallelogramm der rücken ist leicht",
+      "mhm die am boden sitzt und sie hat keinen schwanz oder alle ähm das erste der vierten reihe könnte aussehen wie ein vogel mit einem ganz langen hals der nach rechts schaut okay ja genau dreiecksfuß"
+     ]
+    },
+    "p9@3000": {
+     "cp": 6.9,
+     "agn": 6.9,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 14,
+     "ref_changes": 14,
+     "text": [
+      "ähm rechts schaut ja und sie hat keinen schwanz oder alle ähm das erste der vierten reihe könnte aussehen wie ein vogel mit einem ganz langen hals der nach rechts schaut mhm ja genau ähm das zweite könnte aussehen wie ein fuchs der nach links schaut der schwanz ist rechts so ein parallelogramm der rücken ist leicht",
+      "mhm die am boden sitzt okay ja macht er gerade einen schritt mit dem bein und dreiecksfuß"
+     ]
+    }
+   },
+   "stem": "better-06-DE",
+   "overlap": 0.03,
+   "changes_per_min": 16.54,
+   "n_ref": 72,
+   "unit": "단어"
+  },
+  {
+   "cat": "worse",
+   "id": "71631:2_7476G1A2_7477G1A2_T1_2D10T0431C000358_033706@330.0",
+   "corpus": "aihub71631",
+   "lang": "KO",
+   "t0": 330.0,
+   "L": 34.909,
+   "delta": 10,
+   "speakers": [
+    "0",
+    "1"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 7.5,
+     "agn": 7.5,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 3,
+     "ref_changes": 3,
+     "text": [
+      "근데 여자 친구 것도 당연히 떼 주고 힘들어한다 근데 여자 친구가 그럼 내가 도와줄 수 있는 거죠 하지만 저는",
+      "아니죠 그렇게 당신이 모든 사람한테 친절하면 여자친구 입장에서는 아 얘는 나한테만 친절한 게 아니라 모든 사람한테 친절한 특별한 대상이 아니네 이렇게 느낄"
+     ]
+    },
+    "p9@3000": {
+     "cp": 60.4,
+     "agn": 16.0,
+     "attr": 44.3,
+     "mislabel": 35.8,
+     "streak": 33.0,
+     "swap": false,
+     "hyp_changes": 8,
+     "ref_changes": 3,
+     "text": [
+      "근데 여자친구 것도 당연히 떼 주고 힘들어한다 근데 여자 친구가 그럼 내가 도와줄 수 있는 거죠 하지만 친절한게 아니라 모든 사람한테 친절한 특별한 대상이 아니네 이렇게 느끼는 게",
+      "아니죠 그렇게 당신이 모든 사람한테 친절하면 여자친구 입장에서는 아 얘는 나 같으면 친절한 거 아니야"
+     ]
+    }
+   },
+   "stem": "worse-01-KO",
+   "overlap": 0.0232,
+   "changes_per_min": 5.16,
+   "n_ref": 106,
+   "unit": "글자"
+  },
+  {
+   "cat": "worse",
+   "id": "oto:329@730.0",
+   "corpus": "otoSpeech",
+   "lang": "EN",
+   "t0": 730.0,
+   "L": 37.005,
+   "delta": 10,
+   "speakers": [
+    "1",
+    "0"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 18.2,
+     "agn": 18.2,
+     "attr": 0.0,
+     "mislabel": 3.9,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 10,
+     "ref_changes": 12,
+     "text": [
+      "wow so yes you say the walk is thirty minutes but the drive is fifteen wow man that's a lot of time in traffic yeah more distance yeah that sounds similar to um atlanta's traffic i don't know if you've ever been there at all but atlanta georgia has some of the worst traffic i",
+      "yeah yep that's why when i yeah and i was like i okay i guess i'll just call in uber"
+     ]
+    },
+    "p9@3000": {
+     "cp": 84.4,
+     "agn": 26.0,
+     "attr": 58.4,
+     "mislabel": 36.4,
+     "streak": 33.8,
+     "swap": true,
+     "hyp_changes": 11,
+     "ref_changes": 12,
+     "text": [
+      "wow so yes you say the walk is thirty minutes but the drive is fifteen wow man that's a lot of time to traffic so now no yeah and i was like i okay i guess i'll just call and uber",
+      "yeah yep that's why when i left distance yeah that sounds similar to you know what i mean atlanta's traffic i don't know if you've ever been there at all but atlanta georgia has some of the worst traffic i"
+     ]
+    }
+   },
+   "stem": "worse-02-EN",
+   "overlap": 0.0279,
+   "changes_per_min": 12.97,
+   "n_ref": 77,
+   "unit": "단어"
+  },
+  {
+   "cat": "worse",
+   "id": "ztc:NSLS1d@50.0",
+   "corpus": "ZTC",
+   "lang": "DE",
+   "t0": 50.0,
+   "L": 32.875,
+   "delta": 10,
+   "speakers": [
+    "LS",
+    "NS"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 6.0,
+     "agn": 6.0,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 6,
+     "ref_changes": 6,
+     "text": [
+      "ohne kerze das ist oben so ein quadrat und dann ein rechteck das auf einem dreieck steht nein es oder so wie ein kelch vielleicht vielleicht lassen wir es mal aus dann kommt ein boot mit zwei segeln und nein die zwei segel machen so wie ein",
+      "ah äh mhm"
+     ]
+    },
+    "p9@3000": {
+     "cp": 92.0,
+     "agn": 8.0,
+     "attr": 84.0,
+     "mislabel": 48.0,
+     "streak": 36.0,
+     "swap": false,
+     "hyp_changes": 7,
+     "ref_changes": 6,
+     "text": [
+      "ohne kerze das ist oben so ein quadrat und an einem rechteck das auf einem dreieck steht nein es oder so wie ein kelch vielleicht mhm mhm",
+      "ah vielleicht lassen wir es mal aus dann kommt ein boot mit zwei segeln und nein die zwei segel machen so wie ein"
+     ]
+    }
+   },
+   "stem": "worse-03-DE",
+   "overlap": 0.0152,
+   "changes_per_min": 12.78,
+   "n_ref": 50,
+   "unit": "단어"
+  },
+  {
+   "cat": "worse",
+   "id": "71631:2_B679G2A5_B680G1A5_T1_2D05T0183C000430_051827@560.0",
+   "corpus": "aihub71631",
+   "lang": "KO",
+   "t0": 560.0,
+   "L": 29.671,
+   "delta": 10,
+   "speakers": [
+    "0",
+    "1"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 9.2,
+     "agn": 9.2,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 7,
+     "ref_changes": 5,
+     "text": [
+      "위가 죽었으면 자식들 생각해서라도 당장 뭐 그냥 한 뿐이라도 받아와야 현실적으로 자식하고 사니까 그렇겠지만 자식 죽으면 뭐 합의하고 싶지 않겠지 자녀들이",
+      "어 어 응 어 그러니깐 합의가 힘들기도 했고 그때 합의할 그 여력도 아니었었을 다는 시기고"
+     ]
+    },
+    "p9@3000": {
+     "cp": 58.2,
+     "agn": 9.2,
+     "attr": 49.0,
+     "mislabel": 25.5,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 8,
+     "ref_changes": 5,
+     "text": [
+      "위가 죽었으면 자식들 생각해서라도 당장 뭐 그냥 한 번이라도 받아와야 현실적으로 자식하고 사니까 그렇겠지만 자식 죽으면 뭐 합의하고 싶지 않겠지 자녀는 뭐 어 힘들기도 했고 그때 합의할 그 여력도 아니었었을 다는 시기고",
+      "어 어 응 음 그러니깐 합의가"
+     ]
+    }
+   },
+   "stem": "worse-04-KO",
+   "overlap": 0.0243,
+   "changes_per_min": 18.2,
+   "n_ref": 98,
+   "unit": "글자"
+  },
+  {
+   "cat": "worse",
+   "id": "oto:86@10.0",
+   "corpus": "otoSpeech",
+   "lang": "EN",
+   "t0": 10.0,
+   "L": 36.373,
+   "delta": 10,
+   "speakers": [
+    "0",
+    "1"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 17.3,
+     "agn": 13.3,
+     "attr": 4.0,
+     "mislabel": 10.7,
+     "streak": 10.7,
+     "swap": false,
+     "hyp_changes": 5,
+     "ref_changes": 16,
+     "text": [
+      "okay i'm going to confirm that my partner's audio has no noise or echo and best quality microphone so i'm clicking ready to start can you hear me all right i'm here okay how are you doing",
+      "okay hello yes i can hear you just fine hello okay i can hear you just fine okay you know no topic just freely just talk freely about anything you want okay cool right now we"
+     ]
+    },
+    "p9@3000": {
+     "cp": 82.7,
+     "agn": 18.7,
+     "attr": 64.0,
+     "mislabel": 52.0,
+     "streak": 33.3,
+     "swap": false,
+     "hyp_changes": 9,
+     "ref_changes": 16,
+     "text": [
+      "okay i'm going to confirm that my partner's audio has no noise or echo and best quality microphone so i'm clicking ready to start can you hear me okay yes i can hear you fine hello okay i can hear you just fine okay you no topic just freelyeing just talk freely about anything you want okay cool how are you doing",
+      "okay hello all right i'm here yeah okay right now"
+     ]
+    }
+   },
+   "stem": "worse-05-EN",
+   "overlap": 0.05,
+   "changes_per_min": 16.5,
+   "n_ref": 75,
+   "unit": "단어"
+  },
+  {
+   "cat": "worse",
+   "id": "ztc:BSDS2b@380.0",
+   "corpus": "ZTC",
+   "lang": "DE",
+   "t0": 380.0,
+   "L": 37.184,
+   "delta": 10,
+   "speakers": [
+    "DS",
+    "BS"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 12.2,
+     "agn": 10.8,
+     "attr": 1.4,
+     "mislabel": 1.4,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 4,
+     "ref_changes": 4,
+     "text": [
+      "gerade abgeschnitten ist sondern rechts hat es dann noch so wie so ein dreieck das nach unten geht aber oben hat es diese drei mühlen blätter oder wie man das nennt ja ja dann kommt ein gans krüppeliger fisch oder so der nach oben schwimmt ja genau dann kommt jemand der rennt nach rechts das hintere bein ist ein wenig nach hinten ausgestreckt die arme sind ausgebreitet",
+      "in dem windmühle ah der indiana night"
+     ]
+    },
+    "p9@3000": {
+     "cp": 90.5,
+     "agn": 17.6,
+     "attr": 73.0,
+     "mislabel": 47.3,
+     "streak": 44.6,
+     "swap": true,
+     "hyp_changes": 5,
+     "ref_changes": 4,
+     "text": [
+      "gerade abgeschnitten ist sondern rechts hat es dann noch so wie so ein dreieck das nach unten geht und aber oben hat es diese drei mühlen blätter oder wie man das nennt oder",
+      "mit dem windmühle ah da irgendwie auch nicht ja ja dann kommt ein gans krüppelige fisch oder so der nach oben schwimmt ja genau dann kommt jemand der rennt nach rechts das hintere bein ist ein wenig nach hinten ausgestreckt die arme sind ausgebreitet"
+     ]
+    }
+   },
+   "stem": "worse-06-DE",
+   "overlap": 0.0102,
+   "changes_per_min": 6.45,
+   "n_ref": 74,
+   "unit": "단어"
+  },
+  {
+   "cat": "both_bad",
+   "id": "71631:2_B730G1A2_B729G1A2_T1_2D11T0469C000396_052072@1040.0",
+   "corpus": "aihub71631",
+   "lang": "KO",
+   "t0": 1040.0,
+   "L": 39.679,
+   "delta": 10,
+   "speakers": [
+    "1",
+    "0"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 43.8,
+     "agn": 11.5,
+     "attr": 32.3,
+     "mislabel": 26.0,
+     "streak": 26.0,
+     "swap": true,
+     "hyp_changes": 6,
+     "ref_changes": 7,
+     "text": [
+      "나는 일 안 하고 돈 벌 수 있는 걸 만들어야지 아 지금 이거 오늘까지 오늘 아홉 시까지 해야 되는데 열 개는 물이다 이다 니 니 목소리를 하루 종일 듣는 것도 디다 아",
+      "음 그니까 이런 거 내랑 하자 오늘 더 받아 오지 그랬어 한 열 개 받아 오지 그랬어 어 다섯 개가 적당히"
+     ]
+    },
+    "p9@3000": {
+     "cp": 80.2,
+     "agn": 11.5,
+     "attr": 68.8,
+     "mislabel": 54.2,
+     "streak": 53.1,
+     "swap": true,
+     "hyp_changes": 6,
+     "ref_changes": 7,
+     "text": [
+      "나는 일 안 하고 돈 벌 수 있는 걸 만들어야지 오늘 더 받아 오지 그랬어 한 열 개 받아 오지 그랬어 어 오늘까지 오늘 아홉 시까지 해야 되는데 열 개는 물이다다 니 니 목소리를 하루 종일 듣는 것도 디다",
+      "음 그 이런 거 내랑 하자 아 지금 이거 다섯 개가 적당히"
+     ]
+    }
+   },
+   "stem": "both_bad-01-KO",
+   "overlap": 0.0116,
+   "changes_per_min": 10.58,
+   "n_ref": 96,
+   "unit": "글자"
+  },
+  {
+   "cat": "both_bad",
+   "id": "oto:375@450.0",
+   "corpus": "otoSpeech",
+   "lang": "EN",
+   "t0": 450.0,
+   "L": 38.852,
+   "delta": 10,
+   "speakers": [
+    "0",
+    "1"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 84.8,
+     "agn": 28.3,
+     "attr": 56.5,
+     "mislabel": 32.6,
+     "streak": 21.0,
+     "swap": true,
+     "hyp_changes": 9,
+     "ref_changes": 10,
+     "text": [
+      "if i needed one i'll just buy it but you know i've been working i've been working and shipping and receiving for so many years man it's like i they have one day to have one at home i'll probably be like oh man i can't stand these things because i'm just so you actually work for an outfit oh yeah hmm",
+      "oh yeah well actually i work for a company so amazon and stuff like that so it's more like my job is more like a quality control so i get a lot of packages from amazon and my job is to basically i'm kind of like the middle man i check everything out make sure the paperwork and everything matches up it's going to the right person no damage to the box"
+     ]
+    },
+    "p9@3000": {
+     "cp": 75.4,
+     "agn": 17.4,
+     "attr": 58.0,
+     "mislabel": 32.6,
+     "streak": 21.7,
+     "swap": true,
+     "hyp_changes": 11,
+     "ref_changes": 10,
+     "text": [
+      "if i needed one i would just buy it but you know working i've been working and shipping and receiving for so many years man it's like a they have one they have one at home i'll probably be like oh man i can't stand these things because i'm just so you actually work for an outfit oh yeah mmm",
+      "oh yeah yeah well actually i work um it's like i'm kind of partnering with a different company i do a like a lot of work for amazon and stuff like that so it's more like my job is more like a quality control so i get a lot of packages from amazon and my job is to basically i'm kind of like the middle man i check everything out make sure the paperwork and everything matches up it's going to the right person no damage to the box"
+     ]
+    }
+   },
+   "stem": "both_bad-02-EN",
+   "overlap": 0.0319,
+   "changes_per_min": 10.81,
+   "n_ref": 138,
+   "unit": "단어"
+  },
+  {
+   "cat": "both_bad",
+   "id": "nsc:w144_mindelo@360.0",
+   "corpus": "NSC",
+   "lang": "DE",
+   "t0": 360.0,
+   "L": 32.75,
+   "delta": 10,
+   "speakers": [
+    "interlocutor",
+    "speaker"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 90.0,
+     "agn": 27.5,
+     "attr": 62.5,
+     "mislabel": 57.5,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 5,
+     "ref_changes": 2,
+     "text": [
+      "dann hier ist es äh in ordnung einundvierzig zu sagen da habe ich nämlich jetzt gestockt so ob ich ja ja ich muss meinen zettel erst finden du kannst dir das gerne schon mal anschauen",
+      "eins ist ja klar sorry ähm dann kommt jetzt die bibliothek mhm"
+     ]
+    },
+    "p9@3000": {
+     "cp": 95.0,
+     "agn": 22.5,
+     "attr": 72.5,
+     "mislabel": 47.5,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 5,
+     "ref_changes": 2,
+     "text": [
+      "dann hier ist es in ordnung einundvierzig zu sagen da habe ich nämlich jetzt gestockt so ob ich genau äh dann kommt jetzt die bibliothek bitte ich muss meinen zettel erst finden du kannst dir das gerne schon mal anschauen",
+      "eins ist ja auch sorry mhm"
+     ]
+    }
+   },
+   "stem": "both_bad-03-DE",
+   "overlap": 0.0238,
+   "changes_per_min": 14.66,
+   "n_ref": 40,
+   "unit": "단어"
+  },
+  {
+   "cat": "both_bad",
+   "id": "aihub134-1:2_2814G2A4_2815G2A4_T2_2D06T0219C000207_012090@110.0",
+   "corpus": "aihub134-1",
+   "lang": "KO",
+   "t0": 110.0,
+   "L": 28.248,
+   "delta": 10,
+   "speakers": [
+    "1",
+    "0"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 62.7,
+     "agn": 6.9,
+     "attr": 55.9,
+     "mislabel": 34.3,
+     "streak": 34.3,
+     "swap": false,
+     "hyp_changes": 3,
+     "ref_changes": 6,
+     "text": [
+      "정말 먹고 싶다 할 끓여 왜냐면 아이들은 안 먹으니까 내가 또 김치찌개도 끓이고 아이들 먹을 또 뭐 된장찌개도 따로 끓이고 이러면 일이 두 배가 되잖아 그래서 이제 조금만 기다려 봐 우리도 이렇게 김치찌개 부대찌개 같이 먹은 지 얼마 안 돼",
+      "맞아 아예 안 먹는다니까"
+     ]
+    },
+    "p9@3000": {
+     "cp": 61.8,
+     "agn": 5.9,
+     "attr": 55.9,
+     "mislabel": 34.3,
+     "streak": 34.3,
+     "swap": false,
+     "hyp_changes": 5,
+     "ref_changes": 6,
+     "text": [
+      "정말 먹고 싶다 할 끓여 왜냐면 아이들은 안 먹으니까 내가 또 김치찌개도 끓이고 아이들 먹을 또 뭐 된장찌개도 따로 끓이고 이러면 일이 두 배가 되잖아 그래서 이제 조금만 기다려 봐 우리도 이렇게 김치찌개 부대찌개 같이 먹은지 얼마 안 돼",
+      "응 맞아 아예 안 먹는다니까"
+     ]
+    }
+   },
+   "stem": "both_bad-04-KO",
+   "overlap": 0.0096,
+   "changes_per_min": 12.74,
+   "n_ref": 102,
+   "unit": "글자"
+  },
+  {
+   "cat": "both_bad",
+   "id": "oto:310@480.0",
+   "corpus": "otoSpeech",
+   "lang": "EN",
+   "t0": 480.0,
+   "L": 25.568,
+   "delta": 10,
+   "speakers": [
+    "1",
+    "0"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 28.8,
+     "agn": 13.6,
+     "attr": 15.2,
+     "mislabel": 16.7,
+     "streak": 7.6,
+     "swap": true,
+     "hyp_changes": 5,
+     "ref_changes": 6,
+     "text": [
+      "okay let's see creator who's the hater",
+      "if you click on the video oh i do see it let me see who's the hater here engagement was a full bro i remember this dude bro i can't i feel like i carry every conversation maybe i talk you know what it is i get this a lot too like sometimes i don't let people finish"
+     ]
+    },
+    "p9@3000": {
+     "cp": 71.2,
+     "agn": 15.2,
+     "attr": 56.1,
+     "mislabel": 37.9,
+     "streak": 12.1,
+     "swap": true,
+     "hyp_changes": 9,
+     "ref_changes": 6,
+     "text": [
+      "okay let's see what do you want to oh i do see it let me see who's the hater here engagement was a fool",
+      "if you click on hater who's the hater bro i remember this dude bro i can't i carry every conversation maybe i tell you know what it is i get this a lot too like sometimes i don't let people finish"
+     ]
+    }
+   },
+   "stem": "both_bad-05-EN",
+   "overlap": 0.0311,
+   "changes_per_min": 4.69,
+   "n_ref": 66,
+   "unit": "단어"
+  },
+  {
+   "cat": "both_bad",
+   "id": "kec:rec_003_p1@290.0",
+   "corpus": "KEC",
+   "lang": "DE",
+   "t0": 290.0,
+   "L": 28.9,
+   "delta": 10,
+   "speakers": [
+    "AS_006",
+    "IS_005"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 97.2,
+     "agn": 25.0,
+     "attr": 72.2,
+     "mislabel": 48.6,
+     "streak": 9.7,
+     "swap": true,
+     "hyp_changes": 2,
+     "ref_changes": 5,
+     "text": [
+      "ich weiß aber noch nicht wann äh fertig ich habe gerade über lebik gesprochen zweite und die dritte aber es war die dritte und die vierte dann habe ich wahrscheinlich die dritte sogar angefangen ich habe immer keine ahnung ehrlich gesagt äh zeugt und sie so",
+      "okay nee es ist glaube ich einfach bescheid nee weil äh in äh habe ich mit einer freundin das mal ein bisschen geguckt und die hat sich dann die die vierte ist noch nicht"
+     ]
+    },
+    "p9@3000": {
+     "cp": 94.4,
+     "agn": 22.2,
+     "attr": 72.2,
+     "mislabel": 48.6,
+     "streak": 9.7,
+     "swap": true,
+     "hyp_changes": 2,
+     "ref_changes": 5,
+     "text": [
+      "ich weiß aber noch nicht wann fertig ich habe gerade über lebith glaube es die zweite und die dritte aber es war die dritte und die vierte dann habe ich wahrscheinlich die dritte sogar angefangen ich habe immer keine ahnung ehrlich gesagt äh besorgt und ich so",
+      "okay nee das soll ich einfach bescheid nee weil äh in habe ich mit einer freundin das mal ein bisschen geguckt und die hat sich dann die die vierte ist noch nicht"
+     ]
+    }
+   },
+   "stem": "both_bad-06-DE",
+   "overlap": 0.0783,
+   "changes_per_min": 6.23,
+   "n_ref": 72,
+   "unit": "단어"
+  },
+  {
+   "cat": "both_good",
+   "id": "aihub134-1:2_2929G2A4_2933G2A4_T2_2D03T0105C000393_012676@540.0",
+   "corpus": "aihub134-1",
+   "lang": "KO",
+   "t0": 540.0,
+   "L": 39.837,
+   "delta": 10,
+   "speakers": [
+    "0",
+    "1"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 6.2,
+     "agn": 6.2,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 5,
+     "ref_changes": 6,
+     "text": [
+      "근데 그 목걸이도 전에 어 한 번도 안 물어봤는데 어 그런 아 그때 금 판다고 해 가지고 나 애들 바지도 다 팔았거든",
+      "어 어 아 야 그러면 신랑이 선물해 주고 너 이거 왜 목걸이 했는 거 안 써 안 껴 이렇게 얘기도 안 해"
+     ]
+    },
+    "p9@3000": {
+     "cp": 8.8,
+     "agn": 8.8,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 8,
+     "ref_changes": 6,
+     "text": [
+      "어 근데 그 목걸이도 전에 어 한 번도 안 물어봤는데 어 어 그런 아 그때 금 판다고 해 가지고 나 애들 바지도 다 팔았거든",
+      "어 어 아 야 그러면 신랑이 선물해 주고 너 이거 왜 목걸이 했는 거 안 써 안 껴 이렇게 얘기도 안 해"
+     ]
+    }
+   },
+   "stem": "both_good-01-KO",
+   "overlap": 0.0334,
+   "changes_per_min": 19.58,
+   "n_ref": 80,
+   "unit": "글자"
+  },
+  {
+   "cat": "both_good",
+   "id": "oto:90@750.0",
+   "corpus": "otoSpeech",
+   "lang": "EN",
+   "t0": 750.0,
+   "L": 28.761,
+   "delta": 10,
+   "speakers": [
+    "0",
+    "1"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 8.3,
+     "agn": 7.1,
+     "attr": 1.2,
+     "mislabel": 1.2,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 0,
+     "ref_changes": 10,
+     "text": [
+      "from another another job actually recommended this to me and i'm just trying it out for the first time it was a similar role where i had to kind of have conversations and talk to people so i have experience as far as that and they gave me a lot of reviews where they're like oh you had white noise or static on your mic or you had movement noises which deducts from your overall quality and that makes it",
+      ""
+     ]
+    },
+    "p9@3000": {
+     "cp": 7.1,
+     "agn": 7.1,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 4,
+     "ref_changes": 10,
+     "text": [
+      "from another job i actually recommended this to me and i'm just trying it out for the first time it was a similar role where i had to kind of have conversations and talk to people so i have experience as far as that and they gave me a lot of reviews where they're like oh you had white noise or static on your mic or you had movement noises which deducts from your overall quality and that makes it",
+      "sounds yeah"
+     ]
+    }
+   },
+   "stem": "both_good-02-EN",
+   "overlap": 0.0671,
+   "changes_per_min": 18.78,
+   "n_ref": 84,
+   "unit": "단어"
+  },
+  {
+   "cat": "both_good",
+   "id": "nsc:m158_monrovia@110.0",
+   "corpus": "NSC",
+   "lang": "DE",
+   "t0": 110.0,
+   "L": 37.989,
+   "delta": 10,
+   "speakers": [
+    "interlocutor",
+    "speaker"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 8.3,
+     "agn": 8.3,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 12,
+     "ref_changes": 12,
+     "text": [
+      "gerät mir eine mit spinat champignons tomaten und käse wäre das was für sie dann bestelle ich sofort es wären zwölf euro dann adresse mhm okay ja genau alles klar dann habe ich die bestellung aufgegeben haben sie um die uhrzeit dauert es nicht so lang vielleicht eine halbe stunde gerne",
+      "ja und für natürlich die glücksburger straße einundvierzig in bochum meine telefonnummer brauchen sie die auch okay die null drei drei okay danke ihnen"
+     ]
+    },
+    "p9@3000": {
+     "cp": 6.9,
+     "agn": 6.9,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 12,
+     "ref_changes": 12,
+     "text": [
+      "gerät mir einmal mit spinat champignons tomaten und käse wäre das was für sie bestelle ich sofort das wären zwölf euro dann adresse mhm okay ja genau alles klar dann habe ich die bestellung aufgegeben haben sie um die uhrzeit dauert es nicht so lang vielleicht eine halbe stunde gerne",
+      "ja und für natürlich die glücksburger straße einundvierzig in bochum meine telefonnummer brauchen sie die auch okay die null drei drei okay danke ihnen"
+     ]
+    }
+   },
+   "stem": "both_good-03-DE",
+   "overlap": 0.0,
+   "changes_per_min": 28.43,
+   "n_ref": 72,
+   "unit": "단어"
+  },
+  {
+   "cat": "both_good",
+   "id": "aihub134-1:2_2959G2A4_3045G2A4_T2_2D11T0469C000450_013331@550.0",
+   "corpus": "aihub134-1",
+   "lang": "KO",
+   "t0": 550.0,
+   "L": 39.913,
+   "delta": 10,
+   "speakers": [
+    "1",
+    "0"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 7.1,
+     "agn": 7.1,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 2,
+     "ref_changes": 6,
+     "text": [
+      "어 평수도 크고 사람들이 부담 생각만 하고 있더라 내 주변 사람들은 어 아직 발전도 많이 안 됐고 어 아마 북구가 더 나을 수도 있어",
+      "가고 싶다거나 그러진 않고 나는 남구 쪽으로는 이제 애들 교육 때문에 한 번 가고 싶은데 이미 너무 금액이 많이 올라서"
+     ]
+    },
+    "p9@3000": {
+     "cp": 7.1,
+     "agn": 7.1,
+     "attr": 0.0,
+     "mislabel": 1.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 4,
+     "ref_changes": 6,
+     "text": [
+      "음 평수도 크고 사람들이 부담 생각만 하고 있더라 내 주변 사람들은 어 아직 발전도 많이 안 됐고 어 아마 북구가 더 나을 수도 있어",
+      "음 가고 싶다거나 그러진 않고 나는 남구 쪽으로는 이제 애들 교육 때문에 한 번 가고 싶은데 이미 너무 금액이 많이 올라서"
+     ]
+    }
+   },
+   "stem": "both_good-04-KO",
+   "overlap": 0.0368,
+   "changes_per_min": 15.03,
+   "n_ref": 99,
+   "unit": "글자"
+  },
+  {
+   "cat": "both_good",
+   "id": "oto:145@10.0",
+   "corpus": "otoSpeech",
+   "lang": "EN",
+   "t0": 10.0,
+   "L": 24.179,
+   "delta": 10,
+   "speakers": [
+    "1",
+    "0"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 3.7,
+     "agn": 3.7,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 6,
+     "ref_changes": 6,
+     "text": [
+      "how are you today i'm doing good not bad not bad how's your day going so far awesome that's good are you new to this or you're oh i see oh this is like my",
+      "good how are you it's actually going really well no i mean i took a couple of weeks off but yeah"
+     ]
+    },
+    "p9@3000": {
+     "cp": 3.7,
+     "agn": 3.7,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 6,
+     "ref_changes": 6,
+     "text": [
+      "how are you today i'm doing good not bad not bad how's your day going so far awesome that's good are you new to this or you're new oh i see this is like my",
+      "good how are you it's actually going really well no i mean i took a couple of weeks off but yeah"
+     ]
+    }
+   },
+   "stem": "both_good-05-EN",
+   "overlap": 0.0,
+   "changes_per_min": 14.89,
+   "n_ref": 54,
+   "unit": "단어"
+  },
+  {
+   "cat": "both_good",
+   "id": "ztc:JLJW1a@430.0",
+   "corpus": "ZTC",
+   "lang": "DE",
+   "t0": 430.0,
+   "L": 22.143,
+   "delta": 10,
+   "speakers": [
+    "JL",
+    "JW"
+   ],
+   "runs": {
+    "r1@2000": {
+     "cp": 7.7,
+     "agn": 7.7,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 11,
+     "ref_changes": 13,
+     "text": [
+      "es ist nicht der also der körper würde ich sagen schaut nach rechts aber der kopf schaut nach links und das zweite sieht aus wie ein fuchs der liegt und ja",
+      "nein ja okay mhm nach links schaut er"
+     ]
+    },
+    "p9@3000": {
+     "cp": 7.7,
+     "agn": 7.7,
+     "attr": 0.0,
+     "mislabel": 0.0,
+     "streak": 0.0,
+     "swap": false,
+     "hyp_changes": 11,
+     "ref_changes": 13,
+     "text": [
+      "es ist nicht der also der körper würde ich sagen schaut nach rechts aber der kopf schaut nach links und das zweite sieht aus wie ein fuchs der liegt und ja",
+      "nein ja okay mhm nach links schaut er"
+     ]
+    }
+   },
+   "stem": "both_good-06-DE",
+   "overlap": 0.0702,
+   "changes_per_min": 27.1,
+   "n_ref": 39,
+   "unit": "단어"
+  }
+ ]
+}
