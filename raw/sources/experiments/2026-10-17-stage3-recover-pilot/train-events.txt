@@ -1,0 +1,33 @@
+[2026-10-17 08:41:39] job 89638 nodes=2 (slurmmxch200v5-hpc-[29-30]) restart=0/5 OUT=/soundai/Model/VAPASR/stage3-st3-p8-recover
+섞기: steps/epoch 625 · 비중 {'dlg_ko': 0.3536, 'dlg_en': 0.1248, 'dlg_de': 0.1232, 'rep_en': 0.1328, 'rep_ko': 0.1328, 'rep_de': 0.1328} · 셋 배치/epoch {'dlg_ko': 312, 'dlg_en': 25, 'dlg_de': 39, 'rep_en': 311, 'rep_ko': 764, 'rep_de': 327} · world 16
+train 종료: step 4000/4000 완료 · {'train_runtime': 4448.2858, 'train_samples_per_second': 14.388, 'train_steps_per_second': 0.899, 'train_loss': 0.28525124245882033, 'epoch': 6.4}
+check-save: 누락 [] · 추가 [] · shape [] · 값 차이 0 [] · 인코더 저장 키 638 · 손실 메모리 {'loss': 0.15449, 'loss_next': 0.15341, 'loss_text': 0.13269, 'top1_text': 0.94273, 'loss_turn': 0.36663} / 재로드 {'loss': 0.15501, 'loss_next': 0.1537, 'loss_text': 0.13327, 'top1_t
+PARITY OK
+[10:09:59] 학습 완료 → DONE (parity: /soundai/Model/VAPASR/stage3-st3-p8-recover/parity.json)
+{
+ "parity": true,
+ "stage3_config_ok": true,
+ "eot_registry_ok": true,
+ "memory": {
+  "loss": 0.15449,
+  "loss_next": 0.15341,
+  "loss_text": 0.13269,
+  "top1_text": 0.94273,
+  "loss_turn": 0.36663
+ },
+ "reloaded": {
+  "loss": 0.15501,
+  "loss_next": 0.1537,
+  "loss_text": 0.13327,
+  "top1_text": 0.94273,
+  "loss_turn": 0.36803
+ },
+ "missing": [],
+ "extra": [],
+ "shape_mismatch": [],
+ "value_diff": [],
+ "encoder_saved_keys": 638,
+ "tokenizer_reload_ok": true,
+ "tokenizer_reload_error": null,
+ "batch_n_soft": 12
+}
