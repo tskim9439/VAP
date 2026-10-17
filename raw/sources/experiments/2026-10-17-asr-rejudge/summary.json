@@ -1,0 +1,102 @@
+{
+ "args": {
+  "data": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "out": "/soundai/users/tskim/VAPKT-data/results/p2-asr-rejudge-20261017",
+  "corpora": "aihub71631,aihub134-1,aihub134-2",
+  "band": "0.1,0.2",
+  "n": 150,
+  "control": 40,
+  "unchecked": "otoSpeech:150",
+  "tau": 0.1,
+  "judge": "/soundai/Model/Qwen3-ASR-1.7B",
+  "base": "/soundai/Model/Qwen3-ASR-0.6B",
+  "page_per_cat": 4,
+  "min_dur": 0.3,
+  "batch": 32,
+  "gpu": "2"
+ },
+ "speed_judge": {
+  "utts": 720,
+  "audio_s": 2110.8,
+  "wall_s": 72.7,
+  "rtf": 0.0345
+ },
+ "speed_base": {
+  "utts": 150,
+  "audio_s": 382.9,
+  "wall_s": 14.7,
+  "rtf": 0.0384
+ },
+ "groups": {
+  "aihub134-1/band": {
+   "n": 150,
+   "label_wrong": 0.52,
+   "base_wrong": 0.187,
+   "all_differ": 0.22,
+   "all_agree": 0.073,
+   "label_err_med": 0.125,
+   "base_err_med": 0.137,
+   "judges_err_med": 0.069
+  },
+  "aihub134-1/control": {
+   "n": 40,
+   "label_wrong": 0.0,
+   "base_wrong": 0.0,
+   "all_differ": 0.15,
+   "all_agree": 0.85,
+   "label_err_med": 0.0,
+   "base_err_med": 0.0,
+   "judges_err_med": 0.0
+  },
+  "aihub134-2/band": {
+   "n": 150,
+   "label_wrong": 0.473,
+   "base_wrong": 0.193,
+   "all_differ": 0.267,
+   "all_agree": 0.067,
+   "label_err_med": 0.143,
+   "base_err_med": 0.143,
+   "judges_err_med": 0.074
+  },
+  "aihub134-2/control": {
+   "n": 40,
+   "label_wrong": 0.0,
+   "base_wrong": 0.0,
+   "all_differ": 0.175,
+   "all_agree": 0.825,
+   "label_err_med": 0.0,
+   "base_err_med": 0.0,
+   "judges_err_med": 0.0
+  },
+  "aihub71631/band": {
+   "n": 150,
+   "label_wrong": 0.58,
+   "base_wrong": 0.167,
+   "all_differ": 0.167,
+   "all_agree": 0.087,
+   "label_err_med": 0.125,
+   "base_err_med": 0.143,
+   "judges_err_med": 0.053
+  },
+  "aihub71631/control": {
+   "n": 40,
+   "label_wrong": 0.0,
+   "base_wrong": 0.0,
+   "all_differ": 0.125,
+   "all_agree": 0.875,
+   "label_err_med": 0.0,
+   "base_err_med": 0.0,
+   "judges_err_med": 0.0
+  },
+  "otoSpeech/unchecked": {
+   "n": 150,
+   "label_wrong": 0.233,
+   "base_wrong": 0.053,
+   "all_differ": 0.147,
+   "all_agree": 0.567,
+   "label_err_med": 0.0,
+   "base_err_med": 0.0,
+   "judges_err_med": 0.0
+  }
+ }
+}
