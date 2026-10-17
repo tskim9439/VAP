@@ -1,0 +1,19 @@
+  dlg_ko ['aihub71631', 'aihub134-1', 'aihub134-2']: 300 창 · held-out 제외 437 대화 · stats {'dialogues': 3898, 'windows': 101902, 'skipped_untranscribed': 0, 'skipped_unaligned': 0, 'skipped_sparse': 28395, 'no_start': 202528, 'windows_with_mask': 123678, 'random_start': 0, 'cst_windows': 90799, 'cst_dropped_speakers': 0, 'cst_dialogues': 3461, 'cst_excluded': 437}
+  dlg_en ['otoSpeech']: 300 창 · held-out 제외 38 대화 · stats {'dialogues': 420, 'windows': 7973, 'skipped_untranscribed': 0, 'skipped_unaligned': 0, 'skipped_sparse': 48, 'no_start': 29135, 'windows_with_mask': 885, 'random_start': 0, 'cst_windows': 7245, 'cst_dropped_speakers': 0, 'cst_dialogues': 382, 'cst_excluded': 38}
+  dlg_de ['kec', 'ztc', 'nsc']: 300 창 · held-out 제외 82 대화 · stats {'dialogues': 820, 'windows': 12554, 'skipped_untranscribed': 0, 'skipped_unaligned': 0, 'skipped_sparse': 444, 'no_start': 23961, 'windows_with_mask': 11209, 'random_start': 0, 'cst_windows': 11195, 'cst_dropped_speakers': 0, 'cst_dialogues': 738, 'cst_excluded': 82}
+  sim_ko(합성): 300 창 · 대화 10000 · stats {'dialogues': 10000, 'windows': 29261, 'skipped_untranscribed': 0, 'skipped_unaligned': 0, 'skipped_sparse': 0, 'no_start': 43606, 'windows_with_mask': 0, 'random_start': 0, 'cst_windows': 29261, 'cst_dropped_speakers': 0, 'cst_dialogues': 10000, 'cst_excluded': 0}
+  sim_en(합성): 300 창 · 대화 10000 · stats {'dialogues': 10000, 'windows': 22128, 'skipped_untranscribed': 0, 'skipped_unaligned': 0, 'skipped_sparse': 0, 'no_start': 55722, 'windows_with_mask': 0, 'random_start': 0, 'cst_windows': 22128, 'cst_dropped_speakers': 0, 'cst_dialogues': 10000, 'cst_excluded': 0}
+  sim_de(합성): 300 창 · 대화 10000 · stats {'dialogues': 10000, 'windows': 28286, 'skipped_untranscribed': 0, 'skipped_unaligned': 0, 'skipped_sparse': 0, 'no_start': 46229, 'windows_with_mask': 0, 'random_start': 0, 'cst_windows': 28286, 'cst_dropped_speakers': 0, 'cst_dialogues': 10000, 'cst_excluded': 0}
+  check dlg_ko: 64 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check dlg_en: 64 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check dlg_de: 64 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check sim_ko: 64 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check sim_en: 64 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+  check sim_de: 64 항목 × δ[4, 5, 6, 7, 8, 9, 10] → 불일치 0 []
+dry-run dlg_ko aihub134-2:1_3019G1A1_3020G1A1_T2_1D08T0354C000263_013822@390.0 L 30.966 δ10 · 화자 ['0', '1'] · EOT 7 soft 4 · 머리 '<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\nlanguage <SPK_A>Korean <SPK_B>Korean<asr_text><DELAY_10>'
+dry-run dlg_en oto:200@160.0 L 31.568 δ10 · 화자 ['1', '0'] · EOT 10 soft 10 · 머리 '<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\nlanguage <SPK_A>English <SPK_B>English<asr_text><DELAY_10>'
+dry-run dlg_de ztc:DWAR1c@270.0 L 20.853 δ10 · 화자 ['DW', 'AR'] · EOT 5 soft 5 · 머리 '<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\nlanguage <SPK_A>German <SPK_B>German<asr_text><DELAY_10>'
+dry-run sim_ko sim_ko_009674@0.0 L 26.119 δ10 · 화자 ['a', 'b'] · EOT 6 soft 0 · 머리 '<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\nlanguage <SPK_A>Korean <SPK_B>Korean<asr_text><DELAY_10>'
+dry-run sim_en sim_en_000600@70.0 L 25.078 δ10 · 화자 ['b', 'a'] · EOT 7 soft 0 · 머리 '<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\nlanguage <SPK_A>English <SPK_B>English<asr_text><DELAY_10>'
+dry-run sim_de sim_de_007143@0.0 L 37.065 δ10 · 화자 ['a', 'b'] · EOT 11 soft 0 · 머리 '<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\nlanguage <SPK_A>German <SPK_B>German<asr_text><DELAY_10>'
+dry-run 끝 → /tmp/sa_tskim/stage3-dry-sim/dry-run.json

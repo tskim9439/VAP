@@ -1,0 +1,101 @@
+{
+ "lang": "German",
+ "sessions": 10000,
+ "failed": 0,
+ "hours": 248.63,
+ "speech_hours": 193.87,
+ "overlap_ratio_mean": 0.047,
+ "changes_per_min_mean": 12.52,
+ "bc_per_min": 4.24,
+ "self_overlap": 0,
+ "pools": {
+  "ztc": 3470,
+  "kec": 3486,
+  "nsc": 3044
+ },
+ "timing": {
+  "dialogues": 738,
+  "pairs": 84637,
+  "p_hold": 0.531,
+  "bc_rate_per_s": 0.1023,
+  "fto_q10_50_90": [
+   -0.7,
+   0.52,
+   2.74
+  ],
+  "hold_q50": 1.048,
+  "turn_q10_50_90": [
+   1.027,
+   1.98,
+   4.656
+  ],
+  "fto_negative_share": 0.215
+ },
+ "pool_info": {
+  "kec": {
+   "dialogues": 150,
+   "units": 33218,
+   "keys_all": 299,
+   "keys_used": 299,
+   "units_used": 33218
+  },
+  "ztc": {
+   "dialogues": 334,
+   "units": 68473,
+   "keys_all": 666,
+   "keys_used": 657,
+   "units_used": 68417
+  },
+  "nsc": {
+   "dialogues": 254,
+   "units": 36744,
+   "keys_all": 508,
+   "keys_used": 508,
+   "units_used": 36744
+  },
+  "words": {
+   "files": 0,
+   "rows": 0
+  }
+ },
+ "errors": {
+  "too_short": 40
+ },
+ "args": {
+  "lang": "German",
+  "out": "/soundai/users/tskim/VAPKT-data/data/sim-dialogue-v2",
+  "sessions": 10000,
+  "dur": [
+   60.0,
+   120.0
+  ],
+  "phase2": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "split": "/soundai/users/tskim/VAPKT-data/data/phase2/splits/v2.json",
+  "phase2_corpora": [
+   "kec",
+   "ztc",
+   "nsc"
+  ],
+  "stats_corpora": [
+   "kec",
+   "ztc",
+   "nsc"
+  ],
+  "words": [],
+  "words_frac": 0.15,
+  "pool_weights": "kec:0.35,ztc:0.35,nsc:0.3",
+  "min_units": 10,
+  "max_units": 80,
+  "jitter_db": 3.0,
+  "noise_bank": "/soundai/users/tskim/VAPKT-data/data/noise-bank-v1",
+  "noise_p": 0.5,
+  "noise_snr": "10,30",
+  "rir_p": 0.3,
+  "p_hold": 0.3,
+  "bc_scale": 1.5,
+  "split_s": 4.0,
+  "workers": 24,
+  "seed": 0
+ },
+ "sec": 801.8
+}

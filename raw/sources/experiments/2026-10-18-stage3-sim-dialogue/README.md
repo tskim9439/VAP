@@ -78,7 +78,18 @@ source_type: source-drop
   - 한국어: 71631 1,183 · 134-1 938 · 134-2 879
   - 독일어: ZTC 1,074 · KEC 1,040 · NSC 886
 - **창 수:** 창은 무음에서만 시작해 세션당 2–3 개다(시험 40 세션 → 80–113 창). v1 은 언어당 6–8 천 창이라 4,000 step 동안 합성 창도 약 20 번 반복된다.
-- **v2(진행 중):** 언어별 10,000 세션(약 2.5 만 창, 합계 약 85 GB)
+- **v2(`v2-sim_*.stats.json`):** 언어별 10,000 세션, 실패 0·자기 겹침 0, 합계 82 GB, 각 13–17 분
+
+  | | 시간 | 분당 교대 | 겹침 | 분당 맞장구 | 창(dry-run) |
+  |---|---|---|---|---|---|
+  | 영어 | 258 h | 7.4 | 4.0 % | 1.6 | 22,128(실제 7,245) |
+  | 한국어 | 244 h | 11.5 | 6.2 % | 3.1 | 29,261(실제 90,799) |
+  | 독일어 | 249 h | 12.5 | 4.7 % | 4.2 | 28,286(실제 11,195) |
+
+  - 영어 풀: Switchboard 2,988 · otoSpeech 2,974 · VoxPopuli 1,507 · CV 1,488 · LibriSpeech 1,043
+- **dry-run(`dry-run-v2.txt`, `stage3_dry_sim.sh`):**
+  - 실제·합성 셋 학습 전 점검(64 항목 × δ4–10) 불일치 0
+  - 합성 창은 `<EOT>` 가 문맥에 있고 soft 0 이다.
 - **산출 위치:** mxc `/soundai/users/tskim/VAPKT-data/data/sim-dialogue-v{1,2}/`(`sim_<xx>.refined.dialogues.jsonl`, `sim_<xx>.stats.json`, `mono/`)
 
 ## 스모크
@@ -91,3 +102,27 @@ source_type: source-drop
 - **청취:** 미리보기 페이지를 사용자에게 열어 두었다.
   - 로컬 T5 `vapkt-review/sim-preview-test2/`(EN·KO 10 세션), `sim-preview-test3-de/`(DE 5 세션)
   - 코퍼스 음성이라 외부에 올리지 않는다.
+
+## 파일럿 st3-p10-sim (제출 대기 — 사용자)
+- **비교 대상:** p9(화자 헤드) 같은 step. p9 레시피에 합성 v2 를 더한다.
+- **replay 비중은 p9 와 같게 둔다(약 40 %).** 단일 화자 성능을 지키기 위해서다. 대화 몫 60 % 를 실제 37 %·합성 23 % 로 나눈다.
+  - 가중치 `dlg_ko 2 · dlg_en 0.7 · dlg_de 0.7 · sim_ko 0.5 · sim_en 0.8 · sim_de 0.8 · rep 각 1.2`
+  - 합성은 실제 대화가 적은 영어·독일어에 더 준다.
+- **제출 명령(mxc, 사용자):**
+
+  ```bash
+  cd /soundai/users/tskim/VAPKT
+  (MAX_RESTART=5 bash slurm/submit-stage3-train.sh --run st3-p10-sim --partition apex --nodes 2 --backchannel 1.0,3 --weights dlg_ko:2,dlg_en:0.7,dlg_de:0.7,sim_ko:0.5,sim_en:0.8,sim_de:0.8,rep_ko:1.2,rep_en:1.2,rep_de:1.2 --lr 4e-5 --max-steps 4000 --spk-act-weight 0.5 --sim-data /soundai/users/tskim/VAPKT-data/data/sim-dialogue-v2)
+  ```
+
+  - `--dry-run` 으로 확인했다. 산출은 `/soundai/Model/VAPASR/stage3-st3-p10-sim` 이다.
+- **평가 큐(걸어 둠):** ck2000 → GPU 2, ck3000 → GPU 5, final → GPU 0
+  - 대화 평가 → 오류 유형 분해 → 단일 화자 퇴행 순서다.
+  - 로그는 mxc `results/stage3-regress/queue-p10-gpu{2,5,0}.log` 다.
+- **판정(p9 같은 step 대비, 대화 단위 짝 bootstrap):**
+  - 1 차: cp·귀속 몫·통째 오배정·연속 뒤바뀜
+  - 같이 볼 것:
+    - agn: 합성은 읽기체가 섞여 대화체 받아쓰기에는 도움이 작을 수 있다.
+    - step 2,000 뒤 나빠짐(과적합)이 주는지
+    - EOT: 실제 대화 몫이 60 → 37 % 로 준다.
+    - 단일 화자 퇴행
