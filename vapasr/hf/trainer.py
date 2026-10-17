@@ -74,7 +74,7 @@ class VapAsrTrainer(Trainer):
         lang = inputs.get("lang", ["English"])[0]
         nw = self.model.config.next_weight_ko if (lang == "Korean" and self.model.config.next_weight_ko is not None) else self.model.config.next_weight
         x = {k: inputs[k] for k in ("wav", "wav_len", "K", "feats", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids", "sem_mask",
-                                    "labels_alt", "sem_only_mask") if k in inputs}   # pos_weight: semantic commit hard negative 위치 가중, position_ids: packing, sem_mask: SEM 중립(라벨 없는 ASR) 행
+                                    "labels_alt", "sem_only_mask", "activity", "activity_mask") if k in inputs}   # pos_weight: semantic commit hard negative 위치 가중, position_ids: packing, sem_mask: SEM 중립(라벨 없는 ASR) 행, activity: Stage 3 화자 슬롯 활동
         if "soft_w_full" in inputs: x["soft_w"] = inputs["soft_w_full"]                    # Stage 3 <EOT> soft label(labels_alt 와 짝), sem_only_mask: <SEM_END> 만 중립
         out = model(**x, next_weight=nw)
         for k in ("loss_next", "loss_text", "top1_text"): self._parts[k] = self._parts.get(k, 0.0) + float(getattr(out, k))
@@ -106,8 +106,9 @@ class VapAsrTrainer(Trainer):
     def create_optimizer(self):
         if self.optimizer is not None: return self.optimizer
         m = self.model; emb_w = m.get_input_embeddings().weight; wd = self.args.weight_decay
-        groups = [{"params": [p for n, p in m.named_parameters() if p.requires_grad and n.startswith("adapter")], "lr": self.lr_adapter, "weight_decay": wd},
-                  {"params": [p for n, p in m.named_parameters() if p.requires_grad and not n.startswith(("adapter", "encoder")) and p is not emb_w], "lr": self.args.learning_rate, "weight_decay": wd},
+        new_mod = ("adapter", "spk_head")                                                     # 새로 붙인 작은 모듈(adapter·Stage 3 화자 슬롯 헤드)은 adapter lr
+        groups = [{"params": [p for n, p in m.named_parameters() if p.requires_grad and n.startswith(new_mod)], "lr": self.lr_adapter, "weight_decay": wd},
+                  {"params": [p for n, p in m.named_parameters() if p.requires_grad and not n.startswith(new_mod + ("encoder",)) and p is not emb_w], "lr": self.args.learning_rate, "weight_decay": wd},
                   {"params": [emb_w] if emb_w.requires_grad else [], "lr": self.args.learning_rate, "weight_decay": 0.0},
                   {"params": [p for n, p in m.named_parameters() if p.requires_grad and n.startswith("encoder")], "lr": self.lr_encoder, "weight_decay": wd}]
         groups = [g for g in groups if g["params"]]

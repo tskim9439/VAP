@@ -1,0 +1,23 @@
+## [2026-10-17] task | Stage 3 화자 정체 보조 손실(2 슬롯 활동 헤드) 구현과 파일럿 st3-p9-spkhead 준비 — 테스트·2 GPU 스모크·parity 통과, 제출 대기
+
+- Changed:
+  - `vapasr/hf/configuration_vapasr.py`: `spk_slots`·`spk_weight`
+  - `vapasr/hf/modeling_vapasr.py`: `spk_head`·`add_spk_head`, forward 의 활동 BCE(Phase 2 경로 재사용), 라벨 없는 행 0 기울기 묶음
+  - `vapasr/hf/trainer.py`: activity 를 모델로 넘김, `spk_head` 는 adapter lr 그룹
+  - `vapasr/data/cst_dialogue.py`: `slot_activity`, `CstDialogueDataset(spk_activity=)`, `collate_cst` activity·activity_mask
+  - `experiments/stage3_train.py`: `--spk-act-weight`, 지문(켤 때만), 로그 `loss_spk`·`spk_acc`, parity 배치 activity
+  - `slurm/submit-stage3-train.sh`: `--spk-act-weight`
+  - `tests/test_cst_dialogue.py`: 테스트 2 개
+  - raw `raw/sources/experiments/2026-10-17-stage3-spk-head/`([[2026-10-17-stage3-spk-head]])
+  - [[output-stage3-prep-plan-20261014]]: "화자 정체 보조 손실 파일럿 준비" 절
+- Reason:
+  - 사용자 요청 "2번 구현해줘"
+  - 정체 회복 파일럿은 step 2,000 에서 연속 뒤바뀜을 줄이지 못했다. 목소리 정체 신호를 직접 주는 쪽으로 간다.
+- 결과:
+  - 테스트 mxc 95 개·로컬 68 개 통과. 로컬 `test_packing` varlen 3 개는 맥 transformers 버전 탓이다.
+  - 2 GPU torchrun 20 step: replay step 에서도 DDP 정상, `spk_acc` 0.53 → 0.70, 헤드 포함 parity OK
+- Next:
+  - 사용자가 st3-p9-spkhead 를 제출한다(2 노드, 4,000 step, `--spk-act-weight 0.5`).
+  - 평가 큐 3 개(GPU 1·2·4)가 기다린다.
+  - r1 ck2000 과 비교한다.
+- By: tskim

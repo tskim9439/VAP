@@ -3,7 +3,7 @@
 import json
 import numpy as np, pytest, torch, torch.nn.functional as F
 from vapasr.data.cst_dialogue import (cst_head_text, build_cst_sequence, read_back, tag_flush, window_speakers, window_streams, dialogue_episodes, is_backchannel,
-                                      CstDialogueDataset, collate_cst, Recover, pick_flip, retag)
+                                      CstDialogueDataset, collate_cst, Recover, pick_flip, retag, slot_activity)
 from vapasr.data.dialogue import Dialogue, Utterance, ChannelRef, chunk_of
 from vapasr.data.interleave import Specials
 from vapasr.data.semcommit_dataset import build_interleaved_events
@@ -192,6 +192,19 @@ def test_dataset_recover_flips_only_with_rng(tmp_path):
     with pytest.raises(ValueError): CstDialogueDataset([q], FakeTok(), delays=(4,), recover=Recover(p=1.5))
 
 
+def test_slot_activity_labels_and_collate(tmp_path):
+    q = make(tmp_path); ds = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, seed=1, spk_activity=True)
+    eps = ds.eps["c1"]; act = slot_activity(eps, ["y", "x"], 2.5, 20.0, 250)                   # 2.5 s 시작: y(3–5 s) 가 A, x(6–8 s) 가 B
+    k = lambda t: int((t - 2.5) / 0.08)
+    assert act[k(4.0)] == [1, 0] and act[k(7.0)] == [0, 1] and act[k(5.5)] == [0, 0] and act[0] == [0, 0] and len(act) == 250
+    assert slot_activity(eps, ["x"], 0.0, 20.0, 250)[int(4.0 / 0.08)] == [0, 0]                # 슬롯에 없는 화자(y)는 0
+    b = [ds[i] for i in range(3)]; assert all(x["activity"].shape == (x["K"], 2) for x in b)
+    c = collate_cst(b); Km = max(x["K"] for x in b); assert c["activity"].shape == (3, Km, 2) and c["activity_mask"].shape == (3, Km)
+    assert all(int(c["activity_mask"][i].sum()) == b[i]["K"] for i in range(3)) and torch.equal(c["activity"][0, : b[0]["K"]], b[0]["activity"])
+    from vapasr.hf.packing import pack_batch
+    p = pack_batch(c); assert p["activity"].shape[:2] == p["activity_mask"].shape and "activity" not in collate_cst([CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, seed=1)[0]])
+
+
 def test_dataset_hard_eot_mode(tmp_path):
     q = make(tmp_path)
     soft = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, seed=1)
@@ -238,6 +251,27 @@ def test_reinit_turn_row_only_when_reserved():
     keep = torch.ones(W2.shape[0], dtype=torch.bool); keep[TURN] = False; assert torch.equal(W2.detach()[keep], W20[keep])
     mu = W20[:BASE].mean(0); assert (W2.detach()[TURN] - mu).abs().max() < 0.2 and TURN not in m2.config.blocked_ids
     W21 = W2.detach().clone(); m2.add_semantic_tokens(tok2, turn=True, reinit_turn=True); assert torch.equal(W2.detach(), W21)   # 한 번만
+
+
+def test_spk_head_activity_loss_and_ddp_tie():
+    from vapasr.hf import VapAsrForStreamingASR
+    m, tok = tiny_model(); m.add_semantic_tokens(tok, turn=True); assert m.spk_head is None
+    m.add_spk_head(2, 0.7); assert m.config.spk_slots == 2 and m.config.spk_weight == 0.7 and m.spk_head[-1].out_features == 2
+    h0 = m.spk_head; m.add_spk_head(2, 0.3); assert m.spk_head is h0 and m.config.spk_weight == 0.3          # 같은 슬롯 수면 가중만
+    NX = m.config.sp_ids["<NEXT_AUDIO>"]
+    ids = torch.tensor([[1, 0, 50, NX, 0, 60, NX]]); is_audio = torch.tensor([[0, 1, 0, 0, 1, 0, 0]], dtype=torch.bool)
+    chunk_of = torch.tensor([[-1, 0, -1, -1, 1, -1, -1]]); labels = ids.clone(); labels[is_audio] = -100; labels[:, 0] = -100
+    x = dict(ids=ids, is_audio=is_audio, chunk_of=chunk_of, labels=labels, mask=torch.ones(1, 7, dtype=torch.long), feats=torch.randn(1, 1, 2, 4))
+    act = torch.tensor([[[1.0, 0.0], [0.0, 1.0]]]); m.train()
+    base = m(**x, next_weight=0.3); out = m(**x, activity=act, activity_mask=torch.ones(1, 2), next_weight=0.3)
+    assert base.loss_act is None and out.loss_act is not None and out.act_acc is not None
+    assert torch.allclose(out.loss, base.loss + 0.3 * out.loss_act, atol=1e-5)                                   # 가중 config.spk_weight
+    m.zero_grad(); base.loss.backward()
+    assert all(p.grad is not None and float(p.grad.abs().sum()) == 0.0 for p in m.spk_head.parameters())       # 라벨 없는 행: 0 기울기로 그래프에 묶임
+    m.eval(); assert torch.allclose(m(**x, next_weight=0.3).loss, base.loss)
+    cfg = m.config.to_dict(); cfg.pop("model_type", None)
+    from vapasr.hf import VapAsrConfig
+    m2 = VapAsrForStreamingASR(VapAsrConfig(**cfg), thinker=type(m.thinker)()); assert m2.spk_head is not None and any(k.startswith("spk_head.") for k in m2.state_dict())   # 저장 config 로 다시 만들면 헤드도 생긴다
 
 
 def test_forward_sem_only_mask_and_eot_soft():

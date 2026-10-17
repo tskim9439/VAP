@@ -58,6 +58,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.sp_ids = dict(config.sp_ids); self.next_audio = self.sp_ids.get("<NEXT_AUDIO>"); self.empty_audio = self.sp_ids.get("<EMPTY_AUDIO>")
         self.register_buffer("blocked", torch.tensor(sorted(set(config.blocked_ids)), dtype=torch.long), persistent=False)
         self.act_head = nn.Sequential(nn.Linear(config.hidden_size, config.act_hidden), nn.GELU(), nn.Linear(config.act_hidden, config.lanes)) if config.lanes > 0 else None   # Phase 2 lane 활동 헤드(audio 위치)
+        self.spk_head = self._spk_head(config.spk_slots) if getattr(config, "spk_slots", 0) > 0 and config.lanes == 0 else None   # Stage 3 화자 슬롯 활동 헤드(audio 위치, 학습 보조)
         self.post_init()
 
     # ── HF 규약(tie·임베딩)
@@ -145,9 +146,13 @@ class VapAsrForStreamingASR(PreTrainedModel):
         loss, st = soft_ce(logits, t, alt, w, self.next_audio, nw, eot_id=eot_id, eot_weight=self.config.eot_weight if eot_id >= 0 else 1.0, tag_ids=tag_ids, tag_weight=getattr(self.config, "tag_weight", 1.0),
                            evt_weights=evt, pos_override=pw, sem_id=sem_id, turn_id=turn_id)
         loss_act, act_st = None, {}
-        if self.act_head is not None and activity is not None:
+        head = self.act_head if self.act_head is not None else self.spk_head                   # Phase 2 lane 활동 | Stage 3 화자 슬롯 활동(같은 audio 위치 BCE)
+        if head is not None and activity is not None:
             ha, tg = gather_audio_targets(h, is_audio, chunk_of, activity, activity_mask if activity_mask is not None else torch.ones(activity.shape[:2], device=h.device))
-            loss_act, act_st = activity_bce(self.act_head(ha).float(), tg); loss = loss + (self.config.act_weight if act_weight is None else float(act_weight)) * loss_act
+            aw = float(act_weight) if act_weight is not None else (self.config.act_weight if self.act_head is not None else self.config.spk_weight)
+            loss_act, act_st = activity_bce(head(ha).float(), tg); loss = loss + aw * loss_act
+        elif self.spk_head is not None and self.training:                                     # 활동 라벨 없는 행(replay): 헤드를 0 가중으로 그래프에 묶어 DDP(find_unused_parameters=False)가 기다리지 않게
+            loss = loss + 0.0 * sum(p.sum() for p in self.spk_head.parameters())
         out = VapAsrOutput(loss=loss, loss_next=st["loss_next"], loss_text=st["loss_text"], top1_text=st["top1_text"], n_labels=int(t.numel()),
                            loss_eot=st["loss_eot"], loss_act=(loss_act.item() if loss_act is not None else None), act_acc=act_st.get("act_acc"), n_soft=st["n_soft"],
                            loss_sem=st["loss_sem"] if st.get("n_sem") else None, top1_sem=st["top1_sem"] if st.get("n_sem") else None, n_sem=st.get("n_sem"), sem_fp=st.get("sem_fp"),
@@ -163,6 +168,18 @@ class VapAsrForStreamingASR(PreTrainedModel):
         hp = self.thinker.model(inputs_embeds=E[sel][None], attention_mask=None, position_ids=pos, use_cache=False,
                                 **packed_kwargs(lengths=sel.sum(1))).last_hidden_state[0]
         return hp.new_zeros(*sel.shape, hp.shape[-1]).index_put((sel,), hp)
+
+    def _spk_head(self, slots: int) -> nn.Module:
+        return nn.Sequential(nn.Linear(self.config.hidden_size, self.config.act_hidden), nn.GELU(), nn.Linear(self.config.act_hidden, slots))
+
+    def add_spk_head(self, slots: int = 2, weight: float = 0.5) -> None:
+        """Stage 3(mono) 화자 슬롯 활동 헤드를 붙인다 — 청크마다 '슬롯 s 화자가 말하는 중' BCE(LLM 의 audio 위치 hidden, 슬롯 순서 = 창에서 먼저 말한 사람 A).
+        텍스트 화자 태그는 δ 청크 늦게 나오므로 지금 청크의 슬롯을 맞히려면 목소리로 정체를 추적해야 한다. 디코드는 쓰지 않는다. 이미 같은 슬롯 수면 가중만 바꾼다."""
+        assert self.config.lanes == 0, "Phase 2(lanes>0) 는 act_head 가 lane 활동을 맡는다"
+        if self.spk_head is None or int(self.config.spk_slots) != int(slots):
+            W = self.get_input_embeddings().weight; self.config.spk_slots = int(slots)
+            self.spk_head = self._spk_head(int(slots)).to(device=W.device, dtype=W.dtype)
+        self.config.spk_weight = float(weight)
 
     def activity_logits(self, h_audio: torch.Tensor) -> torch.Tensor:
         """Phase 2 lane 활동 logits (…, R) — 추론 parser(lane_state) 가 닫힘 판정에 쓴다."""

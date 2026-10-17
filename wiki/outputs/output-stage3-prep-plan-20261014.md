@@ -15,6 +15,7 @@ sources:
   - '[[2026-10-16-stage3-pilots]]'
   - '[[2026-10-16-stage3-main-r1]]'
   - '[[2026-10-17-stage3-recover-pilot]]'
+  - '[[2026-10-17-stage3-spk-head]]'
 related:
   - '[[decision-eot-immediate-soft-label]]'
   - '[[output-phase2-eval-plan]]'
@@ -363,6 +364,20 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
     - δ10 cp − agn: r1 은 11.4 → 12.8, p8 은 11.4 → 11.9
     - δ4 final 끼리 cp −2.45 [−3.77, −1.12], 이어짐 −0.96
   - δ10 주 지표로 r1 ck2000 을 넘는 체크포인트는 없다. **Stage 3 최종은 r1 checkpoint-2000 그대로 둔다.**
+
+### 화자 정체 보조 손실 파일럿 준비 (2026-10-17, [[2026-10-17-stage3-spk-head]])
+- **사용자 결정:** "2번 구현해줘"
+- **구현(기본 끔):** `model.add_spk_head(2, w)` + `CstDialogueDataset(spk_activity=True)` + `stage3_train.py --spk-act-weight` + `submit-stage3-train.sh --spk-act-weight`
+  - LLM 의 audio 위치 hidden 에 2 슬롯 헤드를 붙인다. 청크마다 '슬롯 A/B 가 말하는 중' BCE 다.
+  - 슬롯 순서는 직렬화와 같은 먼저 말한 사람 = A 이고, 라벨은 episode 구간이다.
+  - 텍스트 태그가 δ 늦게 나오므로, 지금 청크의 슬롯을 맞히려면 목소리로 정체를 추적해야 한다.
+  - replay 행은 헤드를 0 가중으로 그래프에 묶는다(DDP). 헤드는 adapter lr 이다.
+- **점검:**
+  - 테스트: mxc 95 개, 로컬 68 개 통과
+  - 2 GPU torchrun 스모크: replay step 도 DDP 정상, `spk_acc` 0.53 → 0.70(20 step), 헤드 포함 parity OK
+- **파일럿 st3-p9-spkhead(사용자 제출 대기):** r1 레시피 + `--spk-act-weight 0.5`, 2 노드, 4,000 step
+  - checkpoint-2000 을 r1 ck2000 과 비교한다.
+  - 평가 큐 3 개(GPU 1·2·4)가 ck2000·3000·final 을 기다린다.
 
 ## 열린 질문
 - (해결 2026-10-16) `<EOT>` 는 soft 다. hard 는 보류 오방출이 0.17 → 0.28 로 커졌다(p2).

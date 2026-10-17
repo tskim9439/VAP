@@ -26,7 +26,10 @@ soft label(decision-eot-immediate-soft-label): 결과·p_end 는 대화 전체 �
   run 안에서 시작하면 '헛 교대' 를 흉내 낸다. n0·n1 은 단어 첫 토큰(tokenizer 가 있으면 — 디코드가 공백으로 시작). 구간 안 출력 label 은 −100(틀린 문맥에서 이어 쓰는 법을 가르치지 않는다). 회복 지점 n1 만 정답을 둔다:
   n1 이 교대 지점이면 문맥 슬롯이 이미 그 화자라 태그 없이 이어 쓰고('boundary' — 목소리로 정체를 판단), run 안이면 바로잡는 태그를 낸다('inrun').
   평가·점검 경로(cst_sequence 기본)는 뒤집지 않는다 — __getitem__ 만 rng 를 넘긴다.
+화자 슬롯 활동(spk_activity, 기본 끔 — 모델 add_spk_head 의 라벨): 청크마다 [슬롯 A 말함, 슬롯 B 말함] 0/1(slot_activity). 슬롯 순서는 직렬화와 같은
+  window_speakers(먼저 말한 사람 = A), 말함 = episode(전사 없는 발화 포함, gap < 0.25 s 병합) 구간. collate_cst 가 activity (B,K,2)·activity_mask (B,K) 로 묶는다.
 """
+import math
 import random
 from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple
 
@@ -92,6 +95,15 @@ def window_streams(eps: List[Episode], speakers: Sequence[str], t0: float, L: fl
         if ep.outcome == "backchannel": st["eot_backchannel"] += 1; continue
         e = ep.end - t0; streams[s].append((int(eot_id), e, chunk_of(e + EOT_GAP_S))); eot_p[(s, len(streams[s]) - 1)] = ep.p_end; st["eot"] += 1
     return streams, eot_p, st
+
+
+def slot_activity(eps: List[Episode], speakers: Sequence[str], t0: float, L: float, K: int) -> List[List[int]]:
+    """(K, 2) 0/1 — 창 기준 청크 [k·0.08, (k+1)·0.08) 가 슬롯 s 화자의 episode 와 겹치면 1(겹침 구간은 둘 다 1). 슬롯 = speakers 순서."""
+    act = [[0, 0] for _ in range(K)]; slot = {s: i for i, s in enumerate(speakers)}
+    for ep in eps:
+        if ep.speaker not in slot or ep.end <= t0 or ep.start >= t0 + L: continue
+        for k in range(max(0, int((ep.start - t0) / CHUNK_S)), min(K, int(math.ceil((ep.end - t0) / CHUNK_S)))): act[k][slot[ep.speaker]] = 1
+    return act
 
 
 def tag_flush(chunks: List[tuple], srcs: List[list], K: int, sp: Specials) -> None:
@@ -242,11 +254,12 @@ class CstDialogueDataset(DialogueWindowDataset):
     windows: 주면 그 (conv_id, t0, L) 목록만 쓴다(p2_build_windows 산출물 등). max_speakers: 창 안 화자 상한(초과 창은 버림).
     decision_weight: EOT 결정 위치 가중(pos_weight 덮어쓰기, 0 = 기본 가중). backchannel: 맞장구 선택(모듈 설명, 기본 끔).
     eot_mode: 'soft'(p_end 그대로) | 'hard'(p_end ≥ 0.5 → 1, 아니면 0; 미관측은 그대로 마스크) — 파일럿 비교용.
-    recover: 정체 회복 학습 설정(Recover, 기본 None = 끔) — __getitem__ 에서만 쓴다(모듈 설명)."""
+    recover: 정체 회복 학습 설정(Recover, 기본 None = 끔) — __getitem__ 에서만 쓴다(모듈 설명).
+    spk_activity: True 면 __getitem__ 이 화자 슬롯 활동 activity (K, 2) 를 낸다(모델 add_spk_head 보조 손실의 라벨)."""
 
     def __init__(self, dialogues: List[str], tok, delays=(4,), exclude: Optional[set] = None, windows: Optional[List[Tuple[str, float, float]]] = None,
                  max_speakers: int = 2, decision_weight: float = 0.0, backchannel: Optional[Tuple[float, int]] = None, eot_mode: str = "soft",
-                 recover: Optional[Recover] = None, **kw):
+                 recover: Optional[Recover] = None, spk_activity: bool = False, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if recover is not None and not (0 <= recover.p <= 1 and 0 <= recover.boundary_frac <= 1 and recover.max_lag >= 1 and recover.max_boundaries >= 1):
             raise ValueError(f"recover 범위: {recover}")
@@ -255,7 +268,8 @@ class CstDialogueDataset(DialogueWindowDataset):
         for c in gone: del self.dlgs[c]
         if windows is not None: self.items = [(c, round(float(t0), 3), round(float(L), 3)) for c, t0, L in windows if c in self.dlgs]
         else: self.items = [it for it in self.items if it[0] in self.dlgs]
-        self.eot_mode = eot_mode; self.recover = recover if recover is not None and recover.p > 0 else None; conv = lambda n: int(tok.convert_tokens_to_ids(n))
+        self.eot_mode = eot_mode; self.recover = recover if recover is not None and recover.p > 0 else None; self.spk_activity = bool(spk_activity)
+        conv = lambda n: int(tok.convert_tokens_to_ids(n))
         self.spk_ids = (conv("<SPK_A>"), conv("<SPK_B>")); self.eot_id = conv("<EOT>"); self.decision_weight = float(decision_weight)
         self.delay_ids = {d: conv(f"<DELAY_{d}>") for d in self.delays}
         self.csp = Specials(next_audio=self.sp.next_audio, empty_audio=self.sp.empty_audio, spk=self.spk_ids)
@@ -328,15 +342,22 @@ class CstDialogueDataset(DialogueWindowDataset):
                     chunk_of=torch.tensor(s["chunk_of"]), labels=torch.tensor(s["labels"]), pos_weight=torch.tensor(s["pos_weight"], dtype=torch.float32),
                     labels_alt=torch.tensor(s["labels_alt"]), soft_w=torch.tensor(s["soft_w"], dtype=torch.float32),
                     lang=s["lang"], delay=delay, name=s["corpus"], id=f"{s['cid']}@{s['t0']}", n_text=s["st"].tokens, overflow=s["st"].overflow_tokens,
-                    n_flush=s["n_flush"], K=s["K"], rounds=s["n_rounds"], n_eot=s["n_eot"], n_soft=s["n_soft"], n_spk=len(s["speakers"]), n_flip=int(s["flip"] is not None))
+                    n_flush=s["n_flush"], K=s["K"], rounds=s["n_rounds"], n_eot=s["n_eot"], n_soft=s["n_soft"], n_spk=len(s["speakers"]), n_flip=int(s["flip"] is not None),
+                    **({"activity": torch.tensor(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"]), dtype=torch.float)} if self.spk_activity else {}))
 
 
 def collate_cst(batch):
-    """collate_streams + pos_weight·labels_alt·soft_w_full (B, L)(packing ROW_KEYS) + sem_only_mask(유효 위치 True: <SEM_END> 중립, <EOT> 학습)."""
+    """collate_streams + pos_weight·labels_alt·soft_w_full (B, L)(packing ROW_KEYS) + sem_only_mask(유효 위치 True: <SEM_END> 중립, <EOT> 학습)
+    + (spk_activity 면) activity (B, Kmax, 2)·activity_mask (B, Kmax) — 인코더 출력 (B, Kmax) 과 줄을 맞춘다(packing.pack_batch 가 그대로 편다)."""
     out = collate_streams(batch); B, L = out["ids"].shape
     pw = torch.zeros(B, L); la = torch.full((B, L), -100, dtype=torch.long); sw = torch.ones(B, L)
     for i, b in enumerate(batch):
         n = len(b["ids"]); pw[i, :n] = b["pos_weight"]; la[i, :n] = b["labels_alt"]; sw[i, :n] = b["soft_w"]
     out.update(pos_weight=pw, labels_alt=la, soft_w_full=sw, sem_only_mask=out["mask"].bool())
     for k in ("n_eot", "n_soft", "n_flip"): out[k] = sum(int(b.get(k, 0)) for b in batch)
+    if "activity" in batch[0]:
+        Km = max(int(b["K"]) for b in batch); act = torch.zeros(B, Km, batch[0]["activity"].shape[1]); am = torch.zeros(B, Km)
+        for i, b in enumerate(batch):
+            k = b["activity"].shape[0]; assert k == int(b["K"]), f"activity 길이 {k} ≠ K {b['K']}"; act[i, :k] = b["activity"]; am[i, :k] = 1
+        out.update(activity=act, activity_mask=am)
     return out

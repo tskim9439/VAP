@@ -12,6 +12,7 @@
   dlg_ko·dlg_en·dlg_de  vapasr/data/cst_dialogue.CstDialogueDataset — Phase 2 정제 대화(split held-out 제외)의 20–40 s 창,
                         prefix 'language <SPK_A>{L} <SPK_B>{L}<asr_text><DELAY_d>', 화자 태그, 턴 끝 soft <EOT>(--eot-mode·--backchannel·--decision-weight).
                         --recover-p > 0: 정체 회복 학습(창 일부에서 문맥 슬롯 한 구간을 뒤집고 회복 지점만 정답 — cst_dialogue 모듈 설명).
+                        --spk-act-weight > 0: 화자 슬롯 활동 보조 손실(model.add_spk_head — 청크마다 슬롯 A/B 가 말하는 중인지 BCE, 라벨 cst_dialogue.slot_activity).
   rep_ko·rep_en·rep_de  vapasr/data/ast_dataset.AstStreamDataset — Stage 2 와 같은 단일 화자 ASR·번역 항목(--ast-frac 번역 모드, --offline-frac final 모드).
                         <SEM_END>·<EOT> 둘 다 중립(sem_mask) — 단일 화자 스트림 끝은 턴 끝 라벨이 아니다.
   섞기: vapasr/hf/stage3.WeightedRoundRobinLoader — step 마다 셋을 가중치로 고른다(결정적). epoch = 대화 셋 배치를 한 번 도는 길이.
@@ -43,6 +44,7 @@ g.add_argument("--recover-p", type=float, default=0.0, help="정체 회복 학�
 g.add_argument("--recover-boundary-frac", type=float, default=0.5, help="회복 지점을 다음 교대 경계(태그 없이 이어 씀)로 둘 비율, 나머지는 run 안(바로잡는 태그)")
 g.add_argument("--recover-max-lag", type=int, default=8, help="run 안 회복의 최대 거리(방출 원소 수)")
 g.add_argument("--recover-max-boundaries", type=int, default=2, help="경계 회복을 몇 번째 교대 경계까지 고를지")
+g.add_argument("--spk-act-weight", type=float, default=0.0, help="화자 슬롯 활동 보조 손실 가중(0 = 끔): LLM audio 위치에 2 슬롯 헤드, 청크마다 'A/B 가 말하는 중' BCE")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
 g.add_argument("--replay-de-words", action="append", default=[], help="독일어 words.jsonl(반복·쉼표·@목록) → rep_de")
@@ -141,8 +143,8 @@ def log(*s):
 torch.manual_seed(a.seed); random.seed(a.seed); torch.backends.cuda.matmul.allow_tf32 = True
 out = a.out_dir; os.makedirs(out, exist_ok=True)
 if not a.dry_run and world == 1 and torch.cuda.is_available() and torch.cuda.device_count() > 1: sys.exit("GPU 가 여러 장 보인다 — --gpu N 또는 torchrun")
-IN_KEYS = ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids", "labels_alt", "sem_mask", "sem_only_mask")
-LOSS_KEYS = ("loss_next", "loss_text", "top1_text", "loss_turn", "top1_turn")
+IN_KEYS = ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids", "labels_alt", "sem_mask", "sem_only_mask", "activity", "activity_mask")
+LOSS_KEYS = ("loss_next", "loss_text", "top1_text", "loss_turn", "top1_turn", "loss_act")
 
 # ── 모델 + tokenizer
 from transformers import AutoTokenizer
@@ -160,6 +162,7 @@ if not a.dry_run:
     model.add_semantic_tokens(tok, turn=True, reinit_turn=True)                              # <EOT> 를 턴 종료로 켠다(예약 행 재초기화·차단 해제)
     if max(delays) > 8: add_delay_tokens(model, tok)                                         # Stage 2 에서 이미 붙었으면 그대로
     add_ast_tokens(model, tok)                                                                # <TRANS>·<SPK_A/B> 차단 해제(이미 있으면 그대로)
+    if a.spk_act_weight > 0: model.add_spk_head(2, a.spk_act_weight)                           # 화자 슬롯 활동 헤드(새로 붙이면 adapter lr — trainer.create_optimizer)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
     assert not bad, f"tokenizer 특수 토큰 id 가 config 와 다름: {bad}"
@@ -193,7 +196,7 @@ if model is not None:
     speed = apply_speedups(model, a, log, liger=a.liger); a.liger = bool(speed["liger"]); cfg.use_liger = a.liger
     n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad)
     log(f"model ← {a.init} ({time.time() - t0:.0f}s) · 학습 {n_tr / 1e6:.1f}M · 인코더 {'동결' if a.freeze_encoder else '학습'}(init 인코더 저장됨={init_had_encoder}) · "
-        f"<EOT>={EOT} 켬(turn_weight {cfg.turn_weight}) · grad ckpt {a.grad_ckpt} · liger {a.liger}")
+        f"<EOT>={EOT} 켬(turn_weight {cfg.turn_weight}) · grad ckpt {a.grad_ckpt} · liger {a.liger} · 화자 슬롯 헤드 {f'켬(가중 {cfg.spk_weight})' if model.spk_head is not None else '끔'}")
 
 # ── 데이터
 def _paths(vals):
@@ -213,7 +216,8 @@ for lang in ("Korean", "English", "German"):
     files = [os.path.join(a.data, f"{c}.refined.dialogues.jsonl") for c in cs]; dlg_files += files
     held = {cid for c in cs for cid in split["corpora"].get(c, {}).get("heldout", [])}
     ds = CstDialogueDataset(files, tok, delays=delays, exclude=held, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac,
-                            seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc)
+                            seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
+                            spk_activity=a.spk_act_weight > 0)
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = lang; train_sets[key] = ds
     log(f"  {key} {cs}: {len(ds)} 창 · held-out 제외 {ds.stats['cst_excluded']} 대화 · stats {dict(ds.stats)}")
@@ -249,7 +253,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           next_weight=a.next_weight, next_weight_ko=a.next_weight_ko, replay_words=file_digest(RW) if RW else None, replay_de_words=file_digest(RD) if RD else None,
           replay_files_frac=a.replay_files_frac, replay_max_items=a.replay_max_items, ast_targets_sha256=ast_fp, ast_frac=a.ast_frac, offline_frac=a.offline_frac,
           gain_augment=list(gain) if gain else None, speed_perturb=list(speeds) or None, noise_aug=naug.settings() if naug else None, spec_augment=a.spec_augment,
-          max_windows=a.max_windows, seed=a.seed, vocab_sha256=vocab_sha, init=os.path.abspath(a.init), **({"recover": rc._asdict()} if rc else {}))   # 끄면 키 없음(이전 run 지문 그대로)
+          max_windows=a.max_windows, seed=a.seed, vocab_sha256=vocab_sha, init=os.path.abspath(a.init), **({"recover": rc._asdict()} if rc else {}), **({"spk_act_weight": a.spk_act_weight} if a.spk_act_weight > 0 else {}))   # 끄면 키 없음(이전 run 지문 그대로)
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():
@@ -291,6 +295,7 @@ class Stage3Trainer(VapAsrTrainer):
         c.setdefault(f"loss_{kind}", []).append(float(loss.detach()))
         if kind == "dlg" and getattr(o, "loss_turn", None) is not None: c.setdefault("loss_turn_dlg", []).append(float(o.loss_turn))
         if kind == "dlg": c.setdefault("soft", []).append(int(inputs.get("n_soft", 0))); c.setdefault("flip", []).append(int(inputs.get("n_flip", 0)))
+        if kind == "dlg" and getattr(o, "loss_act", None) is not None: c.setdefault("loss_spk", []).append(float(o.loss_act)); c.setdefault("spk_acc", []).append(float(o.act_acc))
         return (loss, o) if return_outputs else loss
     def log(self, logs, start_time=None):
         c = self.__dict__.get("_kind")

@@ -1,0 +1,30 @@
+{
+ "parity": true,
+ "stage3_config_ok": true,
+ "eot_registry_ok": true,
+ "memory": {
+  "loss": 0.85243,
+  "loss_next": 0.1703,
+  "loss_text": 0.47721,
+  "top1_text": 0.875,
+  "loss_turn": 3.03507,
+  "loss_act": 0.595
+ },
+ "reloaded": {
+  "loss": 0.85163,
+  "loss_next": 0.17005,
+  "loss_text": 0.477,
+  "top1_text": 0.875,
+  "loss_turn": 3.02573,
+  "loss_act": 0.59511
+ },
+ "missing": [],
+ "extra": [],
+ "shape_mismatch": [],
+ "value_diff": [],
+ "encoder_saved_keys": 638,
+ "tokenizer_reload_ok": true,
+ "tokenizer_reload_error": null,
+ "batch_n_soft": 15
+}spk_slots 2 spk_weight 0.5 stage3.spk_act_weight 0.5
+spk_head keys ['spk_head.0.bias', 'spk_head.0.weight', 'spk_head.2.bias', 'spk_head.2.weight']
