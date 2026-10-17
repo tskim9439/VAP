@@ -13,6 +13,8 @@
                         prefix 'language <SPK_A>{L} <SPK_B>{L}<asr_text><DELAY_d>', 화자 태그, 턴 끝 soft <EOT>(--eot-mode·--backchannel·--decision-weight).
                         --recover-p > 0: 정체 회복 학습(창 일부에서 문맥 슬롯 한 구간을 뒤집고 회복 지점만 정답 — cst_dialogue 모듈 설명).
                         --spk-act-weight > 0: 화자 슬롯 활동 보조 손실(model.add_spk_head — 청크마다 슬롯 A/B 가 말하는 중인지 BCE, 라벨 cst_dialogue.slot_activity).
+  sim_ko·sim_en·sim_de  --sim-data 의 합성 2 인 대화(vapasr/data/sim_dialogue — 다른 화자의 실제 발화를 턴으로 번갈아 놓음). 같은 CstDialogueDataset,
+                        <EOT> 감독 없음(meta.mask_eot). epoch 기준(anchor)은 실제 대화 셋(dlg_*)만.
   rep_ko·rep_en·rep_de  vapasr/data/ast_dataset.AstStreamDataset — Stage 2 와 같은 단일 화자 ASR·번역 항목(--ast-frac 번역 모드, --offline-frac final 모드).
                         <SEM_END>·<EOT> 둘 다 중립(sem_mask) — 단일 화자 스트림 끝은 턴 끝 라벨이 아니다.
   섞기: vapasr/hf/stage3.WeightedRoundRobinLoader — step 마다 셋을 가중치로 고른다(결정적). epoch = 대화 셋 배치를 한 번 도는 길이.
@@ -40,6 +42,8 @@ g.add_argument("--backchannel", default="off", help="맞장구 선택 'max_s,max
 g.add_argument("--decision-weight", type=float, default=2.0, help="EOT 결정 위치 가중(pos_weight 덮어쓰기; Phase 2 eot_weight 2)")
 g.add_argument("--turn-weight", type=float, default=2.0, help="config.turn_weight(<EOT> 타깃 가중 — 결정 위치는 --decision-weight 가 덮는다)")
 g.add_argument("--max-windows", type=int, default=0, help="대화 셋마다 창 상한(0 = 전부; 스모크)")
+g.add_argument("--sim-data", default=None, help="합성 2 인 대화 폴더(experiments/sim_build_dialogues.py 산출: sim_<ko|en|de>.refined.dialogues.jsonl + mono/) — "
+               "가중치 키 sim_ko·sim_en·sim_de 로 쓴다(<EOT> 감독 없음, 전사·화자 태그·화자 활동만)")
 g.add_argument("--recover-p", type=float, default=0.0, help="정체 회복 학습: 대화 창마다 문맥 슬롯 한 구간을 뒤집을 확률(0 = 끔; cst_dialogue 모듈 설명)")
 g.add_argument("--recover-boundary-frac", type=float, default=0.5, help="회복 지점을 다음 교대 경계(태그 없이 이어 씀)로 둘 비율, 나머지는 run 안(바로잡는 태그)")
 g.add_argument("--recover-max-lag", type=int, default=8, help="run 안 회복의 최대 거리(방출 원소 수)")
@@ -221,6 +225,20 @@ for lang in ("Korean", "English", "German"):
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = lang; train_sets[key] = ds
     log(f"  {key} {cs}: {len(ds)} 창 · held-out 제외 {ds.stats['cst_excluded']} 대화 · stats {dict(ds.stats)}")
+sim_files = []
+for lang in ("Korean", "English", "German"):                                                  # 합성 대화(sim_dialogue): held-out 과 무관한 학습 재료로만 만들었다
+    key = f"sim_{SHORT[lang]}"
+    if weights.get(key, 0) <= 0: continue
+    if not a.sim_data: sys.exit(f"--weights 에 {key} 가 있는데 --sim-data 가 없다")
+    f = os.path.join(a.sim_data, f"{key}.refined.dialogues.jsonl")
+    if not os.path.exists(f): sys.exit(f"합성 대화 없음: {f}")
+    sim_files.append(f)
+    ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
+                            mono_cache_dir=os.path.join(a.sim_data, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
+                            spk_activity=a.spk_act_weight > 0)
+    if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
+    ds.lang = lang; train_sets[key] = ds
+    log(f"  {key}(합성): {len(ds)} 창 · 대화 {ds.stats['cst_dialogues']} · stats {dict(ds.stats)}")
 RW = _subset(_paths(a.replay_words), a.replay_files_frac); RD = _subset(_paths(a.replay_de_words), a.replay_files_frac); ast_fp = None
 if (RW or RD) and any(weights.get(k, 0) > 0 for k in ("rep_ko", "rep_en", "rep_de")):
     from vapasr.data.ast_dataset import AstStreamDataset, load_ast_targets
@@ -240,7 +258,7 @@ assert any(k.startswith("dlg_") for k in train_sets), "대화 셋이 없다"
 check = {}
 for key, ds in train_sets.items():                                                             # 시퀀스 불변식(오디오 없이)
     n = min(len(ds), a.check_items); rng = random.Random(a.seed); idx = sorted(rng.sample(range(len(ds)), n))
-    if key.startswith("dlg_"):
+    if key.startswith(("dlg_", "sim_")):
         bad = [(ds.items[i], d, P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d)] if P]
         if rc: bad += [(ds.items[i], d, "flip", P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d, rng=random.Random(a.seed * 7919 + i * 31 + d), recover=rc._replace(p=1.0))] if P]
     else: bad = [(ds.items[i]["id"], d, P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d)] if P]
@@ -253,11 +271,12 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           next_weight=a.next_weight, next_weight_ko=a.next_weight_ko, replay_words=file_digest(RW) if RW else None, replay_de_words=file_digest(RD) if RD else None,
           replay_files_frac=a.replay_files_frac, replay_max_items=a.replay_max_items, ast_targets_sha256=ast_fp, ast_frac=a.ast_frac, offline_frac=a.offline_frac,
           gain_augment=list(gain) if gain else None, speed_perturb=list(speeds) or None, noise_aug=naug.settings() if naug else None, spec_augment=a.spec_augment,
-          max_windows=a.max_windows, seed=a.seed, vocab_sha256=vocab_sha, init=os.path.abspath(a.init), **({"recover": rc._asdict()} if rc else {}), **({"spk_act_weight": a.spk_act_weight} if a.spk_act_weight > 0 else {}))   # 끄면 키 없음(이전 run 지문 그대로)
+          max_windows=a.max_windows, seed=a.seed, vocab_sha256=vocab_sha, init=os.path.abspath(a.init), **({"recover": rc._asdict()} if rc else {}), **({"spk_act_weight": a.spk_act_weight} if a.spk_act_weight > 0 else {}),
+          **({"sim_data": file_digest(sim_files)} if sim_files else {}))   # 끄면 키 없음(이전 run 지문 그대로)
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():
-        if not key.startswith("dlg_"): continue
+        if not key.startswith(("dlg_", "sim_")): continue
         s = ds.cst_sequence(0, max(delays)); P = len(ds.cst_prefix(ds.dlgs[s["cid"]].lang, max(delays)))
         def show(p):
             t = s["ids"][p]; lab = s["labels"][p]

@@ -21,6 +21,7 @@ soft label(decision-eot-immediate-soft-label): 결과·p_end 는 대화 전체 �
 맞장구 선택(backchannel=(최대 길이 s, 최대 토큰 수), 기본 끔 = Phase 2 규칙): 그 이하의 episode 는 (1) 다른 화자의 결과 판정에서 '상대가 말함'으로
   세지 않고 (2) 자기 <EOT> 를 내지 않는다(전사는 그대로). 2026-10-14 측정: 끄면 결과의 24–50 % 가 both(0.5), 켜면(1 s·3 토큰) 11–32 %.
 <SEM_END> 는 쓰지 않는다 → collate_cst 가 sem_only_mask 를 내 그 행의 <SEM_END> logit 만 softmax 에서 뺀다(중립). <EOT> 는 학습한다.
+합성 대화(meta.mask_eot — sim_dialogue·dialogue_stitch): <EOT> 결정 label 을 모두 −100 으로 둔다(턴 타이밍이 인공적). 전사·화자 태그·화자 활동은 학습한다.
 정체 회복 학습(recover, 기본 끔 — 2026-10-17 오류 분해: 교대 하나를 놓치거나 더 내면 뒤 턴들의 정체가 뒤집힌 채 회복하지 않는다):
   학습 창의 recover.p 비율에서 방출 원소 한 구간 [n0, n1) 의 문맥 슬롯을 뒤집어 태그를 다시 단다(retag) — 교대 지점에서 시작하면 '놓친 교대',
   run 안에서 시작하면 '헛 교대' 를 흉내 낸다. n0·n1 은 단어 첫 토큰(tokenizer 가 있으면 — 디코드가 공백으로 시작). 구간 안 출력 label 은 −100(틀린 문맥에서 이어 쓰는 법을 가르치지 않는다). 회복 지점 n1 만 정답을 둔다:
@@ -65,11 +66,15 @@ def dialogue_episodes(d: Dialogue, backchannel: Optional[Tuple[float, int]] = No
     """대화 전체의 episode 와 EOT 결과(p_end). 전사 없는 발화도 '말하고 있음'으로 결과 판정에 넣는다.
     backchannel 이 있으면 그 이하 episode 는 다른 화자의 판정에서 빼고, 자신은 outcome 'backchannel'(p_end None, <EOT> 없음)."""
     eps = build_episodes(d)
-    if backchannel is None: assign_p_end(eps, d.observed()); return eps
-    bc = [is_backchannel(e, backchannel) for e in eps]
-    for e, b in zip(eps, bc):
-        if b: e.outcome, e.p_end = "backchannel", None; continue
-        e.outcome = classify(e, [o for o, ob in zip(eps, bc) if o.speaker == e.speaker or not ob], d.observed()); e.p_end = P_END[e.outcome]
+    if backchannel is None: assign_p_end(eps, d.observed())
+    else:
+        bc = [is_backchannel(e, backchannel) for e in eps]
+        for e, b in zip(eps, bc):
+            if b: e.outcome, e.p_end = "backchannel", None; continue
+            e.outcome = classify(e, [o for o, ob in zip(eps, bc) if o.speaker == e.speaker or not ob], d.observed()); e.p_end = P_END[e.outcome]
+    if d.meta.get("mask_eot"):                                  # 합성(stitch·sim): 턴 타이밍이 인공적 — EOT 감독 없음. <EOT> 는 문맥에 남고 결정 label 만 −100(맞장구 표시는 둔다)
+        for e in eps:
+            if e.outcome != "backchannel": e.outcome, e.p_end = "synthetic", None
     return eps
 
 

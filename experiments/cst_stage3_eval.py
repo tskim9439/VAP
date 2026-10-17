@@ -11,6 +11,9 @@
   --verify: 언어·δ 마다 첫 배치의 처음·끝 창을 model.stream_decode 로 다시 풀어 토큰·시각이 같은지 확인한다.
   --oracle: 모델 없이 학습 타깃 시퀀스(정답)를 디코드 출력처럼 바꿔 채점한다 — 지표 sanity(slot·cp 0, 양성 EOT 재현율 1).
   --from-predictions DIR: 그 폴더 predictions-rank*.jsonl 의 원출력(emitted)을 다시 채점한다(디코드 없이 — 채점 규칙을 고친 뒤).
+  --spk-guide on,margin[,span] [--spk-guide-hold] [--spk-guide-no-insert]: 화자 헤드 안내 디코딩(batch_decode.SpkGuide — model.spk_head 가 있는 Stage 3 체크포인트).
+      2026-10-18 p9 ck3000: 삽입은 귀속을 나쁘게 한다(δ10 cp +4.1). 삽입 + 막기는 δ10 중립·δ4 cp −1.3.
+      직렬 stream_decode 에는 안내가 없어 --verify 와 함께 쓰지 않는다. 행에 guide_insert·guide_hold(바꾼 태그 수)를 남긴다.
   --backchannel S,N: 참조 EOT 를 맞장구 규칙으로 만든다(맞장구 episode 는 EOT 참조에서 빠지고 상대 판정에서도 빠진다). 기본은 Phase 2 규칙.
 참조 = 그 δ 의 학습 타깃 시퀀스(cst_sequence)에서 전사 없는 음성 청크(mask_chunks — 학습 label −100)에 놓인 원소를 뺀 것. 전사 토큰 → 단어(시각 = 마지막
   토큰의 원래 끝 시각), EOT = episode 끝(p_end). 가설도 같은 청크에서 나온 토큰·EOT 를 버린다 — 참조·가설이 같은 규칙(2026-10-15 오라클 점검: 창 전체 토큰을
@@ -81,7 +84,7 @@ def run(a):
         model = None; tok = AutoTokenizer.from_pretrained(a.checkpoint); cfg = json.load(open(os.path.join(a.checkpoint, "config.json"))); sp = cfg["sp_ids"]; blocked = cfg["blocked_ids"]
     else:
         from vapasr.hf.infer import load_model
-        from vapasr.hf.batch_decode import decode_batch
+        from vapasr.hf.batch_decode import decode_batch, SpkGuide
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
     spk = (sp["<SPK_A>"], sp["<SPK_B>"]); EOT = sp["<EOT>"]
     if EOT in blocked and not a.oracle: print("!! <EOT> 가 decode 차단 목록에 있다(Stage 3 학습 전 체크포인트) — EOT 는 나오지 않는다", flush=True)
@@ -91,7 +94,15 @@ def run(a):
     conf = dict(checkpoint=os.path.abspath(a.checkpoint), config_sha256=hashlib.sha256(open(os.path.join(a.checkpoint, "config.json"), "rb").read()).hexdigest(),
                 split_sha256=hashlib.sha256(open(a.split, "rb").read()).hexdigest(), corpora=a.corpora, deltas=a.deltas, limit_windows=a.limit_windows, dtype=a.dtype,
                 world_size=a.world_size, eot_blocked=EOT in blocked, oracle=bool(a.oracle), from_predictions=a.from_predictions,
-                **({"backchannel": list(a.backchannel)} if a.backchannel else {}))
+                **({"backchannel": list(a.backchannel)} if a.backchannel else {}),
+                **({"spk_guide": list(a.spk_guide), "spk_guide_hold": bool(a.spk_guide_hold), **({"spk_guide_no_insert": True} if a.spk_guide_no_insert else {})} if a.spk_guide else {}))
+    if a.spk_guide:
+        assert not a.verify, "--spk-guide 는 배치 디코드 전용이다(직렬 stream_decode 에 안내가 없다) — --verify 없이"
+        assert model is not None and getattr(model, "spk_head", None) is not None, "--spk-guide: 화자 헤드가 있는 체크포인트가 필요하다"
+        ws_cache = {}
+        def word_start(tid):
+            if tid not in ws_cache: ws_cache[tid] = tok.decode([tid]).startswith(" ")
+            return ws_cache[tid]
     cp = os.path.join(out, f"config-rank{a.rank}.json")
     if os.path.exists(cp): assert json.load(open(cp)) == conf, "재개 설정 불일치 — 새 --out 을 쓴다"
     else: json.dump(conf, open(cp, "w"), indent=1)
@@ -126,7 +137,9 @@ def run(a):
                             q = ds.cst_sequence(m[0], delta)
                             states.append(SimpleNamespace(emitted=emitted_from_sequence(q["ids"], q["is_input"], q["chunk_of"], sp["<NEXT_AUDIO>"], sp["<EMPTY_AUDIO>"]), forced=0, flush_rounds=0))
                     else:
-                        states = decode_batch(model, feats, prefixes, max_flush_rounds=a.max_flush)
+                        guide = SpkGuide(delay=delta, on=a.spk_guide[0], margin=a.spk_guide[1], span=int(a.spk_guide[2]) if len(a.spk_guide) > 2 else 2,
+                                         hold=a.spk_guide_hold, insert=not a.spk_guide_no_insert, word_start=word_start) if a.spk_guide else None
+                        states = decode_batch(model, feats, prefixes, max_flush_rounds=a.max_flush, spk_guide=guide)
                     key = (ds.dlgs[meta[0][1]].lang, delta)
                     if a.verify and model is not None and key not in checked:
                         for j in sorted({0, len(meta) - 1}):
@@ -141,6 +154,7 @@ def run(a):
                         sc["eot"] = match_eot(ref_eot, he, sc["perm"], eot_tol(delta))
                         row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, delta=delta, L=L, K=K, speakers=sp_order, n_spk=len(sp_order), masked_chunks=len(mask),
                                    forced=s.forced, flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted],
+                                   **({"guide_insert": s.guide_insert, "guide_hold": s.guide_hold} if hasattr(s, "guide_insert") else {}),
                                    ref_text=[" ".join(w for w, _ in r) for r in ref_w[:2]], hyp_text=[" ".join(w for w, _ in words(h)) for h in hs], **sc)
                         fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
                 print(f"  {c}: {min(b0 + a.batch_size, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
@@ -171,6 +185,9 @@ def main():
     q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1); q.add_argument("--batch-size", type=int, default=32)
     q.add_argument("--max-flush", type=int, default=None); q.add_argument("--dtype", default="float32"); q.add_argument("--encoder", default=None); q.add_argument("--verify", action="store_true")
     q.add_argument("--oracle", action="store_true", help="모델 없이 정답 시퀀스를 채점(지표 sanity)")
+    q.add_argument("--spk-guide", default=None, type=lambda s: [float(x) for x in s.split(",")], help="화자 헤드 안내 디코딩 'on,margin[,span]'(예 0.5,0.3)")
+    q.add_argument("--spk-guide-hold", action="store_true", help="안내: 헤드가 현재 화자를 가리키면 모델의 태그 전환을 막는다(EOT 용 태그도 막혀 EOT 재현율이 줄 수 있다)")
+    q.add_argument("--spk-guide-no-insert", action="store_true", help="안내: 태그 삽입을 끈다(--spk-guide-hold 와 함께 = 막기만)")
     q.add_argument("--from-predictions", default=None, help="이 폴더의 원출력을 다시 채점(디코드 없음)")
     q.add_argument("--backchannel", default=None, type=lambda s: (float(s.split(",")[0]), int(s.split(",")[1])),
                    help="참조 EOT 를 맞장구 규칙(최대초,최대토큰)으로 — 그 규칙으로 학습한 모델(--backchannel)을 같은 정의로 잰다. 창·전사 참조는 같다")

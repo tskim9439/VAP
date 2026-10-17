@@ -1,0 +1,101 @@
+{
+ "lang": "Korean",
+ "sessions": 3000,
+ "failed": 0,
+ "hours": 73.4,
+ "speech_hours": 56.75,
+ "overlap_ratio_mean": 0.0624,
+ "changes_per_min_mean": 11.57,
+ "bc_per_min": 3.14,
+ "self_overlap": 0,
+ "pools": {
+  "aihub71631": 1183,
+  "aihub134-1": 938,
+  "aihub134-2": 879
+ },
+ "timing": {
+  "dialogues": 3461,
+  "pairs": 677134,
+  "p_hold": 0.563,
+  "bc_rate_per_s": 0.0659,
+  "fto_q10_50_90": [
+   -1.46,
+   0.77,
+   4.35
+  ],
+  "hold_q50": 1.1,
+  "turn_q10_50_90": [
+   1.08,
+   2.03,
+   4.85
+  ],
+  "fto_negative_share": 0.329
+ },
+ "pool_info": {
+  "aihub71631": {
+   "dialogues": 698,
+   "units": 140103,
+   "keys_all": 1353,
+   "keys_used": 1291,
+   "units_used": 139874
+  },
+  "aihub134-1": {
+   "dialogues": 1337,
+   "units": 246209,
+   "keys_all": 2647,
+   "keys_used": 2482,
+   "units_used": 245476
+  },
+  "aihub134-2": {
+   "dialogues": 1426,
+   "units": 189854,
+   "keys_all": 2821,
+   "keys_used": 2602,
+   "units_used": 188776
+  },
+  "words": {
+   "files": 0,
+   "rows": 0
+  }
+ },
+ "errors": {
+  "too_short": 6
+ },
+ "args": {
+  "lang": "Korean",
+  "out": "/soundai/users/tskim/VAPKT-data/data/sim-dialogue-v1",
+  "sessions": 3000,
+  "dur": [
+   60.0,
+   120.0
+  ],
+  "phase2": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "split": "/soundai/users/tskim/VAPKT-data/data/phase2/splits/v2.json",
+  "phase2_corpora": [
+   "aihub71631",
+   "aihub134-1",
+   "aihub134-2"
+  ],
+  "stats_corpora": [
+   "aihub71631",
+   "aihub134-1",
+   "aihub134-2"
+  ],
+  "words": [],
+  "words_frac": 0.15,
+  "pool_weights": "aihub71631:0.4,aihub134-1:0.3,aihub134-2:0.3",
+  "min_units": 10,
+  "max_units": 80,
+  "jitter_db": 3.0,
+  "noise_bank": "/soundai/users/tskim/VAPKT-data/data/noise-bank-v1",
+  "noise_p": 0.5,
+  "noise_snr": "10,30",
+  "rir_p": 0.3,
+  "p_hold": 0.3,
+  "bc_scale": 1.5,
+  "split_s": 4.0,
+  "workers": 24,
+  "seed": 0
+ },
+ "sec": 238.9
+}
