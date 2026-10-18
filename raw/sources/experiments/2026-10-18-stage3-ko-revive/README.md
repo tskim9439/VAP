@@ -137,6 +137,14 @@ source_type: source-drop
 (MAX_RESTART=5 bash slurm/submit-stage3-train.sh --run st3-p11-revive --partition low_p_hpc --nodes 2 --exclude hpc-102 --backchannel 1.0,3 --weights dlg_ko:2,dlg_en:0.7,dlg_de:0.7,sim_ko:0.5,sim_en:0.8,sim_de:0.8,rep_ko:1.2,rep_en:1.2,rep_de:1.2 --lr 4e-5 --max-steps 4000 --spk-act-weight 0.5 --sim-data /soundai/users/tskim/VAPKT-data/data/sim-dialogue-v2 --revive-dir /soundai/users/tskim/VAPKT-data/data/phase2/revive-asr-v1)
 ```
 - 평가 큐(`stage3-regress/pick_gpu_queue.sh`)는 run 이름으로 기다리므로 그대로 쓴다.
+- **job 91438**(`low_p_hpc`, `--exclude hpc-102`):
+  - 시도 1(19:18, hpc-2·3): hpc-3 rank 8–15 가 `No module named 'pyexpat'` 로 rc=1 → requeue. 그 노드는 `/tmp` 자동 정리로 파일이 빠진 예전 env 복사본을 마커만 보고 썼다.
+    - `scripts/stage-env-local.sh` 에 파일 수 대조를 더했다(8bc9235).
+  - 시도 2(19:27, hpc-17·18):
+    - 한 노드가 기록 없는 예전 복사본(파일 9,207)을 감지해 다시 풀었다(23 s).
+    - 데이터는 dry-run 과 같다: `dlg_ko` 90,799 창·되살림 349,119, `dlg_de` 되살림 15,066
+    - 9 셋 점검 불일치 0, 섞기 비중 `dlg_ko` 0.22(p10 과 같음), steps/epoch 1,041
+    - 19:41 학습 시작(`rev_per_dlg_step` 기록)
 
 ## 파일
 - 분석: `mask_by_len.py`·`mask-by-len.txt`, `flag_kinds.py`·`flag-kinds.txt`, `mask_vs_attr.py`·`mask-vs-attr-p10ck3000.txt`

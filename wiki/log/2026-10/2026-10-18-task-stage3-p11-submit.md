@@ -11,5 +11,8 @@
   - 감시자는 가짜 scontrol 로 5 경우(멈춤·정상·유예 안 종료·이전 시도 줄·한도 초과)를 mxc 에서 시험했다.
   - 제출 `--dry-run` 에서 `--exclude=…hpc-52,…hpc-4,…hpc-102` 가 넘어가는 것을 봤다.
   - 평가 큐 3 개(ck2000·ck3000·final)는 체크포인트를 기다린다.
-- Next: 사용자가 `scancel 91256` 뒤 `--exclude hpc-102` 로 다시 낸다. 새 job 을 감시하고 학습 전 점검을 확인한다.
+  - 다시 낸 job 91438:
+    - 시도 1: 환경 복사본에서 pyexpat 이 빠져 실패했다 → [[2026-10-18-task-stage3-env-staging-check]]
+    - 시도 2(hpc-17·18): 19:41 학습 시작. 9 셋 점검 불일치 0, 데이터·섞기 비중은 dry-run·p10 과 같다.
+- Next: 학습이 끝나면 평가 큐(ck2000·ck3000·final)가 돈다. 그 뒤 p10 과 같은 step 에서 비교한다(`mask_cmp_p11.py` 등).
 - By: tskim
