@@ -1,0 +1,12 @@
+aihub71631 {'flag': 117920, 'flag+tokens': 0, 'flag+raw': 117918, 'flag+text': 0, 'ok': 151754, 'no_tokens': 415, 'no_tokens+text': 415, 'no_tokens+raw': 415}
+   flags: {'asr_disagree': 89916, 'implausible_rate': 25182, 'anon': 2549, 'charset': 191, 'digit': 191, 'empty': 71, 'jamo': 18}
+aihub134-1 {'ok': 280594, 'flag': 165425, 'flag+tokens': 0, 'flag+raw': 165425, 'flag+text': 0, 'missing': 46020, 'no_tokens': 581, 'no_tokens+text': 581, 'no_tokens+raw': 581}
+   flags: {'asr_disagree': 133767, 'implausible_rate': 26807, 'anon': 4689, 'charset': 101, 'digit': 101, 'empty': 51, 'jamo': 21}
+aihub134-2 {'flag': 223285, 'flag+tokens': 0, 'flag+raw': 223285, 'flag+text': 0, 'ok': 216029, 'missing': 60494, 'no_tokens': 314, 'no_tokens+text': 314, 'no_tokens+raw': 314}
+   flags: {'asr_disagree': 198294, 'implausible_rate': 19821, 'anon': 4024, 'empty': 877, 'charset': 243, 'digit': 242, 'jamo': 47}
+kec {'ok': 37515, 'flag': 5640, 'flag+tokens': 0, 'flag+raw': 5610, 'flag+text': 0}
+   flags: {'asr_disagree': 4597, 'discontinued': 594, 'unintelligible': 301, 'implausible_rate': 136, 'empty': 30, 'digit': 19, 'charset': 11}
+ztc {'ok': 76763, 'flag': 12446, 'flag+tokens': 0, 'flag+raw': 12444, 'flag+text': 0}
+   flags: {'asr_disagree': 11933, 'implausible_rate': 259, 'unintelligible': 210, 'symbol': 16, 'digit': 15, 'abbrev': 7, 'fragment': 4, 'empty': 2}
+nsc {'ok': 42756, 'flag': 13650, 'flag+tokens': 0, 'flag+raw': 13633, 'flag+text': 0}
+   flags: {'asr_disagree': 12678, 'implausible_rate': 518, 'digit': 478, 'abbrev': 318, 'empty': 17, 'symbol': 5, 'charset': 5}

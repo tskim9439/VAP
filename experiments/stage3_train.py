@@ -13,6 +13,7 @@
                         prefix 'language <SPK_A>{L} <SPK_B>{L}<asr_text><DELAY_d>', 화자 태그, 턴 끝 soft <EOT>(--eot-mode·--backchannel·--decision-weight).
                         --recover-p > 0: 정체 회복 학습(창 일부에서 문맥 슬롯 한 구간을 뒤집고 회복 지점만 정답 — cst_dialogue 모듈 설명).
                         --spk-act-weight > 0: 화자 슬롯 활동 보조 손실(model.add_spk_head — 청크마다 슬롯 A/B 가 말하는 중인지 BCE, 라벨 cst_dialogue.slot_activity).
+                        --revive-dir: asr_disagree 로 격리된 발화를 정렬 토큰째 입력 문맥으로 되살려 화자 태그·<EOT> 를 학습(전사 label −100, 창 목록 그대로).
   sim_ko·sim_en·sim_de  --sim-data 의 합성 2 인 대화(vapasr/data/sim_dialogue — 다른 화자의 실제 발화를 턴으로 번갈아 놓음). 같은 CstDialogueDataset,
                         <EOT> 감독 없음(meta.mask_eot). epoch 기준(anchor)은 실제 대화 셋(dlg_*)만.
   rep_ko·rep_en·rep_de  vapasr/data/ast_dataset.AstStreamDataset — Stage 2 와 같은 단일 화자 ASR·번역 항목(--ast-frac 번역 모드, --offline-frac final 모드).
@@ -44,6 +45,8 @@ g.add_argument("--turn-weight", type=float, default=2.0, help="config.turn_weigh
 g.add_argument("--max-windows", type=int, default=0, help="대화 셋마다 창 상한(0 = 전부; 스모크)")
 g.add_argument("--sim-data", default=None, help="합성 2 인 대화 폴더(experiments/sim_build_dialogues.py 산출: sim_<ko|en|de>.refined.dialogues.jsonl + mono/) — "
                "가중치 키 sim_ko·sim_en·sim_de 로 쓴다(<EOT> 감독 없음, 전사·화자 태그·화자 활동만)")
+g.add_argument("--revive-dir", default=None, help="격리 발화 되살리기(experiments/stage3_revive_tokens.py 산출 <corpus>.revive.jsonl 폴더) — 실제 대화에서 "
+               "asr_disagree 로 격리된 발화를 입력 문맥으로 되살려 화자 태그·<EOT> 를 학습한다(전사 label 은 −100; cst_dialogue 모듈 설명)")
 g.add_argument("--recover-p", type=float, default=0.0, help="정체 회복 학습: 대화 창마다 문맥 슬롯 한 구간을 뒤집을 확률(0 = 끔; cst_dialogue 모듈 설명)")
 g.add_argument("--recover-boundary-frac", type=float, default=0.5, help="회복 지점을 다음 교대 경계(태그 없이 이어 씀)로 둘 비율, 나머지는 run 안(바로잡는 태그)")
 g.add_argument("--recover-max-lag", type=int, default=8, help="run 안 회복의 최대 거리(방출 원소 수)")
@@ -210,18 +213,19 @@ def _subset(paths, frac):
     if frac >= 1.0: return list(paths)
     keep = [p for p in paths if int(hashlib.sha1(p.encode()).hexdigest()[:8], 16) / 0xFFFFFFFF < frac]
     return keep or list(paths[:1])
-from vapasr.data.cst_dialogue import CstDialogueDataset, Recover
+from vapasr.data.cst_dialogue import CstDialogueDataset, Recover, load_revive
 rc = Recover(p=a.recover_p, boundary_frac=a.recover_boundary_frac, max_lag=a.recover_max_lag, max_boundaries=a.recover_max_boundaries) if a.recover_p > 0 else None
 split = json.load(open(a.split, encoding="utf-8")); mono = a.mono_cache or os.path.join(a.data, "mono")
-train_sets, dlg_files = {}, []
+train_sets, dlg_files, revive_files = {}, [], []
 for lang in ("Korean", "English", "German"):
     cs = [c for c in corpora if DLG_LANG[c] == lang]; key = f"dlg_{SHORT[lang]}"
     if not cs or weights.get(key, 0) <= 0: continue
     files = [os.path.join(a.data, f"{c}.refined.dialogues.jsonl") for c in cs]; dlg_files += files
     held = {cid for c in cs for cid in split["corpora"].get(c, {}).get("heldout", [])}
+    rv = [f for f in (os.path.join(a.revive_dir, f"{c}.revive.jsonl") for c in cs) if os.path.exists(f)] if a.revive_dir else []; revive_files += rv
     ds = CstDialogueDataset(files, tok, delays=delays, exclude=held, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac,
                             seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0)
+                            spk_activity=a.spk_act_weight > 0, revive=load_revive(rv) if rv else None)
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = lang; train_sets[key] = ds
     log(f"  {key} {cs}: {len(ds)} 창 · held-out 제외 {ds.stats['cst_excluded']} 대화 · stats {dict(ds.stats)}")
@@ -252,6 +256,7 @@ if (RW or RD) and any(weights.get(k, 0) > 0 for k in ("rep_ko", "rep_en", "rep_d
                               speed_perturb=speeds, noise_aug=naug, ast_targets=AST, ast_frac=a.ast_frac, trans_id=trans_id, gain_aug=gain, gain_aug_langs=gain_langs)
         if not len(ds): log(f"  {key}: 항목 0 — 건너뜀"); continue
         ds.lang = lang; train_sets[key] = ds; log(f"  {key}: {len(ds)} 항목 · 번역 타깃 있는 항목 {ds.stats.get('ast_items', 0)}")
+if a.revive_dir and not revive_files: sys.exit(f"--revive-dir 에 대화 코퍼스의 <corpus>.revive.jsonl 이 없다: {a.revive_dir}")
 missing = sorted(k for k, w in weights.items() if w > 0 and k not in train_sets)
 if missing: sys.exit(f"가중치 > 0 인데 만들어지지 않은 셋: {missing} (입력·코퍼스를 확인하거나 --weights 에서 뺀다)")
 assert any(k.startswith("dlg_") for k in train_sets), "대화 셋이 없다"
@@ -272,7 +277,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           replay_files_frac=a.replay_files_frac, replay_max_items=a.replay_max_items, ast_targets_sha256=ast_fp, ast_frac=a.ast_frac, offline_frac=a.offline_frac,
           gain_augment=list(gain) if gain else None, speed_perturb=list(speeds) or None, noise_aug=naug.settings() if naug else None, spec_augment=a.spec_augment,
           max_windows=a.max_windows, seed=a.seed, vocab_sha256=vocab_sha, init=os.path.abspath(a.init), **({"recover": rc._asdict()} if rc else {}), **({"spk_act_weight": a.spk_act_weight} if a.spk_act_weight > 0 else {}),
-          **({"sim_data": file_digest(sim_files)} if sim_files else {}))   # 끄면 키 없음(이전 run 지문 그대로)
+          **({"sim_data": file_digest(sim_files)} if sim_files else {}), **({"revive": file_digest(revive_files)} if revive_files else {}))   # 끄면 키 없음(이전 run 지문 그대로)
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():
@@ -313,14 +318,14 @@ class Stage3Trainer(VapAsrTrainer):
         kind = "dlg" if "labels_alt" in inputs else "rep"; c = self.__dict__.setdefault("_kind", {})
         c.setdefault(f"loss_{kind}", []).append(float(loss.detach()))
         if kind == "dlg" and getattr(o, "loss_turn", None) is not None: c.setdefault("loss_turn_dlg", []).append(float(o.loss_turn))
-        if kind == "dlg": c.setdefault("soft", []).append(int(inputs.get("n_soft", 0))); c.setdefault("flip", []).append(int(inputs.get("n_flip", 0)))
+        if kind == "dlg": c.setdefault("soft", []).append(int(inputs.get("n_soft", 0))); c.setdefault("flip", []).append(int(inputs.get("n_flip", 0))); c.setdefault("rev", []).append(int(inputs.get("n_rev", 0)))
         if kind == "dlg" and getattr(o, "loss_act", None) is not None: c.setdefault("loss_spk", []).append(float(o.loss_act)); c.setdefault("spk_acc", []).append(float(o.act_acc))
         return (loss, o) if return_outputs else loss
     def log(self, logs, start_time=None):
         c = self.__dict__.get("_kind")
         if c and "loss" in logs:
             for k, v in c.items():
-                if v: logs[{"soft": "soft_per_dlg_step", "flip": "flip_per_dlg_step"}.get(k, k)] = round(sum(v) / len(v), 4)
+                if v: logs[{"soft": "soft_per_dlg_step", "flip": "flip_per_dlg_step", "rev": "rev_per_dlg_step"}.get(k, k)] = round(sum(v) / len(v), 4)
             self._kind = {}
         return super().log(logs, start_time)
 

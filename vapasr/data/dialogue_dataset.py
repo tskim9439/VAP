@@ -87,9 +87,13 @@ class DialogueWindowDataset(Dataset):
 
     def _bad_spans(self, d: Dialogue):
         """전사 없는 음성 구간: quarantine(flags) · 토큰도 텍스트도 없음 · 텍스트는 있는데 미정렬(allow_unaligned 가 아니면) · 결손 조각. 보정으로 분할된 조각은 text="" 이지만 tokens 가 있어 정상."""
-        bad = [(u.start, u.end) for u in d.utterances if u.flags or (not u.tokens and (not u.text or not self.allow_unaligned))]
+        bad = [(u.start, u.end) for u in d.utterances if self._untranscribed(d, u)]
         missing = set(d.meta.get("missing", [])); bad += [(u.start, u.end) for i, u in enumerate(d.utterances, 1) if i in missing]
         return bad
+
+    def _untranscribed(self, d: Dialogue, u) -> bool:
+        """_bad_spans 의 발화 판정 — 하위 클래스가 되살린 발화를 빼려고 덮어쓴다(cst_dialogue.CstDialogueDataset revive)."""
+        return bool(u.flags) or (not u.tokens and (not u.text or not self.allow_unaligned))
     def mask_chunks(self, d: Dialogue, t0: float, L: float, K: int, delay: int) -> set:
         """창 [t0,t0+L) 에서 전사 없는 구간이 덮는 청크 집합(lexical 이 δ 만큼 늦게 놓이므로 끝은 +(δ+1) 청크, EOT 후보 +0.24 s 도 포함)."""
         out = set(); tail = (delay + 1) * CHUNK_S + 0.24

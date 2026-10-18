@@ -3,7 +3,7 @@
 import json
 import numpy as np, pytest, torch, torch.nn.functional as F
 from vapasr.data.cst_dialogue import (cst_head_text, build_cst_sequence, read_back, tag_flush, window_speakers, window_streams, dialogue_episodes, is_backchannel,
-                                      CstDialogueDataset, collate_cst, Recover, pick_flip, retag, slot_activity)
+                                      CstDialogueDataset, collate_cst, Recover, pick_flip, retag, slot_activity, load_revive)
 from vapasr.data.dialogue import Dialogue, Utterance, ChannelRef, chunk_of
 from vapasr.data.interleave import Specials
 from vapasr.data.semcommit_dataset import build_interleaved_events
@@ -235,6 +235,63 @@ def test_backchannel_option_changes_outcome_and_drops_its_eot():
     assert is_backchannel(e1[1], (1.0, 3)) and not is_backchannel(e1[0], (1.0, 3))
     st, eot_p, w = window_streams(e1, ["x", "y"], 0.0, 20.0, EOT)
     assert w["eot_backchannel"] == 1 and st[1][:1] == [(13, 3.5)] and all(x[0] != EOT for x in st[1][:2])   # 맞장구 전사는 남고 EOT 만 없다
+
+
+# ── 격리 발화 되살리기(revive)
+def test_revive_masks_text_but_keeps_tags_and_eot():
+    st = [[(10, 0.5), (11, 1.0), ev(1.1), (12, 2.6), (13, 3.0)], [(20, 1.6), (21, 2.0), ev(2.1)]]   # B 의 20·21 = 되살린 발화(1.3–2.0 s)
+    eot = {(0, 2): 1.0, (1, 2): 1.0}; base = build_cst_sequence(st, eot, 50, PRE, PAD, SP, delay=2)
+    assert build_cst_sequence(st, eot, 50, PRE, PAD, SP, delay=2, lex_mask=(), lex_chunks=()) == base           # 끄면 그대로
+    lk = set(range(chunk_of(1.3, 2), chunk_of(2.0, 2) + 1))
+    s = build_cst_sequence(st, eot, 50, PRE, PAD, SP, delay=2, lex_mask={(1, 0), (1, 1)}, lex_chunks=lk)
+    assert s["ids"] == base["ids"] and s["lex"] == {(1, 0), (1, 1)}
+    assert lab_of(s, 20) == lab_of(s, 21) == -100 and lab_of(s, 10) == 10 and lab_of(s, 12) == 12              # 전사만 입력 문맥으로
+    pb = s["ids"].index(B); pa = s["ids"].index(A, pb); assert s["labels"][pb] == B and s["labels"][pa] == A   # 교대 태그는 학습
+    assert all(s["labels"][p] == EOT for p in s["eot_pos"]) and s["soft_pos"] == base["soft_pos"]              # <EOT> 결정도 학습
+    nxt = [p for p, t in enumerate(s["ids"]) if t == NEXT and not s["is_input"][p]]
+    assert all((s["labels"][p] == -100) == (s["chunk_at"][p] in lk) for p in nxt)                               # <NEXT_AUDIO> 는 방출 구간 안만
+    assert {s["ids"][p] for p in range(len(s["ids"])) if s["labels"][p] != base["labels"][p]} == {20, 21, NEXT}
+    import random
+    for k in range(40):                                                                         # 뒤집기 시작·회복 지점은 되살린 원소가 아니다
+        f = build_cst_sequence(ST3, {}, 50, PRE, PAD, SP, delay=2, recover=RC, rng=random.Random(k), lex_mask={(1, 0), (1, 1)})["flip"]
+        assert f is None or (f["n0"] not in {(1, 0), (1, 1)} and f["n1"] not in {(1, 0), (1, 1)})
+
+
+def make_revive(tmp_path):
+    """make() 대화에서 y1(9–11 s)·x3(18–20 s)을 정제 단계처럼 격리(asr_disagree: 전사·토큰 지움)하고 그 토큰을 되살리기 재료로 돌려준다.
+    y2 는 다른 사유가 섞여(anon) 되살리지 않고, y3 은 재료에 없다(정렬 없음). x5(30–32 s)는 재료에 있어도 결손 조각(meta.missing — 오디오 없음)이라 되살리지 않는다."""
+    q = make(tmp_path); d = Dialogue.from_json(open(q).read()); keep = {}
+    for i, u in enumerate(d.utterances, 1):
+        if u.utt_id in ("y1", "x3", "y2", "y3", "x5"):
+            if u.utt_id in ("y1", "x3", "x5"): keep[u.utt_id] = list(u.tokens)
+            if u.utt_id == "x5": d.meta["missing"] = [i]
+            u.flags = ["asr_disagree", "anon"] if u.utt_id == "y2" else ["asr_disagree"]; u.text = ""; u.tokens = None
+    open(q, "w").write(d.to_json() + "\n"); return q, {"c1": keep}
+
+
+def test_dataset_revive_restores_turn_tags_inside_masked_turns(tmp_path):
+    q, rv = make_revive(tmp_path)
+    off = CstDialogueDataset([q], FakeTok(), delays=(2, 4), window_s=(20.0, 20.0), hop_s=5.0, seed=1)
+    on = CstDialogueDataset([q], FakeTok(), delays=(2, 4), window_s=(20.0, 20.0), hop_s=5.0, seed=1, revive=rv)
+    assert on.items == off.items and on.stats["cst_revived"] == 2 and on.stats["cst_revive_missing"] == 1 and "cst_revived" not in off.stats
+    assert set(on.revived["c1"]) == {"y1", "x3"}                                                # x5 = 결손 조각(오디오 없음)
+    for i in range(len(on)):
+        for dl in (2, 4): assert on.target_problems(i, dl) == [] and off.target_problems(i, dl) == [], (on.items[i], dl)
+    w = [("c1", 5.5, 20.0)]                                                                     # x1 · y1(되살림) · x2 · y2(마스크) · x3(되살림) · y3(마스크) · x4
+    a = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), windows=w)
+    b = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(20.0, 20.0), windows=w, revive=rv)
+    s0, s = a.cst_sequence(0, 4), b.cst_sequence(0, 4); K = s["K"]
+    m0, m1 = a.mask_chunks(a.dlgs["c1"], 5.5, 20.0, K, 4), b.mask_chunks(b.dlgs["c1"], 5.5, 20.0, K, 4)
+    assert m1 < m0 and chunk_of(10.0 - 5.5) in m0 and chunk_of(10.0 - 5.5) not in m1 and chunk_of(16.0 - 5.5) in m1   # y1 은 마스크에서 빠지고 y2 는 남는다
+    rev = [p for p, x in enumerate(s["src_at"]) if x is not None and (x[0], x[1]) in s["lex"]]
+    assert len(rev) == 4 and sorted(s["ids"][p] for p in rev) == [11, 12, 13, 14] and all(s["labels"][p] == -100 for p in rev)
+    tags = lambda z: [(z["ids"][p], z["labels"][p]) for p in range(len(z["ids"])) if not z["is_input"][p] and z["ids"][p] in b.spk_ids]
+    assert [t for t, _ in tags(s0)] == [b.spk_ids[0]]                                           # 끄면 y 의 말이 텍스트에 없어 교대가 하나도 없다
+    assert tags(s) == [(b.spk_ids[0],) * 2, (b.spk_ids[1],) * 2, (b.spk_ids[0],) * 2]           # y1 앞 B, x2 앞 A 태그를 학습한다
+    assert s["n_eot"] == s0["n_eot"] + 2 and b.problems_of(s) == [] and b.est_lens()[0] > a.est_lens()[0]   # y1·x3 의 <EOT>
+    assert collate_cst([b[0]])["n_rev"] == 4 and collate_cst([a[0]])["n_rev"] == 0
+    p = tmp_path / "test.revive.jsonl"; p.write_text(json.dumps({"conv_id": "c1", "utts": {k: [list(t) for t in v] for k, v in rv["c1"].items()}}) + "\n")
+    assert load_revive([str(p)]) == rv
 
 
 # ── 모델: sem_only_mask · <EOT> soft · 예약 <EOT> 행 재초기화

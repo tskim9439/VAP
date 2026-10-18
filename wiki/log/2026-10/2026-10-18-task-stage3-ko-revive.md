@@ -1,0 +1,26 @@
+## [2026-10-18] task | Stage 3 한국어 화자 귀속 — 마스크 분석, 격리 발화 되살리기(revive) 구현, 파일럿 p11 준비
+
+- Changed:
+  - 코드:
+    - `vapasr/data/cst_dialogue.py`: `REVIVABLE`·`load_revive`·`revived_elements`·`revived_chunks`, `build_cst_sequence(lex_mask, lex_chunks)`, `CstDialogueDataset(revive=)`·`_untranscribed`, 검사 `revive:unmasked`, 카운터 `n_rev`
+    - `vapasr/data/dialogue_dataset.py`: `_untranscribed` 훅(기본 동작 그대로)
+    - `experiments/stage3_revive_tokens.py`(새): 정렬 결과에서 격리 발화의 정렬 토큰을 다시 뽑는다.
+    - `experiments/stage3_train.py`: `--revive-dir`(지문 키 `revive` 는 켰을 때만), 로그 `rev_per_dlg_step`
+    - `slurm/submit-stage3-train.sh`: `--revive-dir`
+    - `tests/test_cst_dialogue.py`: 2 개
+  - raw [[2026-10-18-stage3-ko-revive]]: 분석 2 종, 재료 통계, 로더 점검, dry-run·스모크, 제출 명령
+  - [[output-stage3-prep-plan-20261014]]: 한국어 화자 귀속 절, summary·sources
+  - [[status]]: 2026-10-18 절(Stage 3 최종·한국어 파일럿·저장소 정리)
+- Reason: 사용자 "한국어 화자 귀속은 어떻게 개선할 수 있을까?" → "1번 구현과 파일럿 준비 진행하자"
+- 결과:
+  - 진단: 한국어 학습 대화는 화자 교대의 69–80 % 가 마스크 발화에 닿는다(독일어 27–50 %, 영어 2 %). 대부분 `asr_disagree` 다.
+  - p10 ck3000 평가: 마스크 < 5 % 한국어 창의 참조 교대당 오배정은 0.64, 마스크가 있는 창은 1.30–1.82 다. 독일어는 관계가 없다. 마스크 적은 창은 29 개라 인과는 파일럿으로 본다.
+  - 재료 `revive-asr-v1`: 한국어 39.2 만 발화(205 h), KEC·ZTC 1.7 만(4.2 h). 결손 조각은 뺐다. 첫 빌드는 134-1 결손 조각 5,384 건을 되살릴 뻔해 고쳤다. NSC 는 정렬이 없다.
+  - 로더 점검(δ10, 창 300): 한국어 창당 학습되는 교대 1.7–3.4 → 5.9–7.9, `<EOT>` 2.8–3.8 → 6.5–6.9, 창 목록 같음, 불변식 위반 0
+  - dry-run(p10 레시피 + `--revive-dir`): `dlg_ko` 되살림 349,119 발화, 6 셋 불일치 0, 지문 `revive` 8261d406876b5b94
+  - 스모크(호스트 GPU 6, 20 step): 학습 완료, `rev_per_dlg_step` 기록, 저장 뒤 재로드 PARITY OK(인코더 키 638)
+  - 테스트: Stage 3 관련 56 통과·2 건너뜀(로컬 transformers 버전)
+- Next:
+  - 사용자가 p11(`st3-p11-revive`, p10 레시피 + `--revive-dir`)을 제출한다. 명령은 raw README 에 있다.
+  - 제출 뒤 평가 큐(ck2000·ck3000·final)를 건다. p10 과 같은 step 에서 대화 단위 bootstrap 을 하고 마스크 구간별 교대당 오배정을 비교한다.
+- By: tskim

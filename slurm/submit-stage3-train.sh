@@ -12,6 +12,7 @@
 #   --recover-p P      정체 회복 학습(대화 창마다 문맥 슬롯 한 구간을 뒤집을 확률, 기본 0 = 끔; 세부는 --extra "--recover-boundary-frac …")
 #   --spk-act-weight W 화자 슬롯 활동 보조 손실 가중(기본 0 = 끔; 청크마다 슬롯 A/B 가 말하는 중인지 BCE)
 #   --sim-data DIR     합성 2 인 대화 폴더(sim_build_dialogues 산출) — --weights 에 sim_ko·sim_en·sim_de 를 넣어 쓴다
+#   --revive-dir DIR   격리 발화 되살리기 재료(stage3_revive_tokens 산출 <corpus>.revive.jsonl) — asr_disagree 발화의 화자 태그·<EOT> 학습
 #   --max-steps N(기본 2000)  --epochs E  --lr LR  --warmup N(기본 300)  --save-every N(기본 500)  --batch-tokens N(기본 16384)  --max-bs N(기본 64)
 #   --nodes N(기본 1)  --partition P(기본 apex)  --time HH:MM:SS(기본 24:00:00)  --after JOBID  --init DIR(기본 q06-s4-ast/final)
 #   --extra "..."      stage3_train.py 에 그대로 붙일 인자   --dry-run   sbatch 대신 명령만 출력
@@ -26,7 +27,7 @@ AST=/soundai/users/tskim/VAPKT-data/data/ast-mono-v1/targets-fix-gen-v3-bf16
 AST_CV4=/soundai/users/tskim/VAPKT-data/data/ast-mono-cv4en-v1/targets-fix-gen-v3-bf16
 NB=/soundai/users/tskim/VAPKT-data/data/noise-bank-v1
 run=""; init=/soundai/Model/VAPASR/semcommit-q06-s4-ast/final; nodes=1; partition=apex; time_limit=24:00:00; after=""; dry=0; extra=""
-weights="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5"; eot_mode=soft; backchannel=off; decision_weight=2; start_mode=grid; frac=0.2; recover_p=0; spk_act=0; sim_data=""
+weights="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5"; eot_mode=soft; backchannel=off; decision_weight=2; start_mode=grid; frac=0.2; recover_p=0; spk_act=0; sim_data=""; revive_dir=""
 max_steps=2000; epochs=1; lr=6e-5; warmup=300; save_every=500; batch_tokens=16384; max_bs=64
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -35,6 +36,7 @@ while [[ $# -gt 0 ]]; do
     --weights) weights=$2; shift 2 ;;    --eot-mode) eot_mode=$2; shift 2 ;;  --backchannel) backchannel=$2; shift 2 ;;
     --decision-weight) decision_weight=$2; shift 2 ;; --start-mode) start_mode=$2; shift 2 ;; --replay-files-frac) frac=$2; shift 2 ;;
     --recover-p) recover_p=$2; shift 2 ;;  --spk-act-weight) spk_act=$2; shift 2 ;;  --sim-data) sim_data=$2; shift 2 ;;
+    --revive-dir) revive_dir=$2; shift 2 ;;
     --max-steps) max_steps=$2; shift 2 ;; --epochs) epochs=$2; shift 2 ;;    --lr) lr=$2; shift 2 ;;
     --warmup) warmup=$2; shift 2 ;;      --save-every) save_every=$2; shift 2 ;; --batch-tokens) batch_tokens=$2; shift 2 ;;
     --max-bs) max_bs=$2; shift 2 ;;      --extra) extra=$2; shift 2 ;;        --dry-run) dry=1; shift ;;
@@ -51,6 +53,7 @@ done
 [[ $spk_act =~ ^([0-9]+\.?[0-9]*|\.[0-9]+)$ ]] || { echo "--spk-act-weight 는 0 이상의 수" >&2; exit 2; }
 [[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }
 [[ -z $sim_data || -d $sim_data/mono ]] || { echo "--sim-data 에 mono/ 가 없다: $sim_data" >&2; exit 1; }
+[[ -z $revive_dir ]] || ls "$revive_dir"/*.revive.jsonl >/dev/null 2>&1 || { echo "--revive-dir 에 *.revive.jsonl 이 없다: $revive_dir" >&2; exit 1; }
 for f in "$D/splits/v2.json" "$SNAP/main-words.list" "$ASR" "$CV4" "$DE" "$AST/pack/en-de/meta.json" "$AST_CV4/pack/en-de/meta.json" "$NB/noise.jsonl"; do
   [[ -s $f ]] || { echo "입력 없음·비어 있음: $f" >&2; exit 1; }
 done
@@ -61,8 +64,8 @@ args+=" --start-mode $start_mode --recover-p $recover_p --spk-act-weight $spk_ac
 args+=" --ast-targets $AST,$AST_CV4 --ast-frac 0.8 --offline-frac 0.3 --gain-augment 0.5,-70,-20 --gain-augment-langs English"
 args+=" --speed-perturb 0.9,1.0,1.1 --noise-bank $NB --train-encoder --lr-encoder 1e-5 --encoder-right-context 3 --encoder-context-sampling fixed --spec-augment 2,27,2,0.03"
 args+=" --attn-impl varlen --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --delays 4,5,6,7,8,9,10 --lr $lr --warmup $warmup --epochs $epochs --max-steps $max_steps"
-args+=" --save-every $save_every --num-workers 4 ${sim_data:+--sim-data $sim_data} $extra"
-echo "Stage 3 run $run → $out · init $init · $nodes 노드 × 8 GPU · $partition · 가중치 $weights · EOT $eot_mode · 맞장구 $backchannel · 시작 $start_mode · 정체 회복 $recover_p · 화자 슬롯 헤드 $spk_act · 합성 ${sim_data:-없음} · max-steps $max_steps · MAX_RESTART ${MAX_RESTART:-3}" >&2
+args+=" --save-every $save_every --num-workers 4 ${sim_data:+--sim-data $sim_data} ${revive_dir:+--revive-dir $revive_dir} $extra"
+echo "Stage 3 run $run → $out · init $init · $nodes 노드 × 8 GPU · $partition · 가중치 $weights · EOT $eot_mode · 맞장구 $backchannel · 시작 $start_mode · 정체 회복 $recover_p · 화자 슬롯 헤드 $spk_act · 합성 ${sim_data:-없음} · 되살리기 ${revive_dir:-없음} · max-steps $max_steps · MAX_RESTART ${MAX_RESTART:-3}" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 dep=""; [[ -n $after ]] && dep="--dependency=afterany:$after"
 (( dry )) && sb="echo sbatch" || sb=sbatch
