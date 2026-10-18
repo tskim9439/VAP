@@ -50,7 +50,7 @@ def run(corpus):
     tri, tri_st, _ = load_ast_targets([p for p in a.trans_input.split(",") if p]) if a.trans_input else ({}, collections.Counter(), "")
     rv_path = os.path.join(a.revive_dir, f"{corpus}.revive.jsonl") if a.revive_dir else ""
     rv = load_revive([rv_path]) if rv_path and os.path.exists(rv_path) else None
-    held = set(json.load(open(a.split, encoding="utf-8"))["corpora"].get(corpus, {}).get("heldout", [])) if a.split else set()
+    held = set(json.load(open(a.split, encoding="utf-8"))["corpora"].get(corpus, {}).get("heldout", [])) if a.split else set()   # 합성 대화는 --split 없이
     bc = tuple(float(x) if i == 0 else int(x) for i, x in enumerate(a.backchannel.split(","))) if a.backchannel else None
     ds = CstDialogueDataset([os.path.join(a.data, f"{corpus}.refined.dialogues.jsonl")], tok, delays=DELAYS, exclude=held, mono_cache_dir=os.path.join(a.data, "mono"),
                             seed=a.seed, backchannel=bc, revive=rv, trans=tr, trans_input=tri, ast_frac=1.0)
@@ -58,17 +58,18 @@ def run(corpus):
     if a.only_translated: ds.items = [it for it in ds.items if it[0] in convs]
     rep = dict(corpus=corpus, held_out_dialogues=len(held), stats=dict(ds.stats), trans_rows=sum(1 for r in tr if r.split("|")[0] in ds.dlgs),
                trans_input_rows=sum(1 for r in tri if r.split("|")[0] in ds.dlgs), trans_load=dict(tr_st), windows=len(ds), sec_init=round(time.time() - t0, 1))
-    lang = next((ds.dlgs[c].lang for c, _, _ in ds.items), "Korean"); tgts = list(ds.tgt_of.get(lang, ()))
     rep["prefix"] = {}
-    for tg in tgts:
-        pre = ds.cst_prefix(lang, DELAYS[0], tg); body = pre[len(ds._pre):-1]; text = tok.decode(body)
-        rep["prefix"][tg] = dict(text=text, n_tokens=len(pre), ok=text == cst_head_text([lang, lang], [tg, tg]) and body.count(ds.spk_ids[0]) == 2 and body.count(ds.spk_ids[1]) == 2)
+    if len(ds):                                                                                 # 첫 창의 슬롯 언어로(교차 언어는 목표 'xl' = 각 슬롯이 상대 언어)
+        _, langs = ds.slots(0)
+        for tg in ds.tgt_options(0):
+            tp = [langs[1], langs[0]] if tg == "xl" else [tg, tg]; pre = ds.cst_prefix(langs, DELAYS[0], tp); body = pre[len(ds._pre):-1]; text = tok.decode(body)
+            rep["prefix"][tg] = dict(text=text, n_tokens=len(pre), ok=text == cst_head_text(langs, tp) and body.count(ds.spk_ids[0]) == 2 and body.count(ds.spk_ids[1]) == 2)
     rng = random.Random(a.seed); idx = list(range(len(ds)))
     if a.max_windows and len(idx) > a.max_windows: idx = sorted(rng.sample(idx, a.max_windows))
-    est = ds.est_lens(); agg = {tg: collections.defaultdict(list) for tg in tgts}; win = {tg: collections.Counter() for tg in tgts}
+    est = ds.est_lens(); agg = collections.defaultdict(lambda: collections.defaultdict(list)); win = collections.defaultdict(collections.Counter)
     probs = collections.Counter(); ex = []; nbad = 0; shown = 0; t1 = time.time()
     for n, i in enumerate(idx):
-        for tg in tgts:
+        for tg in ds.tgt_options(i):
             d = rng.choice(DELAYS); s = ds.cst_sequence(i, d, tgt=tg); s3 = ds.cst_sequence(i, d); P = ds.problems_of(s); g = agg[tg]
             for p in P: probs[p.split(":")[0]] += 1
             nbad += bool(P)
@@ -86,7 +87,7 @@ def run(corpus):
         if n and n % 5000 == 0: print(f"  {corpus}: {n}/{len(idx)} {time.time() - t1:.0f}s", flush=True)
     rep.update(windows_checked=len(idx), sequences_with_problems=nbad, problems=dict(probs), problem_examples=ex, sec_check=round(time.time() - t1, 1))
     rep["by_tgt"] = {}
-    for tg in tgts:
+    for tg in sorted(agg):
         g = agg[tg]; w = win[tg]; rows_in = w.get("miss_miss", 0) + w.get("miss_cut", 0)
         rep["by_tgt"][tg] = dict(seq_len=pct(g["len"]), over_16384=int(sum(1 for x in g["len"] if x > 16384)), len_ratio_vs_stage3=pct(g["ratio"], (50, 90, 100)),
                                  est_under=int(sum(1 for x in g["est_ratio"] if x > 1.0)), est_ratio=pct(g["est_ratio"], (50, 90, 100)),

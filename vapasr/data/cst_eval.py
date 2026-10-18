@@ -1,4 +1,5 @@
 """Stage 3 평가 도우미(experiments/cst_stage3_eval.py) — 두 슬롯 출력 해석, 화자 귀속 오류율, 턴 끝 <EOT> 일치. 순수 함수(모델·tokenizer 없이 테스트).
+Stage 4(experiments/cst_stage4_eval.py): parse_emitted4(전사·번역 네 흐름), lag_matched(번역 단어 지연 — 학습 타깃 시각 대비).
 
 출력 해석(parse_emitted): 스트리밍 [(k, tid)] — <SPK_A>/<SPK_B> 태그가 슬롯을 열고, 그 뒤 토큰·<EOT> 는 그 슬롯 것이다. 첫 태그 앞 토큰은 슬롯 A 로 본다
   (태그를 빠뜨려도 받아쓰기 평가는 되게). 방출 시각 = 청크 끝 (k+1)·80 ms (ast_eval.word_emission_times 와 같은 규약).
@@ -28,6 +29,31 @@ def parse_emitted(emitted: Sequence, spk_ids: Sequence[int], eot_id: int, drop_c
         if t == eot_id: eots.append((cur, tt))
         else: slots[cur].append((tt, t))
     return slots, eots
+
+
+def parse_emitted4(emitted: Sequence, spk_ids: Sequence[int], trans_id: int, eot_id: int, drop_chunks=(), drop_tr_chunks=()):
+    """Stage 4 네 흐름 출력 해석 → (슬롯별 전사 [(시각 s, tid)], 슬롯별 번역 [(시각 s, tid)], [(슬롯, 시각 s)] <EOT>).
+    <SPK_x> 는 슬롯 x 전사 구간을, <TRANS> 는 지금 슬롯의 번역 구간을 연다(cst_dialogue.read_back4 와 같은 규칙). 첫 태그 앞은 슬롯 A 전사로 본다.
+    drop_chunks: 버릴 청크(전사 없는 음성 — 전사·번역·<EOT> 모두), drop_tr_chunks: 번역만 버릴 청크(참조 번역이 없는 행)."""
+    src: List[List[Tuple[float, int]]] = [[], []]; tr: List[List[Tuple[float, int]]] = [[], []]; eots: List[Tuple[int, float]] = []
+    cur, kind = 0, 0; drop, dtr = set(drop_chunks), set(drop_tr_chunks); spk = list(spk_ids)
+    for k, t in emitted:
+        t = int(t)
+        if t in spk: cur, kind = spk.index(t), 0; continue
+        if t == trans_id: kind = 1; continue
+        if k in drop: continue
+        tt = (int(k) + 1) * CHUNK_S
+        if t == eot_id: eots.append((cur, tt))
+        elif kind == 0: src[cur].append((tt, t))
+        elif k not in dtr: tr[cur].append((tt, t))
+    return src, tr, eots
+
+
+def lag_matched(ref: Sequence[Tuple[str, float]], hyp: Sequence[Tuple[str, float]]) -> List[float]:
+    """번역 지연: 참조·가설 단어열 [(단어, 시각)]을 같은 비용 정렬(align)로 맞춰 일치한 단어의 (가설 시각 − 참조 시각) 목록.
+    참조 시각 = 학습 타깃의 방출 청크(stable prefix 확정 + δ) — 0 이면 타깃만큼 빠르다."""
+    al = align([w for w, _ in ref], [w for w, _ in hyp])
+    return [round(hyp[j][1] - ref[i][1], 3) for i, j in al if i is not None and j is not None and ref[i][0] == hyp[j][0]]
 
 
 def emitted_from_sequence(ids: Sequence[int], is_input: Sequence[bool], chunk_of: Sequence[int], next_id: int, empty_id: int) -> List[Tuple[int, int]]:

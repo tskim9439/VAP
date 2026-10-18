@@ -17,6 +17,8 @@
                         --dlg-trans(Stage 4, decision-stage4-prep-20261019): 대화 발화 번역 타깃이 있으면 창을 --dlg-ast-frac 확률로 번역 모드(두 화자 전사 +
                         번역 네 흐름, prefix 에 translate 줄 — cst_dialogue.build_cst4_sequence)로 낸다. 목표 언어는 한·독 → 영, 영 → 독·한(무작위).
                         --dlg-trans-input: 되살린 발화의 번역(입력 문맥으로만). 끄면(기본) Stage 3 와 같고 지문에 키가 없다.
+  sim_<l1>-<l2>         교차 언어 합성 대화(Stage 4 — sim_build_dialogues --lang2, 예 sim_ko-en·sim_en-de): --sim-data 의 <키>.refined.dialogues.jsonl 과
+                        targets-<키>/ 번역 타깃. 슬롯은 언어로 고정(A/B 무작위), --sim-trans-frac 확률로 번역 모드(각 슬롯이 상대 언어로), 나머지는 받아쓰기만.
   sim_ko·sim_en·sim_de  --sim-data 의 합성 2 인 대화(vapasr/data/sim_dialogue — 다른 화자의 실제 발화를 턴으로 번갈아 놓음). 같은 CstDialogueDataset,
                         <EOT> 감독 없음(meta.mask_eot). epoch 기준(anchor)은 실제 대화 셋(dlg_*)만.
   rep_ko·rep_en·rep_de  vapasr/data/ast_dataset.AstStreamDataset — Stage 2 와 같은 단일 화자 ASR·번역 항목(--ast-frac 번역 모드, --offline-frac final 모드).
@@ -58,6 +60,7 @@ g.add_argument("--dlg-trans", action="append", default=[], help="Stage 4 대화 
                "반복·쉼표·@목록) — 주면 대화 창을 --dlg-ast-frac 확률로 번역 모드로")
 g.add_argument("--dlg-trans-input", action="append", default=[], help="되살린 격리 발화의 번역 타깃(--revive-dir 과 함께; stage4_dialogue_units --revive-dir) — 입력 문맥으로만")
 g.add_argument("--dlg-ast-frac", type=float, default=0.5, help="번역 타깃이 있을 때 대화 창을 번역 모드로 둘 확률(나머지는 Stage 3 형식)")
+g.add_argument("--sim-trans-frac", type=float, default=0.8, help="교차 언어 합성 셋(sim_<l1>-<l2>) 창을 번역 모드로 둘 확률")
 g.add_argument("--spk-act-weight", type=float, default=0.0, help="화자 슬롯 활동 보조 손실 가중(0 = 끔): LLM audio 위치에 2 슬롯 헤드, 청크마다 'A/B 가 말하는 중' BCE")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -262,6 +265,20 @@ for lang in ("Korean", "English", "German"):                                    
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = lang; train_sets[key] = ds
     log(f"  {key}(합성): {len(ds)} 창 · 대화 {ds.stats['cst_dialogues']} · stats {dict(ds.stats)}")
+sim_trans_fp = {}
+for key in sorted(k for k, w in weights.items() if w > 0 and re.fullmatch(r"sim_[a-z]{2}-[a-z]{2}", k)):        # 교차 언어 합성(Stage 4)
+    if not a.sim_data: sys.exit(f"--weights 에 {key} 가 있는데 --sim-data 가 없다")
+    f, td = os.path.join(a.sim_data, f"{key}.refined.dialogues.jsonl"), os.path.join(a.sim_data, f"targets-{key}")
+    if not os.path.exists(f) or not os.path.isdir(td): sys.exit(f"교차 언어 합성 대화·번역 타깃 없음: {f} · {td}")
+    from vapasr.data.ast_dataset import load_ast_targets
+    XT, xt_st, sim_trans_fp[key] = load_ast_targets([td]); sim_files.append(f)
+    ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
+                            mono_cache_dir=os.path.join(a.sim_data, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
+                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac)
+    if not ds.has_xl: sys.exit(f"{key}: 교차 언어 대화(meta.spk_lang)가 아니다")
+    if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
+    ds.lang = next(iter(ds.dlgs.values())).lang; train_sets[key] = ds
+    log(f"  {key}(교차 언어 합성): {len(ds)} 창 · 대화 {ds.stats['cst_dialogues']} · 번역 타깃 {dict(xt_st)} · 번역 모드 {a.sim_trans_frac}")
 RW = _subset(_paths(a.replay_words), a.replay_files_frac); RD = _subset(_paths(a.replay_de_words), a.replay_files_frac); ast_fp = None
 if (RW or RD) and any(weights.get(k, 0) > 0 for k in ("rep_ko", "rep_en", "rep_de")):
     from vapasr.data.ast_dataset import AstStreamDataset, load_ast_targets
@@ -286,8 +303,7 @@ for key, ds in train_sets.items():                                              
         bad = [(ds.items[i], d, P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d)] if P]
         if rc: bad += [(ds.items[i], d, "flip", P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d, rng=random.Random(a.seed * 7919 + i * 31 + d), recover=rc._replace(p=1.0))] if P]
         if getattr(ds, "trans_on", False):                                                     # 번역 모드(목표 언어마다)
-            bad += [(ds.items[i], d, tg, P[:3]) for i in idx for d in ds.delays for tg in ds.tgt_of.get(ds.dlgs[ds.items[i][0]].lang, ())
-                    for P in [ds.problems_of(ds.cst_sequence(i, d, tgt=tg))] if P]
+            bad += [(ds.items[i], d, tg, P[:3]) for i in idx for d in ds.delays for tg in ds.tgt_options(i) for P in [ds.problems_of(ds.cst_sequence(i, d, tgt=tg))] if P]
     else: bad = [(ds.items[i]["id"], d, P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d)] if P]
     check[key] = dict(n=n, bad=len(bad), examples=[str(b)[:200] for b in bad[:5]]); log(f"  check {key}: {n} 항목 × δ{list(delays)} → 불일치 {len(bad)} {bad[:2]}")
 assert all(v["bad"] == 0 for v in check.values()), f"시퀀스 불변식 위반: {check}"
@@ -300,19 +316,20 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           gain_augment=list(gain) if gain else None, speed_perturb=list(speeds) or None, noise_aug=naug.settings() if naug else None, spec_augment=a.spec_augment,
           max_windows=a.max_windows, seed=a.seed, vocab_sha256=vocab_sha, init=os.path.abspath(a.init), **({"recover": rc._asdict()} if rc else {}), **({"spk_act_weight": a.spk_act_weight} if a.spk_act_weight > 0 else {}),
           **({"sim_data": file_digest(sim_files)} if sim_files else {}), **({"revive": file_digest(revive_files)} if revive_files else {}),
-          **({"dlg_trans": dt_fp, "dlg_trans_input": dti_fp, "dlg_ast_frac": a.dlg_ast_frac} if DT else {}))   # 끄면 키 없음(이전 run 지문 그대로)
+          **({"dlg_trans": dt_fp, "dlg_trans_input": dti_fp, "dlg_ast_frac": a.dlg_ast_frac} if DT else {}),
+          **({"sim_trans": sim_trans_fp, "sim_trans_frac": a.sim_trans_frac} if sim_trans_fp else {}))   # 끄면 키 없음(이전 run 지문 그대로)
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():
         if not key.startswith(("dlg_", "sim_")): continue
-        s = ds.cst_sequence(0, max(delays)); P = len(ds.cst_prefix(ds.dlgs[s["cid"]].lang, max(delays)))
+        s = ds.cst_sequence(0, max(delays)); P = len(ds.cst_prefix(s["langs"], max(delays)))
         def show(p):
             t = s["ids"][p]; lab = s["labels"][p]
             return ("A" if s["chunk_of"][p] >= 0 else names.get(t) or repr(tok.decode([t]))) + ("" if lab != -100 or s["is_input"][p] else "[m]") + (f"[p={s['soft_w'][p]}]" if p in s["soft_pos"] else "")
         log(f"dry-run {key} {s['cid']}@{s['t0']} L {s['L']} δ{max(delays)} · 화자 {s['speakers']} · EOT {s['n_eot']} soft {s['n_soft']} · 머리 {tok.decode(s['ids'][:P])!r}")
         log(" ".join(show(p) for p in range(P, min(len(s["ids"]), P + 400))))
         if getattr(ds, "trans_on", False):                                                     # 번역 모드 예(첫 목표 언어)
-            tg = ds.tgt_of[ds.dlgs[s["cid"]].lang][0]; s = ds.cst_sequence(0, max(delays), tgt=tg); P = len(ds.cst_prefix(ds.dlgs[s["cid"]].lang, max(delays), tg))
+            tg = ds.tgt_options(0)[0]; s = ds.cst_sequence(0, max(delays), tgt=tg); P = len(ds.cst_prefix(s["langs"], max(delays), list(s["tgt"])))
             log(f"dry-run 번역 {key} → {tg} · 번역 토큰 {s['n_tr']} · 입력만 {len(s['tr_input'])} · 창 {s['win']} · 머리 {tok.decode(s['ids'][:P])!r}")
             log(" ".join(show(p) for p in range(P, min(len(s["ids"]), P + 400))))
         if rc:                                                                                # 뒤집은 예: 회복 지점 앞뒤

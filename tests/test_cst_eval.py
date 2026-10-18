@@ -71,3 +71,20 @@ def test_attr_errors_types_and_overlap():
     assert gap["n_mis"] == 0 and gap["agn"] == 1 and gap["n_pair"] == 2                       # 빠진 단어는 귀속 오류가 아니다
     ko = attr_errors([[("안녕 하세요", 1.0)], []], [[], [("안녕하세요", 1.0)]], "Korean", [0, 1])
     assert ko["n_ref"] == 5 and ko["units"] == {"whole_short/solo": 5}                         # 글자 단위로 세고, short 는 단어(2 개) 기준
+
+
+def test_parse_emitted4_streams_and_drops():
+    from vapasr.data.cst_eval import parse_emitted4
+    A, B, TR, EOT = 1002, 1003, 1005, 1004
+    em = [(5, A), (5, 10), (5, TR), (5, 30), (7, A), (7, 11), (8, EOT), (9, B), (9, TR), (9, 40), (9, EOT), (12, B), (12, 20), (12, TR), (12, 41)]
+    s, t, e = parse_emitted4(em, (A, B), TR, EOT)
+    assert s == [[(0.48, 10), (0.64, 11)], [(1.04, 20)]] and t == [[(0.48, 30)], [(0.8, 40), (1.04, 41)]] and e == [(0, 0.72), (1, 0.8)]
+    s2, t2, e2 = parse_emitted4(em, (A, B), TR, EOT, drop_chunks={7}, drop_tr_chunks={12})
+    assert s2 == [[(0.48, 10)], [(1.04, 20)]] and t2 == [[(0.48, 30)], [(0.8, 40)]] and e2 == e        # 버린 청크: 전사·번역 / 번역만
+    assert parse_emitted4([(3, 50), (3, TR), (3, 51)], (A, B), TR, EOT)[:2] == ([[(0.32, 50)], []], [[(0.32, 51)], []])   # 첫 태그 앞 = 슬롯 A
+
+
+def test_lag_matched():
+    from vapasr.data.cst_eval import lag_matched
+    ref = [("a", 1.0), ("b", 1.2), ("c", 2.0)]; hyp = [("a", 1.16), ("x", 1.3), ("c", 2.4)]
+    assert lag_matched(ref, hyp) == [0.16, 0.4] and lag_matched(ref, []) == [] and lag_matched(ref, ref) == [0.0, 0.0, 0.0]

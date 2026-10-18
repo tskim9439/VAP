@@ -9,7 +9,7 @@
 관측 한계: `observed_until_s` 는 정답을 만들 때 볼 수 있는 미래의 끝(대화 끝 또는 결손 시작)이다. 모델의 관측과 다르다(정본 §5.2 label_observed_until).
 """
 from dataclasses import dataclass, field, asdict
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Sequence
 import json
 
 GAP_S = 0.25          # 같은 화자 발화 병합 gap (정본 §3.2·§5: 화자별 VAD, gap < 0.25 s 병합)
@@ -84,3 +84,11 @@ def build_episodes(dlg: Dialogue, gap_s: float = GAP_S) -> List[Episode]:
 def chunk_of(t_s: float, delay: int = 0, chunk_s: float = CHUNK_S) -> int:
     """청크 인덱스 = floor(t/0.08) + δ (E2 규약)."""
     return int(t_s / chunk_s + 1e-9) + delay
+
+def clamp_to_spans(t: float, spans: Sequence[Tuple[float, float]]) -> float:
+    """시각을 조각 구간 목록(시작순)으로 자른다: 조각 안이면 그대로, 첫 조각 앞이면 그 시작, 조각 사이 쉼이면 다음 조각 시작(늦은 쪽),
+    끝 뒤면 마지막 끝. 번역 확정 시각을 전사 토큰처럼 발화 조각에 맞출 때 쓴다(build_episodes 가 토큰을 발화 구간으로 자르는 것과 짝)."""
+    for a, b in spans:
+        if t < a: return a
+        if t <= b: return t
+    return spans[-1][1]

@@ -14,6 +14,11 @@
     기준이 되게 한다. 한 화자는 자기 말과 겹치지 않는다(episode 병합 gap 0.25 s 도 지킨다).
   결과 Dialogue: channels = 화자별 조각 [(path, 대화 시각, src_offset, dur)](dialogue_mix.load_channel 규약), utterances = 놓인 발화(토큰은
     대화 시각), meta = synthetic "sim" · mask_eot(턴 타이밍이 인공적이라 EOT 감독 없음 — dialogue_stitch 와 같은 원칙) · 화자 키 · 풀.
+  번역(Stage 4, 선택): Unit.trans = {목표 언어: [(id, 발화 오디오 안 확정 시각)]} — words 행은 Stage 2 타깃(행 id = words 행 id)을 구간 시각으로,
+    Phase 2 발화는 S1 대화 타깃(행 id = conv|화자|원 utt_id)을 조각 구간으로 나눠 붙인다. 토큰과 같은 규칙으로 나누고(split_unit) 놓는다(synth_session) —
+    결과는 meta.trans = {utt_id: {목표 언어: [[id, 대화 시각], …]}}(sim_build_dialogues 가 떼어 번역 타깃 파일로 쓴다).
+    행 무결성: 한 행의 번역은 뒤 조각에서 확정되기도 한다(한국어는 행 끝에 몰린다). 그래서 이어지는 조각(Unit.cont)은 세션 시작(sim_build_dialogues)·
+    맞장구로 쓰지 않고, 조각이 빠진 행은 번역을 떼어 낸다 — 말하지 않은 내용의 번역이 끼지 않게(2026-10-19 시험 합성에서 확인).
 """
 import math, random, re
 from dataclasses import dataclass, field
@@ -21,7 +26,7 @@ from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from .dialogue import Dialogue, Utterance, ChannelRef, build_episodes, GAP_S
+from .dialogue import Dialogue, Utterance, ChannelRef, build_episodes, clamp_to_spans, GAP_S
 
 SR = 16000
 
@@ -31,6 +36,8 @@ class Unit:
     key: str; order: float; path: str; src_offset: Optional[float]; dur: float
     tokens: List[Tuple[int, float]]                       # (id, 발화 오디오(src_offset 부터) 안 끝 시각 s)
     text: str = ""; uid: str = ""; pool: str = ""
+    trans: Dict[str, List[Tuple[int, float]]] = field(default_factory=dict)   # 목표 언어 → [(id, 발화 오디오 안 확정 시각 s)](Stage 4, 없으면 비움 — 키만 있고 빈 목록 = 이 조각에서 확정된 번역 없음)
+    cont: bool = False                                                         # 앞 조각에 이어지는 조각(정제 #n 의 둘째 이후·split_unit 의 둘째 이후) — 세션 시작·맞장구로 쓰지 않는다
 
     def short(self, max_tokens: int = 3, max_s: float = 1.6) -> bool:
         """맞장구 후보: 토큰 ≤ max_tokens 이고 마지막 토큰이 max_s 안(앞 무음 포함 대략치)."""
@@ -68,28 +75,57 @@ SPEAKER_RULES: Dict[str, Callable] = {"librispeech-960": _ls, "librispeech-960-r
                                        "voxpopuli-train": _vp, "cv4-en": _cv}
 
 
-def units_from_words_row(r: dict) -> List[Unit]:
-    """words 행 → 구간별 Unit(화자 키를 아는 세트만). 토큰은 행 시각 (offset, offset + dur + 0.08] 로 구간에 나눈다."""
+def units_from_words_row(r: dict, trans: Optional[Dict[str, tuple]] = None) -> List[Unit]:
+    """words 행 → 구간별 Unit(화자 키를 아는 세트만). 토큰은 행 시각 (offset, offset + dur + 0.08] 로 구간에 나눈다.
+    trans: 이 행의 번역 타깃 {목표 언어: (ids, 행 시각)}(Stage 2 — 번역 단위는 구간을 넘지 않는다) — 토큰과 같은 규칙으로 구간에 나눈다."""
     rule = SPEAKER_RULES.get(r.get("set"))
     if rule is None or r.get("training_eligible") is False: return []
     toks = sorted(((int(t), float(x)) for t, x in (r.get("tokens") or [])), key=lambda z: z[1]); out = []; used = 0
+    trs = {g: sorted(((int(i), float(t)) for i, t in zip(*v)), key=lambda z: z[1]) for g, v in (trans or {}).items()}; tr_used = {g: 0 for g in trs}
+    def take(seq, j, a, b):
+        got = []
+        while j < len(seq) and seq[j][1] <= b + 0.08:
+            if seq[j][1] > a - 1e-3: got.append((seq[j][0], round(max(0.0, seq[j][1] - a), 3)))
+            j += 1
+        return got, j
     for g in r["segments"]:
         k = rule(g["utt_id"], r, g)
         a, b = float(g["offset_s"]), float(g["offset_s"]) + float(g["dur_s"])
-        tt = []
-        while used < len(toks) and toks[used][1] <= b + 0.08:
-            if toks[used][1] > a - 1e-3: tt.append((toks[used][0], round(max(0.0, toks[used][1] - a), 3)))
-            used += 1
+        tt, used = take(toks, used, a, b); tr = {}
+        for lg, seq in trs.items(): tr[lg], tr_used[lg] = take(seq, tr_used[lg], a, b)
         if k is None or not tt: continue
         out.append(Unit(key=k[0], order=k[1], path=g["path"], src_offset=g.get("src_offset_s"), dur=float(g["dur_s"]), tokens=tt, text=g.get("raw_text", ""),
-                        uid=g["utt_id"], pool=r["set"]))
+                        uid=g["utt_id"], pool=r["set"], trans=tr))
     return out
 
 
 # ── Phase 2 정제 대화
-def units_from_dialogue(d: Dialogue, margin: float = 0.1) -> List[Unit]:
-    """전사 감독 발화(tokens 있고 flags 없음) → Unit. 오디오 = 화자 채널(또는 그 시각에 가장 가까운 조각)의 [start − margin, end + margin]."""
-    out = []
+def dialogue_piece_trans(d: Dialogue, trans: Dict[str, Dict[str, tuple]]) -> Dict[str, Dict[str, List[Tuple[int, float]]]]:
+    """S1 대화 번역 타깃(행 = 같은 화자의 원 utt_id 로 묶은 정제 조각 #n)을 조각마다 나눈다 → {utt_id: {목표 언어: [(id, 대화 시각)]}}.
+    확정 시각은 행 조각 구간으로 자르고(clamp_to_spans — cst_dialogue 번역 흐름과 같은 규칙) 그 시각 이후 처음 끝나는 조각에 준다.
+    번역이 있는 행의 조각은 확정 토큰이 없어도 빈 목록을 받는다(한국어처럼 행 끝에서 몰아 확정되는 경우 — 번역 없음과 구별)."""
+    rows: Dict[Tuple[str, str], list] = {}
+    for u in d.utterances:
+        if u.tokens and not u.flags and u.end > u.start: rows.setdefault((u.speaker, u.utt_id.split("#")[0]), []).append((u.start, u.end, u.utt_id))
+    out: Dict[str, Dict[str, list]] = {}
+    for (spk, base), ps in rows.items():
+        tt = trans.get(f"{d.conv_id}|{spk}|{base}")
+        if not tt: continue
+        ps.sort(); spans = [(a, b) for a, b, _ in ps]
+        for g, (ids, ts) in tt.items():
+            for _, _, uid in ps: out.setdefault(uid, {}).setdefault(g, [])
+            for i, t in zip(ids, ts):
+                c = clamp_to_spans(float(t), spans); j = next((j for j, (_, b) in enumerate(spans) if c <= b + 1e-6), len(spans) - 1)
+                out.setdefault(ps[j][2], {}).setdefault(g, []).append((int(i), c))
+    return out
+
+
+def units_from_dialogue(d: Dialogue, margin: float = 0.1, trans: Optional[Dict[str, Dict[str, tuple]]] = None) -> List[Unit]:
+    """전사 감독 발화(tokens 있고 flags 없음) → Unit. 오디오 = 화자 채널(또는 그 시각에 가장 가까운 조각)의 [start − margin, end + margin].
+    trans: S1 대화 번역 타깃 전체({행 id: {목표 언어: (ids, 대화 시각)}}) — 조각마다 나눠(dialogue_piece_trans) Unit.trans 로 붙인다."""
+    out = []; pt = dialogue_piece_trans(d, trans) if trans else {}; first = {}; broken = set()
+    for u in sorted((u for u in d.utterances if u.tokens and not u.flags and u.end > u.start), key=lambda u: u.start):
+        first.setdefault((u.speaker, u.utt_id.split("#")[0]), u.utt_id)
     for u in d.utterances:
         if not u.tokens or u.flags or u.end <= u.start: continue
         ref = d.channels.get(u.speaker)
@@ -102,9 +138,13 @@ def units_from_dialogue(d: Dialogue, margin: float = 0.1) -> List[Unit]:
         else: continue
         dur = (u.end + margin) - t0
         tt = [(int(t), round(float(x) - t0, 3)) for t, x in u.tokens]
-        if dur <= 0.1 or not tt or tt[0][1] < 0: continue
+        row = (u.speaker, u.utt_id.split("#")[0])
+        if dur <= 0.1 or not tt or tt[0][1] < 0: broken.add(row); continue
+        tr = {g: [(i, round(t - t0, 3)) for i, t in v] for g, v in pt.get(u.utt_id, {}).items()}
         out.append(Unit(key=f"{d.corpus}|{d.conv_id}|{u.speaker}", order=u.start, path=path, src_offset=round(src, 3), dur=round(dur, 3), tokens=tt,
-                        text=u.text, uid=u.utt_id, pool=d.corpus))
+                        text=u.text, uid=u.utt_id, pool=d.corpus, trans=tr, cont=first.get(row) != u.utt_id))
+    for x in out:                                                                              # 조각이 빠진 행은 번역을 떼어 낸다(빠진 조각의 내용이 다음 조각 번역에 섞인다)
+        if x.trans and (x.key.split("|")[2], x.uid.split("#")[0]) in broken: x.trans = {}
     return out
 
 
@@ -197,8 +237,10 @@ def split_unit(u: "Unit", parts: Sequence[Tuple[float, float]]) -> List["Unit"]:
     out = []
     for k, (a, b) in enumerate(parts):
         tt = [(tid, round(t - a, 3)) for tid, t in u.tokens if a < t <= b]
+        lo = -1e9 if k == 0 else a                                                              # 번역 확정 시각은 첫 조각이 앞쪽(≤ 0)도 받는다
+        tr = {g: [(i, round(max(0.0, t - a), 3)) for i, t in v if lo < t <= b] for g, v in u.trans.items()}
         if tt: out.append(Unit(key=u.key, order=u.order + k * 1e-3, path=u.path, src_offset=round((u.src_offset or 0.0) + a, 3), dur=round(b - a, 3), tokens=tt,
-                               text=u.text if k == 0 else "", uid=f"{u.uid}~{k}", pool=u.pool))
+                               text=u.text if k == 0 else "", uid=f"{u.uid}~{k}", pool=u.pool, trans=tr, cont=u.cont if k == 0 else True))
     return out or [u]
 
 
@@ -224,6 +266,7 @@ def synth_session(units: Sequence[Sequence[Unit]], stats: TimingStats, rng: rand
     턴을 놓을 화자의 발화가 떨어지면 끝낸다(혼자 말하는 꼬리를 만들지 않는다). 맞장구는 짧은 발화(Unit.short)로만, 쓰면 그 발화는 턴에 다시 안 쓴다."""
     names = ("a", "b"); q = [list(units[0]), list(units[1])]; p_hold = stats.p_hold if cfg.p_hold is None else cfg.p_hold
     utts: List[Utterance] = []; pieces: Dict[str, list] = {"a": [], "b": []}; last_end = [-1e9, -1e9]; n = {"turns": 0, "bc": 0, "units": 0, "split": 0}
+    trans: Dict[str, Dict[str, list]] = {}
     def take(s: int) -> Optional[Unit]:
         if not q[s]: return None
         u = q[s].pop(0)
@@ -231,13 +274,14 @@ def synth_session(units: Sequence[Sequence[Unit]], stats: TimingStats, rng: rand
             subs = expand(u)
             if len(subs) > 1: n["split"] += 1; q[s][:0] = subs[1:]; u = subs[0]
         return u
-    def take_short(s: int) -> Optional[Unit]:
-        i = next((i for i, u in enumerate(q[s]) if u.short()), None)
+    def take_short(s: int) -> Optional[Unit]:                                            # 이어지는 조각은 맞장구로 앞당기지 않는다(번역 순서)
+        i = next((i for i, u in enumerate(q[s]) if u.short() and not u.cont), None)
         return None if i is None else q[s].pop(i)
     def place(s: int, u: Unit, at: float) -> float:
         a, b = span(u); d = round(b - a, 3); at = round(at, 3)
         toks = [(tid, round(at + min(max(t - a, 0.0), d), 3)) for tid, t in u.tokens]
         utts.append(Utterance(speaker=names[s], start=at, end=round(at + d, 3), text=u.text, raw=u.text, tokens=toks, utt_id=f"{names[s]}:{u.uid}"))
+        if u.trans: trans[utts[-1].utt_id] = {g: [[tid, round(at + min(max(t - a, 0.0), d), 3)] for tid, t in v] for g, v in u.trans.items()}
         pieces[names[s]].append((u.path, at, round((u.src_offset or 0.0) + a, 3), d)); n["units"] += 1
         return at + d
     prev = None; p_start = p_end = 0.0
@@ -267,7 +311,7 @@ def synth_session(units: Sequence[Sequence[Unit]], stats: TimingStats, rng: rand
     utts.sort(key=lambda u: (u.start, u.speaker))
     return Dialogue(conv_id=conv_id, corpus=corpus, lang=lang, split="train", duration_s=round(end, 3), speakers=list(names), utterances=utts,
                     channels={k: ChannelRef(pieces=v) for k, v in pieces.items()},
-                    meta=dict(synthetic="sim", mask_eot=True, **n, **(meta or {})))
+                    meta=dict(synthetic="sim", mask_eot=True, **n, **(meta or {}), **({"trans": trans} if trans else {})))
 
 
 def overlap_stats(d: Dialogue) -> dict:

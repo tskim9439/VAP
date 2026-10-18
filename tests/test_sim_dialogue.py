@@ -123,3 +123,53 @@ def test_cst_dataset_masks_eot_on_synthetic(tmp_path):
         s = ds.cst_sequence(i, 4); assert ds.problems_of(s) == [] and s["soft_pos"] == [] and s["n_eot"] > 0
         assert all(s["labels"][p] == -100 for p in s["eot_pos"])                                     # <EOT> 는 문맥에만, 감독 없음
         assert any(l != -100 for l, inp in zip(s["labels"], s["is_input"]) if not inp)              # 전사·태그는 학습
+
+
+# ── Stage 4: 번역 토큰을 발화와 같이 나누고 놓기
+def test_words_row_and_split_carry_translation():
+    tr = {"German": ([51, 52, 53, 54], [1.0, 3.2, 4.9, 5.95])}                                       # 구간 0(0.5–3.5)·1(4.0–6.0) 의 확정 시각
+    us = units_from_words_row(row(), trans=tr)
+    assert us[0].trans == {"German": [(51, 0.5), (52, 2.7)]} and us[1].trans == {"German": [(53, 0.9), (54, 1.95)]}
+    assert units_from_words_row(row())[0].trans == {}                                               # 번역 없으면 비움
+    u = Unit(key="k", order=0, path="/p", src_offset=None, dur=9.5, tokens=[(1, 1.5), (2, 2.9), (3, 4.0)], uid="u", trans={"Korean": [(7, 0.0), (8, 2.9), (9, 4.0)]})
+    a, b, c = split_unit(u, [(0.0, 3.25), (3.25, 6.25), (6.25, 9.5)])[:2] + [None]
+    assert a.trans == {"Korean": [(7, 0.0), (8, 2.9)]} and b.trans == {"Korean": [(9, 0.75)]}       # 첫 조각은 0 시각 확정도 받는다
+
+
+def test_dialogue_units_split_row_translation_over_pieces():
+    d = Dialogue(conv_id="c", corpus="kec", lang="German", split="train", duration_s=30.0, speakers=["x", "y"],
+                 utterances=[Utterance("x", 2.0, 4.0, "", tokens=[(1, 3.0), (2, 3.9)], utt_id="u1#0"), Utterance("x", 4.6, 6.0, "", tokens=[(3, 5.5)], utt_id="u1#1"),
+                             Utterance("y", 9.0, 10.0, "ef", tokens=[(4, 9.7)], utt_id="u4")],
+                 channels={"x": ChannelRef(path="/a.wav#ch0"), "y": ChannelRef(path="/a.wav#ch1")})
+    tr = {"c|x|u1": {"English": ([61, 62, 63], [3.0, 4.3, 5.5])}, "c|y|u4": {"English": ([64], [9.7])}}   # 4.3 은 조각 사이 쉼 → 다음 조각 시작 4.6
+    us = {u.uid: u for u in units_from_dialogue(d, trans=tr)}
+    assert us["u1#0"].trans == {"English": [(61, 1.1)]} and us["u1#1"].trans == {"English": [(62, 0.1), (63, 1.0)]} and us["u4"].trans == {"English": [(64, 0.8)]}
+
+
+def test_synth_session_places_translation_like_tokens():
+    st = TimingStats(fto=[0.3], hold=[0.5], p_hold=0.0, turn=[1.0], bc_rate=0.0, bc_pos=[0.5])
+    A = fake_units("A", 6); B = fake_units("B", 6)
+    for u in A: u.trans = {"German": [(900, u.tokens[-1][1]), (901, u.tokens[-1][1] + 5.0)]}     # 끝 뒤 확정(5 s 넘게) → 발화 끝으로 자른다
+    d = synth_session([A, B], st, random.Random(0), 40.0, lambda u: (0.0, u.dur), "x", "sim_en-de", "English+German", meta=dict(spk_lang={"a": "English", "b": "German"}))
+    tr = d.meta["trans"]; ua = [u for u in d.utterances if u.speaker == "a"]
+    assert set(tr) == {u.utt_id for u in ua} and all(tr[u.utt_id]["German"] == [[900, u.tokens[-1][1]], [901, u.end]] for u in ua)
+    assert d.meta["spk_lang"] == {"a": "English", "b": "German"}
+
+
+def test_row_integrity_cont_pieces_and_empty_translation():
+    d = Dialogue(conv_id="c", corpus="aihub71631", lang="Korean", split="train", duration_s=30.0, speakers=["x", "y"],
+                 utterances=[Utterance("x", 2.0, 4.0, "", tokens=[(1, 3.0)], utt_id="u1#0"), Utterance("x", 4.6, 6.0, "", tokens=[(3, 5.5)], utt_id="u1#1"),
+                             Utterance("y", 9.0, 10.0, "", tokens=[(4, 9.7)], utt_id="u4#0"), Utterance("y", 10.5, 10.9, "", tokens=[(5, 10.3)], utt_id="u4#1"),
+                             Utterance("y", 11.0, 12.0, "", tokens=[(6, 11.9)], utt_id="u4#2")],
+                 channels={"x": ChannelRef(path="/a.wav#ch0"), "y": ChannelRef(path="/a.wav#ch1")})
+    tr = {"c|x|u1": {"English": ([61, 62], [5.5, 5.9])}, "c|y|u4": {"English": ([64], [11.9])}}      # 한국어처럼 행 끝에서 몰아 확정
+    us = {u.uid: u for u in units_from_dialogue(d, trans=tr)}
+    assert us["u1#0"].trans == {"English": []} and not us["u1#0"].cont and us["u1#1"].cont and len(us["u1#1"].trans["English"]) == 2   # 빈 목록 = 이 조각에선 확정 없음
+    assert "u4#1" not in us and us["u4#0"].trans == {} and us["u4#2"].trans == {}                  # 조각이 빠진 행(토큰이 조각 앞 — 단위로 못 씀)은 번역을 떼어 낸다
+    u = Unit(key="k", order=0, path="/p", src_offset=None, dur=6.0, tokens=[(1, 1.0), (2, 4.0)], uid="v", trans={"English": [(9, 4.0)]})
+    p0, p1 = split_unit(u, [(0.0, 3.0), (3.0, 6.0)]); assert p0.trans == {"English": []} and not p0.cont and p1.cont and p1.trans == {"English": [(9, 1.0)]}
+    st = TimingStats(fto=[0.3], hold=[0.5], p_hold=0.0, turn=[3.0], bc_rate=50.0, bc_pos=[0.5])
+    B = fake_units("B", 8, short_every=1)
+    for x in B: x.cont = True                                                                   # 이어지는 조각뿐이면 맞장구로 쓰지 않는다
+    dd = synth_session([fake_units("A", 8), B], st, random.Random(0), 30.0, lambda u: (0.0, u.dur), "s", "sim_ko", "Korean")
+    assert dd.meta["bc"] == 0

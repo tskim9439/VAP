@@ -419,6 +419,29 @@ def test_dataset_stage4_translation_mode(tmp_path):
     cc = collate_cst(b); assert cc["n_tr"] == sum(x["n_tr"] for x in b)
 
 
+def test_dataset_cross_lingual_slots_and_targets(tmp_path):
+    import random
+    q = make(tmp_path); d = Dialogue.from_json(open(q).read()); d.lang = "Korean+English"; d.meta = dict(d.meta or {}, spk_lang={"x": "Korean", "y": "English"})
+    open(q, "w").write(d.to_json() + "\n")
+    tr = {f"c1|{u.speaker}|{u.utt_id}": ({"English": (np.array([31, 32]), np.array([u.start + 1.0, u.end]))} if u.speaker == "x" else
+                                         {"Korean": (np.array([41, 42]), np.array([u.start + 1.0, u.end]))}) for u in d.utterances}
+    ds = CstDialogueDataset([q], tok4(), delays=(2, 4), window_s=(20.0, 20.0), hop_s=5.0, seed=1, trans=tr, ast_frac=0.5)
+    assert ds.has_xl and len(ds) > 0 and all(ds.tgt_options(i) == ["xl"] for i in range(len(ds)))
+    orders = set()
+    for i in range(len(ds)):
+        spk, langs = ds.slots(i); assert ds.slots(i) == (spk, langs) and sorted(spk) == ["x", "y"] and langs == [{"x": "Korean", "y": "English"}[w] for w in spk]
+        orders.add(tuple(spk))
+        for dl in (2, 4):
+            s = ds.cst_sequence(i, dl, tgt="xl"); assert ds.problems_of(s) == [] and s["speakers"] == spk and s["tgt"] == (langs[1], langs[0])
+            P = ds.cst_prefix(langs, dl, [langs[1], langs[0]]); assert s["ids"][: len(P)] == P and P != ds.cst_prefix(langs, dl)
+            for k in range(2):                                                                   # 슬롯 k 의 번역 = 그 화자의 행 번역(상대 언어)
+                assert {x[0] for x in s["streams"][2 + k] if len(x) == 2} <= ({31, 32} if spk[k] == "x" else {41, 42})
+            s3 = ds.cst_sequence(i, dl); assert ds.problems_of(s3) == [] and s3["ids"][: len(ds.cst_prefix(langs, dl))] == ds.cst_prefix(langs, dl) and s3["tgt"] is None
+    assert orders == {("x", "y"), ("y", "x")}                                                      # 창 id 해시로 반은 뒤집힌다
+    flips = {tuple(ds.cst_sequence(0, 4, rng=random.Random(k))["speakers"]) for k in range(20)}; assert flips == {("x", "y"), ("y", "x")}   # 학습은 rng
+    random.seed(0); b = [ds[i] for i in range(len(ds))]; assert all(x["lang"] == "Korean+English" for x in b) and any(x["n_tr"] for x in b)
+
+
 # ── 모델: sem_only_mask · <EOT> soft · 예약 <EOT> 행 재초기화
 from test_semcommit_tokens_loss import tiny_model, SEM, TURN, BASE  # noqa: E402
 

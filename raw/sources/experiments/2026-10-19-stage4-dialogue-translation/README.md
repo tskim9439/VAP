@@ -108,6 +108,53 @@ source_type: source-drop
 - 학습 전 검사에 번역 모드(목표 언어마다)를 더했다. 로그에 `tr_per_dlg_step` 을 남긴다.
 - 지문에 `dlg_trans`·`dlg_trans_input`·`dlg_ast_frac` 을 넣는다. 끄면 키가 없어 Stage 3 run 의 재개 지문은 그대로다.
 
+## S3 교차 언어 합성 대화 (`experiments/sim_build_dialogues.py --lang2`, `vapasr/data/sim_dialogue.py`)
+- 화자 a 는 `--lang` 풀, 화자 b 는 `--lang2` 풀에서 고른다. 이름은 `sim_<l1>-<l2>`, `Dialogue.lang = '<L1>+<L2>'`, `meta.spk_lang` 에 화자별 언어를 둔다.
+- 번역(`--trans`): 발화 Unit 이 번역 토큰을 들고 다닌다. 토큰과 같은 규칙으로 나누고(`split_unit`) 놓는다(`synth_session`).
+  - words 행: Stage 2 타깃(행 id = words 행 id). Stage 2 번역 단위는 구간을 넘지 않아 구간 시각으로 나눈다.
+  - Phase 2 발화: S1 대화 타깃(행 = 원 utt_id). 조각 구간으로 나눈다(`dialogue_piece_trans`, `clamp_to_spans`).
+  - 산출: `<out>/targets-sim_<xx>/<xx>/u-*.jsonl.gz`(`load_ast_targets` 형식, 행 id = `<conv>|<화자>|<utt_id 의 # 앞>`)
+- 교차 언어는 상대 언어 번역이 있는 발화만 재료로 쓴다. 시간 구조는 두 언어의 실제 대화에서 함께 잰다.
+- **행 무결성(시험 1 차에서 발견):** 한국어는 행 끝에서 번역이 몰아 확정된다. 그래서 세션이 행 중간 조각에서 시작하면 앞 조각의 번역까지 붙어 나왔다(`보자 <TRANS> That's all I have to say, so see you next time.`).
+  - 고침: 이어지는 조각(`Unit.cont`)은 세션 시작·맞장구로 쓰지 않는다. 조각이 빠진 행은 번역을 떼어 낸다.
+  - 번역 토큰이 하나도 없는 조각은 빈 번역 행으로 남긴다(번역 없음 = miss 와 구별).
+- `--heldout`: 평가 셋용. held-out 대화만 쓰고 words 는 쓰지 않는다.
+- **데이터셋(`CstDialogueDataset`):** `meta.spk_lang` 에 두 언어가 있으면 슬롯을 언어로 고정한다. 어느 언어를 A 로 둘지는 학습 rng, 평가·점검은 창 id 해시로 정한다.
+  - prefix 예: `language <SPK_A>English <SPK_B>Korean\ntranslate <SPK_A>Korean <SPK_B>English`
+  - 번역 모드 목표 'xl' 은 각 슬롯이 상대 언어로 번역한다는 뜻이다.
+- **시험(`sim_xl_test.sh` 를 고친 2 차, KO↔EN 24 세션):** 한국어 = AI Hub 시험 대화(S1 ko→en), 영어 = otoSpeech 시험 대화(S1 en→ko) + words 3 %(Stage 2 en→ko)
+  - 실패 0, 0.44 h, 발화 693 개 모두 번역 행이 있다(행 676, 번역 토큰 6,975). 겹침 4.5 %, 분당 교대 9.4(`sim-xl-test.stats.json`)
+  - dry-run 50 창 문제 0, 길이 p99 1,365, Stage 3 대비 1.16 배, 번역 없는 행 miss 0·cut 23(`sim-xl-test-dry.json`)
+
+## S4 번역 평가 도구 (`experiments/cst_stage4_eval.py`, `vapasr/data/cst_eval.py`)
+- 창: `--split` 이 있으면 held-out 대화(Stage 3 평가와 같은 표본), 없으면 전부(held-out 재료로 만든 합성 평가 셋)
+- 목표: 같은 언어는 `tgt_of` 의 목표마다, 교차 언어는 'xl'
+- 참조 = 학습 타깃에서 전사 없는 음성 청크를 뺀 것이다. 번역은 참조 번역이 없는 행의 방출 청크도 뺀다. 가설도 같은 규칙으로 버린다.
+- 지표:
+  - 받아쓰기·귀속: 같은 언어는 slot·cp·agn, 교차 언어는 슬롯별(언어별) 오류
+  - `<EOT>`: Stage 3 와 같다. 합성 셋은 참조가 없어 뺀다.
+  - 번역: 창·슬롯이 한 분절인 코퍼스 BLEU·chrF(목표 한국어는 BLEU 글자 토큰화)
+  - 번역 지연: 일치 단어의 (가설 − 학습 타깃) 방출 시각 중앙값. 빈 번역 비율도 낸다.
+- **오라클(`--oracle`, 정답 시퀀스를 출력으로):** 합성 KO↔EN 영→한·한→영 BLEU·chrF 100, 지연 0, 받아쓰기 오류 0(`eval-oracle-xl2-summary.json`)
+  - kec(시험 번역 대화 창) 독→영 100, 세 코퍼스 cp 0, `<EOT>` 재현율 1(`eval-oracle-pilot-summary.json`)
+  - 1 차 오라클은 영→한 99.7 이었다. 가설에서만 miss 청크 번역을 버렸기 때문이고, 참조에도 같은 규칙을 넣어 고쳤다.
+- **출발점(실제 디코드, `eval-p11-xl-summary.json`):** Stage 3 최종(p11 ck3000)을 번역 prefix 로 합성 KO↔EN 50 창에 그대로 썼다. 대화 번역은 배운 적이 없다.
+
+  | δ | 영어 WER | 한국어 CER | 영→한 BLEU / chrF | 한→영 BLEU / chrF |
+  |---|---:|---:|---:|---:|
+  | 4 | 76.0 | 104.1 | 16.9 / 15.1 | 8.9 / 21.6 |
+  | 10 | 75.2 | 112.4 | 16.5 / 15.3 | 12.6 / 24.2 |
+
+  - 형식을 따르지 못한다(받아쓰기 자리에 다른 말·번역이 섞여 오류가 100 % 를 넘는다). Stage 4 학습이 필요하다는 기준선이다.
+
+## S5 학습 스크립트 — 교차 언어 셋
+- 가중치 키 `sim_<l1>-<l2>`(예 `sim_ko-en`·`sim_en-de`): `--sim-data` 의 대화와 `targets-<키>/` 를 읽는다. `--sim-trans-frac`(기본 0.8) 확률로 번역 모드다.
+- 학습 전 점검과 dry-run 예시는 `tgt_options`(같은 언어 = 목표 언어, 교차 언어 = 'xl')를 쓴다.
+- `stage3_train --dry-run --dlg-trans`(시험 타깃, otoSpeech·kec 각 60 창): 두 모드 점검 불일치 0
+
 ## 다음
 - S1 전체 생성(사용자 제출): `stage4-dlg-units-v1`·`stage4-dlg-units-revive-v1` 각각 생성 → 수리 → `ast_build_targets --fix-dir fix-gen-v3-bf16 --pack`
-- S3 교차 언어 합성 대화, S4 번역 평가 도구, S6 파일럿
+- S1 타깃이 나오면:
+  - 교차 언어 합성 학습 셋(`sim_en-de`·`sim_ko-en`)과 EN↔DE held-out 평가 셋(`--heldout`)을 만든다. KO↔EN 평가 셋은 사용자 결정을 기다린다.
+  - 같은 언어 held-out 대화 번역 평가
+- TAXI(실제 독↔영 전화 대화) 평가 어댑터, S6 파일럿
