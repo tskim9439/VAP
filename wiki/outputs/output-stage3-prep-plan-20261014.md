@@ -3,7 +3,7 @@ type: output
 status: active
 created: 2026-10-14
 updated: 2026-10-19
-summary: Stage 3(2 인 대화 화자 귀속 + ASR + 턴 끝 EOT) 준비·파일럿·본 학습 — 최종 = 화자 헤드 + 합성 대화 + 격리 발화 되살리기 p11 ck3000(δ10 cp 25.3, 한국어 귀속 몫 6.9)
+summary: Stage 3(2 인 대화 화자 귀속 + ASR + 턴 끝 EOT) 준비·파일럿·본 학습 — 최종 = 화자 헤드 + 합성 대화 + 격리 발화 되살리기 p11 ck3000(δ10 cp 25.3, 한국어 귀속 몫 6.9); p12(NSC 되살리기)는 독일어 개선 없음
 sources:
   - '[[decision-cst-training-stages-and-speaker-slots]]'
   - '[[output-phase2-training-db]]'
@@ -480,6 +480,10 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
   - 이전 최종 p10 checkpoint-3000 을 대신한다. 권장 근거: Stage 3 목표인 화자 귀속이 세 체크포인트 모두 좋아졌다(한국어 오류 약 14 %·영어 약 23 % 감소). 전체 cp 가 낮고(25.28 대 25.62) 단일 화자 퇴행이 없다.
   - 감수한 것: EOT 정밀도 −0.03·보류 오방출 +0.015, agn +0.3. EOT 는 추론 문턱으로 다시 볼 수 있다. seed 반복 확인은 하지 않는다(사용자).
   - 점검: 인코더 키 638, `spk_head.{0,2}.{weight,bias}`, `<EOT>` 151722 등록·차단 해제, tokenizer 있음, `config.stage3` cst-v1(지문 `revive` 8261d406876b5b94·`sim_data` 0f7ac2794329d0f2), global step 3,000. 학습 끝 재로드 PARITY OK
+- **파일럿 p12(`st3-p12-revive2`, 2026-10-19, apex job 91582)** = p11 + 되살리기 재료 v2(NSC 격리 발화 12,309 를 따로 정렬해 되살림)
+  - 결과: **독일어 귀속은 줄지 않았다.** δ10 독일어 귀속 몫 p11 → p12 는 ck3000 8.6 → 8.7, final 8.8 → 8.7 이다. bootstrap 구간은 모두 0 을 포함한다(NSC 만 따로 봐도 같다).
+  - ck3000 은 전체가 나빴다(cp +1.56 [+0.55, +2.55], 한국어·영어 귀속 몫 유의하게 증가). final 은 모든 언어에서 차이가 없다.
+  - 단일 화자 평가는 대부분 ±1 안이다. **Stage 3 최종은 p11 ck3000 그대로다**(Stage 4 시작점도 그대로). → [[2026-10-18-stage3-ko-revive]]
 
 ## 열린 질문
 - (해결 2026-10-16) `<EOT>` 는 soft 다. hard 는 보류 오방출이 0.17 → 0.28 로 커졌다(p2).

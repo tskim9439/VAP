@@ -212,9 +212,32 @@ source_type: source-drop
   - p11 과 다른 것은 재료 v2(NSC 추가) 하나다. 기대 효과는 독일어 쪽에 한정된다.
   - 평가 큐 3 개(ck2000·ck3000·final)를 미리 걸었다.
 
+## p12 결과 (2026-10-19, `p12-vs-p11.txt`·`p12-regress.txt`)
+- job 91582(apex, 2 노드): 01:28 시작, 4000 step 3,826 s, PARITY OK. 평가 큐 셋(ck2000·ck3000·final)은 04:54 에 모두 끝났다.
+- **독일어 귀속은 줄지 않았다.** δ10 귀속 몫(cp − agn, 단위 가중), p11 → p12:
+
+  | step | 독일어 | NSC cp | 한국어 | 영어 | 전체 cp |
+  |---|---|---|---|---|---|
+  | 2000 | 9.6 → 10.3 | 22.9 → 24.7 | 8.1 → 9.6 | 7.0 → 5.5 | 26.43 → 27.30 |
+  | 3000 | 8.6 → 8.7 | 22.8 → 23.2 | 6.9 → 8.5 | 4.9 → 7.5 | 25.28 → 26.88 |
+  | final | 8.8 → 8.7 | 23.2 → 23.7 | 7.6 → 7.1 | 5.4 → 6.0 | 25.91 → 25.98 |
+
+- 대화 단위 bootstrap(p12 − p11, 95 %, 음수 = p12 가 낫다):
+  - 독일어 귀속 몫 δ10: ck2000 +0.67 [−0.65, +1.94], ck3000 +0.15 [−1.14, +1.38], final −0.17 [−1.67, +1.34]
+  - NSC 만: ck3000 +0.07 [−1.33, +1.61], final +0.27 [−1.47, +2.40]. δ4 final −2.14 [−4.54, +0.33] 이 가장 크지만 0 을 포함한다.
+  - ck3000 은 전체가 나빴다: cp +1.56 [+0.55, +2.55], 귀속 몫 +1.23 [+0.30, +2.14](한국어 +1.67, 영어 +2.62 — 둘 다 유의)
+  - final 은 모든 언어에서 0 을 포함한다(전체 cp −0.02 [−1.05, +0.96]).
+- `<EOT>`: 재현율 ck3000 0.766 → 0.750, final 0.727 → 0.727, 정밀도 0.594 → 0.592·0.610 → 0.603
+- 단일 화자 축약 평가: 대부분 ±1 안이다. FLEURS 독→영 δ4 BLEU 는 ck3000 27.9 → 26.3, final 28.6 → 26.8 로 조금 낮다.
+- **읽기:** NSC 격리 발화를 되살려 학습되는 교대가 창당 3.91 → 7.23 으로 늘었지만 NSC 평가 귀속은 그대로다.
+  - p11 대비 ck3000 의 차이는 데이터 순서가 바뀐 run 간 변동과 섞여 있다(seed 반복은 하지 않기로 했다).
+  - p12 를 Stage 3 최종으로 바꿀 근거가 없다. **Stage 3 최종은 p11 ck3000 그대로 둔다**(Stage 4 시작점도 그대로).
+- 비교 스크립트: `cmp_p12.py`·`cmp_attr_p12.py`·`boot_p12.py`(코퍼스별 독일어 포함)
+
 ## 파일
 - 분석: `mask_by_len.py`·`mask-by-len.txt`, `flag_kinds.py`·`flag-kinds.txt`, `mask_vs_attr.py`·`mask-vs-attr-p10ck3000.txt`
 - 재료·점검: `revive_probe.py`, `revive_chain.sh`, `stage3_dry_revive.sh`, `stage3_smoke_revive.sh`
 - v2: `revive_extra_input.py`, `revive_v2_chain.sh`, `v2-input.log`·`v2-chain.log`·`build-v2.log`·`probe-v2.json`
 - 결과: `p11-vs-p10.txt`(대화 평가·오류 분해·bootstrap·마스크 구간별), `p11-regress.txt`·`cmp_regress.py`(단일 화자)
-- 평가·비교: `pick_gpu_queue.sh`(체크포인트가 생길 때 가장 한가한 호스트 GPU 로 평가), `cmp_p11.py`·`cmp_attr_p11.py`·`boot_p11.py`·`mask_cmp_p11.py`(p10 대비)
+- 평가·비교: `pick_gpu_queue.sh`(체크포인트가 생길 때 가장 한가한 호스트 GPU 로 평가), `cmp_p11.py`·`cmp_attr_p11.py`·`boot_p11.py`·`mask_cmp_p11.py`(p10 대비), `cmp_p12.py`·`cmp_attr_p12.py`·`boot_p12.py`(p11 대비)
+- p12 결과: `p12-vs-p11.txt`(대화 평가·오류 분해·bootstrap), `p12-regress.txt`(단일 화자)
