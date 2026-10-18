@@ -123,6 +123,22 @@ source_type: source-drop
   - EOT·영어·독일어·단일 화자 퇴행도 함께 본다.
   - 줄지 않으면 창 난이도 탓으로 보고 측정 보강(NIKL 2020 held-out)으로 넘어간다.
 
+## 제출 경과 (2026-10-18)
+- apex 를 쓸 수 없어 사용자가 `low_p_hpc` 로 냈다(job 91256).
+  - 17:41 hpc-53·54 에서 시작 → 17:45 데이터 로딩 중 선점 → sbatch 가 requeue
+  - 18:13 hpc-60·102 에서 재시작(restart 1/5) → torchrun 랑데부가 10 분 만에 `RendezvousTimeoutError`(hpc-102 가 붙지 못함)
+  - `srun: Terminating StepId` 뒤 hpc-102 작업이 끝나지 않아 sbatch 가 `wait` 에 멈췄다. RUNNING 인 채 1 시간 넘게 진행이 없어 취소가 필요했다.
+- 고침:
+  - `slurm/stage3-train-apex.sbatch` 감시자: 이번 시도 `.err` 에 랑데부 실패·`Terminating StepId` 가 찍히고 300 s 뒤에도 srun 이 살아 있으면 requeue 한다(restart 한도를 넘으면 취소).
+    - 멈춤·정상·유예 안 종료·이전 시도 줄·한도 초과 5 경우를 가짜 scontrol 로 mxc 에서 시험했다.
+  - `slurm/submit-stage3-train.sh --exclude`: 기본 제외(hpc-52·hpc-4)에 노드를 더한다.
+- 다시 낼 명령(사용자, `scancel 91256` 뒤):
+```bash
+(MAX_RESTART=5 bash slurm/submit-stage3-train.sh --run st3-p11-revive --partition low_p_hpc --nodes 2 --exclude hpc-102 --backchannel 1.0,3 --weights dlg_ko:2,dlg_en:0.7,dlg_de:0.7,sim_ko:0.5,sim_en:0.8,sim_de:0.8,rep_ko:1.2,rep_en:1.2,rep_de:1.2 --lr 4e-5 --max-steps 4000 --spk-act-weight 0.5 --sim-data /soundai/users/tskim/VAPKT-data/data/sim-dialogue-v2 --revive-dir /soundai/users/tskim/VAPKT-data/data/phase2/revive-asr-v1)
+```
+- 평가 큐(`stage3-regress/pick_gpu_queue.sh`)는 run 이름으로 기다리므로 그대로 쓴다.
+
 ## 파일
 - 분석: `mask_by_len.py`·`mask-by-len.txt`, `flag_kinds.py`·`flag-kinds.txt`, `mask_vs_attr.py`·`mask-vs-attr-p10ck3000.txt`
 - 재료·점검: `revive_probe.py`, `revive_chain.sh`, `stage3_dry_revive.sh`, `stage3_smoke_revive.sh`
+- 평가·비교: `pick_gpu_queue.sh`(체크포인트가 생길 때 가장 한가한 호스트 GPU 로 평가), `cmp_p11.py`·`cmp_attr_p11.py`·`boot_p11.py`·`mask_cmp_p11.py`(p10 대비)

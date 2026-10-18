@@ -13,6 +13,7 @@
 #   --spk-act-weight W 화자 슬롯 활동 보조 손실 가중(기본 0 = 끔; 청크마다 슬롯 A/B 가 말하는 중인지 BCE)
 #   --sim-data DIR     합성 2 인 대화 폴더(sim_build_dialogues 산출) — --weights 에 sim_ko·sim_en·sim_de 를 넣어 쓴다
 #   --revive-dir DIR   격리 발화 되살리기 재료(stage3_revive_tokens 산출 <corpus>.revive.jsonl) — asr_disagree 발화의 화자 태그·<EOT> 학습
+#   --exclude N,…      더 뺄 노드(hpc-102 처럼 짧게 써도 된다) — sbatch 기본 제외 hpc-52·hpc-4 에 더한다
 #   --max-steps N(기본 2000)  --epochs E  --lr LR  --warmup N(기본 300)  --save-every N(기본 500)  --batch-tokens N(기본 16384)  --max-bs N(기본 64)
 #   --nodes N(기본 1)  --partition P(기본 apex)  --time HH:MM:SS(기본 24:00:00)  --after JOBID  --init DIR(기본 q06-s4-ast/final)
 #   --extra "..."      stage3_train.py 에 그대로 붙일 인자   --dry-run   sbatch 대신 명령만 출력
@@ -27,7 +28,7 @@ AST=/soundai/users/tskim/VAPKT-data/data/ast-mono-v1/targets-fix-gen-v3-bf16
 AST_CV4=/soundai/users/tskim/VAPKT-data/data/ast-mono-cv4en-v1/targets-fix-gen-v3-bf16
 NB=/soundai/users/tskim/VAPKT-data/data/noise-bank-v1
 run=""; init=/soundai/Model/VAPASR/semcommit-q06-s4-ast/final; nodes=1; partition=apex; time_limit=24:00:00; after=""; dry=0; extra=""
-weights="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5"; eot_mode=soft; backchannel=off; decision_weight=2; start_mode=grid; frac=0.2; recover_p=0; spk_act=0; sim_data=""; revive_dir=""
+weights="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5"; eot_mode=soft; backchannel=off; decision_weight=2; start_mode=grid; frac=0.2; recover_p=0; spk_act=0; sim_data=""; revive_dir=""; exclude=""
 max_steps=2000; epochs=1; lr=6e-5; warmup=300; save_every=500; batch_tokens=16384; max_bs=64
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -36,7 +37,7 @@ while [[ $# -gt 0 ]]; do
     --weights) weights=$2; shift 2 ;;    --eot-mode) eot_mode=$2; shift 2 ;;  --backchannel) backchannel=$2; shift 2 ;;
     --decision-weight) decision_weight=$2; shift 2 ;; --start-mode) start_mode=$2; shift 2 ;; --replay-files-frac) frac=$2; shift 2 ;;
     --recover-p) recover_p=$2; shift 2 ;;  --spk-act-weight) spk_act=$2; shift 2 ;;  --sim-data) sim_data=$2; shift 2 ;;
-    --revive-dir) revive_dir=$2; shift 2 ;;
+    --revive-dir) revive_dir=$2; shift 2 ;;  --exclude) exclude=$2; shift 2 ;;
     --max-steps) max_steps=$2; shift 2 ;; --epochs) epochs=$2; shift 2 ;;    --lr) lr=$2; shift 2 ;;
     --warmup) warmup=$2; shift 2 ;;      --save-every) save_every=$2; shift 2 ;; --batch-tokens) batch_tokens=$2; shift 2 ;;
     --max-bs) max_bs=$2; shift 2 ;;      --extra) extra=$2; shift 2 ;;        --dry-run) dry=1; shift ;;
@@ -65,9 +66,10 @@ args+=" --ast-targets $AST,$AST_CV4 --ast-frac 0.8 --offline-frac 0.3 --gain-aug
 args+=" --speed-perturb 0.9,1.0,1.1 --noise-bank $NB --train-encoder --lr-encoder 1e-5 --encoder-right-context 3 --encoder-context-sampling fixed --spec-augment 2,27,2,0.03"
 args+=" --attn-impl varlen --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --delays 4,5,6,7,8,9,10 --lr $lr --warmup $warmup --epochs $epochs --max-steps $max_steps"
 args+=" --save-every $save_every --num-workers 4 ${sim_data:+--sim-data $sim_data} ${revive_dir:+--revive-dir $revive_dir} $extra"
-echo "Stage 3 run $run → $out · init $init · $nodes 노드 × 8 GPU · $partition · 가중치 $weights · EOT $eot_mode · 맞장구 $backchannel · 시작 $start_mode · 정체 회복 $recover_p · 화자 슬롯 헤드 $spk_act · 합성 ${sim_data:-없음} · 되살리기 ${revive_dir:-없음} · max-steps $max_steps · MAX_RESTART ${MAX_RESTART:-3}" >&2
+echo "Stage 3 run $run → $out · init $init · $nodes 노드 × 8 GPU · $partition · 가중치 $weights · EOT $eot_mode · 맞장구 $backchannel · 시작 $start_mode · 정체 회복 $recover_p · 화자 슬롯 헤드 $spk_act · 합성 ${sim_data:-없음} · 되살리기 ${revive_dir:-없음} · 제외 추가 ${exclude:-없음} · max-steps $max_steps · MAX_RESTART ${MAX_RESTART:-3}" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 dep=""; [[ -n $after ]] && dep="--dependency=afterany:$after"
+exc=""; if [[ -n $exclude ]]; then exc="--exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4"; for n in ${exclude//,/ }; do [[ $n == slurmmxch200v5-* ]] || n=slurmmxch200v5-$n; exc+=",$n"; done; fi   # 명령줄 --exclude 는 sbatch 안 기본값을 덮으므로 기본 제외도 함께 쓴다
 (( dry )) && sb="echo sbatch" || sb=sbatch
-$sb --job-name=SA_SFT_FullDuplex --partition="$partition" $dep --nodes="$nodes" --time="$time_limit" \
+$sb --job-name=SA_SFT_FullDuplex --partition="$partition" $dep $exc --nodes="$nodes" --time="$time_limit" \
   --export="ALL,OUT=$out,ARGS_EXTRA=${args//,/%2C}" slurm/stage3-train-apex.sbatch   # --export 는 쉼표로 변수를 가른다 → %2C 로 넘기고 sbatch 가 되돌린다
