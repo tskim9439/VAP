@@ -1,7 +1,8 @@
 import json, os, glob, random, collections
 R = "/soundai/users/tskim/VAPKT-data/results"
 runs = [("p9ck3000", "stage3-eval-st3-p9-spkhead-ck3000", "stage3-attr-errors-st3-p9-spkhead-ck3000"), ("guide-ins", "stage3-eval-p9ck3000-guide-ins", "stage3-attr-errors-p9ck3000-guide-ins"),
-        ("guide-hold", "stage3-eval-p9ck3000-guide-hold", "stage3-attr-errors-p9ck3000-guide-hold")]
+        ("guide-hold", "stage3-eval-p9ck3000-guide-hold", "stage3-attr-errors-p9ck3000-guide-hold"),
+        ("hold-only", "stage3-eval-p9ck3000-guide-holdonly", "stage3-attr-errors-p9ck3000-guide-holdonly")]
 runs = [r for r in runs if os.path.exists(f"{R}/{r[1]}/summary.json") and os.path.exists(f"{R}/{r[2]}/summary.json")]
 S = {n: json.load(open(f"{R}/{e}/summary.json")) for n, e, _ in runs}
 for d in (10, 4):
