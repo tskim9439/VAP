@@ -188,4 +188,13 @@ source_type: source-drop
 - **받아쓰기(agn)도 준다.** 영어 ck2000 은 −4.2 다. 실제 대화 반복이 줄고(6.4 → 4.0 회) 화자 헤드 초반 흔들림이 덜하다.
 - **step 2,000 뒤 나빠짐이 작다.** p10 은 ck3000 이 가장 좋고 final 도 가깝다(δ10 25.6 → 26.7, δ4 26.5 → 26.6).
 - **EOT:** ck3000 재현율 0.719 가 가장 높고 정밀도는 r1 과 같다. 보류 오방출은 0.198 로 조금 높다.
-- **Stage 3 최종 후보:** p10 checkpoint-3000(δ10 cp 25.6, δ4 26.5). 사용자 결정이 필요하다.
+- **Stage 3 최종 후보:** p10 checkpoint-3000(δ10 cp 25.6, δ4 26.5)
+
+## 결정 (사용자, 2026-10-18)
+- "p10 checkpoint-3000으로 확정하고 위키에 기록해줘"
+- **Stage 3 최종 = `/soundai/Model/VAPASR/stage3-st3-p10-sim/checkpoint-3000`** — 이전 최종 r1 checkpoint-2000 을 대신한다.
+- 점검(이 체크포인트 디렉터리):
+  - 인코더 키 638, `spk_head.{0,2}.{weight,bias}`, `spk_slots` 2 · `spk_weight` 0.5
+  - `sem_registry` {`<EOT>`: 151722, `<SEM_END>`: 151723}, `<EOT>` 차단 해제, tokenizer 있음
+  - `config.stage3` 형식 cst-v1(가중치·`spk_act_weight` 0.5·`sim_data` 지문 포함), global step 3,000
+- 디코드는 화자 헤드 안내 없이 한다([[2026-10-18-stage3-spk-guide]]).
