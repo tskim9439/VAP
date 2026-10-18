@@ -2,8 +2,8 @@
 type: output
 status: active
 created: 2026-10-14
-updated: 2026-10-18
-summary: Stage 3(2 인 대화 화자 귀속 + ASR + 턴 끝 EOT) 준비·파일럿·본 학습 — 최종 = 화자 헤드 + 합성 대화 p10 ck3000(δ10 cp 25.6), 한국어 귀속은 격리 발화 되살리기 p11(ck3000 한국어 귀속 몫 6.9, p10 8.0)
+updated: 2026-10-19
+summary: Stage 3(2 인 대화 화자 귀속 + ASR + 턴 끝 EOT) 준비·파일럿·본 학습 — 최종 = 화자 헤드 + 합성 대화 + 격리 발화 되살리기 p11 ck3000(δ10 cp 25.3, 한국어 귀속 몫 6.9)
 sources:
   - '[[decision-cst-training-stages-and-speaker-slots]]'
   - '[[output-phase2-training-db]]'
@@ -108,7 +108,7 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
 | P3 직렬화 | 2 슬롯 prefix + 화자 태그 + soft `<EOT>` 데이터셋, fixture 테스트, 모델 forward 의 soft label 일반화, 전 코퍼스 dry-run | 불일치 0, 형식 테스트 통과 — **2026-10-14 완료**(113,389 창 불일치 0, GPU 스모크 통과. 학습 스크립트 연결은 P5) |
 | P4 평가 | held-out 묶음·지표 도구(ORC-WER·cpWER·EOT) | 오라클 입력에서 지표 sanity — **2026-10-15 통과**(slot·cp 0, EOT 재현율 1) |
 | P5 파일럿 | 소규모 학습(32 창 overfit → 수천 step), replay·언어 비율 정하기 | 단일 화자 퇴행 없음, cpWER·EOT 학습 곡선 — **2026-10-15 준비됨**(학습·평가 스모크 통과, 제출 대기) |
-| P6 본 학습 | 사용자 제출 | **2026-10-16 완료**(q06-st3-r1, checkpoint-2000 확정) → **2026-10-18 st3-p10-sim checkpoint-3000 으로 교체**(화자 헤드 + 합성 대화) |
+| P6 본 학습 | 사용자 제출 | **2026-10-16 완료**(q06-st3-r1, checkpoint-2000 확정) → **2026-10-18 st3-p10-sim checkpoint-3000 으로 교체**(화자 헤드 + 합성 대화) → **2026-10-19 st3-p11-revive checkpoint-3000 으로 교체**(+ 격리 발화 되살리기) |
 | 병행 | Stage 4 용 대화 번역 타깃(턴 단위 교사 번역, 간투사·말 끊김 규칙) | 교사 품질 검사 |
 
 ## P0 점검 결과 (2026-10-14)
@@ -437,7 +437,7 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
     - r1 ck2000 대비 δ10 cp −3.04 [−4.30, −1.77], 귀속 몫 −3.52, agn +0.48. 세 언어 모두 줄었다.
   - step 2,000 뒤 나빠짐이 작다(final δ10 26.7).
   - 단일 화자는 대체로 ±1 pt 안이다(en→ko δ10 BLEU 29.2 vs r1 30.8).
-- **결정(사용자, 2026-10-18): Stage 3 최종 = `/soundai/Model/VAPASR/stage3-st3-p10-sim/checkpoint-3000`**("p10 checkpoint-3000으로 확정하고 위키에 기록해줘")
+- **결정(사용자, 2026-10-18): Stage 3 최종 = `/soundai/Model/VAPASR/stage3-st3-p10-sim/checkpoint-3000`**("p10 checkpoint-3000으로 확정하고 위키에 기록해줘") — 2026-10-19 p11 checkpoint-3000 으로 교체(아래 "한국어 화자 귀속" 절)
   - 이전 최종 r1 checkpoint-2000 을 대신한다.
   - 레시피: 화자 헤드 0.5 + 합성 v2, 4,000 step 중 3,000
   - 대화(δ10): cp 25.6 · agn 17.5 · EOT 재현율 0.719 · 정밀도 0.624 · 보류 오방출 0.198
@@ -476,7 +476,10 @@ Phase 2 산출물은 mxc `VAPKT-data/data/phase2/` 에 있다. 정제 대화·�
   - 마스크 ≥ 5 % 한국어 창의 귀속 몫은 세 체크포인트 모두 1.2–1.7 줄었다. 마스크 적은 창(29 개)도 줄어, 마스크 창에만 듣는 효과로 가를 수는 없다.
   - p11 ck3000: δ10 cp 25.28(p10 ck3000 25.62, −0.36 구간 안), EOT 재현율 0.766 · 정밀도 0.594 · 보류 오방출 0.213
   - 대가는 agn +0.3–0.5(δ4 한국어 +0.6 유의)와 EOT 정밀도 −0.03 이다. 단일 화자 평가는 ±1 안이다(en→ko δ10 BLEU 31.0).
-  - **Stage 3 최종을 p11 ck3000 으로 바꿀지는 사용자 결정 대기다.**
+- **결정(사용자, 2026-10-19): Stage 3 최종 = `/soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000`**("1 번은 너의 권장대로 하고, 2번 seed 는 굳이 하지 말자")
+  - 이전 최종 p10 checkpoint-3000 을 대신한다. 권장 근거: Stage 3 목표인 화자 귀속이 세 체크포인트 모두 좋아졌다(한국어 오류 약 14 %·영어 약 23 % 감소). 전체 cp 가 낮고(25.28 대 25.62) 단일 화자 퇴행이 없다.
+  - 감수한 것: EOT 정밀도 −0.03·보류 오방출 +0.015, agn +0.3. EOT 는 추론 문턱으로 다시 볼 수 있다. seed 반복 확인은 하지 않는다(사용자).
+  - 점검: 인코더 키 638, `spk_head.{0,2}.{weight,bias}`, `<EOT>` 151722 등록·차단 해제, tokenizer 있음, `config.stage3` cst-v1(지문 `revive` 8261d406876b5b94·`sim_data` 0f7ac2794329d0f2), global step 3,000. 학습 끝 재로드 PARITY OK
 
 ## 열린 질문
 - (해결 2026-10-16) `<EOT>` 는 soft 다. hard 는 보류 오방출이 0.17 → 0.28 로 커졌다(p2).

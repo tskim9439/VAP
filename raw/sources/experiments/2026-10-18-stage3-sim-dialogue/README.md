@@ -192,7 +192,7 @@ source_type: source-drop
 
 ## 결정 (사용자, 2026-10-18)
 - "p10 checkpoint-3000으로 확정하고 위키에 기록해줘"
-- **Stage 3 최종 = `/soundai/Model/VAPASR/stage3-st3-p10-sim/checkpoint-3000`** — 이전 최종 r1 checkpoint-2000 을 대신한다.
+- **Stage 3 최종 = `/soundai/Model/VAPASR/stage3-st3-p10-sim/checkpoint-3000`** — 이전 최종 r1 checkpoint-2000 을 대신한다. 2026-10-19 p11 checkpoint-3000 으로 교체([[2026-10-18-stage3-ko-revive]])
 - 점검(이 체크포인트 디렉터리):
   - 인코더 키 638, `spk_head.{0,2}.{weight,bias}`, `spk_slots` 2 · `spk_weight` 0.5
   - `sem_registry` {`<EOT>`: 151722, `<SEM_END>`: 151723}, `<EOT>` 차단 해제, tokenizer 있음

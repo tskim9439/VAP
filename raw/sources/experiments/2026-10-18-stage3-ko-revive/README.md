@@ -183,6 +183,15 @@ source_type: source-drop
   - EOT 를 더 많이 낸다(재현율 +0.05, 정밀도 −0.03, 보류 오방출 +0.015). 되살린 발화의 `<EOT>` 감독이 더해진 영향으로 본다.
 - p11 ck3000 은 p10 ck3000(현재 Stage 3 최종)보다 cp 25.28 대 25.62 로 낮다. 그러나 차이는 구간 안이고 EOT 정밀도와 agn 을 잃었다. 최종 교체는 사용자 결정이다.
 
+## 결정 (사용자, 2026-10-19)
+- "1 번은 너의 권장대로 하고, 2번 seed 는 굳이 하지 말자" — 권장은 교체였다.
+- **Stage 3 최종 = `/soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000`** — 이전 최종 p10 checkpoint-3000 을 대신한다.
+- 점검(이 체크포인트 디렉터리):
+  - 텐서 키 958, 인코더 키 638, `spk_head.{0,2}.{weight,bias}`, `spk_slots` 2 · `spk_weight` 0.5 · `encoder_saved` True
+  - `sem_registry` {`<EOT>`: 151722, `<SEM_END>`: 151723}, `<EOT>` 는 `blocked_ids` 에 없다. tokenizer 있음
+  - `config.stage3` cst-v1, 가중치는 p10 과 같고 지문에 `revive` 8261d406876b5b94 · `sim_data` 0f7ac2794329d0f2. global step 3,000
+- seed 반복 확인은 하지 않는다. 디코드는 화자 헤드 안내 없이 한다.
+
 ## 파일
 - 분석: `mask_by_len.py`·`mask-by-len.txt`, `flag_kinds.py`·`flag-kinds.txt`, `mask_vs_attr.py`·`mask-vs-attr-p10ck3000.txt`
 - 재료·점검: `revive_probe.py`, `revive_chain.sh`, `stage3_dry_revive.sh`, `stage3_smoke_revive.sh`
