@@ -1,0 +1,11 @@
+입력 끝 00:57:48
+{"corpus": "aihub134-1", "targets": 19848, "dialogues": 949, "utts": 19848, "hours": 17.5}
+{"corpus": "aihub134-2", "targets": 9963, "dialogues": 984, "utts": 9963, "hours": 5.9}
+{"corpus": "nsc", "targets": 12309, "dialogues": 276, "utts": 12309, "hours": 6.7}
+정렬 aihub134-1 끝 00:59:08 · EXIT 0 · {"audio_missing": 19848, "dialogues": 949, "sec": 4.0, "peak_gpu_gb": 1.8, "batch_sec_final": 1920, "gpu_total_gb": 150.1, "utts_per_s": 0.0}
+정렬 aihub134-2 끝 01:00:05 · EXIT 0 · {"audio_missing": 9963, "dialogues": 984, "sec": 2.1, "peak_gpu_gb": 1.8, "batch_sec_final": 1920, "gpu_total_gb": 150.1, "utts_per_s": 0.0}
+정렬 nsc 끝 01:09:50 · EXIT 0 · {"utts": 12309, "tokens": 94800, "dialogues": 276, "sec": 543.3, "peak_gpu_gb": 18.9, "batch_sec_final": 1920, "gpu_total_gb": 150.1, "utts_per_s": 22.7}
+재료 끝 01:11:13 · EXIT 0
+점검 끝 01:16:55 · EXIT 0
+dry-run 끝 01:20:48 · EXIT 0
+V2_DONE

@@ -1,0 +1,3 @@
+{"corpus": "aihub134-1", "targets": 19848, "dialogues": 949, "utts": 19848, "hours": 17.5}
+{"corpus": "aihub134-2", "targets": 9963, "dialogues": 984, "utts": 9963, "hours": 5.9}
+{"corpus": "nsc", "targets": 12309, "dialogues": 276, "utts": 12309, "hours": 6.7}

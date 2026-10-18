@@ -192,8 +192,29 @@ source_type: source-drop
   - `config.stage3` cst-v1, 가중치는 p10 과 같고 지문에 `revive` 8261d406876b5b94 · `sim_data` 0f7ac2794329d0f2. global step 3,000
 - seed 반복 확인은 하지 않는다. 디코드는 화자 헤드 안내 없이 한다.
 
+## 재료 v2와 파일럿 p12 준비 (2026-10-19, `revive_v2_chain.sh`)
+- 사용자: "NSC 는 정렬을 뽑으면 되지않아?" → "응 p12까지 진행해"
+- 되살리기에서 '정렬 없음' 으로 빠진 asr_disagree 발화는 정렬기가 실패한 것이 아니라 정렬 대상이 아니었다.
+  - NSC 12,309(교사 두 모델 불일치라 만들 때 text 를 비웠다)
+  - 134-1 19,848 · 134-2 9,963(정제 전 파일엔 text 가 있다)
+- `revive_extra_input.py` 로 대상 발화만 담은 입력을 만들었다(NSC 는 교사 Qwen 전사 raw 를 `target_de` 로 정규화). `p2_align.py` 로 `align-revive-v2` 에 따로 정렬했다.
+  - **134-1·134-2 는 전부 `audio_missing`** — `meta.missing` 에 표시되지 않은 결손 조각이었다. 오디오가 없어 되살리지 않는다.
+  - NSC 는 12,309 발화·94,800 토큰을 543 s 에 정렬했다(호스트 GPU).
+- `stage3_revive_tokens.py --extra-align`: 기본 정렬에 없는 발화만 채운다. 재료 `revive-asr-v2`(v1 은 그대로)
+  - 한국어·KEC·ZTC 는 v1 과 같다. NSC 12,309 발화(5.7 h)가 새로 들어갔다.
+  - 학습 split 기준 `dlg_de` 되살림 15,066 → 25,929
+- 로더 점검(NSC, δ10, 창 300): 학습되는 교대 3.91 → 7.23, `<EOT>` 4.11 → 6.51, 출력 마스크 24.2 → 19.3 %, 불변식 위반 0(`probe-v2.json`)
+- dry-run(p10 레시피 + `--revive-dir revive-asr-v2`): 6 셋 불일치 0, `dlg_de` 되살림 25,929
+- **p12 제출 명령(사용자):**
+```bash
+(MAX_RESTART=5 bash slurm/submit-stage3-train.sh --run st3-p12-revive2 --partition low_p_hpc --nodes 2 --exclude hpc-102 --backchannel 1.0,3 --weights dlg_ko:2,dlg_en:0.7,dlg_de:0.7,sim_ko:0.5,sim_en:0.8,sim_de:0.8,rep_ko:1.2,rep_en:1.2,rep_de:1.2 --lr 4e-5 --max-steps 4000 --spk-act-weight 0.5 --sim-data /soundai/users/tskim/VAPKT-data/data/sim-dialogue-v2 --revive-dir /soundai/users/tskim/VAPKT-data/data/phase2/revive-asr-v2)
+```
+  - p11 과 다른 것은 재료 v2(NSC 추가) 하나다. 기대 효과는 독일어 쪽에 한정된다.
+  - 평가 큐 3 개(ck2000·ck3000·final)를 미리 걸었다.
+
 ## 파일
 - 분석: `mask_by_len.py`·`mask-by-len.txt`, `flag_kinds.py`·`flag-kinds.txt`, `mask_vs_attr.py`·`mask-vs-attr-p10ck3000.txt`
 - 재료·점검: `revive_probe.py`, `revive_chain.sh`, `stage3_dry_revive.sh`, `stage3_smoke_revive.sh`
+- v2: `revive_extra_input.py`, `revive_v2_chain.sh`, `v2-input.log`·`v2-chain.log`·`build-v2.log`·`probe-v2.json`
 - 결과: `p11-vs-p10.txt`(대화 평가·오류 분해·bootstrap·마스크 구간별), `p11-regress.txt`·`cmp_regress.py`(단일 화자)
 - 평가·비교: `pick_gpu_queue.sh`(체크포인트가 생길 때 가장 한가한 호스트 GPU 로 평가), `cmp_p11.py`·`cmp_attr_p11.py`·`boot_p11.py`·`mask_cmp_p11.py`(p10 대비)
