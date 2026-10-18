@@ -1,0 +1,36 @@
+[2026-10-18 10:48:46] job 90667 nodes=2 (slurmmxch200v5-hpc-[39-40]) restart=0/5 OUT=/soundai/Model/VAPASR/stage3-st3-p10-sim
+섞기: steps/epoch 1006 · 비중 {'dlg_ko': 0.2197, 'dlg_en': 0.0765, 'dlg_de': 0.0765, 'sim_ko': 0.0547, 'sim_en': 0.0885, 'sim_de': 0.0875, 'rep_en': 0.1322, 'rep_ko': 0.1322, 'rep_de': 0.1322} · 셋 배치/epoch {'dlg_ko': 312, 'dlg_en': 25, 'dlg_de': 39, 'sim_ko': 105, 'sim_en': 76, 'sim_de': 101, 'rep_en': 311, 'rep_ko': 764, 'rep_de': 327} · world 16
+  ! 항목 ah71-train-2_6546G1A2_6547G1A2_T1_2D07T0277C000496_030012_000496 오디오 조립 실패(ValueError: segment beyond audio: offset 1212.4s ≥ file 1212.42s (/soundai/DB/raw/aihub/71631_audio/Training/01.원천데이터/TS_01.ᄉ) → 이웃 항목 (누적 1)
+train 종료: step 4000/4000 완료 · {'train_runtime': 3931.2605, 'train_samples_per_second': 16.28, 'train_steps_per_second': 1.017, 'train_loss': 0.3826267205476761, 'epoch': 3.9761431411530817}
+check-save: 누락 [] · 추가 [] · shape [] · 값 차이 0 [] · 인코더 저장 키 638 · 손실 메모리 {'loss': 0.25872, 'loss_next': 0.16548, 'loss_text': 0.18401, 'top1_text': 0.93305, 'loss_turn': 0.40816, 'loss_act': 0.13306} / 재로드 {'loss': 0.25837, 'loss_next': 0.16541, 'loss_text': 0.18348, 'top1_text': 0.93305, 'loss_turn': 0.40665, 'loss_act': 0.13323} · tokenizer OK · c
+PARITY OK
+[12:10:17] 학습 완료 → DONE (parity: /soundai/Model/VAPASR/stage3-st3-p10-sim/parity.json)
+{
+ "parity": true,
+ "stage3_config_ok": true,
+ "eot_registry_ok": true,
+ "memory": {
+  "loss": 0.25872,
+  "loss_next": 0.16548,
+  "loss_text": 0.18401,
+  "top1_text": 0.93305,
+  "loss_turn": 0.40816,
+  "loss_act": 0.13306
+ },
+ "reloaded": {
+  "loss": 0.25837,
+  "loss_next": 0.16541,
+  "loss_text": 0.18348,
+  "top1_text": 0.93305,
+  "loss_turn": 0.40665,
+  "loss_act": 0.13323
+ },
+ "missing": [],
+ "extra": [],
+ "shape_mismatch": [],
+ "value_diff": [],
+ "encoder_saved_keys": 638,
+ "tokenizer_reload_ok": true,
+ "tokenizer_reload_error": null,
+ "batch_n_soft": 13
+}

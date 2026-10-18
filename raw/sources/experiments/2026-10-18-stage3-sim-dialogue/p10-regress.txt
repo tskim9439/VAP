@@ -1,0 +1,27 @@
+세트/δ                                           s4 | r1@ck2000 | p9@ck3000 | p10@ck2000 | p10@ck3000 | p10@final
+fleurs-de-en/delta-10 wer                    7.75 |           9.44 |           8.94 |           9.53 |           9.30 |           8.71
+fleurs-de-en/delta-4 wer                    10.99 |          11.26 |          10.76 |          11.04 |          11.26 |          11.58
+fleurs-en-de/delta-10 wer                    7.87 |           8.31 |           7.96 |           8.27 |           8.49 |           8.58
+fleurs-en-de/delta-4 wer                     8.81 |           9.70 |           8.90 |           9.83 |          10.46 |           9.79
+fleurs-en-ko/delta-10 wer                    9.34 |          10.17 |          10.35 |          10.17 |          10.12 |           9.89
+fleurs-en-ko/delta-4 wer                    10.90 |          11.09 |          11.27 |          11.50 |          11.82 |          11.82
+fleurs-ko-en/delta-10 cer_nospace           10.79 |           8.84 |           9.05 |           9.85 |           8.90 |           8.79
+fleurs-ko-en/delta-4 cer_nospace            10.84 |           9.65 |           9.12 |          11.24 |           8.66 |           8.97
+fleurs-de-en/delta-10 BLEU·LAAL      32.47· 1.71 |   29.95· 1.74 |   30.86· 1.70 |   30.14· 1.85 |   30.87· 1.67 |   30.87· 1.76
+fleurs-de-en/delta-4 BLEU·LAAL       27.98· 1.33 |   27.88· 1.51 |   27.21· 1.28 |   27.66· 1.46 |   27.41· 1.27 |   27.82· 1.36
+fleurs-en-de/delta-10 BLEU·LAAL      26.82· 1.99 |   24.71· 1.96 |   25.13· 1.81 |   26.05· 2.35 |   26.32· 1.94 |   25.87· 1.98
+fleurs-en-de/delta-4 BLEU·LAAL       25.02· 1.38 |   21.52· 1.41 |   23.57· 1.35 |   22.46· 1.65 |   21.45· 1.36 |   22.60· 1.49
+fleurs-en-ko/delta-10 BLEU·LAAL      30.86· 3.71 |   30.80· 3.64 |   30.40· 3.33 |   27.77· 4.27 |   29.23· 3.72 |   28.82· 3.72
+fleurs-en-ko/delta-4 BLEU·LAAL       29.64· 2.88 |   29.42· 2.79 |   29.05· 2.87 |   26.85· 3.36 |   29.44· 2.74 |   28.83· 2.79
+fleurs-ko-en/delta-10 BLEU·LAAL      13.77· 2.67 |   13.77· 2.52 |   14.27· 2.63 |   14.19· 2.64 |   13.90· 2.64 |   14.58· 2.66
+fleurs-ko-en/delta-4 BLEU·LAAL       13.12· 2.12 |   13.06· 1.91 |   12.79· 1.96 |   12.33· 1.95 |   13.64· 1.87 |   13.07· 2.00
+kspon-eval_clean/delta-10 cer_nospace          10.63 |          10.39 |          10.76 |          10.69 |          11.31 |          10.88
+kspon-eval_clean/delta-4 cer_nospace          12.11 |          12.11 |          12.29 |          12.54 |          12.42 |          12.23
+kspon-eval_other/delta-10 cer_nospace           7.16 |           7.73 |           7.38 |           7.20 |           6.76 |           6.72
+kspon-eval_other/delta-4 cer_nospace           7.91 |           8.53 |           9.99 |           8.13 |           9.50 |           8.26
+voxpopuli-aa-test/delta-10 wer               6.85 |           7.13 |           7.70 |           7.17 |           7.27 |           7.31
+voxpopuli-aa-test/delta-4 wer                7.59 |           7.80 |           7.87 |           7.55 |           7.98 |           7.77
+yodas-de-dev/delta-10 wer                    3.26 |           3.92 |           3.86 |           3.92 |           4.10 |           3.92
+yodas-de-dev/delta-4 wer                     4.76 |           5.07 |           5.19 |           5.67 |           5.01 |           4.95
+librispeech-test-other/delta-10 wer           7.21 |           7.37 |           7.15 |           7.87 |           7.26 |           7.26
+librispeech-test-other/delta-4 wer           8.03 |           8.80 |           8.69 |           8.20 |           8.36 |           8.53
