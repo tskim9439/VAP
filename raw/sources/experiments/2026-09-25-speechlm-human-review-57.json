@@ -1,0 +1,14 @@
+{
+  "schema": "speechlm-human-review-attestation-v1",
+  "source_type": "user-chat-attestation",
+  "reviewer_id": "tskim",
+  "review_date": "2026-09-25",
+  "statement": "57개 모두 통과",
+  "verdict": "pass_all",
+  "reviewed_items": 57,
+  "exception_keys": [],
+  "bundle_summary_sha256": "3e7aa1d0d70b9a8a7a0d490d75186280053bcde5e07ad108bbcd7ff2480d6ca1",
+  "bundle_review_items_sha256": "1b690cbdd15e52d07933ff45fb1a11bc3b663b9fa6b597bc78e0386a77014915",
+  "bundle_audio_manifest_sha256": "6b55e1bc16301f6ab9158cbf77d0afae49a8f4d09340ccc694909bab21240b3c",
+  "scope_note": "19개 DB x short/long/zero_duration 각 1개. 표본 통과는 QC 보류 행의 복구 또는 미청취 확대 표본 285개의 승인으로 해석하지 않는다."
+}

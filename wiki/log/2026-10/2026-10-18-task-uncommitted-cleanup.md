@@ -1,0 +1,29 @@
+## [2026-10-18] task | 미커밋 변경 정리 — Codex 교사 골드 관문 작업 삭제, 커밋된 코드가 기대던 미커밋 학습 코드 커밋(aa64f73), speechlm 승인 기록 커밋
+
+- Changed:
+  - 삭제(로컬 작업 트리, 미커밋이던 Codex 09-25 교사 골드 관문 작업, 판정 불통과):
+    - `experiments/` 3 · `slurm/` 7 · `tests/` 2
+    - 위키 출력·소스 각 1 · 로그 13
+    - raw `2026-09-25-semcommit-gold-gate-mxc/`, `tmp/semcommit-audit-g1/`
+  - 되돌림: `wiki/status.md` 의 Codex 09-25 절(미커밋)
+  - 커밋 aa64f73: 작업 트리에만 있던 학습 코드 14 파일
+    - `semcommit_train.py` 의 Stage 1–2 플래그 27 개
+    - `output_format`·`semcommit_written`, `packing` 의 `est_extra`, `archive` 의 prebuilt tar 색인
+    - short-pool, 교사 수정, 테스트 5
+  - 백업: T5 `vapkt-backup/2026-10-18-uncommitted-snapshot/`(tracked.patch·untracked.tgz·HEAD.txt) — 삭제 전 미커밋 전체
+  - 커밋(이 샤드와 같은 커밋): Codex 의 speechlm approval·QC 묶음 24 파일
+    - `experiments/speechlm_semcommit_*.py` 7 · `export_local_aligned_manifest.py`, 테스트 7, `slurm/` 2
+    - [[decision-speechlm-all19-qc-candidate-scope]], [[output-speechlm-semcommit-approval-audit-20260925]], [[source-speechlm-human-review-57-20260925]], 로그 3, raw 청취 판정 JSON
+  - [[output-semcommit-two-pass-plan]]: 2026-10-18 상태(최소판만 실행, 10-02 뒤 멈춤), 인용 도구 미커밋 표시를 커밋으로
+- Reason: 사용자 "Codex 의 커밋되지 않은 변경은 삭제해", 이어 "권장대로 진행해"(지우지 말고 커밋), "two-pass 는 커밋해서 기록해"(speechlm 묶음)
+- 결과:
+  - 이전에 수정 파일 10 개를 통째로 Codex 것이라 했으나 틀렸다. 이전 Claude 세션의 Stage 1–2 학습 코드가 Codex 헝크와 얽혀 커밋되지 않은 채였다.
+  - 커밋된 `ast_dataset.py` 가 미추적 `output_format.py` 를 import 해, HEAD 만으로는 Stage 3 학습도 ImportError 였다. 커밋으로 해소했다(커밋 트리 사본에서 import·테스트 179 통과).
+  - 커밋된 `slurm/stage3-train-apex.sbatch` 가 Codex 의 tar 색인(`VAPASR_TAR_INDEX_ROOT`)을 쓴다.
+  - 작성자는 `~/.codex/sessions` 의 apply_patch 기록과 커밋 메시지로 가렸다. 원격(mxc) 사본은 지우지 않았다.
+  - speechlm 묶음은 지금 한국어 학습 데이터 `speechlm-all19-v035`(q06 s1–s4·Stage 3 replay)를 고른 근거다(19 개 원천 전부 쓰기 결정, 57 장 청취 판정, QC). 그래서 지우지 않고 커밋했다.
+  - 커밋 전 점검: 청취 판정 JSON 에 전사는 없다(판정·해시만). 비밀값 없음, 테스트 10 통과, 위키링크 대상 모두 있음.
+- Next:
+  - 결정 페이지([[decision-speechlm-all19-qc-candidate-scope]])는 리뷰 기한(10-02)이 지났다. 병합 때 다른 팀원 리뷰가 필요하다(AGENTS.md).
+  - 그대로 둔 것: `App/`(라이브 앱, Claude 세션 10-16), `.codex/`, `tmp/pdfs`, mono-crop.wav, 교사 환경 스크립트
+- By: tskim

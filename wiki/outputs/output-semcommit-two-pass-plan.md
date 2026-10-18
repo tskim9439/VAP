@@ -2,7 +2,7 @@
 type: output
 status: active
 created: 2026-09-29
-updated: 2026-09-29
+updated: 2026-10-18
 summary: <SEM_END> 트리거 2-pass 재디코드 실험 계획(리뷰 반영, commit 지연 지표 5103556 사용). Qwen3-ASR 2차, VAD·고정창·오라클 대조, 예산 약 30 GPU-h
 sources:
   - '[[output-semcommit-recipe-v0.3]]'
@@ -28,6 +28,10 @@ raw_authors:
 
 - 작성일: 2026-09-29. 같은 날 리뷰 2 건(37 항목)을 반영해 고쳤다. 무엇을 왜 고쳤는지는 부록 B 에 있다.
 - 상태: **계획 단계.** 코드와 학습은 아직 바꾸지 않았다. §10 의 파일은 모두 만들 예정인 것이다.
+- 상태(2026-10-18):
+  - 최소판(`twopass.py`·`semcommit_twopass_eval.py`, 0d2b584)만 실행했다. 10-02 목표 전환([[decision-project-goal-cst-s2tt]]) 뒤로는 멈춰 있다.
+  - 이 계획이 인용한 speechlm QC·보호 인덱스·승인 대조 도구와 승인 기록([[output-speechlm-semcommit-approval-audit-20260925]], [[decision-speechlm-all19-qc-candidate-scope]])은 사용자 결정으로 2026-10-18 커밋했다.
+  - 이 기록들은 지금 한국어 학습 데이터 `speechlm-all19-v035`(q06 s1–s4·Stage 3 replay)를 고른 근거다.
 - 범위 정정(2026-09-29): 사용자 지시 "3번은 일단 제외하고 더 고민해보자"의 3번은 논문 인사이트 3번(합성 말더듬·자기 수정으로 영어 N 보강 = 영어 레이블 불균형)이다. 초판은 이를 T3(commit latency 작업)로 잘못 읽어 T3 를 뺐다.
   - T3 는 범위 안이다. 창 없는 지연 지표(commit·display·after_text, 가설 단어별 청크 `hyp.word_k`)는 커밋 `5103556` 으로 들어갔고, 이 계획의 1차 디코드·지연 지표는 그 판을 쓴다(§4.1, §6.2, §6.6, §10).
   - 단어 정렬이 없는 세트(AIHub 3 세트, ESB)의 단어 끝 기준 지연은 T3 와 무관하게 정렬이 없어서 근사로 남는다(§6.6).
@@ -811,7 +815,7 @@ ESB 세트별 발화 수와 추정 시간(200 개 표본의 평균 길이 × 고
    - 000023(대학 강의, NIA24/137, 벤치마크 강의와 다른 데이터셋): 전부 train
    - 000011(저음질 전화망): train 4,397,622 + **validation 39,729**
 2. QC 와 후보 빌더는 `split == "train"` 만 통과시킨다.
-   - `experiments/speechlm_semcommit_qc.py:119-120, 208-209` (작업 트리, 미커밋)
+   - `experiments/speechlm_semcommit_qc.py:119-120, 208-209` (2026-10-18 커밋)
    - `experiments/semcommit_build_speechlm_candidates.py:87-90`
    - 그래서 000011 의 validation 행은 학습 후보에서 빠진다.
 3. 주의할 점: split 판정 함수 `split_from` 은 경로에 `/validation/`·`/valid/`·`/dev/` 가 있어야 validation 으로 본다(`build_speechlm_single_speaker_arrow.py:115-121`).
@@ -851,8 +855,8 @@ ESB 세트별 발화 수와 추정 시간(200 개 표본의 평균 길이 × 고
 - 남은 위험은 세 가지다.
   1. 상담·전화망은 **같은 데이터셋의 다른 split** 이다. 화자·도메인·정형 문구를 공유할 수 있어 1차 모델이 도메인 이점을 가진다. Kspon(kspon-full), 71631(aihub71631-train)도 같은 코퍼스의 train 으로 학습했다. 도메인 밖 대조는 한국어 강의뿐이다. 그래서 KO 결과는 도메인 안/밖으로 층화해 보고한다(§12).
   2. 전화망은 번호 체계가 달라 파형 수준의 중복이 아직 확정되지 않았다.
-     - P0-1 에서 AIHub 3 세트를 보호 인덱스에 추가한다. 도구는 `experiments/speechlm_semcommit_heldout_index.py`(작업 트리, 미커밋)이고, 같은 16 kHz 디코더로 계산한 PCM 해시를 쓴다.
-     - 그다음 `experiments/speechlm_semcommit_approval_audit.py`(작업 트리, 미커밋) 대조를 다시 돌려 확정한다(CPU 작업).
+     - P0-1 에서 AIHub 3 세트를 보호 인덱스에 추가한다. 도구는 `experiments/speechlm_semcommit_heldout_index.py`(2026-10-18 커밋)이고, 같은 16 kHz 디코더로 계산한 PCM 해시를 쓴다.
+     - 그다음 `experiments/speechlm_semcommit_approval_audit.py`(2026-10-18 커밋) 대조를 다시 돌려 확정한다(CPU 작업).
      - 두 도구는 mxc 에 배포돼 있다(2026-09-29 `ls` 확인).
   3. ESB 의 VoxPopuli(in-domain)와 GigaSpeech·TED-LIUM(yodas 중복 가능성).
 
