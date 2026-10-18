@@ -29,14 +29,50 @@ def tar_index(archive: str) -> Dict[str, Tuple[int, int]]:
 
 _IDX: Dict[str, Dict[str, Tuple[int, int]]] = {}
 _ZIP: Dict[str, "zipfile.ZipFile"] = {}
+_PREBUILT: Dict[str, Dict[str, Tuple[int, int]]] = {}
+
+def _prebuilt_index(archive: str) -> Dict[str, Tuple[int, int]]:
+    """Read the speechlm ASR pipeline's identity-checked tar index, read-only.
+
+    VAPASR_TAR_INDEX_ROOT opts in. A missing index is an error rather than a
+    hidden full-tar scan during training (read_member falls back only to an
+    archive's own existing <archive>.index.json).
+    """
+    root = os.environ["VAPASR_TAR_INDEX_ROOT"]
+    if archive in _PREBUILT:
+        return _PREBUILT[archive]
+    from pathlib import Path
+    from .selection import digest
+    path = Path(archive)
+    stat = path.stat()
+    identity = [str(path.resolve()), stat.st_size, stat.st_mtime_ns]
+    source = Path(root) / (digest(identity) + ".json")
+    if not source.is_file():
+        raise FileNotFoundError(f"prebuilt tar index missing: {source}")
+    content = json.loads(source.read_text())
+    if content.get("identity") != identity:
+        raise ValueError(f"prebuilt tar index identity mismatch: {source}")
+    if len(_PREBUILT) >= 32:
+        _PREBUILT.pop(next(iter(_PREBUILT)))
+    _PREBUILT[archive] = {k: tuple(v) for k, v in content["members"].items()}
+    return _PREBUILT[archive]
+
 def read_member(archive: str, member: str) -> bytes:
     if archive.endswith(".zip"):                        # zip: 중앙 디렉토리로 멤버만 읽는다(풀지 않음). 프로세스당 핸들 캐시
         import zipfile
         if archive not in _ZIP: _ZIP[archive] = zipfile.ZipFile(archive)
         try: return _ZIP[archive].read(member)
         except KeyError: return _ZIP[archive].read("/" + member)   # AI Hub zip 은 멤버 이름이 "/" 로 시작
-    if archive not in _IDX: _IDX[archive] = tar_index(archive)
-    off, size = _IDX[archive][member]
+    if os.environ.get("VAPASR_TAR_INDEX_ROOT"):
+        try:
+            off, size = _prebuilt_index(archive)[member]
+        except FileNotFoundError:                        # not a speechlm archive (e.g. voxpopuli): its own index file, never a full scan
+            if not os.path.exists(_index_path(archive)): raise
+            if archive not in _IDX: _IDX[archive] = tar_index(archive)
+            off, size = _IDX[archive][member]
+    else:
+        if archive not in _IDX: _IDX[archive] = tar_index(archive)
+        off, size = _IDX[archive][member]
     with open(archive, "rb") as f: f.seek(off); return f.read(size)
 
 def load_audio_from_archive(path: str) -> np.ndarray:

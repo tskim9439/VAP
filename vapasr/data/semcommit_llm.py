@@ -31,7 +31,9 @@ from pathlib import Path
 PROMPT_VERSION = "semcommit-prompt-v0.2"   # v0.2 (2026-09-23): Stage A [index, word] anchors + snapping; Stage C REVISION narrowed to plan §10 (continuation/added detail = STABLE)
 KINDS = {"qwen3": dict(template_kwargs={"enable_thinking": False}, trust_remote_code=False),
          "exaone35": dict(template_kwargs={}, trust_remote_code=True),
-         "gptoss": dict(template_kwargs={"reasoning_effort": "low"}, trust_remote_code=False)}
+         "gptoss": dict(template_kwargs={"reasoning_effort": "low"}, trust_remote_code=False),
+         "exaone4": dict(template_kwargs={"enable_thinking": False}, trust_remote_code=False),
+         "qwen38": dict(template_kwargs={"enable_thinking": False}, trust_remote_code=False)}
 PRIMARY_JUDGES = {"Korean": ("exaone35", "qwen3"), "English": ("qwen3", "gptoss")}
 TIEBREAK_JUDGE = {"Korean": "gptoss"}
 # bf16 dequant ≈ 42 GB > A100-40GB → CPU offload. accelerate reserves the largest offloaded layer inside the GPU cap and
@@ -409,9 +411,21 @@ def label_result(labels, lps):
             "margin": None if margin is None else round(margin, 5)}
 
 
+def model_class(kind, transformers_module):
+    """Qwen3.8-27B is a Qwen3.5 multimodal ConditionalGeneration model, even for text-only prompts."""
+    if kind == "qwen38":
+        cls = getattr(transformers_module, "Qwen3_5ForConditionalGeneration", None)
+        if cls is None:
+            raise RuntimeError("Qwen3.8-27B requires a separate teacher env with "
+                               "transformers.Qwen3_5ForConditionalGeneration (model config: 5.8.0.dev0)")
+        return cls
+    return transformers_module.AutoModelForCausalLM
+
+
 class LLM:
     """HF causal-LM adapter for one teacher. Tokenizer loads at construction (fingerprint without GPU); the model loads
-    lazily on first use. kind ∈ {qwen3, exaone35, gptoss}. `model`/`tokenizer` may be injected (tests)."""
+    lazily on first use. Qwen3.8 uses its multimodal class with text-only inputs.
+    `model`/`tokenizer` may be injected (tests)."""
 
     def __init__(self, path, kind, device="cuda", max_memory=None, dtype="bfloat16", model=None, tokenizer=None):
         if kind not in KINDS:
@@ -440,7 +454,7 @@ class LLM:
     def model(self):
         if self._model is None:
             import torch
-            from transformers import AutoModelForCausalLM
+            import transformers
             kw = dict(dtype=getattr(torch, self.dtype), trust_remote_code=self.trust_remote_code,
                       local_files_only=True, low_cpu_mem_usage=True)
             if self.gpu_layers is not None:
@@ -452,7 +466,7 @@ class LLM:
             else:
                 kw.update(dict(device_map="auto", max_memory=self.max_memory) if self.max_memory
                           else dict(device_map={"": "cuda:0" if self.device_name == "cuda" else self.device_name}))
-            self._model = AutoModelForCausalLM.from_pretrained(self.path, **kw).eval()
+            self._model = model_class(self.kind, transformers).from_pretrained(self.path, **kw).eval()
         return self._model
 
     def load(self):
@@ -846,13 +860,17 @@ def candidates_of(a_rows):
     return out
 
 
-EXTRA_SOURCES = ("last", "seg_end", "punct_final")   # recipe v0.3 candidate sources beside Stage A (gold v1: +0.06–0.15 candidate recall)
+EXTRA_SOURCES = ("last", "seg_end", "punct_final")   # default v0.3.3; punct_coord is an opt-in v0.3.4 experiment
+PUNCT_COORD = frozenset(("and", "but", "or", "so", "yet", "for", "then", "however"))
 
 
 def extra_candidates(stream, kinds=EXTRA_SOURCES):
-    """{word index: [source, ...]} for rule-based candidate sources: 'last' = the stream's last word, 'seg_end' = the last
-    word of each segment (utterance end inside a multi-utterance stream), 'punct_final' = a word whose human transcript
-    ends a sentence (. ? ! — LibriSpeech-PC / GigaSpeech punctuation, Kspon transcript punctuation; words tag)."""
+    """{word index: [source, ...]} for rule-based candidate sources.
+
+    punct_coord is opt-in, English only: a transcript comma/semicolon/colon
+    immediately before a coordinating or discourse connective. It proposes a
+    boundary; Stage B/C and calibrated grading still decide whether to label A.
+    """
     words, out = stream["words"], {}
     if not words:
         return out
@@ -868,6 +886,11 @@ def extra_candidates(stream, kinds=EXTRA_SOURCES):
         for k, w in enumerate(words):
             if "punct_final" in (w.get("tags") or ()):
                 out.setdefault(k, []).append("punct_final")
+    if "punct_coord" in kinds and stream.get("lang") == "English":
+        for k, w in enumerate(words[:-1]):
+            if ("punct_comma" in (w.get("tags") or ())
+                    and words[k + 1]["text"].lower() in PUNCT_COORD):
+                out.setdefault(k, []).append("punct_coord")
     return out
 
 

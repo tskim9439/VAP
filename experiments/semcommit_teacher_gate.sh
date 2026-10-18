@@ -43,7 +43,7 @@ fi
 for s in $SETS; do
   W=$GOLD/words-$s.jsonl; mapfile -t BF < <(bfiles "$s")
   if [ "$RECIPE" = v0.3 ]; then G=(--recipe v0.3 --thresholds "$OUT/thresholds.json" --extra-candidates "$EXTRA"); else G=(--c-mask-types "$MASK" $STRICT); fi
-  step $T grade --words "$W" --stageA "$OUT/A-$s.jsonl" --stageB "${BF[@]}" --stageC "$OUT/C-$s.jsonl" --judges-en "$JL" --judges-ko "$JL" "${G[@]}" \
+  step $T grade --words "$W" --stageA "$OUT/A-$s.jsonl" --stageB "${BF[@]}" --stageC "$OUT/C-$s.jsonl" --judges-en "$JL" --judges-ko "$JL" --turn-end none "${G[@]}" \
        --out "$OUT/labels-$s.jsonl" --stats "$OUT/labels-$s.stats.json"
   $GT score-labels --words "$W" --labels "$OUT/labels-$s.jsonl" --gold "$GOLD/gold-$s.jsonl" > "$OUT/gate-$s.json"
   echo "[gate] $s $(cat "$OUT/gate-$s.json")"

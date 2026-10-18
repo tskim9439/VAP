@@ -148,7 +148,9 @@ def _si(stage, it):
 
 def run_model_stage(a, stage, items, fn, params):
     """Fingerprint + resume + blockwise inference with fsync; a failed block becomes explicit inference_error rows."""
-    if a.device.startswith("cuda"):
+    # Slurm may already expose exactly one GPU to this task. In that case the
+    # visible device is cuda:0, regardless of its physical node-local index.
+    if a.device.startswith("cuda") and not os.environ.get("CUDA_VISIBLE_DEVICES"):
         os.environ["CUDA_VISIBLE_DEVICES"] = str(a.gpu)
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")

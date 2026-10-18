@@ -39,10 +39,12 @@ ROW_KEYS = ("ids", "is_audio", "labels", "pos_weight", "labels_alt", "soft_w_ful
 
 def est_lens(ds) -> np.ndarray:
     """Per-item sequence length estimate (tokens). Datasets with est_lens() (Phase 2 windows) use it; mono/semcommit items use
-    prefix + 2 slots per chunk (audio_pad, NEXT_AUDIO) + transcript tokens + flush/tail slack — conservative (over-estimates)."""
+    prefix + 2 slots per chunk (audio_pad, NEXT_AUDIO) + transcript tokens + flush/tail slack — conservative (over-estimates).
+    Items that may be drawn in another output format (semcommit written form) carry est_extra = its extra tokens (longer target +
+    instruction header); absent → 0, so the estimate is unchanged for everything else."""
     if hasattr(ds, "est_lens"):
         return np.asarray(ds.est_lens(), dtype=np.int64)
-    return np.array([24 + 2 * (int(it["K"]) + 4) + len(it.get("tokens") or ()) + int(it.get("n_sem", 0)) for it in ds.items], dtype=np.int64)
+    return np.array([24 + 2 * (int(it["K"]) + 4) + len(it.get("tokens") or ()) + int(it.get("n_sem", 0)) + int(it.get("est_extra", 0)) for it in ds.items], dtype=np.int64)
 
 
 class PackedBudgetSampler(Sampler):

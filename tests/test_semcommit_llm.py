@@ -24,6 +24,34 @@ KO2 = mk_stream("k2", "Korean", ["병원에", "갔다가", "음", "회사에", "
 EN1 = mk_stream("e1", "English", ["i", "went", "home", "no", "to", "work", "today"], {6: ["punct_final"]})
 
 
+def test_new_teacher_kinds_and_model_class():
+    assert sc.KINDS["exaone4"] == dict(template_kwargs={"enable_thinking": False}, trust_remote_code=False)
+    assert sc.KINDS["qwen38"] == dict(template_kwargs={"enable_thinking": False}, trust_remote_code=False)
+    causal, conditional = object(), object()
+    namespace = SimpleNamespace(AutoModelForCausalLM=causal, Qwen3_5ForConditionalGeneration=conditional)
+    assert sc.model_class("exaone4", namespace) is causal
+    assert sc.model_class("qwen38", namespace) is conditional
+    with pytest.raises(RuntimeError, match="separate teacher env"):
+        sc.model_class("qwen38", SimpleNamespace(AutoModelForCausalLM=causal))
+
+
+@pytest.mark.parametrize("kind", ["exaone4", "qwen38"])
+def test_new_teacher_prompt_uses_no_thinking(kind):
+    class FakeTokenizer:
+        pad_token_id = 0
+        eos_token_id = 1
+        chat_template = "fake"
+        padding_side = "right"
+
+        def apply_chat_template(self, messages, **kw):
+            assert kw["enable_thinking"] is False
+            assert kw["add_generation_prompt"] is True
+            return messages[-1]["content"]
+
+    llm = sc.LLM("/models/fake", kind, tokenizer=FakeTokenizer(), model=None)
+    assert llm.build_prompt(sc.stage_b_messages(KO1["words"][:3], "Korean")).endswith("LAST WORD: 내일")
+
+
 # ───────────── prompts ─────────────
 def test_stage_a_prompt_indices_and_hints():
     m = sc.stage_a_messages(KO2["words"], "Korean")
@@ -807,6 +835,16 @@ def test_extra_candidates_sets_and_items():
     assert [i for _, i in sc.stage_b_items([s, KO1], a, sc.EXTRA_SOURCES, only_extra=True)] == [7]
     assert [(i, nc) for _, i, nc in sc.stage_c_items([s], a, sc.EXTRA_SOURCES)] == [(2, None), (7, None)]   # window stops at the next *Stage A* boundary
     assert [(i, nc) for _, i, nc in sc.stage_c_items([KO1], a)] == [(5, 8), (8, None)]                      # v0.2 rows unchanged
+
+
+def test_punct_coord_opt_in_english_only():
+    en = mk_stream("coord-en", "English", ["we", "left", "and", "returned", "but", "stayed"],
+                   {1: ["punct_comma"], 3: ["punct_comma"], 5: ["punct_comma"]})
+    ko = mk_stream("coord-ko", "Korean", ["갔어요", "and", "왔어요"], {0: ["punct_comma"]})
+    assert sc.extra_candidates(en) == {5: ["last", "seg_end"]}
+    assert sc.extra_candidates(en, ("punct_coord",)) == {1: ["punct_coord"], 3: ["punct_coord"]}
+    assert sc.extra_candidates(ko, ("punct_coord",)) == {}
+    assert sc.extra_candidates(en, ("punct_final", "punct_coord")) == {1: ["punct_coord"], 3: ["punct_coord"]}
 
 
 def test_label_probs_features_and_grade_v3():

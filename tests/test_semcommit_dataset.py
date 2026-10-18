@@ -5,7 +5,7 @@ import numpy as np, pytest, torch
 from vapasr.data.interleave import build_interleaved, Specials
 from vapasr.data.semcommit_dataset import (build_interleaved_events, build_semcommit_tokens, build_semcommit_sequence, SemCommitDataset, collate_semcommit,
                                            add_semcommit_specials, last_emit_chunk, semcommit_round_robin, SEM_SPECIALS, semcommit_fingerprint, fingerprint_diff,
-                                           checkpoint_fingerprint_diff, vocab_sha256, FP_PROTOCOL)
+                                           checkpoint_fingerprint_diff, vocab_sha256, FP_PROTOCOL, short_quota_order)
 from vapasr.data.dialogue_tokens import PHASE2_SPECIALS
 from vapasr.uslm.interleave_data import SPECIAL_TOKENS
 
@@ -211,6 +211,34 @@ def test_round_robin_loader_alternates_languages_with_pos_weight(tmp_path):
     got = [(b["lang"][0], tuple(b["ids"].shape), tuple(b["pos_weight"].shape), int((b["pos_weight"] > 0).sum()), b["n_N"]) for b in rr]
     assert len(rr) == len(got) == 4 and [g[0] for g in got] == ["English", "Korean"] * 2
     assert all(g[1] == g[2] and g[3] == g[4] == g[1][0] for g in got)                      # 스트림마다 N 1 개 → pos_weight>0 도 배치 크기만큼
+
+
+def test_short_quota_is_capped_and_deterministic():
+    main = {"en": 60, "ko": 40}
+    short = {"short_en": 900, "short_ko": 100}
+    order = short_quota_order(main, short, 0.10, "balanced")
+    assert len(order) == 111 and sum(k.startswith("short_") for k in order) == 11
+    assert order == short_quota_order(main, short, 0.10, "balanced")
+    assert max(sum(k.startswith("short_") for k in order[i:i + 12]) for i in range(len(order) - 12)) <= 2
+    prop = short_quota_order(main, short, 0.10, "proportional")
+    assert prop.count("short_en") == 10 and prop.count("short_ko") == 1
+    with pytest.raises(ValueError, match="fraction"):
+        short_quota_order(main, short, 0.50, "balanced")
+
+
+def test_speechlm_short_pool_requires_approval_and_separation(tmp_path):
+    row = make_row("slm-1")
+    row.update(set="speechlm-partial", candidate_only=False, training_eligible=True, approval_fingerprint="approved-v1")
+    wp, lp = tmp_path / "w.jsonl", tmp_path / "l.jsonl"
+    wp.write_text(json.dumps(row) + "\n")
+    lp.write_text(json.dumps(make_labels(row["id"])) + "\n")
+    assert len(SemCommitDataset(str(wp), str(lp), FakeTok(), online=False, source_pool="speechlm-short")) == 1
+    with pytest.raises(ValueError, match="pool_mismatch"):
+        SemCommitDataset(str(wp), str(lp), FakeTok(), online=False, source_pool="main")
+    row["candidate_only"] = True
+    wp.write_text(json.dumps(row) + "\n")
+    with pytest.raises(ValueError, match="unapproved_speechlm_word"):
+        SemCommitDataset(str(wp), str(lp), FakeTok(), online=False, source_pool="speechlm-short")
 
 # ── 마지막 단어 B/N + TURN: δ=6 이면 결정 위치 = TURN 타깃 → TURN 라벨·가중 유지, '@TURN' 으로 센다(리뷰 finding 1)
 @pytest.mark.parametrize("g", ["B", "N"])
