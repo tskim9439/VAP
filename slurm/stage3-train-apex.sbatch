@@ -20,6 +20,8 @@ set -uo pipefail
 : "${OUT:?output directory}" "${ARGS_EXTRA:?stage3_train.py arguments}"
 echo "[$(date '+%F %T')] job $SLURM_JOB_ID nodes=$SLURM_NNODES ($SLURM_JOB_NODELIST) restart=${SLURM_RESTART_COUNT:-0}/${MAX_RESTART:-3} OUT=$OUT"
 [ -f "$OUT/DONE" ] && { echo "이미 완료(DONE) — 종료"; exit 0; }
+pre_start() { echo "[$(date '+%T')] 신호 수신(학습 시작 전) → requeue $SLURM_JOB_ID"; scontrol requeue "$SLURM_JOB_ID"; exit 0; }   # 91580: env 복사 중(33 s) 선점이면 아래 on_preempt 가 아직 없어 requeue 줄이 없었다
+trap pre_start USR1 TERM
 mkdir -p "$OUT" /soundai/users/tskim/VAPKT/logs/train
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
 source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
