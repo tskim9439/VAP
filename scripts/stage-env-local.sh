@@ -17,10 +17,16 @@ stamp=$(stat -c %Y "$SRC/conda-meta/history" 2>/dev/null || echo 0)
 TAR="${VAPASR_ENV_TAR:-$SRC.tar}"        # scripts/stage-env-local.sh pack 으로 만든 단일 아카이브(NFS 순차 읽기 ~300 MB/s → 8.7 GB 에 1–2 분). 없으면 파일 단위 병렬 복사(NFS 왕복 지연 때문에 15–20 분)
 if [ "${1:-}" = pack ]; then                # pack: 로컬 복사본을 tar 로 묶어 NFS 에 둔다(다른 노드·컨테이너가 이걸 푼다)
   [ -x "$DST/bin/python" ] || { echo "!! 먼저 복사본이 있어야 pack 할 수 있다: $DST"; exit 1; }
-  echo "[$(date '+%T')] pack $DST → $TAR"; tar -C "$DST" -cf "$TAR.tmp" --exclude='./.staged-from' . && mv "$TAR.tmp" "$TAR" && echo "$SRC@$stamp" > "$TAR.stamp"; ls -la "$TAR"; exit 0
+  echo "[$(date '+%T')] pack $DST → $TAR"; tar -C "$DST" -cf "$TAR.tmp" --exclude='./.staged-from' --exclude='./.staged-count' . && mv "$TAR.tmp" "$TAR" && echo "$SRC@$stamp" > "$TAR.stamp"; ls -la "$TAR"; exit 0
 fi
 # 이미 복사됐고(마커) 콘솔 스크립트 shebang 도 이 경로를 가리키면 건너뛴다(67293: tar 가 /scratch 경로 shebang 을 담고 있어 노드에서 torchrun 이 rc=127)
-if [ -x "$DST/bin/python" ] && [ "$(cat "$DST/.staged-from" 2>/dev/null)" = "$SRC@$stamp" ] && head -n 1 "$DST/bin/torchrun" 2>/dev/null | grep -q "^#!$DST/bin/python"; then echo "이미 복사됨: $DST (원본 $SRC)"; exit 0; fi
+# 파일 수도 복사 때 기록(.staged-count)과 같아야 한다 — /tmp 자동 정리(systemd-tmpfiles)가 오래 안 쓴 파일을 지워 pyexpat 이 사라진 복사본이 마커만 보고 통과했다(91438)
+count_dst() { (cd "$DST" && find . \( -type f -o -type l \) -not -name '.staged-*' | wc -l); }
+if [ -x "$DST/bin/python" ] && [ "$(cat "$DST/.staged-from" 2>/dev/null)" = "$SRC@$stamp" ] && head -n 1 "$DST/bin/torchrun" 2>/dev/null | grep -q "^#!$DST/bin/python"; then
+  rec=$(cat "$DST/.staged-count" 2>/dev/null || echo 없음); now=$(count_dst)
+  [ "$rec" = "$now" ] && { echo "이미 복사됨: $DST (원본 $SRC, 파일 $now)"; exit 0; }
+  echo "!! 복사본 파일 수 $now ≠ 기록 $rec(자동 정리 의심) → 다시 푼다"
+fi
 mkdir -p "$DST"; t0=$(date +%s)
 echo "[$(date '+%T')] $SRC → $DST 복사 시작 (df: $(df -h "$DST" | awk 'NR==2{print $4" 남음"}'))"
 if [ -f "$TAR" ] && [ "$(cat "$TAR.stamp" 2>/dev/null)" = "$SRC@$stamp" ]; then
@@ -35,5 +41,5 @@ fi
 # 콘솔 스크립트(torchrun·pytest 등)의 shebang 이 원본(NFS) 경로나 다른 복사본(/scratch, tar 를 만든 곳) 경로를 가리키면 그 python 이 뜬다 → 이 복사본 경로로 고친다(텍스트 파일만, 없으면 통과)
 grep -IlZ "^#!.*/bin/python[0-9.]*$" "$DST"/bin/* 2>/dev/null | xargs -0 -r sed -i "1s|^#!.*/bin/python\([0-9.]*\)$|#!$DST/bin/python\1|" || true
 head -n 1 "$DST/bin/torchrun" | grep -q "^#!$DST/bin/python" || { echo "!! shebang 교정 실패: $(head -n 1 "$DST/bin/torchrun")"; exit 1; }
-echo "$SRC@$stamp" > "$DST/.staged-from"
+count_dst > "$DST/.staged-count"; echo "$SRC@$stamp" > "$DST/.staged-from"
 echo "[$(date '+%T')] 완료: $(du -sh "$DST" | cut -f1), $(( $(date +%s) - t0 )) s → source scripts/activate-env.sh 로 사용"
