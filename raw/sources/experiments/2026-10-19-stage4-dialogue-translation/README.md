@@ -147,6 +147,25 @@ source_type: source-drop
 
   - 형식을 따르지 못한다(받아쓰기 자리에 다른 말·번역이 섞여 오류가 100 % 를 넘는다). Stage 4 학습이 필요하다는 기준선이다.
 
+### TAXI 어댑터 (`experiments/cst_stage4_taxi.py`, `taxi_p11.sh`·`taxi_p11_asronly.sh`)
+- CST-Bench-TAXI natural(실제 독↔영 전화 대화, `cstbench render` 의 세션 mono 혼합 16 kHz, 86 세션·0.74 h, 세션 길이 중앙 29 s·최대 72 s)
+- 40 s 넘는 세션은 턴 사이 쉼 가운데에서 나눠 디코드한다(109 창). 슬롯은 데이터셋과 같은 규칙(언어 이름순 + 세션 id 해시)이다.
+- 번역 단어를 cstbench 가설 형식(`{session, lang, t, text}`)으로 쓰고 cstbench 채점기(재분절 → BLEU·chrF·StreamLAAL·끝 지연·빈 턴)로 잰다.
+- 받아쓰기는 세션·언어마다 이어 붙인 참조 대 그 언어 슬롯(WER), 슬롯 순열을 허용한 WER(cp)도 낸다.
+- TAXI 전사·번역은 재배포 금지라 hyp·asr 은 mxc(`results/stage4-taxi-*`)에만 두고 보고서(집계)만 가져왔다.
+- **출발점(Stage 3 최종 p11 ck3000 그대로):**
+
+  | 설정 | 독→영 BLEU / chrF | 영→독 BLEU / chrF | StreamLAAL 중앙(독→영·영→독) | 빈 턴(독→영·영→독) | 받아쓰기 WER 영·독 / cp |
+  |---|---:|---:|---:|---:|---:|
+  | 번역 prefix δ4 | 3.6 / 15.6 | 15.8 / 34.2 | 1.04 · 0.91 s | 152/349 · 69/291 | 102.3 · 96.2 / 93.3 |
+  | 번역 prefix δ10 | 3.7 / 15.8 | 18.0 / 35.7 | 1.56 · 1.37 s | 155/349 · 69/291 | 102.2 · 99.0 / 93.5 |
+  | 받아쓰기 prefix δ10 | – | – | – | – | 71.1 · 72.3 / 52.9 |
+
+  - 참고(오프라인 정답 분할 상한, [[output-cst-taxi-offline-baselines-20261005]]): 정답 전사 → Qwen3.8-27B 영→독 48.3·독→영 30.6, Qwen3-ASR-1.7B 경유 42.7·28.1, Qwen3-ASR WER 영 13.8·독 7.3 %
+  - 받아쓰기 prefix(번역 줄 없음)로도 슬롯 순열 허용 WER 이 53 % 다. 번역 형식 미학습만이 아니라 8 kHz 전화 음성·교차 언어 대화가 처음이라는 점도 크다.
+  - 발화 구간 음량은 −19 dBFS(학습 mono −23 dBFS 근처)라 음량 문제는 아니다.
+  - 전화 대역 증강을 Stage 4 학습 후보로 둔다.
+
 ## S5 학습 스크립트 — 교차 언어 셋
 - 가중치 키 `sim_<l1>-<l2>`(예 `sim_ko-en`·`sim_en-de`): `--sim-data` 의 대화와 `targets-<키>/` 를 읽는다. `--sim-trans-frac`(기본 0.8) 확률로 번역 모드다.
 - 학습 전 점검과 dry-run 예시는 `tgt_options`(같은 언어 = 목표 언어, 교차 언어 = 'xl')를 쓴다.
@@ -157,4 +176,4 @@ source_type: source-drop
 - S1 타깃이 나오면:
   - 교차 언어 합성 학습 셋(`sim_en-de`·`sim_ko-en`)과 EN↔DE held-out 평가 셋(`--heldout`)을 만든다. KO↔EN 평가 셋은 사용자 결정을 기다린다.
   - 같은 언어 held-out 대화 번역 평가
-- TAXI(실제 독↔영 전화 대화) 평가 어댑터, S6 파일럿
+- S6 파일럿. S7 TTS 는 엔진·원천 대화 결정(사용자)이 먼저다

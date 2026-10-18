@@ -1,0 +1,40 @@
+{
+ "directions": {
+  "German->English": {
+   "turns": 349,
+   "bleu": 3.62,
+   "chrf": 15.6,
+   "stream_laal_s": {
+    "mean": 1.616,
+    "median": 1.038,
+    "p90": 4.227
+   },
+   "end_offset_s": {
+    "mean": 1.452,
+    "median": 1.209,
+    "p90": 11.506
+   },
+   "empty_turns": 152
+  },
+  "English->German": {
+   "turns": 291,
+   "bleu": 15.82,
+   "chrf": 34.21,
+   "stream_laal_s": {
+    "mean": 1.561,
+    "median": 0.913,
+    "p90": 3.232
+   },
+   "end_offset_s": {
+    "mean": 1.29,
+    "median": 2.127,
+    "p90": 6.12
+   },
+   "empty_turns": 69
+  }
+ },
+ "unknown_sessions": [],
+ "wrong_language_words": 0,
+ "hyp": "/soundai/users/tskim/VAPKT-data/results/stage4-taxi-p11ck3000/hyp-d4.jsonl",
+ "sessions": "/soundai/users/tskim/VAPKT-data/data/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl"
+}
