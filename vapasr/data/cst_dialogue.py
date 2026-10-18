@@ -294,6 +294,146 @@ def read_back(ids: Sequence[int], is_input: Sequence[bool], sp: Specials, eot_id
     return out, bad
 
 
+# ── Stage 4: 두 화자 × (전사·번역) 네 흐름 (decision-stage4-prep-20261019, decision-ast-monotonic-data 9)
+def clamp_to_spans(t: float, spans: Sequence[Tuple[float, float]]) -> float:
+    """번역 확정 시각을 행 조각 구간(시작순)으로 자른다: 조각 안이면 그대로, 첫 조각 앞이면 그 시작, 조각 사이 쉼이면 다음 조각 시작(늦은 쪽 — 그 단어의
+    전사가 어느 조각에 있든 번역이 앞서지 않게), 끝 뒤면 마지막 끝. build_episodes 가 전사 토큰을 발화 구간으로 자르는 것과 짝이다."""
+    for a, b in spans:
+        if t < a: return a
+        if t <= b: return t
+    return spans[-1][1]
+
+
+def window_streams4(eps: List[Episode], speakers: Sequence[str], t0: float, L: float, eot_id: int, trans_of) -> Tuple[List[list], Dict[Tuple[int, int], Optional[float]], dict]:
+    """window_streams + 번역 흐름: 흐름 0·1 = 슬롯 A·B 전사, 2·3 = 그 번역(원소 (tid, t), 창 기준 시각).
+    trans_of(ep) → (토큰 [(tid, t 대화 시각, 입력만)], 번역 없는 행 구간 [(a, b, 사유)], 마지막 행에 번역이 있나).
+    번역 시각은 trans_of 가 행 조각 구간으로 자른 것을 다시 episode 구간으로 자른다. <EOT> 는 그 episode 의 마지막 행에 번역이 있으면 번역 흐름,
+    없으면 전사 흐름(Stage 3 와 같다)에 두고, 어느 쪽이든 전사·번역 꼬리 중 나중 것 뒤에 오도록 그 꼬리 원소를 eot_tail 로 남긴다
+    (build_interleaved_events 는 같은 흐름의 앞 원소만 기다린다 — build_cst4_sequence 가 eot_after_tails 로 옮긴다). 청크는 Stage 3 규칙(말이 끝난 때) 그대로다.
+    → (streams, {(흐름, index): p_end}, 정보 dict(tr_input, miss, miss_eot, eot_tail, st))."""
+    t1 = t0 + L; streams: List[list] = [[] for _ in range(4)]; eot_p: Dict[Tuple[int, int], Optional[float]] = {}
+    tr_input, miss, miss_eot, eot_tail = set(), [], set(), {}; st = dict(eot=0, eot_truncated=0, eot_no_tokens=0, eot_backchannel=0, tr_tokens=0, tr_input=0)
+    slot = {s: i for i, s in enumerate(speakers)}
+    for ep in eps:
+        if ep.end <= t0 or ep.start >= t1 or ep.speaker not in slot: continue
+        s = slot[ep.speaker]; toks = [(int(tid), float(t) - t0) for tid, t in ep.tokens if t0 <= t <= t1]
+        streams[s] += toks
+        tr, gaps, last_ok = trans_of(ep); n_tr = 0
+        for tid, t, inp in sorted(tr, key=lambda x: x[1]):
+            t = min(max(float(t), ep.start), ep.end)
+            if not t0 <= t <= t1: continue
+            if inp: tr_input.add((2 + s, len(streams[2 + s]))); st["tr_input"] += 1
+            streams[2 + s].append((int(tid), t - t0)); n_tr += 1; st["tr_tokens"] += 1
+        for a, b, why in gaps:
+            if b > t0 and a < t1: miss.append((ep.speaker, a, b)); st[f"miss_{why}"] = st.get(f"miss_{why}", 0) + 1
+        if ep.end > t1 + 1e-9: st["eot_truncated"] += 1; continue
+        if not toks: st["eot_no_tokens"] += 1; continue
+        if ep.outcome == "backchannel": st["eot_backchannel"] += 1; continue
+        e = ep.end - t0; w = 2 + s if n_tr and last_ok else s; tails = [(s, len(streams[s]) - 1)] + ([(2 + s, len(streams[2 + s]) - 1)] if n_tr else [])
+        streams[w].append((int(eot_id), e, chunk_of(e + EOT_GAP_S))); key = (w, len(streams[w]) - 1); eot_p[key] = ep.p_end; eot_tail[key] = tails; st["eot"] += 1
+        if not last_ok: miss_eot.add(key)
+    return streams, eot_p, dict(tr_input=tr_input, miss=miss, miss_eot=miss_eot, eot_tail=eot_tail, st=st)
+
+
+def eot_after_tails(chunks: List[tuple], srcs: List[list], eot_tail: Dict[Tuple[int, int], list]) -> int:
+    """<EOT>(명시 이벤트)가 그 episode 의 전사·번역 꼬리(eot_tail) 중 나중 것보다 먼저 나왔으면 그 꼬리 바로 뒤로 옮긴다(제자리 수정) → 옮긴 수.
+    꼬리는 <EOT> 의 k_min 이후 청크에 있으므로 청크 규칙(말이 끝난 때)은 그대로고, 다음 episode 원소는 시각이 더 늦어 흐름 안 순서도 그대로다."""
+    n = 0
+    for key, tails in eot_tail.items():
+        pos = {q: (c, e) for c, src in enumerate(srcs) for e, q in enumerate(src) if q is not None}
+        tp = max((pos[t] for t in tails if t in pos), default=None)
+        if key not in pos or tp is None or tp < pos[key]: continue
+        c0, e0 = pos[key]; tid = chunks[c0][1].pop(e0); srcs[c0].pop(e0); c1, e1 = tp
+        if c1 == c0 and e1 > e0: e1 -= 1
+        chunks[c1][1].insert(e1 + 1, tid); srcs[c1].insert(e1 + 1, key); n += 1
+    return n
+
+
+def tag_cst4(chunks: List[tuple], srcs: List[list], streams: List[list], sp: Specials, trans_id: int) -> Tuple[List[tuple], List[list]]:
+    """build_interleaved_events(add_spk_tags=False) 결과(flush 포함)에 태그를 단다. 구간(슬롯, 전사|번역)이 바뀔 때만:
+    전사 → <SPK_x>, 같은 슬롯 전사 바로 뒤의 번역 → <TRANS>, 그 밖의 번역 → <SPK_x><TRANS>(첫 방출 앞도 마찬가지).
+    <EOT>(명시 이벤트)는 화자 수준 — 문맥 슬롯이 같으면 구간(전사·번역)과 상관없이 태그 없이, 다르면 <SPK_x> 를 열고 낸다."""
+    cur = None; oc: List[tuple] = []; os_: List[list] = []
+    for (k, emits), src in zip(chunks, srcs):
+        ne, ns = [], []
+        for e, q in zip(emits, src):
+            if q is not None:
+                s = q[0] % 2
+                if len(streams[q[0]][q[1]]) > 2:
+                    if cur is None or cur[0] != s: ne.append(sp.spk[s]); ns.append(None); cur = (s, 0)
+                else:
+                    kind = int(q[0] >= 2)
+                    if cur != (s, kind):
+                        tags = [sp.spk[s]] if kind == 0 else [trans_id] if cur == (s, 0) else [sp.spk[s], trans_id]
+                        ne += tags; ns += [None] * len(tags); cur = (s, kind)
+            ne.append(e); ns.append(q)
+        oc.append((k, ne)); os_.append(ns)
+    return oc, os_
+
+
+def build_cst4_sequence(streams: List[list], eot_p: Dict[Tuple[int, int], Optional[float]], K: int, prefix: List[int], audio_pad: int, sp: Specials,
+                        trans_id: int, delay: int, mask_chunks=(), decision_weight: float = 0.0, lex_mask=(), lex_chunks=(), tr_input=(),
+                        miss_chunks=(), miss_eot=(), eot_tail: Optional[Dict[Tuple[int, int], list]] = None) -> dict:
+    """네 흐름(window_streams4) → 학습 시퀀스(오디오와 무관한 순수 함수). build_cst_sequence 와 같은 반환 키 + n_tr·eot_moved.
+    label −100: 입력, 마스크 청크(전사 없는 음성), 되살린 전사(lex_mask)와 그 방출 청크 <NEXT_AUDIO>(lex_chunks),
+      입력 문맥으로만 둘 번역(tr_input — 되살린 발화의 번역)과 그것을 여는 태그, 번역 없는 행의 방출 청크(miss_chunks)의 태그·<NEXT_AUDIO>·<EOT>,
+      마지막 발화에 번역이 없는 episode 의 <EOT>(miss_eot). <EOT> soft label 은 Stage 3 규칙 그대로(태그를 그 <EOT> 만을 위해 열었으면 태그 위치).
+    eot_tail(window_streams4): <EOT> 를 그 episode 의 전사·번역 꼬리 뒤로 옮긴다(eot_after_tails)."""
+    streams = [list(s) for s in streams] + [[] for _ in range(4 - len(streams))]
+    chunks, st, srcs = build_interleaved_events(streams, (K - 0.5) * CHUNK_S, sp, chunk_s=CHUNK_S, delay_frames=delay, max_per_chunk=0,
+                                                add_spk_tags=False, with_src=True)
+    n_moved = eot_after_tails(chunks, srcs, eot_tail or {})
+    chunks, srcs = tag_cst4(chunks, srcs, streams, sp, trans_id)
+    ids, is_input, cof, src_at, chunk_at, n_rounds, n_flush = flatten_cst(chunks, srcs, K, prefix, audio_pad, sp)
+    N = len(ids); mask = set(mask_chunks); lex = set(lex_mask); lk = set(lex_chunks); tri = set(tr_input); mk = set(miss_chunks); me = set(miss_eot)
+    labels = [(-100 if inp or (0 <= c < K and c in mask) else t) for t, inp, c in zip(ids, is_input, chunk_at)]
+    for p, q in enumerate(src_at):
+        if is_input[p]: continue
+        key = None if q is None else (q[0], q[1]); ev = key is not None and len(streams[q[0]][q[1]]) > 2
+        if key in tri:                                                                          # 입력만 번역과 그것을 연 태그(<TRANS>, <SPK_x><TRANS>)
+            labels[p] = -100; b = p - 1
+            while b >= 0 and src_at[b] is None and not is_input[b] and (ids[b] == trans_id or ids[b] in sp.spk): labels[b] = -100; b -= 1
+        elif key in lex or key in me: labels[p] = -100
+        elif q is None and ids[p] == sp.next_audio and chunk_at[p] in lk: labels[p] = -100
+        elif chunk_at[p] in mk and (q is None or ev): labels[p] = -100                           # 번역 없는 행: 태그·NEXT·EOT 를 가르치지 않는다
+    pos_weight = [0.0] * N; labels_alt = [-100] * N; soft_w = [1.0] * N; soft_pos: List[int] = []; eot_pos: List[int] = []
+    for p, q in enumerate(src_at):
+        if q is None or (q[0], q[1]) not in eot_p: continue
+        eot_pos.append(p)
+        if labels[p] == -100: continue
+        s = q[0] % 2; nxt = src_at[p + 1] if p + 1 < N else None                                # <EOT> 뒤 <TRANS> = 같은 슬롯 번역이 이어진다(태그는 어차피 필요했다)
+        opened = ids[p - 1] == sp.spk[s] and src_at[p - 1] is None and not (nxt is not None and nxt[0] % 2 == s) and not (p + 1 < N and ids[p + 1] == trans_id)
+        d = p - 1 if opened else p; pe = eot_p[(q[0], q[1])]
+        if pe is None: labels[d] = labels[p] = -100; continue
+        if labels[d] == -100: continue                                                          # 열린 태그가 가려진 구간이면 결정도 없다
+        alt = ids[p + 1]; assert alt != ids[d], f"soft 대안이 결정 토큰과 같다: pos {d}"
+        labels_alt[d] = alt; soft_w[d] = float(pe); soft_pos.append(d)
+        if decision_weight: pos_weight[d] = float(decision_weight)
+    return dict(ids=ids, is_input=is_input, chunk_of=cof, labels=labels, pos_weight=pos_weight, labels_alt=labels_alt, soft_w=soft_w, soft_pos=soft_pos,
+                eot_pos=eot_pos, src_at=src_at, chunk_at=chunk_at, chunks=chunks, srcs=srcs, st=st, n_rounds=n_rounds, n_flush=n_flush, n_eot=len(eot_pos),
+                n_soft=len(soft_pos), flip=None, lex=lex, n_tr=sum(1 for ev in streams[2:] for x in ev if len(x) == 2), eot_moved=n_moved)
+
+
+def read_back4(ids: Sequence[int], is_input: Sequence[bool], sp: Specials, trans_id: int, eot_id: int) -> Tuple[List[List[int]], List[int], List[str]]:
+    """출력 토큰열(입력·<NEXT_AUDIO> 제외)을 네 흐름 태그 규칙으로 다시 읽는다 → (흐름별 글자 토큰 [A전사, B전사, A번역, B번역], 슬롯별 <EOT> 수, 위반 목록).
+    위반: untagged(태그 없이 시작) · trans_untagged(<TRANS> 앞에 화자 문맥 없음) · dup_tag(같은 구간 태그 연속, 사이에 방출 없음)."""
+    out: List[List[int]] = [[], [], [], []]; eots = [0, 0]; cur = None; bad: List[str] = []; since = 0
+    for t, inp in zip(ids, is_input):
+        if inp or t == sp.next_audio: continue
+        if t in sp.spk:
+            s = sp.spk.index(t)
+            if cur == (s, 0) and since == 0: bad.append("dup_tag")
+            cur = (s, 0); since = 0; continue
+        if t == trans_id:
+            if cur is None: bad.append("trans_untagged"); continue
+            if cur[1] == 1 and since == 0: bad.append("dup_tag")
+            cur = (cur[0], 1); since = 0; continue
+        if cur is None: bad.append("untagged"); continue
+        if t == eot_id: eots[cur[0]] += 1; since += 1; continue
+        out[cur[0] + 2 * cur[1]].append(int(t)); since += 1
+    return out, eots, bad
+
+
 class CstDialogueDataset(DialogueWindowDataset):
     """DialogueWindowDataset(창 선택·mono·마스크) + Stage 3 직렬화. exclude: 학습에서 뺄 conv_id(split held-out).
     windows: 주면 그 (conv_id, t0, L) 목록만 쓴다(p2_build_windows 산출물 등). max_speakers: 창 안 화자 상한(초과 창은 버림).
@@ -301,11 +441,16 @@ class CstDialogueDataset(DialogueWindowDataset):
     eot_mode: 'soft'(p_end 그대로) | 'hard'(p_end ≥ 0.5 → 1, 아니면 0; 미관측은 그대로 마스크) — 파일럿 비교용.
     recover: 정체 회복 학습 설정(Recover, 기본 None = 끔) — __getitem__ 에서만 쓴다(모듈 설명).
     spk_activity: True 면 __getitem__ 이 화자 슬롯 활동 activity (K, 2) 를 낸다(모델 add_spk_head 보조 손실의 라벨).
-    revive: 격리 발화 되살리기 토큰(load_revive, 기본 None = 끔) — 모듈 설명. 학습에서만 쓴다."""
+    revive: 격리 발화 되살리기 토큰(load_revive, 기본 None = 끔) — 모듈 설명. 학습에서만 쓴다.
+    Stage 4 번역(기본 끔): trans = 대화 발화 번역 타깃({행 id '<conv>|<화자>|<utt>': {목표 언어: (ids, 시각)}}, ast_dataset.load_ast_targets),
+      trans_input = 되살린 발화의 번역(같은 형식 — 입력 문맥으로만, label −100), ast_frac = 학습 창을 번역 모드로 둘 확률(나머지는 Stage 3 형식),
+      tgt_of = 원천 언어 → 목표 언어 후보(기본 한·독 → 영, 영 → 독·한 중 하나). 번역 모드의 시퀀스는 build_cst4_sequence(네 흐름) 다."""
 
     def __init__(self, dialogues: List[str], tok, delays=(4,), exclude: Optional[set] = None, windows: Optional[List[Tuple[str, float, float]]] = None,
                  max_speakers: int = 2, decision_weight: float = 0.0, backchannel: Optional[Tuple[float, int]] = None, eot_mode: str = "soft",
-                 recover: Optional[Recover] = None, spk_activity: bool = False, revive: Optional[Dict[str, Dict[str, list]]] = None, **kw):
+                 recover: Optional[Recover] = None, spk_activity: bool = False, revive: Optional[Dict[str, Dict[str, list]]] = None,
+                 trans: Optional[Dict[str, Dict[str, tuple]]] = None, trans_input: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.0,
+                 tgt_of: Optional[Dict[str, Sequence[str]]] = None, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if recover is not None and not (0 <= recover.p <= 1 and 0 <= recover.boundary_frac <= 1 and recover.max_lag >= 1 and recover.max_boundaries >= 1):
             raise ValueError(f"recover 범위: {recover}")
@@ -330,6 +475,9 @@ class CstDialogueDataset(DialogueWindowDataset):
         self.spk_ids = (conv("<SPK_A>"), conv("<SPK_B>")); self.eot_id = conv("<EOT>"); self.decision_weight = float(decision_weight)
         self.delay_ids = {d: conv(f"<DELAY_{d}>") for d in self.delays}
         self.csp = Specials(next_audio=self.sp.next_audio, empty_audio=self.sp.empty_audio, spk=self.spk_ids)
+        self.trans, self.trans_input, self.ast_frac = trans or {}, trans_input or {}, float(ast_frac)
+        self.tgt_of = dict(tgt_of) if tgt_of else {"Korean": ["English"], "German": ["English"], "English": ["German", "Korean"]}
+        self.trans_id = conv("<TRANS>") if self.trans or self.trans_input else None
         self.backchannel = tuple(backchannel) if backchannel else None
         self.eps: Dict[str, List[Episode]] = {c: dialogue_episodes(d, self.backchannel) for c, d in self.dlgs.items()}
         keep, n_drop = [], 0
@@ -338,17 +486,67 @@ class CstDialogueDataset(DialogueWindowDataset):
             else: n_drop += 1
         self.items = keep; self.stats.update(cst_windows=len(keep), cst_dropped_speakers=n_drop, cst_dialogues=len(self.dlgs), cst_excluded=len(gone))
 
-    def cst_prefix(self, lang: str, delay: int) -> List[int]:
-        c = self.__dict__.setdefault("_cst_head", {})
-        if (lang, delay) not in c: c[(lang, delay)] = self._pre + self.tok(cst_head_text([lang, lang]), add_special_tokens=False)["input_ids"] + [self.delay_ids[delay]]
-        return list(c[(lang, delay)])
+    def cst_prefix(self, lang: str, delay: int, tgt: Optional[str] = None) -> List[int]:
+        c = self.__dict__.setdefault("_cst_head", {}); key = (lang, delay, tgt)
+        if key not in c: c[key] = self._pre + self.tok(cst_head_text([lang, lang], [tgt, tgt] if tgt else None), add_special_tokens=False)["input_ids"] + [self.delay_ids[delay]]
+        return list(c[key])
+
+    @property
+    def trans_on(self) -> bool:
+        return self.trans_id is not None and self.ast_frac > 0
+
+    def _rows(self, cid: str) -> Dict[Tuple[str, str], dict]:
+        """대화의 행 (화자, 원 utt_id — 정제가 나눈 조각 #n 을 묶은 것, 번역 타깃의 행 id 와 같은 단위 — stage4_dialogue_units)
+        → dict(a, e, kind 'n'(일반: 토큰 있고 격리 아님) | 'r'(되살림 — 번역은 입력만), eps [그 행 조각이 든 ep_id, 시작순], spans [조각 (start, end), 시작순]).
+        격리된 채 남은 조각은 행이 아니다(마스크 구간). 2026-10-19 점검: 일반·되살림 조각이 섞인 행 0, 행이 episode 여럿에 걸침 1–15 %."""
+        c = self.__dict__.setdefault("_row_cache", {})
+        if cid not in c:
+            rv = self.revived.get(cid, {}); piece = {}
+            for u in self.dlgs[cid].utterances:
+                k = "r" if u.utt_id in rv else "n" if u.tokens and not u.flags else None
+                if k: piece[u.utt_id] = (u.utt_id.split("#")[0], k, u.start, u.end)
+            rows: Dict[Tuple[str, str], dict] = {}
+            for ep in self.eps[cid]:
+                for uid in ep.utt_ids:
+                    if uid not in piece: continue
+                    b, k, a, e = piece[uid]; r = rows.setdefault((ep.speaker, b), dict(a=a, e=e, kind=k, eps=[], spans=[]))
+                    r["a"], r["e"] = min(r["a"], a), max(r["e"], e); r["spans"].append((a, e))
+                    if r["kind"] != k: r["kind"] = "r"                                          # 섞인 행은 입력만(점검 0 건)
+                    if not r["eps"] or r["eps"][-1] != ep.ep_id: r["eps"].append(ep.ep_id)
+            for r in rows.values(): r["spans"].sort()
+            c[cid] = rows
+        return c[cid]
+
+    def trans_of(self, cid: str, tgt: str, t0: float):
+        """window_streams4 의 trans_of(ep): episode 안 행마다 번역(되살린 행은 trans_input 에서, 입력만).
+        확정 시각은 전사 토큰처럼 행 조각 구간으로 자른다(clamp_to_spans — 정렬 토큰이 조각 시작보다 앞서면 전사는 시작으로 당겨지는데 번역만 앞서지 않게).
+        행이 episode 여럿에 걸치면 번역 토큰은 확정 시각이 든(그 시각 이후 처음 끝나는) episode 하나에만 준다 — 같은 번역을 두 번 넣지 않게.
+        번역 없는 행(판정 탈락)과 창 시작 전에 시작한 행(번역이 창 밖 원문에 기댄다)은 그 episode 안 구간으로 낸다(사유 miss·cut)."""
+        rows, E = self._rows(cid), self.eps[cid]
+        def f(ep: Episode):
+            toks, gaps, last_ok, seen = [], [], True, set()
+            for uid in ep.utt_ids:
+                key = (ep.speaker, uid.split("#")[0]); r = rows.get(key)
+                if r is None or key in seen: continue
+                seen.add(key); inp = r["kind"] == "r"
+                tt = None if r["a"] < t0 - 1e-6 else (self.trans_input if inp else self.trans).get(f"{cid}|{key[0]}|{key[1]}", {}).get(tgt)
+                if tt is None: gaps.append((max(r["a"], ep.start), min(r["e"], ep.end), "cut" if r["a"] < t0 - 1e-6 else "miss")); last_ok = False; continue
+                own = (lambda t: ep.ep_id) if len(r["eps"]) == 1 else (lambda t: next((j for j in r["eps"] if t <= E[j].end + 1e-6), r["eps"][-1]))
+                ts = [clamp_to_spans(float(t), r["spans"]) for t in tt[1]]
+                toks += [(int(i), t, inp) for i, t in zip(tt[0], ts) if own(t) == ep.ep_id]; last_ok = True
+            return toks, gaps, last_ok
+        return f
 
     def _untranscribed(self, d: Dialogue, u) -> bool:
         return u.utt_id not in self.revived.get(d.conv_id, ()) and super()._untranscribed(d, u)        # 되살린 발화는 마스크 구간이 아니다
 
-    def cst_sequence(self, i: int, delay: int, rng=None, recover: Optional[Recover] = None) -> dict:
-        """창 i·δ 의 시퀀스. rng 를 주면 recover(기본 self.recover)로 정체 회복 구간을 넣을 수 있다 — 평가·점검은 rng 없이(뒤집지 않음)."""
-        cid, t0, L = self.items[i]; d = self.dlgs[cid]; K = int(round(L / CHUNK_S)); eps = self.eps[cid]
+    def cst_sequence(self, i: int, delay: int, rng=None, recover: Optional[Recover] = None, tgt: Optional[str] = None) -> dict:
+        """창 i·δ 의 시퀀스. rng 를 주면 recover(기본 self.recover)로 정체 회복 구간을 넣을 수 있다 — 평가·점검은 rng 없이(뒤집지 않음).
+        tgt(목표 언어)를 주거나, rng 가 있고 번역이 켜져 있으면 ast_frac 확률로 번역 모드(cst4_sequence) — tgt 는 tgt_of 에서 고른다."""
+        cid, t0, L = self.items[i]; d = self.dlgs[cid]
+        if tgt is None and rng is not None and self.trans_on and rng.random() < self.ast_frac and self.tgt_of.get(d.lang): tgt = rng.choice(list(self.tgt_of[d.lang]))
+        if tgt: return self.cst4_sequence(i, delay, tgt)
+        K = int(round(L / CHUNK_S)); eps = self.eps[cid]
         spk = window_speakers(eps, t0, L); streams, eot_p, wst = window_streams(eps, spk, t0, L, self.eot_id)
         if self.eot_mode == "hard": eot_p = {k: (None if v is None else float(v >= 0.5)) for k, v in eot_p.items()}
         rv = [x for x in self.revived.get(cid, {}).values() if x[2] > t0 and x[1] < t0 + L]
@@ -356,7 +554,21 @@ class CstDialogueDataset(DialogueWindowDataset):
                                mask_chunks=self.mask_chunks(d, t0, L, K, delay), decision_weight=self.decision_weight,
                                recover=recover if recover is not None else self.recover, rng=rng, word_start=self.word_start if hasattr(self.tok, "decode") else None,
                                lex_mask=revived_elements(streams, spk, rv, t0) if rv else (), lex_chunks=revived_chunks(rv, spk, t0, K, delay) if rv else ())
-        return dict(s, K=K, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, streams=streams, win=wst)
+        return dict(s, K=K, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, streams=streams, win=wst, tgt=None, n_tr=0)
+
+    def cst4_sequence(self, i: int, delay: int, tgt: str) -> dict:
+        """번역 모드: 같은 언어 두 슬롯(먼저 말한 사람 = A)의 전사 + 목표 언어 번역 네 흐름(window_streams4 → build_cst4_sequence)."""
+        if self.trans_id is None: raise ValueError("번역 타깃(trans)이 없다")
+        cid, t0, L = self.items[i]; d = self.dlgs[cid]; K = int(round(L / CHUNK_S)); eps = self.eps[cid]
+        spk = window_speakers(eps, t0, L); streams, eot_p, info = window_streams4(eps, spk, t0, L, self.eot_id, self.trans_of(cid, tgt, t0))
+        if self.eot_mode == "hard": eot_p = {k: (None if v is None else float(v >= 0.5)) for k, v in eot_p.items()}
+        rv = [x for x in self.revived.get(cid, {}).values() if x[2] > t0 and x[1] < t0 + L]
+        s = build_cst4_sequence(streams, eot_p, K, self.cst_prefix(d.lang, delay, tgt), self.audio_pad, self.csp, self.trans_id, delay,
+                                mask_chunks=self.mask_chunks(d, t0, L, K, delay), decision_weight=self.decision_weight,
+                                lex_mask=revived_elements(streams[:2], spk, rv, t0) if rv else (), lex_chunks=revived_chunks(rv, spk, t0, K, delay) if rv else (),
+                                tr_input=info["tr_input"], miss_chunks=revived_chunks(info["miss"], spk, t0, K, delay), miss_eot=info["miss_eot"], eot_tail=info["eot_tail"])
+        win = dict(info["st"], tr_input=len(info["tr_input"]), eot_moved=s["eot_moved"])
+        return dict(s, K=K, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, streams=streams, win=win, tgt=tgt, tr_input=info["tr_input"], eot_tail=info["eot_tail"])
 
     def word_start(self, tid: int) -> bool:
         """단어 첫 토큰인가(디코드가 공백으로 시작) — 뒤집기 시작·회복 지점 후보(캐시)."""
@@ -372,6 +584,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         """cst_sequence 결과 하나의 검사(target_problems 본체 — dry-run 은 이미 만든 시퀀스를 넘긴다).
         뒤집은 시퀀스(flip): 슬롯별 다시 읽기는 뒤집은 문맥 슬롯 기준, 구간 출력 label 이 모두 −100, 회복 지점 label 이 정답
         (inrun = 그 화자 태그, boundary = 태그 없이 그 원소)인지 본다."""
+        if s.get("tgt"): return self.problems_of4(s)
         P = []
         got, bad = read_back(s["ids"], s["is_input"], self.csp, self.eot_id)
         P += sorted(set(bad)); f = s.get("flip"); lex = s.get("lex") or ()
@@ -395,17 +608,45 @@ class CstDialogueDataset(DialogueWindowDataset):
         if s["n_eot"] != s["win"]["eot"]: P.append("eot_count")
         return P
 
+    def problems_of4(self, s: dict) -> List[str]:
+        """번역 모드 시퀀스 검사: 네 흐름 다시 읽기(흐름별 글자 토큰·슬롯별 <EOT> 수), 태그 규칙, <EOT> 가 그 episode 의 전사·번역 꼬리 뒤인가,
+        입력만 번역·되살린 전사의 label −100, soft 결정 위치."""
+        got, eots, bad = read_back4(s["ids"], s["is_input"], self.csp, self.trans_id, self.eot_id); P = sorted(set(bad))
+        want = [[x[0] for x in ev if len(x) == 2] for ev in s["streams"]]
+        for k in range(4):
+            if got[k] != want[k]: P.append(f"order:{('A', 'B')[k % 2]}{('', '+tr')[k // 2]}")
+        if eots != [sum(1 for ev in (s["streams"][k], s["streams"][2 + k]) for x in ev if len(x) > 2) for k in range(2)]: P.append("eot_slots")
+        at = {(q[0], q[1]): p for p, q in enumerate(s["src_at"]) if q is not None}
+        if any(k in at and any(t in at and at[t] > at[k] for t in tails) for k, tails in (s.get("eot_tail") or {}).items()): P.append("eot_before_tail")
+        hide = set(s.get("lex") or ()) | set(s.get("tr_input") or ())
+        if hide and any(s["labels"][p] != -100 for p, q in enumerate(s["src_at"]) if q is not None and (q[0], q[1]) in hide): P.append("input_only:unmasked")
+        for d in s["soft_pos"]:
+            if s["labels"][d] != s["ids"][d] or not 0.0 <= s["soft_w"][d] <= 1.0 or s["labels_alt"][d] == s["ids"][d]: P.append(f"soft:{d}")
+            if s["ids"][d] not in (self.eot_id,) + self.spk_ids: P.append(f"soft_tok:{d}")
+        if s["n_eot"] != s["win"]["eot"]: P.append("eot_count")
+        return P
+
     def est_lens(self) -> np.ndarray:
-        return super().est_lens() + 16                                                           # 두 슬롯 prefix 가 Phase 2 prefix 보다 길다
+        est = super().est_lens() + 16                                                            # 두 슬롯 prefix 가 Phase 2 prefix 보다 길다
+        if not self.trans_on: return est
+        if getattr(self, "_est4", None) is not None and len(self._est4) == len(self.items): return self._est4
+        per = {}                                                                                 # 번역 모드로 뽑힐 수 있으니 창마다 번역 토큰 n(행의 목표 언어 중 최대) + 태그 2 + n/4 를 더한다
+        for cid in {c for c, _, _ in self.items}:                                                # (전사·번역이 번갈면 태그가 는다 — 2026-10-19 시험 dry-run 에서 +2 만으로는 1 % 과소 추정 11 창)
+            n_of = lambda x, w, b: max((len(v[0]) for v in (self.trans_input if x["kind"] == "r" else self.trans).get(f"{cid}|{w}|{b}", {}).values()), default=0)
+            r = [(x["a"], x["e"], 2 + n + n // 4) for (w, b), x in self._rows(cid).items() for n in (n_of(x, w, b),)]
+            per[cid] = (np.array([x[0] for x in r]), np.array([x[1] for x in r]), np.array([x[2] for x in r]))
+        add = np.array([int(per[c][2][(per[c][1] > t0) & (per[c][0] < t0 + L)].sum()) if len(per[c][0]) else 0 for c, t0, L in self.items], dtype=np.int64)
+        self._est4 = est + add + 12                                                              # translate 줄
+        return self._est4
 
     def __getitem__(self, i):
-        delay = random.choice(self.delays); s = self.cst_sequence(i, delay, rng=random if self.recover else None)
+        delay = random.choice(self.delays); s = self.cst_sequence(i, delay, rng=random if (self.recover or self.trans_on) else None)
         wav = np.asarray(crop_audio(self.mono(s["cid"]), s["t0"], s["t0"] + s["L"]), dtype=np.float32)
         return dict(wav=torch.from_numpy(np.ascontiguousarray(wav)), ids=torch.tensor(s["ids"]), is_audio=torch.tensor([c >= 0 for c in s["chunk_of"]]),
                     chunk_of=torch.tensor(s["chunk_of"]), labels=torch.tensor(s["labels"]), pos_weight=torch.tensor(s["pos_weight"], dtype=torch.float32),
                     labels_alt=torch.tensor(s["labels_alt"]), soft_w=torch.tensor(s["soft_w"], dtype=torch.float32),
                     lang=s["lang"], delay=delay, name=s["corpus"], id=f"{s['cid']}@{s['t0']}", n_text=s["st"].tokens, overflow=s["st"].overflow_tokens,
-                    n_flush=s["n_flush"], K=s["K"], rounds=s["n_rounds"], n_eot=s["n_eot"], n_soft=s["n_soft"], n_spk=len(s["speakers"]), n_flip=int(s["flip"] is not None), n_rev=len(s["lex"]),
+                    n_flush=s["n_flush"], K=s["K"], rounds=s["n_rounds"], n_eot=s["n_eot"], n_soft=s["n_soft"], n_spk=len(s["speakers"]), n_flip=int(s["flip"] is not None), n_rev=len(s["lex"]), n_tr=int(s.get("n_tr", 0)),
                     **({"activity": torch.tensor(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"]), dtype=torch.float)} if self.spk_activity else {}))
 
 
@@ -417,7 +658,7 @@ def collate_cst(batch):
     for i, b in enumerate(batch):
         n = len(b["ids"]); pw[i, :n] = b["pos_weight"]; la[i, :n] = b["labels_alt"]; sw[i, :n] = b["soft_w"]
     out.update(pos_weight=pw, labels_alt=la, soft_w_full=sw, sem_only_mask=out["mask"].bool())
-    for k in ("n_eot", "n_soft", "n_flip", "n_rev"): out[k] = sum(int(b.get(k, 0)) for b in batch)
+    for k in ("n_eot", "n_soft", "n_flip", "n_rev", "n_tr"): out[k] = sum(int(b.get(k, 0)) for b in batch)
     if "activity" in batch[0]:
         Km = max(int(b["K"]) for b in batch); act = torch.zeros(B, Km, batch[0]["activity"].shape[1]); am = torch.zeros(B, Km)
         for i, b in enumerate(batch):

@@ -14,6 +14,9 @@
                         --recover-p > 0: 정체 회복 학습(창 일부에서 문맥 슬롯 한 구간을 뒤집고 회복 지점만 정답 — cst_dialogue 모듈 설명).
                         --spk-act-weight > 0: 화자 슬롯 활동 보조 손실(model.add_spk_head — 청크마다 슬롯 A/B 가 말하는 중인지 BCE, 라벨 cst_dialogue.slot_activity).
                         --revive-dir: asr_disagree 로 격리된 발화를 정렬 토큰째 입력 문맥으로 되살려 화자 태그·<EOT> 를 학습(전사 label −100, 창 목록 그대로).
+                        --dlg-trans(Stage 4, decision-stage4-prep-20261019): 대화 발화 번역 타깃이 있으면 창을 --dlg-ast-frac 확률로 번역 모드(두 화자 전사 +
+                        번역 네 흐름, prefix 에 translate 줄 — cst_dialogue.build_cst4_sequence)로 낸다. 목표 언어는 한·독 → 영, 영 → 독·한(무작위).
+                        --dlg-trans-input: 되살린 발화의 번역(입력 문맥으로만). 끄면(기본) Stage 3 와 같고 지문에 키가 없다.
   sim_ko·sim_en·sim_de  --sim-data 의 합성 2 인 대화(vapasr/data/sim_dialogue — 다른 화자의 실제 발화를 턴으로 번갈아 놓음). 같은 CstDialogueDataset,
                         <EOT> 감독 없음(meta.mask_eot). epoch 기준(anchor)은 실제 대화 셋(dlg_*)만.
   rep_ko·rep_en·rep_de  vapasr/data/ast_dataset.AstStreamDataset — Stage 2 와 같은 단일 화자 ASR·번역 항목(--ast-frac 번역 모드, --offline-frac final 모드).
@@ -51,6 +54,10 @@ g.add_argument("--recover-p", type=float, default=0.0, help="정체 회복 학�
 g.add_argument("--recover-boundary-frac", type=float, default=0.5, help="회복 지점을 다음 교대 경계(태그 없이 이어 씀)로 둘 비율, 나머지는 run 안(바로잡는 태그)")
 g.add_argument("--recover-max-lag", type=int, default=8, help="run 안 회복의 최대 거리(방출 원소 수)")
 g.add_argument("--recover-max-boundaries", type=int, default=2, help="경계 회복을 몇 번째 교대 경계까지 고를지")
+g.add_argument("--dlg-trans", action="append", default=[], help="Stage 4 대화 발화 번역 타깃(stage4_dialogue_units → ast_mono_generate → ast_build_targets --pack; "
+               "반복·쉼표·@목록) — 주면 대화 창을 --dlg-ast-frac 확률로 번역 모드로")
+g.add_argument("--dlg-trans-input", action="append", default=[], help="되살린 격리 발화의 번역 타깃(--revive-dir 과 함께; stage4_dialogue_units --revive-dir) — 입력 문맥으로만")
+g.add_argument("--dlg-ast-frac", type=float, default=0.5, help="번역 타깃이 있을 때 대화 창을 번역 모드로 둘 확률(나머지는 Stage 3 형식)")
 g.add_argument("--spk-act-weight", type=float, default=0.0, help="화자 슬롯 활동 보조 손실 가중(0 = 끔): LLM audio 위치에 2 슬롯 헤드, 청크마다 'A/B 가 말하는 중' BCE")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -217,6 +224,14 @@ from vapasr.data.cst_dialogue import CstDialogueDataset, Recover, load_revive
 rc = Recover(p=a.recover_p, boundary_frac=a.recover_boundary_frac, max_lag=a.recover_max_lag, max_boundaries=a.recover_max_boundaries) if a.recover_p > 0 else None
 split = json.load(open(a.split, encoding="utf-8")); mono = a.mono_cache or os.path.join(a.data, "mono")
 train_sets, dlg_files, revive_files = {}, [], []
+DT, DTI, dt_fp, dti_fp = {}, {}, None, None
+if a.dlg_trans:                                                                               # Stage 4: 대화 발화 번역 타깃(행 id '<conv>|<화자>|<utt>')
+    from vapasr.data.ast_dataset import load_ast_targets
+    if not 0 < a.dlg_ast_frac <= 1: sys.exit(f"--dlg-ast-frac 는 (0, 1] — {a.dlg_ast_frac}")
+    DT, dt_st, dt_fp = load_ast_targets(_paths(a.dlg_trans))
+    if a.dlg_trans_input: DTI, dti_st, dti_fp = load_ast_targets(_paths(a.dlg_trans_input))
+    log(f"  대화 번역 타깃 {dict(dt_st)} · 입력만(되살림) {dict(dti_st) if a.dlg_trans_input else '없음'} · 번역 모드 {a.dlg_ast_frac}")
+elif a.dlg_trans_input: sys.exit("--dlg-trans-input 은 --dlg-trans 와 함께")
 for lang in ("Korean", "English", "German"):
     cs = [c for c in corpora if DLG_LANG[c] == lang]; key = f"dlg_{SHORT[lang]}"
     if not cs or weights.get(key, 0) <= 0: continue
@@ -225,9 +240,13 @@ for lang in ("Korean", "English", "German"):
     rv = [f for f in (os.path.join(a.revive_dir, f"{c}.revive.jsonl") for c in cs) if os.path.exists(f)] if a.revive_dir else []; revive_files += rv
     ds = CstDialogueDataset(files, tok, delays=delays, exclude=held, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac,
                             seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, revive=load_revive(rv) if rv else None)
+                            spk_activity=a.spk_act_weight > 0, revive=load_revive(rv) if rv else None,
+                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac) if DT else {}))
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = lang; train_sets[key] = ds
+    if DT:
+        rows = {(c, w, b) for c in ds.dlgs for (w, b) in ds._rows(c)}; got = sum(1 for c, w, b in rows if f"{c}|{w}|{b}" in DT or f"{c}|{w}|{b}" in DTI)
+        ds.stats.update(trans_rows=len(rows), trans_rows_with_target=got)
     log(f"  {key} {cs}: {len(ds)} 창 · held-out 제외 {ds.stats['cst_excluded']} 대화 · stats {dict(ds.stats)}")
 sim_files = []
 for lang in ("Korean", "English", "German"):                                                  # 합성 대화(sim_dialogue): held-out 과 무관한 학습 재료로만 만들었다
@@ -266,6 +285,9 @@ for key, ds in train_sets.items():                                              
     if key.startswith(("dlg_", "sim_")):
         bad = [(ds.items[i], d, P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d)] if P]
         if rc: bad += [(ds.items[i], d, "flip", P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d, rng=random.Random(a.seed * 7919 + i * 31 + d), recover=rc._replace(p=1.0))] if P]
+        if getattr(ds, "trans_on", False):                                                     # 번역 모드(목표 언어마다)
+            bad += [(ds.items[i], d, tg, P[:3]) for i in idx for d in ds.delays for tg in ds.tgt_of.get(ds.dlgs[ds.items[i][0]].lang, ())
+                    for P in [ds.problems_of(ds.cst_sequence(i, d, tgt=tg))] if P]
     else: bad = [(ds.items[i]["id"], d, P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d)] if P]
     check[key] = dict(n=n, bad=len(bad), examples=[str(b)[:200] for b in bad[:5]]); log(f"  check {key}: {n} 항목 × δ{list(delays)} → 불일치 {len(bad)} {bad[:2]}")
 assert all(v["bad"] == 0 for v in check.values()), f"시퀀스 불변식 위반: {check}"
@@ -277,7 +299,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           replay_files_frac=a.replay_files_frac, replay_max_items=a.replay_max_items, ast_targets_sha256=ast_fp, ast_frac=a.ast_frac, offline_frac=a.offline_frac,
           gain_augment=list(gain) if gain else None, speed_perturb=list(speeds) or None, noise_aug=naug.settings() if naug else None, spec_augment=a.spec_augment,
           max_windows=a.max_windows, seed=a.seed, vocab_sha256=vocab_sha, init=os.path.abspath(a.init), **({"recover": rc._asdict()} if rc else {}), **({"spk_act_weight": a.spk_act_weight} if a.spk_act_weight > 0 else {}),
-          **({"sim_data": file_digest(sim_files)} if sim_files else {}), **({"revive": file_digest(revive_files)} if revive_files else {}))   # 끄면 키 없음(이전 run 지문 그대로)
+          **({"sim_data": file_digest(sim_files)} if sim_files else {}), **({"revive": file_digest(revive_files)} if revive_files else {}),
+          **({"dlg_trans": dt_fp, "dlg_trans_input": dti_fp, "dlg_ast_frac": a.dlg_ast_frac} if DT else {}))   # 끄면 키 없음(이전 run 지문 그대로)
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():
@@ -288,6 +311,10 @@ if a.dry_run:
             return ("A" if s["chunk_of"][p] >= 0 else names.get(t) or repr(tok.decode([t]))) + ("" if lab != -100 or s["is_input"][p] else "[m]") + (f"[p={s['soft_w'][p]}]" if p in s["soft_pos"] else "")
         log(f"dry-run {key} {s['cid']}@{s['t0']} L {s['L']} δ{max(delays)} · 화자 {s['speakers']} · EOT {s['n_eot']} soft {s['n_soft']} · 머리 {tok.decode(s['ids'][:P])!r}")
         log(" ".join(show(p) for p in range(P, min(len(s["ids"]), P + 400))))
+        if getattr(ds, "trans_on", False):                                                     # 번역 모드 예(첫 목표 언어)
+            tg = ds.tgt_of[ds.dlgs[s["cid"]].lang][0]; s = ds.cst_sequence(0, max(delays), tgt=tg); P = len(ds.cst_prefix(ds.dlgs[s["cid"]].lang, max(delays), tg))
+            log(f"dry-run 번역 {key} → {tg} · 번역 토큰 {s['n_tr']} · 입력만 {len(s['tr_input'])} · 창 {s['win']} · 머리 {tok.decode(s['ids'][:P])!r}")
+            log(" ".join(show(p) for p in range(P, min(len(s["ids"]), P + 400))))
         if rc:                                                                                # 뒤집은 예: 회복 지점 앞뒤
             for j in range(min(len(ds), 50)):
                 s = ds.cst_sequence(j, max(delays), rng=random.Random(a.seed + j), recover=rc._replace(p=1.0))
@@ -318,14 +345,14 @@ class Stage3Trainer(VapAsrTrainer):
         kind = "dlg" if "labels_alt" in inputs else "rep"; c = self.__dict__.setdefault("_kind", {})
         c.setdefault(f"loss_{kind}", []).append(float(loss.detach()))
         if kind == "dlg" and getattr(o, "loss_turn", None) is not None: c.setdefault("loss_turn_dlg", []).append(float(o.loss_turn))
-        if kind == "dlg": c.setdefault("soft", []).append(int(inputs.get("n_soft", 0))); c.setdefault("flip", []).append(int(inputs.get("n_flip", 0))); c.setdefault("rev", []).append(int(inputs.get("n_rev", 0)))
+        if kind == "dlg": c.setdefault("soft", []).append(int(inputs.get("n_soft", 0))); c.setdefault("flip", []).append(int(inputs.get("n_flip", 0))); c.setdefault("rev", []).append(int(inputs.get("n_rev", 0))); c.setdefault("tr", []).append(int(inputs.get("n_tr", 0)))
         if kind == "dlg" and getattr(o, "loss_act", None) is not None: c.setdefault("loss_spk", []).append(float(o.loss_act)); c.setdefault("spk_acc", []).append(float(o.act_acc))
         return (loss, o) if return_outputs else loss
     def log(self, logs, start_time=None):
         c = self.__dict__.get("_kind")
         if c and "loss" in logs:
             for k, v in c.items():
-                if v: logs[{"soft": "soft_per_dlg_step", "flip": "flip_per_dlg_step", "rev": "rev_per_dlg_step"}.get(k, k)] = round(sum(v) / len(v), 4)
+                if v: logs[{"soft": "soft_per_dlg_step", "flip": "flip_per_dlg_step", "rev": "rev_per_dlg_step", "tr": "tr_per_dlg_step"}.get(k, k)] = round(sum(v) / len(v), 4)
             self._kind = {}
         return super().log(logs, start_time)
 

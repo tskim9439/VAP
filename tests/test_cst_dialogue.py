@@ -1,9 +1,11 @@
 """Stage 3 CST 대화 직렬화(vapasr/data/cst_dialogue.py) — 두 슬롯 prefix, 화자 태그, 턴 끝 <EOT> soft label, flush 태그, 마스크·미관측,
-데이터셋(창 화자 순서·3 화자 창 제외·held-out 제외)·collate, 모델 sem_only_mask·<EOT> 행 재초기화. 모델·tokenizer 다운로드 없이 CPU."""
+데이터셋(창 화자 순서·3 화자 창 제외·held-out 제외)·collate, 모델 sem_only_mask·<EOT> 행 재초기화, Stage 4 네 흐름(전사·번역).
+모델·tokenizer 다운로드 없이 CPU."""
 import json
 import numpy as np, pytest, torch, torch.nn.functional as F
 from vapasr.data.cst_dialogue import (cst_head_text, build_cst_sequence, read_back, tag_flush, window_speakers, window_streams, dialogue_episodes, is_backchannel,
-                                      CstDialogueDataset, collate_cst, Recover, pick_flip, retag, slot_activity, load_revive)
+                                      CstDialogueDataset, collate_cst, Recover, pick_flip, retag, slot_activity, load_revive, build_cst4_sequence, read_back4,
+                                      clamp_to_spans)
 from vapasr.data.dialogue import Dialogue, Utterance, ChannelRef, chunk_of
 from vapasr.data.interleave import Specials
 from vapasr.data.semcommit_dataset import build_interleaved_events
@@ -292,6 +294,129 @@ def test_dataset_revive_restores_turn_tags_inside_masked_turns(tmp_path):
     assert collate_cst([b[0]])["n_rev"] == 4 and collate_cst([a[0]])["n_rev"] == 0
     p = tmp_path / "test.revive.jsonl"; p.write_text(json.dumps({"conv_id": "c1", "utts": {k: [list(t) for t in v] for k, v in rv["c1"].items()}}) + "\n")
     assert load_revive([str(p)]) == rv
+
+
+# ── Stage 4: 두 화자 × (전사·번역) 네 흐름
+TR = 1005
+
+
+def test_cst4_tags_translation_and_eot_after_translation():
+    st = [[(10, 0.5), (11, 1.0)], [(20, 1.6), (21, 2.0)], [(30, 0.5), (31, 1.0), ev(1.1)], [(40, 2.0), ev(2.1)]]   # 흐름 2·3 = A·B 번역, <EOT> 는 번역 꼬리 뒤
+    s = build_cst4_sequence(st, {(2, 2): 0.8, (3, 1): 1.0}, 50, PRE, PAD, SP, TR, delay=2)
+    assert [t for t in body(s) if t != NEXT] == [A, 10, TR, 30, A, 11, TR, 31, EOT, B, 20, 21, TR, 40, EOT]   # 같은 청크 안은 (시각, 흐름) — 전사가 먼저
+    assert read_back4(s["ids"], s["is_input"], SP, TR, EOT) == ([[10, 11], [20, 21], [30, 31], [40]], [1, 1], [])
+    i0, i1 = s["eot_pos"]; assert s["chunk_of"][i0 - 1] == 16 and s["chunk_of"][i1 - 1] == 29 and s["n_tr"] == 3          # 청크 = max(번역 꼬리 14, ⌊1.34/0.08⌋)
+    assert s["soft_pos"] == [i0, i1] and [s["labels_alt"][d] for d in s["soft_pos"]] == [NEXT, NEXT] and s["soft_w"][i0] == 0.8
+    assert all(s["labels"][p] == t for p, t in enumerate(s["ids"]) if not s["is_input"][p])                    # 마스크가 없으면 출력 전부 학습
+
+
+def test_cst4_eot_decision_with_opened_tag_and_trans_after_eot():
+    st = [[(10, 0.5)], [(20, 0.65)], [(30, 0.5), ev(0.6)], []]                                    # B 가 A 의 <EOT> 청크(10)에 먼저 말한다 → A 태그를 그 <EOT> 만을 위해 연다
+    s = build_cst4_sequence(st, {(2, 1): 1.0}, 50, PRE, PAD, SP, TR, delay=2)
+    d = s["soft_pos"][0]; assert s["ids"][d - 2: d + 3] == [B, 20, A, EOT, NEXT] and s["labels_alt"][d] == NEXT
+    st = [[(10, 0.1)], [(20, 0.7)], [(30, 0.1), (EOT, 0.2, 12), (35, 0.75)], []]                 # flush: B 20 → A <EOT> → A 번역 35(<TRANS>) — A 태그는 어차피 필요했다
+    s = build_cst4_sequence(st, {(2, 1): 0.5}, 12, PRE, PAD, SP, TR, delay=4)
+    tail = s["ids"][s["ids"].index(EMPTY):]; assert tail[:8] == [EMPTY, B, 20, A, EOT, TR, 35, NEXT]
+    d = s["soft_pos"][0]; assert s["ids"][d] == EOT and s["labels_alt"][d] == TR and s["soft_w"][d] == 0.5      # 결정 = <EOT>(대안 <TRANS>)
+    assert read_back4(s["ids"], s["is_input"], SP, TR, EOT)[1:] == ([1, 0], [])
+
+
+def test_cst4_input_only_translation_and_missing_rows():
+    st = [[(10, 0.5), (11, 1.0)], [(20, 1.6), (21, 2.0), ev(2.1)], [(30, 0.5), (31, 1.0), ev(1.1)], []]
+    eot = {(2, 2): 1.0, (1, 2): 1.0}; base = build_cst4_sequence(st, eot, 50, PRE, PAD, SP, TR, delay=2)
+    s = build_cst4_sequence(st, eot, 50, PRE, PAD, SP, TR, delay=2, tr_input={(2, 0), (2, 1)})       # A 번역 = 되살린 발화의 번역(입력만)
+    assert s["ids"] == base["ids"] and lab_of(s, 30) == lab_of(s, 31) == -100 and lab_of(s, 10) == 10
+    trs = [p for p, t in enumerate(s["ids"]) if t == TR]; assert all(s["labels"][p] == -100 for p in trs)      # 입력만 번역을 연 <TRANS> 도
+    assert [s["labels"][p] for p in s["eot_pos"]] == [EOT, EOT] and s["soft_pos"] == base["soft_pos"]        # <EOT> 결정은 학습
+    mk = set(range(chunk_of(1.3, 2), chunk_of(2.0, 2) + 1))                                     # B(1.3–2.0 s) 행에 번역이 없다
+    m = build_cst4_sequence(st, eot, 50, PRE, PAD, SP, TR, delay=2, miss_chunks=mk, miss_eot={(1, 2)})
+    assert lab_of(m, 20) == 20 and lab_of(m, 21) == 21 and m["labels"][m["ids"].index(B)] == -100           # 전사는 학습, 태그·NEXT 는 가린다
+    nxt = [p for p, t in enumerate(m["ids"]) if t == NEXT and not m["is_input"][p]]
+    assert all((m["labels"][p] == -100) == (m["chunk_at"][p] in mk) for p in nxt) and m["labels"][m["eot_pos"][1]] == -100 and len(m["soft_pos"]) == 1
+    assert read_back4([TR, 30], [False, False], SP, TR, EOT)[2] == ["trans_untagged", "untagged"]
+
+
+def test_cst4_eot_waits_for_transcript_tail():
+    st = [[(10, 0.5), (11, 1.0)], [], [(30, 0.5), ev(1.0)], []]                                   # 번역은 첫 단어에서 끝났다 — <EOT>(번역 흐름)는 전사 꼬리 11 을 기다려야 한다
+    raw = build_cst4_sequence(st, {(2, 1): 1.0}, 50, PRE, PAD, SP, TR, delay=4)
+    assert [t for t in body(raw) if t != NEXT] == [A, 10, TR, 30, EOT, A, 11] and raw["eot_moved"] == 0      # 같은 흐름 앞 원소만 기다리면 말 끝 단어보다 먼저
+    s = build_cst4_sequence(st, {(2, 1): 1.0}, 50, PRE, PAD, SP, TR, delay=4, eot_tail={(2, 1): [(0, 1), (2, 0)]})
+    assert [t for t in body(s) if t != NEXT] == [A, 10, TR, 30, A, 11, EOT] and s["eot_moved"] == 1
+    p = s["eot_pos"][0]; assert s["chunk_at"][p] == s["chunk_at"][p - 1] == chunk_of(1.0, 4) and s["soft_pos"] == [p] and s["labels_alt"][p] == NEXT
+    assert read_back4(s["ids"], s["is_input"], SP, TR, EOT) == ([[10, 11], [], [30], []], [1, 0], [])
+
+
+def test_clamp_to_spans():
+    sp = [(1.0, 2.0), (2.5, 3.0)]
+    assert [clamp_to_spans(t, sp) for t in (0.5, 1.0, 1.7, 2.2, 2.5, 2.9, 3.4)] == [1.0, 1.0, 1.7, 2.5, 2.5, 2.9, 3.0]   # 쉼(2.0–2.5)은 다음 조각 시작
+
+
+def make4(tmp_path):
+    """make() 대화 + 행 번역. x4 를 두 조각(x4#0 24–25 s, x4#1 25.5–26.4 s — 0.5 s 쉼이라 episode 둘)으로 나누고, y1 은 격리(되살리기 재료),
+    y2 는 번역이 없다(판정 탈락). 번역 토큰 = 행 원문 단어 끝 시각(x: 31·32, y: 41·42, 되살린 y1: 45·46).
+    x6 은 0.1 s 쉼의 두 조각(같은 episode)이고 둘째 조각 토큰 시각 36.95 가 조각 시작 37.0 보다 앞선다(전사는 37.0 으로 당겨진다).
+    y3 의 번역은 첫 단어(22 s)에서 끝난다(<EOT> 가 전사 꼬리 23 s 를 기다려야 한다)."""
+    q = make(tmp_path); d = Dialogue.from_json(open(q).read()); us = []; rv = {}
+    for u in d.utterances:
+        if u.utt_id == "x4":
+            us += [Utterance("x", 24.0, 25.0, "", "", tokens=[(11, 24.5)], utt_id="x4#0"), Utterance("x", 25.5, 26.4, "", "", tokens=[(12, 26.0)], utt_id="x4#1")]; continue
+        if u.utt_id == "x6":
+            us += [Utterance("x", 36.0, 36.9, "", "", tokens=[(11, 36.5)], utt_id="x6#0"), Utterance("x", 37.0, 38.0, "", "", tokens=[(12, 36.95)], utt_id="x6#1")]; continue
+        if u.utt_id == "y1": rv[u.utt_id] = list(u.tokens); u.flags = ["asr_disagree"]; u.text = ""; u.tokens = None
+        us.append(u)
+    d.utterances = us; open(q, "w").write(d.to_json() + "\n")
+    tr, tri = {}, {}
+    for u in us:
+        b = u.utt_id.split("#")[0]; rid = f"c1|{u.speaker}|{b}"
+        if b == "y2" or rid in tr: continue
+        if b == "x4": tr[rid] = {"English": (np.array([31, 32]), np.array([24.5, 26.0]))}
+        elif b == "x6": tr[rid] = {"English": (np.array([31, 32]), np.array([36.5, 36.95]))}
+        elif b == "y3": tr[rid] = {"English": (np.array([41, 42]), np.array([22.0, 22.0]))}
+        elif b == "y1": tri[rid] = {"English": (np.array([45, 46]), np.array([u.start + 1.0, u.end]))}
+        else: tr[rid] = {"English": (np.array([31, 32] if u.speaker == "x" else [41, 42]), np.array([u.start + 1.0, u.end]))}
+    return q, {"c1": rv}, tr, tri
+
+
+def tok4():
+    t = FakeTok(); t.add_tokens(["<TRANS>"]); return t
+
+
+def test_dataset_stage4_translation_mode(tmp_path):
+    import random
+    q, rv, tr, tri = make4(tmp_path)
+    s3 = CstDialogueDataset([q], tok4(), delays=(2, 4), window_s=(20.0, 20.0), hop_s=5.0, seed=1, revive=rv)
+    ds = CstDialogueDataset([q], tok4(), delays=(2, 4), window_s=(20.0, 20.0), hop_s=5.0, seed=1, revive=rv, trans=tr, trans_input=tri, ast_frac=0.5)
+    assert ds.items == s3.items and ds.trans_on and ds.trans_id == ds.tok.convert_tokens_to_ids("<TRANS>")
+    rows = ds._rows("c1"); assert rows[("x", "x4")]["eps"] == [e.ep_id for e in ds.eps["c1"] if e.utt_ids[0].startswith("x4")] and len(rows[("x", "x4")]["eps"]) == 2
+    assert rows[("y", "y1")]["kind"] == "r" and rows[("x", "x0")]["kind"] == "n"
+    for i in range(len(ds)):
+        for dl in (2, 4):
+            assert ds.cst_sequence(i, dl)["ids"] == s3.cst_sequence(i, dl)["ids"]                 # rng·tgt 없음 = Stage 3 형식
+            s = ds.cst_sequence(i, dl, tgt="English"); assert ds.problems_of(s) == [], (ds.items[i], dl, ds.problems_of(s))
+            cid, t0, L = ds.items[i]; A_, B_ = (s["streams"][2], s["streams"][3]) if s["speakers"][0] == "x" else (s["streams"][3], s["streams"][2])
+            pieces = lambda b: sorted((u.start, u.end) for u in ds.dlgs["c1"].utterances if u.utt_id.split("#")[0] == b)
+            want = sorted(round(t - t0, 3) for b, ts in ((r.split("|")[2], v["English"][1]) for r, v in tr.items() if r.startswith("c1|x|"))
+                          for t in (clamp_to_spans(float(x), pieces(b)) for x in ts) if t0 <= t <= t0 + L and pieces(b)[0][0] >= t0 - 1e-6)
+            assert sorted(round(x[1], 3) for x in A_ if len(x) == 2) == want                      # x 번역: 행마다 한 번(x4 두 조각 → 31 은 앞 episode, 32 는 뒤)
+            if t0 <= 36.0 and t0 + L >= 38.0:                                                     # x6: 번역 32(36.95 → 37.0)는 전사 12(37.0) 뒤
+                at = {(q[0], q[1]): p for p, q in enumerate(s["src_at"]) if q is not None}; sx = s["speakers"].index("x")
+                pt = [at[(2 + sx, j)] for j, x in enumerate(s["streams"][2 + sx]) if len(x) == 2 and abs(x[1] - (37.0 - t0)) < 1e-6]
+                pw = [at[(sx, j)] for j, x in enumerate(s["streams"][sx]) if len(x) == 2 and abs(x[1] - (37.0 - t0)) < 1e-6]
+                assert len(pt) == len(pw) == 1 and pt[0] > pw[0]
+            if t0 <= 21.0 and t0 + L >= 23.3 and dl >= 4: assert s["win"]["eot_moved"] >= 1                 # y3: <EOT> 를 전사 꼬리 뒤로 옮겼다
+            ins = [p for p, x in enumerate(s["src_at"]) if x is not None and (x[0], x[1]) in s["tr_input"]]
+            assert all(s["ids"][p] in (45, 46) and s["labels"][p] == -100 for p in ins) and len(ins) == sum(1 for x in B_ if len(x) == 2 and x[0] in (45, 46))
+            assert s["ids"][len(ds._pre):].index(ds.delay_ids[dl]) == len(ds.cst_prefix("Korean", dl, "English")) - len(ds._pre) - 1
+    w = CstDialogueDataset([q], tok4(), delays=(4,), windows=[("c1", 11.0, 20.0)], revive=rv, trans=tr, trans_input=tri, ast_frac=1.0)   # y2(15–17 s) 번역 없음
+    s = w.cst_sequence(0, 4, tgt="English"); assert w.problems_of(s) == [] and s["win"]["miss_miss"] == 1 and s["win"]["tr_input"] == 0
+    e = [p for p in s["eot_pos"] if abs(s["streams"][s["src_at"][p][0]][s["src_at"][p][1]][1] - (17.0 - 11.0)) < 1e-6]
+    assert len(e) == 1 and s["labels"][e[0]] == -100 and s["src_at"][e[0]][0] < 2                    # 마지막 행에 번역이 없는 episode: <EOT> 는 전사 흐름에, 학습 안 함
+    c = CstDialogueDataset([q], tok4(), delays=(4,), windows=[("c1", 25.2, 20.0)], revive=rv, trans=tr, trans_input=tri, ast_frac=1.0)   # x4 두 조각 사이에서 시작
+    s = c.cst_sequence(0, 4, tgt="English"); assert c.problems_of(s) == [] and s["win"]["miss_cut"] == 1 and 12 in [x[0] for x in s["streams"][0]]
+    assert all(abs(x[1] - (26.0 - 25.2)) > 1e-6 for x in s["streams"][2])                          # 창 밖 원문에 기대는 번역(x4 의 32)은 넣지 않는다(전사는 Stage 3 규칙대로)
+    assert (ds.est_lens() > s3.est_lens()).all()
+    random.seed(3); b = [ds[i] for i in range(len(ds))]; assert any(x["n_tr"] > 0 for x in b) and any(x["n_tr"] == 0 for x in b)   # ast_frac 0.5: 두 형식이 섞인다
+    cc = collate_cst(b); assert cc["n_tr"] == sum(x["n_tr"] for x in b)
 
 
 # ── 모델: sem_only_mask · <EOT> soft · 예약 <EOT> 행 재초기화

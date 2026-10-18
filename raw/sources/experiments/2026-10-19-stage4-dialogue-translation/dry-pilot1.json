@@ -1,0 +1,907 @@
+{
+ "args": {
+  "data": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "tokenizer": "/soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000",
+  "split": "/soundai/users/tskim/VAPKT-data/data/phase2/splits/v2.json",
+  "trans": "/soundai/users/tskim/VAPKT-data/data/stage4-dlg-units-pilot/targets-fix-gen-v3-bf16",
+  "trans_input": "",
+  "revive_dir": "/soundai/users/tskim/VAPKT-data/data/phase2/revive-asr-v2",
+  "corpora": "aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc",
+  "delays": "4,5,6,7,8,9,10",
+  "backchannel": "1.0,3",
+  "out": "/soundai/users/tskim/VAPKT-data/tmp/stage4-dry-pilot.json",
+  "audio_sample": 10,
+  "procs": 7,
+  "max_windows": 0,
+  "seed": 0,
+  "only_translated": true,
+  "show": 2
+ },
+ "corpora": {
+  "aihub71631": {
+   "corpus": "aihub71631",
+   "held_out_dialogues": 59,
+   "stats": {
+    "dialogues": 757,
+    "windows": 22426,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 2961,
+    "no_start": 44239,
+    "windows_with_mask": 24109,
+    "random_start": 0,
+    "cst_revived": 82524,
+    "cst_revive_missing": 0,
+    "cst_windows": 20540,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 698,
+    "cst_excluded": 59
+   },
+   "trans_rows": 168,
+   "trans_input_rows": 0,
+   "trans_load": {
+    "files": 4,
+    "rows": 5101,
+    "tgt_English": 3171,
+    "tgt_German": 970,
+    "tgt_Korean": 960
+   },
+   "windows": 39,
+   "sec_init": 18.8,
+   "prefix": {
+    "English": {
+     "text": "language <SPK_A>Korean <SPK_B>Korean\ntranslate <SPK_A>English <SPK_B>English<asr_text>",
+     "n_tokens": 27,
+     "ok": true
+    }
+   },
+   "windows_checked": 39,
+   "sequences_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "sec_check": 0.1,
+   "by_tgt": {
+    "English": {
+     "seq_len": {
+      "p50": 999.0,
+      "p90": 1231.0,
+      "p99": 1355.82,
+      "p100": 1398.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.038,
+      "p90": 1.121,
+      "p100": 1.158
+     },
+     "est_under": 0,
+     "est_ratio": {
+      "p50": 0.939,
+      "p90": 0.976,
+      "p100": 0.986
+     },
+     "tr_tokens": {
+      "p10": 3.2,
+      "p50": 21.0,
+      "p90": 79.4
+     },
+     "trans_tags_per_window": 4.18,
+     "spk_tags_per_window": 9.59,
+     "spk_tags_per_window_stage3": 5.85,
+     "masked_label_frac": {
+      "p50": 0.603,
+      "p90": 0.858
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.538,
+      "p90": 0.826
+     },
+     "tr_in_flush": 15,
+     "eot_total": 190,
+     "eot_after_translation": 81,
+     "soft_total": 65,
+     "soft_total_stage3": 169,
+     "rows_without_translation": {
+      "miss": 127,
+      "cut": 17,
+      "total": 144
+     },
+     "window_stats": {
+      "eot": 190,
+      "eot_truncated": 32,
+      "eot_no_tokens": 61,
+      "eot_backchannel": 28,
+      "tr_tokens": 1298,
+      "tr_input": 0,
+      "miss_cut": 17,
+      "miss_miss": 127
+     }
+    }
+   },
+   "audio_sample": {
+    "n": 10,
+    "len_ok": true,
+    "n_tr": [
+     78,
+     0,
+     4,
+     0,
+     18,
+     35,
+     75,
+     35,
+     75,
+     85
+    ]
+   },
+   "sec": 19.8
+  },
+  "aihub134-1": {
+   "corpus": "aihub134-1",
+   "held_out_dialogues": 155,
+   "stats": {
+    "dialogues": 1492,
+    "windows": 29528,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 3796,
+    "no_start": 88370,
+    "windows_with_mask": 31354,
+    "random_start": 0,
+    "cst_revived": 102644,
+    "cst_revive_missing": 17989,
+    "cst_windows": 26465,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 1337,
+    "cst_excluded": 155
+   },
+   "trans_rows": 580,
+   "trans_input_rows": 0,
+   "trans_load": {
+    "files": 4,
+    "rows": 5101,
+    "tgt_English": 3171,
+    "tgt_German": 970,
+    "tgt_Korean": 960
+   },
+   "windows": 46,
+   "sec_init": 31.5,
+   "prefix": {
+    "English": {
+     "text": "language <SPK_A>Korean <SPK_B>Korean\ntranslate <SPK_A>English <SPK_B>English<asr_text>",
+     "n_tokens": 27,
+     "ok": true
+    }
+   },
+   "windows_checked": 46,
+   "sequences_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "sec_check": 0.2,
+   "by_tgt": {
+    "English": {
+     "seq_len": {
+      "p50": 1089.0,
+      "p90": 1346.0,
+      "p99": 1409.55,
+      "p100": 1419.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.106,
+      "p90": 1.149,
+      "p100": 1.18
+     },
+     "est_under": 0,
+     "est_ratio": {
+      "p50": 0.952,
+      "p90": 0.967,
+      "p100": 0.983
+     },
+     "tr_tokens": {
+      "p10": 40.0,
+      "p50": 64.0,
+      "p90": 112.5
+     },
+     "trans_tags_per_window": 14.83,
+     "spk_tags_per_window": 29.87,
+     "spk_tags_per_window_stage3": 18.98,
+     "masked_label_frac": {
+      "p50": 0.432,
+      "p90": 0.574
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.451,
+      "p90": 0.592
+     },
+     "tr_in_flush": 30,
+     "eot_total": 469,
+     "eot_after_translation": 217,
+     "soft_total": 183,
+     "soft_total_stage3": 450,
+     "rows_without_translation": {
+      "miss": 376,
+      "cut": 2,
+      "total": 378
+     },
+     "window_stats": {
+      "eot": 469,
+      "eot_truncated": 44,
+      "eot_no_tokens": 23,
+      "eot_backchannel": 250,
+      "tr_tokens": 3291,
+      "tr_input": 0,
+      "miss_miss": 376,
+      "miss_cut": 2
+     }
+    }
+   },
+   "audio_sample": {
+    "n": 10,
+    "len_ok": true,
+    "n_tr": [
+     113,
+     108,
+     93,
+     60,
+     102,
+     73,
+     94,
+     49,
+     91,
+     37
+    ]
+   },
+   "sec": 32.3
+  },
+  "aihub134-2": {
+   "corpus": "aihub134-2",
+   "held_out_dialogues": 223,
+   "stats": {
+    "dialogues": 1649,
+    "windows": 49911,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 21675,
+    "no_start": 69919,
+    "windows_with_mask": 68235,
+    "random_start": 0,
+    "cst_revived": 163951,
+    "cst_revive_missing": 8775,
+    "cst_windows": 43749,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 1426,
+    "cst_excluded": 223
+   },
+   "trans_rows": 199,
+   "trans_input_rows": 0,
+   "trans_load": {
+    "files": 4,
+    "rows": 5101,
+    "tgt_English": 3171,
+    "tgt_German": 970,
+    "tgt_Korean": 960
+   },
+   "windows": 86,
+   "sec_init": 31.5,
+   "prefix": {
+    "English": {
+     "text": "language <SPK_A>Korean <SPK_B>Korean\ntranslate <SPK_A>English <SPK_B>English<asr_text>",
+     "n_tokens": 27,
+     "ok": true
+    }
+   },
+   "windows_checked": 86,
+   "sequences_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "sec_check": 0.2,
+   "by_tgt": {
+    "English": {
+     "seq_len": {
+      "p50": 921.5,
+      "p90": 1155.5,
+      "p99": 1281.1,
+      "p100": 1310.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.062,
+      "p90": 1.1,
+      "p100": 1.158
+     },
+     "est_under": 1,
+     "est_ratio": {
+      "p50": 0.956,
+      "p90": 0.985,
+      "p100": 1.001
+     },
+     "tr_tokens": {
+      "p10": 11.5,
+      "p50": 34.5,
+      "p90": 69.5
+     },
+     "trans_tags_per_window": 6.7,
+     "spk_tags_per_window": 9.44,
+     "spk_tags_per_window_stage3": 3.81,
+     "masked_label_frac": {
+      "p50": 0.129,
+      "p90": 0.334
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.118,
+      "p90": 0.337
+     },
+     "tr_in_flush": 31,
+     "eot_total": 420,
+     "eot_after_translation": 226,
+     "soft_total": 231,
+     "soft_total_stage3": 418,
+     "rows_without_translation": {
+      "miss": 313,
+      "cut": 1,
+      "total": 314
+     },
+     "window_stats": {
+      "eot": 420,
+      "eot_truncated": 40,
+      "eot_no_tokens": 9,
+      "eot_backchannel": 233,
+      "tr_tokens": 3208,
+      "tr_input": 0,
+      "miss_miss": 313,
+      "miss_cut": 1
+     }
+    }
+   },
+   "audio_sample": {
+    "n": 10,
+    "len_ok": true,
+    "n_tr": [
+     36,
+     12,
+     17,
+     70,
+     21,
+     22,
+     39,
+     48,
+     48,
+     46
+    ]
+   },
+   "sec": 32.2
+  },
+  "otoSpeech": {
+   "corpus": "otoSpeech",
+   "held_out_dialogues": 38,
+   "stats": {
+    "dialogues": 420,
+    "windows": 7973,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 48,
+    "no_start": 29135,
+    "windows_with_mask": 885,
+    "random_start": 0,
+    "cst_windows": 7245,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 382,
+    "cst_excluded": 38
+   },
+   "trans_rows": 787,
+   "trans_input_rows": 0,
+   "trans_load": {
+    "files": 4,
+    "rows": 5101,
+    "tgt_English": 3171,
+    "tgt_German": 970,
+    "tgt_Korean": 960
+   },
+   "windows": 44,
+   "sec_init": 8.6,
+   "prefix": {
+    "German": {
+     "text": "language <SPK_A>English <SPK_B>English\ntranslate <SPK_A>German <SPK_B>German<asr_text>",
+     "n_tokens": 25,
+     "ok": true
+    },
+    "Korean": {
+     "text": "language <SPK_A>English <SPK_B>English\ntranslate <SPK_A>Korean <SPK_B>Korean<asr_text>",
+     "n_tokens": 27,
+     "ok": true
+    }
+   },
+   "windows_checked": 44,
+   "sequences_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "sec_check": 0.3,
+   "by_tgt": {
+    "German": {
+     "seq_len": {
+      "p50": 1123.0,
+      "p90": 1427.4,
+      "p99": 1455.13,
+      "p100": 1459.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.258,
+      "p90": 1.308,
+      "p100": 1.347
+     },
+     "est_under": 0,
+     "est_ratio": {
+      "p50": 0.953,
+      "p90": 0.981,
+      "p100": 0.99
+     },
+     "tr_tokens": {
+      "p10": 99.2,
+      "p50": 140.0,
+      "p90": 206.7
+     },
+     "trans_tags_per_window": 36.89,
+     "spk_tags_per_window": 43.02,
+     "spk_tags_per_window_stage3": 11.64,
+     "masked_label_frac": {
+      "p50": 0.0,
+      "p90": 0.023
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.0,
+      "p90": 0.0
+     },
+     "tr_in_flush": 92,
+     "eot_total": 321,
+     "eot_after_translation": 318,
+     "soft_total": 314,
+     "soft_total_stage3": 318,
+     "rows_without_translation": {
+      "miss": 4,
+      "cut": 1,
+      "total": 5
+     },
+     "window_stats": {
+      "eot": 321,
+      "eot_truncated": 33,
+      "eot_no_tokens": 0,
+      "eot_backchannel": 231,
+      "tr_tokens": 6360,
+      "tr_input": 0,
+      "miss_miss": 4,
+      "miss_cut": 1
+     }
+    },
+    "Korean": {
+     "seq_len": {
+      "p50": 1141.0,
+      "p90": 1416.9,
+      "p99": 1475.13,
+      "p100": 1479.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.262,
+      "p90": 1.31,
+      "p100": 1.342
+     },
+     "est_under": 0,
+     "est_ratio": {
+      "p50": 0.948,
+      "p90": 0.973,
+      "p100": 0.996
+     },
+     "tr_tokens": {
+      "p10": 104.6,
+      "p50": 158.5,
+      "p90": 241.3
+     },
+     "trans_tags_per_window": 26.11,
+     "spk_tags_per_window": 32.82,
+     "spk_tags_per_window_stage3": 11.64,
+     "masked_label_frac": {
+      "p50": 0.0,
+      "p90": 0.044
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.0,
+      "p90": 0.0
+     },
+     "tr_in_flush": 142,
+     "eot_total": 321,
+     "eot_after_translation": 305,
+     "soft_total": 304,
+     "soft_total_stage3": 318,
+     "rows_without_translation": {
+      "miss": 16,
+      "cut": 1,
+      "total": 17
+     },
+     "window_stats": {
+      "eot": 321,
+      "eot_truncated": 33,
+      "eot_no_tokens": 0,
+      "eot_backchannel": 231,
+      "tr_tokens": 7215,
+      "tr_input": 0,
+      "miss_miss": 16,
+      "miss_cut": 1
+     }
+    }
+   },
+   "audio_sample": {
+    "n": 10,
+    "len_ok": true,
+    "n_tr": [
+     130,
+     157,
+     189,
+     44,
+     110,
+     29,
+     184,
+     154,
+     132,
+     137
+    ]
+   },
+   "sec": 9.3
+  },
+  "kec": {
+   "corpus": "kec",
+   "held_out_dialogues": 21,
+   "stats": {
+    "dialogues": 171,
+    "windows": 2444,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 37,
+    "no_start": 7825,
+    "windows_with_mask": 1791,
+    "random_start": 0,
+    "cst_revived": 4079,
+    "cst_revive_missing": 0,
+    "cst_windows": 2165,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 150,
+    "cst_excluded": 21
+   },
+   "trans_rows": 809,
+   "trans_input_rows": 0,
+   "trans_load": {
+    "files": 4,
+    "rows": 5101,
+    "tgt_English": 3171,
+    "tgt_German": 970,
+    "tgt_Korean": 960
+   },
+   "windows": 61,
+   "sec_init": 3.6,
+   "prefix": {
+    "English": {
+     "text": "language <SPK_A>German <SPK_B>German\ntranslate <SPK_A>English <SPK_B>English<asr_text>",
+     "n_tokens": 25,
+     "ok": true
+    }
+   },
+   "windows_checked": 61,
+   "sequences_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "sec_check": 0.2,
+   "by_tgt": {
+    "English": {
+     "seq_len": {
+      "p50": 1099.0,
+      "p90": 1353.0,
+      "p99": 1423.0,
+      "p100": 1426.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.173,
+      "p90": 1.204,
+      "p100": 1.232
+     },
+     "est_under": 5,
+     "est_ratio": {
+      "p50": 0.974,
+      "p90": 0.998,
+      "p100": 1.008
+     },
+     "tr_tokens": {
+      "p10": 61.0,
+      "p50": 108.0,
+      "p90": 146.0
+     },
+     "trans_tags_per_window": 24.59,
+     "spk_tags_per_window": 33.72,
+     "spk_tags_per_window_stage3": 12.93,
+     "masked_label_frac": {
+      "p50": 0.089,
+      "p90": 0.309
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.07,
+      "p90": 0.179
+     },
+     "tr_in_flush": 167,
+     "eot_total": 376,
+     "eot_after_translation": 288,
+     "soft_total": 265,
+     "soft_total_stage3": 375,
+     "rows_without_translation": {
+      "miss": 147,
+      "cut": 10,
+      "total": 157
+     },
+     "window_stats": {
+      "eot": 376,
+      "eot_truncated": 51,
+      "eot_no_tokens": 6,
+      "eot_backchannel": 192,
+      "tr_tokens": 6228,
+      "tr_input": 0,
+      "miss_miss": 147,
+      "miss_cut": 10
+     }
+    }
+   },
+   "audio_sample": {
+    "n": 10,
+    "len_ok": true,
+    "n_tr": [
+     115,
+     87,
+     129,
+     71,
+     97,
+     113,
+     127,
+     63,
+     152,
+     138
+    ]
+   },
+   "sec": 4.3
+  },
+  "ztc": {
+   "corpus": "ztc",
+   "held_out_dialogues": 39,
+   "stats": {
+    "dialogues": 373,
+    "windows": 5877,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 7,
+    "no_start": 8662,
+    "windows_with_mask": 5114,
+    "random_start": 0,
+    "cst_revived": 10987,
+    "cst_revive_missing": 0,
+    "cst_windows": 5206,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 334,
+    "cst_excluded": 39
+   },
+   "trans_rows": 977,
+   "trans_input_rows": 0,
+   "trans_load": {
+    "files": 4,
+    "rows": 5101,
+    "tgt_English": 3171,
+    "tgt_German": 970,
+    "tgt_Korean": 960
+   },
+   "windows": 69,
+   "sec_init": 5.3,
+   "prefix": {
+    "English": {
+     "text": "language <SPK_A>German <SPK_B>German\ntranslate <SPK_A>English <SPK_B>English<asr_text>",
+     "n_tokens": 25,
+     "ok": true
+    }
+   },
+   "windows_checked": 69,
+   "sequences_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "sec_check": 0.2,
+   "by_tgt": {
+    "English": {
+     "seq_len": {
+      "p50": 1044.0,
+      "p90": 1274.2,
+      "p99": 1353.68,
+      "p100": 1387.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.155,
+      "p90": 1.191,
+      "p100": 1.212
+     },
+     "est_under": 0,
+     "est_ratio": {
+      "p50": 0.964,
+      "p90": 0.984,
+      "p100": 0.998
+     },
+     "tr_tokens": {
+      "p10": 49.6,
+      "p50": 74.0,
+      "p90": 104.0
+     },
+     "trans_tags_per_window": 30.32,
+     "spk_tags_per_window": 36.67,
+     "spk_tags_per_window_stage3": 10.68,
+     "masked_label_frac": {
+      "p50": 0.071,
+      "p90": 0.199
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.077,
+      "p90": 0.21
+     },
+     "tr_in_flush": 117,
+     "eot_total": 560,
+     "eot_after_translation": 459,
+     "soft_total": 448,
+     "soft_total_stage3": 556,
+     "rows_without_translation": {
+      "miss": 188,
+      "cut": 0,
+      "total": 188
+     },
+     "window_stats": {
+      "eot": 560,
+      "eot_truncated": 53,
+      "eot_no_tokens": 5,
+      "eot_backchannel": 445,
+      "tr_tokens": 5195,
+      "tr_input": 0,
+      "miss_miss": 188
+     }
+    }
+   },
+   "audio_sample": {
+    "n": 10,
+    "len_ok": true,
+    "n_tr": [
+     73,
+     82,
+     79,
+     72,
+     75,
+     99,
+     102,
+     68,
+     79,
+     74
+    ]
+   },
+   "sec": 5.9
+  },
+  "nsc": {
+   "corpus": "nsc",
+   "held_out_dialogues": 22,
+   "stats": {
+    "dialogues": 276,
+    "windows": 4261,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 372,
+    "no_start": 7474,
+    "windows_with_mask": 4318,
+    "random_start": 0,
+    "cst_revived": 10863,
+    "cst_revive_missing": 0,
+    "cst_windows": 3850,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 254,
+    "cst_excluded": 22
+   },
+   "trans_rows": 318,
+   "trans_input_rows": 0,
+   "trans_load": {
+    "files": 4,
+    "rows": 5101,
+    "tgt_English": 3171,
+    "tgt_German": 970,
+    "tgt_Korean": 960
+   },
+   "windows": 41,
+   "sec_init": 2.9,
+   "prefix": {
+    "English": {
+     "text": "language <SPK_A>German <SPK_B>German\ntranslate <SPK_A>English <SPK_B>English<asr_text>",
+     "n_tokens": 25,
+     "ok": true
+    }
+   },
+   "windows_checked": 41,
+   "sequences_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "sec_check": 0.1,
+   "by_tgt": {
+    "English": {
+     "seq_len": {
+      "p50": 1077.0,
+      "p90": 1284.0,
+      "p99": 1432.0,
+      "p100": 1460.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.147,
+      "p90": 1.201,
+      "p100": 1.279
+     },
+     "est_under": 6,
+     "est_ratio": {
+      "p50": 0.979,
+      "p90": 1.004,
+      "p100": 1.012
+     },
+     "tr_tokens": {
+      "p10": 36.0,
+      "p50": 79.0,
+      "p90": 125.0
+     },
+     "trans_tags_per_window": 27.1,
+     "spk_tags_per_window": 35.44,
+     "spk_tags_per_window_stage3": 11.8,
+     "masked_label_frac": {
+      "p50": 0.174,
+      "p90": 0.363
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.196,
+      "p90": 0.394
+     },
+     "tr_in_flush": 55,
+     "eot_total": 297,
+     "eot_after_translation": 235,
+     "soft_total": 218,
+     "soft_total_stage3": 290,
+     "rows_without_translation": {
+      "miss": 154,
+      "cut": 1,
+      "total": 155
+     },
+     "window_stats": {
+      "eot": 297,
+      "eot_truncated": 34,
+      "eot_no_tokens": 23,
+      "eot_backchannel": 158,
+      "tr_tokens": 3325,
+      "tr_input": 0,
+      "miss_miss": 154,
+      "miss_cut": 1
+     }
+    }
+   },
+   "audio_sample": {
+    "n": 10,
+    "len_ok": true,
+    "n_tr": [
+     107,
+     100,
+     125,
+     55,
+     79,
+     126,
+     108,
+     52,
+     67,
+     59
+    ]
+   },
+   "sec": 3.4
+  }
+ },
+ "all_ok": true
+}
