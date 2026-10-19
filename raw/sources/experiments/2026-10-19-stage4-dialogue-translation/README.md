@@ -254,6 +254,20 @@ source_type: source-drop
   - 번역 평가(창 100)에서 71631 이 43.7 로 보인 것은 창 표본이 달라서다(Stage 3 회귀 창과 겹치는 창이 2 개뿐). 같은 창 200 에서는 32.6(p11 32.2)이다.
   - 마스크가 적은 창에서도 agn 은 영어 21 %(otoSpeech), 독일어 11–21 %, 한국어 10–16 % 다. 같은 발화를 하나씩 잘라 디코드하는 대조는 아직 하지 않았다.
 
+## 본 학습 st4-m1 준비 (2026-10-19, `lead_space_dry.sh`·`stage4_m1_check.sh`)
+- **번역 행 사이 띄어쓰기 버그:** 번역 타깃은 행(발화)마다 `' '.join(단어)` 로 토큰화한다(`ast_build_targets`). 행을 이은 번역 흐름에서 행 사이 공백이 없어 단어가 붙었다("hurry,If").
+  - st4-p1 평가 참조에서 대화 단어의 8.0 %(5,364/66,908), 합성 9.9 % 가 붙어 있었고 모델 가설도 같았다. TAXI 참조는 사람 번역이라 BLEU 가 낮게 나왔을 수 있다.
+  - 수정: `cst_dialogue.lead_space_row` — 행의 첫 단어 토큰을 `' ' + 그 단어`로 다시 토큰화하고 원래 첫 단어 시각을 준다. 이미 공백이면 그대로(멱등).
+  - `--trans-lead-space`: `stage3_train.py`(대화·교차 언어 합성, 지문 키 `trans_lead_space`), `cst_stage4_eval.py`, `cst_stage4_dryrun.py`, `submit-stage3-train.sh`, 평가 큐 `TRANS_LEAD_SPACE=1`. 기본은 끔이다(st4-p1 재현).
+  - 학습 tokenizer 단위 시험: "hurry,If there" → "hurry, If there", 한국어 첫 단어 "그래서"(2 토큰) → " 그래서"(1 토큰), 두 번 적용해도 같다.
+- **교차 언어 영어 반복 생성(st4-p1):** δ10 에서 한 청크에 영어 문장을 지어내고 몇 청크 되풀이한다. 청크당 토큰 상한에 걸린(forced) 창이 200 개 중 19 → 26 → 31(ck2000 → final)로 늘고, 그 창의 영어 오류는 평균 174 %(나머지 30 %)다.
+  - step 이 늘수록 심해지는 방향이 TAXI 하락과 같다. 합성 대화 과적합으로 보지만 가설이다.
+- **st4-m1 설정(사용자 승인):** st4-p1 과 같고 세 가지만 바꿨다 — `--trans-lead-space`, `--max-steps 2500`, 가중치 `sim_en-de` 1.5 → 1.0.
+- **점검(mxc 호스트):**
+  - 타깃 dry-run(`stage4-dry-ls-{dlg,xl}.json`): 실제 대화 7 코퍼스·교차 언어 합성 두 셋 각 500 창, 문제 0
+  - 학습 dry-run: 셋 11 개 × 두 모드 점검 22 개 불일치 0
+  - 스모크 20 step(호스트 GPU 하나): 3.7 분, OOM 없음, 끝 재로드 PARITY OK
+
 ## 대화 발화 단독 디코드 대조 (2026-10-19, `experiments/cst_isolated_asr.py`·`isolated_chain.sh`·`isolated/`)
 - 질문(사용자): "stage 2 에서는 한국어 cer 이 8%, 영어 wer 이 3% 정도 나왔는데, 지금은 30% 이상이 나온다는게 이상해."
 - 방법:

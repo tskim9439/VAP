@@ -1,0 +1,242 @@
+{
+ "args": {
+  "data": "/soundai/users/tskim/VAPKT-data/data/sim-dialogue-xl-v1",
+  "tokenizer": "/soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000",
+  "split": null,
+  "trans": "/soundai/users/tskim/VAPKT-data/data/sim-dialogue-xl-v1/targets-sim_en-de,/soundai/users/tskim/VAPKT-data/data/sim-dialogue-xl-v1/targets-sim_en-ko",
+  "trans_input": "",
+  "revive_dir": "",
+  "corpora": "sim_en-de,sim_en-ko",
+  "delays": "4,5,6,7,8,9,10",
+  "backchannel": "1.0,3",
+  "out": "/soundai/users/tskim/VAPKT-data/data/../tmp/stage4-dry-ls-xl.json",
+  "audio_sample": 3,
+  "procs": 2,
+  "max_windows": 500,
+  "seed": 0,
+  "only_translated": false,
+  "show": 0,
+  "trans_lead_space": true
+ },
+ "corpora": {
+  "sim_en-de": {
+   "corpus": "sim_en-de",
+   "held_out_dialogues": 0,
+   "stats": {
+    "dialogues": 10000,
+    "windows": 24669,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 0,
+    "no_start": 51283,
+    "windows_with_mask": 0,
+    "random_start": 0,
+    "cst_windows": 24669,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 10000,
+    "cst_excluded": 0
+   },
+   "trans_rows": 329010,
+   "trans_input_rows": 0,
+   "trans_load": {
+    "files": 15,
+    "rows": 722531,
+    "tgt_German": 179397,
+    "tgt_Korean": 175132,
+    "tgt_English": 368002
+   },
+   "windows": 24669,
+   "sec_init": 20.4,
+   "prefix": {
+    "xl": {
+     "text": "language <SPK_A>English <SPK_B>German\ntranslate <SPK_A>German <SPK_B>English<asr_text>",
+     "n_tokens": 25,
+     "ok": true
+    }
+   },
+   "windows_checked": 500,
+   "sequences_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "sec_check": 2.2,
+   "by_tgt": {
+    "xl": {
+     "seq_len": {
+      "p50": 1025.0,
+      "p90": 1315.0,
+      "p99": 1451.1,
+      "p100": 1522.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.196,
+      "p90": 1.243,
+      "p100": 1.34
+     },
+     "est_under": 5,
+     "est_ratio": {
+      "p50": 0.953,
+      "p90": 0.983,
+      "p100": 1.018
+     },
+     "tr_tokens": {
+      "p10": 64.0,
+      "p50": 100.0,
+      "p90": 149.1
+     },
+     "trans_tags_per_window": 31.94,
+     "spk_tags_per_window": 35.2,
+     "spk_tags_per_window_stage3": 8.48,
+     "masked_label_frac": {
+      "p50": 0.012,
+      "p90": 0.067
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.015,
+      "p90": 0.02
+     },
+     "tr_in_flush": 962,
+     "eot_total": 3493,
+     "eot_after_translation": 3248,
+     "soft_total": 0,
+     "soft_total_stage3": 0,
+     "rows_without_translation": {
+      "miss": 0,
+      "cut": 163,
+      "total": 163
+     },
+     "window_stats": {
+      "eot": 3493,
+      "eot_truncated": 373,
+      "eot_no_tokens": 0,
+      "eot_backchannel": 1477,
+      "tr_tokens": 51391,
+      "tr_input": 0,
+      "eot_moved": 602,
+      "miss_cut": 163
+     }
+    }
+   },
+   "audio_sample": {
+    "n": 3,
+    "len_ok": true,
+    "n_tr": [
+     72,
+     81,
+     120
+    ]
+   },
+   "sec": 26.5
+  },
+  "sim_en-ko": {
+   "corpus": "sim_en-ko",
+   "held_out_dialogues": 0,
+   "stats": {
+    "dialogues": 10000,
+    "windows": 26726,
+    "skipped_untranscribed": 0,
+    "skipped_unaligned": 0,
+    "skipped_sparse": 0,
+    "no_start": 48005,
+    "windows_with_mask": 0,
+    "random_start": 0,
+    "cst_windows": 26726,
+    "cst_dropped_speakers": 0,
+    "cst_dialogues": 10000,
+    "cst_excluded": 0
+   },
+   "trans_rows": 306430,
+   "trans_input_rows": 0,
+   "trans_load": {
+    "files": 15,
+    "rows": 722531,
+    "tgt_German": 179397,
+    "tgt_Korean": 175132,
+    "tgt_English": 368002
+   },
+   "windows": 26726,
+   "sec_init": 20.6,
+   "prefix": {
+    "xl": {
+     "text": "language <SPK_A>English <SPK_B>Korean\ntranslate <SPK_A>Korean <SPK_B>English<asr_text>",
+     "n_tokens": 27,
+     "ok": true
+    }
+   },
+   "windows_checked": 500,
+   "sequences_with_problems": 0,
+   "problems": {},
+   "problem_examples": [],
+   "sec_check": 4.0,
+   "by_tgt": {
+    "xl": {
+     "seq_len": {
+      "p50": 992.5,
+      "p90": 1275.0,
+      "p99": 1369.09,
+      "p100": 1463.0
+     },
+     "over_16384": 0,
+     "len_ratio_vs_stage3": {
+      "p50": 1.172,
+      "p90": 1.213,
+      "p100": 1.317
+     },
+     "est_under": 0,
+     "est_ratio": {
+      "p50": 0.936,
+      "p90": 0.962,
+      "p100": 0.979
+     },
+     "tr_tokens": {
+      "p10": 61.0,
+      "p50": 103.0,
+      "p90": 152.1
+     },
+     "trans_tags_per_window": 18.06,
+     "spk_tags_per_window": 22.25,
+     "spk_tags_per_window_stage3": 8.99,
+     "masked_label_frac": {
+      "p50": 0.012,
+      "p90": 0.08
+     },
+     "masked_label_frac_stage3": {
+      "p50": 0.015,
+      "p90": 0.02
+     },
+     "tr_in_flush": 1149,
+     "eot_total": 3518,
+     "eot_after_translation": 3193,
+     "soft_total": 0,
+     "soft_total_stage3": 0,
+     "rows_without_translation": {
+      "miss": 0,
+      "cut": 161,
+      "total": 161
+     },
+     "window_stats": {
+      "eot": 3518,
+      "eot_truncated": 372,
+      "eot_no_tokens": 0,
+      "eot_backchannel": 1134,
+      "tr_tokens": 52781,
+      "tr_input": 0,
+      "eot_moved": 398,
+      "miss_cut": 161
+     }
+    }
+   },
+   "audio_sample": {
+    "n": 3,
+    "len_ok": true,
+    "n_tr": [
+     105,
+     104,
+     110
+    ]
+   },
+   "sec": 26.6
+  }
+ },
+ "all_ok": true
+}

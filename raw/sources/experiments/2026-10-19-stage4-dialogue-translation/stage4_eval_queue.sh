@@ -6,6 +6,7 @@
 #   4. Stage 3 회귀: 대화 받아쓰기·귀속·<EOT>(cst_stage3_eval, 창 200 × δ4·10, 맞장구 1.0,3) → results/stage3-eval-<run>-<태그>, 오류 분해 → stage3-attr-errors-…
 #   5. 단일 화자 축약 평가(stage2_regress.sh) → results/stage3-regress-<run>-<태그>
 # 산출물 폴더 이름의 run 은 학습 run 이름(stage3-<run> 폴더). 아무것도 지우지 않는다.
+# TRANS_LEAD_SPACE=1: 번역 참조를 행마다 앞 공백으로(--trans-lead-space 로 학습한 run, st4-m1 부터). 1·2 단계에만 쓴다(TAXI 참조는 사람 번역).
 set -u
 RUN=$1; shift
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
@@ -13,16 +14,17 @@ D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2; R=/soundai/users/tskim/VAP
 S1=$D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16; XE=$D/sim-dialogue-xl-eval-v1; TAXI=$D/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl
 export PYTHONPATH=/soundai/users/tskim/VAPKT PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false VAPASR_STAGE_DIR=/tmp/sa_tskim/vapasr-stage
 P=/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python
+LS=""; [ "${TRANS_LEAD_SPACE:-0}" = 1 ] && LS=--trans-lead-space
 for t in "$@"; do
   echo "[$(date '+%F %T')] $RUN/$t 대기"
   if [ "$t" = final ]; then until [ -f $OUT/DONE ]; do sleep 120; done; else until [ -f $OUT/$t/trainer_state.json ]; do sleep 120; done; sleep 60; fi
   tag=${t#checkpoint-}; [ "$t" != final ] && tag=ck$tag; CK=$OUT/$t; O=$R/stage4-eval-$RUN-$tag; mkdir -p $O
   GPU=$(nvidia-smi --query-gpu=index,memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits | awk -F', ' '{print $1, $3 - $2, $4}' | sort -k2,2nr -k3,3n | head -1 | cut -d' ' -f1)
   export CUDA_VISIBLE_DEVICES=$GPU; echo "[$(date '+%F %T')] $RUN/$t → GPU $GPU ($(nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv,noheader -i $GPU))"
-  $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json --trans $S1 --deltas 4,10 --limit-windows 100 \
+  $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json --trans $S1 --deltas 4,10 --limit-windows 100 $LS \
     --batch-size 32 --backchannel 1.0,3 --out $O/dlg > $O/dlg.log 2>&1; $P experiments/cst_stage4_eval.py summarize --out $O/dlg > $O/dlg-summary.log 2>&1
   echo "[$(date '+%F %T')] 1 같은 언어 대화 번역 끝"
-  $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $XE --trans $XE/targets-sim_en-de --corpora sim_en-de --deltas 4,10 --limit-windows 200 \
+  $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $XE --trans $XE/targets-sim_en-de --corpora sim_en-de --deltas 4,10 --limit-windows 200 $LS \
     --batch-size 32 --out $O/xl > $O/xl.log 2>&1; $P experiments/cst_stage4_eval.py summarize --out $O/xl > $O/xl-summary.log 2>&1
   echo "[$(date '+%F %T')] 2 영↔독 합성 끝"
   $P experiments/cst_stage4_taxi.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --sessions $TAXI --out $O/taxi --deltas 4,10 > $O/taxi.log 2>&1

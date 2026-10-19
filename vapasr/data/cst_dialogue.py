@@ -426,6 +426,17 @@ def read_back4(ids: Sequence[int], is_input: Sequence[bool], sp: Specials, trans
     return out, eots, bad
 
 
+def lead_space_row(tok, ids, times, word_start) -> Tuple[list, list]:
+    """번역 행의 첫 단어를 앞 공백 토큰으로 바꾼다 — 행 단위로 토큰화한 번역(ast_build_targets: ' '.join(단어))을 한 흐름에 이어 붙이면
+    행 사이 단어가 붙는다('hurry,If', 2026-10-19 st4-p1 평가에서 참조 단어의 8 % 가 붙어 있었다). 첫 단어 토큰을 ' ' + 그 단어로 다시
+    토큰화하고, 새 토큰은 원래 첫 단어의 시각(그 단어 마지막 토큰 시각)을 받는다. 이미 공백으로 시작하면 그대로."""
+    ids, times = list(ids), list(times)
+    if not ids or word_start(int(ids[0])): return ids, times
+    k = next((j for j in range(1, len(ids)) if word_start(int(ids[j]))), len(ids))
+    new = tok(" " + tok.decode([int(t) for t in ids[:k]]), add_special_tokens=False)["input_ids"]
+    return [int(t) for t in new] + ids[k:], [times[k - 1]] * len(new) + times[k:]
+
+
 class CstDialogueDataset(DialogueWindowDataset):
     """DialogueWindowDataset(창 선택·mono·마스크) + Stage 3 직렬화. exclude: 학습에서 뺄 conv_id(split held-out).
     windows: 주면 그 (conv_id, t0, L) 목록만 쓴다(p2_build_windows 산출물 등). max_speakers: 창 안 화자 상한(초과 창은 버림).
@@ -436,6 +447,7 @@ class CstDialogueDataset(DialogueWindowDataset):
     revive: 격리 발화 되살리기 토큰(load_revive, 기본 None = 끔) — 모듈 설명. 학습에서만 쓴다.
     Stage 4 번역(기본 끔): trans = 대화 발화 번역 타깃({행 id '<conv>|<화자>|<utt>': {목표 언어: (ids, 시각)}}, ast_dataset.load_ast_targets),
       trans_input = 되살린 발화의 번역(같은 형식 — 입력 문맥으로만, label −100), ast_frac = 학습 창을 번역 모드로 둘 확률(나머지는 Stage 3 형식),
+      trans_lead_space = 번역 행마다 첫 단어를 앞 공백 토큰으로(lead_space_row — 행을 이은 번역 흐름에서 단어가 붙지 않게, 기본 끔: st4-p1 까지의 형식),
       tgt_of = 원천 언어 → 목표 언어 후보(기본 한·독 → 영, 영 → 독·한 중 하나). 번역 모드의 시퀀스는 build_cst4_sequence(네 흐름) 다.
     교차 언어 대화(meta.spk_lang = {화자: 언어} 에 두 언어 — sim_build_dialogues --lang2): 슬롯을 언어로 고정하고(어느 언어를 A 로 둘지는 학습 rng,
       평가·점검은 창 id 해시), prefix 는 'language <SPK_A>{L_A} <SPK_B>{L_B}[\\ntranslate <SPK_A>{L_B} <SPK_B>{L_A}]' — 각 화자의 번역은 상대 언어다(slots)."""
@@ -444,7 +456,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                  max_speakers: int = 2, decision_weight: float = 0.0, backchannel: Optional[Tuple[float, int]] = None, eot_mode: str = "soft",
                  recover: Optional[Recover] = None, spk_activity: bool = False, revive: Optional[Dict[str, Dict[str, list]]] = None,
                  trans: Optional[Dict[str, Dict[str, tuple]]] = None, trans_input: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.0,
-                 tgt_of: Optional[Dict[str, Sequence[str]]] = None, **kw):
+                 tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if recover is not None and not (0 <= recover.p <= 1 and 0 <= recover.boundary_frac <= 1 and recover.max_lag >= 1 and recover.max_boundaries >= 1):
             raise ValueError(f"recover 범위: {recover}")
@@ -470,6 +482,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         self.delay_ids = {d: conv(f"<DELAY_{d}>") for d in self.delays}
         self.csp = Specials(next_audio=self.sp.next_audio, empty_audio=self.sp.empty_audio, spk=self.spk_ids)
         self.trans, self.trans_input, self.ast_frac = trans or {}, trans_input or {}, float(ast_frac)
+        self.trans_lead_space = bool(trans_lead_space)                                             # 행 사이 공백(lead_space_row) — Stage 4 본 학습부터
         self.tgt_of = dict(tgt_of) if tgt_of else {"Korean": ["English"], "German": ["English"], "English": ["German", "Korean"]}
         self.trans_id = conv("<TRANS>") if self.trans or self.trans_input else None
         self.has_xl = any(self.xl_langs(d) for d in self.dlgs.values())
@@ -548,6 +561,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                 seen.add(key); inp = r["kind"] == "r"
                 tt = None if r["a"] < t0 - 1e-6 else (self.trans_input if inp else self.trans).get(f"{cid}|{key[0]}|{key[1]}", {}).get(tg)
                 if tt is None: gaps.append((max(r["a"], ep.start), min(r["e"], ep.end), "cut" if r["a"] < t0 - 1e-6 else "miss")); last_ok = False; continue
+                if self.trans_lead_space: tt = lead_space_row(self.tok, tt[0], tt[1], self.word_start)
                 own = (lambda t: ep.ep_id) if len(r["eps"]) == 1 else (lambda t: next((j for j in r["eps"] if t <= E[j].end + 1e-6), r["eps"][-1]))
                 ts = [clamp_to_spans(float(t), r["spans"]) for t in tt[1]]
                 toks += [(int(i), t, inp) for i, t in zip(tt[0], ts) if own(t) == ep.ep_id]; last_ok = True

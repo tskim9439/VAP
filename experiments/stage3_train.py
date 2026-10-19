@@ -61,6 +61,7 @@ g.add_argument("--dlg-trans", action="append", default=[], help="Stage 4 대화 
 g.add_argument("--dlg-trans-input", action="append", default=[], help="되살린 격리 발화의 번역 타깃(--revive-dir 과 함께; stage4_dialogue_units --revive-dir) — 입력 문맥으로만")
 g.add_argument("--dlg-ast-frac", type=float, default=0.5, help="번역 타깃이 있을 때 대화 창을 번역 모드로 둘 확률(나머지는 Stage 3 형식)")
 g.add_argument("--sim-trans-frac", type=float, default=0.8, help="교차 언어 합성 셋(sim_<l1>-<l2>) 창을 번역 모드로 둘 확률")
+g.add_argument("--trans-lead-space", action="store_true", help="번역 행마다 첫 단어를 앞 공백 토큰으로(cst_dialogue.lead_space_row — 행을 이은 번역 흐름에서 단어가 붙지 않게, Stage 4 본 학습부터). 대화·교차 언어 합성 모두에 적용, 지문에 들어간다")
 g.add_argument("--spk-act-weight", type=float, default=0.0, help="화자 슬롯 활동 보조 손실 가중(0 = 끔): LLM audio 위치에 2 슬롯 헤드, 청크마다 'A/B 가 말하는 중' BCE")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -244,7 +245,7 @@ for lang in ("Korean", "English", "German"):
     ds = CstDialogueDataset(files, tok, delays=delays, exclude=held, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac,
                             seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
                             spk_activity=a.spk_act_weight > 0, revive=load_revive(rv) if rv else None,
-                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac) if DT else {}))
+                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}))
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = lang; train_sets[key] = ds
     if DT:
@@ -278,7 +279,7 @@ for key in sorted(k for k, w in weights.items() if w > 0 and re.fullmatch(r"sim_
     XT, xt_st, sim_trans_fp[key] = load_ast_targets([td]); sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac)
+                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space)
     if not ds.has_xl: sys.exit(f"{key}: 교차 언어 대화(meta.spk_lang)가 아니다")
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = next(iter(ds.dlgs.values())).lang; train_sets[key] = ds
@@ -321,7 +322,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           max_windows=a.max_windows, seed=a.seed, vocab_sha256=vocab_sha, init=os.path.abspath(a.init), **({"recover": rc._asdict()} if rc else {}), **({"spk_act_weight": a.spk_act_weight} if a.spk_act_weight > 0 else {}),
           **({"sim_data": file_digest(sim_files)} if sim_files else {}), **({"revive": file_digest(revive_files)} if revive_files else {}),
           **({"dlg_trans": dt_fp, "dlg_trans_input": dti_fp, "dlg_ast_frac": a.dlg_ast_frac} if DT else {}),
-          **({"sim_trans": sim_trans_fp, "sim_trans_frac": a.sim_trans_frac} if sim_trans_fp else {}))   # 끄면 키 없음(이전 run 지문 그대로)
+          **({"sim_trans": sim_trans_fp, "sim_trans_frac": a.sim_trans_frac} if sim_trans_fp else {}),
+          **({"trans_lead_space": True} if a.trans_lead_space and (DT or sim_trans_fp) else {}))   # 끄면 키 없음(이전 run 지문 그대로)
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():

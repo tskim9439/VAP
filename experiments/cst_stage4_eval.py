@@ -33,7 +33,7 @@ def windows_of(a, tok, TR):
         held = set(split["corpora"].get(c, {}).get("heldout", [])) if split else None
         if split is not None and not held: print(f"  {c}: held-out 없음 — 건너뜀", flush=True); continue
         ds = CstDialogueDataset([os.path.join(a.data, f"{c}.refined.dialogues.jsonl")], tok, delays=tuple(a.deltas), mono_cache_dir=os.path.join(a.data, "mono"), seed=0,
-                                backchannel=a.backchannel, trans=TR, ast_frac=0.0)
+                                backchannel=a.backchannel, trans=TR, ast_frac=0.0, trans_lead_space=a.trans_lead_space)
         idx = [i for i, it in enumerate(ds.items) if held is None or it[0] in held]
         idx.sort(key=lambda i: (ds.items[i][2], ds.items[i][0], ds.items[i][1]))
         if a.limit_windows and len(idx) > a.limit_windows: idx = [idx[j] for j in np.linspace(0, len(idx) - 1, a.limit_windows, dtype=int)]
@@ -108,7 +108,7 @@ def run(a):
     conf = dict(checkpoint=os.path.abspath(a.checkpoint), config_sha256=hashlib.sha256(open(os.path.join(a.checkpoint, "config.json"), "rb").read()).hexdigest(),
                 split_sha256=hashlib.sha256(open(a.split, "rb").read()).hexdigest() if a.split else None, trans_sha256=tr_fp, corpora=a.corpora, deltas=a.deltas,
                 limit_windows=a.limit_windows, tgts=a.tgts, dtype=a.dtype, world_size=a.world_size, oracle=bool(a.oracle), from_predictions=a.from_predictions,
-                **({"backchannel": list(a.backchannel)} if a.backchannel else {}))
+                **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **({"trans_lead_space": True} if a.trans_lead_space else {}))
     cp = os.path.join(out, f"config-rank{a.rank}.json")
     if os.path.exists(cp): assert json.load(open(cp)) == conf, "재개 설정 불일치 — 새 --out 을 쓴다"
     else: json.dump(conf, open(cp, "w"), indent=1)
@@ -200,6 +200,7 @@ def main():
     q.add_argument("--max-flush", type=int, default=None); q.add_argument("--dtype", default="float32"); q.add_argument("--encoder", default=None)
     q.add_argument("--oracle", action="store_true", help="모델 없이 정답 시퀀스를 채점(지표 sanity)"); q.add_argument("--from-predictions", default=None)
     q.add_argument("--backchannel", default=None, type=lambda s: (float(s.split(",")[0]), int(s.split(",")[1])), help="참조 EOT 의 맞장구 규칙(최대초,최대토큰)")
+    q.add_argument("--trans-lead-space", action="store_true", help="참조 번역 행마다 앞 공백(학습 --trans-lead-space 와 같은 형식으로 학습한 모델)")
     q = sub.add_parser("summarize"); q.add_argument("--out", required=True)
     a = ap.parse_args(); {"run": run, "summarize": summarize}[a.cmd](a)
 

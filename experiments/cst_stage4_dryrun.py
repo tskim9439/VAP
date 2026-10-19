@@ -20,6 +20,7 @@ ap.add_argument("--corpora", default="aihub71631,aihub134-1,aihub134-2,otoSpeech
 ap.add_argument("--backchannel", default="1.0,3"); ap.add_argument("--out", required=True); ap.add_argument("--audio-sample", type=int, default=10)
 ap.add_argument("--procs", type=int, default=7); ap.add_argument("--max-windows", type=int, default=0); ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--only-translated", action="store_true"); ap.add_argument("--show", type=int, default=0)
+ap.add_argument("--trans-lead-space", action="store_true", help="번역 행마다 앞 공백(cst_dialogue.lead_space_row)")
 a = ap.parse_args()
 DELAYS = tuple(int(x) for x in a.delays.split(","))
 
@@ -53,7 +54,7 @@ def run(corpus):
     held = set(json.load(open(a.split, encoding="utf-8"))["corpora"].get(corpus, {}).get("heldout", [])) if a.split else set()   # 합성 대화는 --split 없이
     bc = tuple(float(x) if i == 0 else int(x) for i, x in enumerate(a.backchannel.split(","))) if a.backchannel else None
     ds = CstDialogueDataset([os.path.join(a.data, f"{corpus}.refined.dialogues.jsonl")], tok, delays=DELAYS, exclude=held, mono_cache_dir=os.path.join(a.data, "mono"),
-                            seed=a.seed, backchannel=bc, revive=rv, trans=tr, trans_input=tri, ast_frac=1.0)
+                            seed=a.seed, backchannel=bc, revive=rv, trans=tr, trans_input=tri, ast_frac=1.0, trans_lead_space=a.trans_lead_space)
     convs = {r.split("|")[0] for r in tr} | {r.split("|")[0] for r in tri}
     if a.only_translated: ds.items = [it for it in ds.items if it[0] in convs]
     rep = dict(corpus=corpus, held_out_dialogues=len(held), stats=dict(ds.stats), trans_rows=sum(1 for r in tr if r.split("|")[0] in ds.dlgs),
