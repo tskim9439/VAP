@@ -191,6 +191,39 @@ source_type: source-drop
 - 학습 전 점검과 dry-run 예시는 `tgt_options`(같은 언어 = 목표 언어, 교차 언어 = 'xl')를 쓴다.
 - `stage3_train --dry-run --dlg-trans`(시험 타깃, otoSpeech·kec 각 60 창): 두 모드 점검 불일치 0
 
+## S3 본 생성과 전체 dry-run (2026-10-19, `xl_build.sh`·`xl_eval_build.sh`)
+- 교차 언어 합성 학습 셋 `VAPKT-data/data/sim-dialogue-xl-v1`(v2 합성과 같은 규모·잡음 뱅크, 각 15 분):
+
+  | 셋 | 세션 | 시간 | 발화(모두 번역 있음) | 번역 행·토큰 | 겹침 | 분당 교대 |
+  |---|---:|---:|---:|---:|---:|---:|
+  | `sim_en-de`(영: otoSpeech·words, 독: KEC·ZTC·NSC) | 10,000 | 252.7 h | 378,270 | 373,378 · 415 만 | 4.3 % | 9.6 |
+  | `sim_en-ko`(영: 같음, 한: AI Hub 3) | 10,000 | 249.2 h | 347,684 | 349,153 · 421 만 | 5.6 % | 9.5 |
+
+  - 이름은 `--lang`·`--lang2` 순서다. 영어를 먼저 두어 `sim_en-de`·`sim_en-ko` 가 됐다.
+  - otoSpeech 발화는 S1 타깃의 두 목표 언어(독·한)를 함께 들고 간다. 데이터셋은 상대 화자 언어만 쓰므로 해는 없고, 길이 추정만 조금 크게 잡힌다.
+- 영↔독 held-out 평가 셋 `sim-dialogue-xl-eval-v1/sim_en-de`(`--heldout`: held-out 대화만, words 없음): 300 세션, 7.7 h, 발화 13,411
+  - 첫 시도는 mxc 의 `sim_build_dialogues.py` 가 `--heldout` 넣기 전 판이라 실패했다. 다시 올려 만들었다(학습 셋은 행 무결성 고친 판으로 만들어졌음을 diff 로 확인).
+- **전체 타깃 dry-run(`dry-full.json`·`dry-xl.json`·`dry-xl-eval.json`):** 실제 대화 7 코퍼스 1,500 창씩과 합성 두 셋 1,500 창씩, 평가 셋 793 창 모두 문제 0
+  - 번역 모드 길이는 Stage 3 의 1.12–1.21 배(p50), 최대 1,809 토큰이다.
+  - soft `<EOT>` 결정은 Stage 3 의 93–99 % 가 남는다(번역 없는 행의 `<EOT>` 를 가리므로).
+  - 길이 추정 과소는 최대 3.4 %(kec 49/1,500 창)다. 묶음 예산(GPU 당 16,384 토큰)에 비해 작다.
+- 학습 split 의 행 번역 비율(입력만 포함): 한국어 94.7 %, 영어 99.8 %, 독일어 99.1 %
+
+## 학습 준비 (`stage4_dry_train_full.sh`, `stage4_eval_queue.sh`)
+- `stage3_train.py --sim-data` 를 쉼표 목록으로 넓혔다(같은 언어 v2 + 교차 언어 xl).
+- `submit-stage3-train.sh` 에 `--dlg-trans`·`--dlg-trans-input`·`--dlg-ast-frac`·`--sim-trans-frac` 를 더했다.
+- **학습 dry-run(CPU, 셋마다 창 300·항목 300):** p11 ck3000 + 11 셋. 모든 셋이 두 모드 점검에서 불일치 0 이다.
+  - 셋: `dlg_ko·en·de`(번역 0.5, 되살림·되살림 번역), `sim_ko·en·de`, `sim_en-de·en-ko`(번역 0.8), `rep_ko·en·de`
+- **스모크(`stage4_smoke_train.sh`, 호스트 GPU 하나 20 step):** 3.6 분, OOM 없음, 끝 재로드 PARITY OK
+  - 손실 1.09 → 0.70. 대화 step 당 번역 토큰이 최대 1,352 개 학습된다(`tr_per_dlg_step`).
+- 제출 스크립트 `--dry-run` 으로 파일럿 명령의 입력 점검·인자 조립을 확인했다(`--sim-data` 두 폴더, Stage 4 옵션, 제외 노드 6 개).
+- **평가 큐 `stage4_eval_queue.sh <run> <대상>…`:** 체크포인트마다 가장 한가한 호스트 GPU 로 다섯 가지를 잰다.
+  1. 같은 언어 held-out 대화 번역
+  2. 영↔독 합성 평가 셋
+  3. TAXI
+  4. Stage 3 회귀(귀속·`<EOT>`·오류 분해)
+  5. 단일 화자 축약 평가
+
 ## 다음
 - S1 전체 생성(사용자 제출): `stage4-dlg-units-v1`·`stage4-dlg-units-revive-v1` 각각 생성 → 수리 → `ast_build_targets --fix-dir fix-gen-v3-bf16 --pack`
 - S1 타깃이 나오면:

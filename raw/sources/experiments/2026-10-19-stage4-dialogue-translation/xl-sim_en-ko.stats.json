@@ -1,0 +1,182 @@
+{
+ "lang": "English",
+ "lang2": "Korean",
+ "sessions": 10000,
+ "trans": {
+  "rows": 349153,
+  "tokens": 4207951,
+  "utts": 347684,
+  "utts_translated": 347684
+ },
+ "failed": 0,
+ "hours": 249.15,
+ "speech_hours": 202.1,
+ "overlap_ratio_mean": 0.0557,
+ "changes_per_min_mean": 9.46,
+ "bc_per_min": 2.42,
+ "self_overlap": 0,
+ "pools": {
+  "otoSpeech+aihub134-2": 877,
+  "vp+aihub134-2": 461,
+  "swbd+aihub134-2": 878,
+  "cv+aihub134-2": 415,
+  "ls+aihub71631": 388,
+  "vp+aihub134-1": 454,
+  "swbd+aihub71631": 1240,
+  "swbd+aihub134-1": 870,
+  "otoSpeech+aihub134-1": 903,
+  "otoSpeech+aihub71631": 1194,
+  "cv+aihub71631": 635,
+  "ls+aihub134-2": 321,
+  "vp+aihub71631": 593,
+  "ls+aihub134-1": 332,
+  "cv+aihub134-1": 439
+ },
+ "timing": {
+  "dialogues": 3843,
+  "pairs": 750453,
+  "p_hold": 0.57,
+  "bc_rate_per_s": 0.065,
+  "fto_q10_50_90": [
+   -1.43,
+   0.752,
+   4.21
+  ],
+  "hold_q50": 1.02,
+  "turn_q10_50_90": [
+   1.09,
+   2.08,
+   5.13
+  ],
+  "fto_negative_share": 0.322
+ },
+ "pool_info": {
+  "a": {
+   "otoSpeech": {
+    "dialogues": 382,
+    "units": 140723,
+    "keys_all": 764,
+    "keys_used": 764,
+    "units_used": 140723,
+    "units_untranslated": 3902
+   },
+   "words": {
+    "files": 2105,
+    "rows": 321872
+   },
+   "ls": {
+    "keys_all": 5447,
+    "keys_used": 4559,
+    "units_used": 90629,
+    "units_untranslated": 36545
+   },
+   "swbd": {
+    "keys_all": 4841,
+    "keys_used": 3677,
+    "units_used": 71762,
+    "units_untranslated": 10452
+   },
+   "vp": {
+    "keys_all": 20500,
+    "keys_used": 576,
+    "units_used": 7469,
+    "units_untranslated": 1594
+   },
+   "cv": {
+    "keys_all": 4760,
+    "keys_used": 1752,
+    "units_used": 88961,
+    "units_untranslated": 1895
+   }
+  },
+  "b": {
+   "aihub71631": {
+    "dialogues": 698,
+    "units": 134181,
+    "keys_all": 1353,
+    "keys_used": 1290,
+    "units_used": 133949,
+    "units_untranslated": 5922
+   },
+   "aihub134-1": {
+    "dialogues": 1337,
+    "units": 212390,
+    "keys_all": 2645,
+    "keys_used": 2462,
+    "units_used": 211548,
+    "units_untranslated": 33819
+   },
+   "aihub134-2": {
+    "dialogues": 1426,
+    "units": 179007,
+    "keys_all": 2820,
+    "keys_used": 2590,
+    "units_used": 177880,
+    "units_untranslated": 10847
+   },
+   "words": {
+    "files": 0,
+    "rows": 0
+   }
+  }
+ },
+ "errors": {
+  "too_short": 6
+ },
+ "args": {
+  "lang": "English",
+  "out": "/soundai/users/tskim/VAPKT-data/data/sim-dialogue-xl-v1",
+  "sessions": 10000,
+  "dur": [
+   60.0,
+   120.0
+  ],
+  "phase2": "/soundai/users/tskim/VAPKT-data/data/phase2",
+  "split": "/soundai/users/tskim/VAPKT-data/data/phase2/splits/v2.json",
+  "phase2_corpora": [
+   "otoSpeech"
+  ],
+  "stats_corpora": [
+   "otoSpeech"
+  ],
+  "words": [
+   "@/soundai/users/tskim/VAPKT-data/data/semcommit-work/labels/speechlm-all19-v035/snapshots/20260929-1637/main-words.list",
+   "@/soundai/users/tskim/VAPKT-data/data/semcommit-work/asr-words-v1/lists/asr-words-20260929.list",
+   "@/soundai/users/tskim/VAPKT-data/data/cv4-en-v1/lists/cv4-en-words-train.list"
+  ],
+  "words_frac": 0.5,
+  "pool_weights": "otoSpeech:0.3,swbd:0.3,cv:0.15,vp:0.15,ls:0.1",
+  "min_units": 10,
+  "max_units": 80,
+  "jitter_db": 3.0,
+  "noise_bank": "/soundai/users/tskim/VAPKT-data/data/noise-bank-v1",
+  "noise_p": 0.5,
+  "noise_snr": "10,30",
+  "rir_p": 0.3,
+  "p_hold": 0.3,
+  "bc_scale": 1.5,
+  "split_s": 4.0,
+  "workers": 24,
+  "seed": 0,
+  "lang2": "Korean",
+  "phase2_corpora2": [
+   "aihub71631",
+   "aihub134-1",
+   "aihub134-2"
+  ],
+  "stats_corpora2": [
+   "aihub71631",
+   "aihub134-1",
+   "aihub134-2"
+  ],
+  "words2": [],
+  "pool_weights2": "aihub71631:0.4,aihub134-1:0.3,aihub134-2:0.3",
+  "trans": [
+   "/soundai/users/tskim/VAPKT-data/data/stage4-dlg-units-v1/targets-fix-gen-v3-bf16",
+   "/soundai/users/tskim/VAPKT-data/data/ast-mono-v1/targets-fix-gen-v3-bf16/en-ko",
+   "/soundai/users/tskim/VAPKT-data/data/ast-mono-cv4en-v1/targets-fix-gen-v3-bf16/en-ko"
+  ],
+  "allow_untranslated": false
+ },
+ "sec": 939.2
+}
