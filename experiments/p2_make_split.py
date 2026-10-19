@@ -2,7 +2,7 @@
 """세션 단위 held-out split v1 (D1c 부터 학습 제외; [[decision-phase2-eval-plan-v2]]).
   python experiments/p2_make_split.py --data <phase2 dir> --out <phase2 dir>/splits/v1.json
   python experiments/p2_make_split.py --data <phase2 dir> --base <…>/splits/v1.json --corpora kec,ztc,nsc --frac 0.10 --version v2 --out <…>/splits/v2.json
-    v2(Stage 3 독일어, 2026-10-14) = v1 의 코퍼스를 그대로 복사 + 독일어. KEC 는 녹음 쌍(화자 2 명, 한 화자는 한 쌍에만), ZTC 는 화자를 공유하는 dyad 를
+    v2(Stage 3 독일어, 2026-10-14) = v1 의 코퍼스를 그대로 복사 + 독일어. v3(2026-10-20) = v2 + CallHome 독일어(통화 단위 10 %). KEC 는 녹음 쌍(화자 2 명, 한 화자는 한 쌍에만), ZTC 는 화자를 공유하는 dyad 를
     한 덩어리로 묶어 --frac 만큼(해시 순 상위, 정확한 개수) 떼고, NSC 는 상대역이 aden 인 세션 전부(상대역 대부분이 amsterdam 한 사람이라 처음 듣는 상대 확인용).
 규칙: AMI 공식 ASR test 회의(EN2002·ES2004·ES2014·IS1009·TS3003 a–d), ICSI 표준 eval(Bed004·Bed009·Bed016·Bmr005·Bmr019·Bro018), NOTSOFAR dev 서브셋,
       71631·134-1·134-2 는 conv_id 에서 화자 id 를 뽑아 화자 5 % 를 고르고 그 화자가 낀 대화 전부(화자 누설 방지), otoSpeech 는 meta 의 배우 id 5 %(없으면 conv 5 %)."""
@@ -24,7 +24,7 @@ def take(units, k):
     """units: {단위: [conv_id…]} → 해시 순 상위 k 단위를 뗀다(개수가 정확하다)."""
     return sorted(units, key=lambda u: h01(u))[:k]
 for corpus in a.corpora.split(","):
-    if corpus in ("kec", "ztc", "nsc"):
+    if corpus in ("kec", "ztc", "nsc", "callhome-de"):
         units = collections.defaultdict(list); hours = {}; total = 0
         if corpus == "ztc":                                   # 화자를 공유하는 dyad 를 한 덩어리로(union-find)
             par = {}
@@ -38,12 +38,14 @@ for corpus in a.corpora.split(","):
             total += 1; hours[cid] = d["duration_s"] / 3600; m = d.get("meta", {})
             if corpus == "kec": units["kec:" + m["pair"]].append(cid)
             elif corpus == "ztc": units["ztc:" + find(d["speakers"][0])].append(cid)
+            elif corpus == "callhome-de": units[cid].append(cid)                     # 통화마다 화자가 다르다(HF 판에 화자 id 없음) — 통화 단위
             else: units["nsc:" + str(m.get("interlocutor"))].append(cid)
         if corpus == "nsc":
             held_u = [u for u in units if "aden" in u]; rule = "상대역이 aden 인 세션 전부(amsterdam+aden 포함)"
         else:
             k = max(1, round(a.frac * len(units))); held_u = take(units, k)
-            rule = (f"녹음 쌍 {k}/{len(units)} ({a.frac:.0%}, 해시 순)" if corpus == "kec" else f"화자 공유 dyad 덩어리 {k}/{len(units)} ({a.frac:.0%}, 해시 순)")
+            rule = (f"녹음 쌍 {k}/{len(units)} ({a.frac:.0%}, 해시 순)" if corpus == "kec" else f"통화 {k}/{len(units)} ({a.frac:.0%}, 해시 순)" if corpus == "callhome-de"
+                    else f"화자 공유 dyad 덩어리 {k}/{len(units)} ({a.frac:.0%}, 해시 순)")
         held = sorted(c for u in held_u for c in units[u]); hh = sum(hours[c] for c in held)
         out[corpus] = dict(rule=rule, n_heldout=len(held), n_total=total, hours_heldout=round(hh, 1), heldout_units=sorted(held_u), heldout=held)
         print(corpus, rule, f"{len(held)}/{total}", f"{hh:.1f} h", sorted(held_u)); continue

@@ -1,0 +1,20 @@
+{
+ "utts": 27967,
+ "kept": 7149,
+ "quarantined": 20818,
+ "flag_asr_disagree": 20817,
+ "flag_digit": 449,
+ "dialogues": 120,
+ "speakers=2": 104,
+ "flag_empty": 1,
+ "speakers=3": 12,
+ "flag_charset": 11,
+ "speakers=4": 4,
+ "flag_abbrev": 17,
+ "hours": 18.43,
+ "kept_utt_hours": 3.06,
+ "kept_share": 0.2556,
+ "textnorm": "asr-tn-de-v1",
+ "max_wer": 0.03,
+ "rule": "keep iff WER < max_wer"
+}

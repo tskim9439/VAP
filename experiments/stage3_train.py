@@ -101,7 +101,7 @@ from vapasr.speedup import add_speed_args, apply_speedups, training_args_kwargs
 add_speed_args(ap)
 a = ap.parse_args()
 
-DLG_LANG = {"aihub71631": "Korean", "aihub134-1": "Korean", "aihub134-2": "Korean", "nikl2020": "Korean", "otoSpeech": "English", "kec": "German", "ztc": "German", "nsc": "German"}
+DLG_LANG = {"aihub71631": "Korean", "aihub134-1": "Korean", "aihub134-2": "Korean", "nikl2020": "Korean", "otoSpeech": "English", "kec": "German", "ztc": "German", "nsc": "German", "callhome-de": "German"}
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
 delays = tuple(int(x) for x in a.delays.split(",") if x.strip())
 if not delays or not all(1 <= d <= 10 for d in delays): sys.exit(f"--delays {a.delays}: 1–10 의 쉼표 목록")

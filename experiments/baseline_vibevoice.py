@@ -8,10 +8,11 @@
 모델: stream = VibeVoice-ASR-Streaming-7B(model.streaming_generate, 체크포인트의 청크·lookahead), offline = VibeVoice-ASR(창 전체 한 번, JSON 출력 Start/End/Speaker/Content).
   둘 다 탐욕 디코딩, bf16, sdpa. 입력은 우리 평가와 같은 mono 혼합 창(16 kHz)을 24 kHz 로 올린 것(resample_poly 3/2).
 참조: cst_stage3_eval.window_ref(δ 4·10) 그대로 — 전사 없는 발화(마스크)의 말은 참조에서 빠진다.
+잘린 JSON(반복 붕괴로 토큰 상한)은 recover_segments 로 살린다(공식 후처리는 빈 결과). 반복 붕괴 창 수를 따로 낸다.
 가설 단어 시각: offline 은 구간 [Start, End] 안에서 단어 순서대로 고르게, stream 은 그 단어가 나온 청크 구간 [cT, (c+1)T] 안에서 고르게 놓는다(근사).
   마스크: 참조가 버리는 범위와 같은 시간 범위 — 전사 없는 구간 [s, e] 에 대해 단어 끝 시각이 [s − δ·0.08, e + 0.32] 이면 버린다.
 지표: cp = 가설 화자(몇 명이든)와 참조 두 슬롯의 최적 짝(남는 가설 화자 말은 삽입), agn = 화자 무시 시간순, 단위는 cst_eval.units(한국어 글자·영독 단어).
-  마스크 없는 창만의 cp·agn 도 따로 낸다(시각 근사의 영향을 보는 대조).
+  마스크 없는 창(nomask, 시각 근사의 영향을 보는 대조)과 반복 붕괴 없는 창(nodeg — 붕괴 창 하나가 코퍼스 점수를 덮는다)의 cp·agn 도 따로 낸다.
 산출: <out>/predictions-rank{r}.jsonl(창마다 원출력·참조·마스크), score.json. 아무것도 지우지 않는다."""
 import argparse, collections, glob, itertools, json, os, re, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -90,6 +91,20 @@ def run(a):
     print(f"DONE rank={a.rank} rows={n}", flush=True)
 
 
+def recover_segments(raw):
+    """offline 출력이 잘린 JSON(반복 붕괴로 토큰 상한에 걸림)일 때 — 공식 post_process_transcription 은 [] 를 낸다.
+    완성된 구간 객체는 그대로, 마지막 잘린 구간은 Content 를 끝까지 살린다(모델 출력이므로 가설에 넣는다). 키는 공식과 같은 이름으로 맞춘다."""
+    out = []
+    for m in re.finditer(r'\{\s*"Start"\s*:\s*([\d.]+)\s*,\s*"End"\s*:\s*([\d.]+)\s*,\s*"Speaker"\s*:\s*(\d+)\s*,\s*"Content"\s*:\s*"((?:[^"\\]|\\.)*)("?)', raw or ""):
+        out.append(dict(start_time=float(m.group(1)), end_time=float(m.group(2)), speaker_id=int(m.group(3)), text=m.group(4), truncated=not m.group(5)))
+    return out
+
+
+def degenerate(text, n=8):
+    """반복 붕괴: 같은 1–4 글자 단위가 n 번 넘게 잇달아 나온다."""
+    return bool(re.search(r"(.{1,4}?)\1{%d,}" % n, text or ""))
+
+
 SPK_RE = re.compile(r"(?:\[\s*)?(?:Speaker|SPEAKER|speaker|Spk|S)\s*[_ ]?(\d+)\s*(?:\])?\s*[:：]?")
 
 
@@ -97,7 +112,8 @@ def hyp_words(r):
     """→ [(화자, 단어, 창 기준 시각 s)]. offline: JSON 구간, stream: 청크 텍스트(화자 표지 정규식, 없으면 화자 0)."""
     o = r["out"]; out = []
     if "segments" in o:
-        for sg in o["segments"]:
+        segs = o["segments"] or recover_segments(o.get("raw", ""))
+        for sg in segs:
             ws = str(sg.get("text", "")).split()
             try: s, e = float(sg.get("start_time", 0)), float(sg.get("end_time", 0))
             except (TypeError, ValueError): s = e = 0.0
@@ -129,7 +145,8 @@ def score_row(r, delta):
     cp = min(sum(ed(Rp[k], Hp[p[k]]) for k in range(n)) for p in itertools.permutations(range(n)))
     ra = [u for w, _ in sorted([x for slot in ref["words"] for x in slot], key=lambda x: x[1]) for u in units(w, lang)]
     ha = [u for _, w, _ in sorted(hw, key=lambda x: x[2]) for u in units(w, lang)]
-    return dict(n_ref=len(R[0]) + len(R[1]), n_hyp=sum(len(h) for h in H), cp=cp, agn=ed(ra, ha), n_hyp_spk=len(H), masked=ref["masked_chunks"] > 0)
+    o = r["out"]; deg = degenerate(o.get("raw") if "raw" in o else "".join(o.get("chunks", [])))
+    return dict(n_ref=len(R[0]) + len(R[1]), n_hyp=sum(len(h) for h in H), cp=cp, agn=ed(ra, ha), n_hyp_spk=len(H), masked=ref["masked_chunks"] > 0, degenerate=deg)
 
 
 def score(a):
@@ -142,20 +159,20 @@ def score(a):
         acc = collections.defaultdict(collections.Counter); ids = collections.defaultdict(set)
         for r in rows:
             s = score_row(r, delta)
-            for g in ("all", "nomask" if not s["masked"] else None):
+            for g in ("all", "nomask" if not s["masked"] else None, "nodeg" if not s["degenerate"] else None):
                 if g is None: continue
-                c = acc[(r["corpus"], g)]; c["n_ref"] += s["n_ref"]; c["n_hyp"] += s["n_hyp"]; c["cp"] += s["cp"]; c["agn"] += s["agn"]; c["win"] += 1; c["spk>2"] += s["n_hyp_spk"] > 2
+                c = acc[(r["corpus"], g)]; c["n_ref"] += s["n_ref"]; c["n_hyp"] += s["n_hyp"]; c["cp"] += s["cp"]; c["agn"] += s["agn"]; c["win"] += 1; c["spk>2"] += s["n_hyp_spk"] > 2; c["deg"] += s["degenerate"]
                 ids[(r["corpus"], g)].add(r["id"])
         for (c, g), v in sorted(acc.items()):
             e = dict(cp=round(100 * v["cp"] / max(1, v["n_ref"]), 2), agn=round(100 * v["agn"] / max(1, v["n_ref"]), 2), hyp_ref=round(v["n_hyp"] / max(1, v["n_ref"]), 3),
-                     windows=v["win"], hyp_spk_gt2=v["spk>2"])
+                     windows=v["win"], hyp_spk_gt2=v["spk>2"], degenerate=v["deg"])
             for name, crow in cmp.items():                                      # 같은 창의 우리 모델(Stage 3 회귀 평가 원출력의 점수)
                 cc = [x for x in crow if x["delta"] == delta and x["id"] in ids[(c, g)]]; nr = sum(x["n_ref"] for x in cc)
                 if cc: e[name] = dict(cp=round(100 * sum(x["cp"] for x in cc) / max(1, nr), 2), agn=round(100 * sum(x["agn"] for x in cc) / max(1, nr), 2), windows=len(cc))
             res[f"{c}/d{delta}/{g}"] = e
     json.dump(res, open(os.path.join(a.out, "score.json"), "w"), ensure_ascii=False, indent=1)
     for k, e in res.items():
-        print(f"{k:28s} VibeVoice cp {e['cp']:6.2f} agn {e['agn']:6.2f} h/r {e['hyp_ref']:.2f} 창 {e['windows']:3d} (가설 화자 >2: {e['hyp_spk_gt2']})"
+        print(f"{k:28s} VibeVoice cp {e['cp']:6.2f} agn {e['agn']:6.2f} h/r {e['hyp_ref']:.2f} 창 {e['windows']:3d} (가설 화자 >2: {e['hyp_spk_gt2']}, 반복 붕괴 {e['degenerate']})"
               + "".join(f" | {n} cp {e[n]['cp']:6.2f} agn {e[n]['agn']:6.2f}" for n in cmp if n in e))
 
 
