@@ -1,0 +1,34 @@
+{
+ "gen_dir": "gen-v3-bf16",
+ "fix_dir": "fix-gen-v3-bf16",
+ "tokenizer": "/soundai/Model/VAPASR/semcommit-q06-s1m3-d10/final",
+ "built": "2026-10-19 11:37:57",
+ "directions": {
+  "de-en": {
+   "shards": 5,
+   "unit_v2": 25197,
+   "unit_v3": 3935,
+   "unit_fail": 418,
+   "unit_repair": 1016,
+   "rows": 28839,
+   "kept": 28422,
+   "drop_gate": 404,
+   "tokens": 170615,
+   "drop_no_judge": 13,
+   "kept_share": 0.9855
+  },
+  "ko-en": {
+   "shards": 68,
+   "unit_v3": 59072,
+   "unit_v2": 264152,
+   "unit_fail": 35325,
+   "unit_repair": 36923,
+   "rows": 392166,
+   "kept": 356954,
+   "drop_gate": 34555,
+   "drop_no_judge": 657,
+   "tokens": 3053247,
+   "kept_share": 0.9102
+  }
+ }
+}
