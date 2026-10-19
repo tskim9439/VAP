@@ -66,6 +66,7 @@ g.add_argument("--spk-act-weight", type=float, default=0.0, help="화자 슬롯 
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
 g.add_argument("--replay-de-words", action="append", default=[], help="독일어 words.jsonl(반복·쉼표·@목록) → rep_de")
+g.add_argument("--replay-set", action="append", default=[], help="따로 가중하는 단일 화자 셋 '이름:언어:words(쉼표·@목록)' — 이름은 rep_ 로 시작, --weights 에 그 이름으로 비율을 준다. --replay-files-frac 를 적용하지 않는다(작은 셋이 파일 해시로 통째로 빠지지 않게). 예: rep_chde:German:@callhome-de-words-train.list")
 g.add_argument("--replay-files-frac", type=float, default=1.0, help="words 파일 중 이 비율만 읽는다(경로 해시로 고정 선택 — 초기화 시간 절약)")
 g.add_argument("--replay-max-items", type=int, default=0, help="replay 셋마다 항목 상한(0 = 전부)")
 g.add_argument("--ast-targets", action="append", default=[], help="번역 타깃(ast_build_targets.py 산출, pack/ 권장; 반복·쉼표·@목록)")
@@ -297,6 +298,20 @@ if (RW or RD) and any(weights.get(k, 0) > 0 for k in ("rep_ko", "rep_en", "rep_d
                               speed_perturb=speeds, noise_aug=naug, ast_targets=AST, ast_frac=a.ast_frac, trans_id=trans_id, gain_aug=gain, gain_aug_langs=gain_langs)
         if not len(ds): log(f"  {key}: 항목 0 — 건너뜀"); continue
         ds.lang = lang; train_sets[key] = ds; log(f"  {key}: {len(ds)} 항목 · 번역 타깃 있는 항목 {ds.stats.get('ast_items', 0)}")
+RS = {}
+for spec in a.replay_set:                                                                       # 따로 가중하는 단일 화자 셋(예: CallHome 독일어 감독 발화)
+    name, lang, ww = spec.split(":", 2)
+    if not name.startswith("rep_") or name in ("rep_ko", "rep_en", "rep_de") or name in RS: sys.exit(f"--replay-set 이름은 rep_ 로 시작하고 기본 셋·다른 셋과 달라야 한다: {name}")
+    if weights.get(name, 0) <= 0: sys.exit(f"--replay-set {name} 이 --weights 에 없다")
+    RS[name] = _paths([ww])
+    from vapasr.data.ast_dataset import AstStreamDataset, load_ast_targets
+    if "AST" not in globals(): AST, ast_st, ast_fp = load_ast_targets(_paths(a.ast_targets)) if a.ast_targets else ({}, {}, None)
+    ds = AstStreamDataset(RS[name], [], tok, sp_ids, delays=delays, turn_end=False, hangover_s=0.48, hardneg_weight=1.0, max_items=a.replay_max_items or None,
+                          seed=a.seed, online=True, allow_unlabeled=False, max_per_chunk=0, langs=[lang], path_map={}, tail_margin=2, source_pool="main",
+                          ko_textnorm=True, written_frac=0.0, sem_free_unlabeled=True, sem_free_max_ratio=None, offline_frac=a.offline_frac, ignore_labels=True,
+                          speed_perturb=speeds, noise_aug=naug, ast_targets=AST, ast_frac=a.ast_frac, trans_id=trans_id, gain_aug=gain, gain_aug_langs=gain_langs)
+    if not len(ds): sys.exit(f"--replay-set {name}: 항목 0")
+    ds.lang = lang; train_sets[name] = ds; log(f"  {name}(따로 가중): {len(ds)} 항목 · 번역 타깃 있는 항목 {ds.stats.get('ast_items', 0)} · bad {dict(ds.bad)}")
 if a.revive_dir and not revive_files: sys.exit(f"--revive-dir 에 대화 코퍼스의 <corpus>.revive.jsonl 이 없다: {a.revive_dir}")
 missing = sorted(k for k, w in weights.items() if w > 0 and k not in train_sets)
 if missing: sys.exit(f"가중치 > 0 인데 만들어지지 않은 셋: {missing} (입력·코퍼스를 확인하거나 --weights 에서 뺀다)")
@@ -323,7 +338,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"sim_data": file_digest(sim_files)} if sim_files else {}), **({"revive": file_digest(revive_files)} if revive_files else {}),
           **({"dlg_trans": dt_fp, "dlg_trans_input": dti_fp, "dlg_ast_frac": a.dlg_ast_frac} if DT else {}),
           **({"sim_trans": sim_trans_fp, "sim_trans_frac": a.sim_trans_frac} if sim_trans_fp else {}),
-          **({"trans_lead_space": True} if a.trans_lead_space and (DT or sim_trans_fp) else {}))   # 끄면 키 없음(이전 run 지문 그대로)
+          **({"trans_lead_space": True} if a.trans_lead_space and (DT or sim_trans_fp) else {}),
+          **({"replay_sets": {k: file_digest(v) for k, v in sorted(RS.items())}} if RS else {}))   # 끄면 키 없음(이전 run 지문 그대로)
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():
