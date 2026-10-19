@@ -4,6 +4,7 @@
 #         --root DIR(기본 /soundai/users/tskim/VAPKT-data/data/ast-mono-v1) --after JOBID
 #         --prompt v2|v3(기본 v3) --quant bf16|fp8(기본 bf16) --mem-util F(기본 0.95) --max-seqs N(기본 1024)
 #         결과 폴더는 ROOT/gen-<prompt>-<quant> (설정마다 따로 — 다른 설정의 결과와 섞이지 않는다)
+#         --exclude N,…  더 뺄 노드(hpc-50 처럼 짧게 써도 된다) — sbatch 기본 제외 hpc-52·hpc-4 에 더한다(2026-10-19 hpc-50·51 munge 인증 실패)
 #         --fix  생성이 끝난 뒤 수리 단계(관문 탈락 단위를 판정 v3 로 다시 판정, 그래도 탈락하면 한 번 다시 번역) → ROOT/fix-<gen 폴더>
 # 기본값(v3·bf16·0.95·1024)은 2026-10-09 시험에서 고른 것: v2 bf16 대비 en-de 샤드 2.98 배 빠르고 관문 통과 +2 %p
 # (fp8 는 3.57 배지만 관문 통과가 1.3 %p 낮다 — wiki/outputs/output-ast-mono-generation-20261009.md).
@@ -13,7 +14,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 nodes=2; partition=apex; time_limit=""; job_name=SA_SFT_FullDuplex; after=""
 root=/soundai/users/tskim/VAPKT-data/data/ast-mono-v1
-prompt=v3; quant=bf16; mem_util=0.95; max_seqs=1024; mode=run
+prompt=v3; quant=bf16; mem_util=0.95; max_seqs=1024; mode=run; exclude=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --nodes) nodes=$2; shift 2 ;;
@@ -26,6 +27,7 @@ while [[ $# -gt 0 ]]; do
     --quant) quant=$2; shift 2 ;;
     --mem-util) mem_util=$2; shift 2 ;;
     --max-seqs) max_seqs=$2; shift 2 ;;
+    --exclude) exclude=$2; shift 2 ;;
     --fix) mode=fix; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
@@ -45,6 +47,7 @@ if [[ $mode == fix ]]; then
 else
   echo "제출: ${gen_dir} 완료 항목 ${done_n}/${total} · 노드 ${nodes} · ${partition} · ${job_name}" >&2
 fi
-sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} ${time_limit:+--time="$time_limit"} \
+exc=""; if [[ -n $exclude ]]; then exc="--exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4"; for n in ${exclude//,/ }; do [[ $n == slurmmxch200v5-* ]] || n=slurmmxch200v5-$n; exc+=",$n"; done; fi   # 명령줄 --exclude 는 sbatch 안 기본값을 덮으므로 기본 제외도 함께 쓴다
+sbatch --job-name="$job_name" --partition="$partition" ${after:+--dependency=afterany:$after} ${time_limit:+--time="$time_limit"} $exc \
   --nodes="$nodes" --ntasks=$((nodes * 8)) --ntasks-per-node=8 --gres=gpu:8 \
   --export="ALL,ROOT=$root,PROMPT=$prompt,QUANT=$q,GEN_DIR=$gen_dir,MEM_UTIL=$mem_util,MAX_SEQS=$max_seqs,MODE=$mode" slurm/ast-mono-generate.sbatch
