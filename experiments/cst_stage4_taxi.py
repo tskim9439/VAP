@@ -14,7 +14,7 @@
 채점(score): cstbench.evaluate(세션·출력 언어마다 참조 번역에 단어 정렬로 재분절 → BLEU·chrF·StreamLAAL·end_offset·빈 턴) → report-d{δ}.json,
   받아쓰기 WER(세션·언어마다 이어 붙인 참조 전사 대 그 언어 슬롯 전사, cstbench.normalize) → asr-report-d{δ}.json.
 TAXI 전사·번역은 재배포 금지라 hyp·asr 파일은 mxc 에만 두고 저장소에는 report 만 가져온다."""
-import argparse, json, os, sys, time, zlib
+import argparse, json, os, re, sys, time, zlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cst-bench", "src"))
 from cst_stage3_eval import words_of  # noqa: E402
@@ -37,6 +37,29 @@ def windows_of(rec, max_s):
         if b["end_s"] - t0 > max_s and cut > t0 + 5.0: out.append((t0, cut)); t0 = cut
     out.append((t0, T))
     return out
+
+
+def simple_words(s):
+    """두 언어 공통 정규화(소문자·문장부호 제거) — cp 와 화자 무시 WER 을 같은 규칙으로 재서 귀속 몫(cp − agn)을 가른다."""
+    return re.sub(r"[^\w' ]+", " ", s.lower()).split()
+
+
+def attr_split(sessions, asr):
+    """세션 단위 (cp 오류, 화자 무시 오류, 참조 단어 수) — 공통 정규화. cp = 언어 슬롯 순열 중 작은 쪽(2 언어 세션), 화자 무시 = 참조 턴 전부를 시각순으로 이은 것 대
+    가설 단어 전부를 방출 시각순으로 이은 것. VibeVoice 대비 분해(output-vibevoice-stream-comparison-20261020)와 같은 정의."""
+    from vapasr.data.cst_eval import ed
+    by = {}
+    for x in asr: by.setdefault(x["session"], []).append(x)
+    e_cp = e_agn = n = 0
+    for s in sessions:
+        turns = sorted(s["turns"], key=lambda t: t["start_s"]); langs = sorted({t["lang"] for t in turns})
+        R = [[w for t in turns if t["lang"] == lg for w in simple_words(t["transcript"])] for lg in langs]
+        hw = sorted(by.get(s["session_id"], []), key=lambda x: x["t"])
+        H = [[w for x in hw if x["lang"] == lg for w in simple_words(x["text"])] for lg in langs]
+        same = sum(ed(R[k], H[k]) for k in range(len(langs)))
+        e_cp += min(same, ed(R[0], H[1]) + ed(R[1], H[0])) if len(langs) == 2 else same
+        e_agn += ed([w for t in turns for w in simple_words(t["transcript"])], [w for x in hw for w in simple_words(x["text"])]); n += sum(len(r) for r in R)
+    return e_cp, e_agn, n
 
 
 def run(a):
@@ -109,6 +132,8 @@ def score(a):
                 same = sum(ed(R[k], normalize(H[k], langs[k]).split()) for k in range(2)); cross = sum(ed(R[k], normalize(H[1 - k], langs[k]).split()) for k in range(2))
                 e_id += same; e_cp += min(same, cross); n += len(R[0]) + len(R[1])
             res["both"] = dict(wer_slot=round(100 * e_id / max(1, n), 2), wer_cp=round(100 * e_cp / max(1, n), 2), ref_words=n)
+            c, g, m = attr_split(sessions, asr)                                                 # 공통 정규화로 받아쓰기(agn)와 귀속 몫을 가른다
+            res["split"] = dict(cp=round(100 * c / max(1, m), 2), agn=round(100 * g / max(1, m), 2), attr=round(100 * (c - g) / max(1, m), 2), ref_words=m)
         json.dump(res, open(os.path.join(a.out, f"asr-report-d{d}.json"), "w"), indent=1, ensure_ascii=False)
         for k, x in rep["directions"].items():
             print(f"δ{d} {k}: 턴 {x.get('turns')} · BLEU {x.get('bleu')} · chrF {x.get('chrf')} · StreamLAAL 중앙 {(x.get('stream_laal_s') or {}).get('median')} s · "
