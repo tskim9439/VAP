@@ -15,6 +15,7 @@
 #   Stage 4(같은 스크립트, --init 은 Stage 3 최종): --dlg-trans DIR[,DIR](대화 번역 타깃) --dlg-trans-input DIR(되살린 발화 번역, 입력만)
 #                      --dlg-ast-frac F(대화 창 번역 모드 비율, 기본 0.5) --sim-trans-frac F(교차 언어 합성 창 번역 모드 비율, 기본 0.8)
 #                      --trans-lead-space(번역 행마다 앞 공백 — 행을 이은 번역 흐름에서 단어가 붙지 않게, Stage 4 본 학습부터)
+#   --phone-aug P      전화 대역 증강 확률(대화 창·단일 화자 모두, 기본 0 = 끔)   --replay-set 이름:언어:@목록  따로 가중하는 단일 화자 셋(반복 가능, --weights 에 이름)
 #   --revive-dir DIR   격리 발화 되살리기 재료(stage3_revive_tokens 산출 <corpus>.revive.jsonl) — asr_disagree 발화의 화자 태그·<EOT> 학습
 #   --exclude N,…      더 뺄 노드(hpc-102 처럼 짧게 써도 된다) — sbatch 기본 제외 hpc-52·hpc-4 에 더한다
 #   --max-steps N(기본 2000)  --epochs E  --lr LR  --warmup N(기본 300)  --save-every N(기본 500)  --batch-tokens N(기본 16384)  --max-bs N(기본 64)
@@ -31,7 +32,7 @@ AST=/soundai/users/tskim/VAPKT-data/data/ast-mono-v1/targets-fix-gen-v3-bf16
 AST_CV4=/soundai/users/tskim/VAPKT-data/data/ast-mono-cv4en-v1/targets-fix-gen-v3-bf16
 NB=/soundai/users/tskim/VAPKT-data/data/noise-bank-v1
 run=""; init=/soundai/Model/VAPASR/semcommit-q06-s4-ast/final; nodes=1; partition=apex; time_limit=24:00:00; after=""; dry=0; extra=""
-weights="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5"; eot_mode=soft; backchannel=off; decision_weight=2; start_mode=grid; frac=0.2; recover_p=0; spk_act=0; sim_data=""; revive_dir=""; exclude=""; dlg_trans=""; dlg_trans_input=""; dlg_ast_frac=0.5; sim_trans_frac=0.8; trans_lead_space=0
+weights="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5"; eot_mode=soft; backchannel=off; decision_weight=2; start_mode=grid; frac=0.2; recover_p=0; spk_act=0; sim_data=""; revive_dir=""; exclude=""; dlg_trans=""; dlg_trans_input=""; dlg_ast_frac=0.5; sim_trans_frac=0.8; trans_lead_space=0; phone_aug=0; replay_sets=""
 max_steps=2000; epochs=1; lr=6e-5; warmup=300; save_every=500; batch_tokens=16384; max_bs=64
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -42,6 +43,7 @@ while [[ $# -gt 0 ]]; do
     --recover-p) recover_p=$2; shift 2 ;;  --spk-act-weight) spk_act=$2; shift 2 ;;  --sim-data) sim_data=$2; shift 2 ;;
     --revive-dir) revive_dir=$2; shift 2 ;;  --exclude) exclude=$2; shift 2 ;;
     --trans-lead-space) trans_lead_space=1; shift ;;
+    --phone-aug) phone_aug=$2; shift 2 ;;  --replay-set) replay_sets+=" --replay-set $2"; shift 2 ;;
     --dlg-trans) dlg_trans=$2; shift 2 ;;  --dlg-trans-input) dlg_trans_input=$2; shift 2 ;;  --dlg-ast-frac) dlg_ast_frac=$2; shift 2 ;;  --sim-trans-frac) sim_trans_frac=$2; shift 2 ;;
     --max-steps) max_steps=$2; shift 2 ;; --epochs) epochs=$2; shift 2 ;;    --lr) lr=$2; shift 2 ;;
     --warmup) warmup=$2; shift 2 ;;      --save-every) save_every=$2; shift 2 ;; --batch-tokens) batch_tokens=$2; shift 2 ;;
@@ -76,8 +78,11 @@ args+=" --save-every $save_every --num-workers 4 ${sim_data:+--sim-data $sim_dat
 [[ -n $dlg_trans ]] && args+=" --dlg-trans $dlg_trans --dlg-ast-frac $dlg_ast_frac ${dlg_trans_input:+--dlg-trans-input $dlg_trans_input}"
 [[ $weights =~ sim_[a-z][a-z]-[a-z][a-z] ]] && args+=" --sim-trans-frac $sim_trans_frac"
 [[ $trans_lead_space == 1 ]] && args+=" --trans-lead-space"
+[[ $phone_aug != 0 ]] && args+=" --phone-aug $phone_aug"
+args+="$replay_sets"
+for rs in $replay_sets; do [[ $rs == --replay-set ]] && continue; n=${rs%%:*}; [[ $weights == *"$n:"* ]] || { echo "--replay-set $n 이 --weights 에 없다" >&2; exit 2; }; f=${rs#*:*:}; f=${f#@}; [[ -f $f ]] || { echo "--replay-set 목록 없음: $f" >&2; exit 1; }; done
 args+=" $extra"
-echo "Stage 3 run $run → $out · init $init · $nodes 노드 × 8 GPU · $partition · 가중치 $weights · EOT $eot_mode · 맞장구 $backchannel · 시작 $start_mode · 정체 회복 $recover_p · 화자 슬롯 헤드 $spk_act · 합성 ${sim_data:-없음} · 되살리기 ${revive_dir:-없음} · 대화 번역 ${dlg_trans:-없음}${dlg_trans:+(번역 모드 $dlg_ast_frac)} · 번역 행 앞 공백 $trans_lead_space · 제외 추가 ${exclude:-없음} · max-steps $max_steps · MAX_RESTART ${MAX_RESTART:-3}" >&2
+echo "Stage 3 run $run → $out · init $init · $nodes 노드 × 8 GPU · $partition · 가중치 $weights · EOT $eot_mode · 맞장구 $backchannel · 시작 $start_mode · 정체 회복 $recover_p · 화자 슬롯 헤드 $spk_act · 합성 ${sim_data:-없음} · 되살리기 ${revive_dir:-없음} · 대화 번역 ${dlg_trans:-없음}${dlg_trans:+(번역 모드 $dlg_ast_frac)} · 번역 행 앞 공백 $trans_lead_space · 전화 대역 $phone_aug · 따로 가중 셋${replay_sets:- 없음} · 제외 추가 ${exclude:-없음} · max-steps $max_steps · MAX_RESTART ${MAX_RESTART:-3}" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 dep=""; [[ -n $after ]] && dep="--dependency=afterany:$after"
 exc=""; if [[ -n $exclude ]]; then exc="--exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4"; for n in ${exclude//,/ }; do [[ $n == slurmmxch200v5-* ]] || n=slurmmxch200v5-$n; exc+=",$n"; done; fi   # 명령줄 --exclude 는 sbatch 안 기본값을 덮으므로 기본 제외도 함께 쓴다

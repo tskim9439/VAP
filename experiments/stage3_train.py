@@ -76,6 +76,8 @@ g.add_argument("--gain-augment", default="off", help="replay 음량 증강 'p,lo
 g.add_argument("--speed-perturb", default="", help="replay 속도 변형 배율 목록(예 0.9,1.0,1.1)")
 g.add_argument("--noise-bank", default=None, help="replay 잡음·잔향 뱅크"); g.add_argument("--noise-p", type=float, default=0.4)
 g.add_argument("--noise-snr", default="5,30"); g.add_argument("--music-snr", default="10,30"); g.add_argument("--rir-p", type=float, default=0.2)
+g.add_argument("--phone-aug", type=float, default=0.0, help="전화 대역 증강 확률(vapasr/data/phone_aug — 8 kHz·300–3400 Hz 대역·μ-law, 영위상). 대화 창(실제·합성)과 단일 화자 셋 모두에, 단일 화자는 잡음·잔향 뒤에 건다. 0 = 끔(지문 그대로)")
+g.add_argument("--phone-aug-mulaw", type=float, default=0.5, help="전화 대역 증강 안에서 μ-law 8 비트 양자화 확률")
 g = ap.add_argument_group("섞기·학습")
 g.add_argument("--weights", default="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5", help="셋 가중치 'name:w,…' — step 비율(없는 셋 = 0)")
 g.add_argument("--delays", default="4,5,6,7,8,9,10"); g.add_argument("--next-weight", type=float, default=0.3); g.add_argument("--next-weight-ko", type=float, default=0.15)
@@ -129,6 +131,9 @@ except (ValueError, TypeError) as e: sys.exit(f"--spec-augment {a.spec_augment!r
 from vapasr.data.noise_aug import from_args as noise_aug_from_args
 try: naug = noise_aug_from_args(a.noise_bank, a.noise_p, a.noise_snr, a.rir_p, a.music_snr)
 except (ValueError, OSError) as e: sys.exit(f"--noise-bank {a.noise_bank}: {e}")
+from vapasr.data.phone_aug import PhoneAugment, AugChain
+phone = PhoneAugment(p=a.phone_aug, mulaw_p=a.phone_aug_mulaw) if a.phone_aug > 0 else None
+raug = AugChain(naug, phone) if phone is not None else naug                                       # 단일 화자: 잡음·잔향 → 전화 대역
 
 rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))
 if a.gpu is not None and world == 1: os.environ["CUDA_VISIBLE_DEVICES"] = a.gpu
@@ -246,7 +251,7 @@ for lang in ("Korean", "English", "German"):
     ds = CstDialogueDataset(files, tok, delays=delays, exclude=held, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac,
                             seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
                             spk_activity=a.spk_act_weight > 0, revive=load_revive(rv) if rv else None,
-                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}))
+                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}), wav_aug=phone)
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = lang; train_sets[key] = ds
     if DT:
@@ -267,7 +272,7 @@ for lang in ("Korean", "English", "German"):                                    
     sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0)
+                            spk_activity=a.spk_act_weight > 0, wav_aug=phone)
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = lang; train_sets[key] = ds
     log(f"  {key}(합성): {len(ds)} 창 · 대화 {ds.stats['cst_dialogues']} · stats {dict(ds.stats)}")
@@ -280,7 +285,7 @@ for key in sorted(k for k, w in weights.items() if w > 0 and re.fullmatch(r"sim_
     XT, xt_st, sim_trans_fp[key] = load_ast_targets([td]); sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space)
+                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space, wav_aug=phone)
     if not ds.has_xl: sys.exit(f"{key}: 교차 언어 대화(meta.spk_lang)가 아니다")
     if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
     ds.lang = next(iter(ds.dlgs.values())).lang; train_sets[key] = ds
@@ -295,7 +300,7 @@ if (RW or RD) and any(weights.get(k, 0) > 0 for k in ("rep_ko", "rep_en", "rep_d
         ds = AstStreamDataset(ww, [], tok, sp_ids, delays=delays, turn_end=False, hangover_s=0.48, hardneg_weight=1.0, max_items=a.replay_max_items or None,
                               seed=a.seed, online=True, allow_unlabeled=False, max_per_chunk=0, langs=[lang], path_map={}, tail_margin=2, source_pool="main",
                               ko_textnorm=True, written_frac=0.0, sem_free_unlabeled=True, sem_free_max_ratio=None, offline_frac=a.offline_frac, ignore_labels=True,
-                              speed_perturb=speeds, noise_aug=naug, ast_targets=AST, ast_frac=a.ast_frac, trans_id=trans_id, gain_aug=gain, gain_aug_langs=gain_langs)
+                              speed_perturb=speeds, noise_aug=raug, ast_targets=AST, ast_frac=a.ast_frac, trans_id=trans_id, gain_aug=gain, gain_aug_langs=gain_langs)
         if not len(ds): log(f"  {key}: 항목 0 — 건너뜀"); continue
         ds.lang = lang; train_sets[key] = ds; log(f"  {key}: {len(ds)} 항목 · 번역 타깃 있는 항목 {ds.stats.get('ast_items', 0)}")
 RS = {}
@@ -309,7 +314,7 @@ for spec in a.replay_set:                                                       
     ds = AstStreamDataset(RS[name], [], tok, sp_ids, delays=delays, turn_end=False, hangover_s=0.48, hardneg_weight=1.0, max_items=a.replay_max_items or None,
                           seed=a.seed, online=True, allow_unlabeled=False, max_per_chunk=0, langs=[lang], path_map={}, tail_margin=2, source_pool="main",
                           ko_textnorm=True, written_frac=0.0, sem_free_unlabeled=True, sem_free_max_ratio=None, offline_frac=a.offline_frac, ignore_labels=True,
-                          speed_perturb=speeds, noise_aug=naug, ast_targets=AST, ast_frac=a.ast_frac, trans_id=trans_id, gain_aug=gain, gain_aug_langs=gain_langs)
+                          speed_perturb=speeds, noise_aug=raug, ast_targets=AST, ast_frac=a.ast_frac, trans_id=trans_id, gain_aug=gain, gain_aug_langs=gain_langs)
     if not len(ds): sys.exit(f"--replay-set {name}: 항목 0")
     ds.lang = lang; train_sets[name] = ds; log(f"  {name}(따로 가중): {len(ds)} 항목 · 번역 타깃 있는 항목 {ds.stats.get('ast_items', 0)} · bad {dict(ds.bad)}")
 if a.revive_dir and not revive_files: sys.exit(f"--revive-dir 에 대화 코퍼스의 <corpus>.revive.jsonl 이 없다: {a.revive_dir}")
@@ -339,7 +344,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"dlg_trans": dt_fp, "dlg_trans_input": dti_fp, "dlg_ast_frac": a.dlg_ast_frac} if DT else {}),
           **({"sim_trans": sim_trans_fp, "sim_trans_frac": a.sim_trans_frac} if sim_trans_fp else {}),
           **({"trans_lead_space": True} if a.trans_lead_space and (DT or sim_trans_fp) else {}),
-          **({"replay_sets": {k: file_digest(v) for k, v in sorted(RS.items())}} if RS else {}))   # 끄면 키 없음(이전 run 지문 그대로)
+          **({"replay_sets": {k: file_digest(v) for k, v in sorted(RS.items())}} if RS else {}),
+          **({"phone_aug": phone.settings()} if phone is not None else {}))   # 끄면 키 없음(이전 run 지문 그대로)
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():

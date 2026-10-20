@@ -5,6 +5,7 @@
 #   3. TAXI 실제 독↔영 전화 대화(cst_stage4_taxi, δ4·10) → …/taxi
 #   4. Stage 3 회귀: 대화 받아쓰기·귀속·<EOT>(cst_stage3_eval, 창 200 × δ4·10, 맞장구 1.0,3) → results/stage3-eval-<run>-<태그>, 오류 분해 → stage3-attr-errors-…
 #   5. 단일 화자 축약 평가(stage2_regress.sh) → results/stage3-regress-<run>-<태그>
+#   6. CallHome 독일어 held-out 발화(전화, single-turn-callhome-de-v1 이 있으면) → results/stage3-regress-<run>-<태그>/callhome-de
 # 산출물 폴더 이름의 run 은 학습 run 이름(stage3-<run> 폴더). 아무것도 지우지 않는다.
 # TRANS_LEAD_SPACE=1: 번역 참조를 행마다 앞 공백으로(--trans-lead-space 로 학습한 run, st4-m1 부터). 1·2 단계에만 쓴다(TAXI 참조는 사람 번역).
 set -u
@@ -37,6 +38,10 @@ for t in "$@"; do
   $P experiments/cst_attr_errors.py --pred $E3 --data $P2 --split $P2/splits/v2.json --out $A --deltas 4,10 --workers 16 > $A/run.log 2>&1
   echo "[$(date '+%F %T')] 4 Stage 3 회귀 끝"
   bash $R/stage3-regress/stage2_regress.sh $CK $RUN-$tag $GPU > $R/stage3-regress/run-$RUN-$tag.log 2>&1
+  CH=/soundai/users/tskim/VAPKT-data/data/evaluation/single-turn-callhome-de-v1/manifest.jsonl                # 전화 독일어 held-out(있으면) — 6 단계
+  if [ -f $CH ]; then O6=$R/stage3-regress-$RUN-$tag/callhome-de; mkdir -p $O6
+    $P experiments/eval_single_turn_asr.py run --manifest $CH --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --out $O6 --deltas 4 10 --batch-size 64 > $O6/run.log 2>&1
+    $P experiments/eval_single_turn_asr.py summarize --out $O6 > $O6/summary.log 2>&1; echo "[$(date '+%F %T')] $RUN/$t 6 CallHome 독일어 끝"; fi
   echo "[$(date '+%F %T')] $RUN/$t 5 단일 화자 끝 — 대상 끝"
 done
 echo "QUEUE DONE"

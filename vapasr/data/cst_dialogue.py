@@ -447,6 +447,7 @@ class CstDialogueDataset(DialogueWindowDataset):
     revive: 격리 발화 되살리기 토큰(load_revive, 기본 None = 끔) — 모듈 설명. 학습에서만 쓴다.
     Stage 4 번역(기본 끔): trans = 대화 발화 번역 타깃({행 id '<conv>|<화자>|<utt>': {목표 언어: (ids, 시각)}}, ast_dataset.load_ast_targets),
       trans_input = 되살린 발화의 번역(같은 형식 — 입력 문맥으로만, label −100), ast_frac = 학습 창을 번역 모드로 둘 확률(나머지는 Stage 3 형식),
+      wav_aug = 학습 창 오디오 증강(callable(wav, rng), 예 phone_aug.PhoneAugment — 전화 대역, 2026-10-20). 시퀀스·K·라벨은 그대로, 기본 끔.
       trans_lead_space = 번역 행마다 첫 단어를 앞 공백 토큰으로(lead_space_row — 행을 이은 번역 흐름에서 단어가 붙지 않게, 기본 끔: st4-p1 까지의 형식),
       tgt_of = 원천 언어 → 목표 언어 후보(기본 한·독 → 영, 영 → 독·한 중 하나). 번역 모드의 시퀀스는 build_cst4_sequence(네 흐름) 다.
     교차 언어 대화(meta.spk_lang = {화자: 언어} 에 두 언어 — sim_build_dialogues --lang2): 슬롯을 언어로 고정하고(어느 언어를 A 로 둘지는 학습 rng,
@@ -456,7 +457,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                  max_speakers: int = 2, decision_weight: float = 0.0, backchannel: Optional[Tuple[float, int]] = None, eot_mode: str = "soft",
                  recover: Optional[Recover] = None, spk_activity: bool = False, revive: Optional[Dict[str, Dict[str, list]]] = None,
                  trans: Optional[Dict[str, Dict[str, tuple]]] = None, trans_input: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.0,
-                 tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, **kw):
+                 tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, wav_aug=None, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if recover is not None and not (0 <= recover.p <= 1 and 0 <= recover.boundary_frac <= 1 and recover.max_lag >= 1 and recover.max_boundaries >= 1):
             raise ValueError(f"recover 범위: {recover}")
@@ -482,6 +483,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         self.delay_ids = {d: conv(f"<DELAY_{d}>") for d in self.delays}
         self.csp = Specials(next_audio=self.sp.next_audio, empty_audio=self.sp.empty_audio, spk=self.spk_ids)
         self.trans, self.trans_input, self.ast_frac = trans or {}, trans_input or {}, float(ast_frac)
+        self.wav_aug = wav_aug                                                                     # 오디오 증강(phone_aug.PhoneAugment 등, 학습 전용) — 시퀀스·K 그대로
         self.trans_lead_space = bool(trans_lead_space)                                             # 행 사이 공백(lead_space_row) — Stage 4 본 학습부터
         self.tgt_of = dict(tgt_of) if tgt_of else {"Korean": ["English"], "German": ["English"], "English": ["German", "Korean"]}
         self.trans_id = conv("<TRANS>") if self.trans or self.trans_input else None
@@ -681,6 +683,7 @@ class CstDialogueDataset(DialogueWindowDataset):
     def __getitem__(self, i):
         delay = random.choice(self.delays); s = self.cst_sequence(i, delay, rng=random if (self.recover or self.trans_on or self.has_xl) else None)
         wav = np.asarray(crop_audio(self.mono(s["cid"]), s["t0"], s["t0"] + s["L"]), dtype=np.float32)
+        if self.wav_aug is not None: wav = self.wav_aug(wav, random)                              # 끄면 난수를 더 뽑지 않는다
         return dict(wav=torch.from_numpy(np.ascontiguousarray(wav)), ids=torch.tensor(s["ids"]), is_audio=torch.tensor([c >= 0 for c in s["chunk_of"]]),
                     chunk_of=torch.tensor(s["chunk_of"]), labels=torch.tensor(s["labels"]), pos_weight=torch.tensor(s["pos_weight"], dtype=torch.float32),
                     labels_alt=torch.tensor(s["labels_alt"]), soft_w=torch.tensor(s["soft_w"], dtype=torch.float32),
