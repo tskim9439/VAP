@@ -158,8 +158,8 @@ def run(a):
                             modes = ["xl" if len(set(q["langs"][:n_slots])) > 1 else "same" for q in qs] if sb else None   # 교차 언어 = 선언 언어가 다른 창
                             for pre in dict.fromkeys(tuple(p) for p in prefixes):                      # 선언 슬롯 수가 다른 창은 prefix 별로 나눠 돈다
                                 js = [j for j, p in enumerate(prefixes) if tuple(p) == pre]
-                                for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, switch_bias=sb,
-                                                                   row_modes=[modes[j] for j in js] if sb else None, word_init=wi)): states[j] = st_
+                                for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush,
+                                                                   **(dict(switch_bias=sb, row_modes=[modes[j] for j in js], word_init=wi) if sb else {}))): states[j] = st_
                         for (i, cid, t0w, L, K), q, s in zip(meta, qs, states):
                             if (f"{cid}@{t0w}", delta, opt) in done: continue
                             d = ds.dlgs[cid]; mask = ds.mask_chunks(d, t0w, L, K, delta)

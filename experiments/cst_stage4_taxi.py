@@ -101,7 +101,7 @@ def run(a):
                     _, langs = slots_of(r); tg = None if a.asr_only else [langs[1], langs[0]]
                     prefixes.append(pre + tok(cst_head_text(langs, tg), add_special_tokens=False)["input_ids"] + [int(tok.convert_tokens_to_ids(f"<DELAY_{d}>"))])
                 modes = ["xl" if len(set(slots_of(r)[1])) > 1 else "same" for r, _ in batch] if sb else None   # 교차 언어 = 선언한 두 언어가 다름
-                states = decode_batch(model, feats, prefixes, max_flush_rounds=a.max_flush, switch_bias=sb, row_modes=modes, word_init=wi)
+                states = decode_batch(model, feats, prefixes, max_flush_rounds=a.max_flush, **(dict(switch_bias=sb, row_modes=modes, word_init=wi) if sb else {}))
                 for s in states if sb else (): sbc[d][0].update(s.sb_flips); sbc[d][1].update(s.sb_points)
                 for (r, (w0, w1)), s in zip(batch, states):
                     _, langs = slots_of(r); src, tr, _ = parse_emitted4(s.emitted, spk, TRANS, EOT)

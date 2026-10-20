@@ -147,6 +147,7 @@ def run_probe(mod, monkeypatch, sess, out, tok, emitted, flag):
     def decode(model, feats, prefixes, max_flush_rounds=None):
         calls.append(len(feats)); return [types.SimpleNamespace(emitted=list(emitted[int(f[0, 0])])) for f in feats]
     BD = types.ModuleType("vapasr.hf.batch_decode"); BD.decode_batch = decode                     # 실제 모듈은 transformers DynamicCache 가 필요해 가짜 모듈로 바꿔 끼운다
+    BD.SwitchBias, BD.word_init_mask, BD.logits_size = object, None, None                        # run() 이 이름만 가져온다(--switch-bias 없으면 쓰지 않음)
     monkeypatch.setitem(sys.modules, "vapasr.hf.batch_decode", BD)
     monkeypatch.setattr(I, "load_model", lambda *x, **kw: (FakeModel(sp), tok)); monkeypatch.setattr(E, "parse_emitted4", parse_emitted4)
     monkeypatch.setattr(sys, "argv", ["probe", "--checkpoint", "ck", "--sessions", str(sess), "--out", str(out), "--batch-size", "4"] + (["--classify-onsets"] if flag else []))

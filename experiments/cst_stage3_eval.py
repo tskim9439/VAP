@@ -173,8 +173,8 @@ def run(a):
                         modes = ["xl" if len(set(ds.slots(m[0])[1][:n_slots])) > 1 else "same" for m in meta] if sb else None   # 교차 언어 = 선언 언어가 다른 창
                         for pre in dict.fromkeys(tuple(p) for p in prefixes):                          # decode_batch 는 한 배치에 prefix 하나 — 선언 슬롯 수가 다른 창은 나눠 돈다
                             js = [j for j, p in enumerate(prefixes) if tuple(p) == pre]
-                            for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, spk_guide=guide, switch_bias=sb,
-                                                               row_modes=[modes[j] for j in js] if sb else None, word_init=wi)): states[j] = st_
+                            for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, spk_guide=guide,
+                                                               **(dict(switch_bias=sb, row_modes=[modes[j] for j in js], word_init=wi) if sb else {}))): states[j] = st_
                     key = (ds.dlgs[meta[0][1]].lang, delta)
                     if a.verify and model is not None and key not in checked:
                         for j in sorted({0, len(meta) - 1}):
