@@ -104,7 +104,8 @@ def run(a):
     n_slots = max(2, int(getattr(a, "max_speakers", None) or 2))
     if model is not None and len(model.config.slot_tokens) < n_slots:                      # V1(2 슬롯) 기준선: 모델 슬롯 수로 디코드·채점
         print(f"  모델 슬롯 {model.config.slot_tokens} < 창 화자 상한 {n_slots} — 모델 슬롯 수로 디코드·채점", flush=True); n_slots = len(model.config.slot_tokens)
-    spk = tuple(sp[t] for t in SLOTS[:n_slots]); EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>"))
+    n_parse = len(model.config.slot_tokens) if model is not None else n_slots              # 출력 해석은 모델 슬롯 전부(V2 4) — 선언하지 않은 슬롯으로 낸 말은 삽입으로 센다
+    spk = tuple(sp[t] for t in SLOTS[:n_parse]); EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>"))
     if not a.oracle and (EOT in blocked or TRANS in blocked): print(f"!! decode 차단: <EOT> {EOT in blocked} · <TRANS> {TRANS in blocked}", flush=True)
     TR, tr_st, tr_fp = load_ast_targets([p for x in a.trans for p in x.split(",") if p]); print(f"  번역 타깃 {dict(tr_st)}", flush=True)
     sets, items = windows_of(a, tok, TR)

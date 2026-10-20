@@ -47,7 +47,9 @@ def run(a):
     from vapasr.data.cst_eval import parse_emitted4
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
     model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids
-    spk = (sp["<SPK_A>"], sp["<SPK_B>"]); EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>")); dev = next(model.parameters()).device
+    from vapasr.data.cst_dialogue import SLOTS
+    spk = tuple(sp[t] for t in SLOTS[: len(getattr(model.config, "slot_tokens", None) or SLOTS[:2])])                        # V2(4 슬롯)도 출력은 모든 슬롯 태그로 해석 — C·D 로 낸 말은 채점(A·B 언어 슬롯)에서 빠진다(삭제)
+    EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>")); dev = next(model.parameters()).device
     pre = tok("<|im_start|>system\n<|im_end|>\n<|im_start|>assistant\n", add_special_tokens=False)["input_ids"]
     recs = [json.loads(l) for l in open(a.sessions, encoding="utf-8")]; root = os.path.dirname(os.path.abspath(a.sessions))
     jobs = [(r, w) for r in recs for w in windows_of(r, a.max_window)]

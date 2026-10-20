@@ -1,5 +1,5 @@
 # Stage 4 체크포인트 평가 큐(mxc 호스트): bash stage4_eval_queue.sh <run> <대상> [<대상> …] — 대상 = checkpoint-N(trainer_state.json 이 생기면) | final(DONE 이 생기면).
-# 대상마다 그때 가장 한가한 호스트 GPU(빈 메모리 최대, 같으면 사용률 낮은 쪽 — 다른 사용자와 같이 쓴다)를 골라 차례로 잰다:
+# 대상마다 그때 가장 한가한 호스트 GPU(빈 메모리 최대, 같으면 사용률 낮은 쪽 — 다른 사용자와 같이 쓴다; 빈 메모리 MIN_FREE_MB 이상이 될 때까지 기다린다)를 골라 차례로 잰다:
 #   1. 같은 언어 held-out 대화 번역(cst_stage4_eval, 7 코퍼스 × 창 100 × δ4·10 × 목표 언어) → results/stage4-eval-<run>-<태그>/dlg
 #   2. 영↔독 합성 평가 셋(sim-dialogue-xl-eval-v1, 창 200 × δ4·10) → …/xl
 #   3. TAXI 실제 독↔영 전화 대화(cst_stage4_taxi, δ4·10) → …/taxi
@@ -20,7 +20,11 @@ for t in "$@"; do
   echo "[$(date '+%F %T')] $RUN/$t 대기"
   if [ "$t" = final ]; then until [ -f $OUT/DONE ]; do sleep 120; done; else until [ -f $OUT/$t/trainer_state.json ]; do sleep 120; done; sleep 60; fi
   tag=${t#checkpoint-}; [ "$t" != final ] && tag=ck$tag; CK=$OUT/$t; O=$R/stage4-eval-$RUN-$tag; mkdir -p $O
-  GPU=$(nvidia-smi --query-gpu=index,memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits | awk -F', ' '{print $1, $3 - $2, $4}' | sort -k2,2nr -k3,3n | head -1 | cut -d' ' -f1)
+  while true; do                                                                                # 빈 메모리 MIN_FREE_MB(기본 40000) 이상 GPU 를 기다린다(2026-10-20 m2 final 이 다른 작업과 나눠 쓰다 OOM)
+    g=$(nvidia-smi --query-gpu=index,memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits | awk -F', ' '{print $1, $3 - $2, $4}' | sort -k2,2nr -k3,3n | head -1)
+    [ "$(echo $g | cut -d' ' -f2)" -ge ${MIN_FREE_MB:-40000} ] && break; sleep 300
+  done
+  GPU=$(echo $g | cut -d' ' -f1)
   export CUDA_VISIBLE_DEVICES=$GPU; echo "[$(date '+%F %T')] $RUN/$t → GPU $GPU ($(nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv,noheader -i $GPU))"
   $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json --trans $S1 --deltas 4,10 --limit-windows 100 $LS \
     --batch-size 32 --backchannel 1.0,3 --out $O/dlg > $O/dlg.log 2>&1; $P experiments/cst_stage4_eval.py summarize --out $O/dlg > $O/dlg-summary.log 2>&1

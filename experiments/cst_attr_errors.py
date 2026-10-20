@@ -73,13 +73,14 @@ def main():
     conf = json.load(open(os.path.join(a.pred, "config-rank0.json")))
     rows = [json.loads(l) for f in sorted(glob.glob(os.path.join(a.pred, "predictions-rank*.jsonl"))) for l in open(f, encoding="utf-8")]
     rows = [r for r in rows if r["delta"] in a.deltas]
-    tok = AutoTokenizer.from_pretrained(conf["checkpoint"]); sp = json.load(open(os.path.join(conf["checkpoint"], "config.json")))["sp_ids"]
+    tok = AutoTokenizer.from_pretrained(conf["checkpoint"]); ck = json.load(open(os.path.join(conf["checkpoint"], "config.json"))); sp = ck["sp_ids"]
     ns = argparse.Namespace(corpora=conf["corpora"], data=a.data, split=a.split, deltas=a.deltas, limit_windows=conf["limit_windows"],
                             backchannel=tuple(conf["backchannel"]) if conf.get("backchannel") else None, max_speakers=conf.get("max_speakers", 2),
                             window=tuple(conf.get("window", (20.0, 40.0))), hop=conf.get("hop", 10.0), window_draws=conf.get("window_draws", 0), declare=conf.get("declare"))
     sets, items = windows_of(ns, tok)
     from vapasr.data.cst_dialogue import SLOTS
-    G.update(sets=sets, tok=tok, eot=sp["<EOT>"], spk=tuple(sp[t] for t in SLOTS[: max(2, int(ns.max_speakers))]), short_words=a.short_words,
+    n_parse = len(ck.get("slot_tokens") or SLOTS[:2]) if not conf.get("oracle") else max(2, int(ns.max_speakers))   # 평가(cst_stage3_eval)와 같은 출력 해석 슬롯 수
+    G.update(sets=sets, tok=tok, eot=sp["<EOT>"], spk=tuple(sp[t] for t in SLOTS[:n_parse]), short_words=a.short_words,
              index={f"{sets[c].items[i][0]}@{sets[c].items[i][1]}": (c, i) for c, i in items})
     miss = [r["id"] for r in rows if r["id"] not in G["index"]]; assert not miss, f"평가 창에 없는 원출력 {len(miss)} 개: {miss[:3]}"
     print(f"원출력 {len(rows)} 행(δ {a.deltas}) · 워커 {a.workers}", flush=True)

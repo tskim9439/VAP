@@ -107,7 +107,8 @@ def run(a):
     n_slots = max(2, int(getattr(a, "max_speakers", None) or 2))
     if model is not None and len(model.config.slot_tokens) < n_slots:                      # V1(2 슬롯) 기준선: 같은 다화자 창을 2 슬롯으로 잰다(prefix 선언도 2)
         print(f"  모델 슬롯 {model.config.slot_tokens} < 창 화자 상한 {n_slots} — 모델 슬롯 수로 디코드·채점(참조는 창 화자 전부)", flush=True); n_slots = len(model.config.slot_tokens)
-    spk = tuple(sp[t] for t in SLOTS[:n_slots]); EOT = sp["<EOT>"]
+    n_parse = len(model.config.slot_tokens) if model is not None else n_slots              # 출력 해석은 모델 슬롯 전부(V2 4) — 2 인 창에서 C·D 로 낸 말은 삽입으로 센다(텍스트로 읽지 않는다)
+    spk = tuple(sp[t] for t in SLOTS[:n_parse]); EOT = sp["<EOT>"]
     if EOT in blocked and not a.oracle: print("!! <EOT> 가 decode 차단 목록에 있다(Stage 3 학습 전 체크포인트) — EOT 는 나오지 않는다", flush=True)
     sets, items = windows_of(a, tok)
     items = [x for j, x in enumerate(items) if j % a.world_size == a.rank]
