@@ -10,6 +10,12 @@ summary: 2026-10-19 Stage 4 준비(대화 번역 타깃 시험 생성·네 흐�
 
 마지막 갱신: 2026-10-19 (아래 기존 볼트 상태는 2026-09-07의 기록)
 
+## 2026-10-20 Stage 4 최종 → st4-m1 ck1500, VibeVoice 외부 기준선
+
+- **Stage 4 최종 = `/soundai/Model/VAPASR/stage3-st4-m1/checkpoint-1500`**(사용자 결정): TAXI 받아쓰기 cpWER 40.9 · 영→독 BLEU 27.6 · 독→영 21.3, Stage 3 회귀 없음 → [[2026-10-19-stage4-dialogue-translation]]
+- VibeVoice-ASR-Streaming-7B 대비: 학습 코퍼스의 held-out 대화(한·독)는 우리가 낫고 영어는 비슷하다. 실제 독↔영 전화(TAXI)는 19.2 대 40.9 로 크게 뒤진다.
+- 다음: 전화 영역 데이터(CallHome 독일어 단일 화자 셋 `rep_chde`, dry-run 통과)·전화 대역 증강, 영어 반복 생성 원인
+
 ## 2026-10-19 Stage 4 준비
 
 - 사용자 결정 → [[decision-stage4-prep-20261019]], 계획·진행 → [[output-stage4-prep-plan-20261019]]
