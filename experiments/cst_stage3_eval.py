@@ -89,6 +89,12 @@ def run(a):
     import numpy as np, torch
     from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, emitted_from_sequence
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
+    sb = None
+    if getattr(a, "switch_bias", None):                                                        # V3 C3 상태 인지 교대 bias(교차 언어 창만) — 없으면 예전 디코드 그대로
+        from vapasr.hf.batch_decode import SwitchBias
+        sb = SwitchBias.parse(a.switch_bias)
+        assert not (sb.on and a.verify), "--switch-bias 는 배치 디코드 전용이다(직렬 stream_decode 에 bias 가 없다) — --verify 없이(전부 0 은 같은 토큰열이라 허용)"
+        assert not (a.oracle or a.from_predictions or a.spk_guide), "--switch-bias 는 모델 디코드 전용이고 --spk-guide 와 함께 쓰지 않는다"
     prev = {}
     if a.from_predictions:
         import glob
@@ -101,8 +107,9 @@ def run(a):
         model = None; tok = AutoTokenizer.from_pretrained(a.checkpoint); cfg = json.load(open(os.path.join(a.checkpoint, "config.json"))); sp = cfg["sp_ids"]; blocked = cfg["blocked_ids"]
     else:
         from vapasr.hf.infer import load_model
-        from vapasr.hf.batch_decode import decode_batch, SpkGuide
+        from vapasr.hf.batch_decode import decode_batch, SpkGuide, word_init_mask, logits_size
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
+        wi = word_init_mask(tok, logits_size(model)) if sb else None
     from vapasr.data.cst_dialogue import SLOTS
     n_slots = max(2, int(getattr(a, "max_speakers", None) or 2))
     if model is not None and len(model.config.slot_tokens) < n_slots:                      # V1(2 슬롯) 기준선: 같은 다화자 창을 2 슬롯으로 잰다(prefix 선언도 2)
@@ -117,7 +124,8 @@ def run(a):
                 split_sha256=hashlib.sha256(open(a.split, "rb").read()).hexdigest() if a.split else None, corpora=a.corpora, deltas=a.deltas, limit_windows=a.limit_windows, dtype=a.dtype,
                 world_size=a.world_size, eot_blocked=EOT in blocked, oracle=bool(a.oracle), from_predictions=a.from_predictions,
                 **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **win_conf(a),
-                **({"spk_guide": list(a.spk_guide), "spk_guide_hold": bool(a.spk_guide_hold), **({"spk_guide_no_insert": True} if a.spk_guide_no_insert else {})} if a.spk_guide else {}))
+                **({"spk_guide": list(a.spk_guide), "spk_guide_hold": bool(a.spk_guide_hold), **({"spk_guide_no_insert": True} if a.spk_guide_no_insert else {})} if a.spk_guide else {}),
+                **({"switch_bias": sb.policy()} if sb else {}))
     if a.spk_guide:
         assert not a.verify, "--spk-guide 는 배치 디코드 전용이다(직렬 stream_decode 에 안내가 없다) — --verify 없이"
         assert model is not None and getattr(model, "spk_head", None) is not None, "--spk-guide: 화자 헤드가 있는 체크포인트가 필요하다"
@@ -162,9 +170,11 @@ def run(a):
                         guide = SpkGuide(delay=delta, on=a.spk_guide[0], margin=a.spk_guide[1], span=int(a.spk_guide[2]) if len(a.spk_guide) > 2 else 2,
                                          hold=a.spk_guide_hold, insert=not a.spk_guide_no_insert, word_start=word_start) if a.spk_guide else None
                         states = [None] * len(meta)
+                        modes = ["xl" if len(set(ds.slots(m[0])[1][:n_slots])) > 1 else "same" for m in meta] if sb else None   # 교차 언어 = 선언 언어가 다른 창
                         for pre in dict.fromkeys(tuple(p) for p in prefixes):                          # decode_batch 는 한 배치에 prefix 하나 — 선언 슬롯 수가 다른 창은 나눠 돈다
                             js = [j for j, p in enumerate(prefixes) if tuple(p) == pre]
-                            for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, spk_guide=guide)): states[j] = st_
+                            for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, spk_guide=guide, switch_bias=sb,
+                                                               row_modes=[modes[j] for j in js] if sb else None, word_init=wi)): states[j] = st_
                     key = (ds.dlgs[meta[0][1]].lang, delta)
                     if a.verify and model is not None and key not in checked:
                         for j in sorted({0, len(meta) - 1}):
@@ -180,6 +190,7 @@ def run(a):
                         row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, delta=delta, L=L, K=K, speakers=sp_order, n_spk=len(sp_order), masked_chunks=len(mask),
                                    forced=s.forced, flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted],
                                    **({"guide_insert": s.guide_insert, "guide_hold": s.guide_hold} if hasattr(s, "guide_insert") else {}),
+                                   **({"sb_flips": s.sb_flips, "sb_points": s.sb_points} if hasattr(s, "sb_flips") else {}),
                                    ref_text=[" ".join(w for w, _ in r) for r in ref_w], hyp_text=[" ".join(w for w, _ in words(h)) for h in hs], **sc)
                         fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
                 print(f"  {c}: {min(b0 + a.batch_size, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
@@ -220,6 +231,8 @@ def main():
     q.add_argument("--window", type=lambda s: tuple(float(x) for x in s.split(",")), default=(20.0, 40.0), help="창 길이 lo,hi(s) — V1 20,40")
     q.add_argument("--hop", type=float, default=10.0); q.add_argument("--window-draws", type=int, default=0, help="1 = 격자 대신 이어 덮기 창(draw 0) — 긴 창 평가")
     q.add_argument("--declare", type=int, default=None, help="prefix 선언 슬롯 수 하한(기본 max(2, 화자 수); 화자 수를 모르는 추론 흉내 = 4)")
+    q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "
+                                                       "직렬 stream_decode 에 bias 가 없어 0 이 아니면 --verify 와 함께 쓰지 않는다. config 에 정책, 행에 sb_flips·sb_points")
     q = sub.add_parser("summarize"); q.add_argument("--out", required=True)
     a = ap.parse_args(); {"run": run, "summarize": summarize}[a.cmd](a)
 

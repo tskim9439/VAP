@@ -65,11 +65,14 @@ def attr_split(sessions, asr):
 def run(a):
     import numpy as np, soundfile as sf, torch
     from vapasr.hf.infer import load_model
-    from vapasr.hf.batch_decode import decode_batch
+    from vapasr.hf.batch_decode import decode_batch, SwitchBias, word_init_mask, logits_size
     from vapasr.data.cst_dialogue import cst_head_text
     from vapasr.data.cst_eval import parse_emitted4
+    from collections import Counter
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
+    sb = SwitchBias.parse(a.switch_bias) if getattr(a, "switch_bias", None) else None              # V3 C3 상태 인지 교대 bias(교차 언어 창만) — 없으면 예전 디코드 그대로
     model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids
+    wi = word_init_mask(tok, logits_size(model)) if sb else None; sbc = {d: (Counter(), Counter()) for d in a.deltas}
     from vapasr.data.cst_dialogue import SLOTS
     spk = tuple(sp[t] for t in SLOTS[: len(getattr(model.config, "slot_tokens", None) or SLOTS[:2])])                        # V2(4 슬롯)도 출력은 모든 슬롯 태그로 해석 — C·D 로 낸 말은 채점(A·B 언어 슬롯)에서 빠진다(삭제)
     EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>")); dev = next(model.parameters()).device
@@ -78,7 +81,7 @@ def run(a):
     jobs = [(r, w) for r in recs for w in windows_of(r, a.max_window)]
     os.makedirs(a.out, exist_ok=True); t0 = time.time()
     json.dump(dict(checkpoint=os.path.abspath(a.checkpoint), sessions=os.path.abspath(a.sessions), deltas=a.deltas, max_window=a.max_window, windows=len(jobs), asr_only=a.asr_only,
-                   slots={r["session_id"]: slots_of(r) for r in recs}), open(os.path.join(a.out, "config.json"), "w"), indent=1, ensure_ascii=False)
+                   **({"switch_bias": sb.policy()} if sb else {}), slots={r["session_id"]: slots_of(r) for r in recs}), open(os.path.join(a.out, "config.json"), "w"), indent=1, ensure_ascii=False)
     fh = {d: open(os.path.join(a.out, f"hyp-d{d}.jsonl"), "w", encoding="utf-8") for d in a.deltas}
     fa = {d: open(os.path.join(a.out, f"asr-d{d}.jsonl"), "w", encoding="utf-8") for d in a.deltas}
     mix = {}
@@ -97,7 +100,9 @@ def run(a):
                 for r, _ in batch:
                     _, langs = slots_of(r); tg = None if a.asr_only else [langs[1], langs[0]]
                     prefixes.append(pre + tok(cst_head_text(langs, tg), add_special_tokens=False)["input_ids"] + [int(tok.convert_tokens_to_ids(f"<DELAY_{d}>"))])
-                states = decode_batch(model, feats, prefixes, max_flush_rounds=a.max_flush)
+                modes = ["xl" if len(set(slots_of(r)[1])) > 1 else "same" for r, _ in batch] if sb else None   # 교차 언어 = 선언한 두 언어가 다름
+                states = decode_batch(model, feats, prefixes, max_flush_rounds=a.max_flush, switch_bias=sb, row_modes=modes, word_init=wi)
+                for s in states if sb else (): sbc[d][0].update(s.sb_flips); sbc[d][1].update(s.sb_points)
                 for (r, (w0, w1)), s in zip(batch, states):
                     _, langs = slots_of(r); src, tr, _ = parse_emitted4(s.emitted, spk, TRANS, EOT)
                     for k in range(2):
@@ -105,6 +110,9 @@ def run(a):
                         for wd, t in words_of(tok, src[k]): fa[d].write(json.dumps(dict(session=r["session_id"], lang=langs[k], t=round(w0 + t, 3), text=wd), ensure_ascii=False) + "\n")
             print(f"  {min(b0 + a.batch_size, len(jobs))}/{len(jobs)} 창 · {time.time() - t0:.0f}s", flush=True)
     for f in list(fh.values()) + list(fa.values()): f.close()
+    if sb:                                                                                       # 바꾼 태그·결정 지점 수(δ별 합, 집계만 — 세션·글자 없음)
+        res = dict(policy=sb.policy(), **{f"d{d}": dict(flips=dict(f), points=dict(p)) for d, (f, p) in sbc.items()})
+        json.dump(res, open(os.path.join(a.out, "switch-bias.json"), "w"), indent=1); print("SWITCH_BIAS", json.dumps(res), flush=True)
     print("DONE", flush=True)
 
 
@@ -147,6 +155,8 @@ def main():
     q.add_argument("--out", required=True); q.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[4, 10])
     q.add_argument("--max-window", type=float, default=40.0); q.add_argument("--batch-size", type=int, default=16); q.add_argument("--max-flush", type=int, default=None)
     q.add_argument("--dtype", default="float32"); q.add_argument("--asr-only", action="store_true", help="translate 줄 없는 받아쓰기 전용 prefix(Stage 3 형식, 언어만 슬롯별)")
+    q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 두 언어가 다른 창만, 기본 끔). "
+                                                       "config.json 에 정책, switch-bias.json 에 δ별 바꾼 태그·결정 지점 수. 값은 dev 에서만 고른다")
     q = sub.add_parser("score"); q.add_argument("--sessions", required=True); q.add_argument("--out", required=True)
     a = ap.parse_args(); {"run": run, "score": score}[a.cmd](a)
 

@@ -86,6 +86,11 @@ def run(a):
     from vapasr.data.cst_eval import parse_emitted4, emitted_from_sequence
     from vapasr.data.ast_dataset import load_ast_targets
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
+    sb = None
+    if getattr(a, "switch_bias", None):                                                        # V3 C3 상태 인지 교대 bias(교차 언어 창만) — 없으면 예전 디코드 그대로
+        from vapasr.hf.batch_decode import SwitchBias
+        assert not (a.oracle or a.from_predictions), "--switch-bias 는 모델 디코드 전용이다 — --oracle·--from-predictions 와 함께 쓰지 않는다"
+        sb = SwitchBias.parse(a.switch_bias)
     prev = {}
     if a.from_predictions:
         import glob
@@ -98,8 +103,9 @@ def run(a):
         model = None; tok = AutoTokenizer.from_pretrained(a.checkpoint); cfg = json.load(open(os.path.join(a.checkpoint, "config.json"))); sp = cfg["sp_ids"]; blocked = cfg["blocked_ids"]
     else:
         from vapasr.hf.infer import load_model
-        from vapasr.hf.batch_decode import decode_batch
+        from vapasr.hf.batch_decode import decode_batch, word_init_mask, logits_size
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
+        wi = word_init_mask(tok, logits_size(model)) if sb else None
     from vapasr.data.cst_dialogue import SLOTS
     n_slots = max(2, int(getattr(a, "max_speakers", None) or 2))
     if model is not None and len(model.config.slot_tokens) < n_slots:                      # V1(2 슬롯) 기준선: 모델 슬롯 수로 디코드·채점
@@ -115,7 +121,8 @@ def run(a):
     conf = dict(checkpoint=os.path.abspath(a.checkpoint), config_sha256=hashlib.sha256(open(os.path.join(a.checkpoint, "config.json"), "rb").read()).hexdigest(),
                 split_sha256=hashlib.sha256(open(a.split, "rb").read()).hexdigest() if a.split else None, trans_sha256=tr_fp, corpora=a.corpora, deltas=a.deltas,
                 limit_windows=a.limit_windows, tgts=a.tgts, dtype=a.dtype, world_size=a.world_size, oracle=bool(a.oracle), from_predictions=a.from_predictions,
-                **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **({"trans_lead_space": True} if a.trans_lead_space else {}), **win_conf(a))
+                **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **({"trans_lead_space": True} if a.trans_lead_space else {}), **win_conf(a),
+                **({"switch_bias": sb.policy()} if sb else {}))
     cp = os.path.join(out, f"config-rank{a.rank}.json")
     if os.path.exists(cp): assert json.load(open(cp)) == conf, "재개 설정 불일치 — 새 --out 을 쓴다"
     else: json.dump(conf, open(cp, "w"), indent=1)
@@ -148,9 +155,11 @@ def run(a):
                                                       flush_rounds=0) for q in qs]
                         else:
                             states = [None] * len(meta)
+                            modes = ["xl" if len(set(q["langs"][:n_slots])) > 1 else "same" for q in qs] if sb else None   # 교차 언어 = 선언 언어가 다른 창
                             for pre in dict.fromkeys(tuple(p) for p in prefixes):                      # 선언 슬롯 수가 다른 창은 prefix 별로 나눠 돈다
                                 js = [j for j, p in enumerate(prefixes) if tuple(p) == pre]
-                                for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush)): states[j] = st_
+                                for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, switch_bias=sb,
+                                                                   row_modes=[modes[j] for j in js] if sb else None, word_init=wi)): states[j] = st_
                         for (i, cid, t0w, L, K), q, s in zip(meta, qs, states):
                             if (f"{cid}@{t0w}", delta, opt) in done: continue
                             d = ds.dlgs[cid]; mask = ds.mask_chunks(d, t0w, L, K, delta)
@@ -159,7 +168,8 @@ def run(a):
                             sc = score4(ds, q, ref_w, ref_tr, ref_eot, hs, ht, he, delta, words)
                             row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, langs=q["langs"], tgt_opt=opt, tgts=list(q["tgt"]), delta=delta, L=L, K=K, speakers=q["speakers"],
                                        n_spk=sum(1 for st in q["streams"][: len(q["streams"]) // 2] if st), masked_chunks=len(mask), miss_chunks=len(q["miss_chunks"]), forced=s.forced,
-                                       flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted], ref_text=[" ".join(w for w, _ in r) for r in ref_w],
+                                       flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted],
+                                       **({"sb_flips": s.sb_flips, "sb_points": s.sb_points} if hasattr(s, "sb_flips") else {}), ref_text=[" ".join(w for w, _ in r) for r in ref_w],
                                        hyp_text=[" ".join(w for w, _ in words(h)) for h in hs], **sc)
                             fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
                 print(f"  {c}: {min(b0 + a.batch_size, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
@@ -214,6 +224,8 @@ def main():
     q.add_argument("--trans-lead-space", action="store_true", help="참조 번역 행마다 앞 공백(학습 --trans-lead-space 와 같은 형식으로 학습한 모델)")
     q.add_argument("--max-speakers", type=int, default=2, help="V2: 창 화자 상한(최대 4)"); q.add_argument("--window", type=lambda s: tuple(float(x) for x in s.split(",")), default=(20.0, 40.0))
     q.add_argument("--hop", type=float, default=10.0); q.add_argument("--window-draws", type=int, default=0); q.add_argument("--declare", type=int, default=None)
+    q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "
+                                                       "config 에 정책, 행에 sb_flips·sb_points. 값은 dev 에서만 고른다")
     q = sub.add_parser("summarize"); q.add_argument("--out", required=True)
     a = ap.parse_args(); {"run": run, "summarize": summarize}[a.cmd](a)
 
