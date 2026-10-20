@@ -59,6 +59,16 @@ raw_authors:
 | V7 | 학습 스크립트: `--max-speakers`·`--declare-all-p`·`--window`·`--window-draws`·`--dlg-corpora`(회의 = `dlg_mt`)·지문, V2-a 탭, 전화 대역 증강 | **완료**(코드) |
 | V8 | dry-run → 스모크 → 학습 전 점검 → 제출 명령 | 대기(합성 셋·번역 타깃 뒤) |
 
+## 학습 설정 (사용자 승인 2026-10-20 "그래 그 비율로 진행해.")
+- init: Stage 3 최종 p11 ck3000(st4 run 들과 같다). 설정은 st4-m2a(전화 대역 증강 0.3)와 같고 V2 변경만 더한다.
+  - V2 변경: `--enc-tap-layer 0`, `--max-speakers 4 --declare-all-p 0.5`, `--window 20,90 --window-draws 6`, 회의 코퍼스 + 회의 번역 타깃, 합성 v3(3–4 인)
+- 섞는 비율: `dlg_ko:2,dlg_en:0.7,dlg_de:0.7,dlg_mt:1.0,sim_ko:0.8,sim_en:0.8,sim_de:0.8,sim_en-de:1.0,sim_en-ko:1.0,rep_ko:1.2,rep_en:1.2,rep_de:1.2`
+  - step 비중: 실제 대화 35.5 %(회의 8.1 %), 3–4 인 합성 19.4 %, 교차 언어 합성 16.1 %, 단일 화자 29.0 %
+  - m2a 대비: 회의 추가, sim_ko 0.5 → 0.8, 같은 언어 합성을 v3(3–4 인)으로 교체. CallHome 독일어(`rep_chde`)는 m2b 에서 TAXI 가 나빠져 넣지 않는다.
+- step: 3,000(m2a 2,500 — 새로 배울 것이 많고 창이 길어 step 당 창 수가 준다). lr 4e-5 cosine, warmup 300, 500 step 마다 저장, 2 노드.
+  - m1 은 step 이 늘수록 번역 반복 생성이 다시 늘었다. 그래서 ck1500·2000·2500·final 을 모두 재 고른다.
+- 예상: m2a 1.0 s/step → V2 1.2–1.5 s/step(긴 창), 약 1–1.3 h
+
 ## V2-a 학습 전 점검 결과 (2026-10-20) → [[2026-10-20-v2a-dual-stream]]
 - 단위 시험 mxc 54 통과, dry-run 11 셋 불일치 0, 스모크 20 step PARITY OK(`adapter_tap` 저장·재로드, 0 초기화 마지막 층이 20 step 만에 |w| 0.0023 으로 학습)
 - 평가 경로: Stage 3 평가 직렬 = 배치(한·영), 영↔독 합성 평가 실행
