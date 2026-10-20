@@ -227,8 +227,7 @@ def main():
         from vapasr.data.ast_dataset import load_ast_targets
         TR, tr_st, _ = load_ast_targets(_paths(a.trans)); print(f"번역 타깃 {dict(tr_st)} · {time.time() - t0:.0f}s", flush=True)
     need = (lambda lg: lg) if a.lang2 and not a.allow_untranslated else (lambda lg: None)
-    max_spk = max(int(x.split(":")[0]) for x in a.speakers.split(",") if x)
-    pools, persons, stats_d, info = load_pools(a, TR=TR, need=need(a.lang2), min_keys=1 if a.lang2 else max(2, max_spk)); pools2 = None
+    pools, persons, stats_d, info = load_pools(a, TR=TR, need=need(a.lang2), min_keys=1 if a.lang2 else 2); pools2 = None   # 3–4 인 세션에 키가 모자란 풀은 pick_keys 가 None → 다른 시도(풀·화자 수)
     if a.lang2:
         pools2, persons2, stats_d2, info2 = load_pools(a, lang=a.lang2, corpora=a.phase2_corpora2, words=a.words2, stats_corpora=a.stats_corpora2, TR=TR, need=need(a.lang), min_keys=1)
         persons.update(persons2); stats_d += stats_d2; info = {"a": info, "b": info2}

@@ -1,5 +1,5 @@
 # V2 3–4 인 합성 대화 빌드(mxc 호스트 CPU): bash sim_build_multi.sh <train|eval> [en ko de] — 아무것도 지우지 않는다.
-# train: 언어마다 10,000 세션 → data/sim-dialogue-v3-multi(화자 수 2:0.2·3:0.4·4:0.4, p_back 0.2) — v2(2 인, stage3 sim_build.sh)와 같은 재료·풀 가중·잡음.
+# train: 언어마다 10,000 세션 → data/sim-dialogue-v3-multi(화자 수 2:0.2·3:0.4·4:0.4, p_back 0.2) — v2(2 인, stage3 sim_build.sh, 영어 WORDS_FRAC=0.5)와 같은 재료·풀 가중·잡음.
 # eval : held-out 대화 재료만(--heldout), 언어마다 300 세션 → data/sim-dialogue-multi-eval-v1(학습 셋과 겹치지 않는다).
 # CODE(기본 /soundai/users/tskim/VAPKT) 의 코드를 쓴다 — 학습 전 개발 사본(VAPKT-dev)에서 돌릴 때 CODE 를 준다.
 set -u
@@ -14,12 +14,12 @@ else COMMON="--out $D/data/sim-dialogue-multi-eval-v1 --sessions 300 --workers 2
 for L in $LANGS; do
   echo "[$(date '+%F %T')] sim $MODE $L 시작"
   case $L in
-    en) if [ "$MODE" = train ]; then $PY experiments/sim_build_dialogues.py --lang English $COMMON --phase2-corpora otoSpeech --words @$SNAP/main-words.list --words @$ASR --words @$CV4 --words-frac 0.1 \
+    en) if [ "$MODE" = train ]; then $PY experiments/sim_build_dialogues.py --lang English $COMMON --phase2-corpora otoSpeech --words @$SNAP/main-words.list --words @$ASR --words @$CV4 --words-frac 0.5 \
           --pool-weights otoSpeech:0.3,swbd:0.3,cv:0.15,vp:0.15,ls:0.1
         else $PY experiments/sim_build_dialogues.py --lang English $COMMON --phase2-corpora otoSpeech --pool-weights otoSpeech:1; fi ;;
     ko) $PY experiments/sim_build_dialogues.py --lang Korean $COMMON --phase2-corpora aihub71631,aihub134-1,aihub134-2 --pool-weights aihub71631:0.4,aihub134-1:0.3,aihub134-2:0.3 ;;
     de) $PY experiments/sim_build_dialogues.py --lang German $COMMON --phase2-corpora kec,ztc,nsc --pool-weights kec:0.35,ztc:0.35,nsc:0.3 ;;
   esac
-  echo "[$(date '+%F %T')] sim $MODE $L 끝 rc=$?"
+  rc=$?; echo "[$(date '+%F %T')] sim $MODE $L 끝 rc=$rc"                 # rc 를 먼저 받는다($(date) 가 $? 를 덮는다)
 done
 echo "SIM_MULTI_${MODE}_DONE"
