@@ -1,0 +1,968 @@
+{
+ "aihub134-1/d4/all": {
+  "cp": 51.72,
+  "agn": 47.84,
+  "hyp_ref": 1.222,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 1,
+  "m2a-ck2000": {
+   "cp": 20.14,
+   "agn": 14.18,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 19.71,
+   "agn": 13.57,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 20.19,
+   "agn": 13.76,
+   "windows": 200
+  }
+ },
+ "aihub134-1/d4/nodeg": {
+  "cp": 49.29,
+  "agn": 45.39,
+  "hyp_ref": 1.202,
+  "windows": 199,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 19.82,
+   "agn": 14.14,
+   "windows": 199
+  },
+  "v2-ck2000": {
+   "cp": 19.42,
+   "agn": 13.57,
+   "windows": 199
+  },
+  "v2-ck2500": {
+   "cp": 20.22,
+   "agn": 13.75,
+   "windows": 199
+  }
+ },
+ "aihub134-1/d4/nomask": {
+  "cp": 24.32,
+  "agn": 22.02,
+  "hyp_ref": 1.118,
+  "windows": 12,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 6.21,
+   "agn": 6.31,
+   "windows": 12
+  },
+  "v2-ck2000": {
+   "cp": 5.51,
+   "agn": 5.61,
+   "windows": 12
+  },
+  "v2-ck2500": {
+   "cp": 5.91,
+   "agn": 6.01,
+   "windows": 12
+  }
+ },
+ "aihub134-2/d4/all": {
+  "cp": 111.26,
+  "agn": 106.28,
+  "hyp_ref": 1.748,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 1,
+  "m2a-ck2000": {
+   "cp": 26.14,
+   "agn": 15.56,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 26.5,
+   "agn": 15.04,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 26.33,
+   "agn": 15.66,
+   "windows": 200
+  }
+ },
+ "aihub134-2/d4/nodeg": {
+  "cp": 110.67,
+  "agn": 105.69,
+  "hyp_ref": 1.741,
+  "windows": 199,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 26.17,
+   "agn": 15.57,
+   "windows": 199
+  },
+  "v2-ck2000": {
+   "cp": 26.52,
+   "agn": 15.05,
+   "windows": 199
+  },
+  "v2-ck2500": {
+   "cp": 26.35,
+   "agn": 15.67,
+   "windows": 199
+  }
+ },
+ "aihub134-2/d4/nomask": {
+  "cp": 64.94,
+  "agn": 56.18,
+  "hyp_ref": 1.327,
+  "windows": 4,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 19.12,
+   "agn": 12.35,
+   "windows": 4
+  },
+  "v2-ck2000": {
+   "cp": 18.33,
+   "agn": 11.55,
+   "windows": 4
+  },
+  "v2-ck2500": {
+   "cp": 17.93,
+   "agn": 11.95,
+   "windows": 4
+  }
+ },
+ "aihub71631/d4/all": {
+  "cp": 65.15,
+  "agn": 61.93,
+  "hyp_ref": 1.393,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 30.99,
+   "agn": 24.13,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 32.02,
+   "agn": 24.92,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 33.78,
+   "agn": 26.97,
+   "windows": 200
+  }
+ },
+ "aihub71631/d4/nodeg": {
+  "cp": 65.15,
+  "agn": 61.93,
+  "hyp_ref": 1.393,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 30.99,
+   "agn": 24.13,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 32.02,
+   "agn": 24.92,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 33.78,
+   "agn": 26.97,
+   "windows": 200
+  }
+ },
+ "aihub71631/d4/nomask": {
+  "cp": 26.67,
+  "agn": 26.32,
+  "hyp_ref": 1.196,
+  "windows": 14,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 12.4,
+   "agn": 11.42,
+   "windows": 14
+  },
+  "v2-ck2000": {
+   "cp": 11.69,
+   "agn": 11.86,
+   "windows": 14
+  },
+  "v2-ck2500": {
+   "cp": 13.38,
+   "agn": 12.31,
+   "windows": 14
+  }
+ },
+ "kec/d4/all": {
+  "cp": 34.36,
+  "agn": 28.89,
+  "hyp_ref": 0.998,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 31.99,
+   "agn": 22.73,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 30.71,
+   "agn": 20.74,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 31.96,
+   "agn": 21.38,
+   "windows": 200
+  }
+ },
+ "kec/d4/nodeg": {
+  "cp": 34.36,
+  "agn": 28.89,
+  "hyp_ref": 0.998,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 31.99,
+   "agn": 22.73,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 30.71,
+   "agn": 20.74,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 31.96,
+   "agn": 21.38,
+   "windows": 200
+  }
+ },
+ "kec/d4/nomask": {
+  "cp": 24.97,
+  "agn": 21.04,
+  "hyp_ref": 0.971,
+  "windows": 69,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 25.68,
+   "agn": 20.3,
+   "windows": 69
+  },
+  "v2-ck2000": {
+   "cp": 24.69,
+   "agn": 18.65,
+   "windows": 69
+  },
+  "v2-ck2500": {
+   "cp": 24.1,
+   "agn": 19.04,
+   "windows": 69
+  }
+ },
+ "nsc/d4/all": {
+  "cp": 34.46,
+  "agn": 31.28,
+  "hyp_ref": 1.148,
+  "windows": 200,
+  "hyp_spk_gt2": 13,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 23.78,
+   "agn": 16.93,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 23.69,
+   "agn": 16.58,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 24.36,
+   "agn": 17.13,
+   "windows": 200
+  }
+ },
+ "nsc/d4/nodeg": {
+  "cp": 34.46,
+  "agn": 31.28,
+  "hyp_ref": 1.148,
+  "windows": 200,
+  "hyp_spk_gt2": 13,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 23.78,
+   "agn": 16.93,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 23.69,
+   "agn": 16.58,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 24.36,
+   "agn": 17.13,
+   "windows": 200
+  }
+ },
+ "nsc/d4/nomask": {
+  "cp": 19.32,
+  "agn": 19.09,
+  "hyp_ref": 1.075,
+  "windows": 8,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 15.91,
+   "agn": 5.23,
+   "windows": 8
+  },
+  "v2-ck2000": {
+   "cp": 16.14,
+   "agn": 5.45,
+   "windows": 8
+  },
+  "v2-ck2500": {
+   "cp": 20.0,
+   "agn": 4.32,
+   "windows": 8
+  }
+ },
+ "otoSpeech/d4/all": {
+  "cp": 26.36,
+  "agn": 21.31,
+  "hyp_ref": 1.007,
+  "windows": 200,
+  "hyp_spk_gt2": 3,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 29.76,
+   "agn": 23.42,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 25.22,
+   "agn": 19.74,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 26.39,
+   "agn": 20.48,
+   "windows": 200
+  }
+ },
+ "otoSpeech/d4/nodeg": {
+  "cp": 26.36,
+  "agn": 21.31,
+  "hyp_ref": 1.007,
+  "windows": 200,
+  "hyp_spk_gt2": 3,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 29.76,
+   "agn": 23.42,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 25.22,
+   "agn": 19.74,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 26.39,
+   "agn": 20.48,
+   "windows": 200
+  }
+ },
+ "otoSpeech/d4/nomask": {
+  "cp": 26.4,
+  "agn": 21.12,
+  "hyp_ref": 1.004,
+  "windows": 178,
+  "hyp_spk_gt2": 3,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 30.39,
+   "agn": 23.72,
+   "windows": 178
+  },
+  "v2-ck2000": {
+   "cp": 25.57,
+   "agn": 19.83,
+   "windows": 178
+  },
+  "v2-ck2500": {
+   "cp": 26.67,
+   "agn": 20.66,
+   "windows": 178
+  }
+ },
+ "ztc/d4/all": {
+  "cp": 28.56,
+  "agn": 20.1,
+  "hyp_ref": 0.996,
+  "windows": 200,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 22.33,
+   "agn": 11.72,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 21.51,
+   "agn": 11.09,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 21.14,
+   "agn": 11.27,
+   "windows": 200
+  }
+ },
+ "ztc/d4/nodeg": {
+  "cp": 28.56,
+  "agn": 20.1,
+  "hyp_ref": 0.996,
+  "windows": 200,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 22.33,
+   "agn": 11.72,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 21.51,
+   "agn": 11.09,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 21.14,
+   "agn": 11.27,
+   "windows": 200
+  }
+ },
+ "ztc/d4/nomask": {
+  "cp": 24.0,
+  "agn": 15.97,
+  "hyp_ref": 0.981,
+  "windows": 43,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 18.35,
+   "agn": 11.33,
+   "windows": 43
+  },
+  "v2-ck2000": {
+   "cp": 20.03,
+   "agn": 10.37,
+   "windows": 43
+  },
+  "v2-ck2500": {
+   "cp": 19.48,
+   "agn": 11.12,
+   "windows": 43
+  }
+ },
+ "aihub134-1/d10/all": {
+  "cp": 52.01,
+  "agn": 47.67,
+  "hyp_ref": 1.184,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 1,
+  "m2a-ck2000": {
+   "cp": 21.48,
+   "agn": 14.11,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 19.63,
+   "agn": 13.71,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 19.88,
+   "agn": 13.9,
+   "windows": 200
+  }
+ },
+ "aihub134-1/d10/nodeg": {
+  "cp": 49.47,
+  "agn": 45.1,
+  "hyp_ref": 1.163,
+  "windows": 199,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 21.55,
+   "agn": 14.12,
+   "windows": 199
+  },
+  "v2-ck2000": {
+   "cp": 19.63,
+   "agn": 13.68,
+   "windows": 199
+  },
+  "v2-ck2500": {
+   "cp": 19.88,
+   "agn": 13.87,
+   "windows": 199
+  }
+ },
+ "aihub134-1/d10/nomask": {
+  "cp": 24.32,
+  "agn": 22.02,
+  "hyp_ref": 1.118,
+  "windows": 12,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 6.11,
+   "agn": 6.31,
+   "windows": 12
+  },
+  "v2-ck2000": {
+   "cp": 5.41,
+   "agn": 5.51,
+   "windows": 12
+  },
+  "v2-ck2500": {
+   "cp": 5.31,
+   "agn": 5.41,
+   "windows": 12
+  }
+ },
+ "aihub134-2/d10/all": {
+  "cp": 105.08,
+  "agn": 99.73,
+  "hyp_ref": 1.63,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 1,
+  "m2a-ck2000": {
+   "cp": 26.86,
+   "agn": 16.58,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 27.28,
+   "agn": 16.04,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 26.05,
+   "agn": 16.22,
+   "windows": 200
+  }
+ },
+ "aihub134-2/d10/nodeg": {
+  "cp": 104.65,
+  "agn": 99.3,
+  "hyp_ref": 1.625,
+  "windows": 199,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 26.88,
+   "agn": 16.59,
+   "windows": 199
+  },
+  "v2-ck2000": {
+   "cp": 27.31,
+   "agn": 16.05,
+   "windows": 199
+  },
+  "v2-ck2500": {
+   "cp": 26.08,
+   "agn": 16.23,
+   "windows": 199
+  }
+ },
+ "aihub134-2/d10/nomask": {
+  "cp": 64.94,
+  "agn": 56.18,
+  "hyp_ref": 1.327,
+  "windows": 4,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 18.33,
+   "agn": 13.15,
+   "windows": 4
+  },
+  "v2-ck2000": {
+   "cp": 16.33,
+   "agn": 10.36,
+   "windows": 4
+  },
+  "v2-ck2500": {
+   "cp": 11.55,
+   "agn": 9.96,
+   "windows": 4
+  }
+ },
+ "aihub71631/d10/all": {
+  "cp": 63.28,
+  "agn": 60.05,
+  "hyp_ref": 1.352,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 34.1,
+   "agn": 26.94,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 31.2,
+   "agn": 24.73,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 34.27,
+   "agn": 27.48,
+   "windows": 200
+  }
+ },
+ "aihub71631/d10/nodeg": {
+  "cp": 63.28,
+  "agn": 60.05,
+  "hyp_ref": 1.352,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 34.1,
+   "agn": 26.94,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 31.2,
+   "agn": 24.73,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 34.27,
+   "agn": 27.48,
+   "windows": 200
+  }
+ },
+ "aihub71631/d10/nomask": {
+  "cp": 26.67,
+  "agn": 26.32,
+  "hyp_ref": 1.196,
+  "windows": 14,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 12.4,
+   "agn": 11.33,
+   "windows": 14
+  },
+  "v2-ck2000": {
+   "cp": 12.85,
+   "agn": 11.69,
+   "windows": 14
+  },
+  "v2-ck2500": {
+   "cp": 12.85,
+   "agn": 11.69,
+   "windows": 14
+  }
+ },
+ "kec/d10/all": {
+  "cp": 34.34,
+  "agn": 28.9,
+  "hyp_ref": 0.993,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 29.52,
+   "agn": 21.7,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 27.11,
+   "agn": 19.71,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 28.95,
+   "agn": 20.72,
+   "windows": 200
+  }
+ },
+ "kec/d10/nodeg": {
+  "cp": 34.34,
+  "agn": 28.9,
+  "hyp_ref": 0.993,
+  "windows": 200,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 29.52,
+   "agn": 21.7,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 27.11,
+   "agn": 19.71,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 28.95,
+   "agn": 20.72,
+   "windows": 200
+  }
+ },
+ "kec/d10/nomask": {
+  "cp": 24.97,
+  "agn": 21.04,
+  "hyp_ref": 0.971,
+  "windows": 69,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 21.53,
+   "agn": 18.53,
+   "windows": 69
+  },
+  "v2-ck2000": {
+   "cp": 19.97,
+   "agn": 16.97,
+   "windows": 69
+  },
+  "v2-ck2500": {
+   "cp": 20.27,
+   "agn": 17.72,
+   "windows": 69
+  }
+ },
+ "nsc/d10/all": {
+  "cp": 33.66,
+  "agn": 30.4,
+  "hyp_ref": 1.127,
+  "windows": 200,
+  "hyp_spk_gt2": 12,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 20.88,
+   "agn": 16.03,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 21.81,
+   "agn": 15.41,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 22.99,
+   "agn": 15.81,
+   "windows": 200
+  }
+ },
+ "nsc/d10/nodeg": {
+  "cp": 33.66,
+  "agn": 30.4,
+  "hyp_ref": 1.127,
+  "windows": 200,
+  "hyp_spk_gt2": 12,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 20.88,
+   "agn": 16.03,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 21.81,
+   "agn": 15.41,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 22.99,
+   "agn": 15.81,
+   "windows": 200
+  }
+ },
+ "nsc/d10/nomask": {
+  "cp": 19.32,
+  "agn": 19.09,
+  "hyp_ref": 1.075,
+  "windows": 8,
+  "hyp_spk_gt2": 1,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 9.77,
+   "agn": 5.23,
+   "windows": 8
+  },
+  "v2-ck2000": {
+   "cp": 11.14,
+   "agn": 6.82,
+   "windows": 8
+  },
+  "v2-ck2500": {
+   "cp": 10.68,
+   "agn": 6.36,
+   "windows": 8
+  }
+ },
+ "otoSpeech/d10/all": {
+  "cp": 26.28,
+  "agn": 21.26,
+  "hyp_ref": 1.007,
+  "windows": 200,
+  "hyp_spk_gt2": 3,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 25.54,
+   "agn": 20.57,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 23.95,
+   "agn": 19.11,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 24.38,
+   "agn": 19.36,
+   "windows": 200
+  }
+ },
+ "otoSpeech/d10/nodeg": {
+  "cp": 26.28,
+  "agn": 21.26,
+  "hyp_ref": 1.007,
+  "windows": 200,
+  "hyp_spk_gt2": 3,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 25.54,
+   "agn": 20.57,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 23.95,
+   "agn": 19.11,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 24.38,
+   "agn": 19.36,
+   "windows": 200
+  }
+ },
+ "otoSpeech/d10/nomask": {
+  "cp": 26.4,
+  "agn": 21.12,
+  "hyp_ref": 1.004,
+  "windows": 178,
+  "hyp_spk_gt2": 3,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 26.04,
+   "agn": 20.73,
+   "windows": 178
+  },
+  "v2-ck2000": {
+   "cp": 23.98,
+   "agn": 19.24,
+   "windows": 178
+  },
+  "v2-ck2500": {
+   "cp": 24.27,
+   "agn": 19.52,
+   "windows": 178
+  }
+ },
+ "ztc/d10/all": {
+  "cp": 28.24,
+  "agn": 19.92,
+  "hyp_ref": 0.993,
+  "windows": 200,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 20.74,
+   "agn": 11.36,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 20.24,
+   "agn": 10.47,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 20.64,
+   "agn": 11.12,
+   "windows": 200
+  }
+ },
+ "ztc/d10/nodeg": {
+  "cp": 28.24,
+  "agn": 19.92,
+  "hyp_ref": 0.993,
+  "windows": 200,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 20.74,
+   "agn": 11.36,
+   "windows": 200
+  },
+  "v2-ck2000": {
+   "cp": 20.24,
+   "agn": 10.47,
+   "windows": 200
+  },
+  "v2-ck2500": {
+   "cp": 20.64,
+   "agn": 11.12,
+   "windows": 200
+  }
+ },
+ "ztc/d10/nomask": {
+  "cp": 24.0,
+  "agn": 15.97,
+  "hyp_ref": 0.981,
+  "windows": 43,
+  "hyp_spk_gt2": 0,
+  "degenerate": 0,
+  "m2a-ck2000": {
+   "cp": 18.39,
+   "agn": 9.95,
+   "windows": 43
+  },
+  "v2-ck2000": {
+   "cp": 16.26,
+   "agn": 9.49,
+   "windows": 43
+  },
+  "v2-ck2500": {
+   "cp": 18.44,
+   "agn": 10.83,
+   "windows": 43
+  }
+ }
+}
