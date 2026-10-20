@@ -441,6 +441,8 @@ trainer = Stage3Trainer(model=model, args=targs, train_sets=train_sets, dev_sets
                         max_per_chunk=0, num_workers=a.num_workers, language_schedule="balanced", gloo_pg=gloo_pg,
                         pack_max_tokens=a.pack_max_tokens, pack_max_bs=a.pack_max_bs, batch_max_tokens=a.batch_max_tokens, callbacks=[preempt_cb], processing_class=tok)
 tdl = trainer.get_train_dataloader(); plan = tdl.describe()
+empty = sorted(k for k, sp_ in tdl.samplers.items() if weights.get(k, 0) > 0 and len(sp_) == 0)     # rank 당 batch 0 이면 RoundRobinLoader._cycle 이 내지 않고 돈다(멈춤)
+if empty: sys.exit(f"rank 당 batch 가 0 인 셋: {empty} — 셋이 너무 작거나(world {world}) 창 draw 하나가 비었다(--window-draws·--max-windows 확인)")
 log(f"섞기: steps/epoch {plan['steps_per_epoch']} · 비중 {plan['share']} · 셋 배치/epoch {plan['batches_per_epoch']} · world {world}")
 run_rec = dict(args=vars(a), init=a.init, sp_ids=sp_ids, stage3=fp, resume_from=last, resume_fingerprint_diff=fdiff, trainable_m=n_tr / 1e6, encoder_saved=bool(model.config.encoder_saved),
                sizes={k: len(v) for k, v in train_sets.items()}, sets={k: dict(v.stats) for k, v in train_sets.items()}, plan=plan, check=check, world=world, speed=speed,
