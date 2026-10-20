@@ -2,13 +2,23 @@
 type: status
 status: active
 created: 2026-09-03
-updated: 2026-10-19
-summary: 2026-10-19 Stage 4 준비(대화 번역 타깃 시험 생성·네 흐름 형식 구현) — Stage 3 최종 = p11 ck3000, 목표는 CST-S2TT(10-02 전환)
+updated: 2026-10-20
+summary: 2026-10-20 전화 대역 증강 st4-m2 로 TAXI cpWER 40.9 → 28.1(VibeVoice 19.2), V2-a 두 스트림 입력 점검 중 — Stage 4 최종 = st4-m1 ck1500
 ---
 
 # 상태
 
-마지막 갱신: 2026-10-19 (아래 기존 볼트 상태는 2026-09-07의 기록)
+마지막 갱신: 2026-10-20 (아래 기존 볼트 상태는 2026-09-07의 기록)
+
+## 2026-10-20 st4-m2(전화 대역 증강) 결과·V2-a 두 스트림 입력
+
+- st4-m2a(전화 대역 증강)·st4-m2b(+ CallHome 독일어) 학습 완료(PARITY OK) → [[2026-10-19-stage4-dialogue-translation]]
+  - TAXI 받아쓰기 cpWER 40.9 → 28.1(m2a ck2000), 독→영 빈 턴 26 → 3. m2b 는 m2a 보다 1.6–2.6 pt 나쁘다.
+  - VibeVoice 스트리밍(19.2)과의 비교 → [[output-vibevoice-stream-comparison-20261020]]
+  - Stage 3 회귀·단일 화자·CallHome 평가 진행 중. final 의 일부 단계는 GPU OOM 으로 끊겨 이어 돌린다(`stage4_eval_resume.sh`). 체크포인트 선택은 그 뒤(사용자).
+- V2: M0(화자 정보는 인코더 아래층 96 %·LLM 입력 69 %) → 사용자 의문으로 VibeVoice 식 **두 스트림 입력(V2-a)** 으로 방향을 바꿨다 → [[output-v2-speaker-memory-plan-20261020]]
+  - Nemotron L00 → `adapter_tap`(0 초기화) → LLM 입력에 더함. 구현·단위 시험 통과, mxc 학습 전 점검 진행 중 → [[2026-10-20-v2a-dual-stream]]
+  - 파일럿 제안: st4-m2a 와 같은 설정·seed + `--enc-tap-layer 0`(m2a 를 대조군으로)
 
 ## 2026-10-20 Stage 4 최종 → st4-m1 ck1500, VibeVoice 외부 기준선
 

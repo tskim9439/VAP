@@ -3,7 +3,7 @@
 
   python experiments/baseline_vibevoice.py run --mode stream|offline --model <ckpt> --src <VibeVoice 소스> [--lm-tokenizer <Qwen2.5-7B tokenizer>] \\
       --checkpoint <우리 체크포인트(참조 tokenizer)> --data <phase2> --split <v2.json> --out <dir> [--corpora …] [--limit-windows 200] [--rank r --world-size n]
-  python experiments/baseline_vibevoice.py score --out <dir> [--compare 이름=stage3-eval 결과 폴더,…]
+  python experiments/baseline_vibevoice.py score --out <dir> [--compare 이름=stage3-eval 결과 폴더,…] [--dest <json>(기본 <dir>/score.json)]
   python experiments/baseline_vibevoice.py taxi --mode stream|offline --model <ckpt> --src <소스> [--lm-tokenizer …] --sessions <taxi sessions.jsonl> --out <dir>
 
 모델: stream = VibeVoice-ASR-Streaming-7B(model.streaming_generate, 체크포인트의 청크·lookahead), offline = VibeVoice-ASR(창 전체 한 번, JSON 출력 Start/End/Speaker/Content).
@@ -171,7 +171,7 @@ def score(a):
                 cc = [x for x in crow if x["delta"] == delta and x["id"] in ids[(c, g)]]; nr = sum(x["n_ref"] for x in cc)
                 if cc: e[name] = dict(cp=round(100 * sum(x["cp"] for x in cc) / max(1, nr), 2), agn=round(100 * sum(x["agn"] for x in cc) / max(1, nr), 2), windows=len(cc))
             res[f"{c}/d{delta}/{g}"] = e
-    json.dump(res, open(os.path.join(a.out, "score.json"), "w"), ensure_ascii=False, indent=1)
+    json.dump(res, open(a.dest or os.path.join(a.out, "score.json"), "w"), ensure_ascii=False, indent=1)
     for k, e in res.items():
         print(f"{k:28s} VibeVoice cp {e['cp']:6.2f} agn {e['agn']:6.2f} h/r {e['hyp_ref']:.2f} 창 {e['windows']:3d} (가설 화자 >2: {e['hyp_spk_gt2']}, 반복 붕괴 {e['degenerate']})"
               + "".join(f" | {n} cp {e[n]['cp']:6.2f} agn {e[n]['agn']:6.2f}" for n in cmp if n in e))
@@ -244,7 +244,7 @@ def main():
     q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1)
     q = sub.add_parser("taxi"); q.add_argument("--mode", choices=["stream", "offline"], required=True); q.add_argument("--model", required=True); q.add_argument("--src", required=True)
     q.add_argument("--lm-tokenizer", default=None); q.add_argument("--sessions", required=True); q.add_argument("--out", required=True); q.add_argument("--max-new-tokens", type=int, default=None)
-    q = sub.add_parser("score"); q.add_argument("--out", required=True); q.add_argument("--compare", default=None)
+    q = sub.add_parser("score"); q.add_argument("--out", required=True); q.add_argument("--compare", default=None); q.add_argument("--dest", default=None)
     q.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[4, 10])
     a = ap.parse_args()
     if a.cmd in ("run", "taxi"):

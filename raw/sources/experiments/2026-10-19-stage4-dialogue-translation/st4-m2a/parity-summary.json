@@ -1,0 +1,1 @@
+{"parity": true, "memory": {"loss": 0.38177, "loss_next": 0.21862, "loss_text": 0.33291, "top1_text": 0.88586, "loss_turn": 0.38255, "loss_act": 0.14866}, "reloaded": {"loss": 0.38215, "loss_next": 0.21903, "loss_text": 0.33261, "top1_text": 0.88337, "loss_turn": 0.38931, "loss_act": 0.1486}, "encoder_saved_keys": 638, "tokenizer_reload_ok": true}
