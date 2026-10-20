@@ -28,12 +28,12 @@ print(f"ACCEPT {sys.argv[1]}: 세션 {s['sessions']} 실패 {s['failed']} · {s[
 EOF
 }
 echo "[$(date '+%F %T')] $K 학습 셋 시작"
-$PY experiments/sim_build_dialogues.py --lang English $DE --out $O --sessions 10000 --workers 24 --phase2 $P2 --split $P2/splits/v2.json --noise-bank $D/noise-bank-v1 \
+$PY experiments/sim_build_dialogues.py --lang English $DE --out $O --sessions 10000 --workers 24 --phase2 $P2 --split $P2/splits/v2.json --noise-bank $D/noise-bank-v1 --noise-p 0.3 \
   --phase2-corpora otoSpeech --words @$SNAP/main-words.list --words @$ASR --words @$CV4 --words-frac 0.5 --pool-weights otoSpeech:0.45,swbd:0.45,cv:0.05,vp:0.05 \
   --trans $S1 --trans $A2/en-de --trans $A2C/en-de $TEL 2>&1 | grep -v "regex pattern" | tail -3
 [ -f $O/$K.stats.json ] || { echo "학습 셋 빌드 실패(stats 없음): $O"; exit 1; }
 echo "[$(date '+%F %T')] $K held-out dev 셋 시작"
-$PY experiments/sim_build_dialogues.py --lang English $DE --out $OE --sessions 160 --dur 30,75 --workers 24 --phase2 $P2 --split $P2/splits/v2.json --noise-bank $D/noise-bank-v1 --heldout \
+$PY experiments/sim_build_dialogues.py --lang English $DE --out $OE --sessions 160 --dur 30,75 --workers 24 --phase2 $P2 --split $P2/splits/v2.json --noise-bank $D/noise-bank-v1 --noise-p 0.3 --heldout \
   --phase2-corpora otoSpeech --pool-weights otoSpeech:1 --trans $S1 $TEL 2>&1 | grep -v "regex pattern" | tail -3
 [ -f $OE/$K.stats.json ] || { echo "dev 셋 빌드 실패(stats 없음): $OE"; exit 1; }
 echo "[$(date '+%F %T')] dry-run 시작"

@@ -138,9 +138,9 @@ def turn_states(T, Rw, lab, wrong):
 def session_counts(s, T, Rw, hw, off, W, wlang, asr=None, eots=None):
     """세션 하나 → 집계용 Counter(문자열 키 — 합치면 전체, 재표집하면 bootstrap). asr: 그 세션의 asr 행(split), eots: [(시각, 슬롯 언어)]."""
     C = collections.Counter(sessions=1); pairs, _ = walign(Rw, hw, off, W)
-    lab = [None] * len(Rw); exact = [False] * len(Rw); hword = [None] * len(Rw)
+    lab = [None] * len(Rw); exact = [False] * len(Rw); hword = [None] * len(Rw); ht = [None] * len(Rw)
     for i, j in pairs:
-        if i is not None and j is not None: lab[i] = hw[j][1]; exact[i] = hw[j][2] == Rw[i]["w"]; hword[i] = hw[j][2]
+        if i is not None and j is not None: lab[i] = hw[j][1]; exact[i] = hw[j][2] == Rw[i]["w"]; hword[i] = hw[j][2]; ht[i] = hw[j][0]
         elif i is None: C["ins"] += 1
     lmap = {s["speakers"][sp]["lang"]: sp for sp in s["speakers"]}
     wrong = [None if l is None else lmap.get(l) != x["spk"] for l, x in zip(lab, Rw)]
@@ -193,6 +193,10 @@ def session_counts(s, T, Rw, hw, off, W, wlang, asr=None, eots=None):
         maj = {ti: c.most_common(1)[0][0] for ti, c in tl.items()}; C["eot_total"] += len(eots)
         for ti in range(1, len(T)):
             t, p = T[ti], T[ti - 1]
+            pi, ci = ts[ti - 1]["idx"], ts[ti]["idx"]
+            if t["change"] and pi and ci and ts[ti - 1]["lastlab"] == p["lang"]:                       # gate(E+/E− 정의): 앞 턴 마지막이 맞고 새 턴 첫 단어가 틀림/맞음, 두 가설 단어 방출 시각 사이 <EOT>
+                evg = [lg for tt, lg in eots if ht[pi[-1]] <= tt <= ht[ci[0]]]; q = f"eot/gate/{'miss' if ts[ti]['firstlab'] != t['lang'] else 'hit'}"
+                C[f"{q}/n"] += 1; C[f"{q}/any"] += bool(evg); C[f"{q}/{'prev' if any(lg == p['lang'] for lg in evg) else ('other' if evg else 'none')}"] += 1
             if not t["change"] or ti not in maj: continue
             lo, hi = p["b"] + off - 0.4, t["a"] + off + 0.6; ev = [lg for tt, lg in eots if lo <= tt <= hi]; prev_slot = maj.get(ti - 1)
             k = "prev" if any(lg == prev_slot for lg in ev) else ("other" if ev else "none")
@@ -271,7 +275,7 @@ def summarize(C, eot=False):
                split=dict(cp=pct(C["cp_e"], C["n_split"]), agn=pct(C["agn_e"], C["n_split"]), attr=pct(C["cp_e"] - C["agn_e"], C["n_split"]), ref_words=C["n_split"]))
     if eot:
         res["eot"] = dict(emitted=C["eot_total"])
-        for by in ("majority", "toggle"):
+        for by in ("majority", "toggle", "gate"):
             d = {h: {k: C[f"eot/{by}/{h}/{k}"] for k in ("n", "any", "prev", "other", "none")} for h in ("hit", "miss")}
             res["eot"][by] = dict(d, f_hit=pct(d["hit"]["prev"], d["hit"]["n"]), f_miss=pct(d["miss"]["prev"], d["miss"]["n"]))
     return res
@@ -381,11 +385,13 @@ def onset_class(seg, ka, kb, spk_ids, trans_id, eot_id, lost=(), trans_words=())
 
 def onset_classes(sessions, runs, tok, spk_ids, trans_id, eot_id, W=5.0):
     """runs = {세션: [(창 시작 s, emitted [(k, tid)])] 창 순서} → 교대마다 onset_class 집계(세션 id·글자 없음).
-    정렬은 turn_metrics 와 같다(emitted_words 의 가설 단어 = 그 run 의 asr 행). 두 정렬 단어가 다른 창이면 cross_window, 한쪽 턴에 정렬 단어가 없으면 noalign 으로 센다."""
+    정렬은 turn_metrics 와 같다(emitted_words 의 가설 단어 = 그 run 의 asr 행). 두 정렬 단어가 다른 창이면 cross_window, 한쪽 턴에 정렬 단어가 없으면 noalign 으로 센다.
+    교대마다 앞 턴 마지막 정렬 단어가 맞는 슬롯이었나(prev_ok)로도 나눈다 — 놓친 온셋 판단은 classes_prev_ok 로 한다(prev_wrong 은 다시 맞추기·역전 교대).
+    ABSORBED 의 번역 단어는 새 턴 시작 + 오프셋 − 0.3 s 이후에 방출된 것만 본다(앞 턴 자기 번역과 섞이지 않게)."""
     from cst_stage4_taxi import slots_of
     S = [s for s in sessions if lang_bound(s)]; P = {s["session_id"]: prep(s) for s in S}; HW, TRW = {}, {}
     for s in S: HW[s["session_id"]], TRW[s["session_id"]] = emitted_words(tok, runs.get(s["session_id"], []), spk_ids, trans_id, eot_id, slots_of(s)[1])
-    off, _ = offset_of(S, P, HW); C = collections.Counter(); D = collections.Counter()
+    off, _ = offset_of(S, P, HW); C = collections.Counter(); D = collections.Counter(); G = collections.Counter()
     for s in S:
         sid = s["session_id"]; T, Rw = P[sid]; hw = HW[sid]; pairs, _ = walign(Rw, hw, off, W); hj = [None] * len(Rw); al = collections.defaultdict(list)
         for i, j in pairs:
@@ -397,16 +403,19 @@ def onset_classes(sessions, runs, tok, spk_ids, trans_id, eot_id, W=5.0):
             if not al.get(ti - 1) or not al.get(ti): C["noalign"] += 1; continue
             ia, ib = al[ti - 1][-1], al[ti][0]; wa, _, la, ka = hw[hj[ia]][3]; wb, fb, _, kb = hw[hj[ib]][3]
             if wa != wb: C["cross_window"] += 1; continue
-            em = runs[sid][wb][1]; seg = [t for _, t in em[la + 1: fb]] if fb > la else []
+            w0, em = runs[sid][wb]; seg = [t for _, t in em[la + 1: fb]] if fb > la else []
             lost = [x["w"] for x in sorted((x for x in Rw if x["ti"] == ti and x["pos"] < Rw[ib]["pos"]), key=lambda x: x["pos"])]
-            trw = [u for u, p0, p1 in TRW[sid].get((wb, ka), []) if p0 > la and p1 < fb]
+            t_new = T[ti]["a"] + off - 0.3
+            trw = [u for u, p0, p1 in TRW[sid].get((wb, ka), []) if p0 > la and p1 < fb and w0 + (em[p0][0] + 1) * 0.08 >= t_new]
             cls, eot, trans = onset_class(seg, ka, kb, spk_ids, trans_id, eot_id, lost, trw); e = "eot" if eot else "no_eot"
-            C[f"{cls}/{e}"] += 1; D[(T[ti]["lang"], cls, e)] += 1
+            pv = "prev_ok" if hw[hj[ia]][1] == T[ti - 1]["lang"] else "prev_wrong"
+            C[f"{cls}/{e}"] += 1; D[(T[ti]["lang"], cls, e)] += 1; G[(pv, cls, e)] += 1
             if cls == "RESUME" and not trans: C["resume_without_trans"] += 1
     cell = lambda get: {c: dict(eot=get(c, "eot"), no_eot=get(c, "no_eot"), all=get(c, "eot") + get(c, "no_eot")) for c in ONSET}
     return dict(sessions=len(S), skipped_same_lang=len(sessions) - len(S), changes=C["changes"], classified=sum(C[f"{c}/{e}"] for c in ONSET for e in ("eot", "no_eot")),
                 noalign=C["noalign"], cross_window=C["cross_window"], resume_without_trans=C["resume_without_trans"], window_s=W, offset_s=round(off, 3),
-                classes=cell(lambda c, e: C[f"{c}/{e}"]), by_new_lang={lg: cell(lambda c, e, lg=lg: D[(lg, c, e)]) for lg in sorted({k[0] for k in D})})
+                classes=cell(lambda c, e: C[f"{c}/{e}"]), by_new_lang={lg: cell(lambda c, e, lg=lg: D[(lg, c, e)]) for lg in sorted({k[0] for k in D})},
+                classes_prev_ok=cell(lambda c, e: G[("prev_ok", c, e)]), classes_prev_wrong=cell(lambda c, e: G[("prev_wrong", c, e)]))
 
 
 def main():

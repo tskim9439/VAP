@@ -77,7 +77,7 @@ done
 [[ -z $dw_sets || $dw_sets =~ ^(all|xl)$ ]] || { echo "--decision-weight-sets all|xl" >&2; exit 2; }
 [[ -z $eot_drop || $eot_drop =~ ^(0|0?\.[0-9]+|1|1\.0+)$ ]] || { echo "--eot-drop-synth 는 0–1" >&2; exit 2; }
 [[ -z $eot_drop_sets || $eot_drop_sets =~ ^(xl|synth)$ ]] || { echo "--eot-drop-sets xl|synth" >&2; exit 2; }
-for kv in ${set_phone//,/ }; do [[ $kv =~ ^(dlg|sim)_[a-z0-9-]+:(0|0?\.[0-9]+|1|1\.0+)$ && ,$weights, == *",${kv%%:*}:"* ]] || { echo "--set-phone KEY:P — KEY 는 --weights 의 dlg_*·sim_* 셋, P 는 0–1: $kv" >&2; exit 2; }; done
+for kv in ${set_phone//,/ }; do [[ $kv =~ ^(dlg|sim)_[a-z0-9-]+:(0|0?\.[0-9]+|1|1\.0+)$ && ,$weights, == *",${kv%%:*}:"* && ! ,$weights, =~ ,${kv%%:*}:0*\.?0*, ]] || { echo "--set-phone KEY:P — KEY 는 --weights 의 가중 > 0 인 dlg_*·sim_* 셋, P 는 0–1: $kv" >&2; exit 2; }; done
 [[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }
 for sd in ${sim_data//,/ }; do [[ -d $sd/mono ]] || { echo "--sim-data 에 mono/ 가 없다: $sd" >&2; exit 1; }; done
 for td in ${dlg_trans//,/ } ${dlg_trans_input//,/ }; do [[ -d $td/pack ]] || { echo "번역 타깃에 pack/ 이 없다: $td" >&2; exit 1; }; done

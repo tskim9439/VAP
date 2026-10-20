@@ -108,6 +108,8 @@ def test_eot_at_boundaries_hit_and_miss():
     assert r["emitted"] == 2 and r["majority"]["hit"]["n"] == 4 and r["majority"]["miss"]["n"] == 1
     assert r["majority"]["hit"]["prev"] == 1 and r["majority"]["miss"]["other"] == 1 and r["majority"]["f_hit"] == 25.0 and r["majority"]["f_miss"] == 0.0
     assert r["toggle"]["miss"]["n"] == 2 and r["toggle"]["hit"]["n"] == 3
+    assert (r["gate"]["hit"]["n"], r["gate"]["miss"]["n"]) == (3, 1)                              # gate: 앞 턴이 맞은 교대만(교대 4 는 앞 턴이 삼켜져 빠진다)
+    assert r["gate"]["hit"]["prev"] == 1 and r["gate"]["miss"]["other"] == 1 and r["gate"]["f_miss"] == 0.0
 
 
 def test_bootstrap_reproducible_and_paired():

@@ -199,7 +199,7 @@ def test_dataset_weights_pass_invariants(tmp_path, kind):
         for d in on.delays:
             for a, b in zip(seqs(off, i, d), seqs(on, i, d)):
                 assert on.problems_of(b) == [], (kind, i, d, b["tgt"], on.problems_of(b))      # (g) switch_w·hold_w 포함
-                assert {k: b[k] for k in a if k != "pos_weight"} == {k: a[k] for k in a if k != "pos_weight"} and set(b) - set(a) == {"dec_kind", "n_switch", "n_hold"}
+                assert {k: b[k] for k in a if k != "pos_weight"} == {k: a[k] for k in a if k != "pos_weight"} and set(b) - set(a) == {"dec_kind", "n_switch", "n_hold", "dec_heads"}
                 assert all(x == y or k in (1, 2) for x, y, k in zip(a["pos_weight"], b["pos_weight"], b["dec_kind"]))
                 n["sw4" if b["tgt"] else "sw"] += b["n_switch"]; n["ho4" if b["tgt"] else "ho"] += b["n_hold"]
             r = random.Random(100 * i + d)
@@ -400,3 +400,23 @@ def test_submit_script_v3_flags(tmp_path):
     for bad in (["--change-tag-weight", "-1"], ["--hold-tag-weight", "x"], ["--decision-weight-sets", "some"], ["--eot-drop-synth", "1.5"], ["--eot-drop-sets", "all"],
                 ["--set-phone", "rep_en:0.5"], ["--set-phone", "sim_en-de:2"], ["--set-phone", "sim_ko-en:0"]):    # 마지막: --weights 에 없는 셋
         rc, out, err = run_submit(R, sh, SUBMIT_ARGS[1][:-1] + bad + ["--dry-run"]); assert rc != 0 and not out, (bad, err)
+
+
+def test_unspaced_onset_is_a_decision(tmp_path):
+    """앞 공백 없이 시작하는 단위(words 행 합성 발화의 첫 토큰 — 짝수 id)도 episode 첫 원소면 교대·머무름 결정이다(검토 2026-10-21: 영어 합성 단위 onset 이 가중에서 빠지던 결함).
+    y 턴 첫 토큰 22 → 교대, x 가 쉼 뒤 같은 화자로 다시 시작하는 첫 토큰 14 → <EOT> 뒤 머무름. 단어 중간(짝수) 토큰은 여전히 아니다."""
+    SR = 16000; dur = 12.0; w = str(tmp_path / "u.wav"); t = np.arange(int(dur * SR)) / SR
+    sf.write(w, np.stack([0.3 * np.sin(2 * np.pi * 440 * t)] * 2, 1).astype(np.float32), SR)
+    U = [("x", 0.5, 2.0, [(11, 1.0), (13, 2.0)]), ("y", 2.1, 4.0, [(22, 3.0), (23, 4.0)]), ("x", 4.1, 6.0, [(15, 5.0)]), ("x", 6.6, 8.0, [(14, 7.0), (17, 8.0)])]
+    utts = [Utterance(sp, a, e, "t", "t", tokens=toks, utt_id=f"u{j}") for j, (sp, a, e, toks) in enumerate(U)]
+    d = Dialogue(conv_id="u", corpus="test", lang="Korean", split="train", duration_s=dur, speakers=["x", "y"], utterances=utts,
+                 channels={"x": ChannelRef(path=f"{w}#ch0"), "y": ChannelRef(path=f"{w}#ch1")}, meta={})
+    q = str(tmp_path / "u.refined.dialogues.jsonl"); open(q, "w").write(d.to_json() + "\n")
+    ds = CstDialogueDataset([q], tokw(), delays=(2,), windows=[("u", 0.0, 10.0)], change_weight=3.0, hold_weight=1.5)
+    s = ds.cst_sequence(0, 2); ids = s["ids"]; nxt = lambda p: next(ids[j] for j in range(p + 1, len(ids)) if not s["is_input"][j] and ids[j] != ds.csp.next_audio)
+    sw = [p for p, k in enumerate(s["dec_kind"]) if k == 1]; ho = [p for p, k in enumerate(s["dec_kind"]) if k == 2]
+    assert [nxt(p) for p in sw] == [22, 15] and [ids[p] for p in ho] == [14] and ds.problems_of(s) == []
+    hd = set(); window_streams(ds.eps["u"], ["x", "y"], 0.0, 10.0, ds.eot_id, heads=hd)
+    assert hd == {(0, 0), (1, 0), (0, 3), (0, 5)}                                                  # x: 11·13·<EOT>·15·<EOT>·14 … — episode 첫 원소만
+    sw0, _ = decision_positions(ids, s["is_input"], s["labels"], s["labels_alt"], s["src_at"], ds.spk_ids, ds.trans_id, ds.eot_id, ds._ws())
+    assert [nxt(p) for p in sw0] == [15]                                                            # heads 없이는 22 onset 을 놓친다(고치기 전 동작)

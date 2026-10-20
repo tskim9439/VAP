@@ -165,6 +165,7 @@ def test_probe_classify_onsets_off_is_byte_identical(tmp_path, monkeypatch):
     assert all(f"on-{k}" not in on["onset-classes-d10.json"].decode() for k in SCEN)
     asr = [json.loads(l) for l in off["asr-d10.jsonl"].decode().splitlines()]; S = [json.loads(l) for l in open(sess)]
     assert A.turn_metrics(S, asr, B=10)["toggle_recall"]["toggled"] == oc["classes"]["OK"]["all"]
+    assert all(oc["classes"][c]["all"] == oc["classes_prev_ok"][c]["all"] + oc["classes_prev_wrong"][c]["all"] for c in oc["classes"])   # 앞 턴 상태로 나눈 합 = 전체
     base = base_module(PROBE, "classify_onsets", "taxi_v3_probe_base")
     if base is None: pytest.skip("git 기준판 없음")
     assert run_probe(base, monkeypatch, sess, fresh(d, {}), tok, emitted, False) == off                                          # 바꾸기 전 판과 산출 바이트 동일
