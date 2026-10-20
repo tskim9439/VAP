@@ -335,3 +335,13 @@ def overlap_stats(d: Dialogue) -> dict:
     speech = sum(e.end - e.start for e in eps); ch = sum(1 for p, q in zip(eps, eps[1:]) if p.speaker != q.speaker)
     return dict(duration_s=d.duration_s, speech_s=round(speech, 2), overlap_s=round(ov, 2), overlap_ratio=round(ov / max(1e-6, d.duration_s), 4),
                 changes_per_min=round(ch / max(1e-6, d.duration_s / 60), 2), self_overlap=self_ov, episodes=len(eps))
+
+
+def turn_gaps(d: Dialogue) -> dict:
+    """턴 타이밍 점검(C2 전화 합성 stats): episode 를 시작 순으로 이은 쌍의 교대 간격(change — 다음 시작 − 앞 끝, 음수 = 겹침)·같은 화자 재개 간격(hold),
+    화자마다 이어진 발화 사이 쉼(same — GAP_S 미만이면 한 episode 안의 쉼), episode 수."""
+    eps = build_episodes(d); change, hold, same = [], [], []
+    for p, q in zip(eps, eps[1:]): (change if q.speaker != p.speaker else hold).append(round(q.start - p.end, 3))
+    for spk in d.speakers:
+        us = sorted((u for u in d.utterances if u.speaker == spk), key=lambda u: u.start); same += [round(y.start - x.end, 3) for x, y in zip(us, us[1:])]
+    return dict(change=change, hold=hold, same=same, episodes=len(eps))

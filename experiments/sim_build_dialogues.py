@@ -22,10 +22,21 @@ mono: 화자별 채널(놓인 말소리)을 dialogue_mix.mix_dialogue 와 같은
   번역(--trans, 반복·쉼표·@목록 — ast_build_targets 산출: Stage 2 단일 화자 타깃(words 행 id)·S1 대화 타깃(conv|화자|utt)): 발화 Unit 에 붙여 놓고
   (sim_dialogue 모듈 설명), <out>/targets-sim_<xx>/<xx>/u-*.jsonl.gz(load_ast_targets 형식, 행 id = <conv>|<화자>|<utt_id 의 # 앞>)로 쓴다.
   교차 언어는 상대 언어 번역이 있는 발화만 재료로 쓴다(--allow-untranslated 로 끔).
---heldout: 평가 셋 — split held-out 대화만 재료로 쓰고 words 는 쓰지 않는다(학습 합성 셋은 held-out 을 쓰지 않으므로 겹치지 않는다)."""
-import argparse, collections, hashlib, json, math, os, random, sys, time
+--heldout: 평가 셋 — split held-out 대화만 재료로 쓰고 words 는 쓰지 않는다(학습 합성 셋은 held-out 을 쓰지 않으므로 겹치지 않는다).
+
+2 회선 전화 조건(V3 C2 — sim_en-de-tel; 기본값이면 산출·난수 소비가 예전과 바이트 동일):
+  --fto-clip lo,hi · --intra-pause lo,hi: SimConfig 의 교대 간격 자르기·턴 안 발화 사이 쉼(기본 = SimConfig 기본 -2,3 · 0.1,0.5). lo > 0 이면 겹침이 없고,
+    hi < 0.25 s(dialogue.GAP_S)면 합성 턴 하나가 episode 하나다(턴 안에 같은 화자 <EOT> 가 생기지 않는다). 맞장구 끄기는 --bc-scale 0, 재개는 --p-hold.
+  --phone-per-speaker P: 화자 트랙마다 따로 전화 채널(phone_aug.PhoneAugment(p=P, mulaw_p=0.5) — 대역·μ-law 결정)을 말소리를 놓은 뒤·gain 전에 건다.
+    난수는 세션 rng 와 따로 random.Random(f'{seed}:{i}:chan:{화자}')(세션 난수열 그대로). gain 은 처리된 트랙의 말소리 구간 RMS 로 다시 재서 레벨 목표(−23 dBFS ± --jitter-db)를 지킨다.
+    --phone-same-frac F: 이 비율의 세션은 모든 화자가 같은 채널 파라미터(첫 화자 시드)를 쓴다('회선이 다르면 화자가 다르다' 지름길을 막는다).
+    meta.chan = {same, spk: {화자: {phone, low, high, mulaw, level_db}}}(켰을 때만).
+  --name-suffix SUF(교차 언어만): 키 sim_<l1>-<l2>-SUF — 산출 이름(jsonl·stats·targets-·mono/)·conv_id 가 따른다.
+  위 옵션이 하나라도 기본이 아니면 stats.json 에 tel(화자 레벨 차 |Δ|·교대/재개 간격·같은 화자 쉼 히스토그램, hold 비율, 채널 집계)을 더한다."""
+import argparse, collections, hashlib, json, math, os, random, re, sys, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
+TEL_DEFAULTS = dict(fto_clip=(-2.0, 3.0), intra_pause=(0.1, 0.5), phone_per_speaker=0.0, phone_same_frac=0.0, name_suffix=None)   # C2 옵션 기본(fto·intra = SimConfig 기본) — 이 값이면 빌드·stats 가 예전과 같다
 G = {}
 
 
@@ -99,21 +110,58 @@ def pick_keys(rng, keys, persons, tries=60, n=2):
     return None
 
 
-def mix_arrays(d, audio, spans, rng, jitter_db, target_dbfs=-23.0, peak=0.98):
-    """dialogue_mix.mix_dialogue 와 같은 규칙을 이미 읽은 발화 오디오로: 화자별 채널에 말소리 구간을 놓고, 화자 발화 구간 RMS 로 target_dbfs(± jitter) 에 맞춰 더한다."""
+def mix_arrays(d, audio, spans, rng, jitter_db, target_dbfs=-23.0, peak=0.98, fx=None, levels=None):
+    """dialogue_mix.mix_dialogue 와 같은 규칙을 이미 읽은 발화 오디오로: 화자별 채널에 말소리 구간을 놓고, 화자 발화 구간 RMS 로 target_dbfs(± jitter) 에 맞춰 더한다.
+    fx(ch, 화자) → 처리한 채널(C2 화자별 전화 채널 — phone_fx): 말소리를 놓은 뒤·gain 전에 걸고, gain 은 처리된 채널의 같은 말소리 구간 RMS 로 다시 잰다.
+    levels: 주면 화자별 말소리 구간 레벨(dBFS, gain 뒤·피크 제한 전 = target_dbfs + jitter)을 채운다. 둘 다 None 이면 예전과 같은 계산·난수 소비."""
     import numpy as np
     from vapasr.data.sim_dialogue import SR
     T = int(round(d.duration_s * SR)); mono = np.zeros(T, np.float32); gains = {}
     for spk in d.speakers:
-        ch = np.zeros(T, np.float32); acc = 0.0; n = 0
+        ch = np.zeros(T, np.float32); acc = 0.0; n = 0; rr = []
         for u in d.utterances:
             if u.speaker != spk: continue
             uid = u.utt_id.split(":", 1)[1]; a, b = spans[uid]; x = audio[uid]; i0 = int(round(u.start * SR)); m = int(round((u.end - u.start) * SR))
             seg = x[int(round(a * SR)): int(round(a * SR)) + m]; seg = seg[: max(0, T - i0)]; ch[i0: i0 + len(seg)] += seg; acc += float(np.sum(seg.astype(np.float64) ** 2)); n += len(seg)
+            rr.append((i0, len(seg)))
+        if fx is not None:                                                         # 대역 제한·μ-law 가 말소리 RMS 를 바꾼다 → 처리된 채널의 같은 구간으로 다시 잰다
+            ch = fx(ch, spk); acc = sum(float(np.sum(ch[i0: i0 + m].astype(np.float64) ** 2)) for i0, m in rr)
         rms = math.sqrt(acc / n) if n else 1e-6
         g = (10 ** (target_dbfs / 20)) / max(rms, 1e-6) * (10 ** (rng.uniform(-jitter_db, jitter_db) / 20) if jitter_db else 1.0); gains[spk] = round(g, 4); mono += ch * g
+        if levels is not None: levels[spk] = round(20 * math.log10(max(g * rms, 1e-9)), 3)
     pk = float(np.max(np.abs(mono))) if T else 0.0
     return (mono * (peak / pk) if pk > peak else mono), gains
+
+
+def phone_fx(aug, seed, i, speakers, same_frac=0.0):
+    """C2 화자별 전화 채널(--phone-per-speaker): 화자 트랙마다 따로 aug(PhoneAugment — 대역·μ-law 결정)를 건다 → (fx(ch, 화자) → 처리한 채널, meta.chan).
+    난수는 세션 rng 와 따로 random.Random(f'{seed}:{i}:chan:{화자}') — 세션 난수열을 건드리지 않는다. same_frac 비율의 세션(판정 난수 f'{seed}:{i}:chan',
+    same_frac 0 이면 뽑지 않는다)은 모든 화자가 첫 화자의 시드를 써서 같은 대역·μ-law 결정을 받는다. meta.chan = {same, spk: {화자: {phone, low, high, mulaw}}}."""
+    same = same_frac > 0 and random.Random(f"{seed}:{i}:chan").random() < same_frac; chan = dict(same=same, spk={})
+    def fx(ch, spk):
+        info = {}; y = aug(ch, random.Random(f"{seed}:{i}:chan:{speakers[0] if same else spk}"), info=info); chan["spk"][spk] = dict(phone=bool(info), **info)
+        return y
+    return fx, chan
+
+
+def tel_row(d, levels, chan):
+    """C2 stats 의 세션 행: 화자 레벨 차(최대 − 최소 dB — 2 인이면 |Δ|), episode 기준 교대·재개 간격과 같은 화자 쉼(sim_dialogue.turn_gaps),
+    합성 턴 대비 남는 episode 수(split_turns — 턴 안 쉼이 GAP_S 를 넘어 갈라진 턴; 재개가 앞 턴과 붙으면 음수), 채널(meta.chan)."""
+    from vapasr.data.sim_dialogue import turn_gaps
+    lv = list(levels.values()); tg = turn_gaps(d)
+    return dict(level_diff=round(max(lv) - min(lv), 3) if len(lv) > 1 else None, change=tg["change"], hold=tg["hold"], same=tg["same"],
+                split_turns=tg["episodes"] - d.meta["turns"] - d.meta["bc"], chan=chan)
+
+
+def _hist(xs, lo, hi, w):
+    """[lo, hi) 를 폭 w 칸으로 센 막대 + 범위 밖 수(stats.json 의 C2 레벨 차·타이밍 분포)."""
+    k = int(round((hi - lo) / w)); n = [0] * k; under = over = 0
+    for x in xs:
+        j = int(math.floor((x - lo) / w + 1e-9))
+        if j < 0: under += 1
+        elif j >= k: over += 1
+        else: n[j] += 1
+    return dict(lo=lo, w=w, n=n, under=under, over=over)
 
 
 def make_session(i):
@@ -155,17 +203,22 @@ def make_session(i):
                 k = int(sub.uid.rsplit("~", 1)[1]); p0, p1 = parts[k]; audio[sub.uid] = x[int(round(p0 * SR)): int(round(p1 * SR))]
             return subs
         try:
-            d = synth_session(us, G["stats"], rng, rng.uniform(*a.dur), span, f"sim_{xx}_{i:06d}", f"sim_{xx}", G["lang_name"], cfg=SimConfig(p_hold=a.p_hold, bc_scale=a.bc_scale, p_back=a.p_back),
+            d = synth_session(us, G["stats"], rng, rng.uniform(*a.dur), span, f"sim_{xx}_{i:06d}", f"sim_{xx}", G["lang_name"],
+                              cfg=SimConfig(p_hold=a.p_hold, bc_scale=a.bc_scale, p_back=a.p_back, fto=a.fto_clip, intra_pause=a.intra_pause),
                               meta=dict(pool=pool, keys=list(ks), attempt=attempt, **({"spk_lang": {"a": a.lang, "b": a.lang2}} if a.lang2 else {})), expand=expand)
             if d.meta["turns"] < 4 or d.duration_s < 25.0: errs.append("too_short"); continue
             if len(us) > 2 and min(collections.Counter(u.speaker for u in d.utterances).get(x, 0) for x in d.speakers) < 2: errs.append("speaker_too_few"); continue   # 3 명 이상: 모두 발화 2 개 이상
             tr = d.meta.pop("trans", None)
-            y, gains = mix_arrays(d, audio, spans, rng, a.jitter_db); d.meta["gains"] = gains
+            fx, chan = phone_fx(G["phone"], a.seed, i, d.speakers, a.phone_same_frac) if G.get("phone") is not None else (None, None); lv = {} if G.get("tel") else None
+            y, gains = mix_arrays(d, audio, spans, rng, a.jitter_db, fx=fx, levels=lv); d.meta["gains"] = gains
+            if chan is not None:
+                for s, v in chan["spk"].items(): v["level_db"] = lv[s]
+                d.meta["chan"] = chan
             if G.get("noise") is not None: y = G["noise"](y, random.Random(f"{a.seed}:{i}:aug"))
             f = mono_cache_path(os.path.join(a.out, "mono"), d); os.makedirs(os.path.dirname(f), exist_ok=True)
             tmp = f[:-4] + f".{os.getpid()}.tmp.npy"; np.save(tmp, np.asarray(y, dtype=np.float16)); os.replace(tmp, f)
             return i, d.to_json(), dict(overlap_stats(d), pool=pool, bc=d.meta["bc"], turns=d.meta["turns"], units=d.meta["units"], attempt=attempt, errors=errs,
-                                        utts=len(d.utterances), utts_translated=len(tr or {})), (d.conv_id, tr)
+                                        utts=len(d.utterances), utts_translated=len(tr or {}), **({"tel": tel_row(d, lv, chan)} if lv is not None else {})), (d.conv_id, tr)
         except Exception as e:
             errs.append(f"{type(e).__name__}: {str(e)[:80]}")
     return i, None, dict(failed=True, errors=errs), None
@@ -210,7 +263,20 @@ def main():
     g.add_argument("--trans", action="append", default=[], help="번역 타깃(ast_build_targets 산출, 반복·쉼표·@목록) — Stage 2 단일 화자·S1 대화")
     g.add_argument("--allow-untranslated", action="store_true", help="교차 언어에서 상대 언어 번역이 없는 발화도 재료로 쓴다")
     g.add_argument("--heldout", action="store_true", help="평가 셋: split held-out 대화만 재료로 쓴다(words 없음) — 학습 셋과 겹치지 않는다")
+    t = ap.add_argument_group("2 회선 전화 조건(V3 C2 — 기본값이면 예전과 바이트 동일)")
+    t.add_argument("--fto-clip", default=None, help="교대 간격을 'lo,hi' s 로 자른다(SimConfig.fto, 기본 -2,3 — 음수는 --fto-clip=-1,2 처럼). lo > 0 이면 겹침 없음")
+    t.add_argument("--intra-pause", default=None, help="턴 안 발화 사이 쉼 'lo,hi' s(SimConfig.intra_pause, 기본 0.1,0.5). hi < 0.25 면 턴 하나가 episode 하나")
+    t.add_argument("--phone-per-speaker", type=float, default=0.0, help="화자 트랙마다 따로 전화 채널을 걸 확률(PhoneAugment p, mulaw_p 0.5 — 섞기 전·gain 전; 0 = 끔)")
+    t.add_argument("--phone-same-frac", type=float, default=0.0, help="--phone-per-speaker 세션 중 모든 화자가 같은 채널 파라미터를 쓰는 비율")
+    t.add_argument("--name-suffix", default=None, help="교차 언어 키 접미사(예 tel → sim_en-de-tel; 산출 이름·conv_id 가 따른다)")
     a = ap.parse_args()
+    pair = lambda s, k: tuple(float(x) for x in s.split(",")) if s else TEL_DEFAULTS[k]
+    a.fto_clip, a.intra_pause = pair(a.fto_clip, "fto_clip"), pair(a.intra_pause, "intra_pause")
+    if len(a.fto_clip) != 2 or a.fto_clip[0] > a.fto_clip[1] or len(a.intra_pause) != 2 or not 0 <= a.intra_pause[0] <= a.intra_pause[1]:
+        sys.exit(f"--fto-clip·--intra-pause 는 'lo,hi'(lo ≤ hi, 쉼 ≥ 0): {a.fto_clip} {a.intra_pause}")
+    if not (0 <= a.phone_per_speaker <= 1 and 0 <= a.phone_same_frac <= 1) or (a.phone_same_frac > 0 and a.phone_per_speaker <= 0):
+        sys.exit(f"--phone-per-speaker·--phone-same-frac 는 [0, 1], same-frac 은 per-speaker > 0 일 때만: {a.phone_per_speaker} {a.phone_same_frac}")
+    if a.name_suffix is not None and (not a.lang2 or not re.fullmatch(r"[a-z0-9]+", a.name_suffix)): sys.exit(f"--name-suffix 는 교차 언어(--lang2)에서 [a-z0-9]+: {a.name_suffix!r}")
     if a.p_hold < 0: a.p_hold = None
     a.dur = tuple(float(x) for x in a.dur.split(",")); a.phase2_corpora = [c for c in a.phase2_corpora.split(",") if c]
     a.stats_corpora = [c for c in (a.stats_corpora.split(",") if a.stats_corpora else a.phase2_corpora) if c]
@@ -219,7 +285,7 @@ def main():
     if a.lang2 and (a.lang2 == a.lang or not a.pool_weights2): sys.exit("--lang2 는 --lang 과 다른 언어이고 --pool-weights2 가 필요하다")
     weights = {k: float(v) for k, v in (x.split(":") for x in a.pool_weights.split(",") if x)}
     weights2 = {k: float(v) for k, v in (x.split(":") for x in a.pool_weights2.split(",") if x)}
-    xx = SHORT[a.lang] + (f"-{SHORT[a.lang2]}" if a.lang2 else ""); lang_name = a.lang + (f"+{a.lang2}" if a.lang2 else "")
+    xx = SHORT[a.lang] + (f"-{SHORT[a.lang2]}" if a.lang2 else "") + (f"-{a.name_suffix}" if a.name_suffix else ""); lang_name = a.lang + (f"+{a.lang2}" if a.lang2 else "")
     os.makedirs(a.out, exist_ok=True); t0 = time.time()
     from vapasr.data.sim_dialogue import timing_stats
     TR = None
@@ -245,6 +311,10 @@ def main():
     if a.noise_bank:
         from vapasr.data.noise_aug import from_args
         G["noise"] = from_args(a.noise_bank, a.noise_p, a.noise_snr, a.rir_p)
+    G["tel"] = any(getattr(a, k) != v for k, v in TEL_DEFAULTS.items() if k != "name_suffix"); G["phone"] = None   # tel: stats 에 C2 점검(레벨 차·타이밍)을 더한다
+    if a.phone_per_speaker > 0:
+        from vapasr.data.phone_aug import PhoneAugment
+        G["phone"] = PhoneAugment(p=a.phone_per_speaker, mulaw_p=0.5)
     import multiprocessing as mp
     lines, rows, trans_all = {}, [], {}
     with mp.get_context("fork").Pool(a.workers) as pool:
@@ -267,7 +337,18 @@ def main():
                 timing=dict(dialogues=stats.n_dialogues, pairs=stats.n_pairs, p_hold=round(stats.p_hold, 3), bc_rate_per_s=round(stats.bc_rate, 4),
                             fto_q10_50_90=[q(stats.fto, p) for p in (0.1, 0.5, 0.9)], hold_q50=q(stats.hold, 0.5), turn_q10_50_90=[q(stats.turn, p) for p in (0.1, 0.5, 0.9)],
                             fto_negative_share=round(sum(x < 0 for x in stats.fto) / max(1, len(stats.fto)), 3)),
-                pool_info=info, errors=dict(collections.Counter(e for r in rows for e in r.get("errors", [])).most_common(20)), args={k: (list(v) if isinstance(v, tuple) else v) for k, v in vars(a).items()}, sec=round(time.time() - t0, 1))
+                pool_info=info, errors=dict(collections.Counter(e for r in rows for e in r.get("errors", [])).most_common(20)),
+                args={k: (list(v) if isinstance(v, tuple) else v) for k, v in vars(a).items() if k not in TEL_DEFAULTS or v != TEL_DEFAULTS[k]}, sec=round(time.time() - t0, 1))   # C2 옵션은 기본이 아닐 때만
+    if G["tel"]:                                                                   # C2 점검: 화자 레벨 차 |Δ|·교대/재개 간격·같은 화자 쉼·채널
+        from vapasr.data.dialogue import GAP_S
+        R = [r["tel"] for r in ok]; ld = [r["level_diff"] for r in R if r["level_diff"] is not None]; cg, hg, sg = ([x for r in R for x in r[k]] for k in ("change", "hold", "same"))
+        CH = [r["chan"] for r in R if r["chan"]]; sp = [v for c in CH for v in c["spk"].values()]; on = [v for v in sp if v["phone"]]; q3 = lambda xs: [q(xs, p) for p in (0.1, 0.5, 0.9)]
+        summ["tel"] = dict(level_diff_db=dict(q10_50_90=q3(ld), mean=round(sum(ld) / max(1, len(ld)), 3), hist=_hist(ld, 0.0, 20.0, 1.0)),
+                           hold_ratio=round(len(hg) / max(1, len(hg) + len(cg)), 4), changes=len(cg), holds=len(hg), split_turns=sum(r["split_turns"] for r in R),
+                           change_gap_s=dict(q10_50_90=q3(cg), min=min(cg, default=None), hist=_hist(cg, -2.0, 3.0, 0.1)), hold_gap_s=dict(q10_50_90=q3(hg), hist=_hist(hg, 0.0, 3.0, 0.25)),
+                           same_spk_gap_s=dict(under_gap=int(sum(x < GAP_S for x in sg)), hist=_hist(sg, 0.0, 1.0, 0.05)),
+                           chan=dict(sessions=len(CH), same=sum(c["same"] for c in CH), tracks=len(sp), phone=len(on), mulaw=sum(v["mulaw"] for v in on),
+                                     low_q10_50_90=q3([v["low"] for v in on]), high_q10_50_90=q3([v["high"] for v in on])) if CH else None)
     json.dump(summ, open(os.path.join(a.out, f"sim_{xx}.stats.json"), "w"), ensure_ascii=False, indent=1)
     print(json.dumps({k: v for k, v in summ.items() if k not in ("args", "pool_info")}, ensure_ascii=False), flush=True)
 

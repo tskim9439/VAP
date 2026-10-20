@@ -5,9 +5,10 @@
   2. 전화 대역 통과: 하한 U(low) Hz · 상한 U(high) Hz 4 차 Butterworth 를 앞뒤로 건다(sosfiltfilt — 영위상, 단어 시각이 밀리지 않는다).
   3. 확률 mulaw_p 로 G.711 μ-law 8 비트 양자화(부호화 → 복호화).
   4. 16 kHz 로 올리고(resample_poly 2/1) 길이와 RMS 를 원래와 맞춘다. [-1, 1] 을 넘으면 전체를 줄인다.
-시퀀스·K·라벨은 바꾸지 않는다(오디오만). AugChain 은 잡음·잔향(noise_aug.NoiseAugment) 뒤에 이어 거는 묶음이다(전화기는 방 소리 다음에 걸린다)."""
+시퀀스·K·라벨은 바꾸지 않는다(오디오만). AugChain 은 잡음·잔향(noise_aug.NoiseAugment) 뒤에 이어 거는 묶음이다(전화기는 방 소리 다음에 걸린다).
+V3 C2 합성(sim_build_dialogues --phone-per-speaker)은 같은 증강을 섞기 전 화자 트랙마다 따로 건다(__call__ 의 info 로 뽑은 대역·μ-law 를 meta.chan 에 남긴다)."""
 import math
-from typing import Sequence
+from typing import Optional, Sequence
 
 import numpy as np
 
@@ -31,14 +32,17 @@ class PhoneAugment:
     def settings(self) -> dict:
         return dict(kind="phone", p=self.p, low=list(self.low), high=list(self.high), mulaw_p=self.mulaw_p)
 
-    def __call__(self, wav: np.ndarray, rng) -> np.ndarray:
+    def __call__(self, wav: np.ndarray, rng, info: Optional[dict] = None) -> np.ndarray:
+        """info: 주면 건 경우에만 뽑은 값(low·high Hz, mulaw)을 채운다(화자별 전화 채널의 meta.chan — 난수 소비·출력은 같다). 안 걸면 비운 채로 둔다."""
         x = np.asarray(wav, dtype=np.float32)
         if len(x) < 256 or rng.random() >= self.p: return x
         from scipy.signal import butter, resample_poly, sosfiltfilt
-        y = resample_poly(x, 1, 2)
-        sos = butter(4, [rng.uniform(*self.low), rng.uniform(*self.high)], btype="bandpass", fs=8000, output="sos")
+        y = resample_poly(x, 1, 2); band = [rng.uniform(*self.low), rng.uniform(*self.high)]
+        sos = butter(4, band, btype="bandpass", fs=8000, output="sos")
         if len(y) > 3 * (2 * len(sos) + 1): y = sosfiltfilt(sos, y)
-        if rng.random() < self.mulaw_p: y = mulaw_roundtrip(y)
+        mu = rng.random() < self.mulaw_p
+        if mu: y = mulaw_roundtrip(y)
+        if info is not None: info.update(low=round(band[0], 1), high=round(band[1], 1), mulaw=mu)
         z = resample_poly(y, 2, 1)[: len(x)]
         if len(z) < len(x): z = np.pad(z, (0, len(x) - len(z)))
         rx, rz = math.sqrt(float(np.mean(x.astype(np.float64) ** 2))), math.sqrt(float(np.mean(z.astype(np.float64) ** 2)))
