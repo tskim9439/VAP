@@ -352,6 +352,21 @@ source_type: source-drop
   - CallHome 독일어를 더한 m2b 가 TAXI 에서 m2a 보다 1.6–2.6 pt 나쁘다. 독일어만이 아니라 영어도 나쁘다. 원인은 모른다(rep_chde 는 step 의 2.75 %).
   - 같은 언어 대화 번역은 ±1 BLEU 로 같다. 합성 영어 WER 은 ck1500 에서 m1 보다 나쁘고 ck2000 에서는 낫다. 반복 생성은 step 에 따라 들쭉날쭉하다.
   - 체크포인트 선택은 Stage 3 회귀·단일 화자·CallHome 과 final 재평가가 끝난 뒤에 한다.
+- 4–6 단계 결과(16:2x 기준 — m2a final 과 m2b ck1500 의 Stage 3 회귀는 OOM 으로 끊겨 이어 돌리는 중):
+
+  | δ10 | st4-m1 ck1500 | m2a ck1500 | **m2a ck2000** | m2b ck2000 | m2b final |
+  |---|---:|---:|---:|---:|---:|
+  | Stage 3 회귀 cp · agn(코퍼스 평균) | 25.97 · 18.37 | 25.52 · 18.18 | 25.59 · 18.18 | 25.39 · 18.05 | 25.00 · 17.98 |
+  | EOT 재현율 · 정밀도 | 0.688 · 0.621 | 0.726 · 0.610 | 0.723 · 0.605 | 0.713 · 0.625 | 0.729 · 0.616 |
+  | CallHome 독일어 held-out WER | 26.8 | – | 21.6 | **12.3** | 12.5 |
+  | VoxPopuli-AA · LibriSpeech other WER | 8.05 · 7.15 | – | 6.74 · 7.37 | 7.59 · 7.15 | 7.73 · 6.88 |
+  | Kspon other CER · YODAS 독 WER | 7.03 · 3.92 | – | 7.38 · 3.62 | 7.95 · 3.68 | 8.00 · 5.01 |
+  | FLEURS 한→영 CER · BLEU | 8.82 · 15.6 | – | 8.88 · 15.0 | 9.68 · 15.3 | 9.72 · 14.9 |
+
+  - 전화 대역 증강은 같은 언어 대화(Stage 3 회귀)를 해치지 않았다(cp −0.4 pt, EOT 재현율 +0.04). CallHome 독일어 WER 도 26.8 → 21.6 이다.
+  - m2b 는 CallHome 독일어가 12.3 으로 크게 낫다. 다만 평가 참조가 학습 라벨과 같은 두 교사 의사 전사라, 일부는 라벨 관례를 배운 몫일 수 있다. TAXI 독일어 WER 은 m2a 보다 1.2 pt 나쁘다(27.3 대 26.1). m2b final 은 YODAS 독 5.01·Kspon 8.00 으로 단일 화자가 나빠졌다.
+  - m2a final 은 FLEURS 한→영 CER 이 12.06 으로 크게 나빠졌다. 전체로는 **m2a ck2000 이 가장 고르다**(TAXI 28.1, Stage 3·단일 화자 회귀 없음).
+  - VibeVoice 스트리밍 대비(같은 창, `vibevoice/dialogue-*-score-m2.json`): m2a ck2000 이 otoSpeech 25.5 대 26.3 으로 영어도 앞섰다. 한·독은 m1 과 같은 차이다.
 
 ## VibeVoice-ASR 외부 기준선 (2026-10-20, `experiments/baseline_vibevoice.py`·`vibevoice_chain.sh`·`vibevoice_taxi.sh`·`vibevoice/`)
 - 모델: Microsoft VibeVoice-ASR-Streaming-7B(@60d858b, 8.7 B, 청크 2.93 s + lookahead 0.53 s)와 VibeVoice-ASR(@d0c9efd, 오프라인 — 창 전체를 듣고 화자·시각·내용 JSON). 탐욕 디코드, bf16.
