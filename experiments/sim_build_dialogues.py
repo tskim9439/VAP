@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""합성 2 인 대화 셋 만들기(Stage 3 화자 귀속 보강) — vapasr/data/sim_dialogue 로 세션을 합성하고 mono 혼합(+잡음·잔향)을 캐시한다.
+"""합성 2 인(V2: --speakers 로 3–4 인도) 대화 셋 만들기(Stage 3 화자 귀속 보강) — vapasr/data/sim_dialogue 로 세션을 합성하고 mono 혼합(+잡음·잔향)을 캐시한다.
 
   python experiments/sim_build_dialogues.py --lang English --out <dir> --sessions 2000 \\
       --phase2 <phase2 dir> --split <v2.json> --phase2-corpora otoSpeech --words @<list> --words @<list> [--words-frac 0.15] \\
@@ -81,13 +81,21 @@ def load_pools(a, lang=None, corpora=None, words=None, stats_corpora=None, TR=No
     return out, persons, stats_d, info
 
 
-def pick_keys(rng, keys, persons, tries=60):
+def pick_keys(rng, keys, persons, tries=60, n=2):
+    """다른 사람인 화자 키 n 개(쌍마다 person_ids 가 겹치지 않고 Phase 2 는 다른 대화). n = 2 는 예전과 같은 난수열."""
     ks = list(keys)
+    if n == 2:
+        for _ in range(tries):
+            a, b = rng.sample(ks, 2)
+            if persons[a] & persons[b]: continue
+            if "|" in a and a.split("|")[1] == b.split("|")[1]: continue
+            return a, b
+        return None
+    if len(ks) < n: return None
     for _ in range(tries):
-        a, b = rng.sample(ks, 2)
-        if persons[a] & persons[b]: continue
-        if "|" in a and a.split("|")[1] == b.split("|")[1]: continue
-        return a, b
+        got = rng.sample(ks, n)
+        if any(persons[x] & persons[y] or ("|" in x and x.split("|")[1] == y.split("|")[1]) for i, x in enumerate(got) for y in got[i + 1:]): continue
+        return tuple(got)
     return None
 
 
@@ -118,7 +126,9 @@ def make_session(i):
         rng = random.Random(f"{a.seed}:{i}:{attempt}")
         if G.get("pools2") is None:
             names = [n for n in G["weights"] if n in G["pools"]]
-            pool = rng.choices(names, weights=[G["weights"][n] for n in names])[0]; ks = pick_keys(rng, G["pools"][pool], G["persons"])
+            pool = rng.choices(names, weights=[G["weights"][n] for n in names])[0]
+            n_spk = rng.choices(list(G["n_spk"]), weights=list(G["n_spk"].values()))[0] if len(G["n_spk"]) > 1 else next(iter(G["n_spk"]))   # 2 만이면 난수를 더 뽑지 않는다
+            ks = pick_keys(rng, G["pools"][pool], G["persons"], n=n_spk)
             if ks is None: continue
             src = [G["pools"][pool][k] for k in ks]
         else:                                                                      # 교차 언어: 화자 a = --lang 풀, b = --lang2 풀(코퍼스가 달라 사람이 겹치지 않는다)
@@ -145,9 +155,10 @@ def make_session(i):
                 k = int(sub.uid.rsplit("~", 1)[1]); p0, p1 = parts[k]; audio[sub.uid] = x[int(round(p0 * SR)): int(round(p1 * SR))]
             return subs
         try:
-            d = synth_session(us, G["stats"], rng, rng.uniform(*a.dur), span, f"sim_{xx}_{i:06d}", f"sim_{xx}", G["lang_name"], cfg=SimConfig(p_hold=a.p_hold, bc_scale=a.bc_scale),
+            d = synth_session(us, G["stats"], rng, rng.uniform(*a.dur), span, f"sim_{xx}_{i:06d}", f"sim_{xx}", G["lang_name"], cfg=SimConfig(p_hold=a.p_hold, bc_scale=a.bc_scale, p_back=a.p_back),
                               meta=dict(pool=pool, keys=list(ks), attempt=attempt, **({"spk_lang": {"a": a.lang, "b": a.lang2}} if a.lang2 else {})), expand=expand)
             if d.meta["turns"] < 4 or d.duration_s < 25.0: errs.append("too_short"); continue
+            if len(us) > 2 and min(collections.Counter(u.speaker for u in d.utterances).get(x, 0) for x in d.speakers) < 2: errs.append("speaker_too_few"); continue   # 3 명 이상: 모두 발화 2 개 이상
             tr = d.meta.pop("trans", None)
             y, gains = mix_arrays(d, audio, spans, rng, a.jitter_db); d.meta["gains"] = gains
             if G.get("noise") is not None: y = G["noise"](y, random.Random(f"{a.seed}:{i}:aug"))
@@ -190,6 +201,8 @@ def main():
     ap.add_argument("--noise-p", type=float, default=0.5); ap.add_argument("--noise-snr", default="10,30"); ap.add_argument("--rir-p", type=float, default=0.3)
     ap.add_argument("--p-hold", type=float, default=0.3, help="같은 화자 재개 확률(음수 = 실제 대화 값)"); ap.add_argument("--bc-scale", type=float, default=1.5)
     ap.add_argument("--split-s", type=float, default=4.0, help="이보다 긴 발화는 안쪽 쉼에서 구 단위로 나눈다")
+    ap.add_argument("--speakers", default="2:1", help="세션 화자 수 분포 'n:가중,…'(V2 예 2:0.2,3:0.4,4:0.4 — 같은 언어만; 기본 2 인 = 예전과 같은 난수열)")
+    ap.add_argument("--p-back", type=float, default=0.2, help="3 명 이상: 교대 때 앞앞 턴 화자에게 되돌아갈 확률(sim_dialogue.SimConfig)")
     ap.add_argument("--workers", type=int, default=16); ap.add_argument("--seed", type=int, default=0)
     g = ap.add_argument_group("교차 언어·번역(Stage 4)")
     g.add_argument("--lang2", default=None, choices=sorted(SHORT), help="화자 b 의 언어(주면 교차 언어 세션)"); g.add_argument("--phase2-corpora2", default="")
@@ -214,7 +227,8 @@ def main():
         from vapasr.data.ast_dataset import load_ast_targets
         TR, tr_st, _ = load_ast_targets(_paths(a.trans)); print(f"번역 타깃 {dict(tr_st)} · {time.time() - t0:.0f}s", flush=True)
     need = (lambda lg: lg) if a.lang2 and not a.allow_untranslated else (lambda lg: None)
-    pools, persons, stats_d, info = load_pools(a, TR=TR, need=need(a.lang2), min_keys=1 if a.lang2 else 2); pools2 = None
+    max_spk = max(int(x.split(":")[0]) for x in a.speakers.split(",") if x)
+    pools, persons, stats_d, info = load_pools(a, TR=TR, need=need(a.lang2), min_keys=1 if a.lang2 else max(2, max_spk)); pools2 = None
     if a.lang2:
         pools2, persons2, stats_d2, info2 = load_pools(a, lang=a.lang2, corpora=a.phase2_corpora2, words=a.words2, stats_corpora=a.stats_corpora2, TR=TR, need=need(a.lang), min_keys=1)
         persons.update(persons2); stats_d += stats_d2; info = {"a": info, "b": info2}
@@ -224,6 +238,9 @@ def main():
           f"맞장구 {stats.bc_rate:.3f}/s · {time.time() - t0:.0f}s", flush=True)
     missing = [k for k, w in weights.items() if w > 0 and k not in pools] + [f"2:{k}" for k, w in weights2.items() if a.lang2 and w > 0 and k not in pools2]
     if missing: sys.exit(f"가중치 > 0 인데 쓸 수 있는 풀이 없다: {missing} (있는 풀 {sorted(pools)}{' / ' + str(sorted(pools2)) if pools2 is not None else ''})")
+    n_spk = {int(k): float(v) for k, v in (x.split(":") for x in a.speakers.split(",") if x)}
+    if not n_spk or not all(2 <= k <= 4 and v > 0 for k, v in n_spk.items()) or (a.lang2 and set(n_spk) != {2}): sys.exit(f"--speakers 2–4 의 'n:가중' (교차 언어는 2 만): {a.speakers}")
+    G.update(n_spk=n_spk)
     G.update(args=a, pools=pools, persons=persons, stats=stats, weights={k: w for k, w in weights.items() if w > 0}, xx=xx, lang_name=lang_name,
              pools2=pools2, weights2={k: w for k, w in weights2.items() if w > 0})
     if a.noise_bank:

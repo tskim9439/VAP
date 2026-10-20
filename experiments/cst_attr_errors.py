@@ -19,7 +19,7 @@ def busy_of(eps, speakers, t0, L):
     """슬롯별 말하는 구간(창 기준 s)과 창 특성(겹침 비율, 분당 화자 교대)."""
     t1 = t0 + L; E = sorted([e for e in eps if e.end > t0 and e.start < t1 and e.speaker in speakers], key=lambda e: e.start)
     busy = [[(max(e.start, t0) - t0, min(e.end, t1) - t0) for e in E if e.speaker == s] for s in speakers] + [[]] * (2 - len(speakers))
-    ov = sum(max(0.0, min(b0, b1) - max(a0, a1)) for a0, b0 in busy[0] for a1, b1 in busy[1])
+    ov = sum(max(0.0, min(b0, b1) - max(a0, a1)) for x in range(len(busy)) for y in range(x + 1, len(busy)) for a0, b0 in busy[x] for a1, b1 in busy[y])   # 화자 쌍마다 함께 말한 시간
     return busy, ov / L, sum(a.speaker != b.speaker for a, b in zip(E, E[1:])) / (L / 60)
 
 
@@ -28,7 +28,7 @@ def one(job):
     r = job; c, i = G["index"][r["id"]]; ds = G["sets"][c]; tok = G["tok"]; d = ds.dlgs[ds.items[i][0]]
     ref_w, _, mask, sp_order = window_ref(ds, i, r["delta"], G["eot"], tok)
     hs, _ = parse_emitted([tuple(e) for e in r["emitted"]], G["spk"], G["eot"], drop_chunks=mask)
-    hyp_w = [words_of(tok, hs[0]), words_of(tok, hs[1])]
+    hyp_w = [words_of(tok, h) for h in hs]
     sc = score_window(ref_w, hyp_w, d.lang); same = all(sc[k] == r[k] for k in ("n_ref", "cp", "agn"))
     busy, ov, chg = busy_of(ds.eps[ds.items[i][0]], sp_order, ds.items[i][1], ds.items[i][2])
     ae = attr_errors(ref_w, hyp_w, d.lang, sc["perm"], busy, G["short_words"]); same = same and ae.pop("agn") == sc["agn"] and ae["n_ref"] == sc["n_ref"]
@@ -75,9 +75,11 @@ def main():
     rows = [r for r in rows if r["delta"] in a.deltas]
     tok = AutoTokenizer.from_pretrained(conf["checkpoint"]); sp = json.load(open(os.path.join(conf["checkpoint"], "config.json")))["sp_ids"]
     ns = argparse.Namespace(corpora=conf["corpora"], data=a.data, split=a.split, deltas=a.deltas, limit_windows=conf["limit_windows"],
-                            backchannel=tuple(conf["backchannel"]) if conf.get("backchannel") else None)
+                            backchannel=tuple(conf["backchannel"]) if conf.get("backchannel") else None, max_speakers=conf.get("max_speakers", 2),
+                            window=tuple(conf.get("window", (20.0, 40.0))), hop=conf.get("hop", 10.0), window_draws=conf.get("window_draws", 0), declare=conf.get("declare"))
     sets, items = windows_of(ns, tok)
-    G.update(sets=sets, tok=tok, eot=sp["<EOT>"], spk=(sp["<SPK_A>"], sp["<SPK_B>"]), short_words=a.short_words,
+    from vapasr.data.cst_dialogue import SLOTS
+    G.update(sets=sets, tok=tok, eot=sp["<EOT>"], spk=tuple(sp[t] for t in SLOTS[: max(2, int(ns.max_speakers))]), short_words=a.short_words,
              index={f"{sets[c].items[i][0]}@{sets[c].items[i][1]}": (c, i) for c, i in items})
     miss = [r["id"] for r in rows if r["id"] not in G["index"]]; assert not miss, f"평가 창에 없는 원출력 {len(miss)} 개: {miss[:3]}"
     print(f"원출력 {len(rows)} 행(δ {a.deltas}) · 워커 {a.workers}", flush=True)

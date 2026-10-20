@@ -65,6 +65,9 @@ g.add_argument("--dlg-ast-frac", type=float, default=0.5, help="번역 타깃이
 g.add_argument("--sim-trans-frac", type=float, default=0.8, help="교차 언어 합성 셋(sim_<l1>-<l2>) 창을 번역 모드로 둘 확률")
 g.add_argument("--trans-lead-space", action="store_true", help="번역 행마다 첫 단어를 앞 공백 토큰으로(cst_dialogue.lead_space_row — 행을 이은 번역 흐름에서 단어가 붙지 않게, Stage 4 본 학습부터). 대화·교차 언어 합성 모두에 적용, 지문에 들어간다")
 g.add_argument("--spk-act-weight", type=float, default=0.0, help="화자 슬롯 활동 보조 손실 가중(0 = 끔): LLM audio 위치에 2 슬롯 헤드, 청크마다 'A/B 가 말하는 중' BCE")
+g.add_argument("--max-speakers", type=int, default=2, help="V2: 창 화자 상한(최대 4 — 슬롯 C·D = <SPK_3>·<SPK_4>, model.enable_slots·화자 헤드 4 출력). 모든 대화 셋에 같은 슬롯 수")
+g.add_argument("--declare-all-p", type=float, default=0.5, help="V2(--max-speakers > 2): 학습 창을 이 확률로 슬롯 전부 선언(나머지는 max(2, 화자 수)) — 추론 때 화자 수를 모르면 최대를 선언")
+g.add_argument("--window-draws", type=int, default=0, help="V2: 창 draw 수 R(> 0 이면 격자 대신 대화를 U(--window) 창으로 이어 덮고 epoch e 에 draw e mod R — 매 epoch 다른 창). 화자 상한을 넘는 창은 줄인다")
 g.add_argument("--enc-tap-layer", type=int, default=-1, help="V2-a 두 스트림 입력: 인코더 이 층(0 부터) 출력을 adapter_tap 으로 LLM 입력에 더한다(−1 = 끔, V1). 새로 붙이면 마지막 Linear 0 초기화")
 g.add_argument("--enc-tap-hidden", type=int, default=0, help="adapter_tap 은닉 차원(0 = adapter 와 같게)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
@@ -108,7 +111,8 @@ from vapasr.speedup import add_speed_args, apply_speedups, training_args_kwargs
 add_speed_args(ap)
 a = ap.parse_args()
 
-DLG_LANG = {"aihub71631": "Korean", "aihub134-1": "Korean", "aihub134-2": "Korean", "nikl2020": "Korean", "otoSpeech": "English", "kec": "German", "ztc": "German", "nsc": "German", "callhome-de": "German"}
+DLG_LANG = {"aihub71631": "Korean", "aihub134-1": "Korean", "aihub134-2": "Korean", "nikl2020": "Korean", "otoSpeech": "English", "kec": "German", "ztc": "German", "nsc": "German", "callhome-de": "German", "ami": "English", "icsi": "English", "notsofar": "English"}
+MEETING = {"ami", "icsi", "notsofar"}                                                          # V2: 영어 회의(3–7 인)는 dlg_mt 로 따로 가중한다
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
 delays = tuple(int(x) for x in a.delays.split(",") if x.strip())
 if not delays or not all(1 <= d <= 10 for d in delays): sys.exit(f"--delays {a.delays}: 1–10 의 쉼표 목록")
@@ -116,6 +120,9 @@ corpora = [c for c in a.dlg_corpora.split(",") if c]
 if not all(c in DLG_LANG for c in corpora): sys.exit(f"--dlg-corpora: 알 수 없는 코퍼스 {[c for c in corpora if c not in DLG_LANG]} (알려진 것 {sorted(DLG_LANG)})")
 win = tuple(float(x) for x in a.window.split(","))
 if len(win) != 2 or not 0 < win[0] <= win[1]: sys.exit(f"--window lo,hi — {a.window}")
+if not 2 <= a.max_speakers <= 4 or not 0 <= a.declare_all_p <= 1 or a.window_draws < 0: sys.exit(f"--max-speakers 2–4 · --declare-all-p [0, 1] · --window-draws ≥ 0 — {a.max_speakers} {a.declare_all_p} {a.window_draws}")
+if any(c in MEETING for c in corpora) and a.max_speakers < 3: sys.exit("회의 코퍼스(ami·icsi·notsofar)는 --max-speakers 3 이상과 함께")
+VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_speakers=a.window_draws > 0, **({"declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}))   # 모든 대화 셋 공통(V2)
 bc = None if a.backchannel == "off" else tuple(float(x) for x in a.backchannel.split(","))
 if bc is not None and len(bc) != 2: sys.exit(f"--backchannel max_s,max_tokens | off — {a.backchannel}")
 bc = (bc[0], int(bc[1])) if bc else None
@@ -192,7 +199,8 @@ if not a.dry_run:
     model.add_semantic_tokens(tok, turn=True, reinit_turn=True)                              # <EOT> 를 턴 종료로 켠다(예약 행 재초기화·차단 해제)
     if max(delays) > 8: add_delay_tokens(model, tok)                                         # Stage 2 에서 이미 붙었으면 그대로
     add_ast_tokens(model, tok)                                                                # <TRANS>·<SPK_A/B> 차단 해제(이미 있으면 그대로)
-    if a.spk_act_weight > 0: model.add_spk_head(2, a.spk_act_weight)                           # 화자 슬롯 활동 헤드(새로 붙이면 adapter lr — trainer.create_optimizer)
+    if a.max_speakers > 2: model.enable_slots(tok, a.max_speakers)                            # V2: 슬롯 C·D(<SPK_3>·<SPK_4>) 예약 행 재초기화·차단 해제
+    if a.spk_act_weight > 0: model.add_spk_head(max(2, a.max_speakers), a.spk_act_weight)     # 화자 슬롯 활동 헤드(새로 붙이면 adapter lr — trainer.create_optimizer; 2 → 4 는 A·B 행 유지)
     if a.enc_tap_layer >= 0: model.add_enc_tap(a.enc_tap_layer, a.enc_tap_hidden or None)      # V2-a 두 스트림 입력(adapter_tap 도 adapter lr)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
@@ -250,8 +258,11 @@ if a.dlg_trans:                                                                 
     if a.dlg_trans_input: DTI, dti_st, dti_fp = load_ast_targets(_paths(a.dlg_trans_input))
     log(f"  대화 번역 타깃 {dict(dt_st)} · 입력만(되살림) {dict(dti_st) if a.dlg_trans_input else '없음'} · 번역 모드 {a.dlg_ast_frac}")
 elif a.dlg_trans_input: sys.exit("--dlg-trans-input 은 --dlg-trans 와 함께")
-for lang in ("Korean", "English", "German"):
-    cs = [c for c in corpora if DLG_LANG[c] == lang]; key = f"dlg_{SHORT[lang]}"
+def cap(ds):
+    """--max-windows: 창 표본(draw 표시와 함께 거른다)."""
+    if a.max_windows and len(ds) > a.max_windows: keep = set(random.Random(a.seed).sample(range(len(ds)), a.max_windows)); ds.keep_items([i in keep for i in range(len(ds))])
+for key, lang in (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "German"), ("dlg_mt", "English")):
+    cs = [c for c in corpora if DLG_LANG[c] == lang and (c in MEETING) == (key == "dlg_mt")]
     if not cs or weights.get(key, 0) <= 0: continue
     files = [os.path.join(a.data, f"{c}.refined.dialogues.jsonl") for c in cs]; dlg_files += files
     held = {cid for c in cs for cid in split["corpora"].get(c, {}).get("heldout", [])}
@@ -259,9 +270,8 @@ for lang in ("Korean", "English", "German"):
     ds = CstDialogueDataset(files, tok, delays=delays, exclude=held, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac,
                             seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
                             spk_activity=a.spk_act_weight > 0, revive=load_revive(rv) if rv else None,
-                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}), wav_aug=phone)
-    if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
-    ds.lang = lang; train_sets[key] = ds
+                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}), wav_aug=phone, **VKW)
+    cap(ds); ds.lang = lang; train_sets[key] = ds
     if DT:
         rows = {(c, w, b) for c in ds.dlgs for (w, b) in ds._rows(c)}; got = sum(1 for c, w, b in rows if f"{c}|{w}|{b}" in DT or f"{c}|{w}|{b}" in DTI)
         ds.stats.update(trans_rows=len(rows), trans_rows_with_target=got)
@@ -280,9 +290,8 @@ for lang in ("Korean", "English", "German"):                                    
     sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, wav_aug=phone)
-    if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
-    ds.lang = lang; train_sets[key] = ds
+                            spk_activity=a.spk_act_weight > 0, wav_aug=phone, **VKW)
+    cap(ds); ds.lang = lang; train_sets[key] = ds
     log(f"  {key}(합성): {len(ds)} 창 · 대화 {ds.stats['cst_dialogues']} · stats {dict(ds.stats)}")
 sim_trans_fp = {}
 for key in sorted(k for k, w in weights.items() if w > 0 and re.fullmatch(r"sim_[a-z]{2}-[a-z]{2}", k)):        # 교차 언어 합성(Stage 4)
@@ -293,9 +302,9 @@ for key in sorted(k for k, w in weights.items() if w > 0 and re.fullmatch(r"sim_
     XT, xt_st, sim_trans_fp[key] = load_ast_targets([td]); sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space, wav_aug=phone)
+                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space, wav_aug=phone, **VKW)
     if not ds.has_xl: sys.exit(f"{key}: 교차 언어 대화(meta.spk_lang)가 아니다")
-    if a.max_windows and len(ds) > a.max_windows: ds.items = random.Random(a.seed).sample(ds.items, a.max_windows)
+    cap(ds)
     ds.lang = next(iter(ds.dlgs.values())).lang; train_sets[key] = ds
     log(f"  {key}(교차 언어 합성): {len(ds)} 창 · 대화 {ds.stats['cst_dialogues']} · 번역 타깃 {dict(xt_st)} · 번역 모드 {a.sim_trans_frac}")
 RW = _subset(_paths(a.replay_words), a.replay_files_frac); RD = _subset(_paths(a.replay_de_words), a.replay_files_frac); ast_fp = None
@@ -354,7 +363,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"trans_lead_space": True} if a.trans_lead_space and (DT or sim_trans_fp) else {}),
           **({"replay_sets": {k: file_digest(v) for k, v in sorted(RS.items())}} if RS else {}),
           **({"phone_aug": phone.settings()} if phone is not None else {}),   # 끄면 키 없음(이전 run 지문 그대로)
-          **({"enc_tap": dict(layer=a.enc_tap_layer, hidden=a.enc_tap_hidden or None)} if a.enc_tap_layer >= 0 else {}))
+          **({"enc_tap": dict(layer=a.enc_tap_layer, hidden=a.enc_tap_hidden or None)} if a.enc_tap_layer >= 0 else {}),
+          **({"max_speakers": a.max_speakers, "declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}), **({"window_draws": a.window_draws} if a.window_draws else {}))
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():

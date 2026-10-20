@@ -1,4 +1,5 @@
-"""Stage 3 평가 도우미(experiments/cst_stage3_eval.py) — 두 슬롯 출력 해석, 화자 귀속 오류율, 턴 끝 <EOT> 일치. 순수 함수(모델·tokenizer 없이 테스트).
+"""Stage 3 평가 도우미(experiments/cst_stage3_eval.py) — 슬롯 출력 해석, 화자 귀속 오류율, 턴 끝 <EOT> 일치. 순수 함수(모델·tokenizer 없이 테스트).
+슬롯 수: 2(V1) 또는 최대 4(V2 — spk_ids 길이, 참조 슬롯 = 창 화자 수). cp 는 가설 슬롯 → 참조 슬롯의 모든 순열 중 최소(4 슬롯이면 24 개), 같으면 그대로 짝(항등)을 고른다.
 Stage 4(experiments/cst_stage4_eval.py): parse_emitted4(전사·번역 네 흐름), lag_matched(번역 단어 지연 — 학습 타깃 시각 대비).
 
 출력 해석(parse_emitted): 스트리밍 [(k, tid)] — <SPK_A>/<SPK_B> 태그가 슬롯을 열고, 그 뒤 토큰·<EOT> 는 그 슬롯 것이다. 첫 태그 앞 토큰은 슬롯 A 로 본다
@@ -20,7 +21,7 @@ CHUNK_S = 0.08
 
 def parse_emitted(emitted: Sequence, spk_ids: Sequence[int], eot_id: int, drop_chunks=()) -> Tuple[List[List[Tuple[float, int]]], List[Tuple[int, float]]]:
     """→ (슬롯별 [(방출 시각 s, tid)], [(슬롯, 방출 시각 s)] <EOT>). drop_chunks 의 청크에서 나온 토큰·EOT 는 버린다(전사 없는 음성 구간)."""
-    slots: List[List[Tuple[float, int]]] = [[], []]; eots: List[Tuple[int, float]] = []; cur = 0; drop = set(drop_chunks)
+    slots: List[List[Tuple[float, int]]] = [[] for _ in spk_ids]; eots: List[Tuple[int, float]] = []; cur = 0; drop = set(drop_chunks)
     for k, t in emitted:
         t = int(t)
         if t in spk_ids: cur = list(spk_ids).index(t); continue
@@ -35,7 +36,7 @@ def parse_emitted4(emitted: Sequence, spk_ids: Sequence[int], trans_id: int, eot
     """Stage 4 네 흐름 출력 해석 → (슬롯별 전사 [(시각 s, tid)], 슬롯별 번역 [(시각 s, tid)], [(슬롯, 시각 s)] <EOT>).
     <SPK_x> 는 슬롯 x 전사 구간을, <TRANS> 는 지금 슬롯의 번역 구간을 연다(cst_dialogue.read_back4 와 같은 규칙). 첫 태그 앞은 슬롯 A 전사로 본다.
     drop_chunks: 버릴 청크(전사 없는 음성 — 전사·번역·<EOT> 모두), drop_tr_chunks: 번역만 버릴 청크(참조 번역이 없는 행)."""
-    src: List[List[Tuple[float, int]]] = [[], []]; tr: List[List[Tuple[float, int]]] = [[], []]; eots: List[Tuple[int, float]] = []
+    src: List[List[Tuple[float, int]]] = [[] for _ in spk_ids]; tr: List[List[Tuple[float, int]]] = [[] for _ in spk_ids]; eots: List[Tuple[int, float]] = []
     cur, kind = 0, 0; drop, dtr = set(drop_chunks), set(drop_tr_chunks); spk = list(spk_ids)
     for k, t in emitted:
         t = int(t)
@@ -89,14 +90,19 @@ def ed(a: Sequence, b: Sequence) -> int:
 
 
 def score_window(ref: Sequence[Sequence[Tuple[str, float]]], hyp: Sequence[Sequence[Tuple[str, float]]], lang: str) -> Dict:
-    """ref·hyp: 슬롯별 [(단어 문자열, 시각 s)]. → dict(n_ref, slot, cp, agn, swap, perm)."""
+    """ref·hyp: 슬롯별 [(단어 문자열, 시각 s)](슬롯 수는 서로 달라도 된다 — 모자란 쪽은 빈 슬롯). → dict(n_ref, slot, cp, agn, swap, perm).
+    perm[h] = 가설 슬롯 h 를 짝지은 참조 슬롯(참조 슬롯 수 이상이면 참조에 없는 슬롯 — 그 말은 모두 삽입). 2 슬롯은 예전 정의와 같다."""
+    from itertools import permutations
     U = lambda ws: [u for w, _ in ws for u in units(w, lang)]
-    rA, rB, hA, hB = U(ref[0]), U(ref[1]), U(hyp[0]), U(hyp[1])
-    same = ed(rA, hA) + ed(rB, hB); cross = ed(rA, hB) + ed(rB, hA)
-    ra = [u for w, _ in sorted(list(ref[0]) + list(ref[1]), key=lambda x: x[1]) for u in units(w, lang)]
-    ha = [u for w, _ in sorted(list(hyp[0]) + list(hyp[1]), key=lambda x: x[1]) for u in units(w, lang)]
-    swap = cross < same
-    return dict(n_ref=len(rA) + len(rB), n_hyp=len(hA) + len(hB), slot=same, cp=min(same, cross), agn=ed(ra, ha), swap=bool(swap), perm=[1, 0] if swap else [0, 1])
+    n = max(2, len(ref), len(hyp)); Rs = [U(ref[i]) if i < len(ref) else [] for i in range(n)]; Hs = [U(hyp[i]) if i < len(hyp) else [] for i in range(n)]
+    cost = [[ed(Rs[r], Hs[h]) for h in range(n)] for r in range(n)]                     # cost[참조][가설]
+    same = sum(cost[i][i] for i in range(n)); best, bp = same, tuple(range(n))
+    for p in permutations(range(n)):                                                    # p[h] = 가설 h 의 참조 슬롯(항등이 먼저 — 같으면 그대로)
+        c = sum(cost[p[h]][h] for h in range(n))
+        if c < best: best, bp = c, p
+    ra = [u for w, _ in sorted([x for sl in ref for x in sl], key=lambda x: x[1]) for u in units(w, lang)]
+    ha = [u for w, _ in sorted([x for sl in hyp for x in sl], key=lambda x: x[1]) for u in units(w, lang)]
+    return dict(n_ref=sum(map(len, Rs)), n_hyp=sum(map(len, Hs)), slot=same, cp=best, agn=ed(ra, ha), swap=bool(best < same), perm=list(bp))
 
 
 def match_eot(ref: Sequence[Tuple[int, float, Optional[float]]], hyp: Sequence[Tuple[int, float]], perm: Sequence[int], tol: float) -> Dict:
@@ -162,9 +168,9 @@ def attr_errors(ref: Sequence[Sequence[Tuple[str, float]]], hyp: Sequence[Sequen
     통째 오배정 run 은 다시 나눈다: 홀로(앞뒤 run 은 통째로 틀리지 않음 — 턴 하나를 주변 화자에 삼킴) / 이어짐(연속 run 이 통째로 틀림 — 여러 턴의 정체가 뒤바뀜).
     → dict(n_ref, agn, n_pair, n_mis, units{'유형/ov|solo': 단위 수}, runs, runs_short, whole_short_runs, whole_long_runs, whole_iso_units, whole_streak_units,
            whole_streak_edge_units(이어짐 중 창 처음·끝 run 에 닿는 것), ref_changes, hyp_changes, late_words)."""
-    rw = sorted([(t, s, k, w) for s in (0, 1) for k, (w, t) in enumerate(ref[s])], key=lambda x: x[0])
+    rw = sorted([(t, s, k, w) for s in range(len(ref)) for k, (w, t) in enumerate(ref[s])], key=lambda x: x[0])
     R = [(u, s, (s, k), t) for t, s, k, w in rw for u in units(w, lang)]
-    hw = sorted([(t, perm[s], w) for s in (0, 1) for w, t in hyp[s]], key=lambda x: x[0])
+    hw = sorted([(t, perm[s], w) for s in range(len(hyp)) for w, t in hyp[s]], key=lambda x: x[0])
     H = [(u, s) for _, s, w in hw for u in units(w, lang)]
     pairs = align([x[0] for x in R], [x[0] for x in H])
     lab: List[Optional[int]] = [None] * len(R)
@@ -174,7 +180,7 @@ def attr_errors(ref: Sequence[Sequence[Tuple[str, float]]], hyp: Sequence[Sequen
     for i, x in enumerate(R):
         if runs and R[runs[-1][-1]][1] == x[1]: runs[-1].append(i)
         else: runs.append([i])
-    ov = lambda i: busy is not None and any(a - 1e-9 <= R[i][3] <= b + 1e-9 for a, b in busy[1 - R[i][1]])
+    ov = lambda i: busy is not None and any(a - 1e-9 <= R[i][3] <= b + 1e-9 for o in range(len(busy)) if o != R[i][1] for a, b in busy[o])   # 다른 슬롯 화자 누구든
     cnt: Dict[str, int] = {}; late_words: List[int] = []; whole = {"whole_short": 0, "whole_long": 0}; n_short = 0; whole_n = [0] * len(runs)
     for ri, run in enumerate(runs):
         short = len({R[i][2] for i in run}) <= short_words; n_short += short

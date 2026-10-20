@@ -256,16 +256,20 @@ class SimConfig:
     lead_s: float = 0.5; tail_s: float = 0.5
     min_start_after_other: float = 0.3             # 교대 턴은 앞 턴 시작 + 이 값 이후에 시작(앞 턴을 통째로 덮지 않게)
     bc_min_host_s: float = 1.5                     # 이보다 긴 턴에만 맞장구
+    p_back: float = 0.2                            # 3 명 이상: 교대할 때 바로 전 상대(앞앞 턴 화자)에게 되돌아갈 확률(나머지는 다른 화자 중 균등) — 둘씩 주고받는 경향.
+                                                   # 0.4 면 90 s 4 인 세션의 28 % 에서 한 화자가 발화 1 개 이하(2026-10-20 모의), 0.2 는 16 %
 
 
 def synth_session(units: Sequence[Sequence[Unit]], stats: TimingStats, rng: random.Random, target_s: float, span: Callable[[Unit], Tuple[float, float]],
                   conv_id: str, corpus: str, lang: str, cfg: SimConfig = SimConfig(), meta: Optional[dict] = None,
                   expand: Optional[Callable[[Unit], List[Unit]]] = None) -> Dialogue:
-    """units: 화자 둘의 발화(각자 쓸 순서대로). span(u) → 그 발화 오디오의 말소리 구간(s, 발화 오디오 기준). → Dialogue(화자 "a"·"b").
+    """units: 화자 N(2–4)의 발화(각자 쓸 순서대로). span(u) → 그 발화 오디오의 말소리 구간(s, 발화 오디오 기준). → Dialogue(화자 "a"·"b"[·"c"·"d"]).
+    3 명 이상(V2): 교대하면 cfg.p_back 확률로 앞앞 턴 화자, 아니면 다른 화자 중 균등. 맞장구 host 의 상대도 다른 화자 중 균등. 2 명은 예전과 같은 난수열이다.
     expand(u) → 긴 발화를 구 단위로 나눈 조각들(split_points·split_unit) — 첫 조각을 지금 쓰고 나머지는 그 화자 줄 맨 앞에 되돌린다.
     턴을 놓을 화자의 발화가 떨어지면 끝낸다(혼자 말하는 꼬리를 만들지 않는다). 맞장구는 짧은 발화(Unit.short)로만, 쓰면 그 발화는 턴에 다시 안 쓴다."""
-    names = ("a", "b"); q = [list(units[0]), list(units[1])]; p_hold = stats.p_hold if cfg.p_hold is None else cfg.p_hold
-    utts: List[Utterance] = []; pieces: Dict[str, list] = {"a": [], "b": []}; last_end = [-1e9, -1e9]; n = {"turns": 0, "bc": 0, "units": 0, "split": 0}
+    N = len(units); assert 2 <= N <= 4, f"화자 2–4: {N}"
+    names = ("a", "b", "c", "d")[:N]; q = [list(u) for u in units]; p_hold = stats.p_hold if cfg.p_hold is None else cfg.p_hold
+    utts: List[Utterance] = []; pieces: Dict[str, list] = {x: [] for x in names}; last_end = [-1e9] * N; n = {"turns": 0, "bc": 0, "units": 0, "split": 0}
     trans: Dict[str, Dict[str, list]] = {}
     def take(s: int) -> Optional[Unit]:
         if not q[s]: return None
@@ -284,9 +288,13 @@ def synth_session(units: Sequence[Sequence[Unit]], stats: TimingStats, rng: rand
         if u.trans: trans[utts[-1].utt_id] = {g: [[tid, round(at + min(max(t - a, 0.0), d), 3)] for tid, t in v] for g, v in u.trans.items()}
         pieces[names[s]].append((u.path, at, round((u.src_offset or 0.0) + a, 3), d)); n["units"] += 1
         return at + d
-    prev = None; p_start = p_end = 0.0
+    prev = prev2 = None; p_start = p_end = 0.0
+    def other(x, back):                                                                 # x 가 아닌 화자(2 명이면 난수 없이 상대)
+        if N == 2: return 1 - x
+        if back is not None and back != x and rng.random() < cfg.p_back: return back
+        return rng.choice([y for y in range(N) if y != x])
     while True:
-        s = rng.randrange(2) if prev is None else (prev if rng.random() < p_hold else 1 - prev)
+        s = rng.randrange(N) if prev is None else (prev if rng.random() < p_hold else other(prev, prev2))
         if prev is None: start = cfg.lead_s
         elif s != prev: start = max(p_end + stats.pick(rng, stats.fto, *cfg.fto), p_start + cfg.min_start_after_other)
         else: start = last_end[s] + stats.pick(rng, stats.hold, *cfg.hold)
@@ -299,13 +307,14 @@ def synth_session(units: Sequence[Sequence[Unit]], stats: TimingStats, rng: rand
             if k: cur += rng.uniform(*cfg.intra_pause)
             cur = place(s, u, cur); k += 1
         if k == 0: break
-        last_end[s] = cur; n["turns"] += 1; o = 1 - s
+        last_end[s] = cur; n["turns"] += 1; o = other(s, None)
         if cur - start >= cfg.bc_min_host_s and rng.random() < 1.0 - math.exp(-cfg.bc_scale * stats.bc_rate * (cur - start)):
             u = take_short(o)
             if u is not None:
                 a, b = span(u); at = max(start + min(0.95, max(0.15, stats.pick(rng, stats.bc_pos, 0.0, 1.2))) * (cur - start), last_end[o] + GAP_S)
                 if at + (b - a) <= cur + 0.5: last_end[o] = place(o, u, at); n["bc"] += 1
                 else: q[o].insert(0, u)
+        if prev != s: prev2 = prev
         prev = s; p_start, p_end = start, cur
     end = max((u.end for u in utts), default=0.0) + cfg.tail_s
     utts.sort(key=lambda u: (u.start, u.speaker))
@@ -318,7 +327,7 @@ def overlap_stats(d: Dialogue) -> dict:
     """합성 결과 점검: 말소리 시간, 두 화자가 함께 말한 시간 비율, 분당 화자 교대(episode 기준), 화자별 자기 겹침 수(0 이어야 한다)."""
     eps = build_episodes(d); by: Dict[str, list] = {}
     for e in eps: by.setdefault(e.speaker, []).append((e.start, e.end))
-    sp = list(by); ov = sum(max(0.0, min(b0, b1) - max(a0, a1)) for a0, b0 in by.get(sp[0], []) for a1, b1 in by.get(sp[1], [])) if len(sp) == 2 else 0.0
+    sp = list(by); ov = sum(max(0.0, min(b0, b1) - max(a0, a1)) for x in range(len(sp)) for y in range(x + 1, len(sp)) for a0, b0 in by[sp[x]] for a1, b1 in by[sp[y]])   # 화자 쌍마다 함께 말한 시간
     self_ov = 0
     for spk in d.speakers:
         us = sorted((u for u in d.utterances if u.speaker == spk), key=lambda u: u.start)

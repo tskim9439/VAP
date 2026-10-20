@@ -158,3 +158,29 @@ def test_shrink_over_cap_windows(tmp_path):
     assert drop.stats["cst_dropped_speakers"] > 0 and keep.stats["cst_shrunk_speakers"] > 0 and len(keep) > len(drop)
     assert len(keep.items) == len(keep.item_draw) and all(len(window_speakers(keep.eps[c], t0, L)) <= 2 and L >= 5.0 for c, t0, L in keep.items)
     for i in range(len(keep)): assert keep.target_problems(i, 4) == []
+
+
+# ── 평가 N 슬롯·합성 N 화자
+def test_score_window_four_slots_permutation():
+    from vapasr.data.cst_eval import score_window, parse_emitted, attr_errors
+    W = lambda *ws: [(w, float(i)) for i, w in enumerate(ws)]
+    ref = [W("a", "b"), W("c"), W("d", "e", "f")]
+    hyp = [W("d", "e", "f"), W("a", "b"), [], W("c")]                                             # 가설 슬롯 0 = 참조 2, 1 = 0, 3 = 1
+    sc = score_window(ref, hyp, "English")
+    assert sc["cp"] == 0 and sc["slot"] == 9 and sc["swap"] and sc["perm"][0] == 2 and sc["perm"][1] == 0 and sc["perm"][3] == 1 and sc["n_ref"] == 6
+    two = score_window([W("a"), W("b")], [W("a"), W("b")], "English"); assert two["perm"] == [0, 1] and not two["swap"] and two["cp"] == 0
+    tie = score_window([W("a"), W("a")], [W("a"), W("a")], "English"); assert tie["perm"] == [0, 1]                    # 같으면 항등
+    slots, eots = parse_emitted([(0, 7), (1, 50), (2, 8), (3, 50), (4, 9), (5, 99)], (7, 8, 9, 10), 99); assert slots == [[(0.16, 50)], [(0.32, 50)], [], []] and eots == [(2, 0.48)]
+    ae = attr_errors(ref, hyp, "English", sc["perm"], busy=[[(0.0, 2.0)], [(0.0, 1.0)], [(0.0, 3.0)]]); assert ae["n_mis"] == 0 and ae["n_ref"] == 6
+
+
+def test_synth_session_four_speakers():
+    import random
+    from vapasr.data import sim_dialogue as sd
+    def units(key, seed):
+        r = random.Random(seed)
+        return [sd.Unit(key=key, order=i, path="/x", src_offset=None, dur=r.uniform(0.5, 5.0), tokens=[(100, 0.3)], text="w", uid=f"{key}{i}") for i in range(40)]
+    st = sd.TimingStats(fto=[-0.5, 0.2, 0.4, 1.0], hold=[0.3, 0.6], p_hold=0.3, turn=[1.5, 3.0, 6.0], bc_rate=0.05, bc_pos=[0.3, 0.6])
+    d = sd.synth_session([units(k, i) for i, k in enumerate("pqrs")], st, random.Random(3), 120.0, lambda u: (0.0, u.dur), "c", "sim", "English")
+    assert d.speakers == ["a", "b", "c", "d"] and set(d.channels) == set(d.speakers) and sd.overlap_stats(d)["self_overlap"] == 0
+    with pytest.raises(AssertionError): sd.synth_session([units("p", 0)], st, random.Random(0), 60.0, lambda u: (0.0, u.dur), "c", "sim", "English")

@@ -21,7 +21,7 @@
 출력: predictions-rank{r}.jsonl(창·δ·목표마다 원출력과 점수), summary.json."""
 import argparse, collections, hashlib, json, os, statistics, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cst_stage3_eval import SEEN, words_of  # noqa: E402
+from cst_stage3_eval import SEEN, words_of, win_kw, win_conf  # noqa: E402
 
 
 def windows_of(a, tok, TR):
@@ -33,7 +33,7 @@ def windows_of(a, tok, TR):
         held = set(split["corpora"].get(c, {}).get("heldout", [])) if split else None
         if split is not None and not held: print(f"  {c}: held-out 없음 — 건너뜀", flush=True); continue
         ds = CstDialogueDataset([os.path.join(a.data, f"{c}.refined.dialogues.jsonl")], tok, delays=tuple(a.deltas), mono_cache_dir=os.path.join(a.data, "mono"), seed=0,
-                                backchannel=a.backchannel, trans=TR, ast_frac=0.0, trans_lead_space=a.trans_lead_space)
+                                backchannel=a.backchannel, trans=TR, ast_frac=0.0, trans_lead_space=a.trans_lead_space, **win_kw(a))
         idx = [i for i, it in enumerate(ds.items) if held is None or it[0] in held]
         idx.sort(key=lambda i: (ds.items[i][2], ds.items[i][0], ds.items[i][1]))
         if a.limit_windows and len(idx) > a.limit_windows: idx = [idx[j] for j in np.linspace(0, len(idx) - 1, a.limit_windows, dtype=int)]
@@ -45,35 +45,37 @@ def window_ref4(ds, q, mask, tok):
     """번역 모드 학습 타깃 q 의 참조 → (슬롯별 전사 [(단어, 시각)], 슬롯별 번역 [(단어, 방출 시각)], [(슬롯, 끝 시각, p_end)] EOT).
     전사·EOT 시각은 원래 시각(창 기준), 번역 시각은 타깃의 방출 청크 끝 (k+1)·80 ms(flush = K) — 가설 방출 시각과 같은 규약.
     번역은 참조 번역이 없는 행의 방출 청크(miss)에 놓인 것도 뺀다 — 가설 쪽(parse_emitted4 drop_tr_chunks)과 같은 규칙."""
-    K = q["K"]; src, tr, eot = [[], []], [[], []], []; miss = q["miss_chunks"]
+    K = q["K"]; n = len(q["streams"]) // 2; src, tr, eot = [[] for _ in range(n)], [[] for _ in range(n)], []; miss = q["miss_chunks"]   # 슬롯 n(2 화자면 2)
     for pos, sa in enumerate(q["src_at"]):
         if sa is None: continue
         k = q["chunk_at"][pos]
         if 0 <= k < K and k in mask: continue
         x = q["streams"][sa[0]][sa[1]]
-        if len(x) == 3: eot.append((sa[0] % 2, x[1], q["eot_p"].get((sa[0], sa[1]))))
-        elif sa[0] < 2: src[sa[0]].append((x[1], x[0]))
-        elif k not in miss: tr[sa[0] - 2].append(((k + 1) * 0.08, x[0]))
-    return [words_of(tok, src[0]), words_of(tok, src[1])], [words_of(tok, tr[0]), words_of(tok, tr[1])], eot
+        if len(x) == 3: eot.append((sa[0] % n, x[1], q["eot_p"].get((sa[0], sa[1]))))
+        elif sa[0] < n: src[sa[0]].append((x[1], x[0]))
+        elif k not in miss: tr[sa[0] - n].append(((k + 1) * 0.08, x[0]))
+    return [words_of(tok, x) for x in src], [words_of(tok, x) for x in tr], eot
 
 
 def score4(ds, q, ref_w, ref_tr, ref_eot, hyp_src, hyp_tr, hyp_eot, delta, words):
     """한 창의 점수 → dict(받아쓰기·귀속, eot, src_err, tr[참조 슬롯마다 원문·목표 언어·참조·가설·지연])."""
     from vapasr.data.cst_eval import score_window, match_eot, eot_tol, ed, units, lag_matched
-    langs = q["langs"]; hw = [words(hyp_src[0]), words(hyp_src[1])]
-    if langs[0] == langs[1]: sc = score_window(ref_w, hw, langs[0])
+    langs = q["langs"]; hw = [words(h) for h in hyp_src]; n = max(len(ref_w), len(hw)); ref_w = list(ref_w) + [[]] * (n - len(ref_w)); ref_tr = list(ref_tr) + [[]] * (n - len(ref_tr))
+    hw += [[]] * (n - len(hw)); hyp_tr = list(hyp_tr) + [[]] * (n - len(hyp_tr))                   # 슬롯 수를 맞춘다(가설 = 모델 슬롯 수, 참조 = 창 화자 수)
+    if len(set(langs)) == 1: sc = score_window(ref_w, hw, langs[0])
     else:                                                                                      # 교차 언어: 슬롯이 언어로 고정 — 순열 없음
         e = [ed([u for w, _ in ref_w[k] for u in units(w, langs[k])], [u for w, _ in hw[k] for u in units(w, langs[k])]) for k in range(2)]
         n = [sum(len(units(w, langs[k])) for w, _ in ref_w[k]) for k in range(2)]
         sc = dict(n_ref=sum(n), n_hyp=sum(sum(len(units(w, langs[k])) for w, _ in hw[k]) for k in range(2)), slot=sum(e), cp=sum(e), agn=sum(e), swap=False, perm=[0, 1])
-    perm = sc["perm"]; inv = {perm[h]: h for h in range(2)}
-    sc["src_err"] = [(langs[r], ed([u for w, _ in ref_w[r] for u in units(w, langs[r])], [u for w, _ in hw[inv[r]] for u in units(w, langs[r])]),
-                      sum(len(units(w, langs[r])) for w, _ in ref_w[r])) for r in range(2)]
+    perm = sc["perm"]; inv = {perm[h]: h for h in range(len(perm))}; R = [r for r in range(len(perm)) if ref_w[r] or ref_tr[r] or r < 2]   # 참조 슬롯(빈 슬롯은 A·B 만 남긴다 — V1 행 형식)
+    lg = lambda r: langs[r] if r < len(langs) else langs[0]; tg = lambda r: q["tgt"][r] if r < len(q["tgt"]) else q["tgt"][0]
+    sc["src_err"] = [(lg(r), ed([u for w, _ in ref_w[r] for u in units(w, lg(r))], [u for w, _ in hw[inv[r]] for u in units(w, lg(r))]),
+                      sum(len(units(w, lg(r))) for w, _ in ref_w[r])) for r in R]
     sc["eot"] = match_eot(ref_eot, hyp_eot, perm, eot_tol(delta))
     sc["tr"] = []
-    for r in range(2):
+    for r in R:
         h = words(hyp_tr[inv[r]])
-        sc["tr"].append(dict(src_lang=langs[r], tgt_lang=q["tgt"][r], ref=" ".join(w for w, _ in ref_tr[r]), hyp=" ".join(w for w, _ in h), n_ref=len(ref_tr[r]),
+        sc["tr"].append(dict(src_lang=lg(r), tgt_lang=tg(r), ref=" ".join(w for w, _ in ref_tr[r]), hyp=" ".join(w for w, _ in h), n_ref=len(ref_tr[r]),
                              n_hyp=len(h), lag=lag_matched(ref_tr[r], h)))
     return sc
 
@@ -98,7 +100,8 @@ def run(a):
         from vapasr.hf.infer import load_model
         from vapasr.hf.batch_decode import decode_batch
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
-    spk = (sp["<SPK_A>"], sp["<SPK_B>"]); EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>"))
+    from vapasr.data.cst_dialogue import SLOTS
+    n_slots = max(2, int(getattr(a, "max_speakers", None) or 2)); spk = tuple(sp[t] for t in SLOTS[:n_slots]); EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>"))
     if not a.oracle and (EOT in blocked or TRANS in blocked): print(f"!! decode 차단: <EOT> {EOT in blocked} · <TRANS> {TRANS in blocked}", flush=True)
     TR, tr_st, tr_fp = load_ast_targets([p for x in a.trans for p in x.split(",") if p]); print(f"  번역 타깃 {dict(tr_st)}", flush=True)
     sets, items = windows_of(a, tok, TR)
@@ -108,7 +111,7 @@ def run(a):
     conf = dict(checkpoint=os.path.abspath(a.checkpoint), config_sha256=hashlib.sha256(open(os.path.join(a.checkpoint, "config.json"), "rb").read()).hexdigest(),
                 split_sha256=hashlib.sha256(open(a.split, "rb").read()).hexdigest() if a.split else None, trans_sha256=tr_fp, corpora=a.corpora, deltas=a.deltas,
                 limit_windows=a.limit_windows, tgts=a.tgts, dtype=a.dtype, world_size=a.world_size, oracle=bool(a.oracle), from_predictions=a.from_predictions,
-                **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **({"trans_lead_space": True} if a.trans_lead_space else {}))
+                **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **({"trans_lead_space": True} if a.trans_lead_space else {}), **win_conf(a))
     cp = os.path.join(out, f"config-rank{a.rank}.json")
     if os.path.exists(cp): assert json.load(open(cp)) == conf, "재개 설정 불일치 — 새 --out 을 쓴다"
     else: json.dump(conf, open(cp, "w"), indent=1)
@@ -139,7 +142,11 @@ def run(a):
                         elif a.oracle:
                             states = [SimpleNamespace(emitted=emitted_from_sequence(q["ids"], q["is_input"], q["chunk_of"], sp["<NEXT_AUDIO>"], sp["<EMPTY_AUDIO>"]), forced=0,
                                                       flush_rounds=0) for q in qs]
-                        else: states = decode_batch(model, feats, prefixes, max_flush_rounds=a.max_flush)
+                        else:
+                            states = [None] * len(meta)
+                            for pre in dict.fromkeys(tuple(p) for p in prefixes):                      # 선언 슬롯 수가 다른 창은 prefix 별로 나눠 돈다
+                                js = [j for j, p in enumerate(prefixes) if tuple(p) == pre]
+                                for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush)): states[j] = st_
                         for (i, cid, t0w, L, K), q, s in zip(meta, qs, states):
                             if (f"{cid}@{t0w}", delta, opt) in done: continue
                             d = ds.dlgs[cid]; mask = ds.mask_chunks(d, t0w, L, K, delta)
@@ -147,7 +154,7 @@ def run(a):
                             hs, ht, he = parse_emitted4(s.emitted, spk, TRANS, EOT, drop_chunks=mask, drop_tr_chunks=q["miss_chunks"])
                             sc = score4(ds, q, ref_w, ref_tr, ref_eot, hs, ht, he, delta, words)
                             row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, langs=q["langs"], tgt_opt=opt, tgts=list(q["tgt"]), delta=delta, L=L, K=K, speakers=q["speakers"],
-                                       n_spk=sum(1 for st in q["streams"][:2] if st), masked_chunks=len(mask), miss_chunks=len(q["miss_chunks"]), forced=s.forced,
+                                       n_spk=sum(1 for st in q["streams"][: len(q["streams"]) // 2] if st), masked_chunks=len(mask), miss_chunks=len(q["miss_chunks"]), forced=s.forced,
                                        flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted], ref_text=[" ".join(w for w, _ in r) for r in ref_w],
                                        hyp_text=[" ".join(w for w, _ in words(h)) for h in hs], **sc)
                             fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
@@ -201,6 +208,8 @@ def main():
     q.add_argument("--oracle", action="store_true", help="모델 없이 정답 시퀀스를 채점(지표 sanity)"); q.add_argument("--from-predictions", default=None)
     q.add_argument("--backchannel", default=None, type=lambda s: (float(s.split(",")[0]), int(s.split(",")[1])), help="참조 EOT 의 맞장구 규칙(최대초,최대토큰)")
     q.add_argument("--trans-lead-space", action="store_true", help="참조 번역 행마다 앞 공백(학습 --trans-lead-space 와 같은 형식으로 학습한 모델)")
+    q.add_argument("--max-speakers", type=int, default=2, help="V2: 창 화자 상한(최대 4)"); q.add_argument("--window", type=lambda s: tuple(float(x) for x in s.split(",")), default=(20.0, 40.0))
+    q.add_argument("--hop", type=float, default=10.0); q.add_argument("--window-draws", type=int, default=0); q.add_argument("--declare", type=int, default=None)
     q = sub.add_parser("summarize"); q.add_argument("--out", required=True)
     a = ap.parse_args(); {"run": run, "summarize": summarize}[a.cmd](a)
 
