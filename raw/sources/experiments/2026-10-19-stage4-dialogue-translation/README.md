@@ -295,6 +295,16 @@ source_type: source-drop
   - Stage 2 최종과 비교하면 st4-p1 이 영어·독일어 단독 발화에서 1.9–3.9 pt 낫다. 한국어는 같다. 대화 학습이 대화체 받아쓰기를 좋게 했다.
   - 대화 cp 와 agn 의 차이(귀속 몫)는 3.6–9.6 pt 다.
 
+## 다음 학습 st4-m2 준비 — 전화 대역 증강 + CallHome 독일어 (2026-10-20, `stage4_m2_prep.sh`·`stage4_m2_check.sh`·`build_chde_eval.py`)
+- 동기: TAXI 받아쓰기 cpWER 이 VibeVoice 16–19 대 우리 40.9 다. 전화 음성이 학습에 거의 없다(영어 Switchboard 뿐).
+- **전화 대역 증강 `vapasr/data/phone_aug.py`(`--phone-aug P`):** 확률 P 로 8 kHz 로 내림 → 대역 통과(하한 U(200, 400) Hz · 상한 U(3000, 3600) Hz, 4 차 Butterworth 영위상) → 확률 0.5 로 μ-law 8 비트 → 16 kHz 로 올림, RMS 유지.
+  - 대화 창(실제·같은 언어 합성·교차 언어 합성, `CstDialogueDataset(wav_aug=)`)과 단일 화자 셋(잡음·잔향 뒤, `AugChain`) 모두에 건다. 끄면 난수·지문이 그대로다.
+  - 단위 시험(`tests/test_phone_aug.py`, 4 개): 4.2 kHz 위 에너지 2 % 미만, 300–3400 Hz 안 성분 유지, 시각 어긋남 ±1 샘플, RMS 유지, μ-law 오차 < 0.03.
+- **CallHome 독일어 단일 화자 셋 `--replay-set rep_chde`** (감독 발화 6,174 · 2.99 h, 가중치 0.3 → 학습 step 의 2.75 %)
+- **평가 셋 `single-turn-callhome-de-v1`:** held-out 통화 12 개의 감독 발화 671 개(전화 독일어, 참조 = 두 교사 일치 의사 전사). 평가 큐 6 단계로 넣었다.
+  - 기준점 WER(δ4 · δ10): st4-m1 ck1500 26.0 · 26.8, p11 ck3000 27.3 · 27.6
+- 점검(mxc 호스트): 학습 dry-run 불일치 0(rep_chde 32 항목 × δ 7 개 포함), 스모크 20 step PARITY OK, 지문에 `phone_aug`·`replay_sets`·`trans_lead_space` 가 들어간다.
+
 ## 본 학습 st4-m1 결과 (2026-10-20, apex job 92394, `st4-m1/`·`st4m1-vs-p1.txt`)
 - 학습 2,500 step(23:43 – 00:4x), 평가 큐 ck1500·ck2000·final(`TRANS_LEAD_SPACE=1` — 대화·합성 번역 참조가 행 앞 공백 형식이라 BLEU 는 st4-p1 숫자와 직접 맞대지 않는다).
 
