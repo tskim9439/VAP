@@ -53,11 +53,11 @@ raw_authors:
 | V1 | 모델: 슬롯 C·D 토큰 켜기(`enable_slots`), 화자 활동 헤드 2 → 4(A·B 행 유지) | **완료**(단위 시험) |
 | V2 | 시퀀스: `cst_dialogue` N 슬롯(전사·번역 흐름 2N, 태그, 다시 읽기, 점검, 활동 라벨, 슬롯 선언 `declare_all_p`·`declare`) | **완료**(단위 시험, 2 화자는 예전과 같음) |
 | V3 | 창: draw 이어 덮기(`window_draws`)·20–90 s·화자 상한 줄이기(`shrink_speakers`), sampler 가 epoch e 에 draw e mod R | **완료**(단위 시험) |
-| V4 | 평가: N 슬롯 채점(cp 순열)·오류 분해·prefix 별 배치, 창 인자(`--max-speakers`·`--window`·`--window-draws`·`--declare`) | 코드 완료, mxc 오라클 점검 중 |
-| V5 | 합성: `synth_session` N 화자(`p_back` 0.2, 2 인은 같은 난수열), `--speakers 2:0.2,3:0.4,4:0.4`, 3–4 인 합성 셋(학습 언어마다 1 만·평가 300) | 생성기 완료, 셋 빌드 중(`sim_build_multi.sh`) |
-| V6 | 회의 번역 타깃: 원문 단위 `stage4-dlg-units-meet-v1`(AMI·ICSI·NOTSOFAR 262,380 단위·2.04 M 단어·227,935 행) → 생성(en→de·ko)·수리는 apex 제출(사용자) | 단위 완료, 제출 대기 |
+| V4 | 평가: N 슬롯 채점(cp 순열)·오류 분해·prefix 별 배치, 창 인자(`--max-speakers`·`--window`·`--window-draws`·`--declare`), AMI 공식 dev·eval(IHM-mix·SDM) | **완료**(오라클 통과) |
+| V5 | 합성: `synth_session` N 화자(`p_back` 0.2, 2 인은 같은 난수열), `--speakers 2:0.2,3:0.4,4:0.4`, 3–4 인 합성 셋(학습 언어마다 1 만·평가 300) | **완료** |
+| V6 | 회의 번역 타깃: 원문 단위 `stage4-dlg-units-meet-v1`(AMI·ICSI·NOTSOFAR 262,380 단위·2.04 M 단어·227,935 행) → 생성(en→de·ko)·수리는 apex 제출(사용자) | **완료**(93807·93808) |
 | V7 | 학습 스크립트: `--max-speakers`·`--declare-all-p`·`--window`·`--window-draws`·`--dlg-corpora`(회의 = `dlg_mt`)·지문, V2-a 탭, 전화 대역 증강 | **완료**(코드) |
-| V8 | dry-run → 스모크 → 학습 전 점검 → 제출 명령 | 대기(합성 셋·번역 타깃 뒤) |
+| V8 | dry-run → 스모크 → 학습 전 점검 → 제출 명령 | **dry-run·스모크 통과**, 제출 명령 준비(`--run v2-p1`) |
 
 ## 평가 분할 정리 — split v4 (2026-10-20)
 - 사용자 질문: "AMI-IHM 과 AMI-SDM 으로도 평가 진행하려는 데, 학습 셋과 겹치지는 않지?"
@@ -80,6 +80,16 @@ raw_authors:
 - step: 3,000(m2a 2,500 — 새로 배울 것이 많고 창이 길어 step 당 창 수가 준다). lr 4e-5 cosine, warmup 300, 500 step 마다 저장, 2 노드.
   - m1 은 step 이 늘수록 번역 반복 생성이 다시 늘었다. 그래서 ck1500·2000·2500·final 을 모두 재 고른다.
 - 예상: m2a 1.0 s/step → V2 1.2–1.5 s/step(긴 창), 약 1–1.3 h
+
+## V2 학습 전 점검 결과 (2026-10-20, `v2_check.sh` — mxc 개발 사본에서, 본 checkout 반영 뒤 단위 시험 95 통과)
+- 입력: 3–4 인 합성 v3(한 1 만·영 9,998·독 9,994 세션, 각 250–263 h), 회의 번역 타깃(영→독 98.7 %·영→한 96.5 % 행 유지), split v4
+- dry-run(CPU): 12 셋 × 32 항목 × δ 7 개 불일치 0
+  - 창(6 draw 합): dlg_ko 285,136 · dlg_en 38,108 · dlg_de 37,429 · dlg_mt 55,034 · sim_ko·en·de 99–102 k · 교차 언어 97–99 k
+  - 회의 창 중 4 명이 넘는 창은 4,115 개를 줄이고 3,335 개를 버렸다(5–7 인 ICSI·NOTSOFAR). 회의 번역 타깃은 학습 쪽 행의 99.7 % 에 붙었다.
+  - 지문: max_speakers 4 · declare_all_p 0.5 · window_draws 6 · window [20, 90] · enc_tap L00 · 전화 대역 0.3
+- 스모크 20 step(GPU 하나, Stage 3 최종에서): 손실 정상, 끝 재로드 PARITY OK
+  - slot_tokens A·B·`<SPK_3>`·`<SPK_4>`, 차단 해제, 화자 헤드 4 출력, `adapter_tap` 저장
+- 3,000 step 동안 셋별 회전 수(추정): dlg_ko 1.6 · dlg_en/de/mt 약 4 · 합성 약 1.8–2.3 — 바퀴마다 다른 draw
 
 ## V2-a 학습 전 점검 결과 (2026-10-20) → [[2026-10-20-v2a-dual-stream]]
 - 단위 시험 mxc 54 통과, dry-run 11 셋 불일치 0, 스모크 20 step PARITY OK(`adapter_tap` 저장·재로드, 0 초기화 마지막 층이 20 step 만에 |w| 0.0023 으로 학습)
