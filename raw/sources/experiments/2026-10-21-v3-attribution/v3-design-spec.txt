@@ -1,0 +1,1006 @@
+NAME: V3-p1: 턴 시작 교대 결정 보정. 교대·머무름 결정 가중, 2회선 전화 교차 언어 합성(sim_en-de-tel), 상태 인지 교대 bias(dev 튜닝), 합성 창 EOT-문맥 dropout(조건부). Step 0 결정 지점 진단으로 p2 를 고른다.
+
+SUMMARY:
+ 진단부터 정리한다. TAXI 귀속 몫 8.0 pt 는 소리를 못 들어서가 아니라 턴 시작에서 교대를 결정하지 못해서 생긴다(V1 = st4-m2a ck2000, δ10, 세션 통째).
+- 오류 단어의 89% 가 놓친 교대 뒤에 오고, 94% 가 턴 전체가 틀린 경우다.
+- 가설 교대는 496 회, 참조는 540 회다. toggle recall 은 87.4% 로 VibeVoice 98.1% 보다 낮다.
+- 반대로 턴 안 오교대는 0.3% 뿐이고, 첫 턴은 86/86 이 맞다.
+- 받아쓰기 자체는 agn 18.4 로 VibeVoice 스트리밍(20.1)보다 이미 낫다.
+
+코드와 합성 점검(tagctx2.py 재실행)으로 확인한 원인 후보는 세 가지다.
+(1) mono Stage 3/4 에서 슬롯 태그 가중이 1 이다(modeling_vapasr.py:148 은 lanes>0 일 때만 tag_weight 를 쓴다). 번역 모드에서는 교대 태그가 같은 슬롯 재개 태그와 경쟁한다(재개 3656 대 교대 1598).
+(2) xl 합성에서는 교대가 곧 코퍼스·채널 교대다. 창 단위 phone aug 는 두 화자에게 똑같이 걸리고, 레벨 차는 ±3 dB 이며, hold 30%·overlap 23% 다. 반면 TAXI 는 양쪽 8 kHz, 엄격 교대, 레벨 차 중앙 6.35 dB 다.
+(3) 번역 모드 교대는 TAXI형 간격에서 1598/1598 이 <EOT> 뒤에 온다. 학습형 FTO 에서도 <EOT> 없는 교대는 57 번, 같은 슬롯 재개는 3020 번이다. 그런데 합성 <EOT> 는 문맥에만 있고 감독되지 않는다. 그래서 교대가 <EOT> 를 조건으로 학습됐을 수 있다.
+
+V3-p1 은 st4-m2a 레시피를 그대로 쓰는 ~1 h run 한 번이다(init p11 ck3000, 2500 step, seed 0, 2 슬롯). 직렬화 형식은 바꾸지 않고 이 결정만 겨눈다.
+- C1: 교대 태그에 pos_weight 3, <EOT> 뒤 머무름 결정에 1.5. 모델 코드는 바꾸지 않는다.
+- C2: 화자별 독립 전화 대역, ±8 dB, 엄격 교대 타이밍(턴 안 쉼 <0.25 s)을 쓴 sim_en-de-tel. 가중 1.0, 기존 sim_en-de 는 0.5 로 낮춘다.
+- C5: 합성 창의 EOT-문맥 dropout 0.5. Step 0 의 D1 과 dTF 가 둘 다 E+ 를 보이면 끈다.
+- C3(디코드만): 상태 인지 교대 bias. 교차 언어 prefix 에만 걸고, 결정 지점은 <EOT> 뒤, <TRANS> 뒤 재개, 전사 word-start 셋이다. dev 에서만 튜닝한다.
+- C4: TAXI 형식으로 만든 비-TAXI 전화 dev(xl-tel-dev)와 턴 결정 지표. 모든 선택을 TAXI 없이 한다.
+- Step 0(훈련 없음): D1 토큰 문맥 분류, D2 --asr-only, D5 태그 역할 집계, dTF(teacher-forced EOT 의존도). EOT 분기와 p2 우선순위를 정한다.
+
+기대 효과(추정):
+- V1 에 C3 만 걸면 attr 8.0 → ~5-6.
+- R1+C3 에서 toggle recall 93-96%, attr ~2.5-4.5, cp ~19.5-21.5.
+- VibeVoice 스트리밍(cp 20.5)을 넘으려면 recall ≳95-96% 가 필요하다.
+
+다음은 p2/p3 로 미룬다. D1/D2/dTF 와 p1 결과를 보고 고른다.
+- 턴 헤더·<SRC>·헤더 문법(형식 변경)
+- Switchboard same-call 실제 2회선 대화
+- tel 셋 EOT 감독
+- 번역 모드 놓친-onset 회복과 on-policy 교정
+- 교차 언어 lookahead
+- word-aligned slot head
+- 같은 언어 귀속용 화자 표현 분기
+
+모든 컴포넌트는 기본값이 꺼짐이고, 끄면 기존과 바이트·토큰 단위로 같다.
+
+### S0 Step-0 결정 지점 진단: D1 토큰 문맥 분류, D2 --asr-only, D5 태그 역할 집계, dTF teacher-forced EOT 의존도 (훈련 없음) [p1=True]
+RATIONALE: EOT 질문(삼킨 턴 앞에 이전 화자의 <EOT> 가 있는가)은 아직 열려 있다.
+
+tagctx2.py 재실행 결과는 다음과 같다. 번역 모드에서 교대 1598 건은 모두 <TRANS> 와 <EOT> 뒤에 온다. 같은 슬롯 재개 3656 건은 모두 <EOT> 없이 온다(학습형 FTO 에서는 <EOT> 없는 교대가 57 건, 재개가 3020 건). 즉 학습 문맥에서 교대와 재개를 가르는 단서는 <EOT> 유무다.
+
+어느 클래스가 우세하냐에 따라 맞는 해법이 다르다.
+- RESUME: <TRANS> 뒤 같은 슬롯 재개. 결정 bias (ii), C5, 형식 C 가 후보다.
+- REASSERT: <EOT> 뒤 같은 슬롯을 명시적으로 잘못 고름. 데이터·지각 쪽 문제다.
+- SILENT: 전사 kind 무태그 계속. 헤더 형식이 후보다.
+- ABSORBED: 번역 kind 로 흡수(언어 강제). lookahead 와 회복 학습이 후보다.
+
+TAXI 결과(D1)는 컴포넌트를 켜고 끄는 데에만 쓰고 값은 고르지 않는다. 같은 판단을 비-TAXI dTF 로 교차 확인한다.
+IMPL: D1. raw/sources/experiments/2026-10-21-v3-attribution/taxi_v3_probe.py 에 --classify-onsets 를 추가한다(기본 끔).
+- 기존 parse_emitted4 래퍼에서 창별 emitted [(k, tid)] 를 메모리에 보존한다. TAXI 는 max-window 90 이라 세션당 한 창이다.
+- 끝나면 C4 의 cst_attr_turns.walign(W=5 s, 시스템별 median offset)으로 참조 단어와 가설 단어를 정렬한다.
+- 540 개 교대마다 '직전 턴 마지막 정렬 가설 단어'와 '새 턴 첫 정렬 가설 단어' 사이의 emitted 구간을 parse_emitted4 와 같은 상태기계(cur, kind)로 다시 돌려 아래 다섯 클래스로 나눈다. 단어 경계는 cst_stage4_taxi 의 leading-space 규칙을 쓴다.
+  - OK: 다른 슬롯 태그
+  - RESUME: <TRANS> 구간 뒤 같은 슬롯 <SPK_x>, 그 사이 이전 슬롯 <EOT> 없음
+  - REASSERT: 이전 슬롯 <EOT> 뒤 같은 슬롯 태그
+  - SILENT: 태그 없이 전사 kind 계속
+  - ABSORBED: 태그 없이 번역 kind 계속
+- 각 클래스를 '이전 슬롯 <EOT> 있음/없음'과 방향(into EN / into DE)으로 교차 집계한다.
+- 출력은 onset-classes-d10.json 하나이고 집계만 담는다. 세션 id 와 텍스트는 넣지 않는다. 원자료는 mxc 에만 둔다.
+- 대상은 V1 ck2000, δ10, b=0 이다(약 25 분 GPU).
+
+D2. cst_stage4_taxi.py run --asr-only 를 같은 체크포인트·δ10·max-window 90 으로 돌리고 score 와 cst_attr_turns 를 실행한다. 진단 전용이다.
+
+D5. experiments/cst_stage4_dryrun.py 에 --tag-roles 를 추가한다(기본 끔). st4-m2a 셋 구성에서 출력 <SPK_x> 라벨을 역할별·셋별로 센다(CPU).
+- 역할: first, change, same-slot-after-TRANS, same-slot-after-EOT, opened-for-EOT, opens-TRANS.
+- 셋: dlg_*, sim_*, sim_xx-yy, rep_*.
+
+dTF. 새 스크립트 experiments/cst_switch_tf.py 를 만든다.
+- xl-tel-dev(C4) 300 창, δ10, 번역 모드와 받아쓰기 모드 각각에 teacher-forced forward 를 한 번 돌린다.
+- C1 의 switch_positions 에서 다음을 잰다: top-1, mean p(교대 태그), mean p(같은 슬롯 태그), argmax 가 텍스트인 비율.
+- 같은 창을 C5 코드 경로(drop_eot p=1, ghost <NEXT_AUDIO> 마스크)로 다시 돌린다.
+- dTF = top1(EOT 유지) − top1(EOT 제거), 단위 pt.
+- V1 ck2000 에서 한 번 돌린다(약 20 분 GPU).
+
+이미 돌고 있는 EOT 로깅 프로브(b=0/1.5/3)의 eot_study f_hit/f_miss 는 D1 과 함께 본다. 균일 bias 결과는 해석하지 않는다.
+FLAG: taxi_v3_probe.py --classify-onsets (기본 끔: probe.json, eot-d*.jsonl, hyp/asr 산출이 바이트 동일)
+cst_stage4_dryrun.py --tag-roles (기본 끔: 기존 json 키·값 동일)
+D2 는 기존 --asr-only 옵션을 그대로 쓴다.
+cst_switch_tf.py 는 새 스크립트라 기존 동작에 영향이 없다.
+TESTS: tests/test_onset_classes.py:
+- 합성 emitted 열로 다섯 클래스 각각을 EOT 있음/없음 두 경우로 만들어 분류가 맞는지 본다. 경계 정렬이 1-2 단어 밀려도 클래스가 같은지(W=3 대 W=5)도 본다.
+- --classify-onsets 를 끄면 산출 파일 해시가 기존과 같은지 본다.
+
+tests/test_switch_tf.py:
+- 라벨 one-hot logits 를 내는 stub 모델에서 top1 이 1.0 이고 dTF 가 0 인지 본다.
+- EOT 제거 경로의 시퀀스가 problems_of / problems_of4 에서 0 인지 본다.
+
+cst_stage4_dryrun --tag-roles 단위 시험: 역할 합 = 출력 태그 라벨 수.
+
+### C1 교대·머무름 결정 가중: 교대 태그 pos_weight 3, <EOT> 뒤 머무름 1.5, 결정 통계 로깅 [p1=True]
+RATIONALE: mono Stage 3/4 는 슬롯 태그 가중이 1 이다. modeling_vapasr.py:148 의 tag_ids/tag_weight 가 lanes>0 일 때만 켜지기 때문이다.
+
+교대는 드물고(턴당 약 1 토큰) 번역 모드에서는 같은 슬롯 재개와 경쟁한다(dry-xl: 번역 모드 창당 태그 34.7 대 받아쓰기 8.3, 합성 점검 재개 3656 대 교대 1598). 모델은 교대를 덜 낸다(496 대 540). 턴 안 오교대는 0.3% 라 recall 을 올릴 여유가 크다.
+
+모델 변경이 필요 없다. p2_losses.soft_ce 의 pos_override 가 가중 우선순위 최상위이고, pos_weight 는 이미 packing ROW_KEY 다.
+
+머무름 가중 1.5 는 judge 가 지적한 같은 언어 정밀도 위험(실제 대화 episode p_hold 0.58)을 막는다. <EOT> 뒤 결정의 두 결과를 모두 감독하되 recall 쪽에 더 무게를 둔다(3 대 1.5).
+
+문헌: Zhao et al. ICASSP 2023 의 FA/FR 가중 손실은 precision 78.1→77.6 에서 recall 을 55.8→65.2 로 올렸다. G-STAR 의 2x speaker-token CE 는 주로 DER 을 개선했으므로 가중만으로 큰 cp 이득을 기대하지는 않는다.
+IMPL: vapasr/data/cst_dialogue.py
+
+새 순수 함수 decision_positions(ids, is_input, labels, labels_alt, src_at, spk_ids, trans_id, eot_id, word_start) → (switch: List[int], hold: List[int]).
+- 문맥 슬롯 cur 을 시퀀스를 따라 추적한다. 입력·출력·마스크 여부와 상관없이 모든 슬롯 태그가 cur 을 갱신한다. <TRANS> 는 kind 만 바꾼다.
+- switch 위치 p 의 조건(모두 만족):
+  - labels[p]==ids[p] 이고 ids[p] ∈ spk_ids
+  - cur 이 있고 slot(ids[p]) 과 다름
+  - labels_alt[p]==-100
+  - ids[p+1] 이 출력 텍스트이고 word_start 가 True
+  이 조건으로 <EOT> 를 위해 연 태그, <SPK><TRANS>, 첫 태그, 단어 중간 overlap churn 이 빠진다.
+- hold 위치 p: 출력 <EOT>(슬롯 s) 뒤 첫 출력 결정 토큰이다. <NEXT_AUDIO> 와 오디오 입력은 건너뛴다. 조건은 다음 둘 중 하나이고, labels[p]!=-100 이며 labels_alt[p]==-100 이어야 한다.
+  - 같은 슬롯 <SPK_s>(번역 모드 재개)
+  - 슬롯 s 문맥의 word-initial 텍스트(받아쓰기 모드에서 태그 없이 계속)
+
+build_cst_sequence 와 build_cst4_sequence 에 change_weight=0.0, hold_weight=0.0, word_start=None 을 추가한다(word_start 는 cst4 에 새로 넣는다).
+- 값이 >0 이면 해당 위치에 pos_weight[p] = max(pos_weight[p], w) 를 적용한다. 그래서 기존 <EOT> decision_weight 2.0 위치는 그대로다.
+- 둘 중 하나라도 >0 일 때만 dec_kind (L,) int8 {0, 1=switch, 2=hold}, n_switch, n_hold 를 반환한다.
+
+CstDialogueDataset(change_weight=0.0, hold_weight=0.0, weight_sets=None).
+- cst_sequence 와 cst4_sequence 로 값을 넘긴다. cst4 에는 word_start=self.word_start 도 넘긴다.
+- collate_cst 가 dec_kind 를 (B, L) 로 패딩한다(키가 없으면 만들지 않는다).
+- packing.ROW_KEYS 에 'dec_kind' 를 추가한다. 없는 키는 기존 규약대로 건너뛴다. stage3_train IN_KEYS 에도 추가한다.
+
+VapAsrForStreamingASR.forward(dec_kind=None):
+- 주어지면 통계만 계산한다: top1_switch, loss_switch, top1_hold, switch_miss(argmax 가 텍스트), switch_wrong_slot(argmax 가 현재 슬롯 태그).
+- 손실 식은 바꾸지 않는다.
+
+problems_of / problems_of4: 가중을 켰을 때 'switch_w' 를 검사한다. 가중 위치 집합이 decision_positions 와 같아야 하고, 각 교대 태그는 직전 문맥 슬롯과 달라야 한다. 'hold_w' 도 같은 방식으로 검사한다.
+
+experiments/stage3_train.py:
+- --change-tag-weight 0.0, --hold-tag-weight 0.0 을 추가하고 dlg_*, sim_*, sim_xx-yy* 의 모든 CstDialogueDataset 에 넘긴다.
+- --decision-weight-sets(기본 all; 같은 언어 가드가 깨지면 xl 셋만으로 다시 돌리는 대비책)를 추가한다.
+- 지문 키는 >0 일 때만 쓴다.
+- Stage3Trainer.log 에 switch_per_dlg_step, top1_switch, switch_miss, top1_hold 를 남긴다.
+
+p1 값: change 3.0, hold 1.5.
+FLAG: --change-tag-weight 0, --hold-tag-weight 0 (기본). 시퀀스, pos_weight, 반환 키, 난수 소비, collate 출력, 지문이 모두 st4-m2a 와 같다. dec_kind 가 없으면 forward 통계와 손실도 같다.
+TESTS: tests/test_cst_dialogue.py:
+(a) W=0 일 때 셋별 32 창의 시퀀스와 pos_weight 해시가 기존과 같다.
+(b) 받아쓰기 fixture 에서 정확히 교대 태그만 가중된다.
+(c) 번역 fixture: B onset 의 <SPK_B> 는 가중되고, <TRANS> 뒤 <SPK_A> 재개, <SPK_x><EOT>, <SPK_x><TRANS>, 첫 태그는 가중되지 않는다.
+(d) hold fixture: 같은 화자 <EOT> 뒤 첫 결정에 1.5 가 붙는다.
+(e) soft 결정 위치는 decision_weight 2.0 을 유지한다.
+(f) recover flip 구간은 -100 을 유지한다.
+(g) 가중을 켜도 problems_of / problems_of4 가 0 이다.
+
+tests/test_p2_losses.py: dec_kind 를 주든 안 주든 loss 값이 같고 통계 키만 늘어난다.
+
+tests/test_packing: dec_kind 가 있는 배치와 없는 배치 모두 pack_batch 가 통과한다.
+
+### C2 sim_en-de-tel: 2회선 전화 조건의 교차 언어 합성 셋. 화자별 독립 전화 대역, ±8 dB 레벨 차, 엄격 교대, 턴 안 쉼 <0.25 s, 10% 동일 채널 [p1=True]
+RATIONALE: xl 합성에는 교대 지름길이 있다.
+- 모든 쌍이 서로 다른 코퍼스다(EN 풀에 8 kHz Switchboard·낭독, DE 는 광대역 KEC/ZTC/NSC).
+- phone aug 는 창 단위라 두 화자에게 똑같이 걸린다(cst_dialogue.py:713).
+- 레벨 jitter 는 ±3 dB 다(sim_build_dialogues.py:114).
+그래서 모델은 '채널이 바뀌면 교대'를 배울 수 있었는데, TAXI 에는 그 단서가 없다(양쪽 8 kHz, 스펙트럼 중심 632 대 654 Hz).
+
+합성 타이밍도 TAXI 와 다르다(SimConfig, sim_dialogue.py:248-257).
+- p_hold 0.3, FTO overlap 23%, 맞장구가 있다.
+- intra_pause 0.1-0.5 s 가 0.25 s episode 경계를 넘어서, 턴 안에 같은 화자 <EOT> 가 생긴다.
+- TAXI 는 교대 97.5%, 간격 0.05-0.54 s, overlap 0, 레벨 차 중앙 6.35 dB 다.
+
+데이터는 이 지표를 실제로 움직였다. phone aug 0.3 하나로 TAXI cp 가 40.9→28.1 이 됐고, V2 의 데이터 이동은 toggle recall 을 87.4→79.6 으로 떨어뜨렸다.
+
+TAXI 를 보지 않고 일반적인 전화 조건 범위로 만든다. 10% 는 두 화자가 같은 채널이라 '선이 다르면 화자가 다르다'는 새 지름길을 막는다.
+IMPL: experiments/sim_build_dialogues.py (기본값이면 기존 빌드와 바이트 동일, 난수 추가 소비 없음):
+- --fto-clip lo,hi → SimConfig(fto=(lo,hi)). --intra-pause lo,hi → SimConfig(intra_pause=(lo,hi)).
+- --phone-per-speaker P(기본 0): mix_arrays(..., fx=None) 에서 화자 채널 ch 에 말소리를 놓은 뒤 gain 계산 전에 PhoneAugment(p=P, mulaw_p=0.5)(ch, rng_spk) 를 건다.
+  - rng_spk = random.Random(f'{seed}:{i}:chan:{spk}') 로 분리해 세션 rng 흐름을 건드리지 않는다.
+  - gain 은 처리된 채널의 말소리 구간 RMS 로 다시 잰다.
+- --phone-same-frac 0.1: 이 비율의 세션은 두 화자가 같은 대역·μ-law 결정을 쓴다(같은 시드).
+- --name-suffix tel → 키 sim_en-de-tel. 산출: sim_en-de-tel.refined.dialogues.jsonl, targets-sim_en-de-tel/, mono/sim_en-de-tel/.
+- meta.chan(화자별 대역·codec) 을 남기고, stats.json 에 gains |Δ| 와 타이밍 히스토그램을 쓴다.
+
+experiments/stage3_train.py:
+- xl 키 정규식을 sim_[a-z]{2}-[a-z]{2} 에서 sim_[a-z]{2}-[a-z]{2}(?:-[a-z0-9]+)? 로 바꾼다. 기존 키는 같은 분기로 간다.
+- --set-phone KEY:P[,…](기본 없음): 그 셋만 wav_aug=PhoneAugment(p=P) 를 쓴다(P=0 이면 None). 지문 키 set_phone 은 줄 때만 쓴다.
+
+빌드(mxc 호스트 CPU 24 workers, 입력은 xl_build.sh 와 같고 새 디렉터리에만 쓴다. 아무것도 지우지 않는다).
+학습 셋 → $D/sim-dialogue-xl-tel-v1, 약 15-20 분, 약 29 GB:
+- 언어·규모: --lang English --lang2 German --sessions 10000
+- EN 풀: --phase2-corpora otoSpeech --words @main --words @ASR --words @CV4 --words-frac 0.5 --pool-weights otoSpeech:0.45,swbd:0.45,cv:0.05,vp:0.05 (LibriSpeech 제외)
+- DE 풀: --phase2-corpora2 kec,ztc,nsc --pool-weights2 kec:0.35,ztc:0.35,nsc:0.3
+- 번역: --trans $S1 --trans $A2/en-de --trans $A2C/en-de
+- 타이밍: --p-hold 0.05 --bc-scale 0 --fto-clip 0.05,0.8 --intra-pause 0.1,0.24
+- 채널·잡음: --jitter-db 8 --phone-per-speaker 1.0 --phone-same-frac 0.1 --noise-bank $D/noise-bank-v1 --noise-p 0.3
+- 이름: --name-suffix tel
+
+수용 기준:
+- overlap_ratio_mean 0, bc_per_min 0
+- 교대 12-15/분, hold ≈0.05
+- gains |Δ| 중앙 ≈4.5-5 dB
+- cst_stage4_dryrun 0 problems
+
+학습 가중: st4-m2a 가중에서 sim_en-de 를 1.0→0.5 로 낮추고 sim_en-de-tel:1.0 을 더한다(총 11.1→11.6, replay 비중 32.4→31.0%). --set-phone sim_en-de-tel:0 으로 창 단위 이중 전화 처리를 막는다.
+FLAG: 빌드: --phone-per-speaker 0, --fto-clip/--intra-pause 미지정, --phone-same-frac 0, --name-suffix 없음. 이 경우 같은 시드 세션의 to_json 과 mono 가 기존과 바이트 동일하다.
+학습: --weights 에 sim_en-de-tel 이 없고 --set-phone 을 주지 않으면 데이터 구성과 지문이 st4-m2a 와 같다.
+TESTS: tests/test_sim_dialogue.py:
+- 기본 플래그로 만든 시드 세션 3 개의 to_json·mono 해시가 기존과 같다.
+- tel 플래그 500 세션에서:
+  - 교대 간격 ≥0.05 s(overlap 0)
+  - hold 비율 0.05±0.02
+  - 턴 안 쉼 <0.25 s 이라 화자 턴 하나가 episode 하나
+  - 맞장구 0
+
+tests/test_phone_aug.py (화자별 경로):
+- 각 채널의 4.2 kHz 위 에너지 <2%
+- 상호상관 지연 ±1 샘플(영위상)
+- 말소리 구간 gain 오차 <1 dB
+- same-frac 세션은 두 화자 대역 파라미터가 같다
+- P=0 이면 난수를 뽑지 않는다
+
+stage3_train 의 키 분류 함수: 기존 키 집합에서 결과가 같고, sim_en-de-tel 은 xl 로 분류된다.
+
+### C3 상태 인지 교대 bias (디코드 전용, 교차 언어 prefix 만, 결정 지점별 β, dev 에서만 튜닝) [p1=True]
+RATIONALE: TAXI 번역 모드 디코드에서는 onset 의 상당수가 이미 명시적 태그 선택이다(<TRANS> 뒤나 <EOT> 뒤). 진행 중인 균일 tag-bias 프로브는 두 태그에 같은 +b 를 더하므로 이 A/B 선택을 바꾸지 못한다.
+
+현재 슬롯 기준으로 '다른 슬롯'에만 bias 를 주고 결정 지점을 나누면, 태그 누락(SILENT)과 같은 슬롯 재개(RESUME/REASSERT)를 둘 다 뒤집을 수 있다.
+
+정밀도 여유가 크다(턴 안 오교대 0.3%). 예전 하드 삽입(+4.06 cp)은 흔들리는 청크 단위 헤드로 태그를 넣었다. 이 방식은 모델 자신의 태그 logit 만 옮긴다.
+
+번역 kind 안의 word-start 와 단어 중간에는 걸지 않는다. 턴 안 재개가 교대보다 약 2.3 배 많아서 거기에 걸면 오교대와 번역 churn 이 생긴다.
+
+문헌: USM-SCD(arXiv:2309.08023)는 추론 때 <st> 사후확률에 λ=5 를 곱해 F1 64.6→75.3 을 얻었다. 다만 YT-96 다국어, greedy 설정이다.
+IMPL: vapasr/hf/batch_decode.py 에 dataclass SwitchBias(b_eot=0.0, b_res=0.0, b_wi=0.0, modes=('xl',)) 를 추가하고 decode_batch(..., switch_bias=None) 로 받는다.
+
+행별 상태는 emitted 토큰으로 갱신하며 parse_emitted4 와 같은 규칙을 쓴다.
+- cur: 마지막 슬롯 태그, 없으면 None
+- kind: 0 또는 1
+- eot_open: 이 행이 <EOT> 를 낸 뒤 아직 슬롯 태그가 없음
+
+mode 는 행마다 한 번, prefix 에서 슬롯 태그 뒤 언어 이름이 서로 다르면 'xl' 이다.
+
+argmax tid 에 대해, cur 이 있고 mode ∈ modes 이고 advance 가 아닐 때:
+- (i) eot_open 이고 tid 가 <SPK_cur> 또는 word-initial 텍스트 → b_eot
+- (ii) eot_open 이 아니고 kind==1 이며 tid==<SPK_cur>(번역 뒤 재개) → b_res
+- (iii) eot_open 이 아니고 kind==0 이며 tid 가 word-initial 텍스트 → b_wi
+해당하면 그 행 logits 를 복제해 <SPK_other> 에 b 를 더하고, 다시 argmax 해 <SPK_other> 가 이기면 교체한다.
+
+그 밖의 위치는 건드리지 않는다: 번역 kind word-start, 단어 중간, 첫 태그, <NEXT_AUDIO>, <EMPTY_AUDIO>, <TRANS>, <EOT>.
+
+word_init (V,) bool 은 tok.decode([t]).startswith(' ') 로 한 번 캐시한다(spk_guide 의 word_start 재사용). 카운터 s.sb_flips = {eot, res, wi}.
+
+switch_bias=None 이면 블록을 통째로 건너뛰어 토큰이 같다. 직렬 stream_decode(--verify)는 bias 를 지원하지 않으므로 bias≠0 이면 verify 를 assert 로 거부한다.
+
+배선: cst_stage4_taxi.py run, cst_stage4_eval.py run, cst_stage3_eval.py run 에 --switch-bias 'eot=..,res=..,wi=..[;…]' 를 추가한다. --deltas 처럼 같은 인코더 특징을 재사용하고, 출력은 <out>/sb-<tag>/ 와 config.json 이다. 동결한 값은 결과 디렉터리의 decode_policy.json 에 남긴다.
+
+튜닝은 dev 에서만 하고 설정을 동결한 뒤 TAXI 를 한 번 돌린다.
+- xl-tel-dev 160 세션을 tune 80 / check 80 으로 나눈다.
+- 단계 격자: b_eot ∈ {0,1,2,3} → 그 최적에서 b_res ∈ {0,0.5,1,2} → b_wi ∈ {0,0.5,1}.
+- 사전 등록 규칙: tune 반쪽의 attribution share 최소. 단 다음 조건을 지킨다.
+  - 턴 안 오교대 ≤0.6%
+  - hyp/ref change ratio ≤1.05
+  - early-switch partial words ≤ 같은 체크포인트 b=0 의 2 배
+  - xl-eval-v1 번역 BLEU −0.5 이내
+- check 반쪽에서 b=0 대비 paired session bootstrap 95% CI 가 0 을 넘을 때만 채택하고, 아니면 해당 β 를 0 으로 둔다.
+- 같은 언어 prefix 는 0 으로 고정한다(modes=('xl',)).
+- δ10 에서만 튜닝하고 δ4 는 같은 값으로 보고한다.
+FLAG: decode_batch(switch_bias=None), eval/TAXI 스크립트에서 --switch-bias 미지정 → 기존 토큰열 그대로. live App(MLX) 디코더는 바꾸지 않는다.
+TESTS: tests/test_switch_bias.py (test_spk_guide.py 의 stub thinker 패턴):
+(a) None 이나 모든 β=0 이면 토큰열이 같다.
+(b) (i)(ii)(iii) 각각 logit 차가 β 보다 작을 때만 <SPK_other> 로 뒤집히고, 클 때는 그대로다.
+(c) 번역 kind word-start, 단어 중간, 첫 태그, <NEXT_AUDIO>, 같은 언어 prefix 는 불변이다.
+(d) 카운터가 정확하다.
+(e) bias≠0 에서 verify 가 거부된다.
+
+실모델 parity: V1 ck2000 ZTC 200 창에서 switch_bias=None 과 전부 0 의 토큰열이 같아야 한다(guide-off-parity.txt 와 같은 방식).
+
+### C4 TAXI 형식의 비-TAXI 전화 dev(xl-tel-dev)와 턴 결정 지표(cst_attr_turns) [p1=True]
+RATIONALE: TAXI 는 평가 전용이다.
+
+기존 xl eval(sim-dialogue-xl-eval-v1)은 학습과 같은 교차 코퍼스·창 단위 공통 채널 confound 를 안고 있어 채널이 같을 때의 miss 를 보지 못한다. 그리고 per-slot WER 만 낸다.
+
+턴 결정 지표(toggle recall, change ratio, 방향별 miss, 번역 누출)는 V1/V2/V2-notap 을 한 분류로 설명했지만 지금은 scratchpad 에만 있고 TAXI 경로가 박혀 있다.
+
+선택·튜닝·메커니즘 점검을 모두 TAXI 없이 하려면 이 도구가 필요하다.
+IMPL: experiments/sim_to_sessions.py (새 스크립트):
+- 입력: <dir>/<corpus>.refined.dialogues.jsonl 과 mono 캐시.
+- 출력: cstbench sessions.jsonl 과 mix/<conv>.wav(16 kHz, float16 npy 에서 변환).
+  - session_id = conv_id
+  - speakers {a,b: {lang}} 는 meta.spk_lang 에서
+  - turns = build_episodes(d) 의 {speaker, lang, start_s, end_s, transcript=tok.decode(tokens)}
+- xl-tel-dev(C2 의 held-out 160 세션, 30-75 s, seed 1)와 비교용 xl-eval-v1(300) 을 둘 다 변환한다. 그러면 cst_stage4_taxi.py run/score 를 그대로 쓸 수 있다(번역 prefix, 세션 통째, cp/agn/attr 분해).
+
+experiments/cst_attr_turns.py (새 스크립트):
+- scratchpad/v3diag 의 attr_diag.py 와 eot_study.py 를 이식한다. 인자: --sessions --asr --eot --against <다른 결과 디렉터리> --boot 1000.
+- 출력(집계만):
+  - 교대 지점 toggle recall
+  - hyp/ref change ratio
+  - 통째로 틀린 change turn
+  - early/late partial words
+  - 턴 안 오교대율
+  - 새 화자 언어별 miss rate
+  - ≤3 단어 턴 whole-wrong
+  - wrong-slot other-language word rate (세션 참조 어휘 lexicon LID)
+  - slot collapse 세션
+  - 첫 턴 정확도
+  - 이전 슬롯 <EOT>-before-switch f_hit/f_miss
+  - 세션 paired bootstrap 95% CI
+- cst_stage4_taxi.py score 에 --turn-metrics(기본 끔)로 연결한다.
+
+회귀 점검: V1 TAXI 에서 scratchpad 수치를 재현해야 한다(87.4%, 496/540, 통째로 틀린 change turn 44, 9.3% / 3.5%).
+
+경도 게이트: V1 ck2000 의 toggle recall 이 xl-tel-dev 에서 xl-eval-v1 보다 ≥3 pt 낮고 ≤95% 여야 한다. 아니면 dev 만 강화한다(--phone-same-frac 0.3, --jitter-db 10, 짧은 턴 비율↑). 학습 셋은 그대로 둔다.
+
+Stage 3 같은 언어 held-out(cst_stage3_eval 7 코퍼스 × 200 창, δ4/10)에도 같은 지표를 cst_attr_errors 유형과 함께 보고한다.
+FLAG: 새 스크립트만 추가한다. 기존 score·report 파일은 그대로다. cst_stage4_taxi.py score --turn-metrics 기본 끔(끄면 출력 바이트 동일).
+TESTS: tests/test_cst_attr_turns.py:
+- 완벽한 가설: recall 100%, whole-wrong 0, change ratio 1.0
+- 한 턴을 삼킨 fixture: whole-wrong 1, ratio <1
+- 턴 안 오교대 fixture
+- 방향 분해
+- 같은 seed 면 bootstrap 결과가 같다
+
+tests/test_sim_to_sessions.py:
+- 턴 수 = build_episodes 수
+- wav 길이 = duration
+- turn.lang = meta.spk_lang
+- transcript 를 다시 토큰화하면 원래 토큰
+
+mxc 에서 V1 TAXI 재현 점검(집계만).
+
+### C5 합성 창 EOT-문맥 dropout (p=0.5, Step 0 규칙에 따라 켜고 끔) [p1=True]
+RATIONALE: 합성·xl 창은 meta.mask_eot 로 <EOT> 결정 라벨이 −100 이다. 그런데 <EOT> 자체는 문맥에 남는다(cst_dialogue.py:85-87).
+
+합성 점검을 보면 번역 모드 교대는 TAXI형 간격에서 100% <EOT> 뒤에 오고, 학습형 FTO 에서도 <EOT> 없는 교대가 57 대 같은 슬롯 재개 3020 으로 드물다. 모델은 '자기가 <EOT> 를 냈을 때만 교대'를 배웠을 수 있다. 그런데 교차 언어 전화 오디오에서 <EOT> 를 내는 법은 감독받은 적이 없다. 이 조합이면 통째로 삼킨 턴이 그대로 설명된다.
+
+dropout 은 감독을 잃지 않는다. 합성 <EOT> 는 원래 −100 이고, 실제 대화는 건드리지 않는다. 남는 위험은 유효한 단서가 약해지는 것이다. 그래서 합성 창의 절반에만 적용하고, dev 의 EOT 지표로 지킨다.
+IMPL: cst_dialogue.window_streams / window_streams4(..., drop_eot=False):
+- True 면 p_end 가 None 인(합성) episode 의 <EOT> 원소, eot_p, eot_tail 을 넣지 않는다.
+- 대신 ghost(슬롯, k_min, tails) 를 반환하고 st['eot_dropped'] 를 센다.
+
+build_cst_sequence / build_cst4_sequence(..., eot_ghost=()):
+- flatten_cst 뒤 각 ghost 의 청크 c = max(k_min, tails 방출 청크) 를 구한다.
+- c<K 이면 그 라운드를 닫는 <NEXT_AUDIO> 라벨을 −100 으로 둔다('여기서는 EOT 가 아니다'라는 신호를 지운다).
+- flush 라운드는 그대로 둔다.
+
+CstDialogueDataset(eot_drop_synth=0.0): d.meta.mask_eot 인 창에서만, 그리고 p>0 일 때만 rng.random() 을 뽑는다.
+
+problems_of / problems_of4: n_eot + eot_dropped = 창의 EOT 수인지, ghost 위치가 맞는지 검사한다.
+
+stage3_train.py --eot-drop-synth: 지문 키는 >0 일 때만 쓴다.
+
+p1 값은 0.5 다. R1 제출 전에 eot_contingency 규칙으로 켤지 끌지 정한다.
+FLAG: --eot-drop-synth 0 (기본). 난수 소비, 시퀀스, 라벨, 지문이 같다.
+TESTS: tests/test_cst_dialogue.py:
+(a) p=0 이면 해시와 rng 상태가 같다.
+(b) p=1 합성 창(받아쓰기·번역 모드 각각):
+  - <EOT> 없음
+  - read_back 과 read_back4 에 dup_tag 없음
+  - problems_of / problems_of4 0
+  - p=0 대비 바뀐 라벨은 제거된 EOT 와 ghost <NEXT_AUDIO> 뿐
+(c) 실제 대화(mask_eot 아님)는 p=1 에서도 바이트 동일.
+(d) C1 과 함께 켜면 <EOT> 없이 오는 교대 태그도 switch 가중을 받는다.
+
+### P2-A 턴 헤더 직렬화 + 헤더 문법 (매 episode onset 에 슬롯 태그 재선언, <EOT> 뒤 선언 슬롯 헤더 강제). 형식 설계 B+E [p1=False]
+RATIONALE: 지금은 '태그 없음 = 같은 화자'라서 교대를 놓쳐도 손해가 없다. 헤더 형식은 모든 onset 을 명시적인 A/B 선택으로 바꾼다. 명시적 첫 선택은 86/86 이 맞았다.
+
+다만 TAXI 번역 모드 onset 은 이미 <TRANS>/<EOT> 뒤의 명시 태그라서 이득이 주로 받아쓰기와 asr-only 경로에 생긴다. 게다가 다음이 바뀌거나 깨진다.
+- 파서, eval, live App 호환
+- 같은 언어 창에 같은 화자 헤더가 들어가 휴지에서 뒤집힐 위험(한국어 화자 분리도 66%)
+
+그래서 p2 로 미룬다.
+
+문헌 근거의 한계:
+- Zheng et al. 2026 의 virtual <SC> 는 오검출된 교대가 ID 오류로 번지지 않게 하는 정밀도·견고성 목적이다. recall 근거로는 약하다.
+- JEDIS 는 change-only 태그가 per-word 태그보다 cpWER 이 낫다고 보고했다(AMI 23.13 대 24.08). 그러므로 per-word 가 아니라 per-turn 이어야 한다.
+
+발동 조건(OR가 아니라 AND):
+- D1/D2 에서 SILENT(전사 kind 무태그) 비중이 크거나 asr-only 의 miss 가 번역 모드보다 많다.
+- 그리고 p1 뒤에도 xl-tel-dev toggle recall 이 95% 미만이다.
+IMPL: semcommit_dataset.build_interleaved_events(force_tag=None) 에서, 버킷 루프에서만 지정된 episode head 에 같은 슬롯이어도 태그를 낸다.
+
+cst_dialogue:
+- window_streams(4) 가 heads 를 반환한다.
+- tag_flush, retag, tag_cst4 에 force=heads.
+- build_* 가 hdr=[(pos, first|change|same)] 를 반환한다.
+- <SPK_s><EOT><SPK_s> 충돌은 soft_alt_collision 으로 센다.
+- read_back(4) 와 parse_emitted(4) 는 방출 뒤 같은 슬롯 태그를 합법으로 본다.
+- problems_of(4) 에 'header:missing', 'grammar:eot' 를 추가한다.
+
+CstDialogueDataset(tag_scheme), stage3_train --tag-scheme {change,turn}, config.tag_scheme 저장.
+
+batch_decode.TagGrammar:
+- <EOT> 뒤에는 {<NEXT_AUDIO>} ∪ 선언 슬롯 태그만 허용한다.
+- 텍스트·태그 logsumexp 와 <NEXT_AUDIO> 를 비교해 단어 삭제를 막는다.
+- --grammar 는 config.tag_scheme=='turn' 일 때만 기본 켬.
+
+같은 헤더 가중 1.5 는 C1 의 hold 를 일반화해서 쓴다.
+FLAG: --tag-scheme change (기본: GOLDEN 바이트 동일)
+decode --grammar off (기본: 토큰 동일)
+문법은 V1 체크포인트에 배포하지 않는다.
+TESTS: - tests/test_semcommit_format.py 의 GOLDEN 유지
+- 상태기계가 dry-run 학습 시퀀스를 100% 받아들임
+- grammar off 일 때 ZTC 200 창 디코드 parity
+- --tag-scheme turn 에서 problems_of(4) 0
+- 같은 슬롯 재태그가 parse_emitted4 에서 dup_tag 가 아님
+
+### P2-B <SRC> 슬롯 중립 재개 토큰 (번역 뒤 같은 화자 전사 재개를 <SPK_x> 대신 <SRC> 로). 형식 설계 C [p1=False]
+RATIONALE: tag_cst4(cst_dialogue.py:351-370)와 AST replay 에서는 <SPK_x> 가 대부분 '번역 뒤 전사 재개' 신호다. 이것이 onset 결정에 '같은 슬롯' 사전확률을 물려줄 수 있다.
+
+그러나 1:1 이름 바꾸기라서 경계를 인지하지 못한 경우(<EOT> 없음)에는 <SRC> 가 같은 오류를 낸다. 또 모든 번역 데이터와 단일 화자 replay(step 의 약 34%) 형식, 그리고 새 임베딩 행이 바뀌어 BLEU 와 호환성 위험이 있다.
+
+발동 조건(모두 만족):
+- D1 에서 RESUME 가 우세하다.
+- D2 에서 asr-only 의 attribution 이 번역 모드보다 ≥2 pt 낫다.
+- C3 의 (ii) b_res 가 dev 에서 효과가 없다.
+발동하면 P2-A 와 함께 쓴다.
+IMPL: semcommit_tokens:
+- SRC_TOKEN '<SRC>' = 151727 (<TRANS> 151726 다음 행). 여분 행을 assert 로 확인한다.
+- add_src_special 을 추가한다.
+- add_ast_tokens(src=True) 는 행을 mean(W[<SPK_A>], W[<SPK_B>]) + 0.02·noise 로 초기화한다.
+
+tag_cst4: head 가 아닌 같은 슬롯 번역 뒤 재개를 <SRC> 로 바꾼다.
+
+ast_dataset.build_ast_sequence(src_id): 첫 태그 말고는 <SRC> 로 바꾼다.
+
+파서(read_back4, parse_emitted4, cst_stage4_taxi, cst_stage4_eval, live App)는 <SRC> 를 '현재 슬롯 kind=0' 으로 읽는다. 'src_untagged' 위반을 추가한다.
+
+stage3_train --src-resume, config.ast_format='ast-v3'.
+FLAG: --src-resume 끔 (기본). 토큰 추가와 형식 변경이 없다. config 에 ast_format 키가 없으면 기존 파서 경로를 쓴다.
+TESTS: - 끄면 GOLDEN·AST 시퀀스 해시가 같다.
+- 켜면 read_back4 결과 = 이벤트열.
+- 151727 이 여분 행인지 assert.
+- 파서가 <SRC> 를 현재 슬롯 전사로 읽는다.
+
+### P2-C Switchboard same-call 실제 2회선 전화 대화 (dlg_swbd, <EOT> 감독) [p1=False]
+RATIONALE: 다운로드 없이 얻을 수 있는 유일한 실제 2회선 통화다. 파일명 sw03322A_18271375_191563125 에 통화·채널·시작·끝이 들어 있어 약 230 h 를 복원할 수 있다.
+
+얻는 것:
+- 실제 턴 교대
+- 채널별로 다른 수화기·회선
+- 자연스러운 레벨
+- 감독된 <EOT>
+
+지금 Switchboard 는 단일 화자 재료로만 쓰인다.
+
+judge 1 이 꼽은 p2 1순위다. 특히 REASSERT(경계는 보고 슬롯을 잘못 고름)가 우세하거나 E- 일 때 쓴다.
+
+위험:
+- words 행의 통화 커버리지를 모른다. 먼저 측정해야 한다.
+- 영어 전화 EOT 감독이 EOT 보정을 옮길 수 있다.
+IMPL: sim_build_dialogues.py 에 --same-call swbd 모드를 추가하거나 새로 experiments/swbd_call_dialogues.py 를 만든다.
+- swbd-train(-rg) words 행을 통화 키 swbd:swNNNN + A/B 로 묶는다.
+- Unit.order 시각에 그대로 배치한다(speech_span 트리밍 없음).
+- meta mask_eot=False 로 둔다.
+- 전사 없는 발화는 flags untranscribed 로 마스크한다.
+- 커버리지 <0.8 인 통화는 버린다.
+- 믹스는 jitter ±8 dB, 추가 체인 없음, --set-phone dlg_swbd:0.
+- ast-mono 행 타깃을 붙인다(ast_frac 0.5).
+- dev 는 VALIDATION 통화 40 개다.
+
+선행 작업 D4: 통화 커버리지 통계(CPU).
+
+가중은 0.6, sim_en 에서 덜어 온다. R0 대조와 지문 동일성 규율을 지킨다.
+FLAG: --same-call 미지정이면 빌더가 기존과 같다. --weights 에 dlg_swbd 가 없으면 셋이 만들어지지 않는다.
+TESTS: tests/test_swbd_call.py:
+- 채널별 시각 단조
+- 같은 채널 내 자기 겹침 없음
+- 토큰 시각이 발화 안에 있음
+- 커버리지 계산
+- cst_stage4_dryrun 0 problems
+
+### P2-D tel 셋 교대 EOT 감독 (mask_eot='change_only') [p1=False]
+RATIONALE: E- 분기용이다. 지금 교차 언어 합성 데이터는 <EOT> 를 전혀 감독하지 않는다(sim_dialogue mask_eot). 이 변경은 엄격 교대 전화 조건에서 '상대가 이어받는 끝'의 <EOT> recall 을 올려 교대 결정에 단서를 공급한다.
+
+실제 대화의 EOT 보정을 옮길 위험이 있어서 p1 에서는 뺀다.
+IMPL: dialogue_episodes 에서 meta.mask_eot == 'change_only' 이면, 1.5 s 안에 다른 화자가 이어받는 episode 만 outcome change, p_end=1 로 둔다. hold·pause episode 는 계속 마스크한다.
+
+빌더 --eot-supervise change_only 는 tel 셋에만 쓴다.
+
+실제 대화 eval 에서 EOT 정밀도와 지연이 −0.01 이내일 때만 유지한다.
+FLAG: mask_eot True (기본, 기존 의미 그대로). 빌더 --eot-supervise 미지정.
+TESTS: - change_only 에서 change episode 만 p_end=1, 나머지는 None.
+- 기존 True/False 경로는 해시가 같다.
+- problems_of4 0.
+
+### P2-E 교차 언어 놓친-onset 회복 (번역 모드 XlMiss), 이어서 on-policy 교정 [p1=False]
+RATIONALE: 통째로 삼킨 턴이 오류 단어의 94% 이고, 72% 는 다음 교대도 놓쳐서야 다시 맞춰진다.
+
+이 변경은 1-3 단어 뒤 교정 태그를 가르쳐 통째 삼킴을 부분 오류로 바꾼다.
+
+기존 recover 는 다음 한계가 있었다.
+- 2 스트림 받아쓰기 창에만 적용됐다(cst_dialogue.py:251).
+- 번역 모드는 그 전에 반환된다(:609).
+- 같은 언어 데이터에서는 효과가 없었다.
+
+그래서 언어가 증거가 되는 교차 언어 창에만, 실제 오류 패턴(절반은 이전 슬롯 언어로 번역됨)을 흉내 내 적용한다.
+
+발동 조건: p1 뒤 dev 에서 통째로 틀린 change turn 이 4% 를 넘거나 E- 일 때.
+IMPL: cst_dialogue 에 XlMiss(p, max_words=3, translated_frac=0.5, post_eot_frac=0.5) 와 순수 함수 inject_miss 를 추가한다. tag_cst4 뒤, flatten 전에 적용한다.
+- onset 의 <SPK_new> 를 뺀다.
+- 첫 m 단어를 이전 슬롯 문맥(원문 또는 그 턴 번역의 첫 m 단어)에 입력 전용(-100)으로 둔다.
+- m+1 번째 단어 앞에 교정 <SPK_new> 를 넣는다(가중 w_change).
+
+problems_of(4) 에 'xlmiss:*' 를 추가한다. stage3_train --xl-miss-p.
+
+2 라운드: experiments/v3_onpolicy_decode.py 와 v3_onpolicy_build.py 로 모델 자신의 prefix 에서 교정 예제를 만든다(OnPolicyCstDataset, problems_onpol).
+FLAG: --xl-miss-p 0 (기본: 난수·시퀀스 동일). on-policy 셋은 --weights 에 없으면 쓰지 않는다.
+TESTS: tests/test_xlmiss.py:
+- read-back 이 올바르다.
+- 삼킨 구간은 -100 이다.
+- 교정 라벨이 있다.
+- 단어가 중복되지 않는다.
+- 같은 언어 창에는 적용되지 않는다.
+- p=0 이면 해시가 같다.
+
+### P2-F 전화 체인과 짝 짓기 확장: A-law·EQ·잡음 모드, 레벨 ≥12 dB, sim_en-ko-tel, F0 매칭, YODAS en↔de 같은 계열 짝 [p1=False]
+RATIONALE: C2 의 tel 셋도 여전히 영어 풀 대 독일어 풀이라 교차 코퍼스다. 코퍼스 음색이라는 잔여 지름길이 남는다.
+
+발동 조건:
+- dev 경도 게이트가 계속 약하다.
+- 또는 p1 뒤 REASSERT/언어 일치 오류가 남는다.
+- 또는 비-TAXI 레벨 진단에서 조용한 쪽이 삼켜진다는 근거가 나온다.
+IMPL: vapasr/data/tel_chain.py:
+- TelChain(대역 무작위, 0-2 피킹 EQ, μ/A-law/none) 을 만든다. phone_aug 에 alaw_roundtrip 을 추가한다.
+
+빌더 플래그(기본값은 기존과 같음):
+- --level-db
+- --noise-mode-p mix/cont/gated/none
+- --pair-mode f0:p (experiments/sim_speaker_f0.py 로 화자 F0 계산)
+- --family-frac (YODAS en↔de; 비디오 키는 교차 언어 셋에서만)
+
+sim_en-ko-tel 은 AIHub 풀을 쓴다.
+FLAG: 모든 새 빌더 플래그 기본값에서 기존 세션 바이트가 같다.
+TESTS: tests/test_tel_chain.py:
+- 4.2 kHz 위 에너지 <2%
+- 정렬 ±1 샘플
+- RMS 유지
+- 0 구간 유지
+- A-law 오차 <0.03
+- 기본 플래그 해시 동일
+
+### P2-G 교차 언어 헤더 2-토큰 lookahead (디코드 전용, KV fork) [p1=False]
+RATIONALE: 삼킨 단어의 48.9% 는 정확한 자기 언어 전사이고, wrong-slot 치환의 63.7% 는 상대 언어다. 모델은 '언어는 맞고 슬롯은 틀린' 증거를 태그를 확정한 뒤에야 갖는다.
+
+태그 후보마다 다음 word-initial 확률을 비교하면 이 증거를 결정에 쓸 수 있다.
+
+발동 조건: p1 뒤 dev 에 그런 잔여 오류가 많거나, D1 에서 ABSORBED 가 우세할 때.
+
+비용: KV 복제(90 s 창 fp32 기준 0.1-0.5 GB), MLX 이식. 잘못된 슬롯에서 확신을 갖고 '번역'하면 효과가 약하다.
+IMPL: decode_batch 에서 교차 언어 행이 슬롯 태그를 낼 때(청크당 최대 1 회):
+- fork_cache 로 그 행을 n 개 후보로 복제한다(DynamicCache.layers 와 key_cache API 를 모두 처리).
+- 각 후보 태그를 넣어 s2 = max log-softmax(텍스트 ∩ word_init) 를 구한다.
+- Score = log p(tag) + β·[다른 슬롯] + λ·s2 로 고른다.
+
+λ 는 xl dev 에서만 고른다.
+FLAG: --lookahead off (기본). λ=0 parity 시험으로 토큰 동일을 확인한다.
+TESTS: - λ=0 이면 토큰이 같다.
+- 두 KV API 모두 fork_cache 가 정확하다.
+- stub 에서 언어 점수가 결정을 바꾼다.
+
+### V31-H word-aligned slot head + 2-word hysteresis (라벨 지연 사용자 결정 필요) [p1=False]
+RATIONALE: <EOT> 에 의존하지 않는 안전망이다. 매 단어 결정 위치에서 다음 단어의 슬롯을 예측하고, θ 이상으로 2 번 연속 불일치하면 태그를 넣는다.
+
+Kanda et al. 2022 의 t-vector 는 결정 지연 2 단어가 가장 좋았다(LibriCSS cpWER 12.4, 8 단어는 19.7).
+
+위험:
+- 하드 삽입 계열의 실패 선례가 있다(+4.06 cp).
+- 1-2 단어 라벨 지연을 허용할지는 사용자가 정해야 한다. VibeVoice 스트리밍의 알고리즘적 화자 지연은 1.53-2.00 s 다.
+IMPL: modeling_vapasr.add_slot_head(slots=2, weight=0.2, change_weight=5.0).
+
+라벨은 build_cst(4)_sequence 의 단어 결정 위치에서 dec_slot, dec_w 로 만들고, ROW_KEYS 와 IN_KEYS 에 추가한다.
+
+디코드는 SlotHysteresis(theta, n=2, relabel=0|1) 이다. θ 는 dev 에서만 고르고, 기본은 삽입만 한다(relabel=0).
+FLAG: add_slot_head 를 부르지 않음(기본). config 에 키가 없고 디코드 --slot-hyst off.
+TESTS: - 라벨 위치가 태그를 본 hidden 을 제외한다.
+- 헤드를 끄면 시퀀스가 같다.
+- 저장 후 다시 로드해도 parity 가 맞다.
+- stub 에서 히스테리시스가 2 연속 불일치에서만 삽입한다.
+
+### P3 같은 언어 화자 귀속 트랙: δ-정렬 spk_head 라벨, 그다음 detach 화자 분기 + zero-init 증거 주입, 그다음 prototype·dense word-slot head·hard same-language pair [p1=False]
+RATIONALE: TAXI 레버는 아니다. TAXI 는 슬롯이 언어로 정해지고, 모델은 이미 새 언어를 듣고 있다.
+
+이 트랙의 대상은 같은 언어 귀속 몫이다(7.4 대 VibeVoice 5.0 스트리밍 / 2.2 오프라인). 여기서는 목소리 증거가 차이를 만든다. 근거:
+- 화자 분리도는 L00 에서 96%, LLM 입력에서 69% 다.
+- spk_head 는 지연 정렬이 아니라 현재 청크를 라벨로 쓴다(cst_dialogue.py:120-126).
+- 목적함수 없는 raw 탭(V2-a)은 7.4→7.4 로 실패했다. 따라서 화자 목적함수가 필요하다.
+
+문헌(단서 포함):
+- JEDIS: 학습 전용 단어 수준 화자 디코더로 AMI WDER 10.87→6.97.
+- Sortformer: 커널 주입으로 AMI cpWER 32.94→28.17. 단 동결 Sortformer 로 약 123M 파라미터가 늘었고, 공동 미세조정하면 32.74.
+- G-STAR: 14.23→10.29 는 인터리브 빈도의 효과이지 단서 유무의 효과가 아니다.
+IMPL: 1 단계: slot_activity 를 k−δ 정렬 라벨로 바꾸는 옵션 --spk-act-delay-aligned.
+
+2 단계: 표현 설계 C1-C4 를 쓴다.
+- vapasr/hf/spk_branch.py 의 SpkBranch(L00·마지막 층 입력은 detach)
+- 사후확률 detach 후 zero-init MLP 로 chunk embedding 에 더함
+- B0 분기 사전학습
+- evidence null/oracle 신뢰도 시험
+
+3 단계: prototype(C7), dense word-slot head(C8), F0 hard pair 재빌드(데이터 C6), tag-context dropout.
+
+live App 은 증분 분기가 생기기 전까지 거부한다.
+FLAG: --spk-branch-layer -1, --spk-act-delay-aligned 끔 (기본: V1 바이트 동일).
+TESTS: - 인과성: 접두를 잘라도 분기 출력이 같다.
+- detach 했으므로 인코더 grad 0.
+- 저장 후 다시 로드해도 parity.
+- zero-init 이라 step 0 에서 LLM 입력이 V1 과 같다.
+
+EXISTING FIXES:
+ - mono Stage 3/4 의 슬롯 태그는 가중이 1 이다. modeling_vapasr.py:148 의 tag_ids/tag_weight 가 lanes>0 일 때만 켜지기 때문이다. 그래서 교대 결정이 드물고 약하게 학습된다. → C1: pos_weight 로 교대 3, <EOT> 뒤 머무름 1.5 를 준다. 모델 코드는 바꾸지 않는다(soft_ce pos_override 와 packing ROW_KEY 가 이미 있다).
+ - 교차 언어 합성(xl)에는 채널·코퍼스 지름길이 있다. 쌍이 100% 교차 코퍼스이고, phone aug 가 창 단위라 두 화자에게 같다(cst_dialogue.py:713). 레벨 jitter 는 ±3 dB 다(sim_build_dialogues.py:114). 약 30% 세션은 8 kHz Switchboard 대 광대역 독일어다. → C2 sim_en-de-tel: 화자별 독립 전화 대역, ±8 dB, 10% 동일 채널.
+ - 합성 턴 타이밍은 p_hold 0.3, FTO overlap 23%, 맞장구가 있다. 또 intra_pause 0.1-0.5 s 가 0.25 s episode 경계를 넘어서 턴 안에 같은 화자 <EOT> 가 생긴다. → C2 는 교차 언어 tel 셋에만 엄격 교대 타이밍을 쓴다(p_hold 0.05, FTO 0.05-0.8, intra-pause 0.1-0.24, 맞장구 0). 같은 언어 셋은 그대로 둔다.
+ - 합성 <EOT> 는 문맥에는 있지만 감독되지 않는다(mask_eot, cst_dialogue.py:85-87). 그래서 교대가 '자기 <EOT> 뒤'라는 조건에 묶여 학습됐을 수 있다. → C5 EOT-문맥 dropout 으로 고치고, S0 의 dTF 로 측정한다.
+ - 디코드는 상태를 보지 않는 greedy argmax 다. 진행 중인 균일 tag-bias 프로브는 <TRANS> 뒤 A/B 선택을 바꿀 수 없어서 보정 가설을 검증하지 못한다. → C3 는 결정 지점별·현재 슬롯 기준 상태 인지 bias 를 쓰고, dev 에서 tune/check 를 나눠 튜닝한 뒤 동결한다.
+ - 평가 공백. 턴 결정 지표가 scratchpad 에만 있고 TAXI 경로가 박혀 있다. 기존 xl eval 은 학습과 같은 confound 를 갖고 per-slot WER 만 낸다. TAXI 없이 튜닝할 전화 dev 가 없다. → C4: xl-tel-dev 를 TAXI 형식으로 만들고, cst_attr_turns 와 경도 게이트를 둔다.
+ - EOT 분기가 열려 있는데, 형식 변경안은 측정 전에 형식을 바꾸려 했다. → S0 의 D1/D2/D5/dTF 가 컴포넌트 on/off 와 p2 우선순위를 정한다. TAXI 는 값을 고르는 데 쓰지 않고, 비-TAXI dTF 로 교차 확인한다.
+ - 비교 규율. 형식 설계는 3000 step run 을 2500 step V1 대조와 비교했다. 체크포인트 간 spread 를 noise floor 로 쓰는 것도 약하다. → step 수를 2500 으로 맞추고 기존 st4-m2a ck1500/ck2000/final 을 대조로 재사용한다. 세션 paired bootstrap 을 쓰고, toggle recall binomial SE ≈1.4 pt(540 교대)를 명시한다.
+ - 체크포인트 선택. m2a final 은 FLEURS 한→영 CER 이 12.06 으로 회귀했고, m2b 는 rep_chde 때문에 TAXI 가 나빠졌다. → 사전 등록한 dev 가드 규칙(FLEURS, 단일 화자, EOT, 같은 언어 attr 포함)으로 체크포인트와 β 를 고른다.
+ - (p2 로 미룸, 근거 있음) recover 가 교차 언어·번역 모드에 닿지 않는다(cst_dialogue.py:251, :609). → P2-E XlMiss·on-policy.
+ - (p2 로 미룸, 근거 있음) Switchboard 와 CallHome-de 가 단일 화자 재료로만 쓰인다. → P2-C dlg_swbd.
+ - (p3 로 미룸, 근거 있음) spk_head 라벨이 δ 정렬이 아니라 현재 청크다(cst_dialogue.py:120-126). → P3 1 단계.
+
+RUN PLAN:
+ 원칙: SLURM 제출과 데이터 업로드는 사용자만 한다. mxc 에서는 아무것도 지우지 않고, 빌드는 새 디렉터리에만 쓴다. 코드 동기화는 azcopy 로 한다. TAXI 텍스트와 가설은 mxc 에만 두고, 밖으로는 집계만 낸다.
+
+STEP 0. 코드 약 1-1.5 일과 디코드 약 6-8 GPU-h. 훈련은 없고 호스트 GPU 를 쓰며 사용자가 실행한다.
+0a. 진행 중인 EOT 로깅 프로브(taxi_v3_probe b0/1.5/3)를 eot_study 로 집계해 f_hit/f_miss 를 얻는다. 균일 bias 의 cp 변화는 해석하지 않는다.
+0b. D1 을 돌린다: V1 st4-m2a ck2000, δ10, max-window 90, b=0, --classify-onsets.
+0c. D2 를 돌린다: 같은 조건에 --asr-only. 이어서 D5 를 돌린다: dry-run --tag-roles(CPU).
+0d. C2 빌드를 한다: sim-dialogue-xl-tel-v1(10k, CPU 약 20 분)과 sim-dialogue-xl-tel-eval-v1(160 held-out, seed 1).
+  - 둘 다 cst_stage4_dryrun 0 problems 여야 한다.
+  - sim_to_sessions 로 xl-tel-dev 와 xl-eval-v1 을 TAXI 형식으로 변환한다.
+0e. V1 ck2000 을 xl-tel-dev 와 xl-eval-v1 에 디코드하고 경도 게이트를 적용한다. 실패하면 dev 만 강화한다.
+0f. dTF 를 잰다: cst_switch_tf, V1 ck2000, xl-tel-dev 300 창, 두 모드.
+0g. V1 ck2000 에서 C3 단계 격자를 돌린다(tune 80 세션). check 80 으로 확인한 뒤 decode_policy 를 동결한다. 그 뒤 TAXI 를 δ10 으로 한 번 디코드해 'V1+decode-only' 행을 만든다.
+0h. 불변식을 확인한다.
+  - 새 플래그를 모두 끄면 stage3_train --dry-run 의 지문이 st4-m2a config.stage3 와 같아야 한다.
+  - 셋별 32 창 시퀀스 해시가 같아야 한다.
+  - GOLDEN 이 유지돼야 한다.
+  - R1 플래그로 dry-run 했을 때 problems_of / problems_of4 가 0 이어야 한다(switch_w, hold_w, ghost 포함).
+  - 20-step smoke 가 PARITY OK 여야 한다.
+0i. 제출 전에 C5 를 결정한다(eot_contingency 규칙). 결정은 run 디렉터리 README 에 적는다.
+
+TRAINING. apex, 2x8 H200, 각 약 1 h, 사용자가 제출한다.
+
+R1 'v3-p1' 이 V3-p1 run 이다.
+- st4-m2a(job 93404)와 같게 둔다: init /soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000. 플래그는 stage4_m2_check.sh 에서 rep_chde 를 뺀 것과 같다. 2 슬롯, 20-40 s 창, split v2, --phone-aug 0.3, spk-act 0.5, backchannel 1.0,3, decision-weight 2, lr 4e-5, δ4-10, dlg-ast-frac 0.5, sim-trans-frac 0.8, seed 0, --max-steps 2500, --save-every 500.
+- 바꾸는 것:
+  - --sim-data $D/sim-dialogue-v2,$D/sim-dialogue-xl-v1,$D/sim-dialogue-xl-tel-v1
+  - --weights dlg_ko:2,dlg_en:0.7,dlg_de:0.7,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:0.5,sim_en-de-tel:1.0,sim_en-ko:1.0,rep_ko:1.2,rep_en:1.2,rep_de:1.2
+  - --set-phone sim_en-de-tel:0
+  - --change-tag-weight 3 --hold-tag-weight 1.5
+  - 0i 규칙에 따라 --eot-drop-synth 0.5
+- 학습이 끝나면 save/reload parity(분기·결정 통계 키 포함)를 확인한다.
+
+R2 'v3-p1-nodata' 는 선택이지만 권장하는 병렬 ablation 이다. R1 에서 tel 셋을 빼고 st4-m2a 가중을 그대로 쓴다. C1 과 C5 는 R1 과 같다. 비교로 얻는 것:
+- R1−R2 = C2 의 효과
+- R2−V1 = C1(+C5)의 효과
+- (X+b*)−X = 디코드 bias 의 효과
+
+대조: 기존 st4-m2a ck1500/ck2000/final 을 그대로 쓴다. 재학습하지 않는다.
+
+C5 판단이 경계선이면 세 번째 슬롯에서 R1 에서 C5 를 뺀 run 을 돌린다.
+
+평가 순서. 체크포인트마다 ck1500, ck2000, final.
+(1) b=0 으로 dev 전체와 가드 세트를 돌리고, 사전 등록 규칙으로 체크포인트를 고른다.
+(2) 고른 체크포인트에서만 C3 격자(tune)를 돌리고 check 로 확인한 뒤 동결한다.
+(3) TAXI 를 b=0 과 b* 로 정확히 두 번 디코드한다. δ10 세션 통째, 그리고 δ4 는 b* 로 돌린다. 이어서 cst_stage4_taxi score --turn-metrics 를 돌리고 V1 ck2000 대비 paired session bootstrap 을 낸다.
+(4) m2a 때와 같은 표준 스위트를 돌린다: stage3, dlg, xl summary, VibeVoice 같은 창, FLEURS, CallHome-de, 단일 화자.
+
+보고 표(TAXI): V1, V1+b*, R2, R2+b*, R1, R1+b*, VibeVoice 스트리밍/오프라인.
+
+p1 뒤 결정:
+- V3-p1 후보 기준: R1 의 TAXI attr ≤3 이고 cp <20.5 이며 가드를 모두 통과. 승격은 사용자가 정한다.
+- R1 이 dev 에서 R2 보다 noise floor 이상 낫지 않으면, 새 데이터가 없는 R2 를 택한다.
+- 같은 언어 가드가 깨지고 TAXI 는 좋아졌다면 --decision-weight-sets 를 xl 셋으로만 두고 1 run 을 다시 돌린다. 이 결정은 사용자가 한다.
+- dev 와 TAXI 의 recall 이 모두 93% 미만이면 bias 를 키우지 않는다. 대신 p2 로 간다. D1 클래스별 p2:
+  - REASSERT(명시적 오선택) 우세 → P2-C dlg_swbd, P2-F, P2-G
+  - SILENT 우세 → P2-A
+  - RESUME 우세 + D2 asr-only 가 ≥2 pt 나음 + C3(ii) 실패 → P2-B(+P2-A)
+  - ABSORBED 우세 또는 E- → P2-D, P2-E
+  - 통째로 틀린 change turn 이 4% 초과 → P2-E
+
+예산: 학습 1-2 run(각 약 1 h, 2x8 H200). 디코드는 Step 0 약 6-8 GPU-h, p1 평가 약 6-8 GPU-h. CPU 빌드 약 30 분.
+
+EVAL PLAN:
+ 1) 주 지표: TAXI. 평가 전용이고 설정을 동결한 뒤에만 돈다. 세션 통째(max-window 90), δ10 이 주, δ4 를 함께 보고한다. 번역 prefix, cst_stage4_taxi.attr_split 의 공통 정규화를 쓴다.
+- cp, agn, attr = cp − agn.
+- 목표:
+  - attr ≤3.0 (V1 8.0, VibeVoice 스트리밍 0.4). 확장 목표 ≤1.5.
+  - cp <20.5 (VibeVoice 스트리밍). 확장 목표 <16.8 (VibeVoice 오프라인).
+  - agn ≤18.4.
+- V1 ck2000 대비 paired session bootstrap 95% CI 를 낸다.
+- 해석 기준:
+  - toggle recall SE ≈1.4 pt(540 교대).
+  - 최악 10 세션이 오류 단어의 75% 를 차지하므로 세션 bootstrap 을 필수로 한다.
+  - cp <20.5 에는 대략 recall ≳95-96% 가 필요하다(recall 95% → attr ≈3.2, 번역 누출 감소로 agn ≈17.4).
+
+2) TAXI 오류 구조 (cst_attr_turns, 집계만)
+- toggle recall: 목표 ≥95%, 확장 목표 ≥97% (V1 87.4, VibeVoice 98.1)
+- hyp/ref change ratio: 0.95-1.05 (V1 0.92)
+- 통째로 틀린 change turn: V1 44/540
+- 턴 안 오교대: 가드 ≤0.6% (V1 0.3%)
+- early-switch partial words: 가드 ≤ V1 의 2 배 (V1 18)
+- 방향별 miss: into EN 9.3% / into DE 3.5%
+- ≤3 단어 턴 whole-wrong: 14.9%
+- wrong-slot other-language word rate: V1 2.5%
+- 첫 턴: 86/86 유지
+- slot collapse 세션
+- 역전 연쇄 전이: V1 11
+- f_hit/f_miss
+- D1 클래스 분포 (V1 대 R1)
+
+3) 선택 지표 (비-TAXI, 사전 등록)
+- xl-tel-dev(tune/check 반쪽): attribution share, toggle recall, change ratio, 턴 안 오교대, 방향별 miss
+- xl-eval-v1: 기존 confound 셋, 회귀 없음
+- Stage 3 같은 언어 held-out(aihub134-1/-2, aihub71631, otoSpeech, kec, ztc, nsc; 7 코퍼스 × 200 창, δ4/10): cp/agn/attr, cst_attr_errors 유형(whole, early, late, inner, streak), toggle recall, 같은 화자 onset 오교대율
+
+체크포인트 규칙: b=0 에서 xl-tel-dev attribution share 가 최소인 체크포인트를 고른다. 단 아래 가드를 모두 지켜야 한다.
+
+4) 가드 (V1 ck2000 대비 넘으면 안 되는 선)
+- agn: TAXI 와 같은 언어 dev 에서 +0.3 pt 이내.
+- 같은 언어 attribution share: 악화 ≤0.2 pt (CI 가 0 을 포함).
+- EOT: Stage 3 match_eot 정밀도/재현율 −0.01 이내, 지연 불변.
+- 단일 화자 WER/CER: VoxPopuli-AA, Kspon, YODAS-de dev, LS test-other, CallHome-de 에서 +0.2-0.3 abs 이내.
+- 번역: TAXI 양방향 BLEU/chrF, 빈 턴(V1 3/12), FLEURS 3 방향, xl-eval BLEU/chrF 가 −0.5 BLEU / −1 chrF 이내. FLEURS 한→영 CER(m2a final 의 12.06 회귀)을 따로 본다.
+- 합성 영어 반복과 강제 진행 창 수.
+- 지연: δ10 방출 오프셋 중앙 ≈0.74 s, StreamLAAL 불변. 디코드 RTF 를 보고한다.
+
+5) 메커니즘 지표
+- 학습 로그(대화 행): top1_switch, switch_miss, switch_wrong_slot, top1_hold, switch_per_dlg_step, loss_text, loss_rep, loss_turn_dlg 를 st4-m2a 와 비교한다.
+- cst_switch_tf(R1/R2/V1): 교대 top-1 과 p(교대) 대 p(같은 슬롯), <EOT> 유지/제거 차 dTF. C5 가 의존을 줄였는지 본다.
+- 디코드 카운터: sb_flips{eot, res, wi} 를 100 교대당으로 센다.
+
+6) 불변식 (필수)
+- 모든 새 플래그를 끄면 시퀀스, 지문, 디코드 토큰이 바이트 동일.
+- R1 dry-run 에서 problems_of / problems_of4 가 0 (switch_w, hold_w, ghost 포함).
+- smoke PARITY OK.
+- 학습 끝 save/reload parity.
+- bias=None 일 때 ZTC 200 창 디코드 parity.
+
+7) Step 0 보고 (모두 집계)
+- D1 클래스 × <EOT> 유무 × 방향
+- D2 asr-only 대 번역 모드의 attr 와 toggle recall
+- D5 셋별 태그 역할 비율
+- dTF
+- 경도 게이트: V1 의 xl-tel-dev 대 xl-eval-v1 recall
+- V1+b* 의 TAXI 1 회 결과
+
+RISKS:
+ C1 교대 가중: 오교대나 early switch 가 늘 수 있다.
+- 결정 위치를 교대 태그 중 다음 토큰이 word-initial 인 것으로 좁힌다.
+- <EOT> 뒤 머무름도 1.5 로 함께 감독한다.
+- 턴 안 오교대 ≤0.6%, early-switch ≤2 배, 같은 언어 attr 가드를 둔다.
+- 대비책: --decision-weight-sets 로 xl 셋에만 건다.
+- teacher-forced 교대 top-1 이 이미 ~100% 면 이 레버는 거의 효과가 없다. S0 dTF 와 학습 로그로 미리 보인다.
+
+C2 tel 셋 위험과 대응:
+- '선이 다르면 화자가 다르다'는 새 지름길 → 10% 동일 채널 세션을 넣는다.
+- 클립된 FTO 경계(0.05, 0.8)에 값이 몰린다 → 수용하되 dev 로 확인한다.
+- 이중 전화 처리 → --set-phone sim_en-de-tel:0.
+- 다른 셋이 약 4% 희석되고 replay 비중이 32.4→31.0% 로 준다 → 단일 화자·FLEURS 가드.
+- 여전히 영어 풀 대 독일어 풀이라 교차 코퍼스다 → 잔여 confound 는 P2-C/P2-F 에서 다룬다.
+- 엄격 교대 사전확률이 같은 언어로 샐 수 있다 → 교차 언어 tel 셋에만 적용하고 같은 언어 sim 은 그대로 둔다.
+
+C5 EOT-문맥 dropout:
+- 유효한 '<EOT> 뒤 교대' 단서가 약해지고 실제 대화의 EOT 방출이 줄 수 있다.
+- 대응: 합성 창의 50% 에만 건다. ghost 라운드의 <NEXT_AUDIO> 는 마스크한다. 실제 대화는 건드리지 않는다. EOT P/R 가드를 둔다. E+ 가 확실하면 끈다(dTF 와 D1 이 둘 다 E+ 일 때).
+
+C3 디코드 bias:
+- 오교대와 번역 churn 이 생길 수 있다.
+- 대응:
+  - 결정 지점 셋에만 걸고, 번역 kind 안과 단어 중간은 제외한다.
+  - xl prefix 에만 걸고, 같은 언어는 0 으로 둔다.
+  - tune/check 를 나눠 β 가 dev 에 과적합하지 않게 하고, check 반쪽에서 CI 가 0 을 넘을 때만 채택한다.
+  - 슬롯 인덱스(B)가 아니라 '현재가 아닌 슬롯'에만 bias 를 준다(V2 의 슬롯 B 편향 선례).
+- dev 최적 β 가 실제 통화로 잘 옮겨가지 않을 수 있다. 그래서 TAXI 는 b=0 과 b* 를 둘 다 보고한다.
+
+dev 타당성:
+- 합성 dev 는 순위 신호이지 수준 추정이 아니다.
+- 경도 게이트를 둔다: V1 이 xl-tel-dev 에서 실제로 덜 맞혀야 한다.
+- 여전히 순위가 TAXI 와 어긋날 수 있다. p2 에서 swbd-call-dev(실제 2회선)를 더해 보완한다.
+
+TAXI 누출 금지:
+- 값, 체크포인트, 플래그, 변형은 TAXI 로 고르지 않는다.
+- D1 은 컴포넌트를 켜고 끄는 데에만 쓰고, 비-TAXI dTF 로 교차 확인한다.
+- TAXI 는 체크포인트당 b=0 과 b* 로 정확히 두 번만 디코드한다.
+
+통계: toggle recall SE ≈1.4 pt 이고 최악 10 세션이 75% 다. 세션 paired bootstrap, change ratio, 오교대 가드를 함께 보고하고, noise floor 미만의 이득은 주장하지 않는다.
+
+상한 위험: 모든 레버가 사전확률을 옮기는 성격이라 recall 95% 에 못 미칠 수 있다.
+- 기대를 정직하게 둔다: cp 19.5-21.5.
+- 미달하면 bias 를 키우지 않고, D1 클래스에 맞춰 p2 로 간다.
+- VibeVoice 는 1.53-2.0 s 의 알고리즘적 화자 지연과 약 420k h 스트리밍 사전학습을 쓴다. 우리는 0.8 s 단어 지연이다. 화자 라벨 지연 1-2 단어 허용(V31-H)은 사용자가 정할 일이다.
+
+하지 말 것:
+- 청크 단위 spk_head 로 태그를 하드 삽입(+4.06 cp).
+- 목적함수 없는 raw 탭(V2-a).
+- V2 식으로 2 화자 전화 데이터를 희석(4 슬롯, 회의, 20-90 s 창 → recall 79.6%).
+- 같은 언어 random-flip recover.
+- δ, 창 길이, 슬롯 초기화·flip 조정.
+- per-word 화자 태그.
+- 화자 모듈을 인코더와 공동 미세조정.
+- p1 에 형식 변경(헤더, <SRC>, 문법)을 섞는 것.
+- 3000 step 대 2500 step 비교.
+- 균일 bias 프로브 결과를 C3 의 반증으로 읽는 것.
+
+운영 위험:
+- 맥 Desktop 저장소가 iCloud 에서 dataless 로 퇴출될 수 있다. 읽기 전에 확인하고, 대용량 스테이징은 T5 에 둔다.
+- mxc NFS 에서 import 가 느리다.
+- 컨테이너 기본 python 은 쓰지 않는다.
+- hpc-52 는 exclude 한다. apex 는 비선점이다.
+- 빌드는 새 디렉터리에만 쓰고 rsync --delete 는 쓰지 않는다.
+
+EOT CONTINGENCY:
+ 측정 (설정이나 값을 정하기 전에 한다)
+- f_miss: V1 d10 의 놓친 교대(직전 턴은 맞음, 새 턴은 틀림) 중에서, 직전 턴 마지막 가설 단어와 새 턴 첫 가설 단어 사이에 이전 슬롯의 <EOT> 가 방출된 비율. 출처는 eot_study 와 D1.
+- f_hit: 잡은 교대에서 같은 비율.
+- D1 클래스 분포: OK, RESUME, REASSERT, SILENT, ABSORBED.
+- 비-TAXI 교차 확인: xl-tel-dev 에서 V1 의 dTF.
+- 새 화자의 첫 단어보다 늦게 방출된 <EOT> 는 '없음'으로 센다.
+- 이 측정은 컴포넌트를 켜고 끄는 데만 쓰고, 어떤 값도 고르지 않는다.
+
+E+ : 경계는 들었는데 결정을 놓친 경우
+조건: f_miss ≥0.7 이고 dTF <5 pt. 둘 다 만족해야 한다.
+- p1 조정:
+  - C5 를 끈다. 유효한 '<EOT> 뒤 교대' 단서를 지킨다.
+  - C1 은 그대로 둔다(교대 3, 머무름 1.5).
+  - C3 는 결정 지점 (i) b_eot 를 중심으로 튜닝한다. tel 조건에서 <EOT> 뒤 hold 는 드물어서(합성 0.05) 오교대 위험이 낮다. b_res 와 b_wi 는 격자에 남겨 dev 가 정하게 한다.
+- p2 우선순위(D1 클래스로 정한다):
+  - REASSERT, 즉 <EOT> 뒤 같은 슬롯을 명시적으로 잘못 고름이 우세: 결정의 형식이 아니라 증거와 슬롯의 결합 문제다. P2-C(Switchboard same-call 실제 2회선, EOT 감독), P2-F(확장 전화 체인, 레벨 ≥12 dB, F0·계열 짝), P2-G(lookahead, 디코드만)를 쓴다.
+  - SILENT 가 받아쓰기 경로에서 크다: P2-A(헤더와 문법).
+  - RESUME 이 우세하고 D2 asr-only 가 ≥2 pt 나으며 C3(ii) 가 dev 에서 실패한다: P2-B(<SRC>) 와 P2-A.
+
+E- : 경계 자체를 놓친 경우
+조건: 놓친 교대의 ≥30% 에 이전 슬롯 <EOT> 가 없거나, dTF ≥5 pt.
+- p1 조정:
+  - C5 를 켠다(--eot-drop-synth 0.5). R2 에도 똑같이 켜서 R1−R2 가 C2 효과만 남게 한다.
+  - C3 는 (ii) <TRANS> 뒤 재개와 (iii) 전사 word-start 를 함께 튜닝한다. <EOT> 게이트 지점은 거의 발동하지 않는다.
+  - 1 차 진단 지표는 TAXI 와 dev 의 교대 앞 <EOT> 비율, Stage 3 EOT F1 이다.
+- p2 우선순위:
+  - P2-D: tel 셋 교대 EOT 감독(mask_eot='change_only'). 실제 대화의 EOT 정밀도·지연 가드를 통과할 때만 유지한다.
+  - P2-E: 번역 모드 XlMiss, 이어서 on-policy 교정. <EOT> 없이 1-3 단어 안에 교정하도록 가르친다.
+  - P2-C: dlg_swbd. 실제 전화 타이밍에서 EOT 가 감독된다.
+  - recall 이 여전히 95% 미만이면 V31-H(word-aligned slot head + 히스테리시스). 사용자가 라벨 지연을 결정해야 한다.
+  - P2-A(헤더와 문법)는 순위를 낮춘다. <EOT> 가 없으면 헤더 문법이 발동하지 않는다.
+
+혼합이거나 판단이 엇갈리는 경우
+조건: 0.3 < (EOT 없는 비율) < 0.7 이면서 dTF 와 D1 이 엇갈림.
+- C5 를 켠다. 감독을 잃지 않기 때문이다.
+- 슬롯 여유가 있으면 R1 에서 C5 를 뺀 run 을 함께 돌린다.
+- C3 세 지점을 모두 튜닝한다.
+- p2 는 우세 클래스를 따른다.
+
+공통
+- C1, C2, C3 는 두 분기 모두에서 그대로 둔다.
+  - 번역 모드에서 교대는 <EOT> 유무와 상관없이 명시적 태그 결정이다.
+  - C2 는 채널 지름길을 없앤다.
+- ABSORBED(번역 kind 로 흡수, 언어 강제)가 크면 분기와 상관없이 P2-G lookahead 와 P2-E 의 번역 변형을 앞으로 당긴다.
+- D2(asr-only)가 번역 모드보다 크게 나으면 번역 형식이 원인으로 지목된 것이다. 이때 P2-B 의 우선순위를 올린다. 다만 TAXI 디코드 방식(번역 prefix)은 바꾸지 않는다.
+
+CITATIONS:
+ - Zhao, G., Wang, Q., Lu, H., Huang, Y., Lopez Moreno, I. (Google). Augmenting Transformer-Transducer Based Speaker Change Detection With Token-Level Training Loss. ICASSP 2023, arXiv:2211.06482. 쓰는 곳: C1 근거. FA/FR(삽입·삭제) 가중 최소위험 손실(alpha=1, beta=10, gamma=10)로 long-form pooled 기준 recall 55.8→65.2, precision 78.1→77.6. 원래 인용은 반박됐고, 아래 USM-SCD 와 둘로 나눈 교정 인용이다.
+ - Zhao, G., Wang, Y., Pelecanos, J., Zhang, Y., Liao, H., Huang, Y., Lu, H., Wang, Q. USM-SCD: Multilingual Speaker Change Detection Based on Large Pretrained Foundation Models. arXiv:2309.08023 (ICASSP 2024). 쓰는 곳: C3 근거. 추론 때 <st> 사후확률에 λ=5.0 을 곱해 SCD F1 64.6→75.3 (YT-96-Eval, greedy). 설정이 우리와 다르다(96 개 언어, USM 미세조정).
+ - Peng, J., Chen, Z., Li, H., et al. G-STAR: End-to-End Global Speaker-Tracking Attributed Recognition. arXiv:2603.10468 (v2 2026-05-29). 쓰는 곳: C1, P3. speaker-label 토큰에 2x CE 가중을 줬는데, 이 hierarchical CE 는 주로 DER 을 개선했다. Fisher cpWER 14.23→10.29 는 인터리브 융합(빈도)의 효과이고, 트래커 단서 유무의 효과가 아니다(두 행 모두 트래커 있음).
+ - Zheng, N., Lin, Y., Tian, S., Li, M., Lin, Z., Xiao, L., Tu, D. (Huawei). Balancing ASR and diarization in end-to-end LLMs for multi-talker speech recognition. Interspeech 2026, arXiv:2606.13095. 쓰는 곳: P2-A. 같은 화자의 긴 휴지 안에 virtual <SC> 토큰을 넣고 speaker ID 를 유지하며, 길이 인지 speaker-ID 손실을 쓴다. 저자가 밝힌 목적은 오검출된 교대가 ID 오류로 번지지 않게 하는 정밀도·견고성이므로, recall 근거로는 약하다.
+ - Shi, M., Xiao, X., Fan, R., Ling, S., Li, J. Train Short, Infer Long: Speech-LLM Enables Zero-Shot Streamable Joint ASR and Diarization on Long Audio (JEDIS-LLM). arXiv:2511.16046 (ICASSP 2026 투고, Microsoft·UCLA). 쓰는 곳: P2-A, P3. 학습 전용 단어 수준 화자 디코더로 AMI WDER 10.87→6.97 (segment 태그). change-only 태그가 per-word 태그보다 cpWER 이 낫다(AMI 23.13 대 24.08). 다만 per-word 가 WDER 은 더 낮다(6.34). 모두 20 s 이하 local 설정의 결과다.
+ - Kanda, N., Wu, J., Wu, Y., Xiao, X., Meng, Z., Wang, X., Gaur, Y., Chen, Z., Li, J., Yoshioka, T. Streaming Speaker-Attributed ASR with Token-Level Speaker Embeddings. Interspeech 2022, arXiv:2203.16685. 쓰는 곳: V31-H. t-vector 결정 지연 0/1/2/4/8 단어에서 LibriCSS SD cpWER 13.1/12.7/12.4/14.3/19.7 로 2 단어가 가장 좋다. TT-36, ASR 지연 2.56 s 설정이다.
+ - Park, T., Medennikov, I., Dhawan, K., et al. Sortformer: A Novel Approach for Permutation-Resolved Speaker Supervision in Speech-to-Text Systems. ICML 2025, arXiv:2409.06656. 쓰는 곳: P3. 화자 커널 주입으로 AMI(짧은 구간) cpWER 32.94→28.17 이지만, 동결 Sortformer 로 약 123M 파라미터가 늘었고 공동 미세조정 시 32.74 다. 단어 수준 태그 26.71 대 segment 28.59 는 1.12B adapter 설정에서만 성립한다.
+ - Tu, Y., Peng, Z., Yu, J., Dong, L., et al. VibeVoice-ASR-Streaming Technical Report. arXiv:2609.02812 (2026-09). 오프라인 모델은 Peng et al., VibeVoice-ASR Technical Report, arXiv:2601.18184. 쓰는 곳: 비교 기준선과 지연 맥락. 청크 2.0/2.9 s, lookahead L=4(약 0.5 s), 알고리즘적 화자 지연 1.53-2.00 s, Qwen2.5 7B(1.5B 도 공개), 스트리밍 사전학습 약 420k h, 화자 라벨은 첫 등장 순서.
+
+
+VERDICTS:
+ - refuted=False exists=True numbers=yes :: Kanda et al. (Microsoft), 'Streaming Speaker-Attributed ASR with Token-Level Speaker Embeddings', Interspeech 2022, arXi || Naoyuki Kanda, Jian Wu, Yu Wu, Xiong Xiao, Zhong Meng, Xiaofei Wang, Yashesh Gaur, Zhuo Chen, Jinyu Li, Takuya Yoshioka (Microsoft Cloud+AI / Microsoft Research Asia), "Streaming Speaker-Attributed AS || I checked the arXiv abstract page and the full v2 PDF (text pulled out with pypdf). The title, the Microsoft affiliation, arXiv ID 2203.16685 and the "Accepted for presentation at Interspeech 2022" note all match. Kanda is the first author.
+
+Mechanism: correct. The paper adds an encoder-decoder speaker embedding extractor to the t-SOT streaming transformer-transducer, which gives one speaker embed
+ - refuted=False exists=True numbers=not_checked :: Zheng et al., 'Balancing ASR and diarization in end-to-end LLMs for multi-talker speech recognition', Interspeech 2026,  || Naijun Zheng, Yuke Lin, Sanli Tian, Mengtian Li, Zhiwei Lin, Longshuai Xiao, Dandan Tu (Huawei). "Balancing ASR and diarization in end-to-end LLMs for multi-talker speech recognition." arXiv:2606.1309 || I checked the arXiv abstract page and the HTML full text (arxiv.org/html/2606.13095v1). The title, first author (Zheng), arXiv ID and Interspeech 2026 acceptance all match.
+
+Both mechanisms are in the paper. (1) Section 2.2 adds an <SC> token to the training labels, in the format {text1 <SC> spk1}{text2 <SC> spk2}, so a speaker ID follows every <SC>. In training stage 3 (concatenated long conversa
+ - refuted=True exists=True numbers=partly :: Google, token-level speaker change detection with a minimum-risk/FA-FR weighted loss (ICASSP 2023): speaker-change recal || The claim merges two Google papers. (1) Recall 55.8 to 65.2 comes from: Guanlong Zhao, Quan Wang, Han Lu, Yiling Huang, Ignacio Lopez Moreno, "Augmenting Transformer-Transducer Based Speaker Change De || The first half checks out against arXiv 2211.06482 (ICASSP 2023, Google). In Table 2, pooled over the long-form test sets, recall goes from 55.8 for the baseline to 65.2 with the SCD loss, a 16.8% relative gain. Precision goes from 78.1 to 77.6, which the paper calls "only a -0.6% relative regression", so "similar precision" is fair. F1 (precision and recall) goes from 65.1 to 70.9. EMBR (60.3 rec
+ - refuted=False exists=True numbers=yes :: NVIDIA Sortformer (Park et al., arXiv:2409.06656, ICML 2025): sort loss with arrival-time ordering; speaker-kernel injec || Taejin Park, Ivan Medennikov, Kunal Dhawan, Weiqing Wang, He Huang, Nithin Rao Koluguri, Krishna C. Puvvada, Jagadeesh Balam, Boris Ginsburg. "Sortformer: A Novel Approach for Permutation-Resolved Spe || I checked the arXiv abstract page and the full v3 HTML. The paper, authors, venue (ICML 2025, the 42nd ICML), and mechanism are correct, and the numbers match Table 2 ("Evaluation results of Sortformer-MS-Canary on short segments from AMI test and CH109").
+
+Mechanism:
+- Sort Loss: speaker labels are ordered by arrival time, meaning the first frame in which each speaker is active. The loss is BCE b
+ - refuted=False exists=True numbers=yes :: G-STAR (speech-LLM with interleaved speaker-tracker cues): up-weights speaker-token cross-entropy (2x) and reports Fishe || Jing Peng, Ziyi Chen, Haoyu Li, Yucheng Wang, Duo Ma, Mengtian Li, Yunfan Du, Dezhu Xu, Yu Xi, Kai Yu, Shuai Wang. "G-STAR: End-to-End Global Speaker-Tracking Attributed Recognition." arXiv:2603.10468 || I checked the arXiv HTML for v1 and v2 and extracted the text of the v2 PDF. The claim holds up, with one nuance about the ablation.
+
+What checks out:
+(1) Mechanism. Section 3.3.1, "Interleaved Temporal Fusion (K:1 insertion)", puts speaker-tracker embeddings V(t) into the acoustic token stream U(t) at every K-th position (K=5 is the example). The tracker is a cache-conditioned, Sortformer-style m
+ - refuted=False exists=True numbers=yes :: JEDIS-LLM (Microsoft, arXiv:2511.16046): training-only word-level speaker decoder on the encoder output reduces AMI WDER || Mohan Shi, Xiong Xiao, Ruchao Fan, Shaoshi Ling, Jinyu Li. "Train Short, Infer Long: Speech-LLM Enables Zero-Shot Streamable Joint ASR and Diarization on Long Audio." arXiv:2511.16046 (v1, 20 Nov 2025 || I checked the arXiv abstract page and the HTML full text (v1). Each part of the claim holds up.
+
+(1) Mechanism (Sec. 2.1.2): a 3-layer transformer "Spk-Decoder" (1024-dim, 16 heads) reads the speech-encoder output. It predicts a word-level speaker-ID sequence, made by replacing each word in the transcript with its speaker ID, and is trained with cross-entropy. The total loss is 0.5*L_LLM + 0.5*L_S
+ - refuted=False exists=True numbers=yes :: Microsoft VibeVoice-ASR-Streaming / VibeVoice-ASR technical report: streaming uses ~2-3 s chunks with ~0.5 s lookahead ( || Yujie Tu, Zhiliang Peng, Jianwei Yu, Li Dong, Songchen Xu, Yaoyao Chang, Wenhui Wang, Zilong Wang, Zehua Wang, Yan Xia, Ruibin Yuan, Jiajun Zhang, Xie Chen, Furu Wei. "VibeVoice-ASR-Streaming Technica || I read the arXiv abstract page and the full v2 PDF (15 pages, text extracted locally). Every part of the claim checks out against the streaming report (2609.02812).
+
+- **Chunks:** two configurations, 15 latent frames (exactly 2.0 s) and 22 latent frames (2.9 s), at 7.5 frames per second (133.3 ms per frame). The released checkpoints use the 22-frame (2.9 s) chunk (Sec 3.1, Sec 4).
+- **Lookahead:**
+ - refuted=True exists=True numbers=partly :: NVIDIA Streaming Sortformer with Arrival-Order Speaker Cache (AOSC): 2-speaker CALLHOME DER stays nearly flat from 10 s  || Medennikov, I., Park, T., Wang, W., Huang, H., Dhawan, K., Wang, J., Balam, J., Ginsburg, B. (NVIDIA). "Streaming Sortformer: Speaker Cache-Based Online Speaker Diarization with Arrival-Time Ordering. || The paper, authors, venue and AOSC mechanism are real and described correctly. AOSC stores frame-level embeddings of earlier speakers, orders them by arrival-time speaker index, and updates them by picking the highest-scoring frames from past predictions. The comparison in the claim is wrong, though.
+
+Table 1, CALLHOME-part2, 2-spk column, Streaming Sortformer-AOSC rows:
+- 10 s: 6.80 without post-
+
+
+JUDGES:
+ * best: V3-p1 is the V3-min core, plus the format lens's step-0 diagnostics, plus the data lens's dev-validity gate and its cheap tel-timing details. Budget: about 1-1.5 days of code, 2 training runs of about 1 h, and about 6-8 GPU-h of decodes.
+
+STEP 0 (decode/CPU only; V1 = st4-m2a ck2000, δ10, whole session; run before submitting training)
+(a) Format D1 token-context probe. Extend taxi_v3_probe.py to keep s.emitted. Classify each of the 540 changes as one of:
+- OK
+- RESUME: same-slot <SPK_x> after <TRANS>
+- REASSERT: same-slot tag after <EOT>
+- SILENT
+- ABSORBED
+Cross each class with 'previous-speaker <EOT> present' and with direction. Write aggregates only. This subsumes minimal's f_miss/f_hit. Prediction from tagctx2: RESUME without <EOT> dominates, because a switch without a preceding <EOT> is almost absent from translation-mode training data (57 vs 3020 re-opens).
+(b) Format D2: --asr-only TAXI decode (about 25 min).
+(c) Format D5: dry-run tag-role counts.
+(d) Minimal C4: a held-out sim_en-de-tel dev (120-200 sessions) converted to TAXI format, plus:
+- cst_attr_turns. One merged metric set (format J / data C10): toggle recall, change ratio, whole-wrong turns, within-turn switches, per-direction misses, wrong-slot translated rate.
+- cst_switch_tf: teacher-forced switch top-1 with <EOT> kept vs removed, giving dTF.
+Adopt data C10's gate: V1 toggle recall must be clearly lower on this dev than on xl-eval-v1. If it is not, harden the dev on dev only (more F0/identical-chain pairs)
+   avoid: - Do not use TAXI to choose any value: bias b or gate, checkpoint, change-tag weight, dev thresholds, or which run wins.
+  - The D1 class shares may only switch whole components on or off, and they must be corroborated by dTF on the non-TAXI dev.
+  - Score TAXI only after the configuration is frozen.
+- Do not read the in-flight uniform tag-bias probe (the same constant on <SPK_A> and <SPK_B>) as evidence for or against a switch bias. It cannot change the A-vs-B choice after <TRANS>.
+- Do not compare runs with mismatched step counts, e.g. a 3000-step V3 against V1 ck2000/2500 (the format plan does this). Match the steps or add a V1-3k control.
+- Do not change more than one lever per run without an ablation partner.
+- Do not put serialization changes into p1 before D1/D2 are in: turn headers
+   format-decision: gain 5.5 risk 4 feas 3 evid 6
+   data: gain 6.5 risk 6 feas 3 evid 6.5
+   representation: gain 4.5 risk 5 feas 2 evid 4
+   minimal: gain 6 risk 8 feas 9 evid 7
+ * best: V3-p1 = the minimal backbone (C1 + C2 + C3 + C4), corrected by the format design's kind-aware decode state and its Step-0 diagnostics, plus two safety details from the data design. Keep the V1 st4-m2a recipe (init stage3-st3-p11-revive ck3000, 2 slots, 20-40 s windows, split v2, phone-aug 0.3, spk-act 0.5, 2500 steps, seed 0) so the existing ck1500/ck2000/final checkpoints serve as the control.
+
+PHASE 0: no training, about 1 day of code, user-launched decodes.
+(a) D1 token-context probe. Extend taxi_v3_probe.py (it already wraps parse_emitted4) to keep s.emitted and classify each of the 540 TAXI changes as:
+  - OK;
+  - RESUME: <SPK_same> right after <TRANS>, with no <EOT>;
+  - REASSERT: <SPK_same> after <EOT>;
+  - SILENT;
+  - ABSORBED.
+  Cross each class with 'previous-speaker <EOT> present' and with direction. Write aggregate counts only.
+(b) D2: --asr-only TAXI decode of V1 ck2000, δ10, max-window 90. Diagnostic only.
+(c) D5: dry-run tag-role counts per set.
+(d) Build sim_en-de-tel and the 120-session held-out xl-tel-dev (minimal C2/C4a):
+  - per-speaker PhoneAugment;
+  - ±8 dB per-speaker jitter;
+  - p_hold 0.05, bc-scale 0, fto-clip 0.05-0.8;
+  - no LibriSpeech;
+  - 10% identical-chain sessions (from data C1);
+  - set-opt phone=0 on these sets.
+  Hardness gate (data C10): V1 toggle recall on xl-tel-dev must be clearly below xl-eval-v1, otherwise harden the dev set (dev only).
+(e) Port the turn-decision metrics into the standard scorers (minimal C4b = format J = data C10 s
+   avoid: TAXI must stay eval-only.
+- Never pick a β/bias, gate, checkpoint, weight, flag or V3 variant from TAXI numbers. That includes the in-flight uniform tag-bias probe and the D1/D2 results, which may only choose which components to build.
+- Do not read the uniform both-tag bias result as evidence about switch bias. Adding the same constant to <SPK_A> and <SPK_B> cannot change the A-vs-B choice after <TRANS>.
+
+Decode-bias pitfalls:
+- Do not add switch bias inside translation kind or at every within-turn re-open after <TRANS>. These are about 2.3x more common than real changes and would cause mid-turn flips and BLEU damage.
+- Do not bias toward a fixed slot index (V2 learned a slot-B bias); bias only 'other than current'.
+- Do not apply bias to same-language prefixes without dev evidence.
+
+Repe
+   minimal: gain 6.5 risk 7.5 feas 8.5 evid 7
+   format-decision: gain 6 risk 4 feas 3 evid 6
+   data: gain 6 risk 5 feas 3 evid 6
+   representation: gain 4 risk 5 feas 2 evid 4
+ * best: V3-p1 = minimal 의 골격 + format 의 Step-0 진단과 결정 지표 + data 의 tel 세트 핵심(축소판). 형식(태그 문법)은 p1 에서 바꾸지 않는다.
+
+STEP 0 (훈련 없음, 수 GPU-h, 제출은 사용자):
+(a) 진행 중인 EOT 로깅 프로브로 f_miss/f_hit 를 낸다. walign 을 cst_attr_turns(minimal C4b = format J)로 이식한다.
+(b) format D1 토큰 문맥 분류: OK/RESUME/REASSERT/SILENT/ABSORBED 를 <EOT> 유무, 방향(into EN/DE)과 교차 집계한다. taxi_v3_probe 의 parse_emitted4 monkeypatch 에서 emitted 전체를 보존하도록만 바꾸면 된다.
+(c) D2: V1 ck2000 을 TAXI --asr-only 로 디코드한다(진단 전용).
+(d) D5: stage3_train --dry-run 으로 태그 역할을 집계한다(CPU).
+(e) sim_en-de-tel 빌드(minimal C2). 학습용 10k 와 held-out 120 dev 를 만든다.
+  - 화자별 PhoneAugment p=1, mu-law 0.5, 레벨 ±8 dB
+  - p_hold 0.05, bc 0, FTO 0.05-0.8 s
+  - otoSpeech/swbd 쪽 영어, LibriSpeech 제외
+  - dev 는 TAXI 형식으로 변환(C4a)하고 cst_switch_tf(teacher-forced 교대 top-1, <EOT> 유무 차이)를 돌린다.
+(f) V1 ck2000 에 상태 인지 교대 bias(minimal C3 = format F)를 적용한다.
+  - b ∈ {0,1,2,3}(gate none), b ∈ {1,2}(gate eot) 격자를 xl-tel-dev 와 같은 언어 Stage 3 dev 에서 고른다.
+  - gate none 은 전사 kind word-start 와 <TRANS> 뒤 같은 슬롯 재개 결정에만 건다. 번역 kind 내부 word-start 는 제외한다.
+  - 같은 언어 prefix 는 b=0 이 기본이다.
+  - 고른 값으로 TAXI 를 한 번 돌려 'V1+decode' 숫자를 얻는다.
+
+TRAINING (2 run 병렬, 각 약 1 h, 2×8 H200):
+공통 설정:
+- init stage3-st3-p11-revive ck3000, st4-m2a 플래그 그대로, seed 0
+- --max-steps 2500(V1 대조와 동일), ck1500/2000/final 저장
+R1 'V3-p1':
+- --change-tag-weight 3. 교대 태그에만 건다. 첫 태그, <TRANS> 뒤 같은 슬롯 재개, <EOT> 를 위해 연 태그, 번역을 여는 태그는 가중 1 로 둔다.
+- sim_en-de-tel 1.0 추가, sim_en-de 1.0→0.5. tel 세트는 창 단위 phone aug 를 0 또는 기존 0.3 으로 둔다(이중 처리는 dev 로 확인).
+- E- 또는 혼합일
+   avoid: TAXI 와 프로브:
+- TAXI 로 어떤 값도 고르지 않는다(bias, 체크포인트, 플래그, 분기 임계값, gate). TAXI 는 설정을 고정한 뒤 보고용으로만 돌린다.
+- 진행 중인 균일 tag-bias 프로브(두 태그에 같은 +b)를 '상태 인지 bias 는 무효'라는 근거로 읽지 않는다. 그 프로브는 <TRANS> 뒤 A/B 선택을 바꿀 수 없다.
+
+데이터와 레시피:
+- V2 처럼 2 화자 전화 데이터를 희석하지 않는다(4 슬롯, 회의, 20-90 s 창은 V1 recall 87.4 를 79.6 으로 떨어뜨렸다). replay 비중(약 32%)도 유지한다.
+- 3000 step run 을 2500 step V1 대조와 직접 비교하지 않는다.
+- p1 한 run 에 형식 변경(턴 헤더, <SRC>, 문법)과 데이터·가중 변경을 섞지 않는다. 효과를 분리할 수 없고, 파서·eval·MLX live App 호환이 깨진다.
+
+이미 실패했거나 효과 없던 것:
+- chunk-level spk_head 로 태그를 강제 삽입하는 하드 규칙(+4.06 cp).
+- 목적함수 없는 raw 탭(V2-a, 귀속 7.4→7.4, TAXI 악화).
+- 같은 언어 데이터에 span flip recover(무효 선례).
+- δ, 창 길이, 슬롯 초기화/flip 조정(d4=d10, 첫 턴 0/86 오류).
+- 단어마다 화자 태그(JEDIS: change-only 가 cpWER 에서 우세).
+- 화자 모듈을 인코더와 공동 미세조정(Sortformer 에서 이득이 사라짐).
+
+가중과 bias 적용 범위:
+- <TRANS> 뒤 같은 슬롯
+   format-decision: gain 6.5 risk 4 feas 3 evid 6
+   data: gain 6 risk 5 feas 3 evid 6
+   representation: gain 4.5 risk 6 feas 2 evid 4
+   minimal: gain 6 risk 8 feas 9 evid 7
