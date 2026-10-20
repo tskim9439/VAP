@@ -4,6 +4,7 @@
   python experiments/baseline_vibevoice.py run --mode stream|offline --model <ckpt> --src <VibeVoice 소스> [--lm-tokenizer <Qwen2.5-7B tokenizer>] \\
       --checkpoint <우리 체크포인트(참조 tokenizer)> --data <phase2> --split <v2.json> --out <dir> [--corpora …] [--limit-windows 200] [--rank r --world-size n]
   python experiments/baseline_vibevoice.py score --out <dir> [--compare 이름=stage3-eval 결과 폴더,…]
+  python experiments/baseline_vibevoice.py taxi --mode stream|offline --model <ckpt> --src <소스> [--lm-tokenizer …] --sessions <taxi sessions.jsonl> --out <dir>
 
 모델: stream = VibeVoice-ASR-Streaming-7B(model.streaming_generate, 체크포인트의 청크·lookahead), offline = VibeVoice-ASR(창 전체 한 번, JSON 출력 Start/End/Speaker/Content).
   둘 다 탐욕 디코딩, bf16, sdpa. 입력은 우리 평가와 같은 mono 혼합 창(16 kHz)을 24 kHz 로 올린 것(resample_poly 3/2).
@@ -176,6 +177,61 @@ def score(a):
               + "".join(f" | {n} cp {e[n]['cp']:6.2f} agn {e[n]['agn']:6.2f}" for n in cmp if n in e))
 
 
+def taxi(a):
+    """TAXI(실제 독↔영 전화, cstbench 세션 mono 16 kHz)를 세션 통째로 디코드(세션 ≤ 72 s)하고 세션 단위 cpWER 로 잰다 — cst_stage4_taxi score 의 wer_cp 와 같은 정의
+    (세션마다 언어별로 이은 참조 둘 대 가설 화자들의 최적 짝, 남는 가설 화자 말은 삽입, 짝지은 참조 언어로 cstbench.normalize).
+    전사는 재배포 금지라 원출력(taxi-pred.jsonl)은 mxc 에만 두고 보고(taxi-report.json)만 가져온다."""
+    import numpy as np, soundfile as sf, torch
+    from scipy.signal import resample_poly
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cst-bench", "src"))
+    from cstbench.evaluate import load_jsonl, normalize
+    from vapasr.data.cst_eval import ed
+    sessions = load_jsonl(a.sessions); root = os.path.dirname(os.path.abspath(a.sessions)); os.makedirs(a.out, exist_ok=True)
+    dest = os.path.join(a.out, "taxi-pred.jsonl")
+    done = {json.loads(l)["session"] for l in open(dest, encoding="utf-8")} if os.path.exists(dest) else set()
+    todo = [r for r in sessions if r["session_id"] not in done]
+    if todo:
+        model, proc, frame = load_vibevoice(a); t0 = time.time()
+        with open(dest, "a", encoding="utf-8") as fo, torch.inference_mode():
+            for j, r in enumerate(todo):
+                x, sr = sf.read(os.path.join(root, r["mix"]), dtype="float32"); assert sr == 16000 and x.ndim == 1
+                w = resample_poly(x, 3, 2).astype(np.float32)
+                if a.mode == "stream":
+                    chunks = [t for _, _, t in model.streaming_generate(audio_tensor=torch.from_numpy(w), tokenizer=proc.tokenizer, chunk_duration=frame["chunk"],
+                                                                        text_audio_delay=frame["lookahead"], sample_rate=frame["sample_rate"],
+                                                                        max_new_tokens_per_chunk=a.max_new_tokens, temperature=0.0)]
+                    o = dict(chunks=chunks, chunk_s=frame["chunk"], lookahead_s=frame["lookahead"])
+                else:
+                    inp = proc(audio=[w], sampling_rate=None, return_tensors="pt", padding=True, add_generation_prompt=True)
+                    inp = {k: (v.to("cuda") if isinstance(v, torch.Tensor) else v) for k, v in inp.items()}
+                    ids = model.generate(**inp, max_new_tokens=a.max_new_tokens, do_sample=False, pad_token_id=proc.pad_id, eos_token_id=proc.tokenizer.eos_token_id)
+                    g = ids[0, inp["input_ids"].shape[1]:]; eos = (g == proc.tokenizer.eos_token_id).nonzero(as_tuple=True)[0]
+                    if len(eos): g = g[:eos[0] + 1]
+                    text = proc.decode(g, skip_special_tokens=True); o = dict(raw=text, segments=proc.post_process_transcription(text))
+                fo.write(json.dumps(dict(session=r["session_id"], out=o), ensure_ascii=False) + "\n"); fo.flush()
+                print(f"  {j + 1}/{len(todo)} 세션 · {time.time() - t0:.0f}s", flush=True)
+    pred = {json.loads(l)["session"]: json.loads(l) for l in open(dest, encoding="utf-8")}
+    langs = sorted({t["lang"] for s in sessions for t in s["turns"]}); e_cp = n = deg = 0; per = {lg: [0, 0] for lg in langs}; nodeg = [0, 0]
+    for s in sessions:
+        r = pred[s["session_id"]]; hw = hyp_words(dict(r, lang=None))
+        by = collections.defaultdict(list)
+        for sp, wd, t in sorted(hw, key=lambda x: x[2]): by[sp].append(wd)
+        H = sorted((" ".join(v) for v in by.values()), key=len, reverse=True)[:6]
+        R = [" ".join(t["transcript"] for t in sorted(s["turns"], key=lambda t: t["start_s"]) if t["lang"] == lg) for lg in langs]
+        m = max(2, len(H)); Hp = H + [""] * (m - len(H)); Rl = langs + [None] * (m - 2)
+        def cost(k, h):
+            if Rl[k] is None: return len(normalize(h, langs[0]).split())                        # 남는 가설 화자 = 삽입
+            return ed(normalize(R[k], Rl[k]).split(), normalize(h, Rl[k]).split())
+        best = min(itertools.permutations(range(m)), key=lambda p: sum(cost(k, Hp[p[k]]) for k in range(m)))
+        nr = sum(len(normalize(R[k], langs[k]).split()) for k in range(2)); ec = sum(cost(k, Hp[best[k]]) for k in range(m))
+        e_cp += ec; n += nr; o = r["out"]; dg = degenerate(o.get("raw") if "raw" in o else "".join(o.get("chunks", []))); deg += dg
+        if not dg: nodeg[0] += ec; nodeg[1] += nr
+        for k, lg in enumerate(langs): per[lg][0] += cost(k, Hp[best[k]]); per[lg][1] += len(normalize(R[k], lg).split())
+    rep = dict(mode=a.mode, sessions=len(sessions), wer_cp=round(100 * e_cp / max(1, n), 2), ref_words=n, degenerate_sessions=deg,
+               wer_cp_nodeg=round(100 * nodeg[0] / max(1, nodeg[1]), 2), per_lang={lg: round(100 * e / max(1, nn), 2) for lg, (e, nn) in per.items()})
+    json.dump(rep, open(os.path.join(a.out, "taxi-report.json"), "w"), ensure_ascii=False, indent=1); print(json.dumps(rep, ensure_ascii=False))
+
+
 def main():
     ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest="cmd", required=True)
     q = sub.add_parser("run"); q.add_argument("--mode", choices=["stream", "offline"], required=True); q.add_argument("--model", required=True); q.add_argument("--src", required=True)
@@ -186,13 +242,15 @@ def main():
     q.add_argument("--backchannel", default=(1.0, 3), type=lambda s: (float(s.split(",")[0]), int(s.split(",")[1])))
     q.add_argument("--batch-size", type=int, default=8, help="offline 만"); q.add_argument("--max-new-tokens", type=int, default=None, help="기본: offline 2048, stream 청크당 256(데모 기본)")
     q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1)
+    q = sub.add_parser("taxi"); q.add_argument("--mode", choices=["stream", "offline"], required=True); q.add_argument("--model", required=True); q.add_argument("--src", required=True)
+    q.add_argument("--lm-tokenizer", default=None); q.add_argument("--sessions", required=True); q.add_argument("--out", required=True); q.add_argument("--max-new-tokens", type=int, default=None)
     q = sub.add_parser("score"); q.add_argument("--out", required=True); q.add_argument("--compare", default=None)
     q.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[4, 10])
     a = ap.parse_args()
-    if a.cmd == "run":
+    if a.cmd in ("run", "taxi"):
         if a.mode == "offline": assert a.lm_tokenizer, "--lm-tokenizer 가 필요하다"
         if a.max_new_tokens is None: a.max_new_tokens = 2048 if a.mode == "offline" else 256
-    {"run": run, "score": score}[a.cmd](a)
+    {"run": run, "score": score, "taxi": taxi}[a.cmd](a)
 
 
 if __name__ == "__main__":
