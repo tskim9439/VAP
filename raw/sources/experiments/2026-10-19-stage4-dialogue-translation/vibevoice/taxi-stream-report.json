@@ -1,0 +1,12 @@
+{
+ "mode": "stream",
+ "sessions": 86,
+ "wer_cp": 19.19,
+ "ref_words": 6826,
+ "degenerate_sessions": 0,
+ "wer_cp_nodeg": 19.19,
+ "per_lang": {
+  "English": 21.32,
+  "German": 16.67
+ }
+}

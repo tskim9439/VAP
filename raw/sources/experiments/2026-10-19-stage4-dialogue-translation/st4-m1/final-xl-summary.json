@@ -1,0 +1,96 @@
+{
+ "sim_en-de/d4": {
+  "windows": 200,
+  "ref_units": 15260,
+  "exposure": "unseen",
+  "rows": 200,
+  "forced_tokens": 0,
+  "src_err_by_lang": {
+   "English": {
+    "err": 24.86,
+    "unit": "WER",
+    "ref_units": 8371
+   },
+   "German": {
+    "err": 24.37,
+    "unit": "WER",
+    "ref_units": 6889
+   }
+  },
+  "translation": {
+   "English->German": {
+    "bleu": 27.92,
+    "chrf": 54.73,
+    "n": 194,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 194,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.146,
+    "lag_median": -0.08,
+    "lag_p90": 0.08,
+    "matched_word_share": 0.434
+   },
+   "German->English": {
+    "bleu": 38.19,
+    "chrf": 61.54,
+    "n": 199,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 199,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.128,
+    "lag_median": -0.08,
+    "lag_p90": 0.08,
+    "matched_word_share": 0.564
+   }
+  }
+ },
+ "sim_en-de/d10": {
+  "windows": 200,
+  "ref_units": 15260,
+  "exposure": "unseen",
+  "rows": 200,
+  "forced_tokens": 77,
+  "src_err_by_lang": {
+   "English": {
+    "err": 39.05,
+    "unit": "WER",
+    "ref_units": 8371
+   },
+   "German": {
+    "err": 24.91,
+    "unit": "WER",
+    "ref_units": 6889
+   }
+  },
+  "translation": {
+   "English->German": {
+    "bleu": 29.57,
+    "chrf": 56.43,
+    "n": 194,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 194,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.234,
+    "lag_median": -0.08,
+    "lag_p90": 0.08,
+    "matched_word_share": 0.476
+   },
+   "German->English": {
+    "bleu": 41.16,
+    "chrf": 63.36,
+    "n": 199,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 199,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.105,
+    "lag_median": -0.08,
+    "lag_p90": 0.0,
+    "matched_word_share": 0.585
+   }
+  }
+ }
+}

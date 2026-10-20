@@ -1,0 +1,12 @@
+{
+ "mode": "offline",
+ "sessions": 86,
+ "wer_cp": 16.39,
+ "ref_words": 6826,
+ "degenerate_sessions": 0,
+ "wer_cp_nodeg": 16.39,
+ "per_lang": {
+  "English": 19.82,
+  "German": 12.59
+ }
+}

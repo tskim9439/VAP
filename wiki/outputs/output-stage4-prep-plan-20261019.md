@@ -3,7 +3,7 @@ type: output
 status: active
 created: 2026-10-19
 updated: 2026-10-19
-summary: Stage 4(교차 언어 2 인 대화 + 번역) — 준비 완료, 파일럿 st4-p1: TAXI δ10 독→영 BLEU 3.7 → 22.7·영→독 18.0 → 26.4(ck2000), Stage 3 귀속 회귀 없음
+summary: Stage 4(교차 언어 2 인 대화 + 번역) — st4-m1 ck1500: TAXI 받아쓰기 cpWER 40.9·영→독 BLEU 27.6, Stage 3 회귀 없음; VibeVoice 대비 같은 영역 대화는 같거나 낫고 TAXI 는 뒤진다(16–19)
 sources:
   - '[[decision-stage4-prep-20261019]]'
   - '[[decision-cst-training-stages-and-speaker-slots]]'
@@ -40,7 +40,7 @@ raw_authors:
 | S3 | 교차 언어 합성 대화(이어 붙이기) | **완료**: `sim_en-de`·`sim_en-ko` 각 1 만 세션(약 250 h), 영↔독 평가 300 세션 | 아래 절 |
 | S4 | 대화 번역 평가 도구 | **도구 완료(오라클 만점)·TAXI 어댑터** | 평가 셋은 S1 뒤. xCOMET 은 다음 |
 | S5 | 학습 스크립트·섞기·스모크 | **완료**(dry-run 11 셋 불일치 0, 스모크 PARITY OK) | 섞는 비율은 파일럿에서 |
-| S6 | 파일럿 → 본 학습 | **st4-p1 완료**(TAXI δ10 독→영 BLEU 3.7 → 22.7·영→독 18.0 → 26.4, Stage 3 회귀 없음). **본 학습 st4-m1 학습 중**(apex job 92394 — 번역 행 앞 공백 수정, 2,500 step, 영↔독 합성 가중치 1.0) | 아래 절 |
+| S6 | 파일럿 → 본 학습 | **st4-p1 완료**(TAXI δ10 독→영 BLEU 3.7 → 22.7·영→독 18.0 → 26.4, Stage 3 회귀 없음). **본 학습 st4-m1 완료**(job 92394): ck1500 이 가장 좋다 — TAXI 받아쓰기 cpWER 40.9·영→독 BLEU 27.6. VibeVoice 대비 같은 영역 대화는 같거나 낫고 TAXI 는 크게 뒤진다(16–19) | 아래 절 |
 | S7 | TTS 합성(병행) | **결정 필요** | 아래 절 — 엔진·원천 대화·내려받기(사용자) |
 
 ## S1 실제 대화 번역 타깃
