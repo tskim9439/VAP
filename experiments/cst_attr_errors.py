@@ -65,7 +65,7 @@ def table(rows, title):
 
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--pred", required=True); ap.add_argument("--data", required=True); ap.add_argument("--split", required=True)
+    ap = argparse.ArgumentParser(); ap.add_argument("--pred", required=True); ap.add_argument("--data", required=True); ap.add_argument("--split", default=None)
     ap.add_argument("--out", required=True); ap.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[4, 10])
     ap.add_argument("--workers", type=int, default=16); ap.add_argument("--short-words", type=int, default=3); a = ap.parse_args()
     import multiprocessing as mp

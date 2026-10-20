@@ -101,7 +101,10 @@ def run(a):
         from vapasr.hf.batch_decode import decode_batch
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
     from vapasr.data.cst_dialogue import SLOTS
-    n_slots = max(2, int(getattr(a, "max_speakers", None) or 2)); spk = tuple(sp[t] for t in SLOTS[:n_slots]); EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>"))
+    n_slots = max(2, int(getattr(a, "max_speakers", None) or 2))
+    if model is not None and len(model.config.slot_tokens) < n_slots:                      # V1(2 슬롯) 기준선: 모델 슬롯 수로 디코드·채점
+        print(f"  모델 슬롯 {model.config.slot_tokens} < 창 화자 상한 {n_slots} — 모델 슬롯 수로 디코드·채점", flush=True); n_slots = len(model.config.slot_tokens)
+    spk = tuple(sp[t] for t in SLOTS[:n_slots]); EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>"))
     if not a.oracle and (EOT in blocked or TRANS in blocked): print(f"!! decode 차단: <EOT> {EOT in blocked} · <TRANS> {TRANS in blocked}", flush=True)
     TR, tr_st, tr_fp = load_ast_targets([p for x in a.trans for p in x.split(",") if p]); print(f"  번역 타깃 {dict(tr_st)}", flush=True)
     sets, items = windows_of(a, tok, TR)
@@ -134,7 +137,7 @@ def run(a):
                     for delta in a.deltas:
                         if all((f"{cid}@{t0w}", delta, opt) in done for _, cid, t0w, *_ in meta): continue
                         qs = [ds.cst4_sequence(m[0], delta, opt) for m in meta]
-                        prefixes = [ds.cst_prefix(q["langs"], delta, list(q["tgt"])) for q in qs]
+                        prefixes = [ds.cst_prefix(q["langs"][:n_slots], delta, list(q["tgt"])[:n_slots]) for q in qs]   # 모델 슬롯 수까지 선언
                         if a.from_predictions:
                             keys = [(f"{m[1]}@{m[2]}", delta, opt) for m in meta]
                             if not all(k in prev for k in keys): print(f"  !! 원출력 없음 δ{delta} {opt} — 건너뜀", flush=True); continue
