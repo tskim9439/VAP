@@ -147,6 +147,13 @@ def score(a):
             print(f"δ{d} {k}: 턴 {x.get('turns')} · BLEU {x.get('bleu')} · chrF {x.get('chrf')} · StreamLAAL 중앙 {(x.get('stream_laal_s') or {}).get('median')} s · "
                   f"끝 지연 중앙 {(x.get('end_offset_s') or {}).get('median')} s · 빈 턴 {x.get('empty_turns')}", flush=True)
         print(f"δ{d} 받아쓰기 WER: {res}", flush=True)
+    if getattr(a, "turn_metrics", False):                                                       # 턴 결정 지표(cst_attr_turns, 기본 끔 — 끄면 위 산출·출력 그대로): asr-d*.jsonl 마다, 같은 폴더 eot-d*.jsonl 이 있으면 함께
+        from cst_attr_turns import turn_metrics, brief
+        for f in sorted(glob.glob(os.path.join(a.out, "asr-d*.jsonl"))):
+            d = f.rsplit("-d", 1)[1].split(".")[0]; fe = os.path.join(a.out, f"eot-d{d}.jsonl")
+            tm = turn_metrics(sessions, load_jsonl(f), load_jsonl(fe) if os.path.exists(fe) else None); tm.update(asr=f, eot_file=fe if os.path.exists(fe) else None, sessions_file=a.sessions)
+            json.dump(tm, open(os.path.join(a.out, f"turn-metrics-d{d}.json"), "w"), indent=1, ensure_ascii=False)
+            print(f"δ{d} 턴 결정: {brief(tm)}", flush=True)
 
 
 def main():
@@ -157,7 +164,7 @@ def main():
     q.add_argument("--dtype", default="float32"); q.add_argument("--asr-only", action="store_true", help="translate 줄 없는 받아쓰기 전용 prefix(Stage 3 형식, 언어만 슬롯별)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 두 언어가 다른 창만, 기본 끔). "
                                                        "config.json 에 정책, switch-bias.json 에 δ별 바꾼 태그·결정 지점 수. 값은 dev 에서만 고른다")
-    q = sub.add_parser("score"); q.add_argument("--sessions", required=True); q.add_argument("--out", required=True)
+    q = sub.add_parser("score"); q.add_argument("--sessions", required=True); q.add_argument("--out", required=True); q.add_argument("--turn-metrics", action="store_true", help="asr-d*.jsonl 마다 턴 결정 지표(cst_attr_turns) → turn-metrics-d*.json(기본 끔)")
     a = ap.parse_args(); {"run": run, "score": score}[a.cmd](a)
 
 
