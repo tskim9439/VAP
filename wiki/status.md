@@ -3,19 +3,31 @@ type: status
 status: active
 created: 2026-09-03
 updated: 2026-10-20
-summary: 2026-10-20 전화 대역 증강 st4-m2 로 TAXI cpWER 40.9 → 28.1(VibeVoice 19.2), V2-a 두 스트림 입력 점검 중 — Stage 4 최종 = st4-m1 ck1500
+summary: 2026-10-20 V2 첫 학습 v2-p1 완료 — 2 인 대화는 V1 보다 낫고 TAXI 는 5 pt 나쁨(화자 몰림), 다화자 평가 진행 중 — Stage 4 최종 = st4-m1 ck1500(m2a ck2000 교체 결정 대기)
 ---
 
 # 상태
 
 마지막 갱신: 2026-10-20 (아래 기존 볼트 상태는 2026-09-07의 기록)
 
+## 2026-10-20 V2 첫 학습 v2-p1 결과(중간)
+
+- v2-p1(m2a 설정 + 두 스트림 입력·최대 4 화자·창 20–90 s·회의·합성 3–4 인) 3,000 step 완료, PARITY OK → [[2026-10-20-v2-multispeaker]]
+  - 첫 step 의 `slot_activity` IndexError(화자 상한 줄이기 반올림)를 고쳐 restart 2/5 부터 정상이었다.
+- V1(m2a ck2000) 대비, δ10:
+  - 2 인 같은 언어 대화는 V2 ck2000 이 낫다. cp 25.59 → 24.46, agn 18.18 → 17.03(짝 bootstrap 구간이 0 아래), `<EOT>` 재현율 0.72 → 0.79, 대화 번역 +0.9–1.5 BLEU.
+  - 2 인 창의 화자 귀속 몫은 그대로다(7.4). 단일 화자는 ±0.5 pt, CallHome 독일어 21.6 → 19.7 이다.
+  - **TAXI 는 모든 체크포인트에서 5.0–8.4 pt 나쁘다**(28.1 → 33.4). 대부분 두 화자 말이 한 언어 슬롯으로 몰린 짧은 세션 탓이다.
+    - C·D 슬롯 새기는 0 이다. 탭을 끄면 더 나빠진다(37.3). 남은 후보는 데이터·창 변경이고, 가르려면 학습 대조가 필요하다.
+  - 영↔독 합성 δ10 영어 반복 생성이 ck2500·final 에서 늘었다(WER 50–56).
+- 다음: 긴 창·회의·3–4 인 합성·AMI(IHM-mix·SDM)·회의 번역 평가가 진행 중이다(내일 아침 예상) → V1 대비 귀속 효과를 보고 TAXI 대책 학습을 정한다(사용자).
+
 ## 2026-10-20 st4-m2(전화 대역 증강) 결과·V2-a 두 스트림 입력
 
 - st4-m2a(전화 대역 증강)·st4-m2b(+ CallHome 독일어) 학습 완료(PARITY OK) → [[2026-10-19-stage4-dialogue-translation]]
   - TAXI 받아쓰기 cpWER 40.9 → 28.1(m2a ck2000), 독→영 빈 턴 26 → 3. m2b 는 m2a 보다 1.6–2.6 pt 나쁘다.
   - VibeVoice 스트리밍(19.2)과의 비교 → [[output-vibevoice-stream-comparison-20261020]]
-  - Stage 3 회귀·단일 화자·CallHome 평가 진행 중. final 의 일부 단계는 GPU OOM 으로 끊겨 이어 돌린다(`stage4_eval_resume.sh`). 체크포인트 선택은 그 뒤(사용자).
+  - 모든 평가가 끝났다(final 은 OOM 뒤 이어 돌리기). m2a ck2000 이 가장 고르다 → Stage 4 최종 교체 여부는 사용자 결정 대기.
 - V2: M0(화자 정보는 인코더 아래층 96 %·LLM 입력 69 %) → 사용자 의문으로 VibeVoice 식 **두 스트림 입력(V2-a)** 으로 방향을 바꿨다 → [[output-v2-speaker-memory-plan-20261020]]
   - Nemotron L00 → `adapter_tap`(0 초기화) → LLM 입력에 더함. 구현·단위 시험 통과, mxc 학습 전 점검 진행 중 → [[2026-10-20-v2a-dual-stream]]
   - 파일럿 제안: st4-m2a 와 같은 설정·seed + `--enc-tap-layer 0`(m2a 를 대조군으로)
