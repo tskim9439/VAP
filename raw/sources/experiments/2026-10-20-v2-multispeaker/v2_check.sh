@@ -1,5 +1,5 @@
 # V2 첫 학습 전 점검(mxc 호스트): 단위 시험(CPU) → 학습 dry-run(CPU) → GPU 대기 → 스모크 20 step → 슬롯·탭 가중치 확인 → 평가 경로 스모크(4 슬롯 직렬 = 배치).
-# 설정 = st4-m2a(전화 대역 증강) + V2(--enc-tap-layer 0 · --max-speakers 4 · --window 20,90 --window-draws 6 · 회의 dlg_mt · 3–4 인 합성 v3) — 축소 데이터(stage4_m2_check.sh 와 같은 방식).
+# 설정 = st4-m2a(전화 대역 증강) + V2(split v4 — 회의 공식 dev·eval held-out · --enc-tap-layer 0 · --max-speakers 4 · --window 20,90 --window-draws 6 · 회의 dlg_mt · 3–4 인 합성 v3) — 축소 데이터(stage4_m2_check.sh 와 같은 방식).
 # CODE(기본 /soundai/users/tskim/VAPKT) 의 코드를 쓴다. MEET_TR=1 이면 회의 번역 타깃(stage4-dlg-units-meet-v1)도 넣는다. 산출 /tmp/sa_tskim/v2-* — 지우지 않는다.
 set -u
 CODE=${CODE:-/soundai/users/tskim/VAPKT}; cd $CODE; set -a; source /soundai/users/tskim/VAPKT/.env; set +a
@@ -12,7 +12,7 @@ P=/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python; MIN_FREE_MB=${MI
 DT=$D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16; [ "${MEET_TR:-0}" = 1 ] && DT=$DT,$D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16
 echo "[$(date "+%F %T")] 단위 시험"
 CUDA_VISIBLE_DEVICES= $P -m pytest -q -p no:cacheprovider tests/test_v2_slots.py tests/test_enc_tap.py tests/test_cst_dialogue.py tests/test_cst_eval.py tests/test_packing.py tests/test_stage3_train.py tests/test_sim_dialogue.py tests/test_dialogue_dataset.py 2>&1 | tail -2
-TRAIN="--init $M/stage3-st3-p11-revive/checkpoint-3000 --nemotron-dir $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json \
+TRAIN="--init $M/stage3-st3-p11-revive/checkpoint-3000 --nemotron-dir $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v4.json \
   --dlg-corpora aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar --max-speakers 4 --declare-all-p 0.5 --window 20,90 --window-draws 6 \
   --max-windows 300 --replay-words @$SNAP/main-words.list --replay-words @$ASR --replay-words @$CV4 --replay-de-words @$DE --replay-files-frac 0.01 --replay-max-items 300 \
   --ast-targets $D/ast-mono-v1/targets-fix-gen-v3-bf16,$D/ast-mono-cv4en-v1/targets-fix-gen-v3-bf16 --ast-frac 0.8 --offline-frac 0.3 --gain-augment 0.5,-70,-20 --speed-perturb 0.9,1.0,1.1 --noise-bank $D/noise-bank-v1 \
@@ -47,7 +47,7 @@ print("헤드·탭", w)
 EOF
 echo "[$(date "+%F %T")] 평가 경로 스모크(스모크 final, 4 슬롯)"
 E=/tmp/sa_tskim/v2-eval-smoke
-CUDA_VISIBLE_DEVICES=$GPU $P experiments/cst_stage3_eval.py run --checkpoint $F --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json --out $E/meet --corpora ami,icsi --deltas 10 \
+CUDA_VISIBLE_DEVICES=$GPU $P experiments/cst_stage3_eval.py run --checkpoint $F --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v4.json --out $E/meet --corpora ami,icsi --deltas 10 \
   --limit-windows 4 --batch-size 4 --verify --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 2>&1 | grep -E "PARITY|DONE|Error|모델 슬롯" | tail -5
 CUDA_VISIBLE_DEVICES=$GPU $P experiments/cst_stage3_eval.py run --checkpoint $F --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json --out $E/s3 --corpora aihub134-2,otoSpeech --deltas 10 \
   --limit-windows 4 --batch-size 4 --verify --backchannel 1.0,3 2>&1 | grep -E "PARITY|DONE|Error" | tail -4

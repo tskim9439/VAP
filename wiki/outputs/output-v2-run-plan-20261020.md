@@ -59,8 +59,20 @@ raw_authors:
 | V7 | 학습 스크립트: `--max-speakers`·`--declare-all-p`·`--window`·`--window-draws`·`--dlg-corpora`(회의 = `dlg_mt`)·지문, V2-a 탭, 전화 대역 증강 | **완료**(코드) |
 | V8 | dry-run → 스모크 → 학습 전 점검 → 제출 명령 | 대기(합성 셋·번역 타깃 뒤) |
 
+## 평가 분할 정리 — split v4 (2026-10-20)
+- 사용자 질문: "AMI-IHM 과 AMI-SDM 으로도 평가 진행하려는 데, 학습 셋과 겹치지는 않지?"
+- 확인 결과(V1 은 회의를 학습하지 않아 해당 없음, V2 부터 회의를 학습):
+  - AMI 공식 eval 16 회의(9.06 h)는 v2 부터 모두 held-out 이다.
+  - AMI 공식 dev 18 회의(full-corpus ASR 분할, 9.67 h)는 학습 쪽이었다.
+  - **NOTSOFAR 원본 eval_set 129 회의가 학습 쪽이었다**(held-out 36 = 원본 dev_set, 나머지 72 = train_set).
+- **V2 는 split v4 로 학습한다**(`make_split_v4.py`, `phase2/splits/v4.json` 새 파일):
+  - AMI: 38 회의 held-out(21.1 h) — 공식 eval·dev + ES2014. 학습은 133 회의(78.8 h).
+  - NOTSOFAR: 165 회의 held-out(17.1 h) — 원본 dev·eval. 학습은 train_set 72 회의(7.4 h).
+  - 다른 코퍼스는 v2 와 같다(V1 평가 창 그대로).
+- mxc 의 AMI 는 헤드셋 오디오(Headset-0..4·Mix-Headset)만 있다. AMI-SDM(원거리 마이크 Array1)은 따로 받아야 한다.
+
 ## 학습 설정 (사용자 승인 2026-10-20 "그래 그 비율로 진행해.")
-- init: Stage 3 최종 p11 ck3000(st4 run 들과 같다). 설정은 st4-m2a(전화 대역 증강 0.3)와 같고 V2 변경만 더한다.
+- init: Stage 3 최종 p11 ck3000(st4 run 들과 같다). 설정은 st4-m2a(전화 대역 증강 0.3)와 같고 V2 변경만 더한다. split v4.
   - V2 변경: `--enc-tap-layer 0`, `--max-speakers 4 --declare-all-p 0.5`, `--window 20,90 --window-draws 6`, 회의 코퍼스 + 회의 번역 타깃, 합성 v3(3–4 인)
 - 섞는 비율: `dlg_ko:2,dlg_en:0.7,dlg_de:0.7,dlg_mt:1.0,sim_ko:0.8,sim_en:0.8,sim_de:0.8,sim_en-de:1.0,sim_en-ko:1.0,rep_ko:1.2,rep_en:1.2,rep_de:1.2`
   - step 비중: 실제 대화 35.5 %(회의 8.1 %), 3–4 인 합성 19.4 %, 교차 언어 합성 16.1 %, 단일 화자 29.0 %

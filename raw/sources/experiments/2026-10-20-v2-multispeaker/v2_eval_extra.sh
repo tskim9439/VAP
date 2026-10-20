@@ -2,7 +2,7 @@
 # V1(2 슬롯) 체크포인트도 같은 창으로 잰다(모델 슬롯 수로 디코드·채점 — cst_stage3_eval). 대상마다 빈 메모리 MIN_FREE_MB(기본 40000) 이상 GPU 를 기다린다.
 #   7. TAXI 세션 통째(--max-window 90, 최대 72 s 세션을 나누지 않는다)                 → results/stage4-eval-<run>-<태그>/taxi90
 #   8. 긴 창 held-out 대화(2 인 7 코퍼스, 60–90 s 이어 덮기 draw 0, 코퍼스마다 100)    → results/stage3-eval-long-<run>-<태그> + 오류 분해
-#   9. 회의 held-out(AMI·ICSI·NOTSOFAR, ≤ 4 화자, 20–90 s, 4 슬롯 선언, 코퍼스마다 150) → results/stage3-eval-meet-<run>-<태그> + 오류 분해
+#   9. 회의 held-out(split v4 — AMI 공식 eval·dev + ES2014, NOTSOFAR 공식 dev·eval, ICSI 6; ≤ 4 화자, 20–90 s, 4 슬롯 선언, 코퍼스마다 150) → results/stage3-eval-meet-<run>-<태그> + 오류 분해
 #  10. 3–4 인 합성 held-out(sim-dialogue-multi-eval-v1 한·영·독, 같은 창 규칙)         → results/stage3-eval-msim-<run>-<태그> + 오류 분해
 #  11. 회의 번역(stage4-dlg-units-meet-v1 타깃이 있으면, 코퍼스마다 100)              → results/stage4-eval-<run>-<태그>/meet-tr
 # TRANS_LEAD_SPACE=1: 번역 참조 행 앞 공백(학습 --trans-lead-space). 아무것도 지우지 않는다.
@@ -39,10 +39,10 @@ for t in "$@"; do
   $P experiments/cst_stage4_taxi.py score --sessions $TAXI --out $O/taxi90 > $O/taxi90-summary.log 2>&1
   echo "[$(date '+%F %T')] 7 TAXI 통째 끝"
   s3 "8 긴 창" long --data $P2 --split $P2/splits/v2.json --corpora aihub134-2,aihub134-1,aihub71631,otoSpeech,kec,ztc,nsc --window 60,90 --window-draws 1 --limit-windows 100
-  s3 "9 회의" meet --data $P2 --split $P2/splits/v2.json --corpora ami,icsi,notsofar --limit-windows 150 $MULTI
+  s3 "9 회의" meet --data $P2 --split $P2/splits/v4.json --corpora ami,icsi,notsofar --limit-windows 150 $MULTI
   [ -f $MS/sim_ko.refined.dialogues.jsonl ] && s3 "10 3–4 인 합성" msim --data $MS --corpora sim_ko,sim_en,sim_de --limit-windows 150 $MULTI
   if [ -d $MT/pack ]; then export CUDA_VISIBLE_DEVICES=$(pick_gpu)
-    $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json --trans $MT --corpora ami,icsi,notsofar --deltas 4,10 \
+    $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v4.json --trans $MT --corpora ami,icsi,notsofar --deltas 4,10 \
       --limit-windows 100 --batch-size 16 --backchannel 1.0,3 $LS $MULTI --out $O/meet-tr > $O/meet-tr.log 2>&1
     $P experiments/cst_stage4_eval.py summarize --out $O/meet-tr > $O/meet-tr-summary.log 2>&1; echo "[$(date '+%F %T')] 11 회의 번역 끝"; fi
   echo "[$(date '+%F %T')] $RUN/$t V2 추가 평가 끝"
