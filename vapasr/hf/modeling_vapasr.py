@@ -1,6 +1,8 @@
 """VapAsrForStreamingASR — HF PreTrainedModel 판 mono 스트리밍 ASR (vapasr/uslm/mono_model.MonoInterleavedASR 와 수치 동일).
 
 구성: encoder(Nemotron [56,0], 온라인 특징; 기본 동결) → adapter(LN·MLP) → thinker(Qwen3-ASR thinker, 오디오 타워 제거, full FT).
+V2-a 두 스트림 입력(config.enc_tap_layer ≥ 0, add_enc_tap): 인코더 아래층 출력을 adapter_tap(같은 구조)으로 바꿔 adapter 출력에 더한다 — 마지막 층에서 줄어든 화자 정보(V2 M0)를
+  LLM 입력에 다시 넣는다(VibeVoice-ASR 의 acoustic + semantic 합과 같은 방식, 화자 과제·외부 모듈 없음). 특징 텐서는 (B, S, K, Din): S = 1(V1) 또는 2(마지막 층, 탭 층).
 시퀀스·손실 규약은 mono_model 과 같다: 라벨 위치에서만 lm_head 를 계산하고 <NEXT_AUDIO> 는 next_weight 로 가중.
 저장: adapter + thinker 만 safetensors 에 쓴다(인코더는 동결이면 .nemo 에서 다시 만들고, 학습했으면 함께 저장). lm_head 는 임베딩과 tied.
 생성: from_qwen(Qwen3-ASR 디렉토리) 로 새 모델, from_legacy(ckpt-last.pt) 로 기존 산출물 변환, from_pretrained(dir) 로 재로드."""
@@ -48,6 +50,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
     def __init__(self, config: VapAsrConfig, thinker: Optional[nn.Module] = None):
         super().__init__(config)
         self.adapter = Adapter(config.adapter_d_in, config.adapter_d_out, config.adapter_hidden)
+        self.adapter_tap = Adapter(config.adapter_d_in, config.adapter_d_out, config.enc_tap_hidden) if getattr(config, "enc_tap_layer", -1) >= 0 else None   # V2-a(이름이 adapter 로 시작 → adapter lr 그룹)
         if thinker is None:
             from qwen_asr.core.transformers_backend.configuration_qwen3_asr import Qwen3ASRThinkerConfig
             from qwen_asr.core.transformers_backend.modeling_qwen3_asr import Qwen3ASRThinkerForConditionalGeneration
@@ -75,9 +78,28 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if state_dict: enc.enc.load_state_dict(state_dict)
         tr = self.config.encoder_trainable if trainable is None else trainable; enc.set_trainable(tr); self.config.encoder_trainable = tr
         self.encoder = enc.to(next(self.adapter.parameters()).device); return self
-    def encode(self, wav, wav_len, K):                                            # (B,L) → (B,1,Kmax,Din)
-        assert self.encoder is not None, "encoder 없음 — attach_encoder() 먼저"; return self.encoder(wav, wav_len, K)[:, None]
-    def chunk_embed(self, feats): return self.adapter(feats[:, 0].float())        # (B,1,K,Din) → (B,K,D)
+    def encode(self, wav, wav_len, K):                                            # (B,L) → (B,S,Kmax,Din) — S = 1, 탭이 있으면 2(마지막 층, 탭 층)
+        assert self.encoder is not None, "encoder 없음 — attach_encoder() 먼저"
+        tap = int(getattr(self.config, "enc_tap_layer", -1))
+        return self.encoder(wav, wav_len, K, taps=(tap,)) if tap >= 0 else self.encoder(wav, wav_len, K)[:, None]
+    def chunk_embed(self, feats):                                                 # (B,S,K,Din) → (B,K,D)
+        ce = self.adapter(feats[:, 0].float())
+        if self.adapter_tap is not None:
+            assert feats.shape[1] >= 2, f"두 스트림 모델(enc_tap_layer {self.config.enc_tap_layer})인데 특징 스트림이 {feats.shape[1]} 개 — model.encode 로 만든 특징을 쓴다"
+            ce = ce + self.adapter_tap(feats[:, 1].float())
+        return ce
+
+    def add_enc_tap(self, layer: int, hidden: Optional[int] = None) -> None:
+        """V2-a 두 스트림 입력을 켠다: 인코더 layer 층(0 부터) 출력 → adapter_tap(adapter 와 같은 LN·MLP) → adapter 출력에 더한다.
+        adapter_tap 의 마지막 Linear 를 0 으로 초기화 → 붙인 직후 모델 출력은 V1 과 같다(학습이 탭을 쓰는 만큼만 바뀐다). 이미 같은 층이면 그대로(재개)."""
+        n = len(self.encoder.enc.layers) if self.encoder is not None else None
+        assert n is None or 0 <= int(layer) < n, f"탭 층 {layer}: 인코더 층 0–{n - 1}"
+        if self.adapter_tap is not None:
+            assert int(self.config.enc_tap_layer) == int(layer), f"이미 탭 층 {self.config.enc_tap_layer} — 다른 층({layer})으로 바꾸지 않는다"; return
+        h = int(hidden or self.config.adapter_hidden); dev = next(self.adapter.parameters()).device
+        self.adapter_tap = Adapter(self.config.adapter_d_in, self.config.adapter_d_out, h).to(dev)
+        with torch.no_grad(): self.adapter_tap.net[-1].weight.zero_(); self.adapter_tap.net[-1].bias.zero_()
+        self.config.enc_tap_layer, self.config.enc_tap_hidden = int(layer), h
 
     # ── 학습 forward
     def build(self, feats, ids, is_audio, chunk_of, packed: bool = False):
@@ -329,4 +351,5 @@ class VapAsrForStreamingASR(PreTrainedModel):
     # ── 기존 학습 코드와의 호환(load_trainable_state 형식)
     def trainable_state(self):
         enc = {"encoder": {k: v.detach().cpu() for k, v in self.encoder.enc.state_dict().items()}} if (self.encoder is not None and self.config.encoder_trainable) else {}
+        if self.adapter_tap is not None: enc["adapter_tap"] = self.adapter_tap.state_dict()
         return dict(adapter=self.adapter.state_dict(), thinker={k: v.detach().to(torch.bfloat16).cpu() for k, v in self.thinker.state_dict().items()}, sp_ids=self.sp_ids, mono=True, full_ft=True, **enc)

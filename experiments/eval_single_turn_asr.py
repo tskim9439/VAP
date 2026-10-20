@@ -497,7 +497,7 @@ def run(a):
                 for r, f in zip(batch, feats):
                     if (r["id"], "final") in done:
                         continue
-                    ids = offline_decode(model, tok, f[0], f"{r['lang']}|{r.get('tgt_lang') or ''}" if ast else r["lang"], fmt=ofmt, blocked=oblk,
+                    ids = offline_decode(model, tok, f, f"{r['lang']}|{r.get('tgt_lang') or ''}" if ast else r["lang"], fmt=ofmt, blocked=oblk,
                                          max_new_tokens=(int(f.shape[1]) + 64) if ast else None)   # 전사 + 번역이라 기본 상한(K/2+32)보다 길다
                     src_toks, tr_toks = split_output(ids)
                     hyp = tok.decode([t for _, t in src_toks], skip_special_tokens=True).strip()

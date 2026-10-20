@@ -67,6 +67,7 @@ class LiveSession:
         """mlx_thinker(live_mlx.MlxThinker)를 주면 디코드 루프(thinker forward·토큰 임베딩·argmax)를 MLX 로 돌린다. 인코더·adapter 는 torch(MPS/CUDA) 그대로."""
         from transformers import DynamicCache
         from .infer import prefix_ids
+        assert getattr(model.config, "enc_tap_layer", -1) < 0, "실시간 세션(StreamingEncoder)은 아직 두 스트림 입력(V2-a enc_tap_layer)을 내지 않는다 — 오프라인 인코딩 경로(stream_decode·decode_batch)를 쓴다"
         self.model, self.tok, self.lang, self.delay, self.next_bias = model, tok, lang, delay, next_bias
         self.cap = model.config.runaway_cap if runaway_cap is None else runaway_cap; self.max_flush = max_flush_rounds
         self.dev = next(model.parameters()).device; self.emb = model.get_input_embeddings(); self.cache = DynamicCache()

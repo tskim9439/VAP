@@ -3,11 +3,12 @@ type: output
 status: active
 created: 2026-10-20
 updated: 2026-10-20
-summary: V2(end-to-end 화자 기억) 계획 — M0: 화자 정보는 인코더 아래층에 96 % 남아 있으나 LLM 입력에는 69 % 뿐(원본 Nemotron 부터), 아래층 화자 경로 + 슬롯 기억이 처방
+summary: V2 계획 — M0: 화자 정보는 인코더 아래층 96 %·LLM 입력 69 %, 첫 단계는 VibeVoice 식 두 스트림 입력(V2-a: 아래층 탭 + 0 초기화 connector)
 sources:
   - '[[2026-10-20-v2-speaker-m0]]'
   - '[[output-stage3-prep-plan-20261014]]'
   - '[[2026-10-19-stage4-dialogue-translation]]'
+  - '[[2026-10-20-v2a-dual-stream]]'
 raw_authors:
   - tskim
 ---
@@ -32,6 +33,19 @@ raw_authors:
 3. **주입:** 청크마다 [A 프로필, B 프로필, 지금 화자 특징]을 오디오 임베딩 옆에 넣는다. 화자 헤드도 이 비교를 쓰게 할 수 있다. 창 사이로 프로필을 넘기면 세션 단위 화자 연결(CH109·MLC)도 같은 장치로 풀린다.
 - 대안(더 단순): 아래층 특징을 adapter 입력에 더하기만(기억 없음) — 화자 정보 경로만의 효과를 먼저 가르는 대조군.
 
+## 방향 전환 — V2-a 두 스트림 입력 (2026-10-20)
+- 사용자 의문: 슬롯 기억이 잘 될지 모르겠고, LLM 에 화자 인식 과제를 더하는 것도 내키지 않는다. VibeVoice 는 음성 인코더를 2 개 써서 귀속 문제가 덜한 것 같다.
+- VibeVoice-ASR 소스 확인(`modeling_vibevoice_asr.py` `encode_speech`):
+  - acoustic tokenizer(σ-VAE, 64 차원, 복원용 — 음색·화자가 남는다)와 semantic tokenizer(128 차원, 내용용)를 둘 다 7.5 Hz 인과 conv 로 돌린다.
+  - 각자 connector 를 거쳐 **더해서** LLM 에 넣는다. 화자 과제는 없고 최종 손실만으로 배운다.
+- 우리 측정과 맞는다: VibeVoice 스트리밍의 귀속 몫(cp − agn)이 우리보다 0–7 pt 작다(오프라인 1–4 pt). 모델 크기·데이터 차이도 있어 두 인코더만의 효과로 단정하지는 않는다.
+- **V2-a(사용자 승인 "그래 학습 전 점검까지 준비해."):**
+  - Nemotron L00(M0 에서 화자 분리가 가장 높은 층) 출력을 두 번째 connector `adapter_tap`(adapter 와 같은 LN·MLP)에 넣고 adapter 출력에 더한다.
+  - `adapter_tap` 의 마지막 Linear 를 0 으로 초기화한다. 붙인 직후는 V1 과 같고, 학습이 탭을 쓰는 만큼만 바뀐다.
+  - 새 손실·외부 모듈·추가 지연이 없다. 같은 인코더의 같은 80 ms 프레임이고, 계산은 connector 하나다.
+  - 구현·점검 → [[2026-10-20-v2a-dual-stream]]
+- V2-b(V2-a 로 부족할 때): 별도 음향 인코더(예: VibeVoice acoustic tokenizer)를 두 번째 스트림으로. 슬롯 기억은 V2-a 결과를 본 뒤 다시 판단한다.
+
 ## 다음
-- M1: 화자 가지·대조 손실·슬롯 기억·주입 구현, 단위 시험·스모크
-- M2: V1(st4-m1 ck1500)에서 이어 1,500 step 파일럿, 귀속 몫·턴 통째·연속 뒤바뀜을 대화 단위 bootstrap 으로 V1 과 비교, 받아쓰기·번역 회귀 확인
+- V2-a 파일럿: 대조군과 같은 설정·seed 에 `--enc-tap-layer 0` 만 더한다(같은 step 끼리 비교).
+- 비교 지표: 귀속 몫·턴 통째 오배정·연속 뒤바뀜(대화 단위 bootstrap), 겹침 구간별 오류, 받아쓰기·번역 회귀, LLM 입력 화자 분리도(spk_probe 재측정)

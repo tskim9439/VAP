@@ -2,7 +2,7 @@
 지금은 동결(eval, requires_grad False)이지만 set_trainable(True) 로 풀어 encoder 까지 학습할 수 있다.
 출력은 캐시 규약과 같다: 12.5 Hz, D=1024, 스트림당 K = round(duration·12.5) 프레임(모델 패딩으로 1–2 프레임 길면 자르고 짧으면 0 패딩)."""
 import os, glob
-from typing import Optional
+from typing import Optional, Sequence
 import torch, torch.nn as nn
 
 FRAME_HZ, SR, DIM = 12.5, 16000, 1024
@@ -126,17 +126,27 @@ class NemotronOnline(nn.Module):
         return self.spec_aug
     def train(self, mode: bool = True):                    # 동결 중에는 dropout 등이 켜지지 않도록 eval 유지
         super().train(mode); self.enc.train(mode and self.trainable); return self
-    def forward(self, wav: torch.Tensor, wav_len: torch.Tensor, K: torch.Tensor) -> torch.Tensor:
-        """wav (B, L) float32, wav_len (B,) 샘플 수, K (B,) 목표 프레임 수 → (B, max K, D) float32. 인코더는 fp32 로 돈다(autocast 밖)."""
+    def forward(self, wav: torch.Tensor, wav_len: torch.Tensor, K: torch.Tensor, taps: Sequence[int] = ()) -> torch.Tensor:
+        """wav (B, L) float32, wav_len (B,) 샘플 수, K (B,) 목표 프레임 수 → (B, max K, D) float32. 인코더는 fp32 로 돈다(autocast 밖).
+        taps(층 번호, 0 부터)를 주면 → (B, 1 + len(taps), max K, D): 0 번 = 마지막 층(위와 같은 값), 1.. = 그 층(enc.layers[j]) 출력, 같은 프레임 자르기·0 패딩(V2-a 두 스트림 입력)."""
         with torch.autocast("cuda", enabled=False):
             with torch.no_grad(): f, fl = self.pre(input_signal=wav.float(), length=wav_len)
             if self.spec_aug is not None: f = self.spec_aug(f, fl)                              # 모듈이 training 일 때만(추론·평가는 그대로)
+        got = {}; hooks = [self.enc.layers[j].register_forward_hook(lambda m, i_, o, j=j: got.__setitem__(j, o[0] if isinstance(o, tuple) else o)) for j in taps]   # NeMo 층 출력 (B, T', D)
         # 동결 인코더는 fp32(C2 이후 특징과 완전 동일). 학습할 때는 bf16 autocast — fp32 는 활성화 메모리가 2 배라 KO 배치 48 이 H200 에서 OOM(2026-09-09 실측: bs24 87 GB)
-        with torch.autocast("cuda", enabled=bool(self.trainable), dtype=torch.bfloat16):
-            ctx = torch.no_grad() if not self.trainable else torch.enable_grad()
-            with ctx: h, hl = self.enc(audio_signal=f, length=fl)              # (B, D, T')
-        h = h.float()
-        h = h.transpose(1, 2); Km = int(K.max()); out = h.new_zeros(h.shape[0], Km, h.shape[2])
-        for i in range(h.shape[0]):
-            k, t = int(K[i]), int(hl[i]); n = min(k, t); out[i, :n] = h[i, :n]
-        return out
+        try:
+            with torch.autocast("cuda", enabled=bool(self.trainable), dtype=torch.bfloat16):
+                ctx = torch.no_grad() if not self.trainable else torch.enable_grad()
+                with ctx: h, hl = self.enc(audio_signal=f, length=fl)              # (B, D, T')
+        finally:
+            for hk in hooks: hk.remove()
+        Km = int(K.max())
+        def fit(x):                                                                           # (B, T', D) → (B, Km, D)
+            x = x.float(); out = x.new_zeros(x.shape[0], Km, x.shape[2])
+            for i in range(x.shape[0]):
+                k, t = int(K[i]), int(hl[i]); n = min(k, t); out[i, :n] = x[i, :n]
+            return out
+        out = fit(h.transpose(1, 2))
+        if not taps: return out
+        assert all(got[j].shape[:2] == (h.shape[0], h.shape[2]) for j in taps), f"탭 층 출력 shape {[tuple(got[j].shape) for j in taps]} ≠ (B, T')=({h.shape[0]}, {h.shape[2]})"
+        return torch.stack([out] + [fit(got[j]) for j in taps], 1)

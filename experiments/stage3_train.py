@@ -26,6 +26,8 @@
   섞기: vapasr/hf/stage3.WeightedRoundRobinLoader — step 마다 셋을 가중치로 고른다(결정적). epoch = 대화 셋 배치를 한 번 도는 길이.
 모델: Stage 2 체크포인트 + add_semantic_tokens(turn=True, reinit_turn=True) — 예약만 돼 있던 <EOT> 행을 다시 초기화하고 차단을 푼다,
   config.turn_weight = --turn-weight. 대화 행은 sem_only_mask(<SEM_END> 만 중립), forward 가 labels_alt/soft_w 로 두 점 soft CE.
+  --enc-tap-layer L(V2-a, wiki output-v2-speaker-memory-plan-20261020): 인코더 L 층 출력을 두 번째 connector(adapter_tap, 마지막 Linear 0 초기화 → 붙인 직후 = V1)로
+  LLM 입력에 더한다(model.add_enc_tap). init 에 이미 탭이 있으면 같은 층이어야 한다. 지문 키 enc_tap(끄면 키 없음).
 나머지(인코더 학습·att_context 고정·SpecAugment·속도/잡음/음량 증강·packing·선점 저장·재개 지문·final 재로드 parity)는 semcommit_train.py 와 같은 규약.
 지문: config.stage3(형식·코퍼스·split·창·EOT 규칙·가중치·δ·replay 입력·tokenizer 어휘) — 재개는 같은 지문일 때만(--force-resume 로만 진행).
 저장: checkpoint-N 을 지우지 않는다(--save-total-limit 0). 완료 시 out-dir/final + parity.json(PARITY OK/FAIL) + DONE."""
@@ -63,6 +65,8 @@ g.add_argument("--dlg-ast-frac", type=float, default=0.5, help="번역 타깃이
 g.add_argument("--sim-trans-frac", type=float, default=0.8, help="교차 언어 합성 셋(sim_<l1>-<l2>) 창을 번역 모드로 둘 확률")
 g.add_argument("--trans-lead-space", action="store_true", help="번역 행마다 첫 단어를 앞 공백 토큰으로(cst_dialogue.lead_space_row — 행을 이은 번역 흐름에서 단어가 붙지 않게, Stage 4 본 학습부터). 대화·교차 언어 합성 모두에 적용, 지문에 들어간다")
 g.add_argument("--spk-act-weight", type=float, default=0.0, help="화자 슬롯 활동 보조 손실 가중(0 = 끔): LLM audio 위치에 2 슬롯 헤드, 청크마다 'A/B 가 말하는 중' BCE")
+g.add_argument("--enc-tap-layer", type=int, default=-1, help="V2-a 두 스트림 입력: 인코더 이 층(0 부터) 출력을 adapter_tap 으로 LLM 입력에 더한다(−1 = 끔, V1). 새로 붙이면 마지막 Linear 0 초기화")
+g.add_argument("--enc-tap-hidden", type=int, default=0, help="adapter_tap 은닉 차원(0 = adapter 와 같게)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
 g.add_argument("--replay-de-words", action="append", default=[], help="독일어 words.jsonl(반복·쉼표·@목록) → rep_de")
@@ -177,6 +181,8 @@ from vapasr.data.semcommit_tokens import SEM_SPECIALS, TURN_TOKEN, add_delay_ext
 cfg_path = os.path.join(a.init, "config.json")
 assert os.path.exists(cfg_path) and json.load(open(cfg_path)).get("model_type") == "vapasr", f"--init 은 HF vapasr 디렉토리: {a.init}"
 assert os.path.exists(os.path.join(a.init, "tokenizer_config.json")), f"{a.init} 에 tokenizer 가 없다 — Stage 2 final 을 준다"
+init_tap = int(json.load(open(cfg_path)).get("enc_tap_layer", -1))
+if init_tap >= 0 and a.enc_tap_layer != init_tap: sys.exit(f"--init 에 이미 인코더 탭(층 {init_tap})이 있다 — --enc-tap-layer {init_tap} 로 이어서 학습한다(지금 {a.enc_tap_layer})")
 t0 = time.time(); tok = AutoTokenizer.from_pretrained(a.init); model = None; speed = {}
 if not a.dry_run:
     from vapasr.hf import VapAsrForStreamingASR
@@ -187,6 +193,7 @@ if not a.dry_run:
     if max(delays) > 8: add_delay_tokens(model, tok)                                         # Stage 2 에서 이미 붙었으면 그대로
     add_ast_tokens(model, tok)                                                                # <TRANS>·<SPK_A/B> 차단 해제(이미 있으면 그대로)
     if a.spk_act_weight > 0: model.add_spk_head(2, a.spk_act_weight)                           # 화자 슬롯 활동 헤드(새로 붙이면 adapter lr — trainer.create_optimizer)
+    if a.enc_tap_layer >= 0: model.add_enc_tap(a.enc_tap_layer, a.enc_tap_hidden or None)      # V2-a 두 스트림 입력(adapter_tap 도 adapter lr)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
     assert not bad, f"tokenizer 특수 토큰 id 가 config 와 다름: {bad}"
@@ -220,7 +227,8 @@ if model is not None:
     speed = apply_speedups(model, a, log, liger=a.liger); a.liger = bool(speed["liger"]); cfg.use_liger = a.liger
     n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad)
     log(f"model ← {a.init} ({time.time() - t0:.0f}s) · 학습 {n_tr / 1e6:.1f}M · 인코더 {'동결' if a.freeze_encoder else '학습'}(init 인코더 저장됨={init_had_encoder}) · "
-        f"<EOT>={EOT} 켬(turn_weight {cfg.turn_weight}) · grad ckpt {a.grad_ckpt} · liger {a.liger} · 화자 슬롯 헤드 {f'켬(가중 {cfg.spk_weight})' if model.spk_head is not None else '끔'}")
+        f"<EOT>={EOT} 켬(turn_weight {cfg.turn_weight}) · grad ckpt {a.grad_ckpt} · liger {a.liger} · 화자 슬롯 헤드 {f'켬(가중 {cfg.spk_weight})' if model.spk_head is not None else '끔'} · "
+        f"인코더 탭 {f'L{cfg.enc_tap_layer:02d}(은닉 {cfg.enc_tap_hidden})' if model.adapter_tap is not None else '끔'}")
 
 # ── 데이터
 def _paths(vals):
@@ -345,7 +353,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"sim_trans": sim_trans_fp, "sim_trans_frac": a.sim_trans_frac} if sim_trans_fp else {}),
           **({"trans_lead_space": True} if a.trans_lead_space and (DT or sim_trans_fp) else {}),
           **({"replay_sets": {k: file_digest(v) for k, v in sorted(RS.items())}} if RS else {}),
-          **({"phone_aug": phone.settings()} if phone is not None else {}))   # 끄면 키 없음(이전 run 지문 그대로)
+          **({"phone_aug": phone.settings()} if phone is not None else {}),   # 끄면 키 없음(이전 run 지문 그대로)
+          **({"enc_tap": dict(layer=a.enc_tap_layer, hidden=a.enc_tap_hidden or None)} if a.enc_tap_layer >= 0 else {}))
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():

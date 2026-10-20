@@ -6,7 +6,7 @@
 
 창: Stage 3 회귀 평가와 같은 held-out 창(cst_stage3_eval.windows_of, δ10·맞장구 1.0,3·코퍼스마다 200) — mono 혼합 그대로(모델이 보는 오디오).
 턴: 창 안에 통째로 든 발화 중 1.0 s 이상이고 다른 화자와 겹치는 비율이 0.2 이하인 것(전사 유무와 무관 — 화자 라벨만 쓴다).
-특징: 인코더 층마다(NeMo ConformerEncoder.layers 의 출력 hook, 'pre' = 서브샘플링 출력, 'adapter' = LLM 입력) 턴 구간 프레임 평균.
+특징: 인코더 층마다(NeMo ConformerEncoder.layers 의 출력 hook, 'pre' = 서브샘플링 출력, 'adapter' = LLM 입력 — V2-a 두 스트림 모델이면 adapter + adapter_tap) 턴 구간 프레임 평균.
   orig = Nemotron 원본 인코더(Stage 0 는 인코더를 얼렸으므로 같다).
 지표(층마다, raw 와 창 평균을 뺀 centered 두 가지):
   EER     — 같은 창 안 턴 쌍(같은 화자 = 양성, 다른 화자 = 음성)의 코사인으로 잰 등오류율
@@ -63,7 +63,7 @@ def run(a):
                 w = torch.from_numpy(wav).to(dev); feats.clear()
                 out = enc(w[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))
                 reps = {f"L{j:02d}": feats[j][0] for j in range(len(layers))}                  # (T, D) — NeMo 층 출력은 (B, T, D)
-                if model is not None: reps["adapter"] = model.adapter(out[0].float())
+                if model is not None: reps["adapter"] = model.chunk_embed(model.encode(w[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev)))[0]   # LLM 입력(두 스트림 모델이면 adapter + adapter_tap)
                 spk = [sp for _, sp, _, _ in tt]; lab = np.array([[spk[p] == spk[q] for q in range(len(tt))] for p in range(len(tt))])
                 iu = np.triu_indices(len(tt), 1); Y.append(lab[iu]); rec = dict(id=f"{cid}@{t0}", corpus=c, lang=ds.dlgs[cid].lang, turns=len(tt))
                 for nm in names:

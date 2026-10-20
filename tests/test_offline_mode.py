@@ -41,3 +41,4 @@ def test_offline_loss_and_decode_on_tiny_model():
     assert F.im_end not in blocked and c.audio_token_id in blocked and all(v in blocked for v in m.config.sp_ids.values())
     hyp = offline_decode(m, tok, feats[0, 0], "English", max_new_tokens=7, fmt=F)
     assert len(hyp) <= 7 and not set(hyp) & set(blocked) and F.im_end not in hyp
+    assert offline_decode(m, tok, feats[0], "English", max_new_tokens=7, fmt=F) == hyp           # (S, K, Din) 스트림 축 형태(model.encode 출력)도 같은 결과

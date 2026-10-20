@@ -25,13 +25,14 @@ def offline_blocked_ids(model, fmt: OfflineFormat) -> List[int]:
 @torch.no_grad()
 def offline_decode(model, tok, feats: torch.Tensor, lang: str, max_new_tokens: Optional[int] = None, fmt: Optional[OfflineFormat] = None,
                    blocked: Optional[torch.Tensor] = None) -> List[int]:
-    """feats (K, Din) 인코더 특징 → 텍스트 토큰 id 목록(<|im_end|> 제외)."""
+    """feats (K, Din) 또는 (S, K, Din)(model.encode 의 스트림 축 — 두 스트림 모델) 인코더 특징 → 텍스트 토큰 id 목록(<|im_end|> 제외)."""
     from transformers import DynamicCache
-    fmt = fmt or OfflineFormat(tok); dev = feats.device; K = int(feats.shape[0])
+    if feats.dim() == 2: feats = feats[None]
+    fmt = fmt or OfflineFormat(tok); dev = feats.device; K = int(feats.shape[1])
     if blocked is None: blocked = torch.tensor(offline_blocked_ids(model, fmt), device=dev)
     emb = model.get_input_embeddings(); ids = fmt.header(K, lang); a0 = len(fmt.pre) + 1
     e = emb(torch.tensor(ids, device=dev)).clone()
-    e[a0:a0 + K] = model.chunk_embed(feats[None, None])[0].to(e.dtype)
+    e[a0:a0 + K] = model.chunk_embed(feats[None])[0].to(e.dtype)
     cache = DynamicCache()
     def step(x):
         return model.thinker(inputs_embeds=x.view(1, -1, x.shape[-1]), past_key_values=cache, use_cache=True).logits[0, -1].float()
@@ -47,5 +48,5 @@ def offline_decode(model, tok, feats: torch.Tensor, lang: str, max_new_tokens: O
 def offline_transcribe(model, tok, wav: torch.Tensor, lang: str, **kw) -> List[int]:
     """wav (T,) 16 kHz → 인코더(학습과 같은 청크 수 K = round(길이·12.5)) → offline_decode."""
     K = torch.tensor([int(round(wav.shape[0] / 16000 * model.config.frame_hz))], device=wav.device)
-    feats = model.encode(wav[None], torch.tensor([wav.shape[0]], device=wav.device), K)[0, 0]
+    feats = model.encode(wav[None], torch.tensor([wav.shape[0]], device=wav.device), K)[0]
     return offline_decode(model, tok, feats, lang, **kw)
