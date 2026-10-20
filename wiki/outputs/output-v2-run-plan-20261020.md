@@ -50,14 +50,14 @@ raw_authors:
 ## 작업과 상태
 | # | 작업 | 상태 |
 |---|---|---|
-| V1 | 모델: 슬롯 C·D 토큰 켜기, 화자 활동 헤드 2 → 4 | 시작 |
-| V2 | 시퀀스: `cst_dialogue` N 슬롯(전사·번역 흐름, 태그, 다시 읽기, 점검, 활동 라벨, 슬롯 선언) | – |
-| V3 | 창: draw 이어 덮기·20–90 s·화자 상한 줄이기, sampler 의 epoch 별 draw | – |
-| V4 | 평가: N 슬롯 채점·오류 분해, 긴 창·회의·다화자 합성 셋, TAXI 통째 | – |
-| V5 | 합성: `synth_session` N 화자(다음 화자 고르기, 맞장구 host), 3–4 인 합성 셋(한·영·독) | – |
-| V6 | 회의 번역 타깃: AMI·ICSI·NOTSOFAR 영 → 독·한(S1: 단위 → Qwen3.8-27B 생성 → 관문 → pack), 생성은 apex 제출(사용자) | – |
-| V7 | 학습 스크립트: `--max-speakers 4`·`--window 20,90`·`--window-draws R`·회의 코퍼스·지문, V2-a 탭, 전화 대역 증강 | 탭·전화 대역은 완료 |
-| V8 | dry-run → 스모크 → 학습 전 점검(V2-a 점검 포함) → 제출 명령 | V2-a 점검은 끝(아래) |
+| V1 | 모델: 슬롯 C·D 토큰 켜기(`enable_slots`), 화자 활동 헤드 2 → 4(A·B 행 유지) | **완료**(단위 시험) |
+| V2 | 시퀀스: `cst_dialogue` N 슬롯(전사·번역 흐름 2N, 태그, 다시 읽기, 점검, 활동 라벨, 슬롯 선언 `declare_all_p`·`declare`) | **완료**(단위 시험, 2 화자는 예전과 같음) |
+| V3 | 창: draw 이어 덮기(`window_draws`)·20–90 s·화자 상한 줄이기(`shrink_speakers`), sampler 가 epoch e 에 draw e mod R | **완료**(단위 시험) |
+| V4 | 평가: N 슬롯 채점(cp 순열)·오류 분해·prefix 별 배치, 창 인자(`--max-speakers`·`--window`·`--window-draws`·`--declare`) | 코드 완료, mxc 오라클 점검 중 |
+| V5 | 합성: `synth_session` N 화자(`p_back` 0.2, 2 인은 같은 난수열), `--speakers 2:0.2,3:0.4,4:0.4`, 3–4 인 합성 셋(학습 언어마다 1 만·평가 300) | 생성기 완료, 셋 빌드 중(`sim_build_multi.sh`) |
+| V6 | 회의 번역 타깃: 원문 단위 `stage4-dlg-units-meet-v1`(AMI·ICSI·NOTSOFAR 262,380 단위·2.04 M 단어·227,935 행) → 생성(en→de·ko)·수리는 apex 제출(사용자) | 단위 완료, 제출 대기 |
+| V7 | 학습 스크립트: `--max-speakers`·`--declare-all-p`·`--window`·`--window-draws`·`--dlg-corpora`(회의 = `dlg_mt`)·지문, V2-a 탭, 전화 대역 증강 | **완료**(코드) |
+| V8 | dry-run → 스모크 → 학습 전 점검 → 제출 명령 | 대기(합성 셋·번역 타깃 뒤) |
 
 ## V2-a 학습 전 점검 결과 (2026-10-20) → [[2026-10-20-v2a-dual-stream]]
 - 단위 시험 mxc 54 통과, dry-run 11 셋 불일치 0, 스모크 20 step PARITY OK(`adapter_tap` 저장·재로드, 0 초기화 마지막 층이 20 step 만에 |w| 0.0023 으로 학습)
