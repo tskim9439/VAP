@@ -16,6 +16,8 @@ from .configuration_vapasr import VapAsrConfig
 from .p2_losses import soft_ce, activity_bce, gather_audio_targets
 from .varlen_attention import is_varlen, packed_kwargs
 
+SLOT_TOKENS = ("<SPK_A>", "<SPK_B>", "<SPK_3>", "<SPK_4>")      # 화자 슬롯 A·B·C·D(V2: C·D = Phase 2 예약 토큰) — enable_slots
+
 class Adapter(nn.Module):                                   # uslm/model.Adapter 와 동일 구조(키 이름 net.* 유지 → 기존 ckpt 호환)
     def __init__(self, d_in=1024, d_out=1024, h=2048):
         super().__init__(); self.net = nn.Sequential(nn.LayerNorm(d_in), nn.Linear(d_in, h), nn.GELU(), nn.Linear(h, d_out))
@@ -196,12 +198,39 @@ class VapAsrForStreamingASR(PreTrainedModel):
 
     def add_spk_head(self, slots: int = 2, weight: float = 0.5) -> None:
         """Stage 3(mono) 화자 슬롯 활동 헤드를 붙인다 — 청크마다 '슬롯 s 화자가 말하는 중' BCE(LLM 의 audio 위치 hidden, 슬롯 순서 = 창에서 먼저 말한 사람 A).
-        텍스트 화자 태그는 δ 청크 늦게 나오므로 지금 청크의 슬롯을 맞히려면 목소리로 정체를 추적해야 한다. 디코드는 쓰지 않는다. 이미 같은 슬롯 수면 가중만 바꾼다."""
+        텍스트 화자 태그는 δ 청크 늦게 나오므로 지금 청크의 슬롯을 맞히려면 목소리로 정체를 추적해야 한다. 디코드는 쓰지 않는다. 이미 같은 슬롯 수면 가중만 바꾼다.
+        이미 있는 헤드보다 슬롯이 많으면(V2: 2 → 4) 늘린다 — 앞 슬롯 행·은닉층은 그대로, 새 출력 행은 기존 행 평균(학습한 A·B 를 잃지 않게). 줄이지는 않는다."""
         assert self.config.lanes == 0, "Phase 2(lanes>0) 는 act_head 가 lane 활동을 맡는다"
-        if self.spk_head is None or int(self.config.spk_slots) != int(slots):
-            W = self.get_input_embeddings().weight; self.config.spk_slots = int(slots)
-            self.spk_head = self._spk_head(int(slots)).to(device=W.device, dtype=W.dtype)
-        self.config.spk_weight = float(weight)
+        W = self.get_input_embeddings().weight; slots = int(slots)
+        if self.spk_head is None:
+            self.spk_head = self._spk_head(slots).to(device=W.device, dtype=W.dtype)
+        elif int(self.config.spk_slots) < slots:
+            old = self.spk_head[-1]; new = nn.Linear(old.in_features, slots).to(device=old.weight.device, dtype=old.weight.dtype); n0 = old.out_features
+            with torch.no_grad():
+                new.weight[:n0] = old.weight; new.bias[:n0] = old.bias
+                new.weight[n0:] = old.weight.mean(0, keepdim=True); new.bias[n0:] = old.bias.mean()
+            self.spk_head[-1] = new
+        else: assert int(self.config.spk_slots) == slots, f"화자 헤드 슬롯 {self.config.spk_slots} → {slots}: 줄이지 않는다"
+        self.config.spk_slots = slots; self.config.spk_weight = float(weight)
+
+    def enable_slots(self, tok, n: int = 4, seed: int = 0) -> List[int]:
+        """화자 슬롯을 n 개(최대 4: A·B·C·D)로 켠다 — C·D 는 Phase 2 예약 토큰 <SPK_3>·<SPK_4>(동결 registry 151717·151718, 새 어휘 없음).
+        mono 체크포인트에서 예약만 된 행(config.sem_reserved)은 tied lm_head 의 full-vocab softmax 음성으로만 학습돼 logit 이 눌려 있으므로
+        평균 + 잡음으로 다시 초기화하고(add_semantic_tokens reinit_turn 과 같은 이유), decode 차단과 예약 표시에서 뺀다. config.slot_tokens 에 슬롯 순서를 적는다.
+        반복 호출은 아무것도 바꾸지 않는다. → 슬롯 토큰 id 목록."""
+        from ..data.semcommit_tokens import init_rows_mean_noise, BASE_VOCAB
+        from ..data.dialogue_tokens import FROZEN_REGISTRY
+        assert 2 <= int(n) <= len(SLOT_TOKENS), f"슬롯 수 2–{len(SLOT_TOKENS)}: {n}"
+        names = list(SLOT_TOKENS[: int(n)]); ids = [int(tok.convert_tokens_to_ids(t)) for t in names]
+        assert ids == [FROZEN_REGISTRY[t] for t in names], f"슬롯 토큰 id 가 동결 registry 와 다르다: {dict(zip(names, ids))}"
+        reserved = set(getattr(self.config, "sem_reserved", None) or [])
+        W = self.get_input_embeddings().weight; assert max(ids) < W.shape[0], "임베딩 여유 행 없음"
+        init_rows_mean_noise(W, [i for t, i in zip(names, ids) if t in reserved], upto=BASE_VOCAB, seed=seed)
+        self.config.sem_reserved = [t for t in (self.config.sem_reserved or []) if t not in names]
+        self.config.sp_ids.update(dict(zip(names, ids))); self.sp_ids = dict(self.config.sp_ids)
+        self.config.blocked_ids = sorted(set(self.config.blocked_ids) - set(ids)); self.blocked = torch.tensor(self.config.blocked_ids, dtype=torch.long, device=W.device)
+        self.config.slot_tokens = names
+        return ids
 
     def activity_logits(self, h_audio: torch.Tensor) -> torch.Tensor:
         """Phase 2 lane 활동 logits (…, R) — 추론 parser(lane_state) 가 닫힘 판정에 쓴다."""

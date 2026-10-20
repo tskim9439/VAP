@@ -57,23 +57,29 @@ class PackedBudgetSampler(Sampler):
     def __init__(self, ds, max_tokens: int, max_bs: int = 64, seed: int = 0, rank: int = 0, world: int = 1, drop_last: bool = False,
                  padded: bool = False):
         est = est_lens(ds)
-        order = sorted(range(len(ds)), key=lambda i: (int(est[i]), i))
         cost = (lambda n, tot, e: (n + 1) * e) if padded else (lambda n, tot, e: tot + e)   # ascending order → e is the batch max
-        self.batches, cur, tot = [], [], 0
-        for i in order:
-            e = int(est[i])
-            if cur and (cost(len(cur), tot, e) > max_tokens or len(cur) >= max_bs):
-                self.batches.append(cur); cur, tot = [], 0
-            cur.append(i); tot += e                  # an item longer than max_tokens still gets its own batch
         size = (lambda b: len(b) * int(est[b[-1]])) if padded else (lambda b: int(sum(int(est[i]) for i in b)))
-        if cur and not (drop_last and self.batches and size(cur) < max_tokens // 2):
-            self.batches.append(cur)
-        self.tokens = [size(b) for b in self.batches]
+        def build(idx):
+            batches, cur, tot = [], [], 0
+            for i in sorted(idx, key=lambda i: (int(est[i]), i)):
+                e = int(est[i])
+                if cur and (cost(len(cur), tot, e) > max_tokens or len(cur) >= max_bs):
+                    batches.append(cur); cur, tot = [], 0
+                cur.append(i); tot += e                  # an item longer than max_tokens still gets its own batch
+            if cur and not (drop_last and batches and size(cur) < max_tokens // 2):
+                batches.append(cur)
+            return batches
+        # Window draws (V2, DialogueWindowDataset window_draws): the dataset holds R tilings; epoch e uses draw e mod R only.
+        draws = int(getattr(ds, "n_draws", 1) or 1); item_draw = list(getattr(ds, "item_draw", None) or [0] * len(ds))
+        self.by_draw = [build([i for i in range(len(ds)) if item_draw[i] == r]) for r in range(draws)] if draws > 1 else [build(range(len(ds)))]
+        self.batches = self.by_draw[0]
+        self.tokens_by_draw = [[size(b) for b in bb] for bb in self.by_draw]; self.tokens = self.tokens_by_draw[0]
         self.padded = padded
         self.max_tokens, self.seed, self.rank, self.world, self.epoch = max_tokens, seed, rank, world, 0
-        self.n = len(self.batches) // world
+        self.n = min(len(bb) for bb in self.by_draw) // world                      # the same per-rank length every epoch (Trainer/loader length)
 
-    def set_epoch(self, e: int): self.epoch = e
+    def set_epoch(self, e: int):
+        self.epoch = e; r = e % len(self.by_draw); self.batches = self.by_draw[r]; self.tokens = self.tokens_by_draw[r]
 
     def __iter__(self):
         b = list(self.batches); random.Random(f"{self.seed}:{self.epoch}").shuffle(b)

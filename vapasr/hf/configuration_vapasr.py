@@ -17,7 +17,7 @@ class VapAsrConfig(PretrainedConfig):
                  full_ft: bool = True, lora_r: int = 0, runaway_cap: int = 8, max_flush_rounds: int = 8, blocked_ids: Optional[List[int]] = None, audio_pad_id: Optional[int] = None,
                  prefix_ids: Optional[List[int]] = None, lanes: int = 0, act_weight: float = 1.0, act_hidden: int = 256, eot_weight: float = 2.0, tag_weight: float = 1.0, phase2_registry: Optional[Dict[str, int]] = None,
                  sem_registry: Optional[Dict[str, int]] = None, sem_weight: float = 1.0, turn_weight: float = 1.0, sem_reserved: Optional[List[str]] = None,
-                 spk_slots: int = 0, spk_weight: float = 0.5, enc_tap_layer: int = -1, enc_tap_hidden: int = 2048, **kw):
+                 spk_slots: int = 0, spk_weight: float = 0.5, enc_tap_layer: int = -1, enc_tap_hidden: int = 2048, slot_tokens: Optional[List[str]] = None, **kw):
         self.thinker = thinker or {}; self.thinker_name_or_path = thinker_name_or_path
         self.adapter_d_in, self.adapter_d_out, self.adapter_hidden = adapter_d_in, adapter_d_out, adapter_hidden
         self.encoder_type, self.encoder_name = encoder_type, encoder_name; self.encoder_left_context, self.encoder_right_context = encoder_left_context, encoder_right_context
@@ -32,6 +32,7 @@ class VapAsrConfig(PretrainedConfig):
         self.sem_registry = dict(sem_registry or {})                                                                # semantic commit 으로 학습한 이벤트 토큰: {<SEM_END>: 151723}(+ mono 턴 종료 <EOT>: 151722; v0.2 는 <TURN_END>: 151724). 비어 있으면 끔
         self.sem_weight, self.turn_weight = sem_weight, turn_weight                                                  # SEM/TURN 타깃 위치 CE 가중(lanes 와 무관, NEXT 가중과 같은 규약)
         self.spk_slots, self.spk_weight = int(spk_slots), float(spk_weight)                                         # Stage 3(mono): 화자 슬롯 활동 헤드(슬롯 수, 0 = 없음)·BCE 가중 — 학습 보조 손실
+        self.slot_tokens = list(slot_tokens or ["<SPK_A>", "<SPK_B>"])                                            # 화자 슬롯 토큰 순서(V2 enable_slots: + <SPK_3>·<SPK_4> = C·D)
         self.enc_tap_layer, self.enc_tap_hidden = int(enc_tap_layer), int(enc_tap_hidden)                          # V2-a 두 스트림 입력: 인코더 아래층(0 부터) 출력을 adapter_tap 으로 LLM 입력에 더한다(−1 = 끔)
         self.sem_reserved = list(sem_reserved or [])                                                                # mono semcommit 이 예약만 한 Phase 2 이름 — add_phase2_tokens 가 이 행을 다시 초기화하고 비운다
         super().__init__(**kw)

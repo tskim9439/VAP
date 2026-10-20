@@ -33,7 +33,7 @@ class DialogueWindowDataset(Dataset):
     def __init__(self, dialogues: List[str], tok, align_dir: Optional[str] = None, R: int = R_LANES, window_s: Tuple[float, float] = (20.0, 40.0), hop_s: float = 10.0,
                  delays=(2, 3, 4, 6), delay_onset: int = 0, policy: str = "lazy_free", max_per_chunk: int = 0, seed: int = 0, mix_kw: Optional[dict] = None,
                  max_items: Optional[int] = None, allow_unaligned: bool = False, cache_convs: int = 4, min_text_tokens: int = 8, untranscribed: str = "mask", mono_cache_dir: Optional[str] = None,
-                 start_mode: str = "grid", random_frac: float = 0.5):
+                 start_mode: str = "grid", random_frac: float = 0.5, window_draws: int = 0):
         self.tok = tok; self.sp_ids = add_phase2_specials(tok); self.sp = lane_specials_of(self.sp_ids, R); self.R = R; self.delays = tuple(delays); self.delay_onset = delay_onset
         self.policy = policy; self.M = max_per_chunk; self.mix_kw = mix_kw or {}; self.allow_unaligned = allow_unaligned; self.cache_convs = cache_convs; self.min_text_tokens = min_text_tokens; self.untranscribed = untranscribed; assert untranscribed in ("mask", "skip"); self.mono_cache_dir = mono_cache_dir
         assert start_mode in ("grid", "mixed"); self.start_mode = start_mode; self.random_frac = random_frac
@@ -46,10 +46,17 @@ class DialogueWindowDataset(Dataset):
                 for u in d.utterances:
                     if u.utt_id in toks: u.tokens = toks[u.utt_id]
                 self.dlgs[d.conv_id] = d; self.stats["dialogues"] += 1
-        self.items: List[Tuple[str, float, float]] = []; rng = random.Random(seed); self._seed = seed
-        for cid, d in self.dlgs.items(): self.items += self._windows(d, window_s, hop_s, rng)
-        rng.shuffle(self.items)
-        if max_items: self.items = self.items[:max_items]
+        self.items: List[Tuple[str, float, float]] = []; rng = random.Random(seed); self._seed = seed; self.window_s = tuple(window_s)
+        self.n_draws = max(1, int(window_draws)); self.item_draw: List[int] = []
+        if window_draws > 0:                                                  # V2(decision-v2-run-scope-20261020): draw r 마다 대화를 U(window_s) 창으로 이어 덮는다 — sampler 가 epoch e 에 draw e mod R 을 쓴다
+            for r in range(self.n_draws):
+                for cid, d in self.dlgs.items():
+                    w = self._windows_tiled(d, window_s, random.Random(f"{seed}:{r}:{cid}")); self.items += w; self.item_draw += [r] * len(w)
+            z = list(zip(self.items, self.item_draw)); rng.shuffle(z); self.items = [x for x, _ in z]; self.item_draw = [r for _, r in z]
+        else:
+            for cid, d in self.dlgs.items(): self.items += self._windows(d, window_s, hop_s, rng)
+            rng.shuffle(self.items); self.item_draw = [0] * len(self.items)
+        if max_items: self.items = self.items[:max_items]; self.item_draw = self.item_draw[:max_items]
         self._mono: Dict[str, np.ndarray] = {}; self._order: List[str] = []
 
     # ── 창 선택
@@ -84,6 +91,38 @@ class DialogueWindowDataset(Dataset):
                 if hit: self.stats["windows_with_mask"] += 1
                 out.append((d.conv_id, round(t, 3), round(L, 3))); self.stats["windows"] += 1; self.stats["random_start"] += 1; n_rand -= 1
         return out
+
+    def _windows_tiled(self, d: Dialogue, window_s, rng) -> List[Tuple[str, float, float]]:
+        """draw 하나: 대화를 길이 U(window_s) 창으로 이어 덮는다. 첫 시작은 무작위 오프셋 U(0, lo) 뒤 첫 무음 지점, 다음 시작은 앞 창 끝 직전 5 s 안의
+        가장 늦은 무음 지점(없으면 끝 뒤 첫 무음 지점) — 창 사이 말이 거의 빠지지 않고 겹침도 작다. 거의 무음인 창(min_text_tokens)·skip 모드의 전사 없는 창은 건너뛴다."""
+        sp = sorted((u.start, u.end) for u in d.utterances); merged: List[List[float]] = []
+        for a, b in sp:
+            if merged and a <= merged[-1][1]: merged[-1][1] = max(merged[-1][1], b)
+            else: merged.append([a, b])
+        gaps = ([(0.0, merged[0][0])] if merged else [(0.0, d.duration_s)]) + [(merged[i][1], merged[i + 1][0]) for i in range(len(merged) - 1)] + ([(merged[-1][1], d.duration_s)] if merged else [])
+        def after(t):                                                          # t 이후 첫 무음 지점
+            for a, b in gaps:
+                if b >= t: return max(a, t)
+            return d.duration_s
+        def back(t, w=5.0):                                                    # (t − w, t] 안 가장 늦은 무음 지점, 없으면 after(t)
+            c = [min(b, t) for a, b in gaps if a <= t and b > t - w]
+            return max(c) if c else after(t)
+        bad = self._bad_spans(d); lo, hi = window_s; out = []; t = after(rng.uniform(0.0, lo))
+        while t + lo <= d.duration_s:
+            L = min(rng.uniform(lo, hi), d.duration_s - t); t1 = t + L
+            hit = any(a < t1 and b > t for a, b in bad)
+            n_tok = sum(len([1 for _, tt in (u.tokens or []) if t <= tt <= t1]) for u in d.utterances if u.end > t and u.start < t1)
+            if hit and self.untranscribed == "skip": self.stats["skipped_untranscribed"] += 1
+            elif n_tok < self.min_text_tokens: self.stats["skipped_sparse"] += 1
+            else:
+                if hit: self.stats["windows_with_mask"] += 1
+                out.append((d.conv_id, round(t, 3), round(L, 3))); self.stats["windows"] += 1
+            nt = back(t1); t = nt if nt > t + 1.0 else t1                        # 앞으로만 간다
+        return out
+
+    def keep_items(self, keep: List[bool]) -> None:
+        """items 와 item_draw 를 함께 거른다(하위 클래스의 held-out 제외·화자 수 거르기)."""
+        self.items = [x for x, k in zip(self.items, keep) if k]; self.item_draw = [r for r, k in zip(self.item_draw, keep) if k]; self._est = None
 
     def _bad_spans(self, d: Dialogue):
         """전사 없는 음성 구간: quarantine(flags) · 토큰도 텍스트도 없음 · 텍스트는 있는데 미정렬(allow_unaligned 가 아니면) · 결손 조각. 보정으로 분할된 조각은 text="" 이지만 tokens 가 있어 정상."""
