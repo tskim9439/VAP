@@ -22,3 +22,14 @@
   - Stage 4 번역(2 화자 대화, kec 독→영·otoSpeech 영→독·영→한, 창 10, δ10): 받아쓰기 WER·cp 0, 번역 BLEU·chrF 100 — 번역 모드 N 슬롯 일반화 뒤에도 예전 평가가 그대로다
 - 회의 원문 단위(`stage4-dlg-units-meet-v1`): AMI 89,803 · ICSI 111,388 · NOTSOFAR 61,189 단위, 합계 2.04 M 단어·227,935 행. 생성 apex 93807 → 수리 93808(사용자 제출).
 - 3–4 인 합성 평가 셋: 영·한 300 세션씩, 실패 0, 겹침 6 %.
+
+## AMI 공식 평가 데이터 (`ami-bench-v1`, 2026-10-20)
+- 사용자: "AMI-IHM 과 AMI-SDM 으로도 평가 진행하려는 데, 학습 셋과 겹치지는 않지?" → split v4(`make_split_v4.py`). "mxc 에 바로 받자."(이번 건만 예외)
+- SDM: 공식 사이트(groups.inf.ed.ac.uk)는 mxc 에서 막혀 있다(https SSL_ERROR_SYSCALL, http 470).
+  - `diarizers-community/ami`(sdm, @8cdaae2eaf96, CC-BY-4.0)를 받았다. 회의 통째 Array1-01 이고, validation = 공식 dev 18, test = 공식 eval 16 이다.
+  - 7 파일·2.03 GB, sha256 불일치 0 → `VAPKT-data/data/ami-sdm-hf`
+- IHM-mix: mxc `/soundai/DB/raw/ami/<회의>/<회의>.Mix-Headset.wav`(공식 헤드셋 합, 읽기만)
+- `ami_bench_build.py` → `VAPKT-data/data/ami-bench-v1/{ami-sdm,ami-ihmmix}.refined.dialogues.jsonl` + mono 캐시(발화 구간 −23 dBFS)
+  - 참조·시각은 Phase 2 AMI 대화(헤드셋 정렬) 그대로다. 34 회의 모두 길이 차 1 s 이내.
+  - 시각 맞춤 점검(발화 구간 0/1 대 오디오 포락선 상관, 6 회의): 최대 상관 지연이 SDM −40–0 ms·IHM-mix −40–0 ms 다(청크 80 ms 안). 0 ms 상관은 최대와 같다(SDM 0.13–0.20, IHM-mix 0.21–0.56).
+- 평가: `v2_eval_extra.sh` 12 단계(창 전부, 4 슬롯 선언), `ami_report.py` 로 공식 eval·dev 를 나눠 낸다.

@@ -9,10 +9,10 @@
 # TRANS_LEAD_SPACE=1: 번역 참조 행 앞 공백(학습 --trans-lead-space). 아무것도 지우지 않는다.
 set -u
 RUN=$1; shift
-cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
+CODE=${CODE:-/soundai/users/tskim/VAPKT}; cd $CODE; set -a; source /soundai/users/tskim/VAPKT/.env; set +a      # CODE: 코드 사본(본 checkout 반영 전에는 VAPKT-dev)
 D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2; R=/soundai/users/tskim/VAPKT-data/results; OUT=/soundai/Model/VAPASR/stage3-$RUN
 TAXI=$D/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl; MS=$D/sim-dialogue-multi-eval-v1; MT=$D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16; AB=$D/ami-bench-v1
-export PYTHONPATH=/soundai/users/tskim/VAPKT PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false VAPASR_STAGE_DIR=/tmp/sa_tskim/vapasr-stage
+export PYTHONPATH=$CODE PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false VAPASR_STAGE_DIR=/tmp/sa_tskim/vapasr-stage
 P=/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python; MIN_FREE_MB=${MIN_FREE_MB:-40000}
 LS=""; [ "${TRANS_LEAD_SPACE:-0}" = 1 ] && LS=--trans-lead-space
 MULTI="--max-speakers 4 --window 20,90 --window-draws 1 --declare 4"
