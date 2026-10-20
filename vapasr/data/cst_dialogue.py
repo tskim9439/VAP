@@ -508,8 +508,10 @@ class CstDialogueDataset(DialogueWindowDataset):
         for j, (cid, t0, L) in enumerate(self.items):
             first = speaker_firsts(self.eps[cid], t0, L)
             if len(first) <= max_speakers: keep.append(True); continue
-            L2 = round(first[max_speakers][0] - t0, 3)                                            # (max+1) 번째 화자가 처음 말하기 직전까지
-            if shrink_speakers and L2 >= lo and windows is None: self.items[j] = (cid, t0, L2); keep.append(True); n_shrunk += 1
+            L2 = math.floor((first[max_speakers][0] - t0) * 1000.0 - 1.0) / 1000.0                 # (max+1) 번째 화자가 처음 말하기 1 ms 전까지 — 내림(반올림하면 그 화자의 첫 발화가 창에 들어
+                                                                                                    # 화자가 max+1 명이 된다: 2026-10-20 v2-p1 첫 step 의 slot_activity IndexError)
+            if shrink_speakers and L2 >= lo and windows is None and len(speaker_firsts(self.eps[cid], t0, L2)) <= max_speakers:
+                self.items[j] = (cid, t0, L2); keep.append(True); n_shrunk += 1
             else: keep.append(False); n_drop += 1
         self.keep_items(keep); self.stats.update(cst_windows=len(self.items), cst_dropped_speakers=n_drop, cst_shrunk_speakers=n_shrunk, cst_dialogues=len(self.dlgs), cst_excluded=len(gone))
 

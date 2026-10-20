@@ -184,3 +184,22 @@ def test_synth_session_four_speakers():
     d = sd.synth_session([units(k, i) for i, k in enumerate("pqrs")], st, random.Random(3), 120.0, lambda u: (0.0, u.dur), "c", "sim", "English")
     assert d.speakers == ["a", "b", "c", "d"] and set(d.channels) == set(d.speakers) and sd.overlap_stats(d)["self_overlap"] == 0
     with pytest.raises(AssertionError): sd.synth_session([units("p", 0)], st, random.Random(0), 60.0, lambda u: (0.0, u.dur), "c", "sim", "English")
+
+
+def test_shrink_never_admits_extra_speaker_rounding(tmp_path):
+    """줄인 길이를 반올림하면 (max+1) 번째 화자의 첫 발화가 창에 들어 slot_activity 가 IndexError(2026-10-20 v2-p1 첫 step). 시작 시각에 ms 이하 소수를 둔다."""
+    import numpy as np, random
+    from vapasr.data.cst_dialogue import window_speakers
+    SR = 16000; dur = 300.0; n = 5; p = str(tmp_path / "r.wav"); t = np.arange(int(dur * SR)) / SR
+    sf.write(p, np.stack([0.2 * np.sin(2 * np.pi * (300 + 50 * i) * t) for i in range(n)], 1).astype(np.float32), SR)
+    rr = random.Random(7); spk = [f"q{i}" for i in range(n)]; utts = []; s = 0.0; k = 0
+    while s + 2.0 < dur - 3.0:
+        w = spk[k % n]; a = round(s + rr.uniform(0.0, 0.9), 4); utts.append(Utterance(w, a, a + 1.5, "ab", "ab", tokens=[(11, a + 0.7), (12, a + 1.5)], utt_id=f"{w}u{k}"))
+        k += 1; s = a + 1.5 + rr.uniform(0.2, 1.5)
+    d = Dialogue(conv_id="r1", corpus="rtest", lang="English", split="train", duration_s=dur, speakers=spk, utterances=utts, channels={w: ChannelRef(path=f"{p}#ch{i}") for i, w in enumerate(spk)})
+    q = str(tmp_path / "rtest.refined.dialogues.jsonl"); open(q, "w").write(d.to_json() + "\n")
+    ds = CstDialogueDataset([q], FakeTok(), delays=(4,), window_s=(3.0, 40.0), seed=3, window_draws=8, max_speakers=4, shrink_speakers=True, spk_activity=True)
+    assert ds.stats["cst_shrunk_speakers"] > 0
+    for i, (c, t0, L) in enumerate(ds.items):
+        assert len(window_speakers(ds.eps[c], t0, L)) <= 4, (t0, L)
+        ds[i]                                                                                      # 활동 라벨(K, 4)까지 만든다
