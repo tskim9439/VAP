@@ -4,13 +4,36 @@ WeightedRoundRobinLoader: RoundRobinLoader(언어별 셋, 토큰 예산 배치·
   (smooth weighted round-robin — 결정적이라 모든 rank 가 같은 순서로 같은 셋을 고른다). 파일럿에서 대화·replay·언어 비율을 비교하려고 둔다.
   epoch 길이 = 기준 셋(anchor)의 배치 수 합 / 기준 셋의 가중 비중 — 기준 셋을 한 번 도는 동안 다른 셋은 가중치만큼 돈다(작은 셋은 새 epoch 순열로 반복).
 collate_stage3: 배치 = 한 셋. 대화 행(cst_dialogue, labels_alt 가 있다)은 collate_cst, replay 행(AstStreamDataset)은 collate_semcommit(sem_mask).
+set_kind: 셋 이름(--weights 키) 분류 — 교차 언어 합성은 sim_<l1>-<l2> 에 접미사(-tel 등, V3-p1 sim_en-de-tel)를 붙일 수 있다.
 """
 import hashlib
 import json
 import os
+import re
 from typing import Dict, Optional, Sequence
 
 from .data import RoundRobinLoader
+
+XL_KEY = re.compile(r"sim_[a-z]{2}-[a-z]{2}(?:-[a-z0-9]+)?")                               # 교차 언어 합성 셋(예 sim_en-de · sim_ko-en · sim_en-de-tel)
+
+
+def set_kind(key: str) -> Optional[str]:
+    """셋 이름 → 'xl'(교차 언어 합성 sim_<l1>-<l2>[-접미사]) | 'sim'(같은 언어 합성 sim_*) | 'dlg'(실제 대화) | 'rep'(단일 화자 replay) | None."""
+    if XL_KEY.fullmatch(key): return "xl"
+    return next((k for k in ("sim", "dlg", "rep") if key.startswith(k + "_")), None)
+
+
+def parse_set_phone(spec: str) -> Dict[str, float]:
+    """--set-phone 'KEY:P[,KEY:P]' → {셋: 창 단위 전화 대역 확률}(0 = 그 셋은 끔). 대화·합성 셋(dlg_*·sim_*)만, P ∈ [0, 1], 같은 셋 두 번은 ValueError."""
+    out: Dict[str, float] = {}
+    for x in (spec or "").split(","):
+        if not x.strip(): continue
+        k, _, v = x.partition(":"); k = k.strip()
+        if set_kind(k) not in ("dlg", "sim", "xl") or not v.strip(): raise ValueError(f"--set-phone 형식 'dlg_*|sim_*:P' — {x!r}")
+        p = float(v)
+        if not 0.0 <= p <= 1.0 or k in out: raise ValueError(f"--set-phone P ∈ [0, 1], 셋마다 한 번 — {x!r}")
+        out[k] = p
+    return out
 
 
 def parse_weights(spec: str) -> Dict[str, float]:

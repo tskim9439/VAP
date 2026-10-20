@@ -17,8 +17,10 @@
                         --dlg-trans(Stage 4, decision-stage4-prep-20261019): 대화 발화 번역 타깃이 있으면 창을 --dlg-ast-frac 확률로 번역 모드(두 화자 전사 +
                         번역 네 흐름, prefix 에 translate 줄 — cst_dialogue.build_cst4_sequence)로 낸다. 목표 언어는 한·독 → 영, 영 → 독·한(무작위).
                         --dlg-trans-input: 되살린 발화의 번역(입력 문맥으로만). 끄면(기본) Stage 3 와 같고 지문에 키가 없다.
-  sim_<l1>-<l2>         교차 언어 합성 대화(Stage 4 — sim_build_dialogues --lang2, 예 sim_ko-en·sim_en-de): --sim-data 의 <키>.refined.dialogues.jsonl 과
+  sim_<l1>-<l2>[-접미사] 교차 언어 합성 대화(Stage 4 — sim_build_dialogues --lang2, 예 sim_ko-en·sim_en-de·sim_en-de-tel): --sim-data 의 <키>.refined.dialogues.jsonl 과
                         targets-<키>/ 번역 타깃. 슬롯은 언어로 고정(A/B 무작위), --sim-trans-frac 확률로 번역 모드(각 슬롯이 상대 언어로), 나머지는 받아쓰기만.
+  V3-p1(기본 끔 — 끄면 데이터·지문이 예전 그대로): --change-tag-weight·--hold-tag-weight(교대 태그·<EOT> 뒤 머무름 결정 pos_weight, --decision-weight-sets all|xl),
+                        --eot-drop-synth P(합성 창 EOT-문맥 dropout, --eot-drop-sets xl|synth), --set-phone KEY:P(셋별 창 단위 전화 대역 확률) — cst_dialogue 모듈 설명.
   sim_ko·sim_en·sim_de  --sim-data 의 합성 2 인 대화(vapasr/data/sim_dialogue — 다른 화자의 실제 발화를 턴으로 번갈아 놓음). 같은 CstDialogueDataset,
                         <EOT> 감독 없음(meta.mask_eot). epoch 기준(anchor)은 실제 대화 셋(dlg_*)만.
   rep_ko·rep_en·rep_de  vapasr/data/ast_dataset.AstStreamDataset — Stage 2 와 같은 단일 화자 ASR·번역 항목(--ast-frac 번역 모드, --offline-frac final 모드).
@@ -70,6 +72,12 @@ g.add_argument("--declare-all-p", type=float, default=0.5, help="V2(--max-speake
 g.add_argument("--window-draws", type=int, default=0, help="V2: 창 draw 수 R(> 0 이면 격자 대신 대화를 U(--window) 창으로 이어 덮고 epoch e 에 draw e mod R — 매 epoch 다른 창). 화자 상한을 넘는 창은 줄인다")
 g.add_argument("--enc-tap-layer", type=int, default=-1, help="V2-a 두 스트림 입력: 인코더 이 층(0 부터) 출력을 adapter_tap 으로 LLM 입력에 더한다(−1 = 끔, V1). 새로 붙이면 마지막 Linear 0 초기화")
 g.add_argument("--enc-tap-hidden", type=int, default=0, help="adapter_tap 은닉 차원(0 = adapter 와 같게)")
+g.add_argument("--change-tag-weight", type=float, default=0.0, help="V3-p1 C1: 교대 태그 결정 가중(다른 슬롯 태그 + 단어 첫 글자 위치의 pos_weight, 0 = 끔; cst_dialogue.decision_positions)")
+g.add_argument("--hold-tag-weight", type=float, default=0.0, help="V3-p1 C1: <EOT> 뒤 머무름 결정 가중(같은 슬롯 재개 태그 | 태그 없는 단어 첫 글자, 0 = 끔)")
+g.add_argument("--decision-weight-sets", choices=("all", "xl"), default="all", help="교대·머무름 가중을 걸 셋: all = 대화·합성 셋 전부, xl = 교차 언어 합성(sim_<l1>-<l2>[-접미사])만")
+g.add_argument("--eot-drop-synth", type=float, default=0.0, help="V3-p1 C5: 합성(meta.mask_eot) 창을 이 확률로 골라 감독 없는 <EOT> 를 문맥에서 뺀다(그 라운드 <NEXT_AUDIO> 는 가림, 0 = 끔)")
+g.add_argument("--eot-drop-sets", choices=("xl", "synth"), default="xl", help="EOT-문맥 dropout 을 걸 셋: xl = 교차 언어 합성만, synth = 합성 셋(sim_*) 전부")
+g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
 g.add_argument("--replay-de-words", action="append", default=[], help="독일어 words.jsonl(반복·쉼표·@목록) → rep_de")
@@ -128,9 +136,13 @@ if bc is not None and len(bc) != 2: sys.exit(f"--backchannel max_s,max_tokens | 
 bc = (bc[0], int(bc[1])) if bc else None
 if a.recover_p and not (0 < a.recover_p <= 1 and 0 <= a.recover_boundary_frac <= 1 and a.recover_max_lag >= 1 and a.recover_max_boundaries >= 1):
     sys.exit(f"--recover-*: 범위 밖 p {a.recover_p} · boundary_frac {a.recover_boundary_frac} · max_lag {a.recover_max_lag} · max_boundaries {a.recover_max_boundaries}")
-from vapasr.hf.stage3 import parse_weights, WeightedRoundRobinLoader, collate_stage3, file_digest, fingerprint_diff
+from vapasr.hf.stage3 import parse_weights, WeightedRoundRobinLoader, collate_stage3, file_digest, fingerprint_diff, set_kind, parse_set_phone
 try: weights = parse_weights(a.weights)
 except ValueError as e: sys.exit(f"--weights: {e}")
+if a.change_tag_weight < 0 or a.hold_tag_weight < 0 or not 0 <= a.eot_drop_synth <= 1: sys.exit(f"--change-tag-weight·--hold-tag-weight ≥ 0 · --eot-drop-synth [0, 1] — {a.change_tag_weight} {a.hold_tag_weight} {a.eot_drop_synth}")
+try: set_phone = parse_set_phone(a.set_phone)
+except ValueError as e: sys.exit(str(e))
+if any(weights.get(k, 0) <= 0 for k in set_phone): sys.exit(f"--set-phone 셋이 --weights 에 없다: {sorted(k for k in set_phone if weights.get(k, 0) <= 0)}")
 gain = None if a.gain_augment == "off" else tuple(float(x) for x in a.gain_augment.split(","))
 gain_langs = tuple(x for x in a.gain_augment_langs.split(",") if x)
 speeds = tuple(float(x) for x in a.speed_perturb.split(",") if x.strip())
@@ -178,7 +190,7 @@ def log(*s):
 torch.manual_seed(a.seed); random.seed(a.seed); torch.backends.cuda.matmul.allow_tf32 = True
 out = a.out_dir; os.makedirs(out, exist_ok=True)
 if not a.dry_run and world == 1 and torch.cuda.is_available() and torch.cuda.device_count() > 1: sys.exit("GPU 가 여러 장 보인다 — --gpu N 또는 torchrun")
-IN_KEYS = ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids", "labels_alt", "sem_mask", "sem_only_mask", "activity", "activity_mask")
+IN_KEYS = ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids", "labels_alt", "sem_mask", "sem_only_mask", "activity", "activity_mask", "dec_kind")
 LOSS_KEYS = ("loss_next", "loss_text", "top1_text", "loss_turn", "top1_turn", "loss_act")
 
 # ── 모델 + tokenizer
@@ -248,6 +260,16 @@ def _subset(paths, frac):
     return keep or list(paths[:1])
 from vapasr.data.cst_dialogue import CstDialogueDataset, Recover, load_revive
 rc = Recover(p=a.recover_p, boundary_frac=a.recover_boundary_frac, max_lag=a.recover_max_lag, max_boundaries=a.recover_max_boundaries) if a.recover_p > 0 else None
+def wav_aug_of(key):
+    """대화·합성 셋의 창 단위 증강: --set-phone 에 있으면 그 확률(0 = 끔), 없으면 --phone-aug 그대로."""
+    p = set_phone.get(key)
+    return phone if p is None else PhoneAugment(p=p, mulaw_p=a.phone_aug_mulaw) if p > 0 else None
+def dec_kw(key):
+    """V3-p1 C1·C5 데이터셋 인자(교대·머무름 가중 — --decision-weight-sets, 합성 EOT-문맥 dropout — --eot-drop-sets). 끄거나 이 셋에 걸지 않으면 빈 dict(데이터셋 기본값)."""
+    kind = set_kind(key); kw = {}
+    if (a.change_tag_weight > 0 or a.hold_tag_weight > 0) and (a.decision_weight_sets == "all" or kind == "xl"): kw.update(change_weight=a.change_tag_weight, hold_weight=a.hold_tag_weight)
+    if a.eot_drop_synth > 0 and (kind == "xl" or (a.eot_drop_sets == "synth" and kind == "sim")): kw.update(eot_drop_synth=a.eot_drop_synth)
+    return kw
 split = json.load(open(a.split, encoding="utf-8")); mono = a.mono_cache or os.path.join(a.data, "mono")
 train_sets, dlg_files, revive_files = {}, [], []
 DT, DTI, dt_fp, dti_fp = {}, {}, None, None
@@ -270,7 +292,7 @@ for key, lang in (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "Germa
     ds = CstDialogueDataset(files, tok, delays=delays, exclude=held, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac,
                             seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
                             spk_activity=a.spk_act_weight > 0, revive=load_revive(rv) if rv else None,
-                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}), wav_aug=phone, **VKW)
+                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}), wav_aug=wav_aug_of(key), **VKW, **dec_kw(key))
     cap(ds); ds.lang = lang; train_sets[key] = ds
     if DT:
         rows = {(c, w, b) for c in ds.dlgs for (w, b) in ds._rows(c)}; got = sum(1 for c, w, b in rows if f"{c}|{w}|{b}" in DT or f"{c}|{w}|{b}" in DTI)
@@ -290,11 +312,11 @@ for lang in ("Korean", "English", "German"):                                    
     sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, wav_aug=phone, **VKW)
+                            spk_activity=a.spk_act_weight > 0, wav_aug=wav_aug_of(key), **VKW, **dec_kw(key))
     cap(ds); ds.lang = lang; train_sets[key] = ds
     log(f"  {key}(합성): {len(ds)} 창 · 대화 {ds.stats['cst_dialogues']} · stats {dict(ds.stats)}")
 sim_trans_fp = {}
-for key in sorted(k for k, w in weights.items() if w > 0 and re.fullmatch(r"sim_[a-z]{2}-[a-z]{2}", k)):        # 교차 언어 합성(Stage 4)
+for key in sorted(k for k, w in weights.items() if w > 0 and set_kind(k) == "xl"):                # 교차 언어 합성(Stage 4) — sim_<l1>-<l2>[-접미사]
     if not a.sim_data: sys.exit(f"--weights 에 {key} 가 있는데 --sim-data 가 없다")
     sd = sim_dir(key); f, td = os.path.join(sd, f"{key}.refined.dialogues.jsonl"), os.path.join(sd, f"targets-{key}")
     if not os.path.exists(f) or not os.path.isdir(td): sys.exit(f"교차 언어 합성 대화·번역 타깃 없음: {f} · {td}")
@@ -302,7 +324,7 @@ for key in sorted(k for k, w in weights.items() if w > 0 and re.fullmatch(r"sim_
     XT, xt_st, sim_trans_fp[key] = load_ast_targets([td]); sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space, wav_aug=phone, **VKW)
+                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space, wav_aug=wav_aug_of(key), **VKW, **dec_kw(key))
     if not ds.has_xl: sys.exit(f"{key}: 교차 언어 대화(meta.spk_lang)가 아니다")
     cap(ds)
     ds.lang = next(iter(ds.dlgs.values())).lang; train_sets[key] = ds
@@ -346,6 +368,9 @@ for key, ds in train_sets.items():                                              
         if rc: bad += [(ds.items[i], d, "flip", P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d, rng=random.Random(a.seed * 7919 + i * 31 + d), recover=rc._replace(p=1.0))] if P]
         if getattr(ds, "trans_on", False):                                                     # 번역 모드(목표 언어마다)
             bad += [(ds.items[i], d, tg, P[:3]) for i in idx for d in ds.delays for tg in ds.tgt_options(i) for P in [ds.problems_of(ds.cst_sequence(i, d, tgt=tg))] if P]
+        if getattr(ds, "eot_drop_synth", 0) > 0:                                               # EOT-문맥 dropout 경로(V3-p1 C5 — 받아쓰기·번역 모드)
+            bad += [(ds.items[i], d, "drop", tg, P[:3]) for i in idx for d in ds.delays for tg in [None] + (ds.tgt_options(i) if ds.trans_on else [])
+                    for P in [ds.problems_of(ds.cst_sequence(i, d, tgt=tg, drop_eot=True))] if P]
     else: bad = [(ds.items[i]["id"], d, P[:3]) for i in idx for d in ds.delays for P in [ds.target_problems(i, d)] if P]
     check[key] = dict(n=n, bad=len(bad), examples=[str(b)[:200] for b in bad[:5]]); log(f"  check {key}: {n} 항목 × δ{list(delays)} → 불일치 {len(bad)} {bad[:2]}")
 assert all(v["bad"] == 0 for v in check.values()), f"시퀀스 불변식 위반: {check}"
@@ -364,7 +389,11 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"replay_sets": {k: file_digest(v) for k, v in sorted(RS.items())}} if RS else {}),
           **({"phone_aug": phone.settings()} if phone is not None else {}),   # 끄면 키 없음(이전 run 지문 그대로)
           **({"enc_tap": dict(layer=a.enc_tap_layer, hidden=a.enc_tap_hidden or None)} if a.enc_tap_layer >= 0 else {}),
-          **({"max_speakers": a.max_speakers, "declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}), **({"window_draws": a.window_draws} if a.window_draws else {}))
+          **({"max_speakers": a.max_speakers, "declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}), **({"window_draws": a.window_draws} if a.window_draws else {}),
+          **({"change_tag_weight": a.change_tag_weight} if a.change_tag_weight > 0 else {}), **({"hold_tag_weight": a.hold_tag_weight} if a.hold_tag_weight > 0 else {}),   # V3-p1: 끄면 키 없음
+          **({"decision_weight_sets": a.decision_weight_sets} if (a.change_tag_weight > 0 or a.hold_tag_weight > 0) and a.decision_weight_sets != "all" else {}),
+          **({"eot_drop_synth": a.eot_drop_synth} if a.eot_drop_synth > 0 else {}), **({"eot_drop_sets": a.eot_drop_sets} if a.eot_drop_synth > 0 and a.eot_drop_sets != "xl" else {}),
+          **({"set_phone": {k: (aug.settings() if aug is not None else None) for k in sorted(set_phone) for aug in [wav_aug_of(k)]}} if set_phone else {}))
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():
@@ -411,12 +440,18 @@ class Stage3Trainer(VapAsrTrainer):
         if kind == "dlg" and getattr(o, "loss_turn", None) is not None: c.setdefault("loss_turn_dlg", []).append(float(o.loss_turn))
         if kind == "dlg": c.setdefault("soft", []).append(int(inputs.get("n_soft", 0))); c.setdefault("flip", []).append(int(inputs.get("n_flip", 0))); c.setdefault("rev", []).append(int(inputs.get("n_rev", 0))); c.setdefault("tr", []).append(int(inputs.get("n_tr", 0)))
         if kind == "dlg" and getattr(o, "loss_act", None) is not None: c.setdefault("loss_spk", []).append(float(o.loss_act)); c.setdefault("spk_acc", []).append(float(o.act_acc))
+        if kind == "dlg":                                                                      # V3-p1 교대·머무름 통계·EOT-문맥 dropout(켰을 때만 — 없으면 로그 키도 없다)
+            for k in ("n_switch", "n_hold", "n_eot_drop"):
+                if k in inputs: c.setdefault(k[2:], []).append(int(inputs[k]))
+            for k in ("top1_switch", "switch_miss", "switch_wrong_slot", "top1_hold"):
+                if getattr(o, k, None) is not None: c.setdefault(k, []).append(float(getattr(o, k)))
         return (loss, o) if return_outputs else loss
     def log(self, logs, start_time=None):
         c = self.__dict__.get("_kind")
         if c and "loss" in logs:
             for k, v in c.items():
-                if v: logs[{"soft": "soft_per_dlg_step", "flip": "flip_per_dlg_step", "rev": "rev_per_dlg_step", "tr": "tr_per_dlg_step"}.get(k, k)] = round(sum(v) / len(v), 4)
+                if v: logs[{"soft": "soft_per_dlg_step", "flip": "flip_per_dlg_step", "rev": "rev_per_dlg_step", "tr": "tr_per_dlg_step", "switch": "switch_per_dlg_step",
+                            "hold": "hold_per_dlg_step", "eot_drop": "eot_drop_per_dlg_step"}.get(k, k)] = round(sum(v) / len(v), 4)
             self._kind = {}
         return super().log(logs, start_time)
 

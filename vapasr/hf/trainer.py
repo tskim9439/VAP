@@ -74,7 +74,7 @@ class VapAsrTrainer(Trainer):
         lang = inputs.get("lang", ["English"])[0]
         nw = self.model.config.next_weight_ko if (lang == "Korean" and self.model.config.next_weight_ko is not None) else self.model.config.next_weight
         x = {k: inputs[k] for k in ("wav", "wav_len", "K", "feats", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids", "sem_mask",
-                                    "labels_alt", "sem_only_mask", "activity", "activity_mask") if k in inputs}   # pos_weight: semantic commit hard negative 위치 가중, position_ids: packing, sem_mask: SEM 중립(라벨 없는 ASR) 행, activity: Stage 3 화자 슬롯 활동
+                                    "labels_alt", "sem_only_mask", "activity", "activity_mask", "dec_kind") if k in inputs}   # pos_weight: semantic commit hard negative 위치 가중, position_ids: packing, sem_mask: SEM 중립(라벨 없는 ASR) 행, activity: Stage 3 화자 슬롯 활동, dec_kind: Stage 3 교대·머무름 통계(V3-p1)
         if "soft_w_full" in inputs: x["soft_w"] = inputs["soft_w_full"]                    # Stage 3 <EOT> soft label(labels_alt 와 짝), sem_only_mask: <SEM_END> 만 중립
         out = model(**x, next_weight=nw)
         for k in ("loss_next", "loss_text", "top1_text"): self._parts[k] = self._parts.get(k, 0.0) + float(getattr(out, k))

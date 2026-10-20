@@ -40,6 +40,13 @@ class VapAsrOutput(ModelOutput):
     n_sem: Optional[int] = None
     sem_fp: Optional[float] = None          # SEM 이 타깃이 아닌 라벨 위치 중 argmax=SEM 비율 (조기·오확정 경향)
     n_turn: Optional[int] = None
+    top1_switch: Optional[float] = None     # V3-p1 C1(dec_kind 를 줬을 때만): 교대 태그 위치 top-1 정확도
+    switch_miss: Optional[float] = None     # 교대 위치 중 argmax 가 글자(특수 토큰 아님)인 비율 — 태그 없이 이어 쓰는 놓친 교대
+    switch_wrong_slot: Optional[float] = None   # 교대 위치 중 argmax 가 다른 슬롯 태그인 비율(2 슬롯이면 지금 슬롯 재선언)
+    loss_switch: Optional[float] = None     # 교대 위치 평균 CE(가중 전)
+    n_switch: Optional[int] = None
+    top1_hold: Optional[float] = None       # <EOT> 뒤 머무름 결정 위치 top-1 정확도
+    n_hold: Optional[int] = None
 
 class VapAsrForStreamingASR(PreTrainedModel):
     config_class = VapAsrConfig
@@ -112,7 +119,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
 
     def forward(self, ids=None, is_audio=None, chunk_of=None, labels=None, mask=None, wav=None, wav_len=None, K=None, feats=None, next_weight: Optional[float] = None, return_dict: bool = True,
                 labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, position_ids=None, sem_mask=None,
-                sem_only_mask=None, **_):
+                sem_only_mask=None, dec_kind=None, **_):
         """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight.
         Phase 2(config.lanes>0): labels_alt/soft_w 가 있으면 EOT 후보 위치의 label 을 (labels: w, labels_alt: 1−w) 두 점 분포로 학습(정본 §5.2),
         activity (B,K,R)·activity_mask (B,K) 가 있으면 audio 위치 hidden 으로 lane 활동 BCE 를 더한다(정본 §6). EOT 위치 가중 config.eot_weight.
@@ -126,7 +133,9 @@ class VapAsrForStreamingASR(PreTrainedModel):
         position_ids (1, N) 가 있으면 packing 경로(vapasr/hf/packing.py): thinker 입력은 여러 샘플을 이은 한 줄, 샘플마다 0 부터 다시 세는 위치,
         attention_mask 없음 → transformers 가 블록 대각 causal mask 를 만든다. 인코더 출력은 (1, B·Kmax) 로 펴고 activity 도 같이 편다.
         thinker 가 varlen attention(vapasr/hf/varlen_attention.py, --attn-impl varlen)이면: packing 은 position_ids 로 cu_seqlens 를 만들어 넘기고(Σnᵢ² attention),
-        패딩 배치는 모델 안에서 한 줄로 unpad 해 같은 커널로 돌린 뒤 (B, L) 로 되돌린다(_thinker_unpadded — pad 토큰은 어느 층에서도 계산하지 않는다)."""
+        패딩 배치는 모델 안에서 한 줄로 unpad 해 같은 커널로 돌린 뒤 (B, L) 로 되돌린다(_thinker_unpadded — pad 토큰은 어느 층에서도 계산하지 않는다).
+        dec_kind (B,L)(labels 와 같은 인덱싱, 0 · 1 교대 · 2 머무름 — cst_dialogue.collate_cst, V3-p1 C1)가 있으면 결정 통계(top1_switch·switch_miss·switch_wrong_slot·
+        loss_switch·top1_hold)만 계산한다 — 손실은 그대로(가중은 데이터셋의 pos_weight 가 맡는다)."""
         if wav is not None: feats = self.encode(wav, wav_len, K)
         nw = self.config.next_weight if next_weight is None else float(next_weight)
         packed = position_ids is not None; varlen = is_varlen(self.thinker)
@@ -177,11 +186,26 @@ class VapAsrForStreamingASR(PreTrainedModel):
             loss_act, act_st = activity_bce(head(ha).float(), tg); loss = loss + aw * loss_act
         elif self.spk_head is not None and self.training:                                     # 활동 라벨 없는 행(replay): 헤드를 0 가중으로 그래프에 묶어 DDP(find_unused_parameters=False)가 기다리지 않게
             loss = loss + 0.0 * sum(p.sum() for p in self.spk_head.parameters())
+        dec = self._decision_stats(logits, t, dec_kind[:, 1:][sel]) if dec_kind is not None else {}
         out = VapAsrOutput(loss=loss, loss_next=st["loss_next"], loss_text=st["loss_text"], top1_text=st["top1_text"], n_labels=int(t.numel()),
                            loss_eot=st["loss_eot"], loss_act=(loss_act.item() if loss_act is not None else None), act_acc=act_st.get("act_acc"), n_soft=st["n_soft"],
                            loss_sem=st["loss_sem"] if st.get("n_sem") else None, top1_sem=st["top1_sem"] if st.get("n_sem") else None, n_sem=st.get("n_sem"), sem_fp=st.get("sem_fp"),
-                           loss_turn=st["loss_turn"] if st.get("n_turn") else None, n_turn=st.get("n_turn"))
+                           loss_turn=st["loss_turn"] if st.get("n_turn") else None, n_turn=st.get("n_turn"), **dec)
         return out if return_dict else (loss,)
+
+    @torch.no_grad()
+    def _decision_stats(self, logits, t, dk) -> dict:
+        """교대(dk 1)·머무름(dk 2) 위치 통계(손실과 무관) — 위치가 없으면 그 쪽 키를 내지 않는다. 글자 = 특수 토큰(config.sp_ids·차단 목록)이 아닌 id."""
+        dk = dk.to(t.device); pred = logits.argmax(-1); out = {}
+        special = torch.tensor(sorted(set(self.sp_ids.values()) | set(self.config.blocked_ids)), device=t.device, dtype=torch.long)
+        slots = torch.tensor([self.sp_ids[n] for n in (getattr(self.config, "slot_tokens", None) or SLOT_TOKENS[:2]) if n in self.sp_ids], device=t.device, dtype=torch.long)
+        sw, ho = dk == 1, dk == 2
+        if sw.any():
+            ps, ts = pred[sw], t[sw]
+            out.update(top1_switch=(ps == ts).float().mean().item(), switch_miss=(~torch.isin(ps, special)).float().mean().item(),
+                       switch_wrong_slot=(torch.isin(ps, slots) & (ps != ts)).float().mean().item(), loss_switch=F.cross_entropy(logits[sw], ts).item(), n_switch=int(sw.sum()))
+        if ho.any(): out.update(top1_hold=(pred[ho] == t[ho]).float().mean().item(), n_hold=int(ho.sum()))
+        return out
 
     def _thinker_unpadded(self, E, sel):
         """varlen: 패딩 배치 E (B,L,D) 의 유효 토큰(sel (B,L) bool)만 한 줄 packed 로 thinker 에 넣고(cu_seqlens = 행별 유효 토큰 수)

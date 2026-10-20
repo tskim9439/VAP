@@ -21,6 +21,8 @@
 #   --split NAME       held-out split(기본 v2; V2 는 v4 — 회의 공식 dev·eval 을 학습에서 뺀다)
 #   --enc-tap-layer L  V2-a 두 스트림 입력(인코더 L 층 → adapter_tap → LLM 입력에 더함, 기본 −1 = 끔). init 에 탭이 있으면 같은 층
 #   --revive-dir DIR   격리 발화 되살리기 재료(stage3_revive_tokens 산출 <corpus>.revive.jsonl) — asr_disagree 발화의 화자 태그·<EOT> 학습
+#   V3-p1(주지 않으면 sbatch 명령이 예전과 바이트 동일): --change-tag-weight W  --hold-tag-weight W(교대 태그·<EOT> 뒤 머무름 결정 가중)  --decision-weight-sets all|xl
+#                      --eot-drop-synth P(합성 창 EOT-문맥 dropout)  --eot-drop-sets xl|synth  --set-phone KEY:P[,KEY:P](셋별 창 단위 전화 대역, 0 = 그 셋은 끔)
 #   --exclude N,…      더 뺄 노드(hpc-102 처럼 짧게 써도 된다) — sbatch 기본 제외 hpc-52·hpc-4 에 더한다
 #   --max-steps N(기본 2000)  --epochs E  --lr LR  --warmup N(기본 300)  --save-every N(기본 500)  --batch-tokens N(기본 16384)  --max-bs N(기본 64)
 #   --nodes N(기본 1)  --partition P(기본 apex)  --time HH:MM:SS(기본 24:00:00)  --after JOBID  --init DIR(기본 q06-s4-ast/final)
@@ -38,6 +40,7 @@ NB=/soundai/users/tskim/VAPKT-data/data/noise-bank-v1
 run=""; init=/soundai/Model/VAPASR/semcommit-q06-s4-ast/final; nodes=1; partition=apex; time_limit=24:00:00; after=""; dry=0; extra=""
 weights="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5"; eot_mode=soft; backchannel=off; decision_weight=2; start_mode=grid; frac=0.2; recover_p=0; spk_act=0; sim_data=""; revive_dir=""; exclude=""; dlg_trans=""; dlg_trans_input=""; dlg_ast_frac=0.5; sim_trans_frac=0.8; trans_lead_space=0; phone_aug=0; replay_sets=""; enc_tap=-1; split=v2; max_spk=2; declare_p=0.5; window=20,40; draws=0; dlg_corpora=aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc
 max_steps=2000; epochs=1; lr=6e-5; warmup=300; save_every=500; batch_tokens=16384; max_bs=64
+change_w=""; hold_w=""; dw_sets=""; eot_drop=""; eot_drop_sets=""; set_phone=""                     # V3-p1: 빈 값 = 인자를 넘기지 않는다(stage3_train 기본 = 끔)
 while [[ $# -gt 0 ]]; do
   case $1 in
     --run) run=$2; shift 2 ;;            --init) init=$2; shift 2 ;;          --nodes) nodes=$2; shift 2 ;;
@@ -50,6 +53,8 @@ while [[ $# -gt 0 ]]; do
     --phone-aug) phone_aug=$2; shift 2 ;;  --enc-tap-layer) enc_tap=$2; shift 2 ;;
     --split) split=$2; shift 2 ;;  --max-speakers) max_spk=$2; shift 2 ;;  --declare-all-p) declare_p=$2; shift 2 ;;  --window) window=$2; shift 2 ;;  --window-draws) draws=$2; shift 2 ;;  --dlg-corpora) dlg_corpora=$2; shift 2 ;;  --replay-set) replay_sets+=" --replay-set $2"; shift 2 ;;
     --dlg-trans) dlg_trans=$2; shift 2 ;;  --dlg-trans-input) dlg_trans_input=$2; shift 2 ;;  --dlg-ast-frac) dlg_ast_frac=$2; shift 2 ;;  --sim-trans-frac) sim_trans_frac=$2; shift 2 ;;
+    --change-tag-weight) change_w=$2; shift 2 ;;  --hold-tag-weight) hold_w=$2; shift 2 ;;  --decision-weight-sets) dw_sets=$2; shift 2 ;;
+    --eot-drop-synth) eot_drop=$2; shift 2 ;;  --eot-drop-sets) eot_drop_sets=$2; shift 2 ;;  --set-phone) set_phone=$2; shift 2 ;;
     --max-steps) max_steps=$2; shift 2 ;; --epochs) epochs=$2; shift 2 ;;    --lr) lr=$2; shift 2 ;;
     --warmup) warmup=$2; shift 2 ;;      --save-every) save_every=$2; shift 2 ;; --batch-tokens) batch_tokens=$2; shift 2 ;;
     --max-bs) max_bs=$2; shift 2 ;;      --extra) extra=$2; shift 2 ;;        --dry-run) dry=1; shift ;;
@@ -67,6 +72,12 @@ done
 [[ $enc_tap =~ ^(-1|[0-9]+)$ ]] || { echo "--enc-tap-layer 는 -1 또는 층 번호" >&2; exit 2; }
 [[ $max_spk =~ ^[2-4]$ ]] || { echo "--max-speakers 는 2–4" >&2; exit 2; }
 [[ $window =~ ^[0-9.]+,[0-9.]+$ && $draws =~ ^[0-9]+$ ]] || { echo "--window lo,hi · --window-draws 정수" >&2; exit 2; }
+[[ -z $change_w || $change_w =~ ^([0-9]+\.?[0-9]*|\.[0-9]+)$ ]] || { echo "--change-tag-weight 는 0 이상의 수" >&2; exit 2; }
+[[ -z $hold_w || $hold_w =~ ^([0-9]+\.?[0-9]*|\.[0-9]+)$ ]] || { echo "--hold-tag-weight 는 0 이상의 수" >&2; exit 2; }
+[[ -z $dw_sets || $dw_sets =~ ^(all|xl)$ ]] || { echo "--decision-weight-sets all|xl" >&2; exit 2; }
+[[ -z $eot_drop || $eot_drop =~ ^(0|0?\.[0-9]+|1|1\.0+)$ ]] || { echo "--eot-drop-synth 는 0–1" >&2; exit 2; }
+[[ -z $eot_drop_sets || $eot_drop_sets =~ ^(xl|synth)$ ]] || { echo "--eot-drop-sets xl|synth" >&2; exit 2; }
+for kv in ${set_phone//,/ }; do [[ $kv =~ ^(dlg|sim)_[a-z0-9-]+:(0|0?\.[0-9]+|1|1\.0+)$ && ,$weights, == *",${kv%%:*}:"* ]] || { echo "--set-phone KEY:P — KEY 는 --weights 의 dlg_*·sim_* 셋, P 는 0–1: $kv" >&2; exit 2; }; done
 [[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }
 for sd in ${sim_data//,/ }; do [[ -d $sd/mono ]] || { echo "--sim-data 에 mono/ 가 없다: $sd" >&2; exit 1; }; done
 for td in ${dlg_trans//,/ } ${dlg_trans_input//,/ }; do [[ -d $td/pack ]] || { echo "번역 타깃에 pack/ 이 없다: $td" >&2; exit 1; }; done
@@ -89,11 +100,13 @@ args+=" --save-every $save_every --num-workers 4 ${sim_data:+--sim-data $sim_dat
 [[ $trans_lead_space == 1 ]] && args+=" --trans-lead-space"
 [[ $phone_aug != 0 ]] && args+=" --phone-aug $phone_aug"
 [[ $enc_tap != -1 ]] && args+=" --enc-tap-layer $enc_tap"
+args+="${change_w:+ --change-tag-weight $change_w}${hold_w:+ --hold-tag-weight $hold_w}${dw_sets:+ --decision-weight-sets $dw_sets}${eot_drop:+ --eot-drop-synth $eot_drop}${eot_drop_sets:+ --eot-drop-sets $eot_drop_sets}${set_phone:+ --set-phone $set_phone}"   # V3-p1(빈 값이면 아무것도 붙지 않는다)
+v3="${change_w:+ · 교대 가중 $change_w}${hold_w:+ · 머무름 가중 $hold_w}${dw_sets:+ · 결정 가중 셋 $dw_sets}${eot_drop:+ · 합성 EOT-문맥 dropout $eot_drop}${eot_drop_sets:+ · dropout 셋 $eot_drop_sets}${set_phone:+ · 셋별 전화 대역 $set_phone}"
 args+=" --dlg-corpora $dlg_corpora --window $window --max-speakers $max_spk"; [[ $max_spk != 2 ]] && args+=" --declare-all-p $declare_p"; [[ $draws != 0 ]] && args+=" --window-draws $draws"
 args+="$replay_sets"
 for rs in $replay_sets; do [[ $rs == --replay-set ]] && continue; n=${rs%%:*}; [[ $weights == *"$n:"* ]] || { echo "--replay-set $n 이 --weights 에 없다" >&2; exit 2; }; f=${rs#*:*:}; f=${f#@}; [[ -f $f ]] || { echo "--replay-set 목록 없음: $f" >&2; exit 1; }; done
 args+=" $extra"
-echo "Stage 3 run $run → $out · init $init · $nodes 노드 × 8 GPU · $partition · 가중치 $weights · EOT $eot_mode · 맞장구 $backchannel · 시작 $start_mode · 정체 회복 $recover_p · 화자 슬롯 헤드 $spk_act · 합성 ${sim_data:-없음} · 되살리기 ${revive_dir:-없음} · 대화 번역 ${dlg_trans:-없음}${dlg_trans:+(번역 모드 $dlg_ast_frac)} · 번역 행 앞 공백 $trans_lead_space · 전화 대역 $phone_aug · 인코더 탭 $enc_tap · split $split · 화자 상한 $max_spk · 창 $window(draw $draws) · 대화 코퍼스 $dlg_corpora · 따로 가중 셋${replay_sets:- 없음} · 제외 추가 ${exclude:-없음} · max-steps $max_steps · MAX_RESTART ${MAX_RESTART:-3}" >&2
+echo "Stage 3 run $run → $out · init $init · $nodes 노드 × 8 GPU · $partition · 가중치 $weights · EOT $eot_mode · 맞장구 $backchannel · 시작 $start_mode · 정체 회복 $recover_p · 화자 슬롯 헤드 $spk_act · 합성 ${sim_data:-없음} · 되살리기 ${revive_dir:-없음} · 대화 번역 ${dlg_trans:-없음}${dlg_trans:+(번역 모드 $dlg_ast_frac)} · 번역 행 앞 공백 $trans_lead_space · 전화 대역 $phone_aug · 인코더 탭 $enc_tap · split $split · 화자 상한 $max_spk · 창 $window(draw $draws) · 대화 코퍼스 $dlg_corpora · 따로 가중 셋${replay_sets:- 없음} · 제외 추가 ${exclude:-없음}${v3} · max-steps $max_steps · MAX_RESTART ${MAX_RESTART:-3}" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 dep=""; [[ -n $after ]] && dep="--dependency=afterany:$after"
 exc=""; if [[ -n $exclude ]]; then exc="--exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4"; for n in ${exclude//,/ }; do [[ $n == slurmmxch200v5-* ]] || n=slurmmxch200v5-$n; exc+=",$n"; done; fi   # 명령줄 --exclude 는 sbatch 안 기본값을 덮으므로 기본 제외도 함께 쓴다
