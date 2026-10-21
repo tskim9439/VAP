@@ -1,0 +1,151 @@
+{
+ "sessions": 86,
+ "skipped_same_lang": 0,
+ "changes": 540,
+ "classified": 540,
+ "noalign": 0,
+ "cross_window": 0,
+ "resume_without_trans": 0,
+ "window_s": 5.0,
+ "offset_s": 0.743,
+ "classes": {
+  "OK": {
+   "eot": 0,
+   "no_eot": 472,
+   "all": 472
+  },
+  "RESUME": {
+   "eot": 0,
+   "no_eot": 55,
+   "all": 55
+  },
+  "REASSERT": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  },
+  "SILENT": {
+   "eot": 0,
+   "no_eot": 13,
+   "all": 13
+  },
+  "ABSORBED": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  }
+ },
+ "by_new_lang": {
+  "English": {
+   "OK": {
+    "eot": 0,
+    "no_eot": 243,
+    "all": 243
+   },
+   "RESUME": {
+    "eot": 0,
+    "no_eot": 27,
+    "all": 27
+   },
+   "REASSERT": {
+    "eot": 0,
+    "no_eot": 0,
+    "all": 0
+   },
+   "SILENT": {
+    "eot": 0,
+    "no_eot": 11,
+    "all": 11
+   },
+   "ABSORBED": {
+    "eot": 0,
+    "no_eot": 0,
+    "all": 0
+   }
+  },
+  "German": {
+   "OK": {
+    "eot": 0,
+    "no_eot": 229,
+    "all": 229
+   },
+   "RESUME": {
+    "eot": 0,
+    "no_eot": 28,
+    "all": 28
+   },
+   "REASSERT": {
+    "eot": 0,
+    "no_eot": 0,
+    "all": 0
+   },
+   "SILENT": {
+    "eot": 0,
+    "no_eot": 2,
+    "all": 2
+   },
+   "ABSORBED": {
+    "eot": 0,
+    "no_eot": 0,
+    "all": 0
+   }
+  }
+ },
+ "classes_prev_ok": {
+  "OK": {
+   "eot": 0,
+   "no_eot": 461,
+   "all": 461
+  },
+  "RESUME": {
+   "eot": 0,
+   "no_eot": 30,
+   "all": 30
+  },
+  "REASSERT": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  },
+  "SILENT": {
+   "eot": 0,
+   "no_eot": 9,
+   "all": 9
+  },
+  "ABSORBED": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  }
+ },
+ "classes_prev_wrong": {
+  "OK": {
+   "eot": 0,
+   "no_eot": 11,
+   "all": 11
+  },
+  "RESUME": {
+   "eot": 0,
+   "no_eot": 25,
+   "all": 25
+  },
+  "REASSERT": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  },
+  "SILENT": {
+   "eot": 0,
+   "no_eot": 4,
+   "all": 4
+  },
+  "ABSORBED": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  }
+ },
+ "delta": 10,
+ "checkpoint": "/soundai/Model/VAPASR/stage3-st4-m2a/checkpoint-2000",
+ "tag_bias": 0.0
+}

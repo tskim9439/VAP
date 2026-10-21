@@ -1,0 +1,14 @@
+{
+ "d4": {
+  "English/German": 9,
+  "German/English": 77,
+  "rule": 78,
+  "swap": 8
+ },
+ "d10": {
+  "English/German": 5,
+  "German/English": 81,
+  "rule": 82,
+  "swap": 4
+ }
+}

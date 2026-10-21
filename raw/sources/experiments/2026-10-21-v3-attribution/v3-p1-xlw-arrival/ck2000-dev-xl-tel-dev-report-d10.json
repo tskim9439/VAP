@@ -1,0 +1,40 @@
+{
+ "directions": {
+  "German->English": {
+   "turns": 897,
+   "bleu": 43.0,
+   "chrf": 63.04,
+   "stream_laal_s": {
+    "mean": 1.107,
+    "median": 1.141,
+    "p90": 1.696
+   },
+   "end_offset_s": {
+    "mean": 1.164,
+    "median": 0.66,
+    "p90": 4.546
+   },
+   "empty_turns": 5
+  },
+  "English->German": {
+   "turns": 887,
+   "bleu": 28.96,
+   "chrf": 55.64,
+   "stream_laal_s": {
+    "mean": 1.108,
+    "median": 1.099,
+    "p90": 1.808
+   },
+   "end_offset_s": {
+    "mean": 1.363,
+    "median": 0.652,
+    "p90": 5.819
+   },
+   "empty_turns": 4
+  }
+ },
+ "unknown_sessions": [],
+ "wrong_language_words": 0,
+ "hyp": "/soundai/users/tskim/VAPKT-data/results/v3dev-v3-p1-xlw-arrival-ck2000-xl-tel-dev-sessions/hyp-d10.jsonl",
+ "sessions": "/soundai/users/tskim/VAPKT-data/data/v3-dev/xl-tel-dev/sessions.jsonl"
+}

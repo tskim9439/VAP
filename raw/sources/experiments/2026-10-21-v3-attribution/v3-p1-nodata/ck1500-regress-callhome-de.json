@@ -1,0 +1,83 @@
+{
+  "complete": true,
+  "predictions": 1342,
+  "expected_predictions": 1342,
+  "config": {
+    "protocol": "single-turn-asr-v1",
+    "checkpoint": "/soundai/Model/VAPASR/stage3-v3-p1-nodata/checkpoint-1500",
+    "checkpoint_weights": {
+      "model.safetensors": {
+        "size": 4838863896,
+        "mtime_ns": 1792558313626082800
+      }
+    },
+    "checkpoint_config_sha256": "c606775cda835ca7c678546cb46a5af8753da3f447e4027425fb39cfb02e2e37",
+    "manifest_digest": "7cd02e78d559d04c1ea4c60b9500116f017f1dcd4fdea73a0aba2cbb974b6928",
+    "utterances": 671,
+    "deltas": [
+      4,
+      10
+    ],
+    "tail_s": 1.0,
+    "leading_silence_s": 0,
+    "next_bias": 0,
+    "dtype": "float32",
+    "tf32": false,
+    "max_flush_rounds": 8,
+    "textnorm": {
+      "textnorm_version": "asr-tn-v1.3.0",
+      "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+      "numeric_backend_version": "num2words 0.5.14"
+    },
+    "code": {
+      "experiments/eval_single_turn_asr.py": "cef21fc01de1e536273fadff4f181871a1cc496320259b0e4cdcd2ca66de2fd5",
+      "vapasr/hf/batch_decode.py": "d9a9d4a64d47c69ad322efc3a70620ab54673c2c500834dec8ba376a0790346b",
+      "vapasr/data/single_turn_eval.py": "032d57cb164642f10bfa87f7d2fba149f69461539121ac5aac553a6461fe854a",
+      "vapasr/hf/modeling_vapasr.py": "9ed8c1766e96c8ff08c55f36bbc118a9bad5f50605c4e1c3acbdbf3f789743f3",
+      "vapasr/features/online.py": "5e98f4b1a0e9b732665838f71cd802371b9ed419585517e54549ae989d814a9f",
+      "vapasr/data/textnorm_de.py": "2a46015760672e16d7e6e7cb7a6567e0c18bcfed8eb059626712c15ce184e2ab",
+      "vapasr/data/ast_eval.py": "9494187b9e406ca2fe0cda2949b2a143cb25a866fb04a4679228207f740fe092",
+      "vapasr/data/ast_dataset.py": "00f53a63988584df62db3c40304283e1e590074413b996c0337976152faa5b98"
+    },
+    "world_size": 1,
+    "limit_per_set": 0,
+    "batch_size": 64,
+    "encoder_batch_size": 1,
+    "cpu_threads": 4,
+    "ast_format": "ast-v1"
+  },
+  "groups": {
+    "callhome-de-heldout/delta-4": {
+      "utterances": 671,
+      "audio_s": 1145.8850000000014,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 336,
+          "deletions": 75,
+          "insertions": 229,
+          "n_ref": 2874,
+          "n_hyp": 3028,
+          "errors": 640,
+          "rate": 0.22268615170494085
+        }
+      }
+    },
+    "callhome-de-heldout/delta-10": {
+      "utterances": 671,
+      "audio_s": 1145.8850000000014,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 295,
+          "deletions": 66,
+          "insertions": 263,
+          "n_ref": 2874,
+          "n_hyp": 3071,
+          "errors": 624,
+          "rate": 0.21711899791231734
+        }
+      }
+    }
+  }
+}

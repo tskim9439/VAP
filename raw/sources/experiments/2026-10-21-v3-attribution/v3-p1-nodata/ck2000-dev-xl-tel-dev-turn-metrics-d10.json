@@ -1,0 +1,264 @@
+{
+ "sessions": 160,
+ "ref_words": 24191,
+ "aligned_pct": 96.33,
+ "exact_pct": 83.54,
+ "hyp_words": 24658,
+ "insertions": 1356,
+ "misattributed": {
+  "words": 403,
+  "pct_ref": 1.67,
+  "pct_aligned": 1.73,
+  "exact_share_pct": 21.34
+ },
+ "toggle_recall": {
+  "pct": 94.81,
+  "n": 1560,
+  "toggled": 1479,
+  "transitions": {
+   "prevOK>curOK/toggle": 1463,
+   "prevOK>curWRONG/no-toggle": 29,
+   "prevWRONG>curOK/no-toggle": 52,
+   "prevWRONG>curWRONG/toggle": 16
+  }
+ },
+ "changes": {
+  "hyp": 1758,
+  "ref": 1563,
+  "ratio": 1.1248
+ },
+ "turns": {
+  "first": {
+   "correct": 148,
+   "whole": 3,
+   "partial": 9,
+   "noalign": 0
+  },
+  "change": {
+   "correct": 1452,
+   "whole": 13,
+   "partial": 96,
+   "noalign": 2
+  },
+  "cont": {
+   "correct": 79,
+   "whole": 0,
+   "partial": 7,
+   "noalign": 0
+  }
+ },
+ "turn_wrong_words": {
+  "first": {
+   "correct": 0,
+   "whole": 40,
+   "partial": 27
+  },
+  "change": {
+   "correct": 0,
+   "whole": 158,
+   "partial": 166
+  },
+  "cont": {
+   "correct": 0,
+   "whole": 0,
+   "partial": 12
+  }
+ },
+ "whole_wrong_change": {
+  "turns": 13,
+  "scored": 1561,
+  "pct": 0.83
+ },
+ "within_turn_switch": {
+  "switches": 147,
+  "pairs": 21495,
+  "pct": 0.68
+ },
+ "partial_words": {
+  "late": 62,
+  "early": 76,
+  "middle": 24,
+  "multi": 43
+ },
+ "onset_miss": {
+  "English": {
+   "n": 767,
+   "miss": 6,
+   "pct": 0.78
+  },
+  "German": {
+   "n": 769,
+   "miss": 4,
+   "pct": 0.52
+  }
+ },
+ "short_turns": {
+  "change_le3": {
+   "n": 108,
+   "whole": 0,
+   "maj": 0,
+   "whole_pct": 0.0,
+   "maj_pct": 0.0
+  },
+  "change_gt3": {
+   "n": 1453,
+   "whole": 13,
+   "maj": 23,
+   "whole_pct": 0.89,
+   "maj_pct": 1.58
+  }
+ },
+ "turn_len": {
+  "<=3": {
+   "turns": 128,
+   "whole_pct": 0.0,
+   "maj_pct": 0.0,
+   "word_wrong_pct": 1.84
+  },
+  "4-10": {
+   "turns": 698,
+   "whole_pct": 1.15,
+   "maj_pct": 2.15,
+   "word_wrong_pct": 2.66
+  },
+  "11-20": {
+   "turns": 661,
+   "whole_pct": 0.76,
+   "maj_pct": 1.21,
+   "word_wrong_pct": 1.54
+  },
+  ">20": {
+   "turns": 320,
+   "whole_pct": 0.94,
+   "maj_pct": 1.25,
+   "word_wrong_pct": 1.42
+  }
+ },
+ "wrong_slot_lang": {
+  "wrong_sub": 317,
+  "other_lang": 261,
+  "sub_pct_ref": 1.31,
+  "other_lang_pct_ref": 1.08
+ },
+ "slot_collapse": {
+  "sessions": 0,
+  "scored": 160,
+  "rule": {
+   "hyp_share_ge": 0.9,
+   "ref_share_le": 0.7
+  }
+ },
+ "first_turn": {
+  "n": 160,
+  "correct": 148,
+  "whole": 3,
+  "partial": 9,
+  "noalign": 0,
+  "maj_wrong": 4,
+  "acc_pct": 97.5
+ },
+ "error_onsets": {
+  "onsets": {
+   "same-speaker-next-turn": 4,
+   "session-start": 6,
+   "speaker-change": 29,
+   "within-turn": 81
+  },
+  "words_pct": {
+   "same-speaker-next-turn": 1.49,
+   "session-start": 35.48,
+   "speaker-change": 16.87,
+   "within-turn": 46.15
+  },
+  "recoveries": {
+   "speaker-change": 52,
+   "within-turn": 66
+  }
+ },
+ "split": {
+  "cp": 22.43,
+  "agn": 22.06,
+  "attr": 0.36,
+  "ref_words": 24191
+ },
+ "skipped_same_lang": 0,
+ "window_s": 5.0,
+ "offset_s": 0.712,
+ "offset_iqr": [
+  0.505,
+  0.97
+ ],
+ "bootstrap": {
+  "n": 1000,
+  "seed": 0,
+  "sessions": 160,
+  "metrics": {
+   "toggle_recall": {
+    "value": 94.808,
+    "ci95": [
+     93.51,
+     96.156
+    ]
+   },
+   "change_ratio": {
+    "value": 1.1248,
+    "ci95": [
+     1.0861,
+     1.1637
+    ]
+   },
+   "whole_wrong_change": {
+    "value": 0.833,
+    "ci95": [
+     0.314,
+     1.488
+    ]
+   },
+   "within_turn_switch": {
+    "value": 0.684,
+    "ci95": [
+     0.499,
+     0.894
+    ]
+   },
+   "misattributed": {
+    "value": 1.666,
+    "ci95": [
+     0.883,
+     2.528
+    ]
+   },
+   "early_words": {
+    "value": 0.314,
+    "ci95": [
+     0.193,
+     0.465
+    ]
+   },
+   "cp": {
+    "value": 22.426,
+    "ci95": [
+     20.407,
+     24.493
+    ]
+   },
+   "agn": {
+    "value": 22.062,
+    "ci95": [
+     20.219,
+     24.017
+    ]
+   },
+   "attr": {
+    "value": 0.364,
+    "ci95": [
+     -0.054,
+     0.831
+    ]
+   }
+  }
+ },
+ "asr": "/soundai/users/tskim/VAPKT-data/results/v3dev-v3-p1-nodata-ck2000-xl-tel-dev-sessions/asr-d10.jsonl",
+ "eot_file": null,
+ "sessions_file": "/soundai/users/tskim/VAPKT-data/data/v3-dev/xl-tel-dev/sessions.jsonl"
+}

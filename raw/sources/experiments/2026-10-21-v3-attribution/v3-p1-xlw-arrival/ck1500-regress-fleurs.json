@@ -1,0 +1,383 @@
+{
+  "complete": true,
+  "predictions": 800,
+  "expected_predictions": 800,
+  "config": {
+    "protocol": "single-turn-asr-v1",
+    "checkpoint": "/soundai/Model/VAPASR/stage3-v3-p1-xlw-arrival/checkpoint-1500",
+    "checkpoint_weights": {
+      "model.safetensors": {
+        "size": 4838863896,
+        "mtime_ns": 1792594891961954400
+      }
+    },
+    "checkpoint_config_sha256": "7e3e5515214a22d729371cd4d4d46c443fe24d2bb6a712f0adc3c0a5f5506e1b",
+    "manifest_digest": "7d2229625adcbda44f13922a0311f98499154dbfe3f9a513c0f8dd93d323a219",
+    "utterances": 400,
+    "deltas": [
+      4,
+      10
+    ],
+    "tail_s": 1.0,
+    "leading_silence_s": 0,
+    "next_bias": 0,
+    "dtype": "float32",
+    "tf32": false,
+    "max_flush_rounds": 8,
+    "textnorm": {
+      "textnorm_version": "asr-tn-v1.3.0",
+      "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+      "numeric_backend_version": "num2words 0.5.14"
+    },
+    "code": {
+      "experiments/eval_single_turn_asr.py": "cef21fc01de1e536273fadff4f181871a1cc496320259b0e4cdcd2ca66de2fd5",
+      "vapasr/hf/batch_decode.py": "d9a9d4a64d47c69ad322efc3a70620ab54673c2c500834dec8ba376a0790346b",
+      "vapasr/data/single_turn_eval.py": "032d57cb164642f10bfa87f7d2fba149f69461539121ac5aac553a6461fe854a",
+      "vapasr/hf/modeling_vapasr.py": "9ed8c1766e96c8ff08c55f36bbc118a9bad5f50605c4e1c3acbdbf3f789743f3",
+      "vapasr/features/online.py": "5e98f4b1a0e9b732665838f71cd802371b9ed419585517e54549ae989d814a9f",
+      "vapasr/data/textnorm_de.py": "2a46015760672e16d7e6e7cb7a6567e0c18bcfed8eb059626712c15ce184e2ab",
+      "vapasr/data/ast_eval.py": "9494187b9e406ca2fe0cda2949b2a143cb25a866fb04a4679228207f740fe092",
+      "vapasr/data/ast_dataset.py": "00f53a63988584df62db3c40304283e1e590074413b996c0337976152faa5b98"
+    },
+    "world_size": 1,
+    "limit_per_set": 100,
+    "batch_size": 64,
+    "encoder_batch_size": 1,
+    "cpu_threads": 4,
+    "ast_format": "ast-v1"
+  },
+  "groups": {
+    "fleurs-de-en/delta-4": {
+      "utterances": 100,
+      "audio_s": 1328.0399999999995,
+      "forced": 1,
+      "metrics": {
+        "wer": {
+          "substitutions": 188,
+          "deletions": 14,
+          "insertions": 47,
+          "n_ref": 2193,
+          "n_hyp": 2226,
+          "errors": 249,
+          "rate": 0.11354309165526676
+        }
+      }
+    },
+    "fleurs-de-en/delta-10": {
+      "utterances": 100,
+      "audio_s": 1328.0399999999995,
+      "forced": 1,
+      "metrics": {
+        "wer": {
+          "substitutions": 158,
+          "deletions": 14,
+          "insertions": 32,
+          "n_ref": 2193,
+          "n_hyp": 2211,
+          "errors": 204,
+          "rate": 0.09302325581395349
+        }
+      }
+    },
+    "fleurs-en-de/delta-4": {
+      "utterances": 100,
+      "audio_s": 990.4800000000002,
+      "forced": 17,
+      "metrics": {
+        "wer": {
+          "substitutions": 153,
+          "deletions": 30,
+          "insertions": 35,
+          "n_ref": 2237,
+          "n_hyp": 2242,
+          "errors": 218,
+          "rate": 0.09745194456861869
+        }
+      }
+    },
+    "fleurs-en-de/delta-10": {
+      "utterances": 100,
+      "audio_s": 990.4800000000002,
+      "forced": 20,
+      "metrics": {
+        "wer": {
+          "substitutions": 126,
+          "deletions": 27,
+          "insertions": 29,
+          "n_ref": 2237,
+          "n_hyp": 2239,
+          "errors": 182,
+          "rate": 0.0813589628967367
+        }
+      }
+    },
+    "fleurs-en-ko/delta-4": {
+      "utterances": 100,
+      "audio_s": 977.3799999999998,
+      "forced": 43,
+      "metrics": {
+        "wer": {
+          "substitutions": 160,
+          "deletions": 27,
+          "insertions": 62,
+          "n_ref": 2183,
+          "n_hyp": 2218,
+          "errors": 249,
+          "rate": 0.11406321575813101
+        }
+      }
+    },
+    "fleurs-en-ko/delta-10": {
+      "utterances": 100,
+      "audio_s": 977.3799999999998,
+      "forced": 37,
+      "metrics": {
+        "wer": {
+          "substitutions": 141,
+          "deletions": 30,
+          "insertions": 51,
+          "n_ref": 2183,
+          "n_hyp": 2204,
+          "errors": 222,
+          "rate": 0.1016949152542373
+        }
+      }
+    },
+    "fleurs-ko-en/delta-4": {
+      "utterances": 100,
+      "audio_s": 1257.48,
+      "forced": 9,
+      "metrics": {
+        "cer_nospace": {
+          "substitutions": 226,
+          "deletions": 182,
+          "insertions": 33,
+          "n_ref": 4651,
+          "n_hyp": 4502,
+          "errors": 441,
+          "rate": 0.09481831864115244
+        },
+        "cer_space": {
+          "substitutions": 248,
+          "deletions": 250,
+          "insertions": 117,
+          "n_ref": 6074,
+          "n_hyp": 5941,
+          "errors": 615,
+          "rate": 0.10125123477115575
+        },
+        "wer": {
+          "substitutions": 234,
+          "deletions": 67,
+          "insertions": 83,
+          "n_ref": 1523,
+          "n_hyp": 1539,
+          "errors": 384,
+          "rate": 0.2521339461588969
+        }
+      }
+    },
+    "fleurs-ko-en/delta-10": {
+      "utterances": 100,
+      "audio_s": 1257.48,
+      "forced": 6,
+      "metrics": {
+        "cer_nospace": {
+          "substitutions": 217,
+          "deletions": 180,
+          "insertions": 88,
+          "n_ref": 4651,
+          "n_hyp": 4559,
+          "errors": 485,
+          "rate": 0.10427864975274134
+        },
+        "cer_space": {
+          "substitutions": 240,
+          "deletions": 240,
+          "insertions": 187,
+          "n_ref": 6074,
+          "n_hyp": 6021,
+          "errors": 667,
+          "rate": 0.10981231478432664
+        },
+        "wer": {
+          "substitutions": 225,
+          "deletions": 56,
+          "insertions": 95,
+          "n_ref": 1523,
+          "n_hyp": 1562,
+          "errors": 376,
+          "rate": 0.2468811556139199
+        }
+      }
+    }
+  },
+  "aa_wer": {
+    "fleurs-en-de/delta-10": {
+      "utterances": 100,
+      "empty_ref": 0,
+      "substitutions": 115,
+      "deletions": 22,
+      "insertions": 54,
+      "errors": 191,
+      "n_ref": 2246,
+      "wer_micro": 0.085040071237756,
+      "wer_duration_weighted": 0.09420496912852434,
+      "audio_s": 990.4800000000002
+    },
+    "fleurs-en-de/delta-4": {
+      "utterances": 100,
+      "empty_ref": 0,
+      "substitutions": 143,
+      "deletions": 23,
+      "insertions": 60,
+      "errors": 226,
+      "n_ref": 2246,
+      "wer_micro": 0.1006233303650935,
+      "wer_duration_weighted": 0.11151297225129615,
+      "audio_s": 990.4800000000002
+    },
+    "fleurs-en-ko/delta-10": {
+      "utterances": 100,
+      "empty_ref": 0,
+      "substitutions": 118,
+      "deletions": 27,
+      "insertions": 51,
+      "errors": 196,
+      "n_ref": 2242,
+      "wer_micro": 0.08742194469223907,
+      "wer_duration_weighted": 0.09205528556055088,
+      "audio_s": 977.3799999999998
+    },
+    "fleurs-en-ko/delta-4": {
+      "utterances": 100,
+      "empty_ref": 0,
+      "substitutions": 140,
+      "deletions": 25,
+      "insertions": 61,
+      "errors": 226,
+      "n_ref": 2242,
+      "wer_micro": 0.1008028545941124,
+      "wer_duration_weighted": 0.10331397031831203,
+      "audio_s": 977.3799999999998
+    }
+  },
+  "aa_scoring": {
+    "aa_version": "aa-wer-approx-v1",
+    "aa_code_sha256": "d2bf74ebecbcb9c2aadeb2f22b743a06e5c96ad7bacd9475c075aa63eac35943"
+  },
+  "translation": {
+    "fleurs-de-en/delta-10": {
+      "bleu": 30.24,
+      "chrf": 60.74,
+      "n": 100,
+      "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+      "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+      "laal_s": 1.656,
+      "laal_median_s": 1.497,
+      "al_s": 1.554,
+      "al_median_s": 1.45,
+      "pre_end": 0.936,
+      "latency_n": 100,
+      "empty_translations": 0
+    },
+    "fleurs-de-en/delta-4": {
+      "bleu": 26.32,
+      "chrf": 58.8,
+      "n": 100,
+      "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+      "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+      "laal_s": 1.341,
+      "laal_median_s": 1.089,
+      "al_s": 1.241,
+      "al_median_s": 0.998,
+      "pre_end": 1.0,
+      "latency_n": 100,
+      "empty_translations": 0
+    },
+    "fleurs-en-de/delta-10": {
+      "bleu": 25.86,
+      "chrf": 55.96,
+      "n": 100,
+      "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+      "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+      "laal_s": 2.17,
+      "laal_median_s": 1.672,
+      "al_s": 1.89,
+      "al_median_s": 1.468,
+      "pre_end": 0.914,
+      "latency_n": 100,
+      "empty_translations": 0
+    },
+    "fleurs-en-de/delta-4": {
+      "bleu": 23.04,
+      "chrf": 54.52,
+      "n": 100,
+      "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+      "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+      "laal_s": 1.513,
+      "laal_median_s": 1.021,
+      "al_s": 1.297,
+      "al_median_s": 0.946,
+      "pre_end": 0.993,
+      "latency_n": 100,
+      "empty_translations": 0
+    },
+    "fleurs-en-ko/delta-10": {
+      "bleu": 28.96,
+      "chrf": 24.94,
+      "n": 100,
+      "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+      "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+      "laal_s": 3.563,
+      "laal_median_s": 2.795,
+      "al_s": 3.047,
+      "al_median_s": 2.666,
+      "pre_end": 0.846,
+      "latency_n": 100,
+      "empty_translations": 0
+    },
+    "fleurs-en-ko/delta-4": {
+      "bleu": 28.74,
+      "chrf": 24.89,
+      "n": 100,
+      "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+      "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+      "laal_s": 3.016,
+      "laal_median_s": 2.56,
+      "al_s": 2.537,
+      "al_median_s": 2.27,
+      "pre_end": 0.967,
+      "latency_n": 100,
+      "empty_translations": 0
+    },
+    "fleurs-ko-en/delta-10": {
+      "bleu": 13.15,
+      "chrf": 47.6,
+      "n": 100,
+      "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+      "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+      "laal_s": 2.518,
+      "laal_median_s": 2.345,
+      "al_s": 2.319,
+      "al_median_s": 2.0,
+      "pre_end": 0.974,
+      "latency_n": 100,
+      "empty_translations": 0
+    },
+    "fleurs-ko-en/delta-4": {
+      "bleu": 12.39,
+      "chrf": 46.95,
+      "n": 100,
+      "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+      "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+      "laal_s": 2.225,
+      "laal_median_s": 2.044,
+      "al_s": 2.007,
+      "al_median_s": 1.801,
+      "pre_end": 1.0,
+      "latency_n": 100,
+      "empty_translations": 0
+    }
+  }
+}

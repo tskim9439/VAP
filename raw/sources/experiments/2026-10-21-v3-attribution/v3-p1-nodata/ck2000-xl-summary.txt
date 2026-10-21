@@ -1,0 +1,2 @@
+sim_en-de/d4             English WER 33.81 · German WER 29.77 · EOT 참조 없음 · English->German BLEU 25.8 chrF 53.6 지연 -0.08 · German->English BLEU 36.1 chrF 60.5 지연 -0.08 · 창 200 (unseen)
+sim_en-de/d10            English WER 25.71 · German WER 25.40 · EOT 참조 없음 · English->German BLEU 32.1 chrF 57.4 지연 -0.08 · German->English BLEU 40.5 chrF 63.7 지연 -0.08 · 창 200 (unseen)

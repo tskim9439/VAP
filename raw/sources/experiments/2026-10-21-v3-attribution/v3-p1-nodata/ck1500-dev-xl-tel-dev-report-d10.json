@@ -1,0 +1,40 @@
+{
+ "directions": {
+  "German->English": {
+   "turns": 897,
+   "bleu": 44.18,
+   "chrf": 64.06,
+   "stream_laal_s": {
+    "mean": 1.123,
+    "median": 1.175,
+    "p90": 1.74
+   },
+   "end_offset_s": {
+    "mean": 1.153,
+    "median": 0.663,
+    "p90": 4.436
+   },
+   "empty_turns": 1
+  },
+  "English->German": {
+   "turns": 887,
+   "bleu": 29.52,
+   "chrf": 56.1,
+   "stream_laal_s": {
+    "mean": 1.227,
+    "median": 1.14,
+    "p90": 1.855
+   },
+   "end_offset_s": {
+    "mean": 1.463,
+    "median": 0.657,
+    "p90": 5.458
+   },
+   "empty_turns": 4
+  }
+ },
+ "unknown_sessions": [],
+ "wrong_language_words": 0,
+ "hyp": "/soundai/users/tskim/VAPKT-data/results/v3dev-v3-p1-nodata-ck1500-xl-tel-dev-sessions/hyp-d10.jsonl",
+ "sessions": "/soundai/users/tskim/VAPKT-data/data/v3-dev/xl-tel-dev/sessions.jsonl"
+}

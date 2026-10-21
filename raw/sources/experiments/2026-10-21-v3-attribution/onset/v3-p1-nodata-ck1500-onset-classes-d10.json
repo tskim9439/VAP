@@ -1,0 +1,151 @@
+{
+ "sessions": 86,
+ "skipped_same_lang": 0,
+ "changes": 540,
+ "classified": 540,
+ "noalign": 0,
+ "cross_window": 0,
+ "resume_without_trans": 0,
+ "window_s": 5.0,
+ "offset_s": 0.745,
+ "classes": {
+  "OK": {
+   "eot": 0,
+   "no_eot": 502,
+   "all": 502
+  },
+  "RESUME": {
+   "eot": 0,
+   "no_eot": 32,
+   "all": 32
+  },
+  "REASSERT": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  },
+  "SILENT": {
+   "eot": 0,
+   "no_eot": 6,
+   "all": 6
+  },
+  "ABSORBED": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  }
+ },
+ "by_new_lang": {
+  "English": {
+   "OK": {
+    "eot": 0,
+    "no_eot": 258,
+    "all": 258
+   },
+   "RESUME": {
+    "eot": 0,
+    "no_eot": 18,
+    "all": 18
+   },
+   "REASSERT": {
+    "eot": 0,
+    "no_eot": 0,
+    "all": 0
+   },
+   "SILENT": {
+    "eot": 0,
+    "no_eot": 5,
+    "all": 5
+   },
+   "ABSORBED": {
+    "eot": 0,
+    "no_eot": 0,
+    "all": 0
+   }
+  },
+  "German": {
+   "OK": {
+    "eot": 0,
+    "no_eot": 244,
+    "all": 244
+   },
+   "RESUME": {
+    "eot": 0,
+    "no_eot": 14,
+    "all": 14
+   },
+   "REASSERT": {
+    "eot": 0,
+    "no_eot": 0,
+    "all": 0
+   },
+   "SILENT": {
+    "eot": 0,
+    "no_eot": 1,
+    "all": 1
+   },
+   "ABSORBED": {
+    "eot": 0,
+    "no_eot": 0,
+    "all": 0
+   }
+  }
+ },
+ "classes_prev_ok": {
+  "OK": {
+   "eot": 0,
+   "no_eot": 499,
+   "all": 499
+  },
+  "RESUME": {
+   "eot": 0,
+   "no_eot": 18,
+   "all": 18
+  },
+  "REASSERT": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  },
+  "SILENT": {
+   "eot": 0,
+   "no_eot": 3,
+   "all": 3
+  },
+  "ABSORBED": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  }
+ },
+ "classes_prev_wrong": {
+  "OK": {
+   "eot": 0,
+   "no_eot": 3,
+   "all": 3
+  },
+  "RESUME": {
+   "eot": 0,
+   "no_eot": 14,
+   "all": 14
+  },
+  "REASSERT": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  },
+  "SILENT": {
+   "eot": 0,
+   "no_eot": 3,
+   "all": 3
+  },
+  "ABSORBED": {
+   "eot": 0,
+   "no_eot": 0,
+   "all": 0
+  }
+ },
+ "delta": 10,
+ "checkpoint": "/soundai/Model/VAPASR/stage3-v3-p1-nodata/checkpoint-1500",
+ "tag_bias": 0.0
+}

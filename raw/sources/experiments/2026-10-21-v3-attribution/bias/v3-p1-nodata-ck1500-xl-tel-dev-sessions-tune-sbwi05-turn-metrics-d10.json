@@ -1,0 +1,264 @@
+{
+ "sessions": 80,
+ "ref_words": 11690,
+ "aligned_pct": 97.14,
+ "exact_pct": 83.71,
+ "hyp_words": 12005,
+ "insertions": 649,
+ "misattributed": {
+  "words": 419,
+  "pct_ref": 3.58,
+  "pct_aligned": 3.69,
+  "exact_share_pct": 57.76
+ },
+ "toggle_recall": {
+  "pct": 94.15,
+  "n": 752,
+  "toggled": 708,
+  "transitions": {
+   "prevOK>curOK/toggle": 695,
+   "prevOK>curWRONG/no-toggle": 15,
+   "prevWRONG>curOK/no-toggle": 29,
+   "prevWRONG>curWRONG/toggle": 13
+  }
+ },
+ "changes": {
+  "hyp": 840,
+  "ref": 753,
+  "ratio": 1.1155
+ },
+ "turns": {
+  "first": {
+   "correct": 72,
+   "whole": 1,
+   "partial": 7,
+   "noalign": 0
+  },
+  "change": {
+   "correct": 690,
+   "whole": 14,
+   "partial": 48,
+   "noalign": 1
+  },
+  "cont": {
+   "correct": 33,
+   "whole": 2,
+   "partial": 7,
+   "noalign": 0
+  }
+ },
+ "turn_wrong_words": {
+  "first": {
+   "correct": 0,
+   "whole": 37,
+   "partial": 15
+  },
+  "change": {
+   "correct": 0,
+   "whole": 168,
+   "partial": 169
+  },
+  "cont": {
+   "correct": 0,
+   "whole": 18,
+   "partial": 12
+  }
+ },
+ "whole_wrong_change": {
+  "turns": 14,
+  "scored": 752,
+  "pct": 1.86
+ },
+ "within_turn_switch": {
+  "switches": 80,
+  "pairs": 10482,
+  "pct": 0.76
+ },
+ "partial_words": {
+  "late": 48,
+  "early": 115,
+  "middle": 13,
+  "multi": 20
+ },
+ "onset_miss": {
+  "English": {
+   "n": 359,
+   "miss": 1,
+   "pct": 0.28
+  },
+  "German": {
+   "n": 368,
+   "miss": 6,
+   "pct": 1.63
+  }
+ },
+ "short_turns": {
+  "change_le3": {
+   "n": 57,
+   "whole": 1,
+   "maj": 2,
+   "whole_pct": 1.75,
+   "maj_pct": 3.51
+  },
+  "change_gt3": {
+   "n": 695,
+   "whole": 13,
+   "maj": 21,
+   "whole_pct": 1.87,
+   "maj_pct": 3.02
+  }
+ },
+ "turn_len": {
+  "<=3": {
+   "turns": 70,
+   "whole_pct": 1.43,
+   "maj_pct": 4.29,
+   "word_wrong_pct": 5.65
+  },
+  "4-10": {
+   "turns": 334,
+   "whole_pct": 1.8,
+   "maj_pct": 3.29,
+   "word_wrong_pct": 3.88
+  },
+  "11-20": {
+   "turns": 323,
+   "whole_pct": 2.48,
+   "maj_pct": 3.1,
+   "word_wrong_pct": 3.47
+  },
+  ">20": {
+   "turns": 147,
+   "whole_pct": 1.36,
+   "maj_pct": 2.72,
+   "word_wrong_pct": 3.74
+  }
+ },
+ "wrong_slot_lang": {
+  "wrong_sub": 177,
+  "other_lang": 127,
+  "sub_pct_ref": 1.51,
+  "other_lang_pct_ref": 1.09
+ },
+ "slot_collapse": {
+  "sessions": 0,
+  "scored": 80,
+  "rule": {
+   "hyp_share_ge": 0.9,
+   "ref_share_le": 0.7
+  }
+ },
+ "first_turn": {
+  "n": 80,
+  "correct": 72,
+  "whole": 1,
+  "partial": 7,
+  "noalign": 0,
+  "maj_wrong": 2,
+  "acc_pct": 97.5
+ },
+ "error_onsets": {
+  "onsets": {
+   "same-speaker-next-turn": 4,
+   "session-start": 3,
+   "speaker-change": 15,
+   "within-turn": 44
+  },
+  "words_pct": {
+   "same-speaker-next-turn": 4.77,
+   "session-start": 27.68,
+   "speaker-change": 15.27,
+   "within-turn": 52.27
+  },
+  "recoveries": {
+   "speaker-change": 29,
+   "within-turn": 36
+  }
+ },
+ "split": {
+  "cp": 22.62,
+  "agn": 21.84,
+  "attr": 0.78,
+  "ref_words": 11690
+ },
+ "skipped_same_lang": 0,
+ "window_s": 5.0,
+ "offset_s": 0.709,
+ "offset_iqr": [
+  0.497,
+  0.974
+ ],
+ "bootstrap": {
+  "n": 1000,
+  "seed": 0,
+  "sessions": 80,
+  "metrics": {
+   "toggle_recall": {
+    "value": 94.149,
+    "ci95": [
+     92.535,
+     95.88
+    ]
+   },
+   "change_ratio": {
+    "value": 1.1155,
+    "ci95": [
+     1.0729,
+     1.1664
+    ]
+   },
+   "whole_wrong_change": {
+    "value": 1.862,
+    "ci95": [
+     0.131,
+     4.966
+    ]
+   },
+   "within_turn_switch": {
+    "value": 0.763,
+    "ci95": [
+     0.534,
+     1.003
+    ]
+   },
+   "misattributed": {
+    "value": 3.584,
+    "ci95": [
+     1.074,
+     7.84
+    ]
+   },
+   "early_words": {
+    "value": 0.984,
+    "ci95": [
+     0.265,
+     2.114
+    ]
+   },
+   "cp": {
+    "value": 22.618,
+    "ci95": [
+     20.409,
+     24.951
+    ]
+   },
+   "agn": {
+    "value": 21.839,
+    "ci95": [
+     19.845,
+     23.935
+    ]
+   },
+   "attr": {
+    "value": 0.778,
+    "ci95": [
+     0.062,
+     1.708
+    ]
+   }
+  }
+ },
+ "asr": "/soundai/users/tskim/VAPKT-data/results/v3dev-v3-p1-nodata-ck1500-xl-tel-dev-sessions-tune-sbwi05/asr-d10.jsonl",
+ "eot_file": null,
+ "sessions_file": "/soundai/users/tskim/VAPKT-data/data/v3-dev/xl-tel-dev/sessions-tune.jsonl"
+}

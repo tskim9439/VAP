@@ -1,0 +1,21 @@
+{
+ "English": {
+  "wer": 26.13,
+  "ref_words": 3593
+ },
+ "German": {
+  "wer": 19.3,
+  "ref_words": 3233
+ },
+ "both": {
+  "wer_slot": 22.9,
+  "wer_cp": 22.9,
+  "ref_words": 6826
+ },
+ "split": {
+  "cp": 22.88,
+  "agn": 17.58,
+  "attr": 5.3,
+  "ref_words": 6826
+ }
+}

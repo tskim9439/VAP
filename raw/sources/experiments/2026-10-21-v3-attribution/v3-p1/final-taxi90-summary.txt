@@ -1,0 +1,8 @@
+δ10 German->English: 턴 349 · BLEU 25.94 · chrF 52.92 · StreamLAAL 중앙 1.236 s · 끝 지연 중앙 0.681 s · 빈 턴 2
+δ10 English->German: 턴 291 · BLEU 34.38 · chrF 61.5 · StreamLAAL 중앙 1.207 s · 끝 지연 중앙 0.68 s · 빈 턴 4
+δ10 받아쓰기 WER: {'English': {'wer': 24.13, 'ref_words': 3593}, 'German': {'wer': 17.51, 'ref_words': 3233}, 'both': {'wer_slot': 20.99, 'wer_cp': 20.54, 'ref_words': 6826}, 'split': {'cp': 20.52, 'agn': 17.08, 'attr': 3.44, 'ref_words': 6826}}
+δ4 German->English: 턴 349 · BLEU 23.01 · chrF 51.46 · StreamLAAL 중앙 0.752 s · 끝 지연 중앙 0.235 s · 빈 턴 0
+δ4 English->German: 턴 291 · BLEU 29.32 · chrF 57.48 · StreamLAAL 중앙 0.705 s · 끝 지연 중앙 0.209 s · 빈 턴 7
+δ4 받아쓰기 WER: {'English': {'wer': 27.08, 'ref_words': 3593}, 'German': {'wer': 19.3, 'ref_words': 3233}, 'both': {'wer_slot': 23.4, 'wer_cp': 23.4, 'ref_words': 6826}, 'split': {'cp': 23.37, 'agn': 19.63, 'attr': 3.74, 'ref_words': 6826}}
+δ10 턴 결정: toggle recall 93.89 %(n 540) · 가설/참조 교대 548/540(1.0148) · 통째 틀린 교대 턴 17/540 · 턴 안 헛교대 0.42 % · 새 화자 언어별 놓침 English 4.33 %(n 277) · German 0.41 %(n 245) · 첫 턴 100.0 % · attr 3.44
+δ4 턴 결정: toggle recall 93.12 %(n 538) · 가설/참조 교대 543/540(1.0056) · 통째 틀린 교대 턴 19/539 · 턴 안 헛교대 0.37 % · 새 화자 언어별 놓침 English 5.07 %(n 276) · German 0.41 %(n 243) · 첫 턴 100.0 % · attr 3.74

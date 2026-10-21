@@ -1,0 +1,83 @@
+{
+  "complete": true,
+  "predictions": 200,
+  "expected_predictions": 200,
+  "config": {
+    "protocol": "single-turn-asr-v1",
+    "checkpoint": "/soundai/Model/VAPASR/stage3-v3-p1/final",
+    "checkpoint_weights": {
+      "model.safetensors": {
+        "size": 4838863896,
+        "mtime_ns": 1792559632827546400
+      }
+    },
+    "checkpoint_config_sha256": "23bf7793c5a7ac5fdb3a1765f47cc4d6f864e6115efbbc67a37a8abf5ed1c020",
+    "manifest_digest": "1089d425cb7ff4befafaf5ca32688d92461e74b2cb66e5db3f51f3c820e41186",
+    "utterances": 100,
+    "deltas": [
+      4,
+      10
+    ],
+    "tail_s": 1.0,
+    "leading_silence_s": 0,
+    "next_bias": 0,
+    "dtype": "float32",
+    "tf32": false,
+    "max_flush_rounds": 8,
+    "textnorm": {
+      "textnorm_version": "asr-tn-v1.3.0",
+      "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+      "numeric_backend_version": "num2words 0.5.14"
+    },
+    "code": {
+      "experiments/eval_single_turn_asr.py": "cef21fc01de1e536273fadff4f181871a1cc496320259b0e4cdcd2ca66de2fd5",
+      "vapasr/hf/batch_decode.py": "d9a9d4a64d47c69ad322efc3a70620ab54673c2c500834dec8ba376a0790346b",
+      "vapasr/data/single_turn_eval.py": "032d57cb164642f10bfa87f7d2fba149f69461539121ac5aac553a6461fe854a",
+      "vapasr/hf/modeling_vapasr.py": "9ed8c1766e96c8ff08c55f36bbc118a9bad5f50605c4e1c3acbdbf3f789743f3",
+      "vapasr/features/online.py": "5e98f4b1a0e9b732665838f71cd802371b9ed419585517e54549ae989d814a9f",
+      "vapasr/data/textnorm_de.py": "2a46015760672e16d7e6e7cb7a6567e0c18bcfed8eb059626712c15ce184e2ab",
+      "vapasr/data/ast_eval.py": "9494187b9e406ca2fe0cda2949b2a143cb25a866fb04a4679228207f740fe092",
+      "vapasr/data/ast_dataset.py": "00f53a63988584df62db3c40304283e1e590074413b996c0337976152faa5b98"
+    },
+    "world_size": 1,
+    "limit_per_set": 100,
+    "batch_size": 64,
+    "encoder_batch_size": 1,
+    "cpu_threads": 4,
+    "ast_format": "ast-v1"
+  },
+  "groups": {
+    "yodas-de-dev/delta-4": {
+      "utterances": 100,
+      "audio_s": 596.76,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 65,
+          "deletions": 9,
+          "insertions": 25,
+          "n_ref": 1658,
+          "n_hyp": 1674,
+          "errors": 99,
+          "rate": 0.05971049457177322
+        }
+      }
+    },
+    "yodas-de-dev/delta-10": {
+      "utterances": 100,
+      "audio_s": 596.76,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 38,
+          "deletions": 7,
+          "insertions": 16,
+          "n_ref": 1658,
+          "n_hyp": 1667,
+          "errors": 61,
+          "rate": 0.0367913148371532
+        }
+      }
+    }
+  }
+}

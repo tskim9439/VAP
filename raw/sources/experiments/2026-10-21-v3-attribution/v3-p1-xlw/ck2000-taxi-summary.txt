@@ -1,0 +1,6 @@
+δ10 German->English: 턴 349 · BLEU 24.62 · chrF 51.85 · StreamLAAL 중앙 1.241 s · 끝 지연 중앙 0.681 s · 빈 턴 2
+δ10 English->German: 턴 291 · BLEU 32.43 · chrF 57.4 · StreamLAAL 중앙 1.188 s · 끝 지연 중앙 0.663 s · 빈 턴 10
+δ10 받아쓰기 WER: {'English': {'wer': 29.39, 'ref_words': 3593}, 'German': {'wer': 23.69, 'ref_words': 3233}, 'both': {'wer_slot': 26.69, 'wer_cp': 26.68, 'ref_words': 6826}, 'split': {'cp': 26.66, 'agn': 18.39, 'attr': 8.28, 'ref_words': 6826}}
+δ4 German->English: 턴 349 · BLEU 22.43 · chrF 50.4 · StreamLAAL 중앙 0.703 s · 끝 지연 중앙 0.231 s · 빈 턴 1
+δ4 English->German: 턴 291 · BLEU 27.75 · chrF 55.09 · StreamLAAL 중앙 0.697 s · 끝 지연 중앙 0.198 s · 빈 턴 9
+δ4 받아쓰기 WER: {'English': {'wer': 31.23, 'ref_words': 3593}, 'German': {'wer': 25.43, 'ref_words': 3233}, 'both': {'wer_slot': 28.48, 'wer_cp': 28.14, 'ref_words': 6826}, 'split': {'cp': 28.11, 'agn': 20.91, 'attr': 7.21, 'ref_words': 6826}}

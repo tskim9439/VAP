@@ -1,0 +1,40 @@
+{
+ "directions": {
+  "German->English": {
+   "turns": 2913,
+   "bleu": 40.82,
+   "chrf": 61.62,
+   "stream_laal_s": {
+    "mean": 1.236,
+    "median": 1.121,
+    "p90": 1.655
+   },
+   "end_offset_s": {
+    "mean": 1.024,
+    "median": 0.675,
+    "p90": 2.175
+   },
+   "empty_turns": 56
+  },
+  "English->German": {
+   "turns": 2662,
+   "bleu": 28.66,
+   "chrf": 53.91,
+   "stream_laal_s": {
+    "mean": 1.26,
+    "median": 1.1,
+    "p90": 1.885
+   },
+   "end_offset_s": {
+    "mean": 1.043,
+    "median": 0.66,
+    "p90": 3.649
+   },
+   "empty_turns": 79
+  }
+ },
+ "unknown_sessions": [],
+ "wrong_language_words": 0,
+ "hyp": "/soundai/users/tskim/VAPKT-data/results/v3dev-v3-p1-xlw-final-xl-eval-v1-sessions/hyp-d10.jsonl",
+ "sessions": "/soundai/users/tskim/VAPKT-data/data/v3-dev/xl-eval-v1/sessions.jsonl"
+}

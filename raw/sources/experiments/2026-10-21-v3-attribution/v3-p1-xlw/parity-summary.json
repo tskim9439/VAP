@@ -1,0 +1,29 @@
+{
+ "parity": true,
+ "stage3_config_ok": true,
+ "eot_registry_ok": true,
+ "memory": {
+  "loss": 0.38265,
+  "loss_next": 0.21666,
+  "loss_text": 0.33465,
+  "top1_text": 0.88586,
+  "loss_turn": 0.38552,
+  "loss_act": 0.14867
+ },
+ "reloaded": {
+  "loss": 0.38214,
+  "loss_next": 0.21647,
+  "loss_text": 0.33455,
+  "top1_text": 0.88834,
+  "loss_turn": 0.38248,
+  "loss_act": 0.14833
+ },
+ "missing": [],
+ "extra": [],
+ "shape_mismatch": [],
+ "value_diff": [],
+ "encoder_saved_keys": 638,
+ "tokenizer_reload_ok": true,
+ "tokenizer_reload_error": null,
+ "batch_n_soft": 23
+}

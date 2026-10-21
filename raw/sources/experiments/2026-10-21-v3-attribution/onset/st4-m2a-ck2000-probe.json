@@ -1,0 +1,11 @@
+{
+ "checkpoint": "/soundai/Model/VAPASR/stage3-st4-m2a/checkpoint-2000",
+ "tag_bias": 0.0,
+ "deltas": [
+  10
+ ],
+ "max_window": 90.0,
+ "windows": 86,
+ "eot": {},
+ "tag_tokens": 5280
+}

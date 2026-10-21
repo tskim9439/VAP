@@ -1,0 +1,40 @@
+{
+ "directions": {
+  "German->English": {
+   "turns": 349,
+   "bleu": 25.96,
+   "chrf": 51.84,
+   "stream_laal_s": {
+    "mean": 1.283,
+    "median": 1.235,
+    "p90": 1.82
+   },
+   "end_offset_s": {
+    "mean": 1.528,
+    "median": 0.696,
+    "p90": 5.271
+   },
+   "empty_turns": 5
+  },
+  "English->German": {
+   "turns": 291,
+   "bleu": 33.17,
+   "chrf": 60.75,
+   "stream_laal_s": {
+    "mean": 1.264,
+    "median": 1.175,
+    "p90": 2.011
+   },
+   "end_offset_s": {
+    "mean": 1.135,
+    "median": 0.68,
+    "p90": 4.13
+   },
+   "empty_turns": 11
+  }
+ },
+ "unknown_sessions": [],
+ "wrong_language_words": 0,
+ "hyp": "/soundai/users/tskim/VAPKT-data/results/stage4-eval-v3-p1-xlw-arrival-ck2000/taxi90/hyp-d10.jsonl",
+ "sessions": "/soundai/users/tskim/VAPKT-data/data/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl"
+}
