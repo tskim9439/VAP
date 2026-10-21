@@ -210,3 +210,17 @@ dev(선택 기준, xl-tel-dev 160, δ10, bias 없음)와 TAXI(보고 전용):
 - 학습 인자 차이는 V3 플래그뿐이다(C1 교대 3·머무름 1.5 를 모든 셋에, C5 교차 언어 합성 `<EOT>` 문맥 제거). 같은 언어 과잉 교대는 C1 을 같은 언어 대화 셋에도 건 탓으로 본다. 엄격 교대인 TAXI 에서는 이득이었고, 맞장구·겹침이 많은 한국어 대화에서는 핑퐁이 됐다. C5 기여는 이 run 들로는 가를 수 없다.
 - 그 밖의 가드: 단일 화자 최대 +0.2–0.9(δ10), δ4 는 R1 ck2000 YODAS-de +1.6. 대화 번역 BLEU 는 완료된 코퍼스 기준 −0.4–2.4. 합성 xl BLEU 는 V1 수준이다.
 - 사전 등록 규칙대로 R1·R2 는 후보가 아니다. 대비책(설계 명세 "같은 언어 가드가 깨지고 TAXI 는 좋아졌다면 `--decision-weight-sets xl` 로 1 run — 사용자 결정")을 R4 와 함께 제안했다: R2x `v3-p1-xlw` = R2 + `--decision-weight-sets xl`, R4x `v3-p1-xlw-arrival` = R2x + `--xl-slot-order arrival`.
+
+## 13. 사용자 결정 A — R2x·R4x (2026-10-21 23:1x)
+
+사용자: "A 안으로 진행해줘" — 사전 등록 대비책(교대·머무름 가중을 교차 언어 합성 셋에만)과 R4 를 함께 돌린다.
+
+| 이름 | run | 구성(R2 대비) | 보는 것 |
+|---|---|---|---|
+| R2x | `v3-p1-xlw` | `--decision-weight-sets xl` | R2x − R2 = 같은 언어 과잉 교대가 사라지는가, TAXI 이득이 남는가 |
+| R4x | `v3-p1-xlw-arrival` | `--decision-weight-sets xl --xl-slot-order arrival` | R4x − R2x = 교차 언어 슬롯을 먼저 말한 순서로 둔 효과 |
+
+- 나머지는 R2 와 같다(init st3-p11-revive ck3000, apex 2 노드, 2,500 step, lr 4e-5, C5 교차 언어 합성 `<EOT>` 문맥 제거 1.0). 제출 스크립트 `--dry-run` 의 sbatch 인자는 R2 와 run 이름·추가 플래그만 다르다.
+- 점검: `v3_check.sh r4`(dry-run 12 셋 불일치 0, 스모크 PARITY OK, 평가 경로), `v3_check.sh r4x`.
+- 평가: 기존 6 단계(`stage4_eval_queue.sh`, `TRANS_LEAD_SPACE=1`) × ck1500·ck2000·final + `v3_eval_queue.sh`. 공용 GPU OOM 을 줄이려고 `MIN_FREE_MB=60000` 으로 건다.
+- 선택 규칙은 그대로다(dev xl-tel-dev 귀속 몫 최소 + V1 대비 가드). 같은 언어 가드는 Stage 3 agn·귀속, 태그 수·빈 교대·강제 진행(aihub71631·kec·otoSpeech)을 함께 본다. TAXI 는 보고 전용이다.
