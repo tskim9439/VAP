@@ -77,6 +77,7 @@ g.add_argument("--hold-tag-weight", type=float, default=0.0, help="V3-p1 C1: <EO
 g.add_argument("--decision-weight-sets", choices=("all", "xl"), default="all", help="교대·머무름 가중을 걸 셋: all = 대화·합성 셋 전부, xl = 교차 언어 합성(sim_<l1>-<l2>[-접미사])만")
 g.add_argument("--eot-drop-synth", type=float, default=0.0, help="V3-p1 C5: 합성(meta.mask_eot) 창을 이 확률로 골라 감독 없는 <EOT> 를 문맥에서 뺀다(그 라운드 <NEXT_AUDIO> 는 가림, 0 = 끔)")
 g.add_argument("--eot-drop-sets", choices=("xl", "synth"), default="xl", help="EOT-문맥 dropout 을 걸 셋: xl = 교차 언어 합성만, synth = 합성 셋(sim_*) 전부")
+g.add_argument("--xl-slot-order", choices=("lang", "arrival"), default="lang", help="V3 R4: 교차 언어 창 슬롯 — lang = 언어 고정(prefix 가 슬롯마다 언어), arrival = 먼저 말한 화자가 A(prefix 는 두 언어만, cst_head_text_xl)")
 g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -130,7 +131,8 @@ win = tuple(float(x) for x in a.window.split(","))
 if len(win) != 2 or not 0 < win[0] <= win[1]: sys.exit(f"--window lo,hi — {a.window}")
 if not 2 <= a.max_speakers <= 4 or not 0 <= a.declare_all_p <= 1 or a.window_draws < 0: sys.exit(f"--max-speakers 2–4 · --declare-all-p [0, 1] · --window-draws ≥ 0 — {a.max_speakers} {a.declare_all_p} {a.window_draws}")
 if any(c in MEETING for c in corpora) and a.max_speakers < 3: sys.exit("회의 코퍼스(ami·icsi·notsofar)는 --max-speakers 3 이상과 함께")
-VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_speakers=a.window_draws > 0, **({"declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}))   # 모든 대화 셋 공통(V2)
+VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_speakers=a.window_draws > 0, **({"declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}),
+           **({"xl_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))   # 모든 대화 셋 공통(V2, V3 R4)
 bc = None if a.backchannel == "off" else tuple(float(x) for x in a.backchannel.split(","))
 if bc is not None and len(bc) != 2: sys.exit(f"--backchannel max_s,max_tokens | off — {a.backchannel}")
 bc = (bc[0], int(bc[1])) if bc else None
@@ -393,7 +395,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"change_tag_weight": a.change_tag_weight} if a.change_tag_weight > 0 else {}), **({"hold_tag_weight": a.hold_tag_weight} if a.hold_tag_weight > 0 else {}),   # V3-p1: 끄면 키 없음
           **({"decision_weight_sets": a.decision_weight_sets} if (a.change_tag_weight > 0 or a.hold_tag_weight > 0) and a.decision_weight_sets != "all" else {}),
           **({"eot_drop_synth": a.eot_drop_synth} if a.eot_drop_synth > 0 else {}), **({"eot_drop_sets": a.eot_drop_sets} if a.eot_drop_synth > 0 and a.eot_drop_sets != "xl" else {}),
-          **({"set_phone": {k: (aug.settings() if aug is not None else None) for k in sorted(set_phone) for aug in [wav_aug_of(k)]}} if set_phone else {}))
+          **({"set_phone": {k: (aug.settings() if aug is not None else None) for k in sorted(set_phone) for aug in [wav_aug_of(k)]}} if set_phone else {}),
+          **({"xl_slot_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():
@@ -466,6 +469,7 @@ def last_complete_checkpoint(d):
          if m and all(os.path.exists(os.path.join(d, x, f)) for f in ("trainer_state.json", "model.safetensors"))]
     return max(c)[1] if c else None
 model.config.stage3 = fp
+if a.xl_slot_order != "lang": model.config.xl_slot_order = a.xl_slot_order                     # V3 R4: 평가·디코드가 config 로 같은 교차 언어 prefix·슬롯 순서를 쓴다(끄면 키 없음)
 last = last_complete_checkpoint(out) if a.resume == "auto" else (None if a.resume == "none" else a.resume); fdiff = []
 if last:
     fdiff = fingerprint_diff(last, fp)

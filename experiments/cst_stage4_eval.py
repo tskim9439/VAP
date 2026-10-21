@@ -33,7 +33,8 @@ def windows_of(a, tok, TR):
         held = set(split["corpora"].get(c, {}).get("heldout", [])) if split else None
         if split is not None and not held: print(f"  {c}: held-out 없음 — 건너뜀", flush=True); continue
         ds = CstDialogueDataset([os.path.join(a.data, f"{c}.refined.dialogues.jsonl")], tok, delays=tuple(a.deltas), mono_cache_dir=os.path.join(a.data, "mono"), seed=0,
-                                backchannel=a.backchannel, trans=TR, ast_frac=0.0, trans_lead_space=a.trans_lead_space, **win_kw(a))
+                                backchannel=a.backchannel, trans=TR, ast_frac=0.0, trans_lead_space=a.trans_lead_space, **win_kw(a),
+                                **({"xl_order": a.xl_order} if getattr(a, "xl_order", "lang") != "lang" else {}))   # V3 R4: 모델 config 의 교차 언어 슬롯 순서
         idx = [i for i, it in enumerate(ds.items) if held is None or it[0] in held]
         idx.sort(key=lambda i: (ds.items[i][2], ds.items[i][0], ds.items[i][1]))
         if a.limit_windows and len(idx) > a.limit_windows: idx = [idx[j] for j in np.linspace(0, len(idx) - 1, a.limit_windows, dtype=int)]
@@ -57,16 +58,20 @@ def window_ref4(ds, q, mask, tok):
     return [words_of(tok, x) for x in src], [words_of(tok, x) for x in tr], eot
 
 
-def score4(ds, q, ref_w, ref_tr, ref_eot, hyp_src, hyp_tr, hyp_eot, delta, words):
-    """한 창의 점수 → dict(받아쓰기·귀속, eot, src_err, tr[참조 슬롯마다 원문·목표 언어·참조·가설·지연])."""
+def score4(ds, q, ref_w, ref_tr, ref_eot, hyp_src, hyp_tr, hyp_eot, delta, words, xl_perm=False):
+    """한 창의 점수 → dict(받아쓰기·귀속, eot, src_err, tr[참조 슬롯마다 원문·목표 언어·참조·가설·지연]).
+    xl_perm(V3 R4 — 교차 언어 슬롯이 먼저 말한 순서): 교차 언어 창도 두 슬롯 순열 중 작은 쪽(cp, 단위는 참조 슬롯 언어), slot = 항등."""
     from vapasr.data.cst_eval import score_window, match_eot, eot_tol, ed, units, lag_matched
     langs = q["langs"]; hw = [words(h) for h in hyp_src]; n = max(len(ref_w), len(hw)); ref_w = list(ref_w) + [[]] * (n - len(ref_w)); ref_tr = list(ref_tr) + [[]] * (n - len(ref_tr))
     hw += [[]] * (n - len(hw)); hyp_tr = list(hyp_tr) + [[]] * (n - len(hyp_tr))                   # 슬롯 수를 맞춘다(가설 = 모델 슬롯 수, 참조 = 창 화자 수)
     if len(set(langs)) == 1: sc = score_window(ref_w, hw, langs[0])
-    else:                                                                                      # 교차 언어: 슬롯이 언어로 고정 — 순열 없음
+    else:                                                                                      # 교차 언어: 슬롯이 언어로 고정 — 순열 없음(R4 arrival 은 xl_perm)
         e = [ed([u for w, _ in ref_w[k] for u in units(w, langs[k])], [u for w, _ in hw[k] for u in units(w, langs[k])]) for k in range(2)]
         n = [sum(len(units(w, langs[k])) for w, _ in ref_w[k]) for k in range(2)]
         sc = dict(n_ref=sum(n), n_hyp=sum(sum(len(units(w, langs[k])) for w, _ in hw[k]) for k in range(2)), slot=sum(e), cp=sum(e), agn=sum(e), swap=False, perm=[0, 1])
+        if xl_perm:                                                                            # 가설 슬롯 h ↔ 참조 슬롯 1 − h(단위는 참조 슬롯 언어)
+            x = sum(ed([u for w, _ in ref_w[1 - h] for u in units(w, langs[1 - h])], [u for w, _ in hw[h] for u in units(w, langs[1 - h])]) for h in range(2))
+            if x < sum(e): sc.update(cp=x, agn=x, swap=True, perm=[1, 0])
     perm = sc["perm"]; inv = {perm[h]: h for h in range(len(perm))}; R = [r for r in range(len(perm)) if ref_w[r] or ref_tr[r] or r < 2]   # 참조 슬롯(빈 슬롯은 A·B 만 남긴다 — V1 행 형식)
     lg = lambda r: langs[r] if r < len(langs) else langs[0]; tg = lambda r: q["tgt"][r] if r < len(q["tgt"]) else q["tgt"][0]
     sc["src_err"] = [(lg(r), ed([u for w, _ in ref_w[r] for u in units(w, lg(r))], [u for w, _ in hw[inv[r]] for u in units(w, lg(r))]),
@@ -106,6 +111,7 @@ def run(a):
         from vapasr.hf.batch_decode import decode_batch, word_init_mask, logits_size
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
         wi = word_init_mask(tok, logits_size(model)) if sb else None
+    a.xl_order = (cfg.get("xl_slot_order") if model is None else getattr(model.config, "xl_slot_order", None)) or "lang"   # V3 R4: 교차 언어 슬롯 순서(창·prefix·채점)
     from vapasr.data.cst_dialogue import SLOTS
     n_slots = max(2, int(getattr(a, "max_speakers", None) or 2))
     if model is not None and len(model.config.slot_tokens) < n_slots:                      # V1(2 슬롯) 기준선: 모델 슬롯 수로 디코드·채점
@@ -122,7 +128,7 @@ def run(a):
                 split_sha256=hashlib.sha256(open(a.split, "rb").read()).hexdigest() if a.split else None, trans_sha256=tr_fp, corpora=a.corpora, deltas=a.deltas,
                 limit_windows=a.limit_windows, tgts=a.tgts, dtype=a.dtype, world_size=a.world_size, oracle=bool(a.oracle), from_predictions=a.from_predictions,
                 **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **({"trans_lead_space": True} if a.trans_lead_space else {}), **win_conf(a),
-                **({"switch_bias": sb.policy()} if sb else {}))
+                **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}))
     cp = os.path.join(out, f"config-rank{a.rank}.json")
     if os.path.exists(cp): assert json.load(open(cp)) == conf, "재개 설정 불일치 — 새 --out 을 쓴다"
     else: json.dump(conf, open(cp, "w"), indent=1)
@@ -165,7 +171,7 @@ def run(a):
                             d = ds.dlgs[cid]; mask = ds.mask_chunks(d, t0w, L, K, delta)
                             ref_w, ref_tr, ref_eot = window_ref4(ds, q, mask, tok)
                             hs, ht, he = parse_emitted4(s.emitted, spk, TRANS, EOT, drop_chunks=mask, drop_tr_chunks=q["miss_chunks"])
-                            sc = score4(ds, q, ref_w, ref_tr, ref_eot, hs, ht, he, delta, words)
+                            sc = score4(ds, q, ref_w, ref_tr, ref_eot, hs, ht, he, delta, words, xl_perm=getattr(a, "xl_order", "lang") == "arrival")
                             row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, langs=q["langs"], tgt_opt=opt, tgts=list(q["tgt"]), delta=delta, L=L, K=K, speakers=q["speakers"],
                                        n_spk=sum(1 for st in q["streams"][: len(q["streams"]) // 2] if st), masked_chunks=len(mask), miss_chunks=len(q["miss_chunks"]), forced=s.forced,
                                        flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted],

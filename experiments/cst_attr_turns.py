@@ -343,13 +343,15 @@ def words_at(tok, toks):
 
 
 def emitted_words(tok, windows, spk_ids, trans_id, eot_id, langs):
-    """세션의 창별 원출력 [(창 시작 s, emitted)] → (가설 단어 [(시각, 슬롯 언어, 정규화 단어, (창, 첫 위치, 끝 위치, 슬롯))] 시각순 — cst_stage4_taxi run 이 asr 에
-    쓰는 단어·시각(창 시작 + , 소수 3 자리)·순서(창마다 슬롯 0, 1)와 같다, 번역 단어 {(창, 슬롯): [(정규화 단어, 첫 위치, 끝 위치)]})."""
+    """세션의 창별 원출력 [(창 시작 s, emitted[, 슬롯 언어])] → (가설 단어 [(시각, 슬롯 언어, 정규화 단어, (창, 첫 위치, 끝 위치, 슬롯))] 시각순 — cst_stage4_taxi run 이 asr 에
+    쓰는 단어·시각(창 시작 + , 소수 3 자리)·순서(창마다 슬롯 0, 1)와 같다, 번역 단어 {(창, 슬롯): [(정규화 단어, 첫 위치, 끝 위치)]}).
+    창에 슬롯 언어가 있으면(V3 R4 — 창마다 map_slots 로 짝지은 언어) 그 창은 그것을, 없으면 세션 langs 를 쓴다."""
     H, TRW = [], {}
-    for wi, (w0, em) in enumerate(windows):
+    for wi, w in enumerate(windows):
+        (w0, em), lw = w[:2], (w[2] if len(w) > 2 else langs)
         src, tr = streams_at(em, spk_ids, trans_id, eot_id)
-        for k in range(len(langs)):
-            H += [(round(w0 + t, 3), langs[k], wd, (wi, a, b, k)) for wd, t, a, b in words_at(tok, src[k])]
+        for k in range(len(lw)):
+            H += [(round(w0 + t, 3), lw[k], wd, (wi, a, b, k)) for wd, t, a, b in words_at(tok, src[k])]
             TRW[(wi, k)] = [(u, a, b) for wd, _, a, b in words_at(tok, tr[k]) for u in simple(wd)]
     return sorted([(t, lab, u, ref) for t, lab, wd, ref in H for u in simple(wd)], key=lambda x: x[0]), TRW
 
@@ -384,7 +386,7 @@ def onset_class(seg, ka, kb, spk_ids, trans_id, eot_id, lost=(), trans_words=())
 
 
 def onset_classes(sessions, runs, tok, spk_ids, trans_id, eot_id, W=5.0):
-    """runs = {세션: [(창 시작 s, emitted [(k, tid)])] 창 순서} → 교대마다 onset_class 집계(세션 id·글자 없음).
+    """runs = {세션: [(창 시작 s, emitted [(k, tid)][, 슬롯 언어 — V3 R4 창별])] 창 순서} → 교대마다 onset_class 집계(세션 id·글자 없음).
     정렬은 turn_metrics 와 같다(emitted_words 의 가설 단어 = 그 run 의 asr 행). 두 정렬 단어가 다른 창이면 cross_window, 한쪽 턴에 정렬 단어가 없으면 noalign 으로 센다.
     교대마다 앞 턴 마지막 정렬 단어가 맞는 슬롯이었나(prev_ok)로도 나눈다 — 놓친 온셋 판단은 classes_prev_ok 로 한다(prev_wrong 은 다시 맞추기·역전 교대).
     ABSORBED 의 번역 단어는 새 턴 시작 + 오프셋 − 0.3 s 이후에 방출된 것만 본다(앞 턴 자기 번역과 섞이지 않게)."""
@@ -403,7 +405,7 @@ def onset_classes(sessions, runs, tok, spk_ids, trans_id, eot_id, W=5.0):
             if not al.get(ti - 1) or not al.get(ti): C["noalign"] += 1; continue
             ia, ib = al[ti - 1][-1], al[ti][0]; wa, _, la, ka = hw[hj[ia]][3]; wb, fb, _, kb = hw[hj[ib]][3]
             if wa != wb: C["cross_window"] += 1; continue
-            w0, em = runs[sid][wb]; seg = [t for _, t in em[la + 1: fb]] if fb > la else []
+            w0, em = runs[sid][wb][:2]; seg = [t for _, t in em[la + 1: fb]] if fb > la else []
             lost = [x["w"] for x in sorted((x for x in Rw if x["ti"] == ti and x["pos"] < Rw[ib]["pos"]), key=lambda x: x["pos"])]
             t_new = T[ti]["a"] + off - 0.3
             trw = [u for u, p0, p1 in TRW[sid].get((wb, ka), []) if p0 > la and p1 < fb and w0 + (em[p0][0] + 1) * 0.08 >= t_new]

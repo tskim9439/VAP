@@ -51,7 +51,7 @@ def windows_of(a, tok):
         held = set(split["corpora"].get(c, {}).get("heldout", [])) if split else None
         if split is not None and not held: print(f"  {c}: held-out 없음 — 건너뜀", flush=True); continue
         ds = CstDialogueDataset([os.path.join(a.data, f"{c}.refined.dialogues.jsonl")], tok, delays=tuple(a.deltas), mono_cache_dir=os.path.join(a.data, "mono"), seed=0,
-                                backchannel=a.backchannel, **win_kw(a))
+                                backchannel=a.backchannel, **win_kw(a), **({"xl_order": a.xl_order} if getattr(a, "xl_order", "lang") != "lang" else {}))   # V3 R4
         idx = [i for i, it in enumerate(ds.items) if held is None or it[0] in held]
         idx.sort(key=lambda i: (ds.items[i][2], ds.items[i][0], ds.items[i][1]))
         if a.limit_windows and len(idx) > a.limit_windows: idx = [idx[j] for j in np.linspace(0, len(idx) - 1, a.limit_windows, dtype=int)]
@@ -110,6 +110,7 @@ def run(a):
         from vapasr.hf.batch_decode import decode_batch, SpkGuide, word_init_mask, logits_size
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
         wi = word_init_mask(tok, logits_size(model)) if sb else None
+    a.xl_order = (cfg.get("xl_slot_order") if model is None else getattr(model.config, "xl_slot_order", None)) or "lang"   # V3 R4: 교차 언어 슬롯 순서(창·prefix)
     from vapasr.data.cst_dialogue import SLOTS
     n_slots = max(2, int(getattr(a, "max_speakers", None) or 2))
     if model is not None and len(model.config.slot_tokens) < n_slots:                      # V1(2 슬롯) 기준선: 같은 다화자 창을 2 슬롯으로 잰다(prefix 선언도 2)
@@ -125,7 +126,7 @@ def run(a):
                 world_size=a.world_size, eot_blocked=EOT in blocked, oracle=bool(a.oracle), from_predictions=a.from_predictions,
                 **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **win_conf(a),
                 **({"spk_guide": list(a.spk_guide), "spk_guide_hold": bool(a.spk_guide_hold), **({"spk_guide_no_insert": True} if a.spk_guide_no_insert else {})} if a.spk_guide else {}),
-                **({"switch_bias": sb.policy()} if sb else {}))
+                **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}))
     if a.spk_guide:
         assert not a.verify, "--spk-guide 는 배치 디코드 전용이다(직렬 stream_decode 에 안내가 없다) — --verify 없이"
         assert model is not None and getattr(model, "spk_head", None) is not None, "--spk-guide: 화자 헤드가 있는 체크포인트가 필요하다"

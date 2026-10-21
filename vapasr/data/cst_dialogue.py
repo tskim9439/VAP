@@ -75,6 +75,12 @@ def cst_head_text(langs: Sequence[str], tgts: Optional[Sequence[str]] = None) ->
     return s + "<asr_text>"
 
 
+def cst_head_text_xl(langs: Sequence[str], translate: bool = False) -> str:
+    """교차 언어 창의 먼저 말한 순서 슬롯 prefix 본문(V3 R4 — xl_order 'arrival'): 'language English German[\ntranslate auto]<asr_text>'.
+    두 언어를 이름순으로만 적고 슬롯에 묶지 않는다 — 어느 슬롯이 어느 언어인지(먼저 말한 화자 = <SPK_A>)와 번역 방향(각 슬롯을 상대 언어로)은 모델이 소리로 정한다."""
+    return "language " + " ".join(sorted(set(langs))) + ("\ntranslate auto" if translate else "") + "<asr_text>"
+
+
 def is_backchannel(ep: Episode, backchannel: Optional[Tuple[float, int]]) -> bool:
     return backchannel is not None and ep.end - ep.start <= backchannel[0] and len(ep.tokens) <= backchannel[1]
 
@@ -555,15 +561,19 @@ class CstDialogueDataset(DialogueWindowDataset):
     교차 언어 대화(meta.spk_lang = {화자: 언어} 에 두 언어 — sim_build_dialogues --lang2): 슬롯을 언어로 고정하고(어느 언어를 A 로 둘지는 학습 rng,
       평가·점검은 창 id 해시), prefix 는 'language <SPK_A>{L_A} <SPK_B>{L_B}[\\ntranslate <SPK_A>{L_B} <SPK_B>{L_A}]' — 각 화자의 번역은 상대 언어다(slots).
     change_weight·hold_weight(V3-p1 C1, 기본 0 = 끔): 교대 태그·<EOT> 뒤 머무름 결정 가중(받아쓰기·번역 모드 모두) — 켜면 항목에 dec_kind·n_switch·n_hold.
-    eot_drop_synth(V3-p1 C5, 기본 0 = 끔): meta.mask_eot 대화 창을 학습 rng 로 이 확률만큼 골라 합성 <EOT> 를 문맥에서 뺀다(모듈 설명) — 켜면 항목에 n_eot_drop."""
+    eot_drop_synth(V3-p1 C5, 기본 0 = 끔): meta.mask_eot 대화 창을 학습 rng 로 이 확률만큼 골라 합성 <EOT> 를 문맥에서 뺀다(모듈 설명) — 켜면 항목에 n_eot_drop.
+    xl_order(V3 R4, 기본 'lang'): 'arrival' 이면 교차 언어 창도 먼저 말한 화자 = A, prefix 는 두 언어만(cst_head_text_xl — 'language English German[\ntranslate auto]').
+      어느 슬롯이 어느 언어인지·번역 방향은 모델이 정한다. 같은 언어 창은 그대로다."""
 
     def __init__(self, dialogues: List[str], tok, delays=(4,), exclude: Optional[set] = None, windows: Optional[List[Tuple[str, float, float]]] = None,
                  max_speakers: int = 2, decision_weight: float = 0.0, backchannel: Optional[Tuple[float, int]] = None, eot_mode: str = "soft",
                  recover: Optional[Recover] = None, spk_activity: bool = False, revive: Optional[Dict[str, Dict[str, list]]] = None,
                  trans: Optional[Dict[str, Dict[str, tuple]]] = None, trans_input: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.0,
                  tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, wav_aug=None, declare_all_p: float = 0.0,
-                 declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, **kw):
+                 declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, xl_order: str = "lang", **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
+        if xl_order not in ("lang", "arrival"): raise ValueError(f"xl_order lang|arrival — {xl_order}")
+        self.xl_order = xl_order                                                                # V3 R4: 'arrival' 이면 교차 언어 창도 먼저 말한 순서 슬롯(slots·cst_prefix)
         if not 2 <= max(2, int(max_speakers)) <= len(SLOTS): raise ValueError(f"max_speakers ≤ {len(SLOTS)}: {max_speakers}")
         if not 0.0 <= declare_all_p <= 1.0 or (declare is not None and not 2 <= int(declare) <= len(SLOTS)): raise ValueError(f"declare_all_p {declare_all_p} · declare {declare}")
         if change_weight < 0 or hold_weight < 0 or not 0.0 <= eot_drop_synth <= 1.0: raise ValueError(f"change_weight·hold_weight ≥ 0 · eot_drop_synth [0, 1] — {change_weight} {hold_weight} {eot_drop_synth}")
@@ -616,7 +626,9 @@ class CstDialogueDataset(DialogueWindowDataset):
         """lang·tgt: 언어 하나(두 슬롯 같음) 또는 슬롯 순서 목록(선언 슬롯 수 = 길이). tgt 없으면 translate 줄 없음. tgt 가 문자열이면 선언 슬롯마다 같은 목표."""
         langs = (lang, lang) if isinstance(lang, str) else tuple(lang); tgts = None if not tgt else (tgt,) * len(langs) if isinstance(tgt, str) else tuple(tgt)
         c = self.__dict__.setdefault("_cst_head", {}); key = (langs, delay, tgts)
-        if key not in c: c[key] = self._pre + self.tok(cst_head_text(list(langs), list(tgts) if tgts else None), add_special_tokens=False)["input_ids"] + [self.delay_ids[delay]]
+        if key not in c:
+            head = cst_head_text_xl(langs, bool(tgts)) if self.xl_order == "arrival" and len(set(langs)) > 1 else cst_head_text(list(langs), list(tgts) if tgts else None)   # R4: 교차 언어는 슬롯에 언어를 묶지 않는다
+            c[key] = self._pre + self.tok(head, add_special_tokens=False)["input_ids"] + [self.delay_ids[delay]]
         return list(c[key])
 
     @property
@@ -633,7 +645,8 @@ class CstDialogueDataset(DialogueWindowDataset):
         """창 i 의 슬롯 (화자 [A, B…], 선언 슬롯의 언어 목록). 같은 언어: 창 안에서 먼저 말한 사람 = A(window_speakers — 한 화자 창은 화자 하나),
         선언 슬롯 수 = max(2, 화자 수) — 학습(rng)에서는 declare_all_p 확률로 n_slots 전부(추론 때 화자 수를 모르면 최대를 선언하므로), 평가는 declare 가 있으면
         max(그 수, 화자 수). 2 슬롯 데이터셋(n_slots 2)은 예전과 같고 난수도 더 뽑지 않는다.
-        교차 언어: 두 화자를 언어 이름순으로 두고 rng(학습) 또는 창 id 해시(평가·점검 — 재현)로 반을 뒤집는다(언어·위치 편향 방지)."""
+        교차 언어: 두 화자를 언어 이름순으로 두고 rng(학습) 또는 창 id 해시(평가·점검 — 재현)로 반을 뒤집는다(언어·위치 편향 방지).
+        xl_order 'arrival'(V3 R4): 교차 언어도 창 안에서 먼저 말한 사람 = A(창에서 말하지 않은 화자는 뒤) — 난수를 뽑지 않고, prefix 는 cst_head_text_xl."""
         cid, t0, L = self.items[i]; d = self.dlgs[cid]; sl = self.xl_langs(d)
         if sl is None:
             spk = window_speakers(self.eps[cid], t0, L); D = max(2, len(spk))
@@ -641,6 +654,9 @@ class CstDialogueDataset(DialogueWindowDataset):
             elif rng is not None and self.n_slots > D and self.declare_all_p > 0 and rng.random() < self.declare_all_p: D = self.n_slots
             return spk, [d.lang] * D
         sp = sorted(d.speakers, key=lambda s: sl[s])
+        if self.xl_order == "arrival":
+            w = [s for s in window_speakers(self.eps[cid], t0, L) if s in sl]; sp = w + [s for s in sp if s not in w]
+            return sp, [sl[s] for s in sp]
         if (rng.random() < 0.5) if rng is not None else zlib.crc32(f"{cid}@{t0}".encode()) % 2: sp = sp[::-1]
         return sp, [sl[s] for s in sp]
 
