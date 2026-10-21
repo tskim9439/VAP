@@ -153,6 +153,7 @@ TAXI 는 평가 전용이다. 어떤 값·체크포인트·변형도 TAXI 로 �
 - **평가 짝짓기**:
   - 합성 xl 창(`cst_stage4_eval`): 참조 슬롯은 arrival 순서다. `score4 xl_perm` 으로 두 슬롯 순열 중 작은 쪽을 쓴다. 같은 언어 창의 cpWER 와 같은 규칙이다.
   - TAXI·전화 dev(`cst_stage4_taxi`): `map_slots` 가 창마다 두 가설 슬롯 전사를 창 안 언어별 참조와 비교해 편집 거리가 작은 짝을 고른다. 같으면 창 안 첫 참조 턴의 언어를 슬롯 0 에 둔다(arrival 규칙). 짝 수는 `slot-map.json` 에 남긴다.
+  - `slot-map.json` 의 `rule`·`swap`: 고른 짝이 학습 규칙(창 첫 화자 = 슬롯 0)과 같은 창 수와 뒤집힌 창 수다. swap 은 모델이 첫 화자를 B 에 둔 창이다(규칙 위반). 두 화자 말이 한 슬롯에 같은 정도로 몰리면 짝을 정할 수 없어 rule 로 센다.
   - 주의: 세션이 `--max-window` 보다 길어 창이 여럿이면 창마다 짝을 정하므로, 세션 단위 cpWER 보다 조금 너그럽다. 세션 통째(90 s) 비교에서 창 수를 함께 적는다.
 - **온셋 분류**: `cst_attr_turns.emitted_words` 가 창별 슬롯 언어를 받는다. `taxi_v3_probe.py` 는 run 의 `map_slots` 결과를 창 순서대로 받아 eot·온셋 분류에 쓴다(arrival 이면 `probe.json` 에 `slot_map`).
 - **코드**: `cst_head_text_xl`, `CstDialogueDataset(xl_order)`, `stage3_train --xl-slot-order`(지문·`model.config.xl_slot_order` 는 arrival 일 때만), `submit-stage3-train.sh --xl-slot-order`. 평가 세 스크립트는 모델 config 에서 읽는다(커밋 856494e, ca78287).

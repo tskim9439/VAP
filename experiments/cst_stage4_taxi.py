@@ -9,7 +9,7 @@
 창: 세션이 --max-window(s)보다 길면 턴 사이 쉼 가운데에서 나눠 따로 디코드한다(학습 창 20–40 s). 창마다 prefix
   'language <SPK_A>{L_A} <SPK_B>{L_B}\\ntranslate <SPK_A>{L_B} <SPK_B>{L_A}<asr_text><DELAY_d>' — 두 언어를 이름순으로 두고 세션 id 해시로 반을 뒤집는다
   (CstDialogueDataset.slots 와 같은 규칙). 모델 config xl_slot_order 가 'arrival'(V3 R4)이면 prefix 는 'language English German\\ntranslate auto' 이고
-  슬롯 언어는 창마다 map_slots 로 짝짓는다(cpWER 순열 선택과 같은 규칙, 짝 수는 slot-map.json).
+  슬롯 언어는 창마다 map_slots 로 짝짓는다(cpWER 순열 선택과 같은 규칙, 짝 수와 학습 규칙(첫 화자 = 슬롯 0)과 같은 창 rule·뒤집힌 창 swap 수는 slot-map.json).
 가설: 슬롯 k 의 번역 단어(방출 시각 = 청크 끝 (k+1)·80 ms + 창 시작) → hyp-d{δ}.jsonl {"session", "lang": 슬롯 k 의 목표 언어, "t", "text"} 한 단어씩.
   받아쓰기는 asr-d{δ}.jsonl(세션·슬롯 언어·단어·시각). --asr-only: translate 줄 없이(받아쓰기만 — 번역 형식과 받아쓰기를 가른다).
 채점(score): cstbench.evaluate(세션·출력 언어마다 참조 번역에 단어 정렬로 재분절 → BLEU·chrF·StreamLAAL·end_offset·빈 턴) → report-d{δ}.json,
@@ -63,16 +63,26 @@ def attr_split(sessions, asr):
     return e_cp, e_agn, n
 
 
+def window_turns(rec, w0, w1):
+    return sorted((t for t in rec["turns"] if w0 <= (t["start_s"] + t["end_s"]) / 2 <= w1), key=lambda t: t["start_s"])
+
+
+def rule_slots(rec, w0, w1, langs):
+    """V3 R4 학습 규칙의 짝: 창 안 첫 참조 턴(가운데 시각이 [w0, w1])의 언어가 슬롯 0(턴이 없으면 langs 순서) → [슬롯 0, 슬롯 1] 언어."""
+    turns = window_turns(rec, w0, w1)
+    return sorted(langs, key=lambda lg: lg != turns[0]["lang"]) if turns else list(langs)
+
+
 def map_slots(rec, w0, w1, hyp, langs):
     """V3 R4(교차 언어 슬롯이 먼저 말한 순서): 창의 두 가설 슬롯 전사 hyp [[(단어, 시각)], …] 를 두 언어 langs 에 짝짓는다 — 창 안 참조 턴(가운데 시각이
     [w0, w1])을 언어별로 이어 붙이고 두 순열 중 받아쓰기 편집 거리가 작은 쪽. cpWER 의 순열 선택과 같고, 같으면(한 슬롯에 다 몰렸거나 비었을 때) 창 안 첫 참조 턴의
     언어를 슬롯 0 에 둔다(arrival 학습 규칙과 같은 짝 — 턴이 없으면 langs 순서). → 슬롯별 언어 [슬롯 0, 슬롯 1]."""
     from cstbench.evaluate import normalize
     from vapasr.data.cst_eval import ed
-    turns = sorted((t for t in rec["turns"] if w0 <= (t["start_s"] + t["end_s"]) / 2 <= w1), key=lambda t: t["start_s"])
+    turns = window_turns(rec, w0, w1)
     ref = {lg: normalize(" ".join(t["transcript"] for t in turns if t["lang"] == lg), lg).split() for lg in langs}
     cost = lambda m: sum(ed(ref[m[k]], normalize(" ".join(w for w, _ in hyp[k]), m[k]).split()) for k in range(2))
-    first = sorted(langs, key=lambda lg: lg != turns[0]["lang"]) if turns else list(langs)
+    first = rule_slots(rec, w0, w1, langs)
     return min((first, first[::-1]), key=cost)
 
 
@@ -123,7 +133,8 @@ def run(a):
                 for (r, (w0, w1)), s in zip(batch, states):
                     _, langs = slots_of(r); src, tr, _ = parse_emitted4(s.emitted, spk, TRANS, EOT)
                     if xo == "arrival" and len(set(langs)) > 1:                                       # 슬롯 언어를 창마다 짝짓는다(채점 전용 — 출력은 그대로)
-                        langs = map_slots(r, w0, w1, [words_of(tok, src[k]) for k in range(2)], sorted(set(langs))); smap[(d, "/".join(langs))] += 1
+                        rule = rule_slots(r, w0, w1, sorted(set(langs)))                               # rule = 짝이 학습 규칙(첫 화자 = 슬롯 0)과 같은 창, swap = 뒤집힌 창
+                        langs = map_slots(r, w0, w1, [words_of(tok, src[k]) for k in range(2)], sorted(set(langs))); smap[(d, "/".join(langs))] += 1; smap[(d, "rule" if langs == rule else "swap")] += 1
                     for k in range(2):
                         for wd, t in words_of(tok, tr[k]): fh[d].write(json.dumps(dict(session=r["session_id"], lang=langs[1 - k], t=round(w0 + t, 3), text=wd), ensure_ascii=False) + "\n")
                         for wd, t in words_of(tok, src[k]): fa[d].write(json.dumps(dict(session=r["session_id"], lang=langs[k], t=round(w0 + t, 3), text=wd), ensure_ascii=False) + "\n")

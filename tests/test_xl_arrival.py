@@ -69,7 +69,7 @@ def norm(monkeypatch):
 
 
 def test_map_slots(norm):
-    from cst_stage4_taxi import map_slots
+    from cst_stage4_taxi import map_slots, rule_slots
     rec = dict(turns=[dict(start_s=0.0, end_s=1.0, lang="German", transcript="Guten Tag"), dict(start_s=1.2, end_s=2.0, lang="English", transcript="Hello there"),
                       dict(start_s=50.0, end_s=51.0, lang="English", transcript="outside window")])
     de, en = [("guten", 0.9), ("tag", 1.0)], [("hello", 1.8), ("there", 2.0)]
@@ -79,6 +79,7 @@ def test_map_slots(norm):
     assert map_slots(rec, 0.0, 40.0, [de + en, []], ["English", "German"]) == ["German", "English"]  # 한 슬롯에 다 몰려도 같다
     assert map_slots(rec, 45.0, 60.0, [[], []], ["English", "German"]) == ["English", "German"]      # 창 안 첫 턴이 영어
     assert map_slots(rec, 100.0, 120.0, [[], []], ["English", "German"]) == ["English", "German"]    # 턴이 없으면 langs 순서
+    assert rule_slots(rec, 0.0, 40.0, ["English", "German"]) == ["German", "English"] and rule_slots(rec, 45.0, 60.0, ["English", "German"]) == ["English", "German"]
 
 
 def test_emitted_words_window_langs():
@@ -117,5 +118,11 @@ def test_probe_arrival_uses_window_slot_map(tmp_path, monkeypatch, norm):
     ca, co = json.loads(arr["onset-classes-d10.json"]), json.loads(off["onset-classes-d10.json"])
     assert {k: v for k, v in ca.items() if k != "checkpoint"} == {k: v for k, v in co.items() if k != "checkpoint"} and ca["classified"] == len(TO.SCEN)
     assert json.loads(arr["probe.json"])["slot_map"] == "arrival" and "slot_map" not in json.loads(off["probe.json"])
-    sm = json.loads(arr["slot-map.json"])["d10"]; assert sum(sm.values()) == len(S) and "slot-map.json" not in off
+    sm = json.loads(arr["slot-map.json"])["d10"]; assert sm["rule"] == len(S) and "swap" not in sm and "slot-map.json" not in off   # 각본은 첫 화자 = 슬롯 0
+    assert sum(v for k, v in sm.items() if "/" in k) == len(S)
+    sw = TO.run_probe(mod, monkeypatch, sess, TO.fresh(tmp_path / "o3", {}), tok, em_lang, True)                # 언어 고정 원출력 = 첫 화자가 슬롯 1 인 창이 규칙 위반
+    # 규칙 위반 세션 = 언어 고정 순서의 슬롯 0 이 첫 화자가 아닌 곳(resume_bare·reassert·absorbed_eot). 두 화자 말이 같은 수로 한 슬롯에 몰린 앞 둘은 두 짝 비용이 같아
+    # 규칙 짝(rule)으로 세고, 그 슬롯이 첫 화자(독일어) 쪽에 가까운 absorbed_eot(독 4 + 영 2)만 swap 이다
+    bad = sorted(s["session_id"] for s in S if T.slots_of(s)[0][0] != s["turns"][0]["speaker"]); sm = json.loads(sw["slot-map.json"])["d10"]
+    assert bad == ["on-absorbed_eot", "on-reassert", "on-resume_bare"] and sm["swap"] == 1 and sm["rule"] == len(S) - 1
     assert json.loads(arr["config.json"])["xl_slot_order"] == "arrival" and "xl_slot_order" not in json.loads(off["config.json"])
