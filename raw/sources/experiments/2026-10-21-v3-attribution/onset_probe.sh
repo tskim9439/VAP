@@ -14,7 +14,7 @@ while [ $# -ge 2 ]; do
     [ "$(echo $g | cut -d' ' -f2)" -ge ${MIN_FREE_MB:-40000} ] && break; sleep 120
   done
   export CUDA_VISIBLE_DEVICES=$(echo $g | cut -d' ' -f1); mkdir -p $O; echo "[$(date '+%F %T')] $RUN/$t → GPU $CUDA_VISIBLE_DEVICES"
-  $P $X/taxi_v3_probe.py --checkpoint /soundai/Model/VAPASR/stage3-$RUN/$t --encoder $MXC_NEMOTRON_DIR --sessions $TAXI --out $O --deltas 10 --max-window 90 --classify-onsets > $O/run.log 2>&1
+  $P $X/taxi_v3_probe.py --checkpoint ${MODEL_ROOT:-/soundai/Model/VAPASR}/stage3-$RUN/$t --encoder $MXC_NEMOTRON_DIR --sessions $TAXI --out $O --deltas 10 --max-window 90 --classify-onsets > $O/run.log 2>&1
   echo "[$(date '+%F %T')] $RUN/$t 끝 — $(grep -h ONSET $O/run.log | cut -c1-300)"
 done
 echo "ONSET_PROBE_DONE"

@@ -5,7 +5,7 @@ set -u
 CODE=/soundai/users/tskim/VAPKT; cd $CODE; set -a; source .env; set +a
 export PYTHONPATH=$CODE PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false
 P=/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python; R=/soundai/users/tskim/VAPKT-data/results; DEV=/soundai/users/tskim/VAPKT-data/data/v3-dev
-RUN=$1; t=$2; SET=$3; SF=$4; SB=${5:-}; tag=${t#checkpoint-}; [ "$t" != final ] && tag=ck$tag; CK=/soundai/Model/VAPASR/stage3-$RUN/$t
+RUN=$1; t=$2; SET=$3; SF=$4; SB=${5:-}; tag=${t#checkpoint-}; [ "$t" != final ] && tag=ck$tag; CK=${MODEL_ROOT:-/soundai/Model/VAPASR}/stage3-$RUN/$t
 SESS=$DEV/$SET/$SF.jsonl; [ -f $SESS ] || { echo "없음: $SESS"; exit 2; }
 O=$R/v3dev-$RUN-$tag-$SET-$SF${SB:+-sb$(echo $SB | tr -d '=,.')}; [ -e $O ] && { echo "이미 있다: $O"; exit 1; }
 while true; do

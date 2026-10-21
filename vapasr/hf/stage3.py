@@ -5,6 +5,7 @@ WeightedRoundRobinLoader: RoundRobinLoader(언어별 셋, 토큰 예산 배치·
   epoch 길이 = 기준 셋(anchor)의 배치 수 합 / 기준 셋의 가중 비중 — 기준 셋을 한 번 도는 동안 다른 셋은 가중치만큼 돈다(작은 셋은 새 epoch 순열로 반복).
 collate_stage3: 배치 = 한 셋. 대화 행(cst_dialogue, labels_alt 가 있다)은 collate_cst, replay 행(AstStreamDataset)은 collate_semcommit(sem_mask).
 set_kind: 셋 이름(--weights 키) 분류 — 교차 언어 합성은 sim_<l1>-<l2> 에 접미사(-tel 등, V3-p1 sim_en-de-tel)를 붙일 수 있다.
+decision_weights: 셋 종류별 V3 C1 교대·머무름 가중(--decision-weight-sets, R2m 같은 언어 셋 따로 — --same-lang-change-weight·--same-lang-hold-weight).
 """
 import hashlib
 import json
@@ -21,6 +22,17 @@ def set_kind(key: str) -> Optional[str]:
     """셋 이름 → 'xl'(교차 언어 합성 sim_<l1>-<l2>[-접미사]) | 'sim'(같은 언어 합성 sim_*) | 'dlg'(실제 대화) | 'rep'(단일 화자 replay) | None."""
     if XL_KEY.fullmatch(key): return "xl"
     return next((k for k in ("sim", "dlg", "rep") if key.startswith(k + "_")), None)
+
+
+def decision_weights(kind: Optional[str], change: float, hold: float, sets: str = "all", same_change: Optional[float] = None,
+                     same_hold: Optional[float] = None) -> Dict[str, float]:
+    """셋 종류 → CstDialogueDataset 의 V3 C1 인자 {change_weight, hold_weight}(걸지 않으면 빈 dict = 데이터셋 기본값 끔).
+    같은 언어 셋(dlg·sim)은 same_change·same_hold 중 하나라도 주면 그 두 값만 쓴다(빠진 쪽 0 = 끔 — V3 R2m). 아니면 sets 규칙이다:
+    all = 대화·합성 셋 전부, xl = 교차 언어 합성만(change·hold 가 둘 다 0 이면 끔)."""
+    if kind in ("dlg", "sim") and (same_change is not None or same_hold is not None): c, h = same_change or 0.0, same_hold or 0.0
+    elif sets == "all" or kind == "xl": c, h = change, hold
+    else: return {}
+    return dict(change_weight=c, hold_weight=h) if c > 0 or h > 0 else {}
 
 
 def parse_set_phone(spec: str) -> Dict[str, float]:

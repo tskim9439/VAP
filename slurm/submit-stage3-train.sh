@@ -24,6 +24,7 @@
 #   V3-p1(주지 않으면 sbatch 명령이 예전과 바이트 동일): --change-tag-weight W  --hold-tag-weight W(교대 태그·<EOT> 뒤 머무름 결정 가중)  --decision-weight-sets all|xl
 #                      --eot-drop-synth P(합성 창 EOT-문맥 dropout)  --eot-drop-sets xl|synth  --set-phone KEY:P[,KEY:P](셋별 창 단위 전화 대역, 0 = 그 셋은 끔)
 #   V3 R4: --xl-slot-order lang|arrival(교차 언어 창 슬롯 — arrival = 먼저 말한 화자가 A, prefix 는 두 언어만)
+#   V3 R2m: --same-lang-change-weight W  --same-lang-hold-weight W(같은 언어 셋 dlg_*·sim_<언어> 만 따로 — 주면 그 셋은 이 두 값만, 빠진 쪽 0)
 #   --exclude N,…      더 뺄 노드(hpc-102 처럼 짧게 써도 된다) — sbatch 기본 제외 hpc-52·hpc-4 에 더한다
 #   --max-steps N(기본 2000)  --epochs E  --lr LR  --warmup N(기본 300)  --save-every N(기본 500)  --batch-tokens N(기본 16384)  --max-bs N(기본 64)
 #   --nodes N(기본 1)  --partition P(기본 apex)  --time HH:MM:SS(기본 24:00:00)  --after JOBID  --init DIR(기본 q06-s4-ast/final)
@@ -41,7 +42,7 @@ NB=/soundai/users/tskim/VAPKT-data/data/noise-bank-v1
 run=""; init=/soundai/Model/VAPASR/semcommit-q06-s4-ast/final; nodes=1; partition=apex; time_limit=24:00:00; after=""; dry=0; extra=""
 weights="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5"; eot_mode=soft; backchannel=off; decision_weight=2; start_mode=grid; frac=0.2; recover_p=0; spk_act=0; sim_data=""; revive_dir=""; exclude=""; dlg_trans=""; dlg_trans_input=""; dlg_ast_frac=0.5; sim_trans_frac=0.8; trans_lead_space=0; phone_aug=0; replay_sets=""; enc_tap=-1; split=v2; max_spk=2; declare_p=0.5; window=20,40; draws=0; dlg_corpora=aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc
 max_steps=2000; epochs=1; lr=6e-5; warmup=300; save_every=500; batch_tokens=16384; max_bs=64
-change_w=""; hold_w=""; dw_sets=""; eot_drop=""; eot_drop_sets=""; set_phone=""; xl_order=""                     # V3-p1: 빈 값 = 인자를 넘기지 않는다(stage3_train 기본 = 끔)
+change_w=""; hold_w=""; dw_sets=""; eot_drop=""; eot_drop_sets=""; set_phone=""; xl_order=""; sl_change=""; sl_hold=""   # V3-p1: 빈 값 = 인자를 넘기지 않는다(stage3_train 기본 = 끔)
 while [[ $# -gt 0 ]]; do
   case $1 in
     --run) run=$2; shift 2 ;;            --init) init=$2; shift 2 ;;          --nodes) nodes=$2; shift 2 ;;
@@ -56,6 +57,7 @@ while [[ $# -gt 0 ]]; do
     --dlg-trans) dlg_trans=$2; shift 2 ;;  --dlg-trans-input) dlg_trans_input=$2; shift 2 ;;  --dlg-ast-frac) dlg_ast_frac=$2; shift 2 ;;  --sim-trans-frac) sim_trans_frac=$2; shift 2 ;;
     --change-tag-weight) change_w=$2; shift 2 ;;  --hold-tag-weight) hold_w=$2; shift 2 ;;  --decision-weight-sets) dw_sets=$2; shift 2 ;;
     --eot-drop-synth) eot_drop=$2; shift 2 ;;  --eot-drop-sets) eot_drop_sets=$2; shift 2 ;;  --set-phone) set_phone=$2; shift 2 ;;  --xl-slot-order) xl_order=$2; shift 2 ;;
+    --same-lang-change-weight) sl_change=$2; shift 2 ;;  --same-lang-hold-weight) sl_hold=$2; shift 2 ;;
     --max-steps) max_steps=$2; shift 2 ;; --epochs) epochs=$2; shift 2 ;;    --lr) lr=$2; shift 2 ;;
     --warmup) warmup=$2; shift 2 ;;      --save-every) save_every=$2; shift 2 ;; --batch-tokens) batch_tokens=$2; shift 2 ;;
     --max-bs) max_bs=$2; shift 2 ;;      --extra) extra=$2; shift 2 ;;        --dry-run) dry=1; shift ;;
@@ -79,6 +81,8 @@ done
 [[ -z $eot_drop || $eot_drop =~ ^(0|0?\.[0-9]+|1|1\.0+)$ ]] || { echo "--eot-drop-synth 는 0–1" >&2; exit 2; }
 [[ -z $eot_drop_sets || $eot_drop_sets =~ ^(xl|synth)$ ]] || { echo "--eot-drop-sets xl|synth" >&2; exit 2; }
 [[ -z $xl_order || $xl_order =~ ^(lang|arrival)$ ]] || { echo "--xl-slot-order lang|arrival" >&2; exit 2; }
+[[ -z $sl_change || $sl_change =~ ^([0-9]+\.?[0-9]*|\.[0-9]+)$ ]] || { echo "--same-lang-change-weight 는 0 이상의 수" >&2; exit 2; }
+[[ -z $sl_hold || $sl_hold =~ ^([0-9]+\.?[0-9]*|\.[0-9]+)$ ]] || { echo "--same-lang-hold-weight 는 0 이상의 수" >&2; exit 2; }
 for kv in ${set_phone//,/ }; do [[ $kv =~ ^(dlg|sim)_[a-z0-9-]+:(0|0?\.[0-9]+|1|1\.0+)$ && ,$weights, == *",${kv%%:*}:"* && ! ,$weights, =~ ,${kv%%:*}:0*\.?0*, ]] || { echo "--set-phone KEY:P — KEY 는 --weights 의 가중 > 0 인 dlg_*·sim_* 셋, P 는 0–1: $kv" >&2; exit 2; }; done
 [[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }
 for sd in ${sim_data//,/ }; do [[ -d $sd/mono ]] || { echo "--sim-data 에 mono/ 가 없다: $sd" >&2; exit 1; }; done
@@ -102,8 +106,8 @@ args+=" --save-every $save_every --num-workers 4 ${sim_data:+--sim-data $sim_dat
 [[ $trans_lead_space == 1 ]] && args+=" --trans-lead-space"
 [[ $phone_aug != 0 ]] && args+=" --phone-aug $phone_aug"
 [[ $enc_tap != -1 ]] && args+=" --enc-tap-layer $enc_tap"
-args+="${change_w:+ --change-tag-weight $change_w}${hold_w:+ --hold-tag-weight $hold_w}${dw_sets:+ --decision-weight-sets $dw_sets}${eot_drop:+ --eot-drop-synth $eot_drop}${eot_drop_sets:+ --eot-drop-sets $eot_drop_sets}${set_phone:+ --set-phone $set_phone}${xl_order:+ --xl-slot-order $xl_order}"   # V3-p1·R4(빈 값이면 아무것도 붙지 않는다)
-v3="${change_w:+ · 교대 가중 $change_w}${hold_w:+ · 머무름 가중 $hold_w}${dw_sets:+ · 결정 가중 셋 $dw_sets}${eot_drop:+ · 합성 EOT-문맥 dropout $eot_drop}${eot_drop_sets:+ · dropout 셋 $eot_drop_sets}${set_phone:+ · 셋별 전화 대역 $set_phone}${xl_order:+ · 교차 언어 슬롯 $xl_order}"
+args+="${change_w:+ --change-tag-weight $change_w}${hold_w:+ --hold-tag-weight $hold_w}${dw_sets:+ --decision-weight-sets $dw_sets}${eot_drop:+ --eot-drop-synth $eot_drop}${eot_drop_sets:+ --eot-drop-sets $eot_drop_sets}${set_phone:+ --set-phone $set_phone}${xl_order:+ --xl-slot-order $xl_order}${sl_change:+ --same-lang-change-weight $sl_change}${sl_hold:+ --same-lang-hold-weight $sl_hold}"   # V3-p1·R4·R2m(빈 값이면 아무것도 붙지 않는다)
+v3="${change_w:+ · 교대 가중 $change_w}${hold_w:+ · 머무름 가중 $hold_w}${dw_sets:+ · 결정 가중 셋 $dw_sets}${eot_drop:+ · 합성 EOT-문맥 dropout $eot_drop}${eot_drop_sets:+ · dropout 셋 $eot_drop_sets}${set_phone:+ · 셋별 전화 대역 $set_phone}${xl_order:+ · 교차 언어 슬롯 $xl_order}${sl_change:+ · 같은 언어 교대 가중 $sl_change}${sl_hold:+ · 같은 언어 머무름 가중 $sl_hold}"
 args+=" --dlg-corpora $dlg_corpora --window $window --max-speakers $max_spk"; [[ $max_spk != 2 ]] && args+=" --declare-all-p $declare_p"; [[ $draws != 0 ]] && args+=" --window-draws $draws"
 args+="$replay_sets"
 for rs in $replay_sets; do [[ $rs == --replay-set ]] && continue; n=${rs%%:*}; [[ $weights == *"$n:"* ]] || { echo "--replay-set $n 이 --weights 에 없다" >&2; exit 2; }; f=${rs#*:*:}; f=${f#@}; [[ -f $f ]] || { echo "--replay-set 목록 없음: $f" >&2; exit 1; }; done

@@ -19,7 +19,8 @@
                         --dlg-trans-input: 되살린 발화의 번역(입력 문맥으로만). 끄면(기본) Stage 3 와 같고 지문에 키가 없다.
   sim_<l1>-<l2>[-접미사] 교차 언어 합성 대화(Stage 4 — sim_build_dialogues --lang2, 예 sim_ko-en·sim_en-de·sim_en-de-tel): --sim-data 의 <키>.refined.dialogues.jsonl 과
                         targets-<키>/ 번역 타깃. 슬롯은 언어로 고정(A/B 무작위), --sim-trans-frac 확률로 번역 모드(각 슬롯이 상대 언어로), 나머지는 받아쓰기만.
-  V3-p1(기본 끔 — 끄면 데이터·지문이 예전 그대로): --change-tag-weight·--hold-tag-weight(교대 태그·<EOT> 뒤 머무름 결정 pos_weight, --decision-weight-sets all|xl),
+  V3-p1(기본 끔 — 끄면 데이터·지문이 예전 그대로): --change-tag-weight·--hold-tag-weight(교대 태그·<EOT> 뒤 머무름 결정 pos_weight, --decision-weight-sets all|xl,
+    같은 언어 셋 따로 --same-lang-change-weight·--same-lang-hold-weight — V3 R2m),
                         --eot-drop-synth P(합성 창 EOT-문맥 dropout, --eot-drop-sets xl|synth), --set-phone KEY:P(셋별 창 단위 전화 대역 확률) — cst_dialogue 모듈 설명.
   sim_ko·sim_en·sim_de  --sim-data 의 합성 2 인 대화(vapasr/data/sim_dialogue — 다른 화자의 실제 발화를 턴으로 번갈아 놓음). 같은 CstDialogueDataset,
                         <EOT> 감독 없음(meta.mask_eot). epoch 기준(anchor)은 실제 대화 셋(dlg_*)만.
@@ -75,6 +76,9 @@ g.add_argument("--enc-tap-hidden", type=int, default=0, help="adapter_tap 은닉
 g.add_argument("--change-tag-weight", type=float, default=0.0, help="V3-p1 C1: 교대 태그 결정 가중(다른 슬롯 태그 + 단어 첫 글자 위치의 pos_weight, 0 = 끔; cst_dialogue.decision_positions)")
 g.add_argument("--hold-tag-weight", type=float, default=0.0, help="V3-p1 C1: <EOT> 뒤 머무름 결정 가중(같은 슬롯 재개 태그 | 태그 없는 단어 첫 글자, 0 = 끔)")
 g.add_argument("--decision-weight-sets", choices=("all", "xl"), default="all", help="교대·머무름 가중을 걸 셋: all = 대화·합성 셋 전부, xl = 교차 언어 합성(sim_<l1>-<l2>[-접미사])만")
+g.add_argument("--same-lang-change-weight", type=float, default=None, help="V3 R2m: 같은 언어 셋(dlg_*·sim_<언어>)의 교대 태그 가중 — 이것이나 --same-lang-hold-weight 를 주면 "
+                                                                       "같은 언어 셋은 이 두 값만 쓴다(빠진 쪽 0 = 끔). 교차 언어 셋은 --change-tag-weight·--decision-weight-sets 그대로")
+g.add_argument("--same-lang-hold-weight", type=float, default=None, help="V3 R2m: 같은 언어 셋의 <EOT> 뒤 머무름 결정 가중(--same-lang-change-weight 참고)")
 g.add_argument("--eot-drop-synth", type=float, default=0.0, help="V3-p1 C5: 합성(meta.mask_eot) 창을 이 확률로 골라 감독 없는 <EOT> 를 문맥에서 뺀다(그 라운드 <NEXT_AUDIO> 는 가림, 0 = 끔)")
 g.add_argument("--eot-drop-sets", choices=("xl", "synth"), default="xl", help="EOT-문맥 dropout 을 걸 셋: xl = 교차 언어 합성만, synth = 합성 셋(sim_*) 전부")
 g.add_argument("--xl-slot-order", choices=("lang", "arrival"), default="lang", help="V3 R4: 교차 언어 창 슬롯 — lang = 언어 고정(prefix 가 슬롯마다 언어), arrival = 먼저 말한 화자가 A(prefix 는 두 언어만, cst_head_text_xl)")
@@ -138,10 +142,12 @@ if bc is not None and len(bc) != 2: sys.exit(f"--backchannel max_s,max_tokens | 
 bc = (bc[0], int(bc[1])) if bc else None
 if a.recover_p and not (0 < a.recover_p <= 1 and 0 <= a.recover_boundary_frac <= 1 and a.recover_max_lag >= 1 and a.recover_max_boundaries >= 1):
     sys.exit(f"--recover-*: 범위 밖 p {a.recover_p} · boundary_frac {a.recover_boundary_frac} · max_lag {a.recover_max_lag} · max_boundaries {a.recover_max_boundaries}")
-from vapasr.hf.stage3 import parse_weights, WeightedRoundRobinLoader, collate_stage3, file_digest, fingerprint_diff, set_kind, parse_set_phone
+from vapasr.hf.stage3 import parse_weights, WeightedRoundRobinLoader, collate_stage3, file_digest, fingerprint_diff, set_kind, parse_set_phone, decision_weights
 try: weights = parse_weights(a.weights)
 except ValueError as e: sys.exit(f"--weights: {e}")
 if a.change_tag_weight < 0 or a.hold_tag_weight < 0 or not 0 <= a.eot_drop_synth <= 1: sys.exit(f"--change-tag-weight·--hold-tag-weight ≥ 0 · --eot-drop-synth [0, 1] — {a.change_tag_weight} {a.hold_tag_weight} {a.eot_drop_synth}")
+if any(x is not None and x < 0 for x in (a.same_lang_change_weight, a.same_lang_hold_weight)): sys.exit(f"--same-lang-change-weight·--same-lang-hold-weight ≥ 0 — {a.same_lang_change_weight} {a.same_lang_hold_weight}")
+SL = a.same_lang_change_weight is not None or a.same_lang_hold_weight is not None                 # V3 R2m: 같은 언어 셋 따로 가중
 try: set_phone = parse_set_phone(a.set_phone)
 except ValueError as e: sys.exit(str(e))
 if any(weights.get(k, 0) <= 0 for k in set_phone): sys.exit(f"--set-phone 셋이 --weights 에 없다: {sorted(k for k in set_phone if weights.get(k, 0) <= 0)}")
@@ -268,8 +274,7 @@ def wav_aug_of(key):
     return phone if p is None else PhoneAugment(p=p, mulaw_p=a.phone_aug_mulaw) if p > 0 else None
 def dec_kw(key):
     """V3-p1 C1·C5 데이터셋 인자(교대·머무름 가중 — --decision-weight-sets, 합성 EOT-문맥 dropout — --eot-drop-sets). 끄거나 이 셋에 걸지 않으면 빈 dict(데이터셋 기본값)."""
-    kind = set_kind(key); kw = {}
-    if (a.change_tag_weight > 0 or a.hold_tag_weight > 0) and (a.decision_weight_sets == "all" or kind == "xl"): kw.update(change_weight=a.change_tag_weight, hold_weight=a.hold_tag_weight)
+    kind = set_kind(key); kw = decision_weights(kind, a.change_tag_weight, a.hold_tag_weight, a.decision_weight_sets, a.same_lang_change_weight, a.same_lang_hold_weight)
     if a.eot_drop_synth > 0 and (kind == "xl" or (a.eot_drop_sets == "synth" and kind == "sim")): kw.update(eot_drop_synth=a.eot_drop_synth)
     return kw
 split = json.load(open(a.split, encoding="utf-8")); mono = a.mono_cache or os.path.join(a.data, "mono")
@@ -394,6 +399,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"max_speakers": a.max_speakers, "declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}), **({"window_draws": a.window_draws} if a.window_draws else {}),
           **({"change_tag_weight": a.change_tag_weight} if a.change_tag_weight > 0 else {}), **({"hold_tag_weight": a.hold_tag_weight} if a.hold_tag_weight > 0 else {}),   # V3-p1: 끄면 키 없음
           **({"decision_weight_sets": a.decision_weight_sets} if (a.change_tag_weight > 0 or a.hold_tag_weight > 0) and a.decision_weight_sets != "all" else {}),
+          **({"same_lang_change_weight": a.same_lang_change_weight or 0.0, "same_lang_hold_weight": a.same_lang_hold_weight or 0.0} if SL else {}),   # V3 R2m: 주지 않으면 키 없음
           **({"eot_drop_synth": a.eot_drop_synth} if a.eot_drop_synth > 0 else {}), **({"eot_drop_sets": a.eot_drop_sets} if a.eot_drop_synth > 0 and a.eot_drop_sets != "xl" else {}),
           **({"set_phone": {k: (aug.settings() if aug is not None else None) for k in sorted(set_phone) for aug in [wav_aug_of(k)]}} if set_phone else {}),
           **({"xl_slot_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))

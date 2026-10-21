@@ -6,14 +6,14 @@
 #   4. Stage 3 회귀: 대화 받아쓰기·귀속·<EOT>(cst_stage3_eval, 창 200 × δ4·10, 맞장구 1.0,3) → results/stage3-eval-<run>-<태그>, 오류 분해 → stage3-attr-errors-…
 #   5. 단일 화자 축약 평가(stage2_regress.sh) → results/stage3-regress-<run>-<태그>
 #   6. CallHome 독일어 held-out 발화(전화, single-turn-callhome-de-v1 이 있으면) → results/stage3-regress-<run>-<태그>/callhome-de
-# 산출물 폴더 이름의 run 은 학습 run 이름(stage3-<run> 폴더). 아무것도 지우지 않는다.
+# 산출물 폴더 이름의 run 은 학습 run 이름(stage3-<run> 폴더). 아무것도 지우지 않는다. MODEL_ROOT(기본 /soundai/Model/VAPASR)로 stage3-<run> 의 위치를 바꾼다(평균 체크포인트 등).
 # GPU 는 단계마다 새로 고른다(2026-10-21 V3 평가에서 한 GPU 로 4 시간을 돌다 다른 사용자 작업과 겹쳐 OOM 5 건). 1·2·4 단계는 CUDA OOM 이면 GPU 를 다시 골라
 #   같은 --out 에서 한 번 이어 하고(예측을 이어 쓴다), 3 단계(TAXI)는 처음부터 한 번 다시 한다.
 # TRANS_LEAD_SPACE=1: 번역 참조를 행마다 앞 공백으로(--trans-lead-space 로 학습한 run, st4-m1 부터). 1·2 단계에만 쓴다(TAXI 참조는 사람 번역).
 set -u
 RUN=$1; shift
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
-D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2; R=/soundai/users/tskim/VAPKT-data/results; OUT=/soundai/Model/VAPASR/stage3-$RUN
+D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2; R=/soundai/users/tskim/VAPKT-data/results; OUT=${MODEL_ROOT:-/soundai/Model/VAPASR}/stage3-$RUN
 S1=$D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16; XE=$D/sim-dialogue-xl-eval-v1; TAXI=$D/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl
 export PYTHONPATH=/soundai/users/tskim/VAPKT PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false VAPASR_STAGE_DIR=/tmp/sa_tskim/vapasr-stage
 P=/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python

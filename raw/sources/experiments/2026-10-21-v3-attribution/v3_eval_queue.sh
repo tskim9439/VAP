@@ -2,12 +2,12 @@
 # 기존 평가 큐(stage4_eval_queue.sh — 대화 번역·합성·TAXI 창 40 s·Stage 3 회귀·단일 화자·CallHome)에 더하는 V3 단계. 대상마다 차례로:
 #   1. 비-TAXI 전화 dev(xl-tel-dev 160)와 짝 비교 셋(xl-eval-v1 160) 디코드·턴 결정 지표(v3_dev_decode.sh, bias 없음) — 체크포인트 선택은 여기서만
 #   2. TAXI 세션 통째(--max-window 90, δ4·10, bias 없음 = 고정 설정)·score --turn-metrics → results/stage4-eval-<run>-<태그>/taxi90 — 보고 전용(값을 고르지 않는다)
-# 빈 메모리 MIN_FREE_MB(기본 40000) GPU 를 기다린다. 아무것도 지우지 않는다.
+# 빈 메모리 MIN_FREE_MB(기본 40000) GPU 를 기다린다. 아무것도 지우지 않는다. MODEL_ROOT(기본 /soundai/Model/VAPASR)로 stage3-<run> 의 위치를 바꾼다.
 set -u
 RUN=$1; shift
 CODE=/soundai/users/tskim/VAPKT; cd $CODE; set -a; source .env; set +a
 export PYTHONPATH=$CODE PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false
-P=/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python; R=/soundai/users/tskim/VAPKT-data/results; OUT=/soundai/Model/VAPASR/stage3-$RUN
+P=/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python; R=/soundai/users/tskim/VAPKT-data/results; OUT=${MODEL_ROOT:-/soundai/Model/VAPASR}/stage3-$RUN
 X=raw/sources/experiments/2026-10-21-v3-attribution; TAXI=/soundai/users/tskim/VAPKT-data/data/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl
 for t in "$@"; do
   echo "[$(date '+%F %T')] $RUN/$t 대기"
