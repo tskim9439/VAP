@@ -107,3 +107,5 @@ TAXI 는 평가 전용이다. 어떤 값·체크포인트·변형도 TAXI 로 �
 - `v3_check.sh r2`·`r1`: dry-run 실제 데이터 12 셋(r1 은 sim_en-de-tel 포함) × 32 항목 × δ 7 개 불일치 0, 스모크 20 step 손실 정상·끝 재로드 PARITY OK.
 - dev 변환(`v3_dev_build.sh`): xl-tel-dev 160 세션·턴 1,809(번역 참조 1,784), 짝 비교 xl-eval-v1 160 세션·턴 5,781. tune 80·check 80.
 - V1 dev 기준선·C3 격자(tune 반쪽, res·wi — V1 은 교차 언어 <EOT> 를 내지 않아 eot 지점은 쓰지 않는다) 큐: `v3-dev-v1-queue.log`.
+- 제출(사용자, 2026-10-21 13:0x): R1 `v3-p1` apex job **94261**, R2 `v3-p1-nodata` job **94262**. 평가 큐: 기존 6 단계(`stage4_eval_queue.sh`, `TRANS_LEAD_SPACE=1`) × ck1500·ck2000·final + `v3_eval_queue.sh`(전화 dev·짝 비교 셋 디코드, TAXI 세션 통째 δ4·10 + 턴 결정 지표, bias 없음).
+- V1(st4-m2a ck2000) dev 기준선: xl-tel-dev 160 세션 cp 29.18 · agn 27.13 · 귀속 몫 2.04, toggle recall 90.7 %(교대 1,557) — TAXI(87.4 %, 귀속 8.0)보다 귀속이 쉽다. 짝 비교 셋·경도 게이트는 진행 중.
