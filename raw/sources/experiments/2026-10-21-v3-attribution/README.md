@@ -224,6 +224,6 @@ dev(선택 기준, xl-tel-dev 160, δ10, bias 없음)와 TAXI(보고 전용):
 - 점검: `v3_check.sh r4`(dry-run 12 셋 불일치 0, 스모크 PARITY OK, 평가 경로), `v3_check.sh r4x`.
 - 평가: 기존 6 단계(`stage4_eval_queue.sh`, `TRANS_LEAD_SPACE=1`) × ck1500·ck2000·final + `v3_eval_queue.sh`. 공용 GPU OOM 을 줄이려고 `MIN_FREE_MB=60000` 으로 건다.
 - 선택 규칙은 그대로다(dev xl-tel-dev 귀속 몫 최소 + V1 대비 가드). 같은 언어 가드는 Stage 3 agn·귀속, 태그 수·빈 교대·강제 진행(aihub71631·kec·otoSpeech)을 함께 본다. TAXI 는 보고 전용이다.
-- 제출(사용자, 2026-10-21 23:1x): R2x `v3-p1-xlw` apex job **94525**, R4x `v3-p1-xlw-arrival` job **94526**. `v3_check.sh r4x` dry-run 11 셋 불일치 0(가중은 `sim_en-de`·`sim_en-ko` 에만 — `set_kind` xl).
+- 제출(사용자, 2026-10-21 23:1x): R2x `v3-p1-xlw` apex job **94525**, R4x `v3-p1-xlw-arrival` job **94526**. `v3_check.sh r4x` dry-run 11 셋 불일치 0(가중은 `sim_en-de`·`sim_en-ko` 에만 — `set_kind` xl), 스모크 20 step PARITY OK. 두 job 모두 23:19 시작(94525 hpc-48·76, 94526 hpc-21·23).
 - 평가 큐(23:18 걸림, `MIN_FREE_MB=60000`): `stage4_eval_queue.sh`(`TRANS_LEAD_SPACE=1`) × 2 run × ck1500·ck2000·final + `v3_eval_queue.sh` × 2. 큐 스크립트는 이번부터 단계마다 GPU 를 새로 고르고, 1–4 단계는 CUDA OOM 이면 한 번 이어 한다(커밋 ea25c73).
 
