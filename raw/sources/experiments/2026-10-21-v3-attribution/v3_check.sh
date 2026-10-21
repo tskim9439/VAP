@@ -1,10 +1,11 @@
-# V3-p1 학습 전 점검(mxc 호스트): bash v3_check.sh r2|r1|r4 — 학습 dry-run(CPU) → 스모크 20 step(가장 빈 호스트 GPU).
+# V3-p1 학습 전 점검(mxc 호스트): bash v3_check.sh r2|r1|r4|r2x|r4x — 학습 dry-run(CPU) → 스모크 20 step(가장 빈 호스트 GPU).
 # 둘 다 st4-m2a 설정(stage4_m2_check.sh 에서 rep_chde 를 뺀 것) + V3 플래그. r2 = C1 + C5(교대 3·머무름 1.5·교차 언어 합성 <EOT> 문맥 제거 1.0),
 # r1 = r2 + C2(sim-dialogue-xl-tel-v1 1.0, sim_en-de 0.5, tel 셋 창 단위 전화 대역 끔). 산출 /tmp/sa_tskim/v3-<모드>-{dry,smoke}-train — 지우지 않는다.
 # r4 = r2 + --xl-slot-order arrival(교차 언어 슬롯 = 먼저 말한 순서, prefix 는 두 언어만). 스모크 체크포인트로 config 키와 평가 경로(합성 xl 창 8·전화 dev 3 세션,
 #   /tmp/sa_tskim/v3-r4-smoke-{xl,tel})까지 돌린다 — 출력 품질이 아니라 경로 점검.
+# r2x·r4x = r2·r4 + --decision-weight-sets xl(교대·머무름 가중을 교차 언어 합성 셋에만 — 같은 언어 가드가 깨졌을 때의 사전 등록 대비책).
 set -u
-MODE=${1:?r2|r1|r4}
+MODE=${1:?r2|r1|r4|r2x|r4x}
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
 D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2
 SNAP=$D/semcommit-work/labels/speechlm-all19-v035/snapshots/20260929-1637; ASR=$D/semcommit-work/asr-words-v1/lists/asr-words-20260929.list
@@ -19,6 +20,8 @@ if [ "$MODE" = r1 ]; then
   EXTRA="--set-phone sim_en-de-tel:0"
 fi
 [ "$MODE" = r4 ] && EXTRA="--xl-slot-order arrival"
+[ "$MODE" = r2x ] && EXTRA="--decision-weight-sets xl"
+[ "$MODE" = r4x ] && EXTRA="--decision-weight-sets xl --xl-slot-order arrival"
 V3="--change-tag-weight 3 --hold-tag-weight 1.5 --eot-drop-synth 1.0 --eot-drop-sets xl $EXTRA"
 COMMON="--init /soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000 --nemotron-dir $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json \
   --max-windows 300 --replay-words @$SNAP/main-words.list --replay-words @$ASR --replay-words @$CV4 --replay-de-words @$DE --replay-files-frac 0.01 --replay-max-items 300 \
