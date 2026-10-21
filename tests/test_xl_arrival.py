@@ -46,6 +46,23 @@ def test_arrival_slots_prefix_and_targets(tmp_path, kind):
     assert ds.cst_prefix(["Korean", "English"], 2, ["English", "Korean"]) == ds.cst_prefix(["English", "Korean"], 2, ["Korean", "English"])
 
 
+@pytest.mark.parametrize("kind", ["xl_synth", "xl_real"])
+def test_arrival_training_paths(tmp_path, kind):
+    """학습 경로(rng·C5 <EOT> 문맥 제거·__getitem__)도 arrival — R2 설정(교대 3·머무름 1.5·EOT drop 1.0)에 화자 활동까지: 불변식, prefix, 첫 화자 = A."""
+    ds = make_ds(tmp_path, kind, xl_order="arrival", change_weight=3.0, hold_weight=1.5, eot_drop_synth=1.0, spk_activity=True); r = random.Random(3)
+    for i in range(len(ds)):
+        cid, t0, L = ds.items[i]; first = window_speakers(ds.eps[cid], t0, L)
+        for d in ds.delays:
+            for tg in [None] + ds.tgt_options(i):
+                for kw in (dict(rng=r), dict(drop_eot=True), dict(rng=r, drop_eot=True)):
+                    q = ds.cst_sequence(i, d, tgt=tg, **kw); assert ds.problems_of(q) == [], (i, d, tg, kw, ds.problems_of(q))
+                    want = ds._pre + ds.tok(cst_head_text_xl(q["langs"], bool(q["tgt"])), add_special_tokens=False)["input_ids"] + [ds.delay_ids[d]]
+                    assert q["ids"][: len(want)] == want and (not first or q["speakers"][0] == first[0])
+    random.seed(5); items = [ds[i] for i in range(len(ds))]
+    assert all(x["activity"].shape[1] == 2 and x["ids"].shape == x["labels"].shape for x in items)
+    assert kind != "xl_synth" or sum(x["n_eot_drop"] for x in items) > 0                                  # 합성 창은 C5 가 실제로 <EOT> 를 뺀다
+
+
 def test_score4_xl_perm():
     from cst_stage4_eval import score4
     q = dict(langs=["English", "German"], tgt=["German", "English"])
