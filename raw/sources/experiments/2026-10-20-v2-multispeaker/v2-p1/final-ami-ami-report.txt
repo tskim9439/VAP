@@ -1,0 +1,9 @@
+== /soundai/users/tskim/VAPKT-data/results/stage3-eval-ami-v2-p1-final (4792 행)
+  ami-ihmmix  eval δ4  cpWER  49.55 · agn  22.75 · 귀속 몫 26.80 · slot  76.11 · EOT R 0.268 P 0.316 · 창 580 · 회의 16 · 화자 수 [1, 2, 3, 4]
+  ami-ihmmix  eval δ10 cpWER  48.44 · agn  21.01 · 귀속 몫 27.43 · slot  76.83 · EOT R 0.373 P 0.378 · 창 580 · 회의 16 · 화자 수 [1, 2, 3, 4]
+  ami-ihmmix  dev  δ4  cpWER  58.44 · agn  22.76 · 귀속 몫 35.68 · slot  87.53 · EOT R 0.245 P 0.313 · 창 625 · 회의 18 · 화자 수 [1, 2, 3, 4]
+  ami-ihmmix  dev  δ10 cpWER  55.56 · agn  21.94 · 귀속 몫 33.62 · slot  82.68 · EOT R 0.347 P 0.396 · 창 625 · 회의 18 · 화자 수 [1, 2, 3, 4]
+  ami-sdm     eval δ4  cpWER  56.36 · agn  30.51 · 귀속 몫 25.85 · slot  80.30 · EOT R 0.217 P 0.287 · 창 577 · 회의 16 · 화자 수 [1, 2, 3, 4]
+  ami-sdm     eval δ10 cpWER  53.82 · agn  28.77 · 귀속 몫 25.05 · slot  79.58 · EOT R 0.316 P 0.360 · 창 577 · 회의 16 · 화자 수 [1, 2, 3, 4]
+  ami-sdm     dev  δ4  cpWER  60.87 · agn  28.38 · 귀속 몫 32.49 · slot  86.58 · EOT R 0.188 P 0.285 · 창 614 · 회의 18 · 화자 수 [1, 2, 3, 4]
+  ami-sdm     dev  δ10 cpWER  60.04 · agn  26.92 · 귀속 몫 33.12 · slot  86.43 · EOT R 0.317 P 0.379 · 창 614 · 회의 18 · 화자 수 [1, 2, 3, 4]

@@ -1,0 +1,6 @@
+ami/d4                   English WER 55.56 cp 55.69 swap 0.610 · EOT R 0.248 P 0.295 · English->German BLEU 22.0 chrF 44.2 지연 -0.08 · English->Korean BLEU 29.5 chrF 25.8 지연 0.0 · 창 100 (unseen)
+ami/d10                  English WER 53.69 cp 53.82 swap 0.585 · EOT R 0.358 P 0.380 · English->German BLEU 23.5 chrF 43.3 지연 -0.08 · English->Korean BLEU 27.2 chrF 24.1 지연 0.0 · 창 100 (unseen)
+icsi/d4                  English WER 38.07 cp 38.31 swap 0.410 · EOT R 0.288 P 0.383 · English->German BLEU 26.8 chrF 54.3 지연 -0.08 · English->Korean BLEU 35.6 chrF 30.7 지연 0.0 · 창 100 (unseen)
+icsi/d10                 English WER 36.90 cp 36.92 swap 0.420 · EOT R 0.429 P 0.476 · English->German BLEU 30.5 chrF 55.8 지연 -0.08 · English->Korean BLEU 34.6 chrF 30.3 지연 0.0 · 창 100 (unseen)
+notsofar/d4              English WER 67.75 cp 67.76 swap 0.535 · EOT R 0.316 P 0.356 · English->German BLEU 21.8 chrF 43.7 지연 0.0 · English->Korean BLEU 26.5 chrF 23.5 지연 0.0 · 창 100 (unseen)
+notsofar/d10             English WER 67.72 cp 67.78 swap 0.520 · EOT R 0.341 P 0.414 · English->German BLEU 21.8 chrF 41.7 지연 0.0 · English->Korean BLEU 24.6 chrF 22.2 지연 0.0 · 창 100 (unseen)
