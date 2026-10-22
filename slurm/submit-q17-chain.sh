@@ -14,18 +14,19 @@
 #   bash slurm/submit-q17-chain.sh --dry-run            # sbatch 없이 단계별 명령만(앞 단계 job 은 0 으로 둔다)
 #   bash slurm/submit-q17-chain.sh                      # 1–6 단계 제출
 #   bash slurm/submit-q17-chain.sh --from 5 [--after-job JOBID]   # 5 단계부터(앞 단계가 이미 끝났거나 JOBID 가 끝난 뒤)
+#   bash slurm/submit-q17-chain.sh --to 5                          # 1–5 단계만(6 단계 레시피는 나중에 --from 6 --after-job <5 단계 job>)
 #   --exclude N,…: 모든 단계 sbatch 에서 더 뺄 노드(기본 hpc-50,hpc-51,hpc-101,hpc-102 — V3 R1·R2 때와 같다, 'none' 이면 더 빼지 않는다).
 # 단계마다 MAX_RESTART(기본 5). 앞 단계가 실패하면 뒤 단계는 DependencyNeverSatisfied 로 남는다 — 취소는 사용자가 한다. 경로 변수는 이 스크립트 안에서만 쓴다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-from=1; dep=""; dry=""; exclude=hpc-50,hpc-51,hpc-101,hpc-102
+from=1; to=6; dep=""; dry=""; exclude=hpc-50,hpc-51,hpc-101,hpc-102
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --from) from=$2; shift 2 ;;  --after-job) dep=$2; shift 2 ;;  --dry-run) dry=--dry-run; shift ;;  --exclude) exclude=$2; shift 2 ;;
+    --from) from=$2; shift 2 ;;  --to) to=$2; shift 2 ;;  --after-job) dep=$2; shift 2 ;;  --dry-run) dry=--dry-run; shift ;;  --exclude) exclude=$2; shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
-[[ $from =~ ^[1-6]$ ]] || { echo "--from 은 1–6" >&2; exit 2; }
+[[ $from =~ ^[1-6]$ && $to =~ ^[1-6]$ && $from -le $to ]] || { echo "--from·--to 는 1–6(from ≤ to)" >&2; exit 2; }
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $exclude == none ]] && exclude=""
 export MAX_RESTART=${MAX_RESTART:-5}
@@ -39,7 +40,7 @@ R1X=(--partition apex --nodes 2 --backchannel 1.0,3 --spk-act-weight 0.5 --reviv
      --weights dlg_ko:2,dlg_en:0.7,dlg_de:0.7,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:0.5,sim_en-de-tel:1.0,sim_en-ko:1.0,rep_ko:1.2,rep_en:1.2,rep_de:1.2
      --set-phone sim_en-de-tel:0 --change-tag-weight 3 --hold-tag-weight 1.5 --eot-drop-synth 1.0 --eot-drop-sets xl --lr 4e-5 --max-steps 2500 --decision-weight-sets xl)
 stage() {                                                                                       # 단계 번호, 설명, 명령… → 제출하고 dep 에 job id
-  local n=$1 what=$2; shift 2; [[ $n -lt $from ]] && return 0
+  local n=$1 what=$2; shift 2; [[ $n -lt $from || $n -gt $to ]] && return 0
   local a=(); [[ -n $dep ]] && a=(--afterok "$dep")
   echo "[$(date '+%F %T')] 단계 $n $what${dep:+ (job $dep 성공 뒤)}" >&2
   local out; out=$("$@" ${EXC[@]+"${EXC[@]}"} ${a[@]+"${a[@]}"} $dry 2>&1) || { echo "$out" | tail -5 >&2; echo "!! 단계 $n 제출 실패 — 뒤 단계는 내지 않는다" >&2; exit 1; }
