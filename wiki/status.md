@@ -42,6 +42,7 @@ summary: 2026-10-22 V3 R1x 가 TAXI 21.0(V1 대비 유의), 남은 오류는 목
   - 평가는 `slurm/submit-eval-ast.sh` 로 s4 와 같은 7 셋을 잰다(학습 성공 뒤 afterok).
   - 판단 기준(미리 정함): 번역 BLEU 가 어느 방향·δ 에서도 s4 보다 유의하게 낮지 않고, 받아쓰기도 유의하게 나빠지지 않으면 채택한다.
   - 화자 태그는 Stage 2 에 그대로 둔다(대화 형식의 한 슬롯 경우이고, replay 데이터에도 필요하다).
+  - 사용자 제출: 학습 job 94850(01:12 시작) → 평가 job 94851(afterok).
   - 1.7B 체인은 세 번 판 그대로 둔다. → `raw/sources/experiments/2026-10-23-q06-st2-merged/README.md`
 - **평가 SLURM 묶음·AMI(2026-10-23 00시)**: 사용자 요청으로 `slurm/submit-evals.sh` 를 만들었다. 묶음마다 `v3-eval-node.sbatch` 로 낸다.
   - `r1x-ami`: 0.6B R1x final·avg3 의 AMI 공식 dev·eval(IHM-mix·SDM). 바로 시작한다.
