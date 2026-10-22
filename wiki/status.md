@@ -37,6 +37,12 @@ summary: 2026-10-22 V3 R1x 가 TAXI 21.0(V1 대비 유의), 남은 오류는 목
   - 2026-10-23 00:21 기준 Stage 1 은 3,630/16,173 step 이다. 실패는 없고 2.86 s/step 이다.
     - 같은 step 구간의 0.6B 는 1.22 s/step 이었다. 1.7B 가 2.3 배 느리다.
     - 그래서 체인 어림을 약 37–46 h(6 단계는 10-24 낮–밤 끝)로 고쳤다. 10-22 저녁의 "속도 같음, 약 30 h" 는 10-08 한 구간만 본 틀린 어림이었다. → `raw/sources/experiments/2026-10-22-q17-chain/README.md`
+- **0.6B 합친 Stage 2 시험 준비(2026-10-23 01시)**: 사용자 질문("화자 태그는 대화에서부터 하고, 한 단계로 통합하면 안 좋으려나?")과 apex 2 노드 추가 허용에 따라 준비했다.
+  - `q06-st2-merged`: Stage 1 final 에서 s4 최종 설정으로 4 epoch(29,720 step)를 한 번에 돈다. 지금은 s2·s3·s4 세 번, 43,436 step 이다.
+  - 평가는 `slurm/submit-eval-ast.sh` 로 s4 와 같은 7 셋을 잰다(학습 성공 뒤 afterok).
+  - 판단 기준(미리 정함): 번역 BLEU 가 어느 방향·δ 에서도 s4 보다 유의하게 낮지 않고, 받아쓰기도 유의하게 나빠지지 않으면 채택한다.
+  - 화자 태그는 Stage 2 에 그대로 둔다(대화 형식의 한 슬롯 경우이고, replay 데이터에도 필요하다).
+  - 1.7B 체인은 세 번 판 그대로 둔다. → `raw/sources/experiments/2026-10-23-q06-st2-merged/README.md`
 - **평가 SLURM 묶음·AMI(2026-10-23 00시)**: 사용자 요청으로 `slurm/submit-evals.sh` 를 만들었다. 묶음마다 `v3-eval-node.sbatch` 로 낸다.
   - `r1x-ami`: 0.6B R1x final·avg3 의 AMI 공식 dev·eval(IHM-mix·SDM). 바로 시작한다.
   - `q17-s1`: 1.7B Stage 1 단일 발화 ASR. job 94809 성공 뒤.
