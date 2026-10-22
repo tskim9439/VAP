@@ -280,3 +280,16 @@ dev(선택 기준, xl-tel-dev 160, δ10, bias 없음)와 TAXI(보고 전용):
 1. 교대 가중을 교차 언어 셋에만 걸면 같은 언어 과잉 교대는 완전히 사라진다. 대신 TAXI 귀속 이득을 약 1 pt 돌려준다(run 마다 유의하지 않지만 세 체크포인트 모두 같은 부호). 실제 같은 언어 대화의 교대 가중이 TAXI 교대 탐지에도 도움이 됐다는 뜻이다.
 2. arrival(R4x − R2x): TAXI 는 ck2000·final 에서 −1.7(유의하지 않음), 같은 언어 대화는 조금 낫다. 합성 dev 귀속(+0.2–0.7)과 합성 xl 번역(−1–2 BLEU)은 나쁘다. 슬롯마다 목표 언어를 모델이 정해야 하는 비용으로 보인다. 첫 화자 규칙은 대체로 지킨다(통째 swap 4–6/86).
 3. 합성 전화 dev 순위와 TAXI 순위가 또 맞지 않는다. TAXI 의 run 간 차이 ≤ 2 pt 는 세션 bootstrap 잡음 안이다.
+- 온셋 분류(TAXI 통째 δ10): R2x ck2000 OK 495 · RESUME 42 · SILENT 3, 앞 턴 맞음 중 놓침 21/509(4.1 %). R4x ck1500 OK 499 · RESUME 33 · SILENT 8, 19/507(3.7 %). R2 ck1500 4.0 %, V1 7.8 % 와 비슷하다. 남은 놓침은 여전히 RESUME(번역 뒤 같은 슬롯 재개)이 대부분이다.
+
+## 15. 다음 세 갈래 (2026-10-22, 사용자 "셋다 진행해보자")
+
+| 이름 | run | 구성 | 보는 것 |
+|---|---|---|---|
+| R1x | `v3-p1-tel-xlw` | R1(전화 합성 셋 C2) + `--decision-weight-sets xl` | R1 의 TAXI 이득(final 20.5)이 같은 언어 회귀 없이 남는가 |
+| R1x-a | `v3-p1-tel-xlw-arrival` | R1x + `--xl-slot-order arrival` | R1x 위의 arrival 효과(R4x − R2x 반복) |
+| R2m | `v3-p1-sl15` | R2 + 같은 언어 셋 교대 1.5 · 머무름 1.5(`--same-lang-change-weight`·`--same-lang-hold-weight`, 교차 언어 셋은 3 · 1.5 그대로) | 같은 언어 교대 가중 0(R2x) · 1.5(R2m) · 3(R2)의 용량-반응: TAXI 이득과 핑퐁 |
+| avg | `v3-p1-xlw-avg3` · `v3-p1-xlw-arrival-avg3` | R2x·R4x 의 ck1500·ck2000·final 가중치 평균(학습 없음, `experiments/avg_checkpoints.py`) | 체크포인트 사이 1–2 pt 흔들림이 줄고 TAXI·dev 가 좋아지는가 |
+
+- 코드: `stage3.decision_weights`(셋 종류별 C1 가중 — 주지 않으면 예전 규칙과 같다), `--same-lang-*-weight`(지문 키는 줄 때만), `avg_checkpoints.py`(부동소수만 float64 로 평균, 정수·키·shape 불일치면 멈춤, 덮어쓰기 금지, 다시 읽어 비트 대조, avg.json), 평가 스크립트 `MODEL_ROOT`(평균 체크포인트는 `VAPKT-data/models/stage3-<run>/final` + DONE). 시험 `tests/test_v3_weights_avg.py` 10 건.
+- 제출 스크립트 `--dry-run`: R1 → R1x 는 `--decision-weight-sets xl`, R1x-a 는 그에 `--xl-slot-order arrival`, R2 → R2m 은 `--same-lang-change-weight 1.5 --same-lang-hold-weight 1.5` 만 다르다.
