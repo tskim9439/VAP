@@ -3,7 +3,7 @@ type: status
 status: active
 created: 2026-09-03
 updated: 2026-10-21
-summary: 2026-10-22 V3 R2x·R4x — 같은 언어 과잉 교대는 해소, TAXI 는 22–24(VibeVoice 20.5)로 R2 보다 약 1 pt 뒤, arrival 효과는 유의하지 않음 — 다음 방향 결정 대기
+summary: 2026-10-22 V3 R2x·R4x 로 같은 언어 회귀 해소(TAXI 22–24) — 다음 세 갈래 진행: R1x 쌍(94613·94614)·R2m(94615) 학습, R2x·R4x 체크포인트 평균 평가
 ---
 
 # 상태
@@ -27,6 +27,7 @@ summary: 2026-10-22 V3 R2x·R4x — 같은 언어 과잉 교대는 해소, TAXI 
 - **R2x·R4x 결과(2026-10-22)**: 같은 언어 과잉 교대는 사라졌다(Stage 3 δ10 agn R2x ck2000 18.55 · R4x final 18.37 = V1 수준, aihub71631 태그 V1 수준). 대신 TAXI 귀속 이득을 약 1 pt 돌려줬다. TAXI 통째 δ10 은 R2x 22.3–23.9, R4x 21.8–22.9 다(R2 21.6–23.3, VibeVoice 스트리밍 20.5).
   - 사전 규칙 선택은 R2x ck2000(TAXI 23.9), R4x ck1500(TAXI 22.9)이다. 둘 다 후보 기준(TAXI cp < 20.5)에 못 미친다.
   - arrival 효과(R4x − R2x)는 TAXI 에서 유의하지 않다. 합성 xl 번역은 −1–2 BLEU 다. 세부는 [[2026-10-21-v3-attribution]] 14 절에 있다.
+- 다음 세 갈래(사용자 "셋다 진행해보자"): R1x `v3-p1-tel-xlw`(R1 + 교대 가중 교차 언어 셋만, job 94613)·R1x-a `v3-p1-tel-xlw-arrival`(job 94614)·R2m `v3-p1-sl15`(같은 언어 셋 교대·머무름 1.5, job 94615) 학습 중이다. R2x·R4x 체크포인트 평균(ck1500·ck2000·final)은 평가 중이다. 세부는 [[2026-10-21-v3-attribution]] 15 절에 있다.
 
 ## 2026-10-20 V2 첫 학습 v2-p1 결과(중간)
 

@@ -293,3 +293,7 @@ dev(선택 기준, xl-tel-dev 160, δ10, bias 없음)와 TAXI(보고 전용):
 
 - 코드: `stage3.decision_weights`(셋 종류별 C1 가중 — 주지 않으면 예전 규칙과 같다), `--same-lang-*-weight`(지문 키는 줄 때만), `avg_checkpoints.py`(부동소수만 float64 로 평균, 정수·키·shape 불일치면 멈춤, 덮어쓰기 금지, 다시 읽어 비트 대조, avg.json), 평가 스크립트 `MODEL_ROOT`(평균 체크포인트는 `VAPKT-data/models/stage3-<run>/final` + DONE). 시험 `tests/test_v3_weights_avg.py` 10 건.
 - 제출 스크립트 `--dry-run`: R1 → R1x 는 `--decision-weight-sets xl`, R1x-a 는 그에 `--xl-slot-order arrival`, R2 → R2m 은 `--same-lang-change-weight 1.5 --same-lang-hold-weight 1.5` 만 다르다.
+- 점검(2026-10-22 09:2x): `v3_check.sh r1x4`·`r2m` dry-run 불일치 0 · 스모크 PARITY OK, `r1x` dry-run 불일치 0. 지문 r2m `same_lang_change_weight 1.5 · same_lang_hold_weight 1.5`, r1x4 `decision_weight_sets xl · xl_slot_order arrival`. mxc 시험 83 통과(평균 시험 포함).
+- 평균: R2x·R4x 모두 텐서 958 개(전부 부동소수) 평균, 다시 읽어 비트 대조 OK → `VAPKT-data/models/stage3-v3-p1-xlw{,-arrival}-avg3/final`. 평가 큐(`MODEL_ROOT`, 09:30)를 걸었다. 처음에 네 프로세스가 같은 GPU 0 을 골라 6 단계 큐 둘은 멈췄다가 다시 띄웠다(같은 로그에 이어 씀).
+- 제출(사용자, 10:2x): R1x `v3-p1-tel-xlw` job **94613**(hpc-34·35), R1x-a `v3-p1-tel-xlw-arrival` job **94614**(hpc-72·73), R2m `v3-p1-sl15` job **94615**(hpc-96·97) — 셋 다 10:27 시작. 평가 큐 12 개(`TRANS_LEAD_SPACE=1`, `MIN_FREE_MB=60000`)를 걸었다.
+
