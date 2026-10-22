@@ -120,6 +120,11 @@
 | `q17-v3` | V3 R1x 의 ck1500·ck2000·final·avg3 × 9 작업(0.6B R1x 와 같은 `v3_eval_task.sh`). final·avg3 은 AMI IHM-mix·SDM 을 4 몫씩 더 돈다. 평균은 GPU 7 첫 작업이 만든다 | job 94814 성공 뒤 |
 | `r1x-ami` | 0.6B R1x final·avg3 의 AMI(모델마다 4 몫) — 1.7B 와 비교할 0.6B 값 | 바로 |
 
+- 제출(사용자, 2026-10-23 00:41):
+  - `r1x-ami` = job 94839
+  - `q17-s1` = job 94840(94809 뒤)
+  - `q17-v3` = job 94841(94814 뒤, 45 작업)
+
 - AMI(`v3_eval_task.sh ami <run> <대상> r/w`):
   - 명령은 V2 `v2_eval_extra.sh` 12 단계와 같다: `ami-bench-v1` 공식 dev 18·eval 16 회의, 창 전부, δ4·10, 4 슬롯 선언.
   - 창을 w 몫으로 나눠 돈다. 이어 하기가 되고, 마지막으로 끝난 몫이 합치기·오류 분해·`ami_report.py` 를 돈다.
