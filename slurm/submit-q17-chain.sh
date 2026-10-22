@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Qwen3-ASR 1.7B 체인(2026-10-22, 사용자 "Qwen asr 1.7B 를 이용해서도 학습시키고 싶어"): 0.6B 와 같은 단계·레시피를 1.7B(/soundai/Model/Qwen3-ASR-1.7B)로.
+# 체인 1–6 = 프로젝트 단계 Stage 1 ASR · Stage 2 AST 1–3 차(run 이름 s2·s3·s4-ast 는 0.6B 번역 학습 차수) · Stage 3 2 인 대화 · Stage 4 대화 번역(V3).
 # 단계마다 앞 단계가 성공해야 시작한다(sbatch afterok). 한 번 실행으로 모두 제출하고 job 번호를 출력한다(제출은 사용자 — 스케줄러 셸에서).
 #   1 q17-s1m3-d10-s0      Stage 1 영·한·독 δ4–10 3 epoch(semcommit) — init q17-s0/final(q06-s1m3-d10 과 같은 레시피)                 약 13 h
 #   2 q17-s2-ast           단일 화자 번역(ast-v1, 번역 모드 0.5) 2 epoch — init q17-s1m3-d10-s0/final                                 약 8–9 h
@@ -61,9 +62,9 @@ stage() {                                                                       
   echo "단계 $n job $dep"
 }
 stage 1 "$S1WHAT" bash $S1SH
-stage 2 "Stage 2 q17-s2-ast(init $S1RUN/final)" bash slurm/submit-q17-s2-ast.sh --init $M/semcommit-$S1RUN/final
-stage 3 "Stage 3 q17-s3-ast" bash slurm/submit-q17-s3-ast.sh
-stage 4 "Stage 4 q17-s4-ast" bash slurm/submit-q17-s4-ast.sh
-stage 5 "대화 Stage 3 q17-st3-p11-revive" bash slurm/submit-stage3-train.sh --run q17-st3-p11-revive --init $M/semcommit-q17-s4-ast/final "${P11[@]}"
-stage 6 "V3 R1x q17-v3-p1-tel-xlw" bash slurm/submit-stage3-train.sh --run q17-v3-p1-tel-xlw --init $M/stage3-q17-st3-p11-revive/checkpoint-3000 "${R1X[@]}"
+stage 2 "Stage 2(AST 1 차) q17-s2-ast(init $S1RUN/final)" bash slurm/submit-q17-s2-ast.sh --init $M/semcommit-$S1RUN/final
+stage 3 "Stage 2(AST 2 차) q17-s3-ast" bash slurm/submit-q17-s3-ast.sh
+stage 4 "Stage 2(AST 3 차) q17-s4-ast" bash slurm/submit-q17-s4-ast.sh
+stage 5 "Stage 3(2 인 대화) q17-st3-p11-revive" bash slurm/submit-stage3-train.sh --run q17-st3-p11-revive --init $M/semcommit-q17-s4-ast/final "${P11[@]}"
+stage 6 "Stage 4(대화 번역, V3 R1x) q17-v3-p1-tel-xlw" bash slurm/submit-stage3-train.sh --run q17-v3-p1-tel-xlw --init $M/stage3-q17-st3-p11-revive/checkpoint-3000 "${R1X[@]}"
 echo "[$(date '+%F %T')] 체인 제출 끝${dry:+(dry-run — 아무것도 제출하지 않았다)}" >&2
