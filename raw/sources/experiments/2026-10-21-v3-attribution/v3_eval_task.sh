@@ -10,8 +10,9 @@
 #     산출 results/stage3-eval-ami-<run>-<태그>(+ ami-report.txt) · stage3-attr-errors-ami-<run>-<태그>.
 set -u
 K=${1:?작업}; RUN=${2:?run}; t=${3:?대상}; SH=${4:-0/1}
+SD0=${VAPASR_STAGE_DIR:-}                                                                   # 부르는 쪽(평가 노드) 값 — .env 의 /scratch 는 컨테이너 전용이라 덮이면 안 된다
 CODE=/soundai/users/tskim/VAPKT; cd $CODE; set -a; source .env; set +a
-export PYTHONPATH=$CODE PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false VAPASR_STAGE_DIR=${VAPASR_STAGE_DIR:-/tmp/sa_tskim/vapasr-stage}
+export PYTHONPATH=$CODE PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false VAPASR_STAGE_DIR=${SD0:-/tmp/sa_tskim/vapasr-stage}   # 2026-10-23 전에는 .env 값이 이겨 "stage 실패 → 원본에서 읽음"(NFS 직접)
 P=${PY:-/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python}; R=/soundai/users/tskim/VAPKT-data/results; D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2
 S1=$D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16; XE=$D/sim-dialogue-xl-eval-v1; TAXI=$D/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl; DEV=$D/v3-dev
 CH=$D/evaluation/single-turn-callhome-de-v1/manifest.jsonl; X=raw/sources/experiments/2026-10-21-v3-attribution
