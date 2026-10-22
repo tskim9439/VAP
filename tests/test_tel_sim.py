@@ -277,3 +277,26 @@ def test_same_frac_shares_channel_parameters():
     assert not chan2["same"] and chan2["spk"]["a"] != chan2["spk"]["b"] and chan2["spk"]["a"] == chan["spk"]["a"]   # 따로면 화자마다 다르다(첫 화자 시드는 같다)
     fr = sum(sbd.phone_fx(aug, 0, i, ["a", "b"], 0.1)[1]["same"] for i in range(3000)) / 3000; assert abs(fr - 0.1) < 0.02
     assert not any(sbd.phone_fx(aug, 0, i, ["a", "b"], 0.0)[1]["same"] for i in range(200))
+
+
+def test_level_offset_scales_only_that_speaker():
+    """--level-offset-db(진단): 같은 난수열에서 그 화자 gain 만 10^(dB/20) 배(피크 제한 전), 다른 화자·난수 소비는 그대로."""
+    d, audio, spans = _mix_case(); lv0, lv1 = {}, {}
+    r0, r1 = random.Random(5), random.Random(5)
+    y0, g0 = sbd.mix_arrays(d, audio, spans, r0, 8.0, levels=lv0); y1, g1 = sbd.mix_arrays(d, audio, spans, r1, 8.0, levels=lv1, offsets={"a": -12.0})
+    assert r0.random() == r1.random()                                                        # 난수를 더 뽑지 않는다
+    assert abs(g1["a"] / g0["a"] - 10 ** (-12 / 20)) < 1e-3 and g1["b"] == g0["b"] and abs(lv1["a"] - (lv0["a"] - 12.0)) < 1e-2 and lv1["b"] == lv0["b"]
+    y2, g2 = sbd.mix_arrays(d, audio, spans, random.Random(5), 8.0, offsets={"a": 0.0}); assert g2 == g0 and np.array_equal(y2, y0)
+
+
+def test_level_offset_build(fx, tmp_path):
+    """같은 인자 + --level-offset-db English:-12 → 같은 대화(발화·시각), 영어 화자 레벨만 −12 dB, meta.level_offset_db. 기본(끔)은 stats args 에 키가 없다."""
+    _run(_argv(fx, tmp_path / "base")); _run(_argv(fx, tmp_path / "lo") + ["--level-offset-db", "English:-12"])
+    A, B = _lines(tmp_path / "base", "sim_en-de"), _lines(tmp_path / "lo", "sim_en-de"); assert len(A) == len(B) > 0
+    strip = lambda x: {k: v for k, v in x.items() if k != "meta"}
+    for x, y in zip(A, B):
+        assert strip(x) == strip(y) and y["meta"]["level_offset_db"] == {"a": -12.0, "b": 0.0}
+        assert abs(y["meta"]["gains"]["a"] / x["meta"]["gains"]["a"] - 10 ** (-12 / 20)) < 2e-3 and y["meta"]["gains"]["b"] == x["meta"]["gains"]["b"]
+    assert "level_offset_db" not in json.load(open(tmp_path / "base" / "sim_en-de.stats.json"))["args"]
+    with pytest.raises(SystemExit): _run(_argv(fx, tmp_path / "bad") + ["--level-offset-db", "Klingon:-3"])
+

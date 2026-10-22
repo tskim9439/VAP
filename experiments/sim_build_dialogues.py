@@ -36,7 +36,7 @@ mono: 화자별 채널(놓인 말소리)을 dialogue_mix.mix_dialogue 와 같은
 import argparse, collections, hashlib, json, math, os, random, re, sys, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
-TEL_DEFAULTS = dict(fto_clip=(-2.0, 3.0), intra_pause=(0.1, 0.5), phone_per_speaker=0.0, phone_same_frac=0.0, name_suffix=None)   # C2 옵션 기본(fto·intra = SimConfig 기본) — 이 값이면 빌드·stats 가 예전과 같다
+TEL_DEFAULTS = dict(fto_clip=(-2.0, 3.0), intra_pause=(0.1, 0.5), phone_per_speaker=0.0, phone_same_frac=0.0, name_suffix=None, level_offset_db="")   # C2 옵션 기본(fto·intra = SimConfig 기본) — 이 값이면 빌드·stats 가 예전과 같다
 G = {}
 
 
@@ -110,10 +110,11 @@ def pick_keys(rng, keys, persons, tries=60, n=2):
     return None
 
 
-def mix_arrays(d, audio, spans, rng, jitter_db, target_dbfs=-23.0, peak=0.98, fx=None, levels=None):
+def mix_arrays(d, audio, spans, rng, jitter_db, target_dbfs=-23.0, peak=0.98, fx=None, levels=None, offsets=None):
     """dialogue_mix.mix_dialogue 와 같은 규칙을 이미 읽은 발화 오디오로: 화자별 채널에 말소리 구간을 놓고, 화자 발화 구간 RMS 로 target_dbfs(± jitter) 에 맞춰 더한다.
     fx(ch, 화자) → 처리한 채널(C2 화자별 전화 채널 — phone_fx): 말소리를 놓은 뒤·gain 전에 걸고, gain 은 처리된 채널의 같은 말소리 구간 RMS 로 다시 잰다.
-    levels: 주면 화자별 말소리 구간 레벨(dBFS, gain 뒤·피크 제한 전 = target_dbfs + jitter)을 채운다. 둘 다 None 이면 예전과 같은 계산·난수 소비."""
+    levels: 주면 화자별 말소리 구간 레벨(dBFS, gain 뒤·피크 제한 전 = target_dbfs + jitter)을 채운다. 둘 다 None 이면 예전과 같은 계산·난수 소비.
+    offsets: {화자: dB} 를 주면 레벨 목표·jitter 뒤 gain 에 곱한다(진단 --level-offset-db — 난수를 더 뽑지 않아 같은 시드면 같은 대화를 레벨만 바꿔 섞는다)."""
     import numpy as np
     from vapasr.data.sim_dialogue import SR
     T = int(round(d.duration_s * SR)); mono = np.zeros(T, np.float32); gains = {}
@@ -127,7 +128,9 @@ def mix_arrays(d, audio, spans, rng, jitter_db, target_dbfs=-23.0, peak=0.98, fx
         if fx is not None:                                                         # 대역 제한·μ-law 가 말소리 RMS 를 바꾼다 → 처리된 채널의 같은 구간으로 다시 잰다
             ch = fx(ch, spk); acc = sum(float(np.sum(ch[i0: i0 + m].astype(np.float64) ** 2)) for i0, m in rr)
         rms = math.sqrt(acc / n) if n else 1e-6
-        g = (10 ** (target_dbfs / 20)) / max(rms, 1e-6) * (10 ** (rng.uniform(-jitter_db, jitter_db) / 20) if jitter_db else 1.0); gains[spk] = round(g, 4); mono += ch * g
+        g = (10 ** (target_dbfs / 20)) / max(rms, 1e-6) * (10 ** (rng.uniform(-jitter_db, jitter_db) / 20) if jitter_db else 1.0)
+        if offsets: g *= 10 ** (offsets.get(spk, 0.0) / 20)
+        gains[spk] = round(g, 4); mono += ch * g
         if levels is not None: levels[spk] = round(20 * math.log10(max(g * rms, 1e-9)), 3)
     pk = float(np.max(np.abs(mono))) if T else 0.0
     return (mono * (peak / pk) if pk > peak else mono), gains
@@ -210,7 +213,9 @@ def make_session(i):
             if len(us) > 2 and min(collections.Counter(u.speaker for u in d.utterances).get(x, 0) for x in d.speakers) < 2: errs.append("speaker_too_few"); continue   # 3 명 이상: 모두 발화 2 개 이상
             tr = d.meta.pop("trans", None)
             fx, chan = phone_fx(G["phone"], a.seed, i, d.speakers, a.phone_same_frac) if G.get("phone") is not None else (None, None); lv = {} if G.get("tel") else None
-            y, gains = mix_arrays(d, audio, spans, rng, a.jitter_db, fx=fx, levels=lv); d.meta["gains"] = gains
+            LO = G.get("level_offset") or {}; offs = {s: LO.get((d.meta.get("spk_lang") or {}).get(s, a.lang), 0.0) for s in d.speakers} if LO else None
+            y, gains = mix_arrays(d, audio, spans, rng, a.jitter_db, fx=fx, levels=lv, offsets=offs); d.meta["gains"] = gains
+            if offs and any(offs.values()): d.meta["level_offset_db"] = offs
             if chan is not None:
                 for s, v in chan["spk"].items(): v["level_db"] = lv[s]
                 d.meta["chan"] = chan
@@ -269,6 +274,8 @@ def main():
     t.add_argument("--phone-per-speaker", type=float, default=0.0, help="화자 트랙마다 따로 전화 채널을 걸 확률(PhoneAugment p, mulaw_p 0.5 — 섞기 전·gain 전; 0 = 끔)")
     t.add_argument("--phone-same-frac", type=float, default=0.0, help="--phone-per-speaker 세션 중 모든 화자가 같은 채널 파라미터를 쓰는 비율")
     t.add_argument("--name-suffix", default=None, help="교차 언어 키 접미사(예 tel → sim_en-de-tel; 산출 이름·conv_id 가 따른다)")
+    t.add_argument("--level-offset-db", default="", help="진단: 언어별 화자 레벨 오프셋 'LANG:DB[,LANG:DB]'(예 English:-12) — 레벨 목표·jitter 뒤 gain 에 곱한다. "
+                                                        "난수를 더 뽑지 않아 같은 시드·인자면 같은 대화를 그 언어 화자 레벨만 바꿔 다시 섞는다(기본 끔)")
     a = ap.parse_args()
     pair = lambda s, k: tuple(float(x) for x in s.split(",")) if s else TEL_DEFAULTS[k]
     a.fto_clip, a.intra_pause = pair(a.fto_clip, "fto_clip"), pair(a.intra_pause, "intra_pause")
@@ -278,6 +285,10 @@ def main():
         sys.exit(f"--phone-per-speaker·--phone-same-frac 는 [0, 1], same-frac 은 per-speaker > 0 일 때만: {a.phone_per_speaker} {a.phone_same_frac}")
     if a.name_suffix is not None and (not a.lang2 or not re.fullmatch(r"[a-z0-9]+", a.name_suffix)): sys.exit(f"--name-suffix 는 교차 언어(--lang2)에서 [a-z0-9]+: {a.name_suffix!r}")
     if a.p_hold < 0: a.p_hold = None
+    try: LO = {k.strip(): float(v) for k, v in (x.split(":") for x in a.level_offset_db.split(",") if x.strip())}
+    except ValueError: sys.exit(f"--level-offset-db 'LANG:DB[,LANG:DB]': {a.level_offset_db!r}")
+    if any(k not in SHORT for k in LO): sys.exit(f"--level-offset-db 언어는 {sorted(SHORT)} 중: {sorted(LO)}")
+    G["level_offset"] = {k: v for k, v in LO.items() if v}
     a.dur = tuple(float(x) for x in a.dur.split(",")); a.phase2_corpora = [c for c in a.phase2_corpora.split(",") if c]
     a.stats_corpora = [c for c in (a.stats_corpora.split(",") if a.stats_corpora else a.phase2_corpora) if c]
     a.phase2_corpora2 = [c for c in a.phase2_corpora2.split(",") if c]
