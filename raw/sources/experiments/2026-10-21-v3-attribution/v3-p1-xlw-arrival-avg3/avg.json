@@ -1,0 +1,16 @@
+{
+ "sources": [
+  "/soundai/Model/VAPASR/stage3-v3-p1-xlw-arrival/checkpoint-1500",
+  "/soundai/Model/VAPASR/stage3-v3-p1-xlw-arrival/checkpoint-2000",
+  "/soundai/Model/VAPASR/stage3-v3-p1-xlw-arrival/final"
+ ],
+ "n": 3,
+ "files": {
+  "model.safetensors": {
+   "keys": 958,
+   "floating": 958,
+   "bytes": 4838863896,
+   "parity": true
+  }
+ }
+}

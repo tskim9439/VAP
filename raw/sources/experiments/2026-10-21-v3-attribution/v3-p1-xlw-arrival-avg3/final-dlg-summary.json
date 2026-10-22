@@ -1,0 +1,588 @@
+{
+ "aihub134-1/d4": {
+  "windows": 100,
+  "ref_units": 6664,
+  "err_slot": 28.72,
+  "err_cp": 22.42,
+  "err_agn": 15.35,
+  "swap_share": 0.12,
+  "eot_hyp": 246,
+  "eot_pos": 157,
+  "eot_recall": 0.6688,
+  "eot_precision": 0.5691,
+  "eot_hold_fire": 0.1604,
+  "eot_lat_median": 0.22,
+  "eot_lat_p90": 0.32,
+  "exposure": "partly(화자 10 명 71631 과 겹침)",
+  "rows": 100,
+  "forced_tokens": 2,
+  "src_err_by_lang": {
+   "Korean": {
+    "err": 22.42,
+    "unit": "CER",
+    "ref_units": 6664
+   }
+  },
+  "translation": {
+   "Korean->English": {
+    "bleu": 24.76,
+    "chrf": 49.8,
+    "n": 177,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 177,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.137,
+    "lag_median": -0.08,
+    "lag_p90": 0.0,
+    "matched_word_share": 0.382
+   }
+  }
+ },
+ "aihub134-1/d10": {
+  "windows": 100,
+  "ref_units": 6431,
+  "err_slot": 33.81,
+  "err_cp": 20.15,
+  "err_agn": 15.39,
+  "swap_share": 0.16,
+  "eot_hyp": 234,
+  "eot_pos": 152,
+  "eot_recall": 0.7829,
+  "eot_precision": 0.6838,
+  "eot_hold_fire": 0.1823,
+  "eot_lat_median": 0.68,
+  "eot_lat_p90": 0.79,
+  "exposure": "partly(화자 10 명 71631 과 겹침)",
+  "rows": 100,
+  "forced_tokens": 8,
+  "src_err_by_lang": {
+   "Korean": {
+    "err": 20.15,
+    "unit": "CER",
+    "ref_units": 6431
+   }
+  },
+  "translation": {
+   "Korean->English": {
+    "bleu": 26.68,
+    "chrf": 50.04,
+    "n": 175,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 175,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.109,
+    "lag_median": -0.08,
+    "lag_p90": 0.0,
+    "matched_word_share": 0.388
+   }
+  }
+ },
+ "aihub134-2/d4": {
+  "windows": 100,
+  "ref_units": 3717,
+  "err_slot": 50.85,
+  "err_cp": 25.1,
+  "err_agn": 16.2,
+  "swap_share": 0.2,
+  "eot_hyp": 192,
+  "eot_pos": 125,
+  "eot_recall": 0.72,
+  "eot_precision": 0.5625,
+  "eot_hold_fire": 0.2736,
+  "eot_lat_median": 0.255,
+  "eot_lat_p90": 0.31,
+  "exposure": "unseen",
+  "rows": 100,
+  "forced_tokens": 0,
+  "src_err_by_lang": {
+   "Korean": {
+    "err": 25.1,
+    "unit": "CER",
+    "ref_units": 3717
+   }
+  },
+  "translation": {
+   "Korean->English": {
+    "bleu": 29.03,
+    "chrf": 50.78,
+    "n": 155,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 155,
+    "empty_share": 0.0258,
+    "hyp_ref_words": 1.107,
+    "lag_median": -0.08,
+    "lag_p90": 0.0,
+    "matched_word_share": 0.436
+   }
+  }
+ },
+ "aihub134-2/d10": {
+  "windows": 100,
+  "ref_units": 3513,
+  "err_slot": 50.24,
+  "err_cp": 24.08,
+  "err_agn": 16.4,
+  "swap_share": 0.2,
+  "eot_hyp": 181,
+  "eot_pos": 114,
+  "eot_recall": 0.8158,
+  "eot_precision": 0.6077,
+  "eot_hold_fire": 0.3371,
+  "eot_lat_median": 0.73,
+  "eot_lat_p90": 0.79,
+  "exposure": "unseen",
+  "rows": 100,
+  "forced_tokens": 1,
+  "src_err_by_lang": {
+   "Korean": {
+    "err": 24.08,
+    "unit": "CER",
+    "ref_units": 3513
+   }
+  },
+  "translation": {
+   "Korean->English": {
+    "bleu": 29.97,
+    "chrf": 53.05,
+    "n": 150,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 150,
+    "empty_share": 0.0267,
+    "hyp_ref_words": 1.129,
+    "lag_median": -0.08,
+    "lag_p90": 0.0,
+    "matched_word_share": 0.453
+   }
+  }
+ },
+ "aihub71631/d4": {
+  "windows": 100,
+  "ref_units": 5481,
+  "err_slot": 69.68,
+  "err_cp": 40.14,
+  "err_agn": 31.34,
+  "swap_share": 0.3,
+  "eot_hyp": 293,
+  "eot_pos": 144,
+  "eot_recall": 0.625,
+  "eot_precision": 0.3652,
+  "eot_hold_fire": 0.2009,
+  "eot_lat_median": 0.27,
+  "eot_lat_p90": 0.39,
+  "exposure": "seen(Stage 1·2 노출)",
+  "rows": 100,
+  "forced_tokens": 0,
+  "src_err_by_lang": {
+   "Korean": {
+    "err": 40.14,
+    "unit": "CER",
+    "ref_units": 5481
+   }
+  },
+  "translation": {
+   "Korean->English": {
+    "bleu": 24.88,
+    "chrf": 51.21,
+    "n": 176,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 176,
+    "empty_share": 0.0057,
+    "hyp_ref_words": 1.212,
+    "lag_median": -0.08,
+    "lag_p90": 0.08,
+    "matched_word_share": 0.412
+   }
+  }
+ },
+ "aihub71631/d10": {
+  "windows": 100,
+  "ref_units": 5204,
+  "err_slot": 65.33,
+  "err_cp": 43.47,
+  "err_agn": 33.78,
+  "swap_share": 0.24,
+  "eot_hyp": 289,
+  "eot_pos": 137,
+  "eot_recall": 0.781,
+  "eot_precision": 0.4256,
+  "eot_hold_fire": 0.197,
+  "eot_lat_median": 0.73,
+  "eot_lat_p90": 0.82,
+  "exposure": "seen(Stage 1·2 노출)",
+  "rows": 100,
+  "forced_tokens": 6,
+  "src_err_by_lang": {
+   "Korean": {
+    "err": 43.47,
+    "unit": "CER",
+    "ref_units": 5204
+   }
+  },
+  "translation": {
+   "Korean->English": {
+    "bleu": 27.6,
+    "chrf": 51.64,
+    "n": 169,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 169,
+    "empty_share": 0.0059,
+    "hyp_ref_words": 1.197,
+    "lag_median": -0.08,
+    "lag_p90": 0.08,
+    "matched_word_share": 0.442
+   }
+  }
+ },
+ "kec/d4": {
+  "windows": 100,
+  "ref_units": 7218,
+  "err_slot": 43.13,
+  "err_cp": 29.36,
+  "err_agn": 20.73,
+  "swap_share": 0.19,
+  "eot_hyp": 258,
+  "eot_pos": 140,
+  "eot_recall": 0.5357,
+  "eot_precision": 0.4961,
+  "eot_hold_fire": 0.155,
+  "eot_lat_median": 0.3,
+  "eot_lat_p90": 0.36,
+  "exposure": "unseen",
+  "rows": 100,
+  "forced_tokens": 11,
+  "src_err_by_lang": {
+   "German": {
+    "err": 29.36,
+    "unit": "WER",
+    "ref_units": 7218
+   }
+  },
+  "translation": {
+   "German->English": {
+    "bleu": 32.37,
+    "chrf": 55.13,
+    "n": 190,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 190,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.045,
+    "lag_median": -0.08,
+    "lag_p90": 0.8,
+    "matched_word_share": 0.48
+   }
+  }
+ },
+ "kec/d10": {
+  "windows": 100,
+  "ref_units": 7117,
+  "err_slot": 33.22,
+  "err_cp": 26.08,
+  "err_agn": 19.6,
+  "swap_share": 0.12,
+  "eot_hyp": 252,
+  "eot_pos": 137,
+  "eot_recall": 0.708,
+  "eot_precision": 0.627,
+  "eot_hold_fire": 0.1647,
+  "eot_lat_median": 0.763,
+  "eot_lat_p90": 0.836,
+  "exposure": "unseen",
+  "rows": 100,
+  "forced_tokens": 15,
+  "src_err_by_lang": {
+   "German": {
+    "err": 26.08,
+    "unit": "WER",
+    "ref_units": 7117
+   }
+  },
+  "translation": {
+   "German->English": {
+    "bleu": 36.8,
+    "chrf": 58.67,
+    "n": 190,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 190,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.05,
+    "lag_median": -0.08,
+    "lag_p90": 0.96,
+    "matched_word_share": 0.524
+   }
+  }
+ },
+ "nsc/d4": {
+  "windows": 100,
+  "ref_units": 5096,
+  "err_slot": 41.5,
+  "err_cp": 23.84,
+  "err_agn": 15.89,
+  "swap_share": 0.22,
+  "eot_hyp": 442,
+  "eot_pos": 222,
+  "eot_recall": 0.8288,
+  "eot_precision": 0.6765,
+  "eot_hold_fire": 0.3828,
+  "eot_lat_median": 0.28,
+  "eot_lat_p90": 0.38,
+  "exposure": "unseen",
+  "rows": 100,
+  "forced_tokens": 5,
+  "src_err_by_lang": {
+   "German": {
+    "err": 23.84,
+    "unit": "WER",
+    "ref_units": 5096
+   }
+  },
+  "translation": {
+   "German->English": {
+    "bleu": 50.66,
+    "chrf": 69.6,
+    "n": 191,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 191,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.106,
+    "lag_median": 0.0,
+    "lag_p90": 0.24,
+    "matched_word_share": 0.658
+   }
+  }
+ },
+ "nsc/d10": {
+  "windows": 100,
+  "ref_units": 4924,
+  "err_slot": 44.23,
+  "err_cp": 22.75,
+  "err_agn": 15.45,
+  "swap_share": 0.26,
+  "eot_hyp": 405,
+  "eot_pos": 209,
+  "eot_recall": 0.866,
+  "eot_precision": 0.7284,
+  "eot_hold_fire": 0.3929,
+  "eot_lat_median": 0.76,
+  "eot_lat_p90": 0.84,
+  "exposure": "unseen",
+  "rows": 100,
+  "forced_tokens": 5,
+  "src_err_by_lang": {
+   "German": {
+    "err": 22.75,
+    "unit": "WER",
+    "ref_units": 4924
+   }
+  },
+  "translation": {
+   "German->English": {
+    "bleu": 54.33,
+    "chrf": 72.3,
+    "n": 191,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 191,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.112,
+    "lag_median": 0.0,
+    "lag_p90": 0.24,
+    "matched_word_share": 0.702
+   }
+  }
+ },
+ "otoSpeech/d4": {
+  "windows": 100,
+  "ref_units": 15150,
+  "err_slot": 33.91,
+  "err_cp": 24.36,
+  "err_agn": 18.71,
+  "swap_share": 0.125,
+  "eot_hyp": 409,
+  "eot_pos": 304,
+  "eot_recall": 0.5099,
+  "eot_precision": 0.533,
+  "eot_hold_fire": 0.0934,
+  "eot_lat_median": 0.296,
+  "eot_lat_p90": 0.376,
+  "exposure": "unseen",
+  "rows": 200,
+  "forced_tokens": 80,
+  "src_err_by_lang": {
+   "English": {
+    "err": 24.36,
+    "unit": "WER",
+    "ref_units": 15150
+   }
+  },
+  "translation": {
+   "English->German": {
+    "bleu": 33.61,
+    "chrf": 56.6,
+    "n": 187,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 187,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.029,
+    "lag_median": 0.0,
+    "lag_p90": 0.96,
+    "matched_word_share": 0.454
+   },
+   "English->Korean": {
+    "bleu": 41.03,
+    "chrf": 35.08,
+    "n": 187,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 187,
+    "empty_share": 0.0107,
+    "hyp_ref_words": 0.985,
+    "lag_median": 0.0,
+    "lag_p90": 0.88,
+    "matched_word_share": 0.328
+   }
+  }
+ },
+ "otoSpeech/d10": {
+  "windows": 100,
+  "ref_units": 15114,
+  "err_slot": 31.24,
+  "err_cp": 21.17,
+  "err_agn": 17.4,
+  "swap_share": 0.11,
+  "eot_hyp": 466,
+  "eot_pos": 304,
+  "eot_recall": 0.7039,
+  "eot_precision": 0.6116,
+  "eot_hold_fire": 0.1229,
+  "eot_lat_median": 0.76,
+  "eot_lat_p90": 0.84,
+  "exposure": "unseen",
+  "rows": 200,
+  "forced_tokens": 70,
+  "src_err_by_lang": {
+   "English": {
+    "err": 21.17,
+    "unit": "WER",
+    "ref_units": 15114
+   }
+  },
+  "translation": {
+   "English->German": {
+    "bleu": 37.71,
+    "chrf": 59.22,
+    "n": 186,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 186,
+    "empty_share": 0.0054,
+    "hyp_ref_words": 1.021,
+    "lag_median": 0.0,
+    "lag_p90": 0.56,
+    "matched_word_share": 0.491
+   },
+   "English->Korean": {
+    "bleu": 42.04,
+    "chrf": 36.16,
+    "n": 186,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:char|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 186,
+    "empty_share": 0.0,
+    "hyp_ref_words": 0.986,
+    "lag_median": 0.0,
+    "lag_p90": 1.12,
+    "matched_word_share": 0.352
+   }
+  }
+ },
+ "ztc/d4": {
+  "windows": 100,
+  "ref_units": 4992,
+  "err_slot": 39.26,
+  "err_cp": 22.4,
+  "err_agn": 12.22,
+  "swap_share": 0.19,
+  "eot_hyp": 108,
+  "eot_pos": 104,
+  "eot_recall": 0.2692,
+  "eot_precision": 0.5,
+  "eot_hold_fire": 0.0553,
+  "eot_lat_median": 0.315,
+  "eot_lat_p90": 0.388,
+  "exposure": "unseen",
+  "rows": 100,
+  "forced_tokens": 0,
+  "src_err_by_lang": {
+   "German": {
+    "err": 22.4,
+    "unit": "WER",
+    "ref_units": 4992
+   }
+  },
+  "translation": {
+   "German->English": {
+    "bleu": 46.5,
+    "chrf": 65.97,
+    "n": 197,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 197,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.027,
+    "lag_median": 0.0,
+    "lag_p90": 0.08,
+    "matched_word_share": 0.639
+   }
+  }
+ },
+ "ztc/d10": {
+  "windows": 100,
+  "ref_units": 4868,
+  "err_slot": 39.98,
+  "err_cp": 21.01,
+  "err_agn": 11.2,
+  "swap_share": 0.21,
+  "eot_hyp": 140,
+  "eot_pos": 104,
+  "eot_recall": 0.4519,
+  "eot_precision": 0.6143,
+  "eot_hold_fire": 0.0815,
+  "eot_lat_median": 0.749,
+  "eot_lat_p90": 0.834,
+  "exposure": "unseen",
+  "rows": 100,
+  "forced_tokens": 1,
+  "src_err_by_lang": {
+   "German": {
+    "err": 21.01,
+    "unit": "WER",
+    "ref_units": 4868
+   }
+  },
+  "translation": {
+   "German->English": {
+    "bleu": 50.27,
+    "chrf": 68.42,
+    "n": 196,
+    "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+    "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:0|space:no|version:2.6.0",
+    "segments": 196,
+    "empty_share": 0.0,
+    "hyp_ref_words": 1.029,
+    "lag_median": 0.0,
+    "lag_p90": 0.08,
+    "matched_word_share": 0.671
+   }
+  }
+ }
+}

@@ -1,0 +1,112 @@
+{
+  "complete": true,
+  "predictions": 200,
+  "expected_predictions": 200,
+  "config": {
+    "protocol": "single-turn-asr-v1",
+    "checkpoint": "/soundai/users/tskim/VAPKT-data/models/stage3-v3-p1-xlw-arrival-avg3/final",
+    "checkpoint_weights": {
+      "model.safetensors": {
+        "size": 4838863896,
+        "mtime_ns": 1792627421246116800
+      }
+    },
+    "checkpoint_config_sha256": "7e3e5515214a22d729371cd4d4d46c443fe24d2bb6a712f0adc3c0a5f5506e1b",
+    "manifest_digest": "4b92afa4bb47ec803d523dde759b1d1ed6106b99f385549430ae0ed2788c6caa",
+    "utterances": 100,
+    "deltas": [
+      4,
+      10
+    ],
+    "tail_s": 1.0,
+    "leading_silence_s": 0,
+    "next_bias": 0,
+    "dtype": "float32",
+    "tf32": false,
+    "max_flush_rounds": 8,
+    "textnorm": {
+      "textnorm_version": "asr-tn-v1.3.0",
+      "textnorm_sha256": "cf2fdb45ae28ab2678059ae81ae9de6573f429151003d2f021b46750792c97e5",
+      "numeric_backend_version": "num2words 0.5.14"
+    },
+    "code": {
+      "experiments/eval_single_turn_asr.py": "cef21fc01de1e536273fadff4f181871a1cc496320259b0e4cdcd2ca66de2fd5",
+      "vapasr/hf/batch_decode.py": "d9a9d4a64d47c69ad322efc3a70620ab54673c2c500834dec8ba376a0790346b",
+      "vapasr/data/single_turn_eval.py": "032d57cb164642f10bfa87f7d2fba149f69461539121ac5aac553a6461fe854a",
+      "vapasr/hf/modeling_vapasr.py": "9ed8c1766e96c8ff08c55f36bbc118a9bad5f50605c4e1c3acbdbf3f789743f3",
+      "vapasr/features/online.py": "5e98f4b1a0e9b732665838f71cd802371b9ed419585517e54549ae989d814a9f",
+      "vapasr/data/ast_eval.py": "9494187b9e406ca2fe0cda2949b2a143cb25a866fb04a4679228207f740fe092",
+      "vapasr/data/ast_dataset.py": "00f53a63988584df62db3c40304283e1e590074413b996c0337976152faa5b98"
+    },
+    "world_size": 1,
+    "limit_per_set": 100,
+    "batch_size": 64,
+    "encoder_batch_size": 1,
+    "cpu_threads": 4,
+    "ast_format": "ast-v1"
+  },
+  "groups": {
+    "librispeech-test-other/delta-4": {
+      "utterances": 100,
+      "audio_s": 666.6000000000001,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 116,
+          "deletions": 9,
+          "insertions": 34,
+          "n_ref": 1818,
+          "n_hyp": 1843,
+          "errors": 159,
+          "rate": 0.08745874587458746
+        }
+      }
+    },
+    "librispeech-test-other/delta-10": {
+      "utterances": 100,
+      "audio_s": 666.6000000000001,
+      "forced": 0,
+      "metrics": {
+        "wer": {
+          "substitutions": 102,
+          "deletions": 8,
+          "insertions": 25,
+          "n_ref": 1818,
+          "n_hyp": 1835,
+          "errors": 135,
+          "rate": 0.07425742574257425
+        }
+      }
+    }
+  },
+  "aa_wer": {
+    "librispeech-test-other/delta-10": {
+      "utterances": 100,
+      "empty_ref": 0,
+      "substitutions": 100,
+      "deletions": 9,
+      "insertions": 26,
+      "errors": 135,
+      "n_ref": 1856,
+      "wer_micro": 0.07273706896551724,
+      "wer_duration_weighted": 0.08155813783173083,
+      "audio_s": 666.6000000000001
+    },
+    "librispeech-test-other/delta-4": {
+      "utterances": 100,
+      "empty_ref": 0,
+      "substitutions": 112,
+      "deletions": 11,
+      "insertions": 37,
+      "errors": 160,
+      "n_ref": 1856,
+      "wer_micro": 0.08620689655172414,
+      "wer_duration_weighted": 0.09669082329528701,
+      "audio_s": 666.6000000000001
+    }
+  },
+  "aa_scoring": {
+    "aa_version": "aa-wer-approx-v1",
+    "aa_code_sha256": "d2bf74ebecbcb9c2aadeb2f22b743a06e5c96ad7bacd9475c075aa63eac35943"
+  }
+}
