@@ -77,3 +77,26 @@ def test_avg_checkpoints_refuses_mismatch(tmp_path, bad):
     a = make_ck(tmp_path / "a", [1.0, 2.0], [0, 1])
     b = make_ck(tmp_path / "b", [3.0] * (3 if bad == "shape" else 2), [0, 2] if bad == "int" else [0, 1], {"x": torch.zeros(1)} if bad == "key" else None)
     rc, log = avg(["--out", tmp_path / "o", a, b]); assert rc != 0 and not (tmp_path / "o").exists(), log
+
+
+def test_submit_script_afterok(tmp_path):
+    """--afterok JOBID: init 이 아직 없어도 제출(체인), sbatch 에 --dependency=afterok — --after 와 함께면 거부, 없으면 init 검사 그대로."""
+    R, sh = submit_env(tmp_path); a = SUBMIT_ARGS[1][:-1]; i = a.index("--after"); base = a[:i] + a[i + 2:]          # 골든 인자의 --after 쌍은 뺀다
+    rc, out, err = run_submit(R, sh, base + ["--init", "<R>/none", "--afterok", "123", "--dry-run"]); assert rc == 0 and "--dependency=afterok:123" in out and "만들 예정" in err, err
+    rc, out, err = run_submit(R, sh, base + ["--init", "<R>/none", "--dry-run"]); assert rc != 0 and "init 없음" in err
+    rc, out, err = run_submit(R, sh, base + ["--afterok", "123", "--after", "5", "--dry-run"]); assert rc != 0 and not out
+    rc, out, err = run_submit(R, sh, base + ["--afterok", "x1", "--dry-run"]); assert rc != 0 and not out
+
+
+def test_semcommit_submit_exclude(tmp_path):
+    """submit-semcommit-train-apex.sh --exclude: 기본(없음)은 명령에 --exclude 가 없고, 주면 sbatch 기본 제외(hpc-52·hpc-4)에 더해 붙는다."""
+    R = tmp_path / "R"; snap = R / "snap"; snap.mkdir(parents=True)
+    for f in ("main-words.list", "main-labels.list", "short-words.list", "short-labels.list"): (snap / f).write_text("x\n")
+    (snap / "summary.json").write_text('{"parts": 1}'); init = R / "init"; init.mkdir(); (init / "config.json").write_text("{}")
+    sh = tmp_path / "repo/slurm/submit-semcommit-train-apex.sh"; sh.parent.mkdir(parents=True)
+    sh.write_text((ROOT / "slurm/submit-semcommit-train-apex.sh").read_text().replace("/soundai", f"{R}/soundai"))
+    run = lambda extra: subprocess.run(["bash", str(sh), "--run", "x", "--snap", str(snap), "--init", str(init), "--dry-run"] + extra, capture_output=True, text=True, timeout=60)
+    a, b = run([]), run(["--exclude", "hpc-102,slurmmxch200v5-hpc-50"])
+    assert a.returncode == 0 and b.returncode == 0, (a.stderr, b.stderr)
+    assert "--exclude" not in a.stdout and "--exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4,slurmmxch200v5-hpc-102,slurmmxch200v5-hpc-50" in b.stdout
+    assert b.stdout.replace(" --exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4,slurmmxch200v5-hpc-102,slurmmxch200v5-hpc-50", "") == a.stdout

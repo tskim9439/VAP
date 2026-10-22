@@ -28,6 +28,7 @@
 #   --exclude N,…      더 뺄 노드(hpc-102 처럼 짧게 써도 된다) — sbatch 기본 제외 hpc-52·hpc-4 에 더한다
 #   --max-steps N(기본 2000)  --epochs E  --lr LR  --warmup N(기본 300)  --save-every N(기본 500)  --batch-tokens N(기본 16384)  --max-bs N(기본 64)
 #   --nodes N(기본 1)  --partition P(기본 apex)  --time HH:MM:SS(기본 24:00:00)  --after JOBID  --init DIR(기본 q06-s4-ast/final)
+#   --afterok JOBID    그 job 이 성공한 뒤에만 시작(afterok) — 그 job 이 --init 을 만들 예정이면 init 존재 검사를 건너뛴다(체인 제출, --after 와 함께 쓰지 않는다)
 #   --extra "..."      stage3_train.py 에 그대로 붙일 인자   --dry-run   sbatch 대신 명령만 출력
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -39,14 +40,14 @@ DE=/soundai/users/tskim/VAPKT-data/data/yodas-de-v1/lists/de-words-train-tn2.lis
 AST=/soundai/users/tskim/VAPKT-data/data/ast-mono-v1/targets-fix-gen-v3-bf16
 AST_CV4=/soundai/users/tskim/VAPKT-data/data/ast-mono-cv4en-v1/targets-fix-gen-v3-bf16
 NB=/soundai/users/tskim/VAPKT-data/data/noise-bank-v1
-run=""; init=/soundai/Model/VAPASR/semcommit-q06-s4-ast/final; nodes=1; partition=apex; time_limit=24:00:00; after=""; dry=0; extra=""
+run=""; init=/soundai/Model/VAPASR/semcommit-q06-s4-ast/final; nodes=1; partition=apex; time_limit=24:00:00; after=""; afterok=""; dry=0; extra=""
 weights="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5"; eot_mode=soft; backchannel=off; decision_weight=2; start_mode=grid; frac=0.2; recover_p=0; spk_act=0; sim_data=""; revive_dir=""; exclude=""; dlg_trans=""; dlg_trans_input=""; dlg_ast_frac=0.5; sim_trans_frac=0.8; trans_lead_space=0; phone_aug=0; replay_sets=""; enc_tap=-1; split=v2; max_spk=2; declare_p=0.5; window=20,40; draws=0; dlg_corpora=aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc
 max_steps=2000; epochs=1; lr=6e-5; warmup=300; save_every=500; batch_tokens=16384; max_bs=64
 change_w=""; hold_w=""; dw_sets=""; eot_drop=""; eot_drop_sets=""; set_phone=""; xl_order=""; sl_change=""; sl_hold=""   # V3-p1: 빈 값 = 인자를 넘기지 않는다(stage3_train 기본 = 끔)
 while [[ $# -gt 0 ]]; do
   case $1 in
     --run) run=$2; shift 2 ;;            --init) init=$2; shift 2 ;;          --nodes) nodes=$2; shift 2 ;;
-    --partition) partition=$2; shift 2 ;; --time) time_limit=$2; shift 2 ;;  --after) after=$2; shift 2 ;;
+    --partition) partition=$2; shift 2 ;; --time) time_limit=$2; shift 2 ;;  --after) after=$2; shift 2 ;;  --afterok) afterok=$2; shift 2 ;;
     --weights) weights=$2; shift 2 ;;    --eot-mode) eot_mode=$2; shift 2 ;;  --backchannel) backchannel=$2; shift 2 ;;
     --decision-weight) decision_weight=$2; shift 2 ;; --start-mode) start_mode=$2; shift 2 ;; --replay-files-frac) frac=$2; shift 2 ;;
     --recover-p) recover_p=$2; shift 2 ;;  --spk-act-weight) spk_act=$2; shift 2 ;;  --sim-data) sim_data=$2; shift 2 ;;
@@ -67,6 +68,8 @@ done
 [[ $run =~ ^[A-Za-z0-9._-]+$ ]] || { echo "--run 이름 필요(영숫자·._-)" >&2; exit 2; }
 [[ $nodes =~ ^[1-9][0-9]*$ ]] || { echo "--nodes 는 양의 정수" >&2; exit 2; }
 [[ -z $after || $after =~ ^[0-9]+$ ]] || { echo "--after 는 job id" >&2; exit 2; }
+[[ -z $afterok || $afterok =~ ^[0-9]+$ ]] || { echo "--afterok 는 job id" >&2; exit 2; }
+[[ -z $after || -z $afterok ]] || { echo "--after 와 --afterok 는 함께 쓰지 않는다" >&2; exit 2; }
 [[ $eot_mode =~ ^(soft|hard)$ ]] || { echo "--eot-mode soft|hard" >&2; exit 2; }
 [[ $backchannel =~ ^(off|[0-9.]+,[0-9]+)$ ]] || { echo "--backchannel off | 최대초,최대토큰" >&2; exit 2; }
 [[ $start_mode =~ ^(grid|mixed)$ ]] || { echo "--start-mode grid|mixed" >&2; exit 2; }
@@ -84,7 +87,8 @@ done
 [[ -z $sl_change || $sl_change =~ ^([0-9]+\.?[0-9]*|\.[0-9]+)$ ]] || { echo "--same-lang-change-weight 는 0 이상의 수" >&2; exit 2; }
 [[ -z $sl_hold || $sl_hold =~ ^([0-9]+\.?[0-9]*|\.[0-9]+)$ ]] || { echo "--same-lang-hold-weight 는 0 이상의 수" >&2; exit 2; }
 for kv in ${set_phone//,/ }; do [[ $kv =~ ^(dlg|sim)_[a-z0-9-]+:(0|0?\.[0-9]+|1|1\.0+)$ && ,$weights, == *",${kv%%:*}:"* && ! ,$weights, =~ ,${kv%%:*}:0*\.?0*, ]] || { echo "--set-phone KEY:P — KEY 는 --weights 의 가중 > 0 인 dlg_*·sim_* 셋, P 는 0–1: $kv" >&2; exit 2; }; done
-[[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }
+if [[ -n $afterok ]]; then [[ -f $init/config.json ]] || echo "init 은 job $afterok 가 만들 예정: $init" >&2
+else [[ -f $init/config.json ]] || { echo "init 없음: $init" >&2; exit 1; }; fi
 for sd in ${sim_data//,/ }; do [[ -d $sd/mono ]] || { echo "--sim-data 에 mono/ 가 없다: $sd" >&2; exit 1; }; done
 for td in ${dlg_trans//,/ } ${dlg_trans_input//,/ }; do [[ -d $td/pack ]] || { echo "번역 타깃에 pack/ 이 없다: $td" >&2; exit 1; }; done
 [[ -z $dlg_trans_input || -n $dlg_trans ]] || { echo "--dlg-trans-input 은 --dlg-trans 와 함께" >&2; exit 2; }
@@ -114,7 +118,7 @@ for rs in $replay_sets; do [[ $rs == --replay-set ]] && continue; n=${rs%%:*}; [
 args+=" $extra"
 echo "Stage 3 run $run → $out · init $init · $nodes 노드 × 8 GPU · $partition · 가중치 $weights · EOT $eot_mode · 맞장구 $backchannel · 시작 $start_mode · 정체 회복 $recover_p · 화자 슬롯 헤드 $spk_act · 합성 ${sim_data:-없음} · 되살리기 ${revive_dir:-없음} · 대화 번역 ${dlg_trans:-없음}${dlg_trans:+(번역 모드 $dlg_ast_frac)} · 번역 행 앞 공백 $trans_lead_space · 전화 대역 $phone_aug · 인코더 탭 $enc_tap · split $split · 화자 상한 $max_spk · 창 $window(draw $draws) · 대화 코퍼스 $dlg_corpora · 따로 가중 셋${replay_sets:- 없음} · 제외 추가 ${exclude:-없음}${v3} · max-steps $max_steps · MAX_RESTART ${MAX_RESTART:-3}" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
-dep=""; [[ -n $after ]] && dep="--dependency=afterany:$after"
+dep=""; [[ -n $after ]] && dep="--dependency=afterany:$after"; [[ -n $afterok ]] && dep="--dependency=afterok:$afterok"
 exc=""; if [[ -n $exclude ]]; then exc="--exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4"; for n in ${exclude//,/ }; do [[ $n == slurmmxch200v5-* ]] || n=slurmmxch200v5-$n; exc+=",$n"; done; fi   # 명령줄 --exclude 는 sbatch 안 기본값을 덮으므로 기본 제외도 함께 쓴다
 (( dry )) && sb="echo sbatch" || sb=sbatch
 $sb --job-name=SA_SFT_FullDuplex --partition="$partition" $dep $exc --nodes="$nodes" --time="$time_limit" \

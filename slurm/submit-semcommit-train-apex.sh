@@ -8,6 +8,7 @@
 #   --nodes N          노드 수(노드당 8 GPU, 기본 1)   --time HH:MM:SS(기본 24:00:00)   --partition P(기본 apex)   --job-name NAME
 #   --after JOBID      그 job 이 끝난 뒤 시작(afterany)
 #   --afterok JOBID    그 job 이 성공한 뒤에만 시작(afterok) — 그 job 이 --init 을 만들 예정이면 init 존재 검사를 건너뛴다
+#   --exclude N,…      더 뺄 노드(hpc-102 처럼 짧게 써도 된다) — sbatch 기본 제외 hpc-52·hpc-4 에 더한다(submit-stage3-train.sh 와 같다)
 #   --dry-run          sbatch 대신 명령만 출력("Submitted batch job 0" 형식으로 끝낸다)
 #   --batch-tokens N   GPU 당 동적 배치 예산(샘플 수 × 최장 길이 ≤ N, 기본 32768)   --max-bs N(기본 256)
 #   --epochs E(기본 2)  --lr LR(기본 6e-5)  --warmup N(기본 50)  --save-every N(기본 200)  --max-steps N(기본 0 = epochs)
@@ -48,7 +49,7 @@ while [[ $# -gt 0 ]]; do
     --train-encoder) train_encoder=1; shift ;;  --spec-augment) spec_augment=$2; shift 2 ;;  --speed-perturb) speed_perturb=$2; shift 2 ;;
     --asr-list) asr_list=$2; shift 2 ;;  --asr-max-ratio) asr_max_ratio=$2; shift 2 ;;  --varlen) varlen=1; shift ;;
     --noise-bank) noise_bank=$2; shift 2 ;;
-    --afterok) afterok=$2; shift 2 ;;  --dry-run) dry=1; shift ;;
+    --afterok) afterok=$2; shift 2 ;;  --dry-run) dry=1; shift ;;  --exclude) exclude=$2; shift 2 ;;
     --de-list) de_list=$2; shift 2 ;;
     --qwen-dir) qwen_dir=$2; shift 2 ;;  --asr-only) asr_only=1; shift ;;  --offline-frac) offline_frac=$2; shift 2 ;;  --freeze-thinker) freeze_thinker=1; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
@@ -91,8 +92,9 @@ echo "ASR 옵션: 인코더 $([[ $train_encoder = 1 ]] && echo 학습 || echo �
 echo "δ $delays · 스냅숏 $snap ($(python3 -c "import json,sys;s=json.load(open(sys.argv[1]));print(s['parts'],'파트')" "$snap/summary.json")) · init $init · 산출물 $out · $nodes 노드 × 8 GPU" >&2
 [[ -d $out ]] && echo "이어서: $out 에 checkpoint $(ls -d "$out"/checkpoint-* 2>/dev/null | wc -l) 개" >&2
 dep=""; [[ -n $after ]] && dep="--dependency=afterany:$after"; [[ -n $afterok ]] && dep="--dependency=afterok:$afterok"
+exc=""; if [[ -n ${exclude:-} ]]; then exc="--exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4"; for n in ${exclude//,/ }; do [[ $n == slurmmxch200v5-* ]] || n=slurmmxch200v5-$n; exc+=",$n"; done; fi   # 명령줄 --exclude 는 sbatch 안 기본값을 덮으므로 기본 제외도 함께
 (( dry )) && sb="echo sbatch" || sb=sbatch
-$sb --job-name="$job_name" --partition="$partition" $dep --nodes="$nodes" --time="$time_limit" \
+$sb --job-name="$job_name" --partition="$partition" $dep $exc --nodes="$nodes" --time="$time_limit" \
   --export="ALL,OUT=$out,SNAP=$snap,INIT=$init,ARGS_EXTRA=${args//,/%2C}" slurm/semcommit-train-apex.sbatch   # --export 는 쉼표로 변수를 가른다(job 76482: '--delays 2,3,…' 가 '--delays 2' 로 잘림) → %2C 로 넘기고 sbatch 가 되돌린다
 (( dry )) && echo "Submitted batch job 0"
 exit 0
