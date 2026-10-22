@@ -27,6 +27,7 @@ summary: 2026-10-22 V3 R4x 체크포인트 평균이 TAXI 21.7(VibeVoice 20.5), 
 - **R2x·R4x 결과(2026-10-22)**: 같은 언어 과잉 교대는 사라졌다(Stage 3 δ10 agn R2x ck2000 18.55 · R4x final 18.37 = V1 수준, aihub71631 태그 V1 수준). 대신 TAXI 귀속 이득을 약 1 pt 돌려줬다. TAXI 통째 δ10 은 R2x 22.3–23.9, R4x 21.8–22.9 다(R2 21.6–23.3, VibeVoice 스트리밍 20.5).
   - 사전 규칙 선택은 R2x ck2000(TAXI 23.9), R4x ck1500(TAXI 22.9)이다. 둘 다 후보 기준(TAXI cp < 20.5)에 못 미친다.
   - arrival 효과(R4x − R2x)는 TAXI 에서 유의하지 않다. 합성 xl 번역은 −1–2 BLEU 다. 세부는 [[2026-10-21-v3-attribution]] 14 절에 있다.
+- **Qwen3-ASR 1.7B 체인 준비(2026-10-22 19시)**: 사용자 요청으로 0.6B 와 같은 단계(Stage 1 이어 하기 → AST s2·s3·s4 → 대화 p11 → V3 R1x)를 1.7B 로 이어 내는 `slurm/submit-q17-chain.sh` 를 만들었다(단계마다 afterok, 약 38 h). → `raw/sources/experiments/2026-10-22-q17-chain/README.md`
 - **체크포인트 평균(2026-10-22 12시)**: R4x 평균 `v3-p1-xlw-arrival-avg3` 이 R4x 계열에서 dev 귀속 몫 최소(0.76)다. TAXI 통째 δ10 21.7 · 귀속 4.5 다. V1 대비 cp −4.7 [−9.0, −0.8] · 귀속 −3.5 [−6.4, −0.9] 로 처음으로 95 % 구간이 0 아래다. 같은 언어 가드는 통과하고, 번역 가드(합성 xl BLEU −0.7, TAXI 영→독 −1.3)는 조금 넘는다. R2x 평균은 오히려 나빠졌다(TAXI agn 20.3).
 - 다음 세 갈래(사용자 "셋다 진행해보자"): R1x `v3-p1-tel-xlw`(R1 + 교대 가중 교차 언어 셋만, job 94613)·R1x-a `v3-p1-tel-xlw-arrival`(job 94614)·R2m `v3-p1-sl15`(같은 언어 셋 교대·머무름 1.5, job 94615) 학습 중이다. R2x·R4x 체크포인트 평균(ck1500·ck2000·final)은 평가 중이다. 세부는 [[2026-10-21-v3-attribution]] 15 절에 있다.
 
