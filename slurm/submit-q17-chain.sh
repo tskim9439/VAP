@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Qwen3-ASR 1.7B 체인(2026-10-22, 사용자 "Qwen asr 1.7B 를 이용해서도 학습시키고 싶어"): 0.6B 와 같은 단계·레시피를 1.7B(/soundai/Model/Qwen3-ASR-1.7B)로.
 # 단계마다 앞 단계가 성공해야 시작한다(sbatch afterok). 한 번 실행으로 모두 제출하고 job 번호를 출력한다(제출은 사용자 — 스케줄러 셸에서).
-#   1 q17-s1m3-d10         Stage 1 영·한·독 δ4–10(semcommit, q17-s1m-r3 에서 1 epoch) — 2026-10-08 run 의 checkpoint-1000 에서 이어 한다   약 3 h
-#   2 q17-s2-ast           단일 화자 번역(ast-v1, 번역 모드 0.5) 2 epoch — init q17-s1m3-d10/final                                    약 10 h
-#   3 q17-s3-ast           번역 모드 0.8 + 영어 음량 증강 2 epoch — init q17-s2-ast/final                                              약 10 h
-#   4 q17-s4-ast           + CV4 영어 낭독·번역 2 epoch — init q17-s3-ast/final                                                        약 10 h
-#   5 q17-st3-p11-revive   대화 Stage 3(0.6B p11 명령 그대로: 같은 언어 대화·합성·replay·revive v1, 4,000 step) — init q17-s4-ast/final   약 2.7 h
-#   6 q17-v3-p1-tel-xlw    V3 R1x(전화 합성 셋 + 교대 가중은 교차 언어 셋만, 2,500 step) — init q17-st3-p11-revive/checkpoint-3000       약 2.2 h
-#   (시간은 apex 2 노드, 0.6B 단계 시간 × 1.7B 속도비 약 2.4 로 어림 — 합 약 38 h)
-#   0.6B 와 다른 점: Stage 1 은 0.6B(q06-s0 에서 영·한·독 3 epoch)와 달리 1.7B 영·한 3 epoch(q17-s1m-r3) 뒤 영·한·독 1 epoch 이다(2026-10-08 계획).
+#   1 q17-s1m3-d10-s0      Stage 1 영·한·독 δ4–10 3 epoch(semcommit) — init q17-s0/final(q06-s1m3-d10 과 같은 레시피)                 약 10.6 h
+#   2 q17-s2-ast           단일 화자 번역(ast-v1, 번역 모드 0.5) 2 epoch — init q17-s1m3-d10-s0/final                                 약 6.8 h
+#   3 q17-s3-ast           번역 모드 0.8 + 영어 음량 증강 2 epoch — init q17-s2-ast/final                                              약 6.8 h
+#   4 q17-s4-ast           + CV4 영어 낭독·번역 2 epoch — init q17-s3-ast/final                                                        약 4.1 h
+#   5 q17-st3-p11-revive   대화 Stage 3(0.6B p11 명령 그대로: 같은 언어 대화·합성·replay·revive v1, 4,000 step) — init q17-s4-ast/final   약 1.1 h
+#   6 q17-v3-p1-tel-xlw    V3 R1x(전화 합성 셋 + 교대 가중은 교차 언어 셋만, 2,500 step) — init q17-st3-p11-revive/checkpoint-3000       약 1.0 h
+#   시간 = 0.6B 같은 단계의 순수 step 시간(s_per_step 중앙값 × step 수, apex 2 노드). 2026-10-08 같은 데이터·같은 시각에 1.7B(job 82730)와 0.6B(82738)의
+#   step 시간이 같았다(데이터 읽기가 병목). 합 약 30 h + 단계마다 시작 약 15 분·재시작. 4–6 단계는 0.6B 도 덜 묶여 1.7B 는 더 걸릴 수 있다(1.7B 실측 없음).
+#   --s1 resume: Stage 1 을 2026-10-08 run q17-s1m3-d10(q17-s1m-r3 에서 1 epoch, checkpoint-1000 에서 멈춤)을 이어 하는 판으로 — 남은 4,391 step 약 2.9 h.
+#     0.6B 와 Stage 1 이 다르다(영·한 3 epoch δ1–8 뒤 영·한·독 1 epoch — 독일어·δ4–10 은 0.6B 의 1/3). 2 단계 init 도 그 final 로 바꿔 넘긴다.
 #   5 단계 체크포인트는 0.6B 처럼 checkpoint-3000 을 6 단계 init 으로 쓴다(0.6B 는 평가로 ck3000 을 골랐다 — 1.7B 는 평가 없이 같은 위치).
 # 쓰기(스케줄러 셸, /soundai/users/tskim/VAPKT):
 #   bash slurm/submit-q17-chain.sh --dry-run            # sbatch 없이 단계별 명령만(앞 단계 job 은 0 으로 둔다)
@@ -16,18 +18,25 @@
 #   bash slurm/submit-q17-chain.sh --from 5 [--after-job JOBID]   # 5 단계부터(앞 단계가 이미 끝났거나 JOBID 가 끝난 뒤)
 #   bash slurm/submit-q17-chain.sh --to 5                          # 1–5 단계만(6 단계 레시피는 나중에 --from 6 --after-job <5 단계 job>)
 #   --exclude N,…: 모든 단계 sbatch 에서 더 뺄 노드(기본 hpc-50,hpc-51,hpc-101,hpc-102 — V3 R1·R2 때와 같다, 'none' 이면 더 빼지 않는다).
+#   --s1 mirror|resume: Stage 1 판(기본 mirror = 0.6B 와 같은 q17-s1m3-d10-s0). --from 2 이후로 낼 때도 앞서 쓴 판을 같이 준다(2 단계 init 이 따라간다).
 # 단계마다 MAX_RESTART(기본 5). 앞 단계가 실패하면 뒤 단계는 DependencyNeverSatisfied 로 남는다 — 취소는 사용자가 한다. 경로 변수는 이 스크립트 안에서만 쓴다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-from=1; to=6; dep=""; dry=""; exclude=hpc-50,hpc-51,hpc-101,hpc-102
+from=1; to=6; dep=""; dry=""; exclude=hpc-50,hpc-51,hpc-101,hpc-102; s1=mirror
 while [[ $# -gt 0 ]]; do
   case $1 in
     --from) from=$2; shift 2 ;;  --to) to=$2; shift 2 ;;  --after-job) dep=$2; shift 2 ;;  --dry-run) dry=--dry-run; shift ;;  --exclude) exclude=$2; shift 2 ;;
+    --s1) s1=$2; shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
 [[ $from =~ ^[1-6]$ && $to =~ ^[1-6]$ && $from -le $to ]] || { echo "--from·--to 는 1–6(from ≤ to)" >&2; exit 2; }
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
+case $s1 in
+  mirror) S1SH=slurm/submit-q17-s1m3-d10-s0.sh; S1RUN=q17-s1m3-d10-s0; S1WHAT="Stage 1 q17-s1m3-d10-s0(q17-s0 에서 3 epoch — 0.6B 와 같은 레시피)" ;;
+  resume) S1SH=slurm/submit-q17-s1m3-d10.sh; S1RUN=q17-s1m3-d10; S1WHAT="Stage 1 q17-s1m3-d10(q17-s1m-r3 에서 1 epoch — checkpoint-1000 이어 하기)" ;;
+  *) echo "--s1 은 mirror|resume" >&2; exit 2 ;;
+esac
 [[ $exclude == none ]] && exclude=""
 export MAX_RESTART=${MAX_RESTART:-5}
 D=/soundai/users/tskim/VAPKT-data/data; M=/soundai/Model/VAPASR
@@ -50,8 +59,8 @@ stage() {                                                                       
   [[ -n $dep ]] || { echo "!! 단계 $n job 번호를 못 읽었다" >&2; exit 1; }
   echo "단계 $n job $dep"
 }
-stage 1 "Stage 1 q17-s1m3-d10(이어 하기)" bash slurm/submit-q17-s1m3-d10.sh
-stage 2 "Stage 2 q17-s2-ast" bash slurm/submit-q17-s2-ast.sh
+stage 1 "$S1WHAT" bash $S1SH
+stage 2 "Stage 2 q17-s2-ast(init $S1RUN/final)" bash slurm/submit-q17-s2-ast.sh --init $M/semcommit-$S1RUN/final
 stage 3 "Stage 3 q17-s3-ast" bash slurm/submit-q17-s3-ast.sh
 stage 4 "Stage 4 q17-s4-ast" bash slurm/submit-q17-s4-ast.sh
 stage 5 "대화 Stage 3 q17-st3-p11-revive" bash slurm/submit-stage3-train.sh --run q17-st3-p11-revive --init $M/semcommit-q17-s4-ast/final "${P11[@]}"

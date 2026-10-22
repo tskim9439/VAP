@@ -432,6 +432,7 @@ if a.dry_run:
 # ── Trainer
 from transformers import TrainingArguments
 from vapasr.hf.trainer import VapAsrTrainer, PreemptCallback
+from vapasr.hf.stage import last_complete_checkpoint                                         # 저장 완료 checkpoint-N(한 파일·1.7B 조각 저장 모두 — 선점이 끊은 것은 건너뛴다)
 from vapasr.hf.packing import budget_sampler_factory
 
 class Stage3Trainer(VapAsrTrainer):
@@ -470,10 +471,6 @@ targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradien
                           save_total_limit=a.save_total_limit, save_safetensors=True, seed=a.seed, data_seed=a.seed, report_to=[x for x in a.report_to.split(",") if x and x != "none"],
                           logging_dir=os.path.join(out, "tb"), remove_unused_columns=False, disable_tqdm=True, ignore_data_skip=True, dataloader_num_workers=a.num_workers,
                           label_names=["labels"], log_level="warning" if main else "error", ddp_find_unused_parameters=False, ddp_broadcast_buffers=False, ddp_timeout=10800)
-def last_complete_checkpoint(d):
-    c = [(int(m.group(1)), os.path.join(d, x)) for x in os.listdir(d) for m in [re.fullmatch(r"checkpoint-(\d+)", x)]
-         if m and all(os.path.exists(os.path.join(d, x, f)) for f in ("trainer_state.json", "model.safetensors"))]
-    return max(c)[1] if c else None
 model.config.stage3 = fp
 if a.xl_slot_order != "lang": model.config.xl_slot_order = a.xl_slot_order                     # V3 R4: 평가·디코드가 config 로 같은 교차 언어 prefix·슬롯 순서를 쓴다(끄면 키 없음)
 last = last_complete_checkpoint(out) if a.resume == "auto" else (None if a.resume == "none" else a.resume); fdiff = []

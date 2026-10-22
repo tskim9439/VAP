@@ -366,6 +366,7 @@ if a.dry_run:
 # ── Trainer
 from transformers import TrainingArguments
 from vapasr.hf.trainer import VapAsrTrainer, PreemptCallback
+from vapasr.hf.stage import last_complete_checkpoint                                         # 저장 완료 checkpoint-N(한 파일·1.7B 조각 저장 모두 — 선점이 끊은 것은 건너뛴다)
 from vapasr.data.semcommit_dataset import semcommit_round_robin
 
 class SemTrainer(VapAsrTrainer):
@@ -399,13 +400,7 @@ targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradien
                           save_total_limit=a.save_total_limit, save_safetensors=True, seed=a.seed, data_seed=a.seed, report_to=[x for x in a.report_to.split(",") if x and x != "none"],
                           logging_dir=os.path.join(out, "tb"), remove_unused_columns=False, disable_tqdm=True, ignore_data_skip=True, dataloader_num_workers=a.num_workers,
                           label_names=["labels"], log_level="warning" if main else "error", ddp_find_unused_parameters=False, ddp_broadcast_buffers=False, ddp_timeout=10800)
-def last_complete_checkpoint(d):
-    """checkpoint-N 중 trainer_state.json·model.safetensors 가 모두 있는 가장 큰 N(선점이 저장 도중 끊은 디렉토리는 건너뛴다)."""
-    import re
-    c = [(int(m.group(1)), os.path.join(d, x)) for x in os.listdir(d) for m in [re.fullmatch(r"checkpoint-(\d+)", x)]
-         if m and all(os.path.exists(os.path.join(d, x, f)) for f in ("trainer_state.json", "model.safetensors"))]
-    return max(c)[1] if c else None
-model.config.semcommit = fp                                                                   # 모든 checkpoint-N·final 의 config.json 에 들어간다
+model.config.semcommit = fp                                                                  # 모든 checkpoint-N·final 의 config.json 에 들어간다
 if written_on: model.config.output_formats = output_formats_config(tok)                       # 평가·추론이 표기형 머리를 복원(학습한 형식만; 끄면 키 없음)
 last = last_complete_checkpoint(out) if a.resume == "auto" else (None if a.resume == "none" else a.resume); fdiff = []
 if last:                                                                                      # 재개 = 같은 데이터·설정일 때만(지문 대조)
