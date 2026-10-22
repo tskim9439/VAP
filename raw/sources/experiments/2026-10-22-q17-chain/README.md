@@ -16,17 +16,24 @@
 
 | 단계 | run | init | 레시피 | 어림 시간 |
 |---|---|---|---|---|
-| 1 | `q17-s1m3-d10-s0` | q17-s0/final | `submit-q17-s1m3-d10-s0.sh` = q06-s1m3-d10 판(영·한·독 δ4–10 3 epoch, worker 4) | 10.6 h |
-| 2 | `q17-s2-ast` | q17-s1m3-d10-s0/final | `submit-q17-s2-ast.sh` = q06 판(번역 모드 0.5, 2 epoch) | 6.8 h |
-| 3 | `q17-s3-ast` | q17-s2-ast/final | `submit-q17-s3-ast.sh` = q06 판(번역 모드 0.8 + 영어 음량 증강) | 6.8 h |
-| 4 | `q17-s4-ast` | q17-s3-ast/final | `submit-q17-s4-ast.sh` = q06 판(+ CV4 영어 낭독·번역) | 4.1 h |
-| 5 | `q17-st3-p11-revive` | q17-s4-ast/final | 대화 Stage 3 — 0.6B p11 제출 명령 그대로(4,000 step) | 1.1 h |
-| 6 | `q17-v3-p1-tel-xlw` | q17-st3-p11-revive/checkpoint-3000 | V3 R1x — 0.6B R1x 제출 명령 그대로(2,500 step) | 1.0 h |
+| 1 | `q17-s1m3-d10-s0` | q17-s0/final | `submit-q17-s1m3-d10-s0.sh` = q06-s1m3-d10 판(영·한·독 δ4–10 3 epoch, worker 4) | 약 13 h(실측) |
+| 2 | `q17-s2-ast` | q17-s1m3-d10-s0/final | `submit-q17-s2-ast.sh` = q06 판(번역 모드 0.5, 2 epoch) | 약 8–9 h |
+| 3 | `q17-s3-ast` | q17-s2-ast/final | `submit-q17-s3-ast.sh` = q06 판(번역 모드 0.8 + 영어 음량 증강) | 약 8–9 h |
+| 4 | `q17-s4-ast` | q17-s3-ast/final | `submit-q17-s4-ast.sh` = q06 판(+ CV4 영어 낭독·번역) | 약 5–9 h |
+| 5 | `q17-st3-p11-revive` | q17-s4-ast/final | 대화 Stage 3 — 0.6B p11 제출 명령 그대로(4,000 step) | 약 1.3–2.5 h |
+| 6 | `q17-v3-p1-tel-xlw` | q17-st3-p11-revive/checkpoint-3000 | V3 R1x — 0.6B R1x 제출 명령 그대로(2,500 step) | 약 1.2–2.2 h |
 
-- 시간은 0.6B 같은 단계의 순수 step 시간이다. 합 약 30 h 에 단계마다 시작 약 15 분과 재시작 시간이 더해진다.
-  - 1.7B 도 같은 값으로 잡은 근거: 10-08 에 같은 데이터·같은 시각으로 돈 1.7B(82730)와 0.6B(82738)의 step 시간이 같았다. step 110–1,110 에서 1.11–1.69 s 대 1.12–1.49 s 다. 데이터 읽기가 병목이다.
-  - 4–6 단계는 0.6B 도 데이터 읽기에 덜 묶였다(0.96–1.40 s/step). 1.7B 는 이 단계들에서 더 걸릴 수 있다(1.7B 실측 없음).
-  - 처음 어림(1.7B 속도비 2.4, 합 38 h)은 틀렸다. 0.6B 쪽 시간으로 `results.json` 의 학습 시간을 썼는데, 이 값은 마지막으로 이어 한 구간만 센다. 예를 들어 q06-s1m3-d10 의 "4.2 h" 는 checkpoint-10000 뒤 구간뿐이다. 실제로는 실패 세 번을 포함해 15 h 걸렸다(10-08 17:17 → 10-09 08:19).
+- 시간(2026-10-23 다시 어림): 합 약 37–46 h 에 단계마다 시작·재시작 시간이 더해진다. 6 단계는 10-24 낮–밤에 끝날 것으로 본다.
+  - 1 단계는 1.7B 실측이다. job 94809 의 step 1–3,630 중앙값이 2.86 s/step 이다.
+  - 같은 step 구간의 0.6B(82738·82844)는 1.22 s/step 이었다. 1.7B 가 2.3 배 느리다.
+  - 2–6 단계 0.6B step 시간(작업 로그 `s_per_step` 중앙): s2 1.66 · s3 1.58 · s4 1.03 · p11 0.96 · R1x 1.39 s. 여기에 1.7B 배율 1.2–2.3 을 곱했다.
+    - 배율 1.2 는 데이터 읽기가 병목일 때다(1 단계 전체 중앙 비 2.86/2.33).
+    - 배율 2.3 은 GPU 계산이 병목일 때다(같은 step 구간 비).
+- 어림을 두 번 틀렸다.
+  - 처음(속도비 2.4, 합 38 h): 0.6B 시간으로 `results.json` 의 학습 시간을 썼다. 이 값은 마지막으로 이어 한 구간만 센다(q06-s1m3-d10 의 "4.2 h" 는 checkpoint-10000 뒤 구간뿐, 실제는 실패를 포함해 15 h).
+  - 10-22 저녁(속도 같음, 약 30 h): 10-08 의 한 구간만 보고 정했다. 그 구간에서는 1.7B(82730)와 0.6B(82738)가 둘 다 1.1–1.7 s/step 이었다.
+  - 이 결론에 쓴 0.6B 단계별 중앙값도 `results.json` 의 log_history 에서 뽑았는데, 일부 구간만 남아 있었다. 지금 값은 작업 로그 전체에서 다시 뽑았다.
+  - step 시간은 데이터 읽기 상태에 따라 1.2–2.9 s 로 크게 흔들린다.
 - `--s1 resume`: Stage 1 을 10-08 run `q17-s1m3-d10` 을 checkpoint-1000 에서 이어 하는 판으로 바꾼다(`submit-q17-s1m3-d10.sh`, 남은 4,391 step 약 2.9 h). 2 단계 init 도 그 final 로 넘어간다. 0.6B 와 Stage 1 이 다르다는 점은 아래 검토 3 에 적었다.
 - 5 단계는 평가 없이 0.6B 와 같은 위치(checkpoint-3000)를 6 단계 init 으로 쓴다. 0.6B 는 p11 ck3000 을 평가로 골랐다.
 - 저장 공간: 1.7B 체크포인트 하나는 27 GB 다(0.6B 14 GB). 체인 전체로 체크포인트 약 70 개, 약 2 TB 다. `/soundai` 는 5.0 PB 라 문제없고, 아무것도 지우지 않는다.
@@ -103,9 +110,34 @@
   - step 시간(step 140–160): 1.49–1.55 s. 0.6B 초반과 같은 수준이다.
   - 실패·메모리 부족 없음. 알려진 71631 항목 하나만 이웃 항목으로 바뀐다(0.6B 와 같다).
 
+## 평가 (SLURM, `slurm/submit-evals.sh`, 2026-10-23)
+- 사용자: "평가 작업도 SLURM 통해 수행할 수 있도록 명령어를 알려줘" · "AMI_IHM 이랑 AMI_SDM 에 대해서도 평가를 수행하고 싶어"
+- 묶음마다 작업 목록을 만들어 `slurm/v3-eval-node.sbatch`(apex 1 노드 8 GPU, 시간 한도 24 h)에 낸다.
+
+| 묶음 | 내용 | 시작 조건 |
+|---|---|---|
+| `q17-s1` | Stage 1 final 단일 발화 ASR. 0.6B 10-09 평가와 같은 명령이다: 영·한 vpaa-kspon(GPU 0·1), 독일어 yodas-de(GPU 2·3), δ4·6·8·10 + final | job 94809 성공 뒤 |
+| `q17-v3` | V3 R1x 의 ck1500·ck2000·final·avg3 × 9 작업(0.6B R1x 와 같은 `v3_eval_task.sh`). final·avg3 은 AMI IHM-mix·SDM 을 4 몫씩 더 돈다. 평균은 GPU 7 첫 작업이 만든다 | job 94814 성공 뒤 |
+| `r1x-ami` | 0.6B R1x final·avg3 의 AMI(모델마다 4 몫) — 1.7B 와 비교할 0.6B 값 | 바로 |
+
+- AMI(`v3_eval_task.sh ami <run> <대상> r/w`):
+  - 명령은 V2 `v2_eval_extra.sh` 12 단계와 같다: `ami-bench-v1` 공식 dev 18·eval 16 회의, 창 전부, δ4·10, 4 슬롯 선언.
+  - 창을 w 몫으로 나눠 돈다. 이어 하기가 되고, 마지막으로 끝난 몫이 합치기·오류 분해·`ami_report.py` 를 돈다.
+  - 스모크(호스트 GPU, R1x final, 창 2 개 몫 0/4)에서 디코드와 보고서가 나왔다.
+- V1 ck2000 은 10-21 에 AMI 를 쟀다. 공식 eval δ10 기준:
+  - IHM-mix: cp 54.0 · agn 29.5 · 귀속 24.6
+  - SDM: cp 60.9 · agn 36.2 · 귀속 24.7
+  - 0.6B 단일 GPU 로 4.5–5.7 h 걸렸다.
+- `stage_dir`(평가가 체크포인트를 노드 로컬로 복사)를 고쳤다.
+  - 문제: 같은 노드의 여러 일꾼이 같은 체크포인트를 동시에 부르면 공용 임시 파일(`<파일>.tmp`)을 서로 잘라 쓰는 구조였다. 로컬 재현에서는 문제가 없었다.
+  - 이제 잠금(`.stage.lock`)으로 한 번만 복사하고 임시 파일은 프로세스마다 다른 이름이다. AMI 몫처럼 같은 체크포인트를 여러 GPU 가 동시에 부를 때 필요하다.
+
 ## 제출 (사용자, 스케줄러 셸)
 ```
 (cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-chain.sh --dry-run)              # 미리 보기
 (cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-chain.sh)                        # 1–6 단계(Stage 1 = 0.6B 와 같은 레시피)
 (cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-chain.sh --s1 resume)            # Stage 1 을 10-08 checkpoint-1000 이어 하기로(빠름, 레시피 다름)
+(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh r1x-ami)                    # 0.6B R1x AMI — 바로
+(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh q17-s1)                     # 1.7B Stage 1 평가 — job 94809 성공 뒤
+(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh q17-v3)                     # 1.7B V3 평가 + AMI — job 94814 성공 뒤
 ```

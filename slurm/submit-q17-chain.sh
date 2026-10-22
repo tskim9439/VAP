@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Qwen3-ASR 1.7B 체인(2026-10-22, 사용자 "Qwen asr 1.7B 를 이용해서도 학습시키고 싶어"): 0.6B 와 같은 단계·레시피를 1.7B(/soundai/Model/Qwen3-ASR-1.7B)로.
 # 단계마다 앞 단계가 성공해야 시작한다(sbatch afterok). 한 번 실행으로 모두 제출하고 job 번호를 출력한다(제출은 사용자 — 스케줄러 셸에서).
-#   1 q17-s1m3-d10-s0      Stage 1 영·한·독 δ4–10 3 epoch(semcommit) — init q17-s0/final(q06-s1m3-d10 과 같은 레시피)                 약 10.6 h
-#   2 q17-s2-ast           단일 화자 번역(ast-v1, 번역 모드 0.5) 2 epoch — init q17-s1m3-d10-s0/final                                 약 6.8 h
-#   3 q17-s3-ast           번역 모드 0.8 + 영어 음량 증강 2 epoch — init q17-s2-ast/final                                              약 6.8 h
-#   4 q17-s4-ast           + CV4 영어 낭독·번역 2 epoch — init q17-s3-ast/final                                                        약 4.1 h
-#   5 q17-st3-p11-revive   대화 Stage 3(0.6B p11 명령 그대로: 같은 언어 대화·합성·replay·revive v1, 4,000 step) — init q17-s4-ast/final   약 1.1 h
-#   6 q17-v3-p1-tel-xlw    V3 R1x(전화 합성 셋 + 교대 가중은 교차 언어 셋만, 2,500 step) — init q17-st3-p11-revive/checkpoint-3000       약 1.0 h
-#   시간 = 0.6B 같은 단계의 순수 step 시간(s_per_step 중앙값 × step 수, apex 2 노드). 2026-10-08 같은 데이터·같은 시각에 1.7B(job 82730)와 0.6B(82738)의
-#   step 시간이 같았다(데이터 읽기가 병목). 합 약 30 h + 단계마다 시작 약 15 분·재시작. 4–6 단계는 0.6B 도 덜 묶여 1.7B 는 더 걸릴 수 있다(1.7B 실측 없음).
+#   1 q17-s1m3-d10-s0      Stage 1 영·한·독 δ4–10 3 epoch(semcommit) — init q17-s0/final(q06-s1m3-d10 과 같은 레시피)                 약 13 h
+#   2 q17-s2-ast           단일 화자 번역(ast-v1, 번역 모드 0.5) 2 epoch — init q17-s1m3-d10-s0/final                                 약 8–9 h
+#   3 q17-s3-ast           번역 모드 0.8 + 영어 음량 증강 2 epoch — init q17-s2-ast/final                                              약 8–9 h
+#   4 q17-s4-ast           + CV4 영어 낭독·번역 2 epoch — init q17-s3-ast/final                                                        약 5–9 h
+#   5 q17-st3-p11-revive   대화 Stage 3(0.6B p11 명령 그대로: 같은 언어 대화·합성·replay·revive v1, 4,000 step) — init q17-s4-ast/final   약 1.3–2.5 h
+#   6 q17-v3-p1-tel-xlw    V3 R1x(전화 합성 셋 + 교대 가중은 교차 언어 셋만, 2,500 step) — init q17-st3-p11-revive/checkpoint-3000       약 1.2–2.2 h
+#   시간(2026-10-23 다시 어림, apex 2 노드 순수 step 시간): 1 단계는 1.7B 실측(job 94809 step 1–3,630 중앙 2.86 s/step — 같은 step 구간의 0.6B 1.22 s 의
+#   2.3 배). 2–6 단계는 0.6B 단계별 step 시간(작업 로그 s_per_step 중앙)에 1.7B 배율 1.2–2.3 을 곱한 범위다(데이터 읽기 병목이면 작고 GPU 계산이면 크다).
+#   합 약 37–46 h + 단계마다 시작·재시작. 2026-10-22 의 "1.7B 와 0.6B 속도가 같다(약 30 h)" 는 10-08 한 구간(둘 다 1.1–1.7 s/step)만 보고 낸 틀린 어림이었다.
 #   --s1 resume: Stage 1 을 2026-10-08 run q17-s1m3-d10(q17-s1m-r3 에서 1 epoch, checkpoint-1000 에서 멈춤)을 이어 하는 판으로 — 남은 4,391 step 약 2.9 h.
 #     0.6B 와 Stage 1 이 다르다(영·한 3 epoch δ1–8 뒤 영·한·독 1 epoch — 독일어·δ4–10 은 0.6B 의 1/3). 2 단계 init 도 그 final 로 바꿔 넘긴다.
 #   5 단계 체크포인트는 0.6B 처럼 checkpoint-3000 을 6 단계 init 으로 쓴다(0.6B 는 평가로 ck3000 을 골랐다 — 1.7B 는 평가 없이 같은 위치).
