@@ -82,6 +82,13 @@
   - 산출: `VAPKT-data/tmp/q17-s1-fpcheck-20261022/`
 - 결과: (진행 중 — 아래에 기록)
 
+## 제출 기록
+- 2026-10-22 20:42, 사용자: `bash slurm/submit-q17-chain.sh`(기본 mirror)
+- job 번호(단계마다 앞 job 성공 뒤 시작):
+  - 1 = 94809(`q17-s1m3-d10-s0`)
+  - 2 = 94810, 3 = 94811, 4 = 94812
+  - 5 = 94813, 6 = 94814
+
 ## 제출 (사용자, 스케줄러 셸)
 ```
 (cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-chain.sh --dry-run)              # 미리 보기
