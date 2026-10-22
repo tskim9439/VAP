@@ -43,8 +43,8 @@ stage() {                                                                       
   local a=(); [[ -n $dep ]] && a=(--afterok "$dep")
   echo "[$(date '+%F %T')] 단계 $n $what${dep:+ (job $dep 성공 뒤)}" >&2
   local out; out=$("$@" ${EXC[@]+"${EXC[@]}"} ${a[@]+"${a[@]}"} $dry 2>&1) || { echo "$out" | tail -5 >&2; echo "!! 단계 $n 제출 실패 — 뒤 단계는 내지 않는다" >&2; exit 1; }
-  echo "$out" | grep -E "^sbatch|Submitted|이어서|만들 예정|init 없음|거부" >&2
-  dep=$(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1)
+  echo "$out" | grep -E "^sbatch|Submitted|이어서|만들 예정|init 없음|거부" >&2 || true
+  dep=$(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1 || true)
   [[ -n $dep ]] || { [[ -n $dry ]] && dep=0; } || true                                          # dry-run: 대화 단계 스크립트는 job 줄을 내지 않는다 → 0
   [[ -n $dep ]] || { echo "!! 단계 $n job 번호를 못 읽었다" >&2; exit 1; }
   echo "단계 $n job $dep"
