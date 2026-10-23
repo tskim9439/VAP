@@ -21,7 +21,8 @@
 #   bash slurm/submit-q17-chain.sh --to 5                          # 1–5 단계만(6 단계 레시피는 나중에 --from 6 --after-job <5 단계 job>)
 #   --exclude N,…: 모든 단계 sbatch 에서 더 뺄 노드(기본 hpc-50,hpc-51,hpc-101,hpc-102 — V3 R1·R2 때와 같다, 'none' 이면 더 빼지 않는다).
 #   --s1 mirror|resume: Stage 1 판(기본 mirror = 0.6B 와 같은 q17-s1m3-d10-s0). --from 2 이후로 낼 때도 앞서 쓴 판을 같이 준다(2 단계 init 이 따라간다).
-#   --dlg r1x|noeot|noeot-mt4(2026-10-23): 대화 5·6 단계 레시피. r1x(기본) = 지금 명령. noeot = 두 단계 모두 --no-eot(run 이름 -noeot).
+#   --dlg r1x|mt4|noeot|noeot-mt4(2026-10-23): 대화 5·6 단계 레시피. r1x(기본) = 지금 명령. mt4 = 6 단계에 회의·화자 슬롯 4(<EOT> 있음, run -mt4).
+#     noeot = 두 단계 모두 --no-eot(run 이름 -noeot) — 0.6B 에서 한국어 대화 받아쓰기가 무너져 채택하지 않았다(2026-10-24, V3 README 27 절).
 #     noeot-mt4 = noeot + 6 단계에 회의(AMI·ICSI·NOTSOFAR dlg_mt 1.0·회의 번역 타깃)·화자 슬롯 4(--max-speakers 4 --declare-all-p 0.5)·split v4(run -noeot-mt4).
 #     0.6B 시험(submit-q06-noeot-chain.sh·submit-q06-mt4.sh)과 같은 변경이다. 바꿀 때: 기다리는 5·6 단계 job 과 그 평가 job 을 사용자가 취소하고
 #     bash slurm/submit-q17-chain.sh --from 5 --after-job <4 단계 job> --dlg <레시피> --eval
@@ -44,7 +45,7 @@ case $s1 in
   resume) S1SH=slurm/submit-q17-s1m3-d10.sh; S1RUN=q17-s1m3-d10; S1WHAT="Stage 1 q17-s1m3-d10(q17-s1m-r3 에서 1 epoch — checkpoint-1000 이어 하기)" ;;
   *) echo "--s1 은 mirror|resume" >&2; exit 2 ;;
 esac
-case $dlg in r1x) SUF=""; EVSET=q17-v3 ;; noeot) SUF=-noeot; EVSET=q17-noeot-v3 ;; noeot-mt4) SUF=-noeot; EVSET=q17-noeot-mt4-v3 ;; *) echo "--dlg 는 r1x|noeot|noeot-mt4" >&2; exit 2 ;; esac
+case $dlg in r1x) SUF=""; EVSET=q17-v3 ;; mt4) SUF=""; EVSET=q17-mt4-v3 ;; noeot) SUF=-noeot; EVSET=q17-noeot-v3 ;; noeot-mt4) SUF=-noeot; EVSET=q17-noeot-mt4-v3 ;; *) echo "--dlg 는 r1x|mt4|noeot|noeot-mt4" >&2; exit 2 ;; esac
 [[ $exclude == none ]] && exclude=""
 export MAX_RESTART=${MAX_RESTART:-5}
 D=/soundai/users/tskim/VAPKT-data/data; M=/soundai/Model/VAPASR
@@ -71,10 +72,10 @@ stage 1 "$S1WHAT" bash $S1SH
 stage 2 "Stage 2(AST 1 차) q17-s2-ast(init $S1RUN/final)" bash slurm/submit-q17-s2-ast.sh --init $M/semcommit-$S1RUN/final
 stage 3 "Stage 2(AST 2 차) q17-s3-ast" bash slurm/submit-q17-s3-ast.sh
 stage 4 "Stage 2(AST 3 차) q17-s4-ast" bash slurm/submit-q17-s4-ast.sh
-NE=(); [[ $dlg != r1x ]] && NE=(--no-eot)                                                      # --dlg: <EOT> 없음(5·6 단계), 회의·화자 슬롯 4(6 단계)
+NE=(); [[ $dlg == noeot* ]] && NE=(--no-eot)                                                      # --dlg: <EOT> 없음(5·6 단계), 회의·화자 슬롯 4(6 단계)
 MT=(); S6RUN=q17-v3-p1-tel-xlw$SUF
-if [[ $dlg == noeot-mt4 ]]; then
-  S6RUN=q17-v3-p1-tel-xlw-noeot-mt4
+if [[ $dlg == *mt4 ]]; then
+  S6RUN=q17-v3-p1-tel-xlw$SUF-mt4
   MT=(--weights dlg_ko:2,dlg_en:0.7,dlg_de:0.7,dlg_mt:1.0,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:0.5,sim_en-de-tel:1.0,sim_en-ko:1.0,rep_ko:1.2,rep_en:1.2,rep_de:1.2
       --dlg-trans $D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16,$D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16 --split v4
       --dlg-corpora aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar --max-speakers 4 --declare-all-p 0.5)   # 제출 래퍼는 같은 옵션의 뒤 값을 쓴다
