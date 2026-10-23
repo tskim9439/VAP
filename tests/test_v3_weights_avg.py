@@ -68,7 +68,12 @@ def test_avg_checkpoints(tmp_path):
     assert torch.equal(w["w"], torch.tensor([[1.0, 2.0], [3.0, 5.0]])) and w["w"].dtype == torch.float32 and torch.equal(w["pos"], torch.tensor([0, 1]))
     assert json.loads((out / "config.json").read_text()) == {"tag": "c2"} and not any((out / f).exists() for f in ("optimizer.pt", "trainer_state.json", "rng_state_0.pth"))
     info = json.loads((out / "avg.json").read_text()); assert info["n"] == 3 and info["files"]["model.safetensors"]["parity"] and (tmp_path / "run/DONE").exists()
-    rc, log = avg(["--out", out] + cks); assert rc != 0 and "이미 있다" in log                    # 덮어쓰지 않는다
+    before = (out / "model.safetensors").read_bytes(); (tmp_path / "run/DONE").unlink()            # (시험 폴더) 선점으로 DONE 을 쓰기 전에 끊긴 경우를 흉내 낸다
+    rc, log = avg(["--out", out, "--done"] + cks); assert rc == 0 and "이미 있다(완료)" in log      # 끝난 평균은 덮어쓰지 않고 DONE 만 맞춘다
+    assert (out / "model.safetensors").read_bytes() == before and (tmp_path / "run/DONE").exists()
+    (tmp_path / "half").mkdir(); rc, log = avg(["--out", tmp_path / "half"] + cks); assert rc != 0 and "avg.json 없음" in log   # 끝나지 않은 폴더는 거부
+    (tmp_path / "r2").mkdir(); (tmp_path / "r2/final.tmp123").mkdir()                            # 끊긴 앞 시도의 임시 폴더가 있어도 새로 평균한다(그 폴더는 그대로 둔다)
+    rc, log = avg(["--out", tmp_path / "r2/final"] + cks); assert rc == 0 and (tmp_path / "r2/final/avg.json").exists() and (tmp_path / "r2/final.tmp123").exists(), log
 
 
 @pytest.mark.parametrize("bad", ["int", "key", "shape"])

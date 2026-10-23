@@ -4,6 +4,7 @@
 #   제출(사용자): sbatch --export=ALL,TASKS=<목록 파일> slurm/v3-eval-node.sbatch
 #   작업마다 CUDA_VISIBLE_DEVICES=GPU_IDX=<GPU>, PY = 노드 로컬 env python. 각 작업은 끝났거나 시작된 산출이 있으면 건너뛰고 아무것도 지우지 않는다.
 #   진행: logs/train/SA_V3_EVAL-<job>.out(작업 시작·끝·종료 코드).
+#   --requeue(2026-10-23): low_p_hpc 처럼 선점되는 파티션에서 다시 큐에 든다 — 작업은 완료 표시로 건너뛰거나 이어 한다(v3_eval_task.sh, avg_checkpoints.py).
 #SBATCH --job-name=SA_V3_EVAL
 #SBATCH --partition=apex
 #SBATCH --nodes=1
@@ -13,6 +14,7 @@
 #SBATCH --mem=0
 #SBATCH --time=12:00:00
 #SBATCH --open-mode=append
+#SBATCH --requeue
 #SBATCH --exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4
 #SBATCH --output=/soundai/users/tskim/VAPKT/logs/train/%x-%j.out
 #SBATCH --error=/soundai/users/tskim/VAPKT/logs/train/%x-%j.err

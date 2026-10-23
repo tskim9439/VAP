@@ -2,7 +2,8 @@
 #   작업: dlg | xl | taxi40 | stage3 | regress | xltel | xleval | taxi90 | onset | ami — stage4_eval_queue.sh(1–6 단계)·v3_eval_queue.sh·v3_dev_decode.sh·onset_probe.sh 와
 #   같은 명령·산출 폴더다(TRANS_LEAD_SPACE=1 과 같이 --trans-lead-space — V3 run 은 모두 그렇게 학습했다).
 #   체크포인트: MODEL_ROOT(기본 /soundai/Model/VAPASR)/stage3-<run>/<대상>. 대상이 final 이면 DONE, 아니면 trainer_state.json 이 생길 때까지 기다린다.
-#   건너뛰기: 끝난 작업(요약·보고 파일 있음). xltel·xleval·taxi90·onset 은 산출 폴더가 있으면(호스트 큐가 시작했거나 끝냄) 건너뛴다 — 같은 일을 두 번 하지 않는다.
+#   건너뛰기: 끝난 작업(요약·보고 파일 있음). xltel·xleval·taxi90 은 turn-metrics-d10.json, onset 은 onset-classes-d10.json 이 있으면 건너뛴다
+#   (2026-10-23 전에는 산출 폴더만 있어도 건너뛰었다 — low_p_hpc 선점 뒤 다시 돌면 덜 끝난 산출을 그대로 두게 돼 바꿨다. run 은 덮어쓰므로 처음부터 다시 한다).
 #   PY 로 python 을 바꾼다(노드 로컬 env). 아무것도 지우지 않는다.
 #   ami(2026-10-23, 사용자 "AMI_IHM 이랑 AMI_SDM 에 대해서도 평가를 수행하고 싶어"): AMI 공식 dev 18·eval 16 회의(ami-bench-v1 — 공식 Mix-Headset = IHM-mix,
 #     Array1-01 = SDM) 창 전부, δ4·10, 4 슬롯 선언 — V2 v2_eval_extra.sh 12 단계와 같은 명령. 다섯째 인자 r/w 로 창을 w 몫으로 나눠 r 번째만 돈다
@@ -20,7 +21,7 @@ OUT=${MODEL_ROOT:-/soundai/Model/VAPASR}/stage3-$RUN; CK=$OUT/$t; tag=${t#checkp
 say() { echo "[$(date '+%F %T')] $K $RUN/$t(GPU ${GPU_IDX:-${CUDA_VISIBLE_DEVICES:-?}}): $*"; }
 if [ "$t" = final ]; then until [ -f $OUT/DONE ]; do sleep 60; done; else until [ -f $CK/trainer_state.json ]; do sleep 60; done; fi
 dev() {                                                                                     # 전화 dev·짝 비교 셋(v3_dev_decode.sh 와 같다, bias 없음)
-  local o=$R/v3dev-$RUN-$tag-$1-sessions; [ -e $o ] && { say "있다 — 건너뜀 $o"; return 0; }; mkdir -p $o
+  local o=$R/v3dev-$RUN-$tag-$1-sessions; [ -f $o/turn-metrics-d10.json ] && { say "이미 끝 — 건너뜀 $o"; return 0; }; mkdir -p $o
   $P experiments/cst_stage4_taxi.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --sessions $DEV/$1/sessions.jsonl --out $o --deltas 10 --max-window 90 --batch-size 8 > $o/run.log 2>&1
   $P experiments/cst_stage4_taxi.py score --sessions $DEV/$1/sessions.jsonl --out $o --turn-metrics > $o/summary.log 2>&1; }
 say "시작"; mkdir -p $O
@@ -48,10 +49,10 @@ case $K in
              $P experiments/eval_single_turn_asr.py summarize --out $G/callhome-de > $G/callhome-de/summary.log 2>&1; fi ;;
   xltel) dev xl-tel-dev ;;
   xleval) dev xl-eval-v1 ;;
-  taxi90) [ -e $O/taxi90 ] && { say "있다 — 건너뜀"; exit 0; }
+  taxi90) [ -f $O/taxi90/turn-metrics-d10.json ] && { say "이미 끝 — 건너뜀"; exit 0; }
           $P experiments/cst_stage4_taxi.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --sessions $TAXI --out $O/taxi90 --deltas 4,10 --max-window 90 --batch-size 8 > $O/taxi90.log 2>&1
           $P experiments/cst_stage4_taxi.py score --sessions $TAXI --out $O/taxi90 --turn-metrics > $O/taxi90-summary.log 2>&1 ;;
-  onset) o=$R/taxi-v3onset-$RUN-$tag; [ -e $o ] && { say "있다 — 건너뜀"; exit 0; }; mkdir -p $o
+  onset) o=$R/taxi-v3onset-$RUN-$tag; [ -f $o/onset-classes-d10.json ] && { say "이미 끝 — 건너뜀"; exit 0; }; mkdir -p $o
          $P $X/taxi_v3_probe.py --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --sessions $TAXI --out $o --deltas 10 --max-window 90 --classify-onsets > $o/run.log 2>&1 ;;
   ami) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
        E=$R/stage3-eval-ami-$RUN-$tag; A=$R/stage3-attr-errors-ami-$RUN-$tag; AB=$D/ami-bench-v1

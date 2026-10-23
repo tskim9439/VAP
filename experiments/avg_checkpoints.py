@@ -6,7 +6,8 @@
 각 체크포인트의 *.safetensors 를 같은 파일·키·shape·dtype 끼리 산술 평균한다. 부동소수 텐서는 float64 로 더해 원래 dtype 으로 되돌리고,
 정수·bool 텐서는 모든 체크포인트에서 같아야 한다(다르면 멈춤). 파일 구성·키·shape·dtype 이 하나라도 다르면 멈춘다.
 나머지 파일(config·tokenizer·stage3_run 등)은 마지막 체크포인트에서 복사한다. 학습 상태(optimizer·scheduler·rng_state·trainer_state)는 뺀다.
-<out> 이 이미 있으면 멈춘다(덮어쓰지 않는다). <out>.tmp 에 쓰고, 다시 읽어 평균과 비트 동일한지 대조한 뒤 <out> 으로 옮긴다.
+<out> 이 이미 있으면 덮어쓰지 않는다 — avg.json 이 있는 끝난 평균이면(선점 뒤 다시 돈 평가 노드) --done 의 DONE 만 맞추고 0 으로 끝, 아니면 멈춘다.
+<out>.tmp<pid>(시도마다 다른 이름 — 끊긴 앞 시도의 임시 폴더는 지우지 않고 둔다)에 쓰고, 다시 읽어 평균과 비트 동일한지 대조한 뒤 <out> 으로 옮긴다.
 avg.json 에 출처·파일별 키 수·크기·대조 결과를 남긴다. --done: <out> 의 부모 폴더에 DONE 을 만든다(평가 큐가 대상 final 을 이 표시로 기다린다)."""
 import argparse, json, os, shutil, sys
 
@@ -18,13 +19,17 @@ def average(cks, out, done=False):
     from safetensors import safe_open
     from safetensors.torch import load_file, save_file
     if len(cks) < 2: sys.exit("체크포인트를 2 개 이상 준다")
-    if os.path.exists(out) or os.path.exists(out + ".tmp"): sys.exit(f"이미 있다: {out}(또는 .tmp) — 덮어쓰지 않는다")
+    if os.path.exists(out):
+        if not os.path.exists(os.path.join(out, "avg.json")): sys.exit(f"이미 있다: {out}(avg.json 없음) — 덮어쓰지 않는다")
+        mark = os.path.join(os.path.dirname(os.path.abspath(out)), "DONE")
+        if done and not os.path.exists(mark): open(mark, "w").write("avg_checkpoints\n")
+        print(f"이미 있다(완료): {out} — 덮어쓰지 않는다", flush=True); return json.load(open(os.path.join(out, "avg.json")))
     files = sorted(f for f in os.listdir(cks[-1]) if f.endswith(".safetensors"))
     if not files: sys.exit(f"safetensors 없음: {cks[-1]}")
     for ck in cks:
         got = sorted(f for f in os.listdir(ck) if f.endswith(".safetensors"))
         if got != files: sys.exit(f"safetensors 파일 구성이 다르다: {ck} {got} 대 {files}")
-    tmp = out + ".tmp"; os.makedirs(tmp)
+    tmp = f"{out}.tmp{os.getpid()}"; os.makedirs(tmp)
     info = dict(sources=[os.path.abspath(c) for c in cks], n=len(cks), files={})
     for f in files:
         acc, dt, meta = None, None, None
