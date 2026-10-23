@@ -100,3 +100,11 @@ def test_semcommit_submit_exclude(tmp_path):
     assert a.returncode == 0 and b.returncode == 0, (a.stderr, b.stderr)
     assert "--exclude" not in a.stdout and "--exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4,slurmmxch200v5-hpc-102,slurmmxch200v5-hpc-50" in b.stdout
     assert b.stdout.replace(" --exclude=slurmmxch200v5-hpc-52,slurmmxch200v5-hpc-4,slurmmxch200v5-hpc-102,slurmmxch200v5-hpc-50", "") == a.stdout
+
+
+def test_no_eot_flags(tmp_path):
+    """--no-eot(2026-10-23): stage3_train 도움말에 있고, 제출 래퍼는 주면 그 인자만 덧붙인다(주지 않으면 골든 명령 그대로)."""
+    rc, out = stage3(["--help"], tmp_path); assert rc == 0 and "--no-eot" in out
+    R, sh = submit_env(tmp_path); base = run_submit(R, sh, SUBMIT_ARGS[1])
+    rc, out, err = run_submit(R, sh, SUBMIT_ARGS[1][:-1] + ["--no-eot", "--dry-run"]); assert rc == 0, err
+    assert " --no-eot" in out and out.replace(" --no-eot", "") == base[1] and "<EOT> 없음" in err

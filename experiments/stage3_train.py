@@ -82,6 +82,8 @@ g.add_argument("--same-lang-hold-weight", type=float, default=None, help="V3 R2m
 g.add_argument("--eot-drop-synth", type=float, default=0.0, help="V3-p1 C5: 합성(meta.mask_eot) 창을 이 확률로 골라 감독 없는 <EOT> 를 문맥에서 뺀다(그 라운드 <NEXT_AUDIO> 는 가림, 0 = 끔)")
 g.add_argument("--eot-drop-sets", choices=("xl", "synth"), default="xl", help="EOT-문맥 dropout 을 걸 셋: xl = 교차 언어 합성만, synth = 합성 셋(sim_*) 전부")
 g.add_argument("--xl-slot-order", choices=("lang", "arrival"), default="lang", help="V3 R4: 교차 언어 창 슬롯 — lang = 언어 고정(prefix 가 슬롯마다 언어), arrival = 먼저 말한 화자가 A(prefix 는 두 언어만, cst_head_text_xl)")
+g.add_argument("--no-eot", action="store_true", help="<EOT> 없는 대화 학습(2026-10-23 — 턴 예측은 주 목표가 아니고 화자 귀속이 중요하다): 대화·합성 셋 모두에서 <EOT> 를 정답·문맥 "
+               "모두에서 뺀다. C1 머무름 가중은 뺀 <EOT> 가 놓였을 청크 끝을 기준점으로(cst_dialogue no_eot). <EOT> 행은 켜 두되 정답이 없다. 지문 키 no_eot(끄면 없음)")
 g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -255,7 +257,7 @@ if model is not None:
     speed = apply_speedups(model, a, log, liger=a.liger); a.liger = bool(speed["liger"]); cfg.use_liger = a.liger
     n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad)
     log(f"model ← {a.init} ({time.time() - t0:.0f}s) · 학습 {n_tr / 1e6:.1f}M · 인코더 {'동결' if a.freeze_encoder else '학습'}(init 인코더 저장됨={init_had_encoder}) · "
-        f"<EOT>={EOT} 켬(turn_weight {cfg.turn_weight}) · grad ckpt {a.grad_ckpt} · liger {a.liger} · 화자 슬롯 헤드 {f'켬(가중 {cfg.spk_weight})' if model.spk_head is not None else '끔'} · "
+        f"<EOT>={EOT} {'정답·문맥 없음(--no-eot)' if a.no_eot else f'켬(turn_weight {cfg.turn_weight})'} · grad ckpt {a.grad_ckpt} · liger {a.liger} · 화자 슬롯 헤드 {f'켬(가중 {cfg.spk_weight})' if model.spk_head is not None else '끔'} · "
         f"인코더 탭 {f'L{cfg.enc_tap_layer:02d}(은닉 {cfg.enc_tap_hidden})' if model.adapter_tap is not None else '끔'}")
 
 # ── 데이터
@@ -276,6 +278,7 @@ def dec_kw(key):
     """V3-p1 C1·C5 데이터셋 인자(교대·머무름 가중 — --decision-weight-sets, 합성 EOT-문맥 dropout — --eot-drop-sets). 끄거나 이 셋에 걸지 않으면 빈 dict(데이터셋 기본값)."""
     kind = set_kind(key); kw = decision_weights(kind, a.change_tag_weight, a.hold_tag_weight, a.decision_weight_sets, a.same_lang_change_weight, a.same_lang_hold_weight)
     if a.eot_drop_synth > 0 and (kind == "xl" or (a.eot_drop_sets == "synth" and kind == "sim")): kw.update(eot_drop_synth=a.eot_drop_synth)
+    if a.no_eot: kw.update(no_eot=True)                                                       # 모든 대화·합성 셋(켤 때만 키 — 끄면 데이터셋 기본값)
     return kw
 split = json.load(open(a.split, encoding="utf-8")); mono = a.mono_cache or os.path.join(a.data, "mono")
 train_sets, dlg_files, revive_files = {}, [], []
@@ -402,7 +405,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"same_lang_change_weight": a.same_lang_change_weight or 0.0, "same_lang_hold_weight": a.same_lang_hold_weight or 0.0} if SL else {}),   # V3 R2m: 주지 않으면 키 없음
           **({"eot_drop_synth": a.eot_drop_synth} if a.eot_drop_synth > 0 else {}), **({"eot_drop_sets": a.eot_drop_sets} if a.eot_drop_synth > 0 and a.eot_drop_sets != "xl" else {}),
           **({"set_phone": {k: (aug.settings() if aug is not None else None) for k in sorted(set_phone) for aug in [wav_aug_of(k)]}} if set_phone else {}),
-          **({"xl_slot_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))
+          **({"xl_slot_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}), **({"no_eot": True} if a.no_eot else {}))
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():

@@ -312,6 +312,68 @@ def test_window_streams_drop_returns_ghosts():
     assert {k: v for k, v in s2.items() if k not in ("labels", "eot_ghost", "ghost_pos")} == {k: v for k, v in build_cst_sequence(st, {}, 60, PRE, PAD, SP, delay=4).items() if k != "labels"}
 
 
+
+# ── no_eot(2026-10-23 — 턴 예측이 주 목표가 아니어서 <EOT> 를 정답·문맥 모두에서 뺀다, 머무름 기준점 = 뺀 <EOT> 의 청크 끝)
+def test_window_streams_no_eot_ghosts_every_episode():
+    u = [Utterance("x", 0.0, 2.0, tokens=[(11, 1.0), (12, 2.0)], utt_id="x0"), Utterance("y", 2.5, 4.0, tokens=[(21, 3.0), (22, 4.0)], utt_id="y0"),
+         Utterance("x", 4.5, 6.0, tokens=[(13, 5.0)], utt_id="x1")]
+    e_r = dialogue_episodes(Dialogue(conv_id="r", corpus="t", lang="German", split="train", duration_s=20.0, speakers=["x", "y"], utterances=u))
+    st, eot_p, w, gh = window_streams(e_r, ["x", "y"], 0.0, 20.0, EOT, no_eot=True)                 # 실제 대화도 모두 뺀다
+    assert eot_p == {} and w["eot"] == w["eot_dropped"] == 3 and all(len(x) == 2 for ev_ in st for x in ev_)
+    assert gh == [(0, chunk_of(2.24), [(0, 1)]), (1, chunk_of(4.24), [(1, 1)]), (0, chunk_of(6.24), [(0, 2)])]
+    tr = lambda ep: ([(31, ep.end, False)], [], True)
+    assert window_streams4(e_r, ["x", "y"], 0.0, 20.0, EOT, tr, no_eot=True)[2]["ghost"][0] == (0, chunk_of(2.24), [(0, 1), (2, 0)])
+    s = build_cst_sequence(st, {}, 100, PRE, PAD, SP, delay=4, eot_ghost=gh, no_eot=True, change_weight=3.0, hold_weight=1.5)
+    assert all(s["ids"][p] == NEXT and s["labels"][p] == NEXT for p in s["ghost_pos"])          # 가리지 않는다(가르칠 <EOT> 대안이 없다)
+    assert s["ghost_anchor"] == {p: g[0] for p, g in zip(s["ghost_pos"], gh)} and EOT not in s["ids"] and s["n_eot"] == 0
+    assert [p for p, k in enumerate(s["dec_kind"]) if k == 2] == [] and s["n_switch"] == 2     # x 의 둘째 발화(13)는 y 뒤라 교대, 머무름은 없다
+    u2 = [Utterance("x", 0.0, 2.0, tokens=[(11, 1.0), (12, 2.0)], utt_id="x0"), Utterance("x", 2.6, 3.4, tokens=[(13, 3.0), (15, 3.4)], utt_id="x1"),
+          Utterance("y", 3.5, 5.0, tokens=[(21, 4.2), (22, 4.6)], utt_id="y0")]                 # x 가 0.6 s 쉬고 이어 말한다(머무름) → y 교대
+    e2 = dialogue_episodes(Dialogue(conv_id="h", corpus="t", lang="German", split="train", duration_s=20.0, speakers=["x", "y"], utterances=u2))
+    sa, pa, _ = window_streams(e2, ["x", "y"], 0.0, 20.0, EOT); sb, _, _, gb = window_streams(e2, ["x", "y"], 0.0, 20.0, EOT, no_eot=True)
+    ref = build_cst_sequence(sa, pa, 100, PRE, PAD, SP, delay=4, change_weight=3.0, hold_weight=1.5)
+    nb = build_cst_sequence(sb, {}, 100, PRE, PAD, SP, delay=4, eot_ghost=gb, no_eot=True, change_weight=3.0, hold_weight=1.5)
+    kinds = lambda x: [(x["ids"][p], k) for p, k in enumerate(x["dec_kind"]) if k]
+    assert kinds(nb) == kinds(ref) == [(13, 2), (B, 1)]                                           # 같은 자리에서 머무름(13)·교대(<SPK_B>)
+
+
+@pytest.mark.parametrize("kind", sorted(KINDS))
+def test_no_eot_drops_every_eot(tmp_path, kind):
+    ref = make_ds(tmp_path, kind, change_weight=3.0, hold_weight=1.5); ds = make_ds(tmp_path / "n", kind, change_weight=3.0, hold_weight=1.5, no_eot=True)
+    n = dict(hold=0, hold_ref=0, anchor=0, next_trained=0)
+    for i in range(len(ds)):
+        for d in ds.delays:
+            for r, s in zip(seqs(ref, i, d), seqs(ds, i, d)):
+                assert ds.problems_of(s) == [], (kind, i, d, s["tgt"], ds.problems_of(s))
+                assert ds.eot_id not in s["ids"] and s["n_eot"] == 0 and not s["soft_pos"] and s["win"]["eot_dropped"] == s["win"]["eot"] == r["win"]["eot"]
+                assert [[x[0] for x in ev_ if len(x) == 2] for ev_ in s["streams"]] == [[x[0] for x in ev_ if len(x) == 2] for ev_ in r["streams"]]
+                assert text_labels(s) == text_labels(r)                                         # 글자·label 은 그대로, <EOT> 만 빠진다
+                n["hold"] += s["n_hold"]; n["hold_ref"] += r["n_hold"]; n["anchor"] += len(s["ghost_anchor"])
+                n["next_trained"] += sum(s["labels"][p] == s["ids"][p] for p in s["ghost_pos"])
+            rr = random.Random(100 * i + d)
+            for _ in range(3):
+                s = ds.cst_sequence(i, d, rng=rr); assert ds.problems_of(s) == [] and ds.eot_id not in s["ids"], (kind, i, d, s["flip"])   # 학습 경로
+    assert n["anchor"] > 0 and n["next_trained"] > 0 and n["hold"] > 0 and 0.5 * n["hold_ref"] <= n["hold"] <= 1.5 * n["hold_ref"], n
+    random.seed(0); b = [ds[i] for i in range(4)]; assert all(x["n_eot"] == 0 and ds.eot_id not in x["ids"].tolist() for x in b)
+    assert "dec_kind" in collate_cst(b)
+
+
+@pytest.mark.parametrize("synth", [False, True])
+def test_no_eot_with_all_options(tmp_path, synth):
+    """뒤집기(recover p=1)·C5(p=1)·교대·머무름 가중·번역 모드와 함께 켜도 불변식이 지켜지고 <EOT> 가 남지 않는다."""
+    q, tr = make_dlg(tmp_path, "c_all", synth=synth)
+    ds = CstDialogueDataset([q], tokw(), delays=(2, 4), window_s=(12.0, 20.0), hop_s=3.0, seed=1, decision_weight=2.0, trans=tr, ast_frac=0.5,
+                            recover=Recover(p=1.0), change_weight=3.0, hold_weight=1.5, eot_drop_synth=1.0, no_eot=True)
+    kinds = set()
+    for i in range(len(ds)):
+        for d in ds.delays:
+            r = random.Random(1000 + 10 * i + d)
+            for _ in range(8):
+                s = ds.cst_sequence(i, d, rng=r); assert ds.problems_of(s) == [] and ds.eot_id not in s["ids"], (i, d, s["tgt"], s["flip"] and s["flip"]["kind"], ds.problems_of(s))
+                kinds.add((bool(s["tgt"]), s["flip"] is not None))
+    assert kinds == {(False, True), (True, False)}
+
+
 # ── 모델 forward: dec_kind 는 통계만(손실 불변)
 def test_forward_decision_stats_do_not_change_loss():
     from test_semcommit_tokens_loss import tiny_model

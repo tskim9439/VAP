@@ -114,14 +114,16 @@ def window_speakers(eps: List[Episode], t0: float, L: float) -> List[str]:
     return [s for _, s in speaker_firsts(eps, t0, L)]
 
 
-def window_streams(eps: List[Episode], speakers: Sequence[str], t0: float, L: float, eot_id: int, drop_eot: bool = False, heads: Optional[set] = None):
+def window_streams(eps: List[Episode], speakers: Sequence[str], t0: float, L: float, eot_id: int, drop_eot: bool = False, heads: Optional[set] = None,
+                   no_eot: bool = False):
     """episode → 슬롯별 이벤트열(창 기준 시각). 원소 = (tid, t) 전사 토큰 | (eot_id, t_end, k_min) 명시 청크 이벤트.
     → (streams, {(슬롯, 원소 index): p_end}, 통계). drop_eot(C5): 합성 episode(outcome 'synthetic' — meta.mask_eot 라 p_end 가 없다)의 <EOT> 원소를 넣지 않고
     ghost (슬롯, k_min, 꼬리 [(흐름, index)]) 로 남긴다 — 통계 eot 는 그대로 세고 eot_dropped 를 더한다 → (streams, eot_p, 통계, ghosts)(build_interleaved_events with_src 와 같은 관례).
+    no_eot(<EOT> 없는 학습, 2026-10-23): 모든 episode 의 <EOT> 를 drop_eot 처럼 ghost 로만 남긴다(정답·문맥 모두 없음 — 머무름 결정 기준점으로만 쓴다).
     heads(set 을 주면 채운다 — C1): episode 마다 창 안 첫 전사 원소 (슬롯, index). 반환은 그대로다."""
     t1 = t0 + L; streams: List[list] = [[] for _ in speakers]; eot_p: Dict[Tuple[int, int], Optional[float]] = {}; st = dict(eot=0, eot_truncated=0, eot_no_tokens=0, eot_backchannel=0)
     slot = {s: i for i, s in enumerate(speakers)}; ghosts: List[tuple] = []
-    if drop_eot: st["eot_dropped"] = 0
+    if drop_eot or no_eot: st["eot_dropped"] = 0
     for ep in eps:
         if ep.end <= t0 or ep.start >= t1 or ep.speaker not in slot: continue
         s = slot[ep.speaker]; toks = [(int(tid), float(t) - t0) for tid, t in ep.tokens if t0 <= t <= t1]
@@ -131,9 +133,9 @@ def window_streams(eps: List[Episode], speakers: Sequence[str], t0: float, L: fl
         if not toks: st["eot_no_tokens"] += 1; continue
         if ep.outcome == "backchannel": st["eot_backchannel"] += 1; continue
         e = ep.end - t0
-        if drop_eot and ep.outcome == "synthetic": ghosts.append((s, chunk_of(e + EOT_GAP_S), [(s, len(streams[s]) - 1)])); st["eot"] += 1; st["eot_dropped"] += 1; continue
+        if no_eot or (drop_eot and ep.outcome == "synthetic"): ghosts.append((s, chunk_of(e + EOT_GAP_S), [(s, len(streams[s]) - 1)])); st["eot"] += 1; st["eot_dropped"] += 1; continue
         streams[s].append((int(eot_id), e, chunk_of(e + EOT_GAP_S))); eot_p[(s, len(streams[s]) - 1)] = ep.p_end; st["eot"] += 1
-    return (streams, eot_p, st, ghosts) if drop_eot else (streams, eot_p, st)
+    return (streams, eot_p, st, ghosts) if drop_eot or no_eot else (streams, eot_p, st)
 
 
 def slot_activity(eps: List[Episode], speakers: Sequence[str], t0: float, L: float, K: int, n_slots: int = 2) -> List[List[int]]:
@@ -255,7 +257,7 @@ def flatten_cst(chunks: List[tuple], srcs: List[list], K: int, prefix: List[int]
 
 
 def decision_positions(ids: Sequence[int], is_input: Sequence[bool], labels: Sequence[int], labels_alt: Sequence[int], src_at: Sequence, spk_ids: Sequence[int],
-                       trans_id: Optional[int], eot_id: int, word_start=None, heads=()) -> Tuple[List[int], List[int]]:
+                       trans_id: Optional[int], eot_id: int, word_start=None, heads=(), anchors: Optional[Dict[int, int]] = None) -> Tuple[List[int], List[int]]:
     """교대·머무름 결정 위치(C1, 순수 함수). 문맥 슬롯 cur 을 시퀀스를 따라 추적한다 — 첫 출력 위치부터 모든 슬롯 태그가(label −100 이든 아니든) cur 을 바꾸고
     (prefix 의 슬롯 선언 'language <SPK_A>{L} …' 은 문맥이 아니다), <TRANS> 는 구간(전사·번역)만 바꾼다. 글자 토큰 = 출처(src_at)가 있는 출력 원소 중 <EOT> 가 아닌 것.
     switch p: labels[p] == ids[p] 인 출력 슬롯 태그, cur 이 있고 그 슬롯과 다르다, labels_alt[p] == −100, 다음 위치가 단어 첫 글자 토큰
@@ -263,14 +265,17 @@ def decision_positions(ids: Sequence[int], is_input: Sequence[bool], labels: Seq
     hold p: 출력 <EOT>(문맥 슬롯 s) 뒤 첫 출력 결정 토큰(<NEXT_AUDIO>·오디오·<EMPTY_AUDIO> 입력은 건너뛴다)이 같은 슬롯 <SPK_s>(번역 모드 재개) 이거나
       cur == s 인 단어 첫 글자 토큰(받아쓰기 모드 — 태그 없이 계속)이고 labels[p] != −100, labels_alt[p] == −100.
     word_start(tid) → bool, None 이면 글자 토큰을 모두 단어 첫 토큰으로 본다. heads: episode 첫 전사 원소 (흐름, index) — 앞 공백 없이 시작하는 단위
-    (words 행 합성 발화의 첫 토큰)도 턴 시작이면 단어 첫 토큰으로 본다(window_streams(4) heads). → (switch 위치, hold 위치)."""
-    N = len(ids); slot = {int(t): k for k, t in enumerate(spk_ids)}; ws0 = word_start or (lambda t: True); hd = set(map(tuple, heads))
+    (words 행 합성 발화의 첫 토큰)도 턴 시작이면 단어 첫 토큰으로 본다(window_streams(4) heads).
+    anchors(no_eot — {위치: 슬롯}, ghost_next with_slot): <EOT> 가 없는 시퀀스에서 뺀 <EOT> 가 나왔을 청크를 닫는 <NEXT_AUDIO> 위치를 출력 <EOT> 처럼
+    머무름 기준점으로 쓴다 — 그 위치에서 문맥 슬롯이 아직 그 슬롯일 때만(그 청크 안에서 이미 교대했으면 <EOT> 뒤 교대와 같아 머무름이 아니다). → (switch 위치, hold 위치)."""
+    N = len(ids); slot = {int(t): k for k, t in enumerate(spk_ids)}; ws0 = word_start or (lambda t: True); hd = set(map(tuple, heads)); anc = anchors or {}
     wsp = lambda q: ws0(int(ids[q])) or (src_at[q] is not None and tuple(src_at[q][:2]) in hd)
     text = lambda q: not is_input[q] and src_at[q] is not None and ids[q] != eot_id
-    switch: List[int] = []; hold: List[int] = []; cur = None; started = False; after = None             # after = 아직 첫 결정을 못 본 직전 출력 <EOT> 의 슬롯
+    switch: List[int] = []; hold: List[int] = []; cur = None; started = False; after = None             # after = 아직 첫 결정을 못 본 직전 출력 <EOT>(또는 기준점)의 슬롯
     for p in range(N):
         t = ids[p]; started = started or not is_input[p]
         if not started: continue
+        if p in anc and cur == anc[p]: after = cur
         if t in slot:
             s = slot[t]
             if not is_input[p]:
@@ -285,11 +290,11 @@ def decision_positions(ids: Sequence[int], is_input: Sequence[bool], labels: Seq
     return switch, hold
 
 
-def weight_decisions(s: dict, sp: Specials, trans_id: Optional[int], eot_id: int, word_start, change_weight: float, hold_weight: float, heads=()) -> dict:
+def weight_decisions(s: dict, sp: Specials, trans_id: Optional[int], eot_id: int, word_start, change_weight: float, hold_weight: float, heads=(), anchors=None) -> dict:
     """build_cst(4)_sequence 결과 s 의 pos_weight 를 교대·머무름 위치에서 max(기존, w) 로 올린다(제자리, w > 0 인 쪽만 — <EOT> decision_weight 위치는 그대로)
-    → 덧붙일 키 dict(dec_kind (L,) 0 · 1 교대 · 2 머무름, n_switch, n_hold). 둘 다 0 이면 아무것도 안 하고 {}(반환 키가 예전 그대로)."""
+    → 덧붙일 키 dict(dec_kind (L,) 0 · 1 교대 · 2 머무름, n_switch, n_hold). 둘 다 0 이면 아무것도 안 하고 {}(반환 키가 예전 그대로). anchors: decision_positions(no_eot)."""
     if not (change_weight > 0 or hold_weight > 0): return {}
-    sw, ho = decision_positions(s["ids"], s["is_input"], s["labels"], s["labels_alt"], s["src_at"], sp.spk, trans_id, eot_id, word_start, heads)
+    sw, ho = decision_positions(s["ids"], s["is_input"], s["labels"], s["labels_alt"], s["src_at"], sp.spk, trans_id, eot_id, word_start, heads, anchors)
     dk = [0] * len(s["ids"]); pw = s["pos_weight"]
     for ps, k, w in ((sw, 1, change_weight), (ho, 2, hold_weight)):
         for p in ps:
@@ -298,14 +303,15 @@ def weight_decisions(s: dict, sp: Specials, trans_id: Optional[int], eot_id: int
     return dict(dec_kind=dk, n_switch=len(sw), n_hold=len(ho), dec_heads=sorted(set(map(tuple, heads))))
 
 
-def ghost_next(eot_ghost, src_at: Sequence, chunk_at: Sequence[int], ids: Sequence[int], is_input: Sequence[bool], K: int, sp: Specials) -> List[int]:
-    """뺀 합성 <EOT>(ghost (슬롯, k_min, 꼬리))가 나왔을 청크 c = max(k_min, 꼬리 원소의 방출 청크 — flush 는 K) → c < K 이면 c 를 닫는 <NEXT_AUDIO> 위치(flush 는 없음)."""
+def ghost_next(eot_ghost, src_at: Sequence, chunk_at: Sequence[int], ids: Sequence[int], is_input: Sequence[bool], K: int, sp: Specials, with_slot: bool = False) -> list:
+    """뺀 합성 <EOT>(ghost (슬롯, k_min, 꼬리))가 나왔을 청크 c = max(k_min, 꼬리 원소의 방출 청크 — flush 는 K) → c < K 이면 c 를 닫는 <NEXT_AUDIO> 위치(flush 는 없음).
+    with_slot: (위치, ghost 슬롯) 쌍으로(no_eot 머무름 기준점 — decision_positions anchors)."""
     at = {(q[0], q[1]): p for p, q in enumerate(src_at) if q is not None}
     nx = {chunk_at[p]: p for p in range(len(ids)) if ids[p] == sp.next_audio and not is_input[p] and src_at[p] is None and 0 <= chunk_at[p] < K}
     out = []
-    for _, k_min, tails in eot_ghost:
+    for s, k_min, tails in eot_ghost:
         c = max([int(k_min)] + [chunk_at[at[t]] for t in tails if t in at])
-        if c < K: out.append(nx[c])
+        if c < K: out.append((nx[c], int(s)) if with_slot else nx[c])
     return out
 
 
@@ -316,8 +322,10 @@ def event_id(streams: List[list]) -> int:
 
 def build_cst_sequence(streams: List[list], eot_p: Dict[Tuple[int, int], Optional[float]], K: int, prefix: List[int], audio_pad: int, sp: Specials,
                        delay: int, mask_chunks=(), decision_weight: float = 0.0, recover: Optional[Recover] = None, rng=None, word_start=None,
-                       lex_mask=(), lex_chunks=(), change_weight: float = 0.0, hold_weight: float = 0.0, eot_ghost=(), dec_heads=()) -> dict:
+                       lex_mask=(), lex_chunks=(), change_weight: float = 0.0, hold_weight: float = 0.0, eot_ghost=(), dec_heads=(), no_eot: bool = False) -> dict:
     """슬롯 이벤트열 → 학습 시퀀스(오디오와 무관한 순수 함수; recover·rng 를 주면 그 확률로 정체 회복 구간을 넣는다 — 모듈 설명).
+    no_eot(window_streams no_eot 의 ghosts 와 함께): <EOT> 가 아예 없는 학습이라 ghost 라운드 <NEXT_AUDIO> 를 가리지 않고(가르칠 대안이 없다),
+      ghost 를 머무름 기준점(ghost_anchor {위치: 슬롯} 키, decision_positions anchors)으로만 쓴다.
     word_start(tid) → bool: 주면 뒤집기 시작·회복 지점을 단어 첫 토큰으로 제한한다(실제 오류는 단어 경계에서 난다 — 단어 중간 태그를 가르치지 않게).
     lex_mask: 전사 label 만 −100 인 원소 (슬롯, index), lex_chunks: <NEXT_AUDIO> label 을 −100 으로 둘 청크(K = flush) — 되살린 발화(revive, 모듈 설명).
     change_weight·hold_weight(C1, > 0 이면): 교대·머무름 결정 위치(decision_positions, 단어 첫 토큰은 word_start 또는 dec_heads — episode 첫 전사 원소) 가중
@@ -353,7 +361,9 @@ def build_cst_sequence(streams: List[list], eot_p: Dict[Tuple[int, int], Optiona
             if not is_input[p]: labels[p] = -100
         flip.update(p_start=a0, p_end=a1)
     gh = ghost_next(eot_ghost, src_at, chunk_at, ids, is_input, K, sp) if eot_ghost else []
-    for p in gh: labels[p] = -100                                                               # 뺀 합성 <EOT> 의 라운드: '여기는 <EOT> 아님'을 가르치지 않는다
+    if not no_eot:
+        for p in gh: labels[p] = -100                                                           # 뺀 합성 <EOT> 의 라운드: '여기는 <EOT> 아님'을 가르치지 않는다
+    anc = dict(ghost_next(eot_ghost, src_at, chunk_at, ids, is_input, K, sp, with_slot=True)) if no_eot else None
     pos_weight = [0.0] * N; labels_alt = [-100] * N; soft_w = [1.0] * N; soft_pos: List[int] = []; eot_pos: List[int] = []
     for p, q in enumerate(src_at):
         if q is None or (q[0], q[1]) not in eot_p: continue
@@ -368,8 +378,8 @@ def build_cst_sequence(streams: List[list], eot_p: Dict[Tuple[int, int], Optiona
         if decision_weight: pos_weight[d] = float(decision_weight)
     out = dict(ids=ids, is_input=is_input, chunk_of=cof, labels=labels, pos_weight=pos_weight, labels_alt=labels_alt, soft_w=soft_w, soft_pos=soft_pos,
                eot_pos=eot_pos, src_at=src_at, chunk_at=chunk_at, chunks=chunks, srcs=srcs, st=st, n_rounds=n_rounds, n_flush=n_flush, n_eot=len(eot_pos), n_soft=len(soft_pos),
-               flip=flip, lex=lex, **(dict(eot_ghost=list(eot_ghost), ghost_pos=gh) if eot_ghost else {}))
-    out.update(weight_decisions(out, sp, None, event_id(streams), word_start, change_weight, hold_weight, dec_heads))
+               flip=flip, lex=lex, **(dict(eot_ghost=list(eot_ghost), ghost_pos=gh) if eot_ghost else {}), **({"ghost_anchor": anc} if no_eot else {}))
+    out.update(weight_decisions(out, sp, None, event_id(streams), word_start, change_weight, hold_weight, dec_heads, anc))
     return out
 
 
@@ -390,19 +400,19 @@ def read_back(ids: Sequence[int], is_input: Sequence[bool], sp: Specials, eot_id
 
 # ── Stage 4: 두 화자 × (전사·번역) 네 흐름 (decision-stage4-prep-20261019, decision-ast-monotonic-data 9)
 def window_streams4(eps: List[Episode], speakers: Sequence[str], t0: float, L: float, eot_id: int, trans_of, drop_eot: bool = False,
-                    heads: Optional[set] = None) -> Tuple[List[list], Dict[Tuple[int, int], Optional[float]], dict]:
+                    heads: Optional[set] = None, no_eot: bool = False) -> Tuple[List[list], Dict[Tuple[int, int], Optional[float]], dict]:
     """window_streams + 번역 흐름: N = max(2, 화자 수) — 흐름 0..N−1 = 슬롯 전사, N..2N−1 = 그 번역(원소 (tid, t), 창 기준 시각). 2 화자면 0·1 = A·B 전사, 2·3 = 번역.
     trans_of(ep) → (토큰 [(tid, t 대화 시각, 입력만)], 번역 없는 행 구간 [(a, b, 사유)], 마지막 행에 번역이 있나).
     번역 시각은 trans_of 가 행 조각 구간으로 자른 것을 다시 episode 구간으로 자른다. <EOT> 는 그 episode 의 마지막 행에 번역이 있으면 번역 흐름,
     없으면 전사 흐름(Stage 3 와 같다)에 두고, 어느 쪽이든 전사·번역 꼬리 중 나중 것 뒤에 오도록 그 꼬리 원소를 eot_tail 로 남긴다
     (build_interleaved_events 는 같은 흐름의 앞 원소만 기다린다 — build_cst4_sequence 가 eot_after_tails 로 옮긴다). 청크는 Stage 3 규칙(말이 끝난 때) 그대로다.
     drop_eot(C5): 합성 episode 의 <EOT> 를 넣지 않고 정보에 ghost [(슬롯, k_min, 전사·번역 꼬리)], 통계에 eot_dropped(window_streams 와 같은 규칙).
-    heads: window_streams 와 같다(전사 흐름의 episode 첫 원소).
+    no_eot: 모든 episode 의 <EOT> 를 그렇게 뺀다(window_streams 와 같다). heads: window_streams 와 같다(전사 흐름의 episode 첫 원소).
     → (streams, {(흐름, index): p_end}, 정보 dict(tr_input, miss, miss_eot, eot_tail, st[, ghost]))."""
     N = max(2, len(speakers)); t1 = t0 + L; streams: List[list] = [[] for _ in range(2 * N)]; eot_p: Dict[Tuple[int, int], Optional[float]] = {}
     tr_input, miss, miss_eot, eot_tail = set(), [], set(), {}; st = dict(eot=0, eot_truncated=0, eot_no_tokens=0, eot_backchannel=0, tr_tokens=0, tr_input=0)
     slot = {s: i for i, s in enumerate(speakers)}; ghosts: List[tuple] = []
-    if drop_eot: st["eot_dropped"] = 0
+    if drop_eot or no_eot: st["eot_dropped"] = 0
     for ep in eps:
         if ep.end <= t0 or ep.start >= t1 or ep.speaker not in slot: continue
         s = slot[ep.speaker]; toks = [(int(tid), float(t) - t0) for tid, t in ep.tokens if t0 <= t <= t1]
@@ -420,10 +430,10 @@ def window_streams4(eps: List[Episode], speakers: Sequence[str], t0: float, L: f
         if not toks: st["eot_no_tokens"] += 1; continue
         if ep.outcome == "backchannel": st["eot_backchannel"] += 1; continue
         e = ep.end - t0; w = N + s if n_tr and last_ok else s; tails = [(s, len(streams[s]) - 1)] + ([(N + s, len(streams[N + s]) - 1)] if n_tr else [])
-        if drop_eot and ep.outcome == "synthetic": ghosts.append((s, chunk_of(e + EOT_GAP_S), tails)); st["eot"] += 1; st["eot_dropped"] += 1; continue
+        if no_eot or (drop_eot and ep.outcome == "synthetic"): ghosts.append((s, chunk_of(e + EOT_GAP_S), tails)); st["eot"] += 1; st["eot_dropped"] += 1; continue
         streams[w].append((int(eot_id), e, chunk_of(e + EOT_GAP_S))); key = (w, len(streams[w]) - 1); eot_p[key] = ep.p_end; eot_tail[key] = tails; st["eot"] += 1
         if not last_ok: miss_eot.add(key)
-    return streams, eot_p, dict(tr_input=tr_input, miss=miss, miss_eot=miss_eot, eot_tail=eot_tail, st=st, **({"ghost": ghosts} if drop_eot else {}))
+    return streams, eot_p, dict(tr_input=tr_input, miss=miss, miss_eot=miss_eot, eot_tail=eot_tail, st=st, **({"ghost": ghosts} if drop_eot or no_eot else {}))
 
 
 def eot_after_tails(chunks: List[tuple], srcs: List[list], eot_tail: Dict[Tuple[int, int], list]) -> int:
@@ -465,8 +475,9 @@ def tag_cst4(chunks: List[tuple], srcs: List[list], streams: List[list], sp: Spe
 def build_cst4_sequence(streams: List[list], eot_p: Dict[Tuple[int, int], Optional[float]], K: int, prefix: List[int], audio_pad: int, sp: Specials,
                         trans_id: int, delay: int, mask_chunks=(), decision_weight: float = 0.0, lex_mask=(), lex_chunks=(), tr_input=(),
                         miss_chunks=(), miss_eot=(), eot_tail: Optional[Dict[Tuple[int, int], list]] = None, word_start=None, change_weight: float = 0.0,
-                        hold_weight: float = 0.0, eot_ghost=(), dec_heads=()) -> dict:
+                        hold_weight: float = 0.0, eot_ghost=(), dec_heads=(), no_eot: bool = False) -> dict:
     """전사·번역 흐름 2N 개(window_streams4, 2 화자면 네 흐름) → 학습 시퀀스(오디오와 무관한 순수 함수). build_cst_sequence 와 같은 반환 키 + n_tr·eot_moved.
+    no_eot: build_cst_sequence 와 같다(ghost 라운드를 가리지 않고 머무름 기준점 ghost_anchor 로만).
     label −100: 입력, 마스크 청크(전사 없는 음성), 되살린 전사(lex_mask)와 그 방출 청크 <NEXT_AUDIO>(lex_chunks),
       입력 문맥으로만 둘 번역(tr_input — 되살린 발화의 번역)과 그것을 여는 태그, 번역 없는 행의 방출 청크(miss_chunks)의 태그·<NEXT_AUDIO>·<EOT>,
       마지막 발화에 번역이 없는 episode 의 <EOT>(miss_eot). <EOT> soft label 은 Stage 3 규칙 그대로(태그를 그 <EOT> 만을 위해 열었으면 태그 위치).
@@ -490,7 +501,9 @@ def build_cst4_sequence(streams: List[list], eot_p: Dict[Tuple[int, int], Option
         elif q is None and ids[p] == sp.next_audio and chunk_at[p] in lk: labels[p] = -100
         elif chunk_at[p] in mk and (q is None or ev): labels[p] = -100                           # 번역 없는 행: 태그·NEXT·EOT 를 가르치지 않는다
     gh = ghost_next(eot_ghost, src_at, chunk_at, ids, is_input, K, sp) if eot_ghost else []
-    for p in gh: labels[p] = -100                                                               # 뺀 합성 <EOT> 의 라운드(C5)
+    if not no_eot:
+        for p in gh: labels[p] = -100                                                           # 뺀 합성 <EOT> 의 라운드(C5)
+    anc = dict(ghost_next(eot_ghost, src_at, chunk_at, ids, is_input, K, sp, with_slot=True)) if no_eot else None
     pos_weight = [0.0] * N; labels_alt = [-100] * N; soft_w = [1.0] * N; soft_pos: List[int] = []; eot_pos: List[int] = []
     for p, q in enumerate(src_at):
         if q is None or (q[0], q[1]) not in eot_p: continue
@@ -507,8 +520,8 @@ def build_cst4_sequence(streams: List[list], eot_p: Dict[Tuple[int, int], Option
     out = dict(ids=ids, is_input=is_input, chunk_of=cof, labels=labels, pos_weight=pos_weight, labels_alt=labels_alt, soft_w=soft_w, soft_pos=soft_pos,
                eot_pos=eot_pos, src_at=src_at, chunk_at=chunk_at, chunks=chunks, srcs=srcs, st=st, n_rounds=n_rounds, n_flush=n_flush, n_eot=len(eot_pos),
                n_soft=len(soft_pos), flip=None, lex=lex, n_tr=sum(1 for ev in streams[NS:] for x in ev if len(x) == 2), eot_moved=n_moved,
-               **(dict(eot_ghost=list(eot_ghost), ghost_pos=gh) if eot_ghost else {}))
-    out.update(weight_decisions(out, sp, trans_id, event_id(streams), word_start, change_weight, hold_weight, dec_heads))
+               **(dict(eot_ghost=list(eot_ghost), ghost_pos=gh) if eot_ghost else {}), **({"ghost_anchor": anc} if no_eot else {}))
+    out.update(weight_decisions(out, sp, trans_id, event_id(streams), word_start, change_weight, hold_weight, dec_heads, anc))
     return out
 
 
@@ -563,14 +576,17 @@ class CstDialogueDataset(DialogueWindowDataset):
     change_weight·hold_weight(V3-p1 C1, 기본 0 = 끔): 교대 태그·<EOT> 뒤 머무름 결정 가중(받아쓰기·번역 모드 모두) — 켜면 항목에 dec_kind·n_switch·n_hold.
     eot_drop_synth(V3-p1 C5, 기본 0 = 끔): meta.mask_eot 대화 창을 학습 rng 로 이 확률만큼 골라 합성 <EOT> 를 문맥에서 뺀다(모듈 설명) — 켜면 항목에 n_eot_drop.
     xl_order(V3 R4, 기본 'lang'): 'arrival' 이면 교차 언어 창도 먼저 말한 화자 = A, prefix 는 두 언어만(cst_head_text_xl — 'language English German[\ntranslate auto]').
-      어느 슬롯이 어느 언어인지·번역 방향은 모델이 정한다. 같은 언어 창은 그대로다."""
+      어느 슬롯이 어느 언어인지·번역 방향은 모델이 정한다. 같은 언어 창은 그대로다.
+    no_eot(기본 끔, 2026-10-23 사용자 — 턴 예측은 주 목표가 아니고 화자 귀속이 중요하다): 모든 창(실제·합성, 받아쓰기·번역 모드)에서 <EOT> 를 정답·문맥 모두에서 뺀다.
+      뺀 <EOT> 는 ghost 로만 남아 C1 머무름 결정의 기준점이 된다(ghost_anchor). 끄면 시퀀스·난수는 예전 그대로다."""
 
     def __init__(self, dialogues: List[str], tok, delays=(4,), exclude: Optional[set] = None, windows: Optional[List[Tuple[str, float, float]]] = None,
                  max_speakers: int = 2, decision_weight: float = 0.0, backchannel: Optional[Tuple[float, int]] = None, eot_mode: str = "soft",
                  recover: Optional[Recover] = None, spk_activity: bool = False, revive: Optional[Dict[str, Dict[str, list]]] = None,
                  trans: Optional[Dict[str, Dict[str, tuple]]] = None, trans_input: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.0,
                  tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, wav_aug=None, declare_all_p: float = 0.0,
-                 declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, xl_order: str = "lang", **kw):
+                 declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, xl_order: str = "lang",
+                 no_eot: bool = False, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if xl_order not in ("lang", "arrival"): raise ValueError(f"xl_order lang|arrival — {xl_order}")
         self.xl_order = xl_order                                                                # V3 R4: 'arrival' 이면 교차 언어 창도 먼저 말한 순서 슬롯(slots·cst_prefix)
@@ -598,6 +614,7 @@ class CstDialogueDataset(DialogueWindowDataset):
             self.stats.update(cst_revived=sum(len(v) for v in self.revived.values()), cst_revive_missing=n_miss)
         self.eot_mode = eot_mode; self.recover = recover if recover is not None and recover.p > 0 else None; self.spk_activity = bool(spk_activity)
         self.change_weight, self.hold_weight, self.eot_drop_synth = float(change_weight), float(hold_weight), float(eot_drop_synth)   # V3-p1 C1·C5(기본 끔)
+        self.no_eot = bool(no_eot)                                                                 # <EOT> 없는 학습(기본 끔)
         conv = lambda n: int(tok.convert_tokens_to_ids(n))
         self.n_slots = max(2, int(max_speakers)); self.spk_ids = tuple(conv(t) for t in SLOTS[: self.n_slots]); self.eot_id = conv("<EOT>"); self.decision_weight = float(decision_weight)
         self.declare_all_p, self.declare = float(declare_all_p), (None if declare is None else int(declare))
@@ -725,14 +742,14 @@ class CstDialogueDataset(DialogueWindowDataset):
         if tgt: return self.cst4_sequence(i, delay, tgt, spk, langs, drop_eot=drop_eot)
         K = int(round(L / CHUNK_S)); eps = self.eps[cid]
         hd = set() if self.change_weight > 0 or self.hold_weight > 0 else None                   # C1: episode 첫 전사 원소(앞 공백 없는 단위 첫 토큰도 턴 시작이면 단어 첫 토큰)
-        streams, eot_p, wst, *gh = window_streams(eps, spk, t0, L, self.eot_id, drop_eot=bool(drop_eot), heads=hd)
+        streams, eot_p, wst, *gh = window_streams(eps, spk, t0, L, self.eot_id, drop_eot=bool(drop_eot), heads=hd, no_eot=self.no_eot)
         if self.eot_mode == "hard": eot_p = {k: (None if v is None else float(v >= 0.5)) for k, v in eot_p.items()}
         rv = [x for x in self.revived.get(cid, {}).values() if x[2] > t0 and x[1] < t0 + L]
         s = build_cst_sequence(streams, eot_p, K, self.cst_prefix(langs, delay), self.audio_pad, self.csp, delay,
                                mask_chunks=self.mask_chunks(d, t0, L, K, delay), decision_weight=self.decision_weight,
                                recover=recover if recover is not None else self.recover, rng=rng, word_start=self._ws(),
                                lex_mask=revived_elements(streams, spk, rv, t0) if rv else (), lex_chunks=revived_chunks(rv, spk, t0, K, delay) if rv else (),
-                               change_weight=self.change_weight, hold_weight=self.hold_weight, eot_ghost=gh[0] if gh else (), dec_heads=hd or ())
+                               change_weight=self.change_weight, hold_weight=self.hold_weight, eot_ghost=gh[0] if gh else (), dec_heads=hd or (), no_eot=self.no_eot)
         return dict(s, K=K, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, langs=langs, streams=streams, win=wst, tgt=None, n_tr=0)
 
     def cst4_sequence(self, i: int, delay: int, tgt: str, spk: Optional[List[str]] = None, langs: Optional[List[str]] = None, drop_eot: bool = False) -> dict:
@@ -743,14 +760,15 @@ class CstDialogueDataset(DialogueWindowDataset):
         if spk is None: spk, langs = self.slots(i)
         xl = len(set(langs)) > 1; tg = [langs[1], langs[0]] if xl else [tgt] * len(langs)
         hd = set() if self.change_weight > 0 or self.hold_weight > 0 else None
-        streams, eot_p, info = window_streams4(eps, spk, t0, L, self.eot_id, self.trans_of(cid, dict(zip(spk, tg)) if xl else tgt, t0), drop_eot=bool(drop_eot), heads=hd)
+        streams, eot_p, info = window_streams4(eps, spk, t0, L, self.eot_id, self.trans_of(cid, dict(zip(spk, tg)) if xl else tgt, t0), drop_eot=bool(drop_eot), heads=hd,
+                                               no_eot=self.no_eot)
         if self.eot_mode == "hard": eot_p = {k: (None if v is None else float(v >= 0.5)) for k, v in eot_p.items()}
         rv = [x for x in self.revived.get(cid, {}).values() if x[2] > t0 and x[1] < t0 + L]; mc = revived_chunks(info["miss"], spk, t0, K, delay)
         s = build_cst4_sequence(streams, eot_p, K, self.cst_prefix(langs, delay, tg), self.audio_pad, self.csp, self.trans_id, delay,
                                 mask_chunks=self.mask_chunks(d, t0, L, K, delay), decision_weight=self.decision_weight,
                                 lex_mask=revived_elements(streams[: len(streams) // 2], spk, rv, t0) if rv else (), lex_chunks=revived_chunks(rv, spk, t0, K, delay) if rv else (),
                                 tr_input=info["tr_input"], miss_chunks=mc, miss_eot=info["miss_eot"], eot_tail=info["eot_tail"], word_start=self._ws(),
-                                change_weight=self.change_weight, hold_weight=self.hold_weight, eot_ghost=info.get("ghost", ()), dec_heads=hd or ())
+                                change_weight=self.change_weight, hold_weight=self.hold_weight, eot_ghost=info.get("ghost", ()), dec_heads=hd or (), no_eot=self.no_eot)
         win = dict(info["st"], tr_input=len(info["tr_input"]), eot_moved=s["eot_moved"])
         return dict(s, K=K, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, langs=langs, streams=streams, win=win, tgt=tuple(tg), tr_input=info["tr_input"],
                     eot_tail=info["eot_tail"], eot_p=eot_p, miss_chunks=mc)
@@ -800,10 +818,11 @@ class CstDialogueDataset(DialogueWindowDataset):
     def decision_problems(self, s: dict) -> List[str]:
         """C1·C5 검사(켰을 때만 — 끄면 []): 'switch_w'·'hold_w' 가중·dec_kind 위치가 decision_positions 와 같은가, pos_weight > 0 위치 = soft 결정(decision_weight) ∪ 켠 쪽 위치,
         교대 태그는 직전 문맥 슬롯과 다른가, 머무름은 같은 슬롯 <EOT> 바로 뒤 첫 결정인가. 'eot_ghost': ghost 수 = eot_dropped, ghost 라운드 <NEXT_AUDIO> label −100."""
-        P: List[str] = []; ids, inp, lab = s["ids"], s["is_input"], s["labels"]
+        P: List[str] = []; ids, inp, lab = s["ids"], s["is_input"], s["labels"]; anc = s.get("ghost_anchor") or {}
+        if self.no_eot and (self.eot_id in ids or s["n_eot"] or s["soft_pos"]): P.append("no_eot:eot_left")                  # <EOT> 없는 학습: 원소·soft 결정이 남으면 안 된다
         if self.change_weight > 0 or self.hold_weight > 0:
             if "dec_kind" not in s: return ["switch_w:missing"]
-            sw, ho = decision_positions(ids, inp, lab, s["labels_alt"], s["src_at"], self.spk_ids, self.trans_id, self.eot_id, self._ws(), s.get("dec_heads", ()))
+            sw, ho = decision_positions(ids, inp, lab, s["labels_alt"], s["src_at"], self.spk_ids, self.trans_id, self.eot_id, self._ws(), s.get("dec_heads", ()), anc)
             dk = list(s["dec_kind"])
             if [p for p, k in enumerate(dk) if k == 1] != sw or s["n_switch"] != len(sw): P.append("switch_w")
             if [p for p, k in enumerate(dk) if k == 2] != ho or s["n_hold"] != len(ho): P.append("hold_w")
@@ -817,13 +836,16 @@ class CstDialogueDataset(DialogueWindowDataset):
                 if t in self.spk_ids: cur = self.spk_ids.index(t)
             if any(ctx[p][0] is None or ctx[p][0] == self.spk_ids.index(ids[p]) for p in sw): P.append("switch_w:same_slot")
             for p in ho:
-                q = ctx[p][1]; s0 = ctx[q][0] if q is not None else None
-                if q is None or ids[q] != self.eot_id or s0 != (self.spk_ids.index(ids[p]) if ids[p] in self.spk_ids else ctx[p][0]): P.append("hold_w:not_after_eot"); break
+                q = ctx[p][1]; sl = self.spk_ids.index(ids[p]) if ids[p] in self.spk_ids else ctx[p][0]
+                if self.no_eot:                                                                 # 기준점(뺀 <EOT> 의 청크 끝, 같은 슬롯)이 직전 결정 토큰과 이 위치 사이에 있어야 한다
+                    if not any((q is None or q < a) and a < p and v == sl for a, v in anc.items()): P.append("hold_w:not_after_anchor"); break
+                elif q is None or ids[q] != self.eot_id or (ctx[q][0] if q is not None else None) != sl: P.append("hold_w:not_after_eot"); break
         gh = s.get("eot_ghost") or ()
         if len(gh) != s["win"].get("eot_dropped", 0): P.append("eot_ghost:count")
         if gh:
             want = ghost_next(gh, s["src_at"], s["chunk_at"], ids, inp, s["K"], self.csp)
-            if want != s.get("ghost_pos") or any(lab[p] != -100 or ids[p] != self.csp.next_audio for p in want): P.append("eot_ghost:label")
+            if want != s.get("ghost_pos") or any((not self.no_eot and lab[p] != -100) or ids[p] != self.csp.next_audio for p in want): P.append("eot_ghost:label")   # no_eot 는 가리지 않는다
+            if self.no_eot and anc != dict(ghost_next(gh, s["src_at"], s["chunk_at"], ids, inp, s["K"], self.csp, with_slot=True)): P.append("eot_ghost:anchor")
         return P
 
     def problems_of4(self, s: dict) -> List[str]:
