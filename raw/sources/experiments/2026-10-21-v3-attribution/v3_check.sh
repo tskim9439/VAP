@@ -7,8 +7,9 @@
 # r1x·r1x4 = r1(전화 합성 셋 C2) + --decision-weight-sets xl [+ --xl-slot-order arrival], r2m = r2 + 같은 언어 셋 교대·머무름 1.5(--same-lang-*-weight).
 # r1xlv = r1x 에서 전화 합성 셋만 sim-dialogue-xl-tel-v2(레벨 ±12 dB, C2b)로. r1xne = r1x + --no-eot(2026-10-23 — <EOT> 를 정답·문맥 모두에서 뺀 학습 점검).
 # r1xmt4 = r1x + 회의(AMI·ICSI·NOTSOFAR 학습 분할, dlg_mt 1.0, 회의 번역 타깃) + 화자 슬롯 4(--max-speakers 4 --declare-all-p 0.5, split v4)(2026-10-23).
+# r1xnemt4 = r1xmt4 + --no-eot(사용자 "<EOT> 도 넣지 말아줘").
 set -u
-MODE=${1:?r2|r1|r4|r2x|r4x|r1x|r1x4|r2m|r1xlv|r1xne|r1xmt4}
+MODE=${1:?r2|r1|r4|r2x|r4x|r1x|r1x4|r2m|r1xlv|r1xne|r1xmt4|r1xnemt4}
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
 D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2
 SNAP=$D/semcommit-work/labels/speechlm-all19-v035/snapshots/20260929-1637; ASR=$D/semcommit-work/asr-words-v1/lists/asr-words-20260929.list
@@ -17,7 +18,7 @@ export PYTHONPATH=/soundai/users/tskim/VAPKT PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1
 export VAPASR_TAR_INDEX_ROOT=$D/speechlm-asr-tar-index-v1 VAPASR_STAGE_DIR=/tmp/sa_tskim/vapasr-stage
 P=/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python
 SIM=$D/sim-dialogue-v2,$D/sim-dialogue-xl-v1; W=dlg_ko:2,dlg_en:0.7,dlg_de:0.7,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:1.0,sim_en-ko:1.0,rep_ko:1.2,rep_en:1.2,rep_de:1.2; EXTRA=""
-if [ "$MODE" = r1 ] || [ "$MODE" = r1x ] || [ "$MODE" = r1x4 ] || [ "$MODE" = r1xlv ] || [ "$MODE" = r1xne ] || [ "$MODE" = r1xmt4 ]; then
+if [ "$MODE" = r1 ] || [ "$MODE" = r1x ] || [ "$MODE" = r1x4 ] || [ "$MODE" = r1xlv ] || [ "$MODE" = r1xne ] || [ "$MODE" = r1xmt4 ] || [ "$MODE" = r1xnemt4 ]; then
   TELSET=sim-dialogue-xl-tel-v1; [ "$MODE" = r1xlv ] && TELSET=sim-dialogue-xl-tel-v2
   [ -f $D/$TELSET/sim_en-de-tel.refined.dialogues.jsonl ] || { echo "tel 셋이 아직 없다(build_tel.sh 먼저)"; exit 2; }
   SIM=$SIM,$D/$TELSET; W=dlg_ko:2,dlg_en:0.7,dlg_de:0.7,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:0.5,sim_en-de-tel:1.0,sim_en-ko:1.0,rep_ko:1.2,rep_en:1.2,rep_de:1.2
@@ -30,8 +31,9 @@ fi
 [ "$MODE" = r1x4 ] && EXTRA="$EXTRA --decision-weight-sets xl --xl-slot-order arrival"
 [ "$MODE" = r2m ] && EXTRA="--same-lang-change-weight 1.5 --same-lang-hold-weight 1.5"
 [ "$MODE" = r1xne ] && EXTRA="$EXTRA --decision-weight-sets xl --no-eot"
-if [ "$MODE" = r1xmt4 ]; then W="$W,dlg_mt:1.0"; EXTRA="$EXTRA --decision-weight-sets xl --split $P2/splits/v4.json --dlg-corpora aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar"
+if [ "$MODE" = r1xmt4 ] || [ "$MODE" = r1xnemt4 ]; then W="$W,dlg_mt:1.0"; EXTRA="$EXTRA --decision-weight-sets xl --split $P2/splits/v4.json --dlg-corpora aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar"
   EXTRA="$EXTRA --max-speakers 4 --declare-all-p 0.5 --dlg-trans $D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16"; fi   # --dlg-trans 는 덧붙는다(append)
+[ "$MODE" = r1xnemt4 ] && EXTRA="$EXTRA --no-eot"
 V3="--change-tag-weight 3 --hold-tag-weight 1.5 --eot-drop-synth 1.0 --eot-drop-sets xl $EXTRA"
 COMMON="--init /soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000 --nemotron-dir $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json \
   --max-windows 300 --replay-words @$SNAP/main-words.list --replay-words @$ASR --replay-words @$CV4 --replay-de-words @$DE --replay-files-frac 0.01 --replay-max-items 300 \

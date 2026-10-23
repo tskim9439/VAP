@@ -10,7 +10,7 @@
 #            VAPKT-data/models/stage3-q17-v3-p1-tel-xlw-avg3/final 에 만들고 평균 평가들은 그 DONE 을 기다린다. 기본 의존 job 94814(6 단계).
 #   noeot-v3 0.6B <EOT> 없는 대화 학습 시험(2026-10-23, slurm/submit-q06-noeot-chain.sh): V3 R1x-noEOT(v3-p1-tel-xlw-noeot)에 q17-v3 와 같은 묶음 +
 #            대화 Stage 3 st3-p11-revive-noeot checkpoint-3000 의 같은 언어 평가(stage3). 의존 job 은 --after-job 으로 꼭 준다(그 시험의 Stage 4 학습 job).
-#   mt4-v3   0.6B 회의 + 화자 슬롯 4 시험(2026-10-23, slurm/submit-q06-mt4.sh): v3-p1-tel-xlw-mt4 에 q17-v3 와 같은 묶음(AMI 는 4 슬롯 선언). --after-job 필수.
+#   noeot-mt4-v3  0.6B 회의 + 화자 슬롯 4 + <EOT> 없음 시험(2026-10-23, slurm/submit-q06-mt4.sh): v3-p1-tel-xlw-noeot-mt4 에 q17-v3 와 같은 묶음(AMI 는 4 슬롯 선언). --after-job 필수.
 #   --after-job JOBID  의존 job 을 바꾼다(재제출 등).   --dry-run  목록·sbatch 명령만 출력(파일·제출 없음).
 # 시간 한도는 24 h 로 낸다(sbatch 기본 12 h 를 명령줄로 덮는다). 목록은 VAPKT-data/tmp/evals-<묶음>-<시각>.txt(새 파일).
 # 각 작업은 끝났거나 시작된 산출이 있으면 건너뛰거나 이어 하고(AMI 몫은 이어 한다) 아무것도 지우지 않는다.
@@ -23,8 +23,8 @@ while [[ $# -gt 0 ]]; do
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
-case $set_ in r1x-ami) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;; noeot-v3|mt4-v3) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3" >&2; exit 2 ;; esac
+case $set_ in r1x-ami) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;; noeot-v3|noeot-mt4-v3) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | noeot-mt4-v3" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
 L=()
@@ -44,7 +44,7 @@ case $set_ in
     L+=("2|bash experiments/run_single_turn_asr_mxc.sh $CK $D/results/single-turn-yodas-de-q17-s1m3-d10-s0 2,3 64 0 4,6,8,10 $EV/single-turn-yodas-de-dev-v1/manifest.jsonl final") ;;
   q17-v3) v3set q17-v3-p1-tel-xlw ;;
   noeot-v3) v3set v3-p1-tel-xlw-noeot; L+=("4|bash $X stage3 st3-p11-revive-noeot checkpoint-3000") ;;      # Stage 3 같은 언어 평가(0.6B p11 ck3000 과 비교)
-  mt4-v3) v3set v3-p1-tel-xlw-mt4 ;;
+  noeot-mt4-v3) v3set v3-p1-tel-xlw-noeot-mt4 ;;
 esac
 T=$D/tmp/evals-$set_-$(date +%Y%m%d-%H%M%S).txt
 cmd="sbatch ${dep:+--dependency=afterok:$dep }--time=24:00:00 --export=ALL,TASKS=$T slurm/v3-eval-node.sbatch"
