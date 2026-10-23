@@ -489,3 +489,22 @@ R2x·R4x 의 ck1500·ck2000·final 가중치 평균(`avg_checkpoints.py`, 텐서
   - 스모크(09:42): 20 step 을 끝냈다. soft 결정 0, 저장 후 재로드 대조 일치, `<EOT>=151722 정답·문맥 없음(--no-eot)`.
   - 94867(09:29 시작, hpc-28·31): 실제 데이터 검사 64 항목 × δ4–10 불일치 0, epoch 당 1,041 step 이다.
   - 첫 손실은 1.28 → 0.92(step 30)다.
+
+## 26. 회의 데이터 + 화자 슬롯 4 + `<EOT>` 없음 시험 R1x-noEOT-mt4 (2026-10-23 10시, 사용자 "회의 데이터 넣고 화자 슬롯도 4개를 사용해 학습시키고 싶어" → "<EOT> 도 넣지 말아줘")
+
+- 배경:
+  - 2 슬롯 R1x 는 AMI 3–4 인 창에서 구조적으로 틀린다(25 절, 하한 12.6 %).
+  - 회의 받아쓰기도 V2 보다 8 pt 나쁘다.
+  - V2(10-20)는 회의·4 슬롯에 인코더 탭·20–90 s 창·3–4 인 합성까지 한꺼번에 바꿔 TAXI 가 5–8 pt 나빠졌고, 원인을 가르지 못했다.
+- 설계(`slurm/submit-q06-mt4.sh`, run `v3-p1-tel-xlw-noeot-mt4`): `<EOT>` 없는 R1x(24 절)와 같은 init·명령에 다음만 더한다.
+  - AMI·ICSI·NOTSOFAR 학습 분할(dlg_mt 1.0)과 회의 번역 타깃(stage4-dlg-units-meet-v1)
+  - `--max-speakers 4 --declare-all-p 0.5`
+  - split v4: 기존 7 코퍼스 held-out 은 v2 와 같다. AMI 공식 dev·eval 과 NOTSOFAR dev·eval 이 학습에서 빠진다.
+  - 창(20–40 s 격자)·합성 셋·C1·C5·2,500 step 은 그대로다.
+  - init 은 `st3-p11-revive-noeot` ck3000 이라 그 job(94867) 성공 뒤 시작한다.
+- 비교:
+  - `<EOT>` 없는 R1x(`v3-p1-tel-xlw-noeot`) 대비 = 회의·4 슬롯 효과
+  - R1x 대비 = 전체 효과
+  - V2 는 참고다.
+  - 기준은 dev 귀속·TAXI·같은 언어 가드·AMI(4 슬롯 선언)·번역 BLEU 다.
+- 점검: `v3_check.sh r1xnemt4` 는 dry-run 과 스모크이고 10:00 에 시작했다(`r1xmt4` 는 `<EOT>` 있는 판으로 09:55 에 시작).
