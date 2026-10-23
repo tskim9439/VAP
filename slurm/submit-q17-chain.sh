@@ -21,14 +21,19 @@
 #   bash slurm/submit-q17-chain.sh --to 5                          # 1–5 단계만(6 단계 레시피는 나중에 --from 6 --after-job <5 단계 job>)
 #   --exclude N,…: 모든 단계 sbatch 에서 더 뺄 노드(기본 hpc-50,hpc-51,hpc-101,hpc-102 — V3 R1·R2 때와 같다, 'none' 이면 더 빼지 않는다).
 #   --s1 mirror|resume: Stage 1 판(기본 mirror = 0.6B 와 같은 q17-s1m3-d10-s0). --from 2 이후로 낼 때도 앞서 쓴 판을 같이 준다(2 단계 init 이 따라간다).
+#   --dlg r1x|noeot|noeot-mt4(2026-10-23): 대화 5·6 단계 레시피. r1x(기본) = 지금 명령. noeot = 두 단계 모두 --no-eot(run 이름 -noeot).
+#     noeot-mt4 = noeot + 6 단계에 회의(AMI·ICSI·NOTSOFAR dlg_mt 1.0·회의 번역 타깃)·화자 슬롯 4(--max-speakers 4 --declare-all-p 0.5)·split v4(run -noeot-mt4).
+#     0.6B 시험(submit-q06-noeot-chain.sh·submit-q06-mt4.sh)과 같은 변경이다. 바꿀 때: 기다리는 5·6 단계 job 과 그 평가 job 을 사용자가 취소하고
+#     bash slurm/submit-q17-chain.sh --from 5 --after-job <4 단계 job> --dlg <레시피> --eval
+#   --eval: 6 단계 뒤 평가 묶음(slurm/submit-evals.sh q17-v3·q17-noeot-v3·q17-noeot-mt4-v3)을 6 단계 job 성공 뒤로 함께 낸다.
 # 단계마다 MAX_RESTART(기본 5). 앞 단계가 실패하면 뒤 단계는 DependencyNeverSatisfied 로 남는다 — 취소는 사용자가 한다. 경로 변수는 이 스크립트 안에서만 쓴다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-from=1; to=6; dep=""; dry=""; exclude=hpc-50,hpc-51,hpc-101,hpc-102; s1=mirror
+from=1; to=6; dep=""; dry=""; exclude=hpc-50,hpc-51,hpc-101,hpc-102; s1=mirror; dlg=r1x; ev=0
 while [[ $# -gt 0 ]]; do
   case $1 in
     --from) from=$2; shift 2 ;;  --to) to=$2; shift 2 ;;  --after-job) dep=$2; shift 2 ;;  --dry-run) dry=--dry-run; shift ;;  --exclude) exclude=$2; shift 2 ;;
-    --s1) s1=$2; shift 2 ;;
+    --s1) s1=$2; shift 2 ;;  --dlg) dlg=$2; shift 2 ;;  --eval) ev=1; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -39,6 +44,7 @@ case $s1 in
   resume) S1SH=slurm/submit-q17-s1m3-d10.sh; S1RUN=q17-s1m3-d10; S1WHAT="Stage 1 q17-s1m3-d10(q17-s1m-r3 에서 1 epoch — checkpoint-1000 이어 하기)" ;;
   *) echo "--s1 은 mirror|resume" >&2; exit 2 ;;
 esac
+case $dlg in r1x) SUF=""; EVSET=q17-v3 ;; noeot) SUF=-noeot; EVSET=q17-noeot-v3 ;; noeot-mt4) SUF=-noeot; EVSET=q17-noeot-mt4-v3 ;; *) echo "--dlg 는 r1x|noeot|noeot-mt4" >&2; exit 2 ;; esac
 [[ $exclude == none ]] && exclude=""
 export MAX_RESTART=${MAX_RESTART:-5}
 D=/soundai/users/tskim/VAPKT-data/data; M=/soundai/Model/VAPASR
@@ -65,6 +71,19 @@ stage 1 "$S1WHAT" bash $S1SH
 stage 2 "Stage 2(AST 1 차) q17-s2-ast(init $S1RUN/final)" bash slurm/submit-q17-s2-ast.sh --init $M/semcommit-$S1RUN/final
 stage 3 "Stage 2(AST 2 차) q17-s3-ast" bash slurm/submit-q17-s3-ast.sh
 stage 4 "Stage 2(AST 3 차) q17-s4-ast" bash slurm/submit-q17-s4-ast.sh
-stage 5 "Stage 3(2 인 대화) q17-st3-p11-revive" bash slurm/submit-stage3-train.sh --run q17-st3-p11-revive --init $M/semcommit-q17-s4-ast/final "${P11[@]}"
-stage 6 "Stage 4(대화 번역, V3 R1x) q17-v3-p1-tel-xlw" bash slurm/submit-stage3-train.sh --run q17-v3-p1-tel-xlw --init $M/stage3-q17-st3-p11-revive/checkpoint-3000 "${R1X[@]}"
+NE=(); [[ $dlg != r1x ]] && NE=(--no-eot)                                                      # --dlg: <EOT> 없음(5·6 단계), 회의·화자 슬롯 4(6 단계)
+MT=(); S6RUN=q17-v3-p1-tel-xlw$SUF
+if [[ $dlg == noeot-mt4 ]]; then
+  S6RUN=q17-v3-p1-tel-xlw-noeot-mt4
+  MT=(--weights dlg_ko:2,dlg_en:0.7,dlg_de:0.7,dlg_mt:1.0,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:0.5,sim_en-de-tel:1.0,sim_en-ko:1.0,rep_ko:1.2,rep_en:1.2,rep_de:1.2
+      --dlg-trans $D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16,$D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16 --split v4
+      --dlg-corpora aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar --max-speakers 4 --declare-all-p 0.5)   # 제출 래퍼는 같은 옵션의 뒤 값을 쓴다
+fi
+stage 5 "Stage 3(2 인 대화) q17-st3-p11-revive$SUF" bash slurm/submit-stage3-train.sh --run q17-st3-p11-revive$SUF --init $M/semcommit-q17-s4-ast/final "${P11[@]}" ${NE[@]+"${NE[@]}"}
+stage 6 "Stage 4(대화 번역, V3 R1x) $S6RUN" bash slurm/submit-stage3-train.sh --run $S6RUN --init $M/stage3-q17-st3-p11-revive$SUF/checkpoint-3000 "${R1X[@]}" ${NE[@]+"${NE[@]}"} ${MT[@]+"${MT[@]}"}
+if (( ev )) && [[ $to == 6 ]]; then                                                             # 6 단계 뒤 평가 묶음
+  echo "[$(date '+%F %T')] 평가 $EVSET (job $dep 성공 뒤)" >&2
+  out=$(bash slurm/submit-evals.sh $EVSET --after-job "$dep" $dry 2>&1) || { echo "$out" | tail -5 >&2; echo "!! 평가 제출 실패" >&2; exit 1; }
+  echo "$out" | grep -E "^목록|^sbatch" >&2 || true; echo "평가 job $(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1)"
+fi
 echo "[$(date '+%F %T')] 체인 제출 끝${dry:+(dry-run — 아무것도 제출하지 않았다)}" >&2
