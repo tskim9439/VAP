@@ -15,6 +15,12 @@
       2026-10-18 p9 ck3000: 삽입은 귀속을 나쁘게 한다(δ10 cp +4.1). 삽입 + 막기는 δ10 중립·δ4 cp −1.3.
       직렬 stream_decode 에는 안내가 없어 --verify 와 함께 쓰지 않는다. 행에 guide_insert·guide_hold(바꾼 태그 수)를 남긴다.
   --backchannel S,N: 참조 EOT 를 맞장구 규칙으로 만든다(맞장구 episode 는 EOT 참조에서 빠지고 상대 판정에서도 빠진다). 기본은 Phase 2 규칙.
+  --window full(2026-10-24, 사용자 "AMI 평가에 한번에 돌릴 수 있도록 창 길이를 늘리고 싶은데, 자르지 않고"): 대화(회의)마다 창 하나 [0, duration_s) —
+      자르지 않고 한 스트림으로 디코드한다(vapasr/hf/long_session: 겹침 조각 인코딩 encode_long + 긴 문맥 eager 디코드 long_decode, 창 하나씩).
+      채점 규칙은 같아서 cp·agn 은 세션 단위 cpWER 다. --verify 는 앞 300 s 인코딩(파일 전체 forward 대비)과 앞 60 s 디코드(decode_batch 대비)를 잰다.
+      --spk-guide·--switch-bias 와 함께 쓰지 않는다. 행에 positions(넣은 위치 수)·enc_s·dec_s.
+      --context-s S(--window full 전용, 0 = 문맥 전부): 오디오는 자르지 않고 계속 디코드하되 LLM 문맥은 prefix + 최근 S 초(long_session.LongThinker 문맥 창).
+      V2 final 은 문맥 전부로 14 분 회의의 앞 3.5 분만 받아썼다(학습 창 20–90 s) — 회의 통째 점수는 문맥 창으로 잰다.
 참조 = 그 δ 의 학습 타깃 시퀀스(cst_sequence)에서 전사 없는 음성 청크(mask_chunks — 학습 label −100)에 놓인 원소를 뺀 것. 전사 토큰 → 단어(시각 = 마지막
   토큰의 원래 끝 시각), EOT = episode 끝(p_end). 가설도 같은 청크에서 나온 토큰·EOT 를 버린다 — 참조·가설이 같은 규칙(2026-10-15 오라클 점검: 창 전체 토큰을
   참조로 두면 마스크 청크 때문에 오라클도 KO CER 7–15 % 가 나왔다).
@@ -25,12 +31,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SEEN = {"aihub71631": "seen(Stage 1·2 노출)", "aihub134-1": "partly(화자 10 명 71631 과 겹침)"}
 
 
+def is_full(a) -> bool:
+    return getattr(a, "window", None) == "full"
+
+
 def win_kw(a) -> dict:
-    """V2 평가 창 설정(인자가 없는 호출자 — spk_probe·cst_attr_errors 의 옛 설정 — 는 V1 기본: 화자 2·20–40 s 격자)."""
-    w = tuple(getattr(a, "window", None) or (20.0, 40.0)); kw = dict(window_s=w, hop_s=float(getattr(a, "hop", None) or 10.0))
+    """V2 평가 창 설정(인자가 없는 호출자 — spk_probe·cst_attr_errors 의 옛 설정 — 는 V1 기본: 화자 2·20–40 s 격자).
+    --window full 이면 창 목록은 windows_of 가 대화 길이로 만든다(full_windows) — 여기는 화자 상한·선언만."""
+    kw = {} if is_full(a) else dict(window_s=tuple(getattr(a, "window", None) or (20.0, 40.0)), hop_s=float(getattr(a, "hop", None) or 10.0))
     ms = int(getattr(a, "max_speakers", None) or 2)
     if ms != 2: kw["max_speakers"] = ms
-    if getattr(a, "window_draws", 0): kw["window_draws"] = int(a.window_draws)
+    if getattr(a, "window_draws", 0) and not is_full(a): kw["window_draws"] = int(a.window_draws)
     if getattr(a, "declare", None): kw["declare"] = int(a.declare)
     return kw
 
@@ -38,7 +49,16 @@ def win_kw(a) -> dict:
 def win_conf(a) -> dict:
     """재개 지문에 넣을 V2 창 설정 — V1 기본이면 비운다(예전 run 의 config 그대로)."""
     kw = win_kw(a); out = {k: (list(v) if isinstance(v, tuple) else v) for k, v in kw.items() if k not in ("window_s", "hop_s")}
-    if kw["window_s"] != (20.0, 40.0) or kw["hop_s"] != 10.0: out.update(window=list(kw["window_s"]), hop=kw["hop_s"])
+    if is_full(a): out["window"] = "full"; out.update({"context_s": a.context_s} if getattr(a, "context_s", 0) else {})
+    elif kw["window_s"] != (20.0, 40.0) or kw["hop_s"] != 10.0: out.update(window=list(kw["window_s"]), hop=kw["hop_s"])
+    return out
+
+
+def full_windows(path: str) -> list:
+    """--window full: 대화마다 창 하나 (conv_id, 0, duration_s) — 회의 통째."""
+    out = []
+    for l in open(path, encoding="utf-8"):
+        r = json.loads(l); out.append((r["conv_id"], 0.0, float(r["duration_s"])))
     return out
 
 
@@ -50,8 +70,11 @@ def windows_of(a, tok):
     for c in a.corpora.split(","):
         held = set(split["corpora"].get(c, {}).get("heldout", [])) if split else None
         if split is not None and not held: print(f"  {c}: held-out 없음 — 건너뜀", flush=True); continue
-        ds = CstDialogueDataset([os.path.join(a.data, f"{c}.refined.dialogues.jsonl")], tok, delays=tuple(a.deltas), mono_cache_dir=os.path.join(a.data, "mono"), seed=0,
-                                backchannel=a.backchannel, **win_kw(a), **({"xl_order": a.xl_order} if getattr(a, "xl_order", "lang") != "lang" else {}))   # V3 R4
+        path = os.path.join(a.data, f"{c}.refined.dialogues.jsonl"); kw = win_kw(a)
+        if is_full(a): kw["windows"] = full_windows(path)                                       # 회의 통째 — 화자 상한을 넘는 대화는 버려진다(stats cst_dropped_speakers)
+        ds = CstDialogueDataset([path], tok, delays=tuple(a.deltas), mono_cache_dir=os.path.join(a.data, "mono"), seed=0,
+                                backchannel=a.backchannel, **kw, **({"xl_order": a.xl_order} if getattr(a, "xl_order", "lang") != "lang" else {}))   # V3 R4
+        if is_full(a) and ds.stats.get("cst_dropped_speakers"): print(f"  !! {c}: 화자 상한 {ds.n_slots} 을 넘는 대화 {ds.stats['cst_dropped_speakers']} 개 — 뺀다", flush=True)
         idx = [i for i, it in enumerate(ds.items) if held is None or it[0] in held]
         idx.sort(key=lambda i: (ds.items[i][2], ds.items[i][0], ds.items[i][1]))
         if a.limit_windows and len(idx) > a.limit_windows: idx = [idx[j] for j in np.linspace(0, len(idx) - 1, a.limit_windows, dtype=int)]
@@ -83,6 +106,23 @@ def window_ref(ds, i, delta, eot_id, tok):
         if len(x) == 3: ref_eot.append((src[0], x[1], eot_p.get((src[0], src[1]))))
         else: ref_tok[src[0]].append((x[1], x[0]))
     return [words_of(tok, r) for r in ref_tok], ref_eot, mask, sp_order
+
+
+def verify_long(model, wav, prefix, max_flush) -> None:
+    """--window full --verify: 겹침 조각 인코딩(encode_long)을 파일 전체 forward 와 앞 300 s 로(조각 1000 프레임 — 조각 넷), 긴 디코드(long_decode)를
+    배치 디코드(decode_batch)와 앞 60 s 특징으로(블록 256 위치 — 블록·나머지 경로 둘 다) 대조한다."""
+    import numpy as np, torch
+    from vapasr.hf.batch_decode import decode_batch
+    from vapasr.hf.long_session import encode_long, long_decode
+    dev = next(model.parameters()).device; n = min(len(wav), 300 * 16000); w0 = np.asarray(wav[:n], dtype=np.float32); K0 = int(round(n / 16000 / 0.08))
+    whole = model.encode(torch.from_numpy(w0).to(dev)[None], torch.tensor([n], device=dev), torch.tensor([K0], device=dev))[0]
+    d = (whole - encode_long(model, w0, K0, core=1000)).abs().max().item()
+    print(f"ENC-PARITY 앞 {n / 16000:.0f} s(조각 1000 프레임·앞 겹침 1760): max|Δ| {d:.2e}", flush=True)
+    assert d < 1e-3, f"겹침 조각 인코딩이 파일 전체 forward 와 다르다 {d}"
+    f60 = whole[:, :750]; ref = decode_batch(model, [f60], [list(prefix)], max_flush_rounds=max_flush)[0]
+    out, forced, rounds, used = long_decode(model, f60, prefix, max_flush_rounds=max_flush, blk=256)
+    assert out == ref.emitted and forced == ref.forced and rounds == ref.flush_rounds, f"긴 디코드 ≠ 배치 디코드: 토큰 {len(out)}/{len(ref.emitted)} forced {forced}/{ref.forced}"
+    print(f"DEC-PARITY 앞 60 s: 토큰 {len(out)} 같음(위치 {used})", flush=True)
 
 
 def run(a):
@@ -118,6 +158,11 @@ def run(a):
     n_parse = len(model.config.slot_tokens) if model is not None else n_slots              # 출력 해석은 모델 슬롯 전부(V2 4) — 2 인 창에서 C·D 로 낸 말은 삽입으로 센다(텍스트로 읽지 않는다)
     spk = tuple(sp[t] for t in SLOTS[:n_parse]); EOT = sp["<EOT>"]
     if EOT in blocked and not a.oracle: print("!! <EOT> 가 decode 차단 목록에 있다(Stage 3 학습 전 체크포인트) — EOT 는 나오지 않는다", flush=True)
+    full = is_full(a); bs = 1 if full else a.batch_size                                         # 회의 통째: 창(회의) 하나씩 긴 직렬 디코드
+    assert full or not a.context_s, "--context-s 는 --window full 전용"
+    if full:
+        assert not (sb or a.spk_guide), "--window full 은 긴 직렬 디코드(long_decode)라 --switch-bias·--spk-guide 와 함께 쓰지 않는다"
+        if model is not None: from vapasr.hf.long_session import encode_long, long_decode
     sets, items = windows_of(a, tok)
     items = [x for j, x in enumerate(items) if j % a.world_size == a.rank]
     out = os.path.join(a.out); os.makedirs(out, exist_ok=True)
@@ -145,12 +190,17 @@ def run(a):
     with open(dest, "a", buffering=1) as fo, torch.inference_mode():
         for c in dict.fromkeys(x[0] for x in items):
             ds = sets[c]; todo = [i for cc, i in items if cc == c]
-            for b0 in range(0, len(todo), a.batch_size):
-                batch = todo[b0:b0 + a.batch_size]; feats = []; meta = []
+            for b0 in range(0, len(todo), bs):
+                batch = todo[b0:b0 + bs]; feats = []; meta = []; enc_s = None
                 for i in batch:
                     cid, t0w, L = ds.items[i]; d = ds.dlgs[cid]; K = int(round(L / 0.08)); meta.append((i, cid, t0w, L, K, d))
                     if a.oracle or a.from_predictions: continue
                     wav = np.asarray(ds.mono(cid)[int(round(t0w * 16000)): int(round((t0w + L) * 16000))], dtype=np.float32)
+                    if full:
+                        if all((f"{cid}@{t0w}", dl) in done for dl in a.deltas): continue           # 끝난 회의는 인코딩도 건너뛴다(아래 δ 고리도 건너뜀)
+                        if a.verify and "full" not in checked:
+                            verify_long(model, wav, ds.cst_prefix(ds.slots(i)[1][:n_slots], a.deltas[0]), a.max_flush); checked.add("full")
+                        te = time.time(); feats.append(encode_long(model, wav, K)); enc_s = round(time.time() - te, 1); continue
                     w = torch.from_numpy(wav).to(dev)
                     feats.append(model.encode(w[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))[0])
                 for delta in a.deltas:
@@ -167,6 +217,13 @@ def run(a):
                         for m in meta:
                             q = ds.cst_sequence(m[0], delta)
                             states.append(SimpleNamespace(emitted=emitted_from_sequence(q["ids"], q["is_input"], q["chunk_of"], sp["<NEXT_AUDIO>"], sp["<EMPTY_AUDIO>"]), forced=0, flush_rounds=0))
+                    elif full:
+                        from types import SimpleNamespace
+                        states = []
+                        for j, m in enumerate(meta):
+                            td = time.time(); em, fc, rd, used = long_decode(model, feats[j], prefixes[j], max_flush_rounds=a.max_flush, context_s=a.context_s)
+                            states.append(SimpleNamespace(emitted=em, forced=fc, flush_rounds=rd, positions=used, dec_s=round(time.time() - td, 1)))
+                            print(f"  {c}: {m[1]} {m[3] / 60:.1f} 분 δ{delta} · 위치 {used} · 토큰 {len(em)} · 인코딩 {enc_s} s · 디코드 {states[-1].dec_s} s", flush=True)
                     else:
                         guide = SpkGuide(delay=delta, on=a.spk_guide[0], margin=a.spk_guide[1], span=int(a.spk_guide[2]) if len(a.spk_guide) > 2 else 2,
                                          hold=a.spk_guide_hold, insert=not a.spk_guide_no_insert, word_start=word_start) if a.spk_guide else None
@@ -177,7 +234,7 @@ def run(a):
                             for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, spk_guide=guide,
                                                                **(dict(switch_bias=sb, row_modes=[modes[j] for j in js], word_init=wi) if sb else {}))): states[j] = st_
                     key = (ds.dlgs[meta[0][1]].lang, delta)
-                    if a.verify and model is not None and key not in checked:
+                    if a.verify and model is not None and key not in checked and not full:
                         for j in sorted({0, len(meta) - 1}):
                             serial, forced, _, rounds = model.stream_decode(feats[j], prefixes[j], max_flush_rounds=a.max_flush)
                             assert serial == states[j].emitted and forced == states[j].forced, f"직렬/배치 불일치 {meta[j][1]}@{meta[j][2]} δ{delta}"
@@ -192,9 +249,10 @@ def run(a):
                                    forced=s.forced, flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted],
                                    **({"guide_insert": s.guide_insert, "guide_hold": s.guide_hold} if hasattr(s, "guide_insert") else {}),
                                    **({"sb_flips": s.sb_flips, "sb_points": s.sb_points} if hasattr(s, "sb_flips") else {}),
+                                   **({"positions": s.positions, "enc_s": enc_s, "dec_s": s.dec_s} if hasattr(s, "positions") else {}),
                                    ref_text=[" ".join(w for w, _ in r) for r in ref_w], hyp_text=[" ".join(w for w, _ in words(h)) for h in hs], **sc)
                         fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
-                print(f"  {c}: {min(b0 + a.batch_size, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
+                print(f"  {c}: {min(b0 + bs, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
     print(f"DONE rank={a.rank} rows={n}", flush=True)
 
 
@@ -229,8 +287,10 @@ def main():
     q.add_argument("--backchannel", default=None, type=lambda s: (float(s.split(",")[0]), int(s.split(",")[1])),
                    help="참조 EOT 를 맞장구 규칙(최대초,최대토큰)으로 — 그 규칙으로 학습한 모델(--backchannel)을 같은 정의로 잰다. 창·전사 참조는 같다")
     q.add_argument("--max-speakers", type=int, default=2, help="V2: 창 화자 상한(최대 4 — 슬롯 C·D 를 켠 체크포인트)")
-    q.add_argument("--window", type=lambda s: tuple(float(x) for x in s.split(",")), default=(20.0, 40.0), help="창 길이 lo,hi(s) — V1 20,40")
+    q.add_argument("--window", type=lambda s: s if s == "full" else tuple(float(x) for x in s.split(",")), default=(20.0, 40.0),
+                   help="창 길이 lo,hi(s) — V1 20,40. full = 대화(회의)마다 창 하나, 자르지 않고 한 스트림으로(긴 디코드)")
     q.add_argument("--hop", type=float, default=10.0); q.add_argument("--window-draws", type=int, default=0, help="1 = 격자 대신 이어 덮기 창(draw 0) — 긴 창 평가")
+    q.add_argument("--context-s", type=float, default=0.0, help="--window full: LLM 문맥 창(초, 0 = 문맥 전부) — 오디오는 자르지 않고 문맥만 prefix + 최근 S 초")
     q.add_argument("--declare", type=int, default=None, help="prefix 선언 슬롯 수 하한(기본 max(2, 화자 수); 화자 수를 모르는 추론 흉내 = 4)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "
                                                        "직렬 stream_decode 에 bias 가 없어 0 이 아니면 --verify 와 함께 쓰지 않는다. config 에 정책, 행에 sb_flips·sb_points")

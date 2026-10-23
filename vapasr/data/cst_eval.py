@@ -80,7 +80,26 @@ def units(text: str, lang: str) -> List[str]:
     return score_en(text).split()
 
 
+def _ed_bits(a: Sequence, b: Sequence) -> int:
+    """Myers·Hyyrö 비트 병렬 Levenshtein(단위 비용 — ed 와 같은 값). a 의 위치를 Python 정수 비트로 둬 b 한 원소마다 정수 연산 몇 번 — 회의 통째(화자당 수천 단어)."""
+    m = len(a)
+    if not m: return len(b)
+    peq = {}
+    for i, x in enumerate(a): peq[x] = peq.get(x, 0) | (1 << i)
+    full, top = (1 << m) - 1, 1 << (m - 1); pv, mv, d = full, 0, m
+    for y in b:
+        eq = peq.get(y, 0); xv = eq | mv
+        xh = ((((eq & pv) + pv) & full) ^ pv) | eq
+        ph = mv | (~(xh | pv) & full); mh = pv & xh
+        if ph & top: d += 1
+        elif mh & top: d -= 1
+        ph = ((ph << 1) | 1) & full; mh = (mh << 1) & full                                   # 첫 행 D[0][j] = j(전역 거리)
+        pv = mh | (~(xv | ph) & full); mv = ph & xv
+    return d
+
+
 def ed(a: Sequence, b: Sequence) -> int:
+    if len(a) * len(b) > 250_000: return _ed_bits(a, b)                                     # 긴 열(회의 통째 --window full) — 같은 값, 창 평가는 아래 DP 그대로
     prev = list(range(len(b) + 1))
     for i, x in enumerate(a, 1):
         cur = [i]

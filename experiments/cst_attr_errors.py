@@ -74,9 +74,10 @@ def main():
     rows = [json.loads(l) for f in sorted(glob.glob(os.path.join(a.pred, "predictions-rank*.jsonl"))) for l in open(f, encoding="utf-8")]
     rows = [r for r in rows if r["delta"] in a.deltas]
     tok = AutoTokenizer.from_pretrained(conf["checkpoint"]); ck = json.load(open(os.path.join(conf["checkpoint"], "config.json"))); sp = ck["sp_ids"]
+    w = conf.get("window", (20.0, 40.0))                                                       # "full" = 회의 통째(cst_stage3_eval --window full) — 정렬이 O(단어²)라 회의마다 수 분·수 GB
     ns = argparse.Namespace(corpora=conf["corpora"], data=a.data, split=a.split, deltas=a.deltas, limit_windows=conf["limit_windows"],
                             backchannel=tuple(conf["backchannel"]) if conf.get("backchannel") else None, max_speakers=conf.get("max_speakers", 2),
-                            window=tuple(conf.get("window", (20.0, 40.0))), hop=conf.get("hop", 10.0), window_draws=conf.get("window_draws", 0), declare=conf.get("declare"))
+                            window=w if w == "full" else tuple(w), hop=conf.get("hop", 10.0), window_draws=conf.get("window_draws", 0), declare=conf.get("declare"))
     sets, items = windows_of(ns, tok)
     from vapasr.data.cst_dialogue import SLOTS
     n_parse = len(ck.get("slot_tokens") or SLOTS[:2]) if not conf.get("oracle") else max(2, int(ns.max_speakers))   # 평가(cst_stage3_eval)와 같은 출력 해석 슬롯 수
