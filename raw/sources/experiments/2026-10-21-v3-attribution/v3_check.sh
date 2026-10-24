@@ -8,6 +8,8 @@
 # r1xlv = r1x 에서 전화 합성 셋만 sim-dialogue-xl-tel-v2(레벨 ±12 dB, C2b)로. r1xne = r1x + --no-eot(2026-10-23 — <EOT> 를 정답·문맥 모두에서 뺀 학습 점검).
 # r1xmt4 = r1x + 회의(AMI·ICSI·NOTSOFAR 학습 분할, dlg_mt 1.0, 회의 번역 타깃) + 화자 슬롯 4(--max-speakers 4 --declare-all-p 0.5, split v4)(2026-10-23).
 # r1xnemt4 = r1xmt4 + --no-eot(사용자 "<EOT> 도 넣지 말아줘").
+# INIT=<체크포인트> TAG=<꼬리>(2026-10-25): init 을 바꾸고 산출을 /tmp/sa_tskim/v3-<모드>-<꼬리>-{dry,smoke}-train 에 — 예 1.7B 회의 + 4 슬롯 점검
+#   INIT=/soundai/Model/VAPASR/stage3-q17-st3-p11-revive/checkpoint-3000 TAG=q17 bash v3_check.sh r1xmt4. 없으면 예전 그대로(0.6B p11 ck3000).
 set -u
 MODE=${1:?r2|r1|r4|r2x|r4x|r1x|r1x4|r2m|r1xlv|r1xne|r1xmt4|r1xnemt4}
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
@@ -35,7 +37,7 @@ if [ "$MODE" = r1xmt4 ] || [ "$MODE" = r1xnemt4 ]; then W="$W,dlg_mt:1.0"; EXTRA
   EXTRA="$EXTRA --max-speakers 4 --declare-all-p 0.5 --dlg-trans $D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16"; fi   # --dlg-trans 는 덧붙는다(append)
 [ "$MODE" = r1xnemt4 ] && EXTRA="$EXTRA --no-eot"
 V3="--change-tag-weight 3 --hold-tag-weight 1.5 --eot-drop-synth 1.0 --eot-drop-sets xl $EXTRA"
-COMMON="--init /soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000 --nemotron-dir $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json \
+COMMON="--init ${INIT:-/soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000} --nemotron-dir $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json \
   --max-windows 300 --replay-words @$SNAP/main-words.list --replay-words @$ASR --replay-words @$CV4 --replay-de-words @$DE --replay-files-frac 0.01 --replay-max-items 300 \
   --ast-targets $D/ast-mono-v1/targets-fix-gen-v3-bf16,$D/ast-mono-cv4en-v1/targets-fix-gen-v3-bf16 --ast-frac 0.8 --offline-frac 0.3 --gain-augment 0.5,-70,-20 --speed-perturb 0.9,1.0,1.1 --noise-bank $D/noise-bank-v1 \
   --train-encoder --encoder-right-context 3 --encoder-context-sampling fixed --spec-augment 2,27,2,0.03 --attn-impl varlen --batch-max-tokens 16384 --pack-max-bs 64 \
@@ -44,12 +46,12 @@ COMMON="--init /soundai/Model/VAPASR/stage3-st3-p11-revive/checkpoint-3000 --nem
   --sim-data $SIM --sim-trans-frac 0.8 --trans-lead-space --phone-aug 0.3 --weights $W $V3 \
   --lr 4e-5 --max-steps 20 --warmup 5 --save-every 1000 --log-every 2 --num-workers 2 --report-to none"
 echo "[$(date "+%F %T")] $MODE dry-run"
-$P experiments/stage3_train.py --dry-run $COMMON --out-dir /tmp/sa_tskim/v3-$MODE-dry-train --check-items 32 2>&1 | grep -v "regex pattern"
+$P experiments/stage3_train.py --dry-run $COMMON --out-dir /tmp/sa_tskim/v3-$MODE${TAG:+-$TAG}-dry-train --check-items 32 2>&1 | grep -v "regex pattern"
 echo "DRY EXIT ${PIPESTATUS[0]}"
 [ "${SMOKE:-1}" = 0 ] && { echo "V3_CHECK_DONE $MODE"; exit 0; }
 GPU=$(nvidia-smi --query-gpu=index,memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits | awk -F", " "{print \$1, \$3 - \$2, \$4}" | sort -k2,2nr -k3,3n | head -1 | cut -d" " -f1); echo "GPU $GPU"
 echo "[$(date "+%F %T")] $MODE smoke"
-$P experiments/stage3_train.py --gpu $GPU $COMMON --out-dir /tmp/sa_tskim/v3-$MODE-smoke-train --check-items 8 2>&1 | grep -v "regex pattern"
+$P experiments/stage3_train.py --gpu $GPU $COMMON --out-dir /tmp/sa_tskim/v3-$MODE${TAG:+-$TAG}-smoke-train --check-items 8 2>&1 | grep -v "regex pattern"
 echo "SMOKE EXIT ${PIPESTATUS[0]}"
 if [ "$MODE" = r4 ]; then
   CK=/tmp/sa_tskim/v3-r4-smoke-train/final; XE=$D/sim-dialogue-xl-eval-v1; DEV=$D/v3-dev/xl-tel-dev; SS=/tmp/sa_tskim/v3-r4-smoke-sessions.jsonl
