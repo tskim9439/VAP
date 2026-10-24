@@ -185,10 +185,11 @@
 
 ## 1.7B 회의 + 화자 슬롯 4 시험 (2026-10-25 01시, 사용자 "1.7B 회의 + 4 슬롯 시험을 내고 싶어")
 - 체인: 4 단계 AST 3 차(94812) 23:12 끝, 5 단계 `q17-st3-p11-revive`(94813) 01:07 끝, 6 단계 R1x(94814) 01:09 시작.
-- 설계: 6 단계만 바꾼 판을 R1x 와 **나란히** 낸다(`submit-q17-chain.sh --from 6 --dlg mt4 --eval`, run `q17-v3-p1-tel-xlw-mt4`).
+- 설계: 6 단계만 바꾼 판을 R1x 6 단계(94814) **뒤에 이어** 낸다(사용자 "지금 학습 제출된거 마지막에 이어서 학습되도록" —
+  `submit-q17-chain.sh --from 6 --dlg mt4 --eval --after-job 94814`, run `q17-v3-p1-tel-xlw-mt4`, afterok).
   - init 은 R1x 와 같은 5 단계 checkpoint-3000 이다. R1x 명령에 회의(AMI·ICSI·NOTSOFAR 학습 분할, dlg_mt 1.0, 회의 번역 타깃)·화자 슬롯 4(`--max-speakers 4 --declare-all-p 0.5`)·split v4 만 더한다(0.6B `submit-q06-mt4.sh` 와 같은 변경).
   - 둘을 비교하면 1.7B 에서 회의·4 슬롯 효과만 남는다. 평가는 `q17-mt4-v3`(R1x 평가 94841 과 같은 묶음, AMI 는 4 슬롯 선언)다.
-  - apex 2 노드, 2,500 step, MAX_RESTART 5. init 이 이미 있어 의존 job 이 없다.
+  - apex 2 노드, 2,500 step, MAX_RESTART 5. init 은 이미 있으니 의존은 노드 순서만 정한다. 94814 가 실패하면 이 job 은 DependencyNeverSatisfied 로 남는다(취소 뒤 --after-job 없이 다시 낸다).
 - 점검(`INIT=…/stage3-q17-st3-p11-revive/checkpoint-3000 TAG=q17 v3_check.sh r1xmt4`, 호스트 GPU 0):
   - dry-run 통과(DRY EXIT 0). 회의 셋 dlg_mt 의 번역 모드도 만든다.
   - 스모크 20 step 통과(SMOKE EXIT 0). 13 셋 라벨 점검은 불일치 0 이고, 저장·재로드 대조는 누락·추가·shape·값 차이가 모두 0 이다.
