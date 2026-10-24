@@ -190,6 +190,7 @@
   - init 은 R1x 와 같은 5 단계 checkpoint-3000 이다. R1x 명령에 회의(AMI·ICSI·NOTSOFAR 학습 분할, dlg_mt 1.0, 회의 번역 타깃)·화자 슬롯 4(`--max-speakers 4 --declare-all-p 0.5`)·split v4 만 더한다(0.6B `submit-q06-mt4.sh` 와 같은 변경).
   - 둘을 비교하면 1.7B 에서 회의·4 슬롯 효과만 남는다. 평가는 `q17-mt4-v3`(R1x 평가 94841 과 같은 묶음, AMI 는 4 슬롯 선언)다.
   - apex 2 노드, 2,500 step, MAX_RESTART 5. init 은 이미 있으니 의존은 노드 순서만 정한다. 94814 가 실패하면 이 job 은 DependencyNeverSatisfied 로 남는다(취소 뒤 --after-job 없이 다시 낸다).
+- 사용자 제출(10-25 01:31): 학습 job 95326(94814 성공 뒤) → 평가 job 95327(95326 성공 뒤, `evals-q17-mt4-v3-20261025-013122.txt` 45 작업 — 평균 1 · 9 종 × ck1500·ck2000·final·avg3 · AMI 4 몫 × final·avg3).
 - 점검(`INIT=…/stage3-q17-st3-p11-revive/checkpoint-3000 TAG=q17 v3_check.sh r1xmt4`, 호스트 GPU 0):
   - dry-run 통과(DRY EXIT 0). 회의 셋 dlg_mt 의 번역 모드도 만든다.
   - 스모크 20 step 통과(SMOKE EXIT 0). 13 셋 라벨 점검은 불일치 0 이고, 저장·재로드 대조는 누락·추가·shape·값 차이가 모두 0 이다.
