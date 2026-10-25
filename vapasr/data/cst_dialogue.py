@@ -578,7 +578,10 @@ class CstDialogueDataset(DialogueWindowDataset):
     xl_order(V3 R4, 기본 'lang'): 'arrival' 이면 교차 언어 창도 먼저 말한 화자 = A, prefix 는 두 언어만(cst_head_text_xl — 'language English German[\ntranslate auto]').
       어느 슬롯이 어느 언어인지·번역 방향은 모델이 정한다. 같은 언어 창은 그대로다.
     no_eot(기본 끔, 2026-10-23 사용자 — 턴 예측은 주 목표가 아니고 화자 귀속이 중요하다): 모든 창(실제·합성, 받아쓰기·번역 모드)에서 <EOT> 를 정답·문맥 모두에서 뺀다.
-      뺀 <EOT> 는 ghost 로만 남아 C1 머무름 결정의 기준점이 된다(ghost_anchor). 끄면 시퀀스·난수는 예전 그대로다."""
+      뺀 <EOT> 는 ghost 로만 남아 C1 머무름 결정의 기준점이 된다(ghost_anchor). 끄면 시퀀스·난수는 예전 그대로다.
+    target_spk(E2, 2026-10-25 — wiki output-diarization-integration-20261025, SSA arXiv:2506.22646): 항목마다 창에서 말하는 화자 하나(random)를 골라 그 화자 흐름만
+      한 슬롯(<SPK_A>, 그 화자 언어)으로 쓰고, 그 화자의 80 ms 활동을 target_act (K,) 로 낸다(모델이 인코더에 주입). 다른 화자 말은 정답에 없다. 번역 모드는 쓰지 않는다.
+      끄면 시퀀스·난수는 예전 그대로다."""
 
     def __init__(self, dialogues: List[str], tok, delays=(4,), exclude: Optional[set] = None, windows: Optional[List[Tuple[str, float, float]]] = None,
                  max_speakers: int = 2, decision_weight: float = 0.0, backchannel: Optional[Tuple[float, int]] = None, eot_mode: str = "soft",
@@ -586,7 +589,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                  trans: Optional[Dict[str, Dict[str, tuple]]] = None, trans_input: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.0,
                  tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, wav_aug=None, declare_all_p: float = 0.0,
                  declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, xl_order: str = "lang",
-                 no_eot: bool = False, **kw):
+                 no_eot: bool = False, target_spk: bool = False, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if xl_order not in ("lang", "arrival"): raise ValueError(f"xl_order lang|arrival — {xl_order}")
         self.xl_order = xl_order                                                                # V3 R4: 'arrival' 이면 교차 언어 창도 먼저 말한 순서 슬롯(slots·cst_prefix)
@@ -615,6 +618,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         self.eot_mode = eot_mode; self.recover = recover if recover is not None and recover.p > 0 else None; self.spk_activity = bool(spk_activity)
         self.change_weight, self.hold_weight, self.eot_drop_synth = float(change_weight), float(hold_weight), float(eot_drop_synth)   # V3-p1 C1·C5(기본 끔)
         self.no_eot = bool(no_eot)                                                                 # <EOT> 없는 학습(기본 끔)
+        self.target_spk = bool(target_spk)                                                         # E2 대상 화자 모드(기본 끔): 항목마다 창 화자 하나만 정답, target_act 를 낸다
         conv = lambda n: int(tok.convert_tokens_to_ids(n))
         self.n_slots = max(2, int(max_speakers)); self.spk_ids = tuple(conv(t) for t in SLOTS[: self.n_slots]); self.eot_id = conv("<EOT>"); self.decision_weight = float(decision_weight)
         self.declare_all_p, self.declare = float(declare_all_p), (None if declare is None else int(declare))
@@ -728,16 +732,20 @@ class CstDialogueDataset(DialogueWindowDataset):
     def _untranscribed(self, d: Dialogue, u) -> bool:
         return u.utt_id not in self.revived.get(d.conv_id, ()) and super()._untranscribed(d, u)        # 되살린 발화는 마스크 구간이 아니다
 
-    def cst_sequence(self, i: int, delay: int, rng=None, recover: Optional[Recover] = None, tgt: Optional[str] = None, drop_eot: Optional[bool] = None) -> dict:
+    def cst_sequence(self, i: int, delay: int, rng=None, recover: Optional[Recover] = None, tgt: Optional[str] = None, drop_eot: Optional[bool] = None,
+                     target: Optional[str] = None) -> dict:
         """창 i·δ 의 시퀀스. rng 를 주면 recover(기본 self.recover)로 정체 회복 구간을 넣을 수 있다 — 평가·점검은 rng 없이(뒤집지 않음).
         tgt(목표 언어, 교차 언어는 'xl')를 주거나, rng 가 있고 번역이 켜져 있으면 ast_frac 확률로 번역 모드(cst4_sequence) — tgt 는 tgt_options 에서 고른다.
         슬롯(화자·언어)은 slots(i, rng) — 교차 언어 대화만 rng 로 A/B 를 정한다.
         drop_eot(C5): None 이면 eot_drop_synth > 0 이고 rng 가 있고 meta.mask_eot 대화일 때만 rng 로 뽑는다(그 밖에는 난수를 뽑지 않는다), True/False 면 그대로(점검·dTF)."""
         cid, t0, L = self.items[i]; d = self.dlgs[cid]
-        if tgt is None and rng is not None and self.trans_on and rng.random() < self.ast_frac:
+        if tgt is None and target is None and rng is not None and self.trans_on and rng.random() < self.ast_frac:   # 대상 화자 모드(E2)는 번역 없음
             opts = self.tgt_options(i)
             if opts: tgt = rng.choice(opts)
         spk, langs = self.slots(i, rng)
+        if target is not None:                                                                    # E2: 그 화자 하나만 한 슬롯으로(번역 없음)
+            assert not tgt, "대상 화자 모드는 번역 모드를 쓰지 않는다"
+            t = spk.index(target); spk, langs = [target], [langs[t]]
         if drop_eot is None: drop_eot = bool(self.eot_drop_synth > 0 and rng is not None and d.meta.get("mask_eot") and rng.random() < self.eot_drop_synth)
         if tgt: return self.cst4_sequence(i, delay, tgt, spk, langs, drop_eot=drop_eot)
         K = int(round(L / CHUNK_S)); eps = self.eps[cid]
@@ -750,7 +758,8 @@ class CstDialogueDataset(DialogueWindowDataset):
                                recover=recover if recover is not None else self.recover, rng=rng, word_start=self._ws(),
                                lex_mask=revived_elements(streams, spk, rv, t0) if rv else (), lex_chunks=revived_chunks(rv, spk, t0, K, delay) if rv else (),
                                change_weight=self.change_weight, hold_weight=self.hold_weight, eot_ghost=gh[0] if gh else (), dec_heads=hd or (), no_eot=self.no_eot)
-        return dict(s, K=K, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, langs=langs, streams=streams, win=wst, tgt=None, n_tr=0)
+        return dict(s, K=K, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, langs=langs, streams=streams, win=wst, tgt=None, n_tr=0,
+                    **({"target": True} if target is not None else {}))                         # E2 대상 화자 시퀀스(한 슬롯 선언)
 
     def cst4_sequence(self, i: int, delay: int, tgt: str, spk: Optional[List[str]] = None, langs: Optional[List[str]] = None, drop_eot: bool = False) -> dict:
         """번역 모드: 두 슬롯의 전사 + 번역 네 흐름(window_streams4 → build_cst4_sequence). 같은 언어는 두 슬롯 모두 tgt 로,
@@ -808,7 +817,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                 P.append(f"flip:recover:{f['kind']}")
         for k in range(len(self.spk_ids)):
             if got[k] != want[k]: P.append(f"order:{SLOTS[k]}")
-        if len(s["langs"]) < max(2, len(s["speakers"])): P.append("declare:fewer_slots_than_speakers")
+        if len(s["langs"]) < (1 if s.get("target") else max(2, len(s["speakers"]))): P.append("declare:fewer_slots_than_speakers")   # 대상 화자 시퀀스는 한 슬롯
         for d in s["soft_pos"]:
             if s["labels"][d] != s["ids"][d] or not 0.0 <= s["soft_w"][d] <= 1.0 or s["labels_alt"][d] == s["ids"][d]: P.append(f"soft:{d}")
             if s["ids"][d] not in (self.eot_id,) + self.spk_ids: P.append(f"soft_tok:{d}")
@@ -883,7 +892,9 @@ class CstDialogueDataset(DialogueWindowDataset):
     def __getitem__(self, i):
         delay = random.choice(self.delays); cid = self.items[i][0]
         drop = (random.random() < self.eot_drop_synth) if self.eot_drop_synth > 0 and self.dlgs[cid].meta.get("mask_eot") else None   # C5 동전은 따로 — 형식 난수(slots·recover·tgt)는 예전 조건 그대로
-        s = self.cst_sequence(i, delay, rng=random if (self.recover or self.trans_on or self.has_xl) else None, **({"drop_eot": drop} if drop is not None else {}))
+        tsp = random.choice(window_speakers(self.eps[cid], self.items[i][1], self.items[i][2])) if self.target_spk else None   # E2 대상 화자(끄면 난수를 뽑지 않는다)
+        s = self.cst_sequence(i, delay, rng=random if (self.recover or (self.trans_on and tsp is None) or self.has_xl) else None,
+                              **({"drop_eot": drop} if drop is not None else {}), **({"target": tsp} if tsp is not None else {}))
         wav = np.asarray(crop_audio(self.mono(s["cid"]), s["t0"], s["t0"] + s["L"]), dtype=np.float32)
         if self.wav_aug is not None: wav = self.wav_aug(wav, random)                              # 끄면 난수를 더 뽑지 않는다
         return dict(wav=torch.from_numpy(np.ascontiguousarray(wav)), ids=torch.tensor(s["ids"]), is_audio=torch.tensor([c >= 0 for c in s["chunk_of"]]),
@@ -893,7 +904,8 @@ class CstDialogueDataset(DialogueWindowDataset):
                     n_flush=s["n_flush"], K=s["K"], rounds=s["n_rounds"], n_eot=s["n_eot"], n_soft=s["n_soft"], n_spk=len(s["speakers"]), n_flip=int(s["flip"] is not None), n_rev=len(s["lex"]), n_tr=int(s.get("n_tr", 0)),
                     **({"activity": torch.tensor(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"], self.n_slots), dtype=torch.float)} if self.spk_activity else {}),
                     **({"dec_kind": torch.tensor(s["dec_kind"], dtype=torch.int8), "n_switch": s["n_switch"], "n_hold": s["n_hold"]} if "dec_kind" in s else {}),   # C1(켰을 때만)
-                    **({"n_eot_drop": int(s["win"].get("eot_dropped", 0))} if self.eot_drop_synth > 0 else {}))                                               # C5(켰을 때만)
+                    **({"n_eot_drop": int(s["win"].get("eot_dropped", 0))} if self.eot_drop_synth > 0 else {}),                                               # C5(켰을 때만)
+                    **({"target_act": torch.tensor(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"], 1), dtype=torch.float)[:, 0]} if tsp is not None else {}))   # E2
 
 
 def collate_cst(batch):
@@ -913,6 +925,10 @@ def collate_cst(batch):
         out["dec_kind"] = dk
     for k in ("n_switch", "n_hold", "n_eot_drop"):
         if any(k in b for b in batch): out[k] = sum(int(b.get(k, 0)) for b in batch)
+    if "target_act" in batch[0]:                                                                # E2 대상 화자 활동 (B, Kmax) — 인코더 입력과 같은 줄(packing 이 그대로 넘긴다)
+        Km = max(int(b["K"]) for b in batch); ta = torch.zeros(B, Km)
+        for i, b in enumerate(batch): ta[i, : b["target_act"].shape[0]] = b["target_act"]
+        out["target_act"] = ta
     if "activity" in batch[0]:
         Km = max(int(b["K"]) for b in batch); act = torch.zeros(B, Km, batch[0]["activity"].shape[1]); am = torch.zeros(B, Km)
         for i, b in enumerate(batch):

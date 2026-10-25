@@ -60,6 +60,8 @@ class VapAsrForStreamingASR(PreTrainedModel):
         super().__init__(config)
         self.adapter = Adapter(config.adapter_d_in, config.adapter_d_out, config.adapter_hidden)
         self.adapter_tap = Adapter(config.adapter_d_in, config.adapter_d_out, config.enc_tap_hidden) if getattr(config, "enc_tap_layer", -1) >= 0 else None   # V2-a(이름이 adapter 로 시작 → adapter lr 그룹)
+        h = int(getattr(config, "spk_inject_hidden", 0) or 0)                                    # E2 대상 화자 활동 주입(이름이 adapter 로 시작 → adapter lr 그룹)
+        self.adapter_inject = nn.Sequential(nn.Linear(config.adapter_d_in, h), nn.GELU(), nn.Linear(h, config.adapter_d_in)) if h > 0 else None
         if thinker is None:
             from qwen_asr.core.transformers_backend.configuration_qwen3_asr import Qwen3ASRThinkerConfig
             from qwen_asr.core.transformers_backend.modeling_qwen3_asr import Qwen3ASRThinkerForConditionalGeneration
@@ -87,10 +89,21 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if state_dict: enc.enc.load_state_dict(state_dict)
         tr = self.config.encoder_trainable if trainable is None else trainable; enc.set_trainable(tr); self.config.encoder_trainable = tr
         self.encoder = enc.to(next(self.adapter.parameters()).device); return self
-    def encode(self, wav, wav_len, K):                                            # (B,L) → (B,S,Kmax,Din) — S = 1, 탭이 있으면 2(마지막 층, 탭 층)
+    def encode(self, wav, wav_len, K, act=None):                                  # (B,L) → (B,S,Kmax,Din) — S = 1, 탭이 있으면 2(마지막 층, 탭 층)
+        """act (B, ≥Kmax) 대상 화자 활동(0–1, E2) — 있으면 adapter_inject 로 인코더 pre-encode 출력에 주입한다(없으면 예전 그대로)."""
         assert self.encoder is not None, "encoder 없음 — attach_encoder() 먼저"
-        tap = int(getattr(self.config, "enc_tap_layer", -1))
-        return self.encoder(wav, wav_len, K, taps=(tap,)) if tap >= 0 else self.encoder(wav, wav_len, K)[:, None]
+        assert act is None or self.adapter_inject is not None, "대상 화자 활동을 주었는데 adapter_inject 가 없다(add_spk_inject)"
+        tap = int(getattr(self.config, "enc_tap_layer", -1)); kw = {"inject": (self.adapter_inject, act)} if act is not None else {}
+        return self.encoder(wav, wav_len, K, taps=(tap,), **kw) if tap >= 0 else self.encoder(wav, wav_len, K, **kw)[:, None]
+    def add_spk_inject(self, hidden: int = 512) -> None:
+        """E2 대상 화자 활동 주입을 켠다(SSA, arXiv:2506.22646): adapter_inject = Linear(D, h)·GELU·Linear(h, D), 마지막 Linear 0 초기화 → 붙인 직후 출력은 그대로.
+        이미 있으면 그대로(재개 — 은닉 차원이 다르면 멈춘다)."""
+        if self.adapter_inject is not None:
+            assert int(self.config.spk_inject_hidden) == int(hidden), f"이미 은닉 {self.config.spk_inject_hidden} — {hidden} 으로 바꾸지 않는다"; return
+        d = self.config.adapter_d_in; dev = next(self.adapter.parameters()).device
+        self.adapter_inject = nn.Sequential(nn.Linear(d, int(hidden)), nn.GELU(), nn.Linear(int(hidden), d)).to(dev)
+        with torch.no_grad(): self.adapter_inject[-1].weight.zero_(); self.adapter_inject[-1].bias.zero_()
+        self.config.spk_inject_hidden = int(hidden)
     def chunk_embed(self, feats):                                                 # (B,S,K,Din) → (B,K,D)
         ce = self.adapter(feats[:, 0].float())
         if self.adapter_tap is not None:
@@ -119,7 +132,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
 
     def forward(self, ids=None, is_audio=None, chunk_of=None, labels=None, mask=None, wav=None, wav_len=None, K=None, feats=None, next_weight: Optional[float] = None, return_dict: bool = True,
                 labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, position_ids=None, sem_mask=None,
-                sem_only_mask=None, dec_kind=None, **_):
+                sem_only_mask=None, dec_kind=None, target_act=None, **_):
         """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight.
         Phase 2(config.lanes>0): labels_alt/soft_w 가 있으면 EOT 후보 위치의 label 을 (labels: w, labels_alt: 1−w) 두 점 분포로 학습(정본 §5.2),
         activity (B,K,R)·activity_mask (B,K) 가 있으면 audio 위치 hidden 으로 lane 활동 BCE 를 더한다(정본 §6). EOT 위치 가중 config.eot_weight.
@@ -136,7 +149,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
         패딩 배치는 모델 안에서 한 줄로 unpad 해 같은 커널로 돌린 뒤 (B, L) 로 되돌린다(_thinker_unpadded — pad 토큰은 어느 층에서도 계산하지 않는다).
         dec_kind (B,L)(labels 와 같은 인덱싱, 0 · 1 교대 · 2 머무름 — cst_dialogue.collate_cst, V3-p1 C1)가 있으면 결정 통계(top1_switch·switch_miss·switch_wrong_slot·
         loss_switch·top1_hold)만 계산한다 — 손실은 그대로(가중은 데이터셋의 pos_weight 가 맡는다)."""
-        if wav is not None: feats = self.encode(wav, wav_len, K)
+        if wav is not None: feats = self.encode(wav, wav_len, K, act=target_act)          # target_act (B, Kmax): E2 대상 화자 활동(없으면 예전 그대로)
         nw = self.config.next_weight if next_weight is None else float(next_weight)
         packed = position_ids is not None; varlen = is_varlen(self.thinker)
         if packed:
@@ -405,4 +418,5 @@ class VapAsrForStreamingASR(PreTrainedModel):
     def trainable_state(self):
         enc = {"encoder": {k: v.detach().cpu() for k, v in self.encoder.enc.state_dict().items()}} if (self.encoder is not None and self.config.encoder_trainable) else {}
         if self.adapter_tap is not None: enc["adapter_tap"] = self.adapter_tap.state_dict()
+        if self.adapter_inject is not None: enc["adapter_inject"] = self.adapter_inject.state_dict()
         return dict(adapter=self.adapter.state_dict(), thinker={k: v.detach().to(torch.bfloat16).cpu() for k, v in self.thinker.state_dict().items()}, sp_ids=self.sp_ids, mono=True, full_ft=True, **enc)

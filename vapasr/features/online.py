@@ -126,13 +126,22 @@ class NemotronOnline(nn.Module):
         return self.spec_aug
     def train(self, mode: bool = True):                    # 동결 중에는 dropout 등이 켜지지 않도록 eval 유지
         super().train(mode); self.enc.train(mode and self.trainable); return self
-    def forward(self, wav: torch.Tensor, wav_len: torch.Tensor, K: torch.Tensor, taps: Sequence[int] = ()) -> torch.Tensor:
+    def forward(self, wav: torch.Tensor, wav_len: torch.Tensor, K: torch.Tensor, taps: Sequence[int] = (), inject=None) -> torch.Tensor:
         """wav (B, L) float32, wav_len (B,) 샘플 수, K (B,) 목표 프레임 수 → (B, max K, D) float32. 인코더는 fp32 로 돈다(autocast 밖).
-        taps(층 번호, 0 부터)를 주면 → (B, 1 + len(taps), max K, D): 0 번 = 마지막 층(위와 같은 값), 1.. = 그 층(enc.layers[j]) 출력, 같은 프레임 자르기·0 패딩(V2-a 두 스트림 입력)."""
+        taps(층 번호, 0 부터)를 주면 → (B, 1 + len(taps), max K, D): 0 번 = 마지막 층(위와 같은 값), 1.. = 그 층(enc.layers[j]) 출력, 같은 프레임 자르기·0 패딩(V2-a 두 스트림 입력).
+        inject = (fn, y)(E2, 2026-10-25 — SSA arXiv:2506.22646): pre-encode 출력 X (B, T', D)(80 ms)에 fn(X ⊙ y) 를 더한다. y (B, ≥T') 는 대상 화자 활동(0–1), 모자라면 0 으로 채운다."""
         with torch.autocast("cuda", enabled=False):
             with torch.no_grad(): f, fl = self.pre(input_signal=wav.float(), length=wav_len)
             if self.spec_aug is not None: f = self.spec_aug(f, fl)                              # 모듈이 training 일 때만(추론·평가는 그대로)
         got = {}; hooks = [self.enc.layers[j].register_forward_hook(lambda m, i_, o, j=j: got.__setitem__(j, o[0] if isinstance(o, tuple) else o)) for j in taps]   # NeMo 층 출력 (B, T', D)
+        if inject is not None:
+            fn, y = inject
+            def _inj(m, i_, o):                                                                   # ConvSubsampling 출력 (x (B, T', D), lengths)
+                x = o[0] if isinstance(o, tuple) else o; T = x.shape[1]; yy = y.to(x.dtype)
+                yy = torch.nn.functional.pad(yy, (0, max(0, T - yy.shape[1])))[:, :T]
+                x = x + fn(x * yy[..., None]).to(x.dtype)
+                return (x, *o[1:]) if isinstance(o, tuple) else x
+            hooks.append(self.enc.pre_encode.register_forward_hook(_inj))
         # 동결 인코더는 fp32(C2 이후 특징과 완전 동일). 학습할 때는 bf16 autocast — fp32 는 활성화 메모리가 2 배라 KO 배치 48 이 H200 에서 OOM(2026-09-09 실측: bs24 87 GB)
         try:
             with torch.autocast("cuda", enabled=bool(self.trainable), dtype=torch.bfloat16):

@@ -20,6 +20,9 @@
       채점 규칙은 같아서 cp·agn 은 세션 단위 cpWER 다. --verify 는 앞 300 s 인코딩(파일 전체 forward 대비)과 앞 60 s 디코드(decode_batch 대비)를 잰다.
       --spk-guide·--switch-bias 와 함께 쓰지 않는다. 행에 positions(넣은 위치 수)·enc_s·dec_s.
       --context-s S(--window full 전용, 0 = 문맥 전부): 오디오는 자르지 않고 계속 디코드하되 LLM 문맥은 prefix + 최근 S 초(long_session.LongThinker 문맥 창).
+  --target-oracle(E2, 2026-10-25 — wiki output-diarization-integration-20261025): 대상 화자 모드 체크포인트(adapter_inject)를 정답 화자 활동으로 잰다. 창의 화자마다
+      그 화자 80 ms 활동을 인코더에 주입해 한 슬롯 prefix(그 화자 언어)로 따로 디코드하고, 화자별 출력을 창 화자 순서의 슬롯으로 모아 같은 규칙으로 채점한다.
+      행에 emitted_tgt(화자별 원출력)·spill(슬롯 A 밖으로 낸 단위 수 — 대상 화자 모드인데 다른 슬롯 태그를 낸 말). 배치 디코드만(--verify·--switch-bias·--spk-guide·--window full 없이).
       V2 final 은 문맥 전부로 14 분 회의의 앞 3.5 분만 받아썼다(학습 창 20–90 s) — 회의 통째 점수는 문맥 창으로 잰다.
 참조 = 그 δ 의 학습 타깃 시퀀스(cst_sequence)에서 전사 없는 음성 청크(mask_chunks — 학습 label −100)에 놓인 원소를 뺀 것. 전사 토큰 → 단어(시각 = 마지막
   토큰의 원래 끝 시각), EOT = episode 끝(p_end). 가설도 같은 청크에서 나온 토큰·EOT 를 버린다 — 참조·가설이 같은 규칙(2026-10-15 오라클 점검: 창 전체 토큰을
@@ -125,6 +128,58 @@ def verify_long(model, wav, prefix, max_flush) -> None:
     print(f"DEC-PARITY 앞 60 s: 토큰 {len(out)} 같음(위치 {used})", flush=True)
 
 
+def target_oracle_loop(a, model, tok, sets, items, dest, done, spk, EOT, n_slots, dev) -> int:
+    """--target-oracle(E2): 창의 화자마다 정답 활동 주입 → 한 슬롯 prefix 로 디코드 → 슬롯(창 화자 순서)으로 모아 채점. 쓴 행 수를 돌려준다.
+    창 여러 개의 (창, 화자) 행을 모아 인코딩(활동만 다른 같은 오디오 — 패딩 배치)·디코드(prefix 가 같은 행끼리, 최대 --batch-size 행)한다."""
+    import numpy as np, torch
+    from vapasr.data.cst_dialogue import slot_activity, window_speakers
+    from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol
+    from vapasr.hf.batch_decode import decode_batch
+    n, t0 = 0, time.time(); words = lambda toks: words_of(tok, toks); per = max(1, a.batch_size // 4)   # 창 묶음(화자 4 명이면 batch-size 행)
+    with open(dest, "a", buffering=1) as fo, torch.inference_mode():
+        for c in dict.fromkeys(x[0] for x in items):
+            ds = sets[c]; todo = [i for cc, i in items if cc == c and not all((f"{ds.items[i][0]}@{ds.items[i][1]}", dl) in done for dl in a.deltas)]
+            for b0 in range(0, len(todo), per):
+                rows = []                                                                       # (창 i, 화자, 언어, wav, K)
+                for i in todo[b0: b0 + per]:
+                    cid, t0w, L = ds.items[i]; d = ds.dlgs[cid]; K = int(round(L / 0.08)); allspk, alllang = ds.slots(i)
+                    wav = np.asarray(ds.mono(cid)[int(round(t0w * 16000)): int(round((t0w + L) * 16000))], dtype=np.float32)
+                    for x in window_speakers(ds.eps[cid], t0w, L)[:n_slots]: rows.append((i, x, alllang[allspk.index(x)] if x in allspk else d.lang, wav, K))
+                feats = []
+                for r0 in range(0, len(rows), a.batch_size):                                    # 인코딩: 패딩 배치(행마다 K 로 자른다)
+                    rr = rows[r0: r0 + a.batch_size]; Nw = max(len(r[3]) for r in rr); Km = max(r[4] for r in rr)
+                    W = torch.zeros(len(rr), Nw, device=dev); A = torch.zeros(len(rr), Km, device=dev)
+                    for j, (i, x, _, wav, K) in enumerate(rr):
+                        cid, t0w, L = ds.items[i]; W[j, : len(wav)] = torch.from_numpy(wav).to(dev)
+                        A[j, :K] = torch.tensor(slot_activity(ds.eps[cid], [x], t0w, L, K, 1), dtype=torch.float32, device=dev)[:, 0]
+                    f = model.encode(W, torch.tensor([len(r[3]) for r in rr], device=dev), torch.tensor([r[4] for r in rr], device=dev), act=A)
+                    feats += [f[j, :, : rr[j][4]] for j in range(len(rr))]
+                for delta in a.deltas:
+                    pres = [ds.cst_prefix([r[2]], delta) for r in rows]; states = [None] * len(rows)
+                    for pre in dict.fromkeys(tuple(p) for p in pres):                          # 한 배치에 prefix 하나 — 언어가 다른 화자는 나눠 돈다
+                        js = [j for j, p in enumerate(pres) if tuple(p) == pre]
+                        for g0 in range(0, len(js), a.batch_size):
+                            jj = js[g0: g0 + a.batch_size]
+                            for j, st_ in zip(jj, decode_batch(model, [feats[j] for j in jj], [list(pre)] * len(jj), max_flush_rounds=a.max_flush)): states[j] = st_
+                    for i in dict.fromkeys(r[0] for r in rows):
+                        cid, t0w, L = ds.items[i]; d = ds.dlgs[cid]; K = int(round(L / 0.08))
+                        if (f"{cid}@{t0w}", delta) in done: continue
+                        js = [j for j, r in enumerate(rows) if r[0] == i]
+                        ref_w, ref_eot, mask, sp_order = window_ref(ds, i, delta, EOT, tok); assert sp_order[: len(js)] == [rows[j][1] for j in js], (sp_order, js)
+                        hyp_w, he_all, spill = [], [], 0
+                        for s_, j in enumerate(js):
+                            hs, he = parse_emitted(states[j].emitted, spk, EOT, drop_chunks=mask)
+                            hyp_w.append(words(hs[0])); spill += sum(len(h) for h in hs[1:]); he_all += [(s_, t) for k_, t in he if k_ == 0]
+                        sc = score_window(ref_w, hyp_w, d.lang); sc["eot"] = match_eot(ref_eot, he_all, sc["perm"], eot_tol(delta))
+                        row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, delta=delta, L=L, K=K, speakers=sp_order, n_spk=len(sp_order), masked_chunks=len(mask),
+                                   forced=sum(states[j].forced for j in js), flush_rounds=max(states[j].flush_rounds for j in js), emitted=[], target_oracle=True,
+                                   emitted_tgt=[[list(e) for e in states[j].emitted] for j in js], spill=spill,
+                                   ref_text=[" ".join(w_ for w_, _ in r) for r in ref_w], hyp_text=[" ".join(w_ for w_, _ in h) for h in hyp_w], **sc)
+                        fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
+                print(f"  {c}: {min(b0 + per, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
+    return n
+
+
 def run(a):
     import numpy as np, torch
     from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, emitted_from_sequence
@@ -159,6 +214,9 @@ def run(a):
     spk = tuple(sp[t] for t in SLOTS[:n_parse]); EOT = sp["<EOT>"]
     if EOT in blocked and not a.oracle: print("!! <EOT> 가 decode 차단 목록에 있다(Stage 3 학습 전 체크포인트) — EOT 는 나오지 않는다", flush=True)
     full = is_full(a); bs = 1 if full else a.batch_size                                         # 회의 통째: 창(회의) 하나씩 긴 직렬 디코드
+    tor = bool(getattr(a, "target_oracle", False))
+    if tor: assert model is not None and getattr(model, "adapter_inject", None) is not None and not (sb or a.spk_guide or a.verify or full), \
+        "--target-oracle: adapter_inject 가 있는 E2 체크포인트, 배치 디코드만(--verify·--switch-bias·--spk-guide·--window full 없이)"
     assert full or not a.context_s, "--context-s 는 --window full 전용"
     if full:
         assert not (sb or a.spk_guide), "--window full 은 긴 직렬 디코드(long_decode)라 --switch-bias·--spk-guide 와 함께 쓰지 않는다"
@@ -171,7 +229,7 @@ def run(a):
                 world_size=a.world_size, eot_blocked=EOT in blocked, oracle=bool(a.oracle), from_predictions=a.from_predictions,
                 **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **win_conf(a),
                 **({"spk_guide": list(a.spk_guide), "spk_guide_hold": bool(a.spk_guide_hold), **({"spk_guide_no_insert": True} if a.spk_guide_no_insert else {})} if a.spk_guide else {}),
-                **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}))
+                **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}), **({"target_oracle": True} if tor else {}))
     if a.spk_guide:
         assert not a.verify, "--spk-guide 는 배치 디코드 전용이다(직렬 stream_decode 에 안내가 없다) — --verify 없이"
         assert model is not None and getattr(model, "spk_head", None) is not None, "--spk-guide: 화자 헤드가 있는 체크포인트가 필요하다"
@@ -187,6 +245,9 @@ def run(a):
     dev = next(model.parameters()).device if model is not None else None; checked = set(); t0 = time.time(); n = 0
     words = lambda toks: words_of(tok, toks)
 
+    if tor:
+        n = target_oracle_loop(a, model, tok, sets, items, dest, done, spk, EOT, n_slots, dev)
+        print(f"DONE rank={a.rank} rows={n}", flush=True); return
     with open(dest, "a", buffering=1) as fo, torch.inference_mode():
         for c in dict.fromkeys(x[0] for x in items):
             ds = sets[c]; todo = [i for cc, i in items if cc == c]
@@ -291,6 +352,7 @@ def main():
                    help="창 길이 lo,hi(s) — V1 20,40. full = 대화(회의)마다 창 하나, 자르지 않고 한 스트림으로(긴 디코드)")
     q.add_argument("--hop", type=float, default=10.0); q.add_argument("--window-draws", type=int, default=0, help="1 = 격자 대신 이어 덮기 창(draw 0) — 긴 창 평가")
     q.add_argument("--context-s", type=float, default=0.0, help="--window full: LLM 문맥 창(초, 0 = 문맥 전부) — 오디오는 자르지 않고 문맥만 prefix + 최근 S 초")
+    q.add_argument("--target-oracle", action="store_true", help="E2: 대상 화자 모드 체크포인트를 정답 화자 활동 주입·화자별 디코드로 잰다")
     q.add_argument("--declare", type=int, default=None, help="prefix 선언 슬롯 수 하한(기본 max(2, 화자 수); 화자 수를 모르는 추론 흉내 = 4)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "
                                                        "직렬 stream_decode 에 bias 가 없어 0 이 아니면 --verify 와 함께 쓰지 않는다. config 에 정책, 행에 sb_flips·sb_points")

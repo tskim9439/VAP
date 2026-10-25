@@ -1,5 +1,5 @@
 # V3 평가 작업 하나: bash v3_eval_task.sh <작업> <run> <대상> — GPU 는 부르는 쪽이 CUDA_VISIBLE_DEVICES 로 준다(slurm/v3-eval-node.sbatch 일꾼, GPU_IDX = 그 번호).
-#   작업: dlg | xl | taxi40 | stage3 | regress | xltel | xleval | taxi90 | onset | ami | amifull — stage4_eval_queue.sh(1–6 단계)·v3_eval_queue.sh·v3_dev_decode.sh·onset_probe.sh 와
+#   작업: dlg | xl | taxi40 | stage3 | regress | xltel | xleval | taxi90 | onset | ami | amifull | amitgt — stage4_eval_queue.sh(1–6 단계)·v3_eval_queue.sh·v3_dev_decode.sh·onset_probe.sh 와
 #   같은 명령·산출 폴더다(TRANS_LEAD_SPACE=1 과 같이 --trans-lead-space — V3 run 은 모두 그렇게 학습했다).
 #   체크포인트: MODEL_ROOT(기본 /soundai/Model/VAPASR)/stage3-<run>/<대상>. 대상이 final 이면 DONE, 아니면 trainer_state.json 이 생길 때까지 기다린다.
 #   건너뛰기: 끝난 작업(요약·보고 파일 있음). xltel·xleval·taxi90 은 turn-metrics-d10.json, onset 은 onset-classes-d10.json 이 있으면 건너뛴다
@@ -13,6 +13,8 @@
 #     회의마다 한 스트림으로(cst_stage3_eval --window full — 세션 단위 cpWER), δ4·10, 4 슬롯 선언, LLM 문맥 창 CTX 초(기본 30 — 문맥 전부(0)면 V2 가 3.5 분 뒤
 #     말을 그친다, V3 README 28 절). 몫 r/w 는 ami 와 같고 몫 0 이 --verify(앞 300 s 인코딩·앞 60 s 디코드 대조)를 한다. 귀속 오류 분해(cst_attr_errors)는
 #     정렬이 O(단어²)라 돌리지 않는다. 산출 results/stage3-eval-amifull-c<CTX>-<run>-<태그>(+ ami-report.txt).
+#   amitgt(2026-10-25, E2 — wiki output-diarization-integration-20261025): 대상 화자 모드 체크포인트(adapter_inject)를 ami 와 같은 창에서 정답 화자 활동 주입·화자별
+#     디코드로 잰다(cst_stage3_eval --target-oracle). 몫 r/w·합치기는 ami 와 같고, 귀속 오류 분해는 원출력 형식이 달라 돌리지 않는다. 산출 results/stage3-eval-amitgt-<run>-<태그>.
 set -u
 K=${1:?작업}; RUN=${2:?run}; t=${3:?대상}; SH=${4:-0/1}
 SD0=${VAPASR_STAGE_DIR:-}                                                                   # 부르는 쪽(평가 노드) 값 — .env 의 /scratch 는 컨테이너 전용이라 덮이면 안 된다
@@ -71,6 +73,18 @@ case $K in
          mkdir -p $A; $P experiments/cst_attr_errors.py --pred $E --data $AB --out $A --deltas 4,10 --workers 16 > $A/run.log 2>&1
          $P raw/sources/experiments/2026-10-20-v2-multispeaker/ami_report.py $E > $E/ami-report.txt 2>&1 ) 9> $E/.sum.lock
        say "AMI 합침 → $E/ami-report.txt" ;;
+  amitgt) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
+       E=$R/stage3-eval-amitgt-$RUN-$tag; AB=$D/ami-bench-v1
+       [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
+       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas 4,10 --batch-size 16 \
+         --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 --target-oracle --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
+       grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
+       touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
+       [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }
+       ( flock 9; [ -f $E/summary.json ] && exit 0
+         $P experiments/cst_stage3_eval.py summarize --out $E > $E/summary.log 2>&1
+         $P raw/sources/experiments/2026-10-20-v2-multispeaker/ami_report.py $E > $E/ami-report.txt 2>&1 ) 9> $E/.sum.lock
+       say "AMI 대상 화자(정답 활동) 합침 → $E/ami-report.txt" ;;
   amifull) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
        C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && V=--verify
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
