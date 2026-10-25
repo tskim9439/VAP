@@ -18,6 +18,8 @@
 #            v2-amifull = V2 v2-p1 final(4 슬롯, 의존 없음). mt4-amifull·q17-mt4-amifull = 회의 + 4 슬롯 run 의 final·avg3(평균은 GPU 7 의 첫 작업 — 이미 있으면
 #            DONE 만 맞춘다), --after-job 필수(학습 job). 2 슬롯 모델(R1x 등)은 4 인 회의를 두 슬롯에 담아야 해 세션 cpWER 가 구조적으로 크다 — 묶음에 넣지 않았다.
 #   q17-e2-tgt  E2 대상 화자 모드(slurm/submit-q17-e2-tgt.sh, 2026-10-25): q17-e2-tgt final 을 AMI 정답 활동 주입·화자별 디코드(v3_eval_task.sh amitgt)로 8 몫. --after-job 필수.
+#   q17-e3  E3(2026-10-25): 같은 q17-e2-tgt final 에 정답 대신 E1 화자 분리 가지의 예측 활동(v3_eval_task.sh amie3, 임계 E3_THR — 기본 0.45 = E1 AMI dev 에서 고른 값, 바꾸려면 서브셸에서 export)으로 8 몫.
+#           --after-job 필수(E2 학습 job).
 #   --after-job JOBID  의존 job 을 바꾼다(재제출 등).   --dry-run  목록·sbatch 명령만 출력(파일·제출 없음).   --partition P  평가 노드 파티션(기본 sbatch 의 apex — 예 low_p_hpc).
 # 시간 한도는 24 h 로 낸다(sbatch 기본 12 h 를 명령줄로 덮는다). 목록은 VAPKT-data/tmp/evals-<묶음>-<시각>.txt(새 파일).
 # 각 작업은 끝났거나 시작된 산출이 있으면 건너뛰거나 이어 하고(AMI 몫은 이어 한다) 아무것도 지우지 않는다.
@@ -31,8 +33,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt" >&2; exit 2 ;; esac
+  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-e3) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
 L=()
@@ -67,6 +69,7 @@ case $set_ in
   mt4-amifull) fullset v3-p1-tel-xlw-mt4 ;;
   q17-mt4-amifull) fullset q17-v3-p1-tel-xlw-mt4 ;;
   q17-e2-tgt) for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $X amitgt q17-e2-tgt final $r/8"); done ;;
+  q17-e3) for r in 0 1 2 3 4 5 6 7; do L+=("$r|E3_THR=${E3_THR:-0.45} bash $X amie3 q17-e2-tgt final $r/8"); done ;;
 esac
 T=$D/tmp/evals-$set_-$(date +%Y%m%d-%H%M%S).txt
 cmd="sbatch ${part:+--partition=$part }${dep:+--dependency=afterok:$dep }--time=24:00:00 --export=ALL,TASKS=$T slurm/v3-eval-node.sbatch"

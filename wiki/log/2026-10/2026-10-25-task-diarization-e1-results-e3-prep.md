@@ -1,0 +1,21 @@
+## [2026-10-25] task | 화자 분리 통합 E1 결과(AMI 창 DER)·저장 대조 보강·E3 준비
+
+- Changed:
+  - 평가: `experiments/diar_eval.py`(--save-probs 창 확률, sweep 임계 훑기 — 행이 있는 창은 확률만 다시), `tests/test_diar.py`(sweep 대조)
+  - 학습: `experiments/diar_train.py`(학습 끝 저장·재로드 대조를 늘 켠다 — 가지·인코더 가중치 차이 0, 같은 배치 손실 일치, `parity.json`. 끝난 run 은 --check-final N)
+  - E3: `experiments/cst_stage3_eval.py`(--target-act — 정답 대신 예측 활동, 예측 슬롯마다 디코드), `raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh`(amie3), `slurm/submit-evals.sh`(q17-e3)
+  - 실험: `raw/sources/experiments/2026-10-25-ami-sdm-analysis/`(e1_eval.sh, e1_parity.sh, e1_miss.py, e3_check.sh, README E1·E3 절), [[status]]
+- Reason:
+  - 사용자 "계획대로 진행하는 데 1.7b 모델로 진행해"([[output-diarization-integration-20261025]] E1 평가, E3 준비).
+  - E1(95482)은 18:06 에 끝났다. AMI 창 DER 은 80 ms, collar 0, 최적 짝 기준이다. dev 에서 고른 임계는 0.45 다.
+    - eval 은 IHM-mix 18.67, SDM 23.03 이다. 도착 순서로 짝지으면 31.0, 36.6 이다.
+    - miss 가 가장 크다(SDM 13.1). 그 46 % 가 겹친 구간이고, 말이 적은 화자(창 말 몫 < 5 %)는 68 % 를 통째로 놓친다.
+  - 메모리 규칙(checkpoint-save-load-parity)상 학습 끝 재로드 대조는 기본이어야 한다. E1 본 학습은 스모크에서만 대조했다.
+    - 다시 읽은 final 은 학습 분포 128 창에서 손실 0.108, frame_acc 0.946 이다. 학습 로그 끝 값(0.09–0.13, 0.93–0.95)과 맞는다.
+  - E3 경로를 점검했다(`e3_check.sh`). 고친 대상 화자 루프의 정답 활동 경로는 고치기 전 출력과 6 창 모두 같고, 예측 활동 경로도 돈다.
+  - E2(95486)는 17:02 선점이 정기 저장 도중에 와서 저장이 잘렸다(신호 뒤 약 70 s 에 종료). 18:17 에 step 0 부터 다시 시작했다.
+- Next:
+  - 사용자가 E3 평가를 낸다(`submit-evals.sh q17-e3 --after-job 95486`).
+  - E2·E3 AMI 결과를 E0(SDM eval cp 39.3)·창 평가(53.5)와 비교한다.
+  - 겹침 구간의 miss 를 줄일 방법(E4 합성 데이터, 가지 입력·손실)을 검토한다.
+- By: tskim

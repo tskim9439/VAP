@@ -10,7 +10,10 @@ VapAsr 체크포인트(1.7B)의 인코더를 동결(fp32, 평가 경로와 같�
   dev·eval·NOTSOFAR dev·eval 도 뺀다). 합성 셋(--sim-data)은 폴더의 *.refined.dialogues.jsonl 전부 — 이름은 '<폴더>/<셋>'. 가중 키는 셋 이름, 폴더 이름(그 폴더 셋 전부),
   이름 패턴(fnmatch) 순으로 찾고 없으면 1(제출 래퍼는 '*' 없이 폴더 이름을 쓴다 — sbatch 의 따옴표 없는 확장에서 glob 이 되지 않게).
   라벨 = slot_activity(창 안 먼저 말한 순서, 80 ms), 마스크 = 패딩·전사 없는 음성 구간(_bad_spans). 증강 = 이득 ±6 dB, 잔향(실제 RIR)·잡음(noise_aug).
-산출: out/checkpoint-N/{diar.pt, trainer.pt}, out/final/{diar.pt, diar.json}, out/DONE. out/PREEMPT 가 생기면 저장하고 끝낸다(sbatch 가 requeue).
+산출: out/checkpoint-N/{diar.pt, trainer.pt}, out/final/{diar.pt, diar.json}, out/parity.json, out/DONE. out/PREEMPT 가 생기면 저장하고 끝낸다(sbatch 가 requeue).
+저장·재로드 대조(2026-10-25, 기본 — 메모리 규칙 checkpoint-save-load-parity): 학습 끝에 final 을 새 가지로, 인코더는 init 에서 새로 읽어 마지막 배치의 손실을 메모리 모델과
+  대조하고(가지·인코더 가중치 차이 0, 손실 차이 ≤ 1e-4 — 어긋나면 DONE 을 쓰지 않는다) out/parity.json 에 남긴다. 끝난 run 은 --check-final N 으로 학습 설정(out/config.json)
+  분포의 배치 N 개에서 재로드 모델의 손실·frame_acc 만 잰다(학습 로그 끝 값과 비교).
 재개: 마지막 완전한 checkpoint(trainer.pt 있음)에서. 설정 지문(out/config.json)이 다르면 멈춘다."""
 import argparse, fnmatch, glob, json, math, os, random, sys, time
 
@@ -34,6 +37,7 @@ ap.add_argument("--weight-decay", type=float, default=0.01); ap.add_argument("--
 ap.add_argument("--noise-bank", default=None); ap.add_argument("--noise-p", type=float, default=0.4); ap.add_argument("--rir-p", type=float, default=0.5); ap.add_argument("--noise-snr", default="5,30")
 ap.add_argument("--gain-db", type=float, default=6.0); ap.add_argument("--num-workers", type=int, default=4); ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--dry-run", action="store_true", help="데이터만 만들고 표본 몇 개를 점검(GPU 없음)"); ap.add_argument("--smoke", type=int, default=0, help="이 step 만 돌고 저장·재로드 대조")
+ap.add_argument("--check-final", type=int, default=0, help="학습 없이 끝난 run(out/final)의 저장·재로드 대조만 — out/config.json 설정 분포의 배치 N 개")
 a = ap.parse_args()
 
 
@@ -106,6 +110,39 @@ def fingerprint():
     return {k: getattr(a, k) for k in keys}
 
 
+def reload_check(final_dir, batches, model=None, enc=None):
+    """final/diar.pt 를 새 DiarBranch 로, 인코더는 init 에서 새로 읽어 batches 의 손실·frame_acc 를 학습과 같은 정밀도(인코더 fp32, 가지 bf16 autocast)로 잰다.
+    model·enc(학습 끝 메모리 모델)가 있으면 가중치 차이와 손실을 대조해 어긋나면 멈추고, 없으면(--check-final) 값만 남긴다. out/parity.json 에 쓴다."""
+    from vapasr.hf.diar import DiarBranch, load_encoder, sort_pit_loss
+    dev = torch.device("cuda"); x = torch.load(os.path.join(final_dir, "diar.pt"), map_location=dev); taps = tuple(x["taps"])
+    m2 = DiarBranch(**x["cfg"]).to(dev).eval(); m2.load_state_dict(x["state"]); enc2, _ = load_encoder(x["init"], a.nemotron_dir, "cuda")
+
+    def score(m, e):
+        loss_sum, hit, tot = 0.0, 0.0, 0.0
+        with torch.no_grad():
+            for b in batches:
+                wav, wl, K, act, mask, pad = (b[k].to(dev) for k in ("wav", "wav_len", "K", "act", "mask", "pad"))
+                feats = e(wav, wl, K, taps=taps)
+                with torch.autocast("cuda", dtype=torch.bfloat16): lg = m(feats, pad)
+                loss, _, _ = sort_pit_loss(lg.float(), act, mask & ~pad, a.alpha); mm = (mask & ~pad).float()[..., None]
+                loss_sum += loss.item(); hit += float((((lg.float() > 0).float() == act).float() * mm).sum()); tot += float(mm.sum()) * act.shape[-1]
+        return dict(loss=round(loss_sum / len(batches), 6), frame_acc=round(hit / max(1.0, tot), 4))
+
+    def max_diff(s1, s2):
+        assert s1.keys() == s2.keys(), "state_dict 키가 다르다"
+        return max((float((s1[k].float() - s2[k].float()).abs().max()) for k in s1 if s1[k].numel()), default=0.0)
+
+    out = dict(mode="offline" if model is None else "train-end", final=final_dir, step=x["step"], batches=len(batches), windows=sum(len(b["K"]) for b in batches),
+               reload=score(m2, enc2))
+    if model is not None:
+        model.eval(); out.update(memory=score(model, enc), branch_max_diff=max_diff(model.state_dict(), m2.state_dict()),
+                                 encoder_max_diff=max_diff(enc.state_dict(), enc2.state_dict()))
+    json.dump(out, open(os.path.join(a.out_dir, "parity.json"), "w"), indent=1); log(f"저장·재로드 대조: {out}")
+    if model is not None:
+        assert out["branch_max_diff"] == 0.0 and out["encoder_max_diff"] == 0.0 and abs(out["memory"]["loss"] - out["reload"]["loss"]) <= 1e-4, f"재로드 불일치: {out}"
+    return out
+
+
 def last_checkpoint(out):
     cks = sorted((int(p.rsplit("-", 1)[1]), p) for p in glob.glob(os.path.join(out, "checkpoint-*")) if p.rsplit("-", 1)[1].isdigit() and os.path.exists(os.path.join(p, "trainer.pt")))
     return cks[-1] if cks else (0, None)
@@ -114,6 +151,8 @@ def last_checkpoint(out):
 def main():
     from vapasr.data.noise_aug import from_args as noise_from_args
     from vapasr.hf import load_tokenizer
+    if a.check_final:                                                                              # 끝난 run: 학습 설정으로 데이터 인자를 맞춘다
+        for k, v in json.load(open(os.path.join(a.out_dir, "config.json"))).items(): setattr(a, k, v)
     tok = load_tokenizer(a.init)
     sources, wts = build_sources(tok)
     for s, w in zip(sources, wts): log(f"  셋 {s.name}: 창 {len(s.ds.items)}(draw {a.window_draws}) · 약 {s.hours:.0f} h · 가중 {w:g}")
@@ -126,6 +165,9 @@ def main():
             log(f"  표본 {s.name}: K {x['K']} · 화자 {x['n_spk']} · 활동 몫 {x['act'].mean(0).round(3).tolist()} · 마스크 몫 {1 - x['mask'].mean():.3f} · 음량 {float(np.abs(x['wav']).max()):.3f}")
         b = collate([make_sample(sources[0], i, rng, aug) for i in range(3)]); log(f"  배치 wav {tuple(b['wav'].shape)} act {tuple(b['act'].shape)} pad {int(b['pad'].sum())}")
         print("DRY OK", flush=True); return
+    if a.check_final:
+        it = iter(Stream(sources, wts, aug, f"{a.seed}:check")); batches = [collate([next(it) for _ in range(a.batch)]) for _ in range(a.check_final)]
+        reload_check(os.path.join(a.out_dir, "final"), batches); return
     import torch.distributed as dist
     from vapasr.hf.diar import DiarBranch, load_encoder, sort_pit_loss, tap_layers
     ddp = "RANK" in os.environ
@@ -154,13 +196,13 @@ def main():
                                      pin_memory=True, persistent_workers=a.num_workers > 0, prefetch_factor=4 if a.num_workers else None)
 
     def save(tag):
-        if rank != 0: return
+        if rank != 0: return None
         d = os.path.join(a.out_dir, tag); tmp = d + f".tmp{os.getpid()}"; os.makedirs(tmp, exist_ok=True)
         torch.save(dict(state=model.state_dict(), cfg=model.cfg, taps=list(taps), init=os.path.abspath(a.init), step=step), os.path.join(tmp, "diar.pt"))
         if tag != "final": torch.save(dict(opt=opt.state_dict(), sched=sched.state_dict(), step=step), os.path.join(tmp, "trainer.pt"))
         else: json.dump(dict(cfg=model.cfg, taps=list(taps), init=os.path.abspath(a.init), step=step, args=fingerprint()), open(os.path.join(tmp, "diar.json"), "w"), indent=1)
         if os.path.exists(d): d = f"{d}-dup{step}-{os.getpid()}"; log(f"!! {tag} 가 이미 있다 — 덮어쓰지 않고 {d} 로")
-        os.replace(tmp, d); log(f"저장 → {d}")
+        os.replace(tmp, d); log(f"저장 → {d}"); return d
 
     preempt = os.path.join(a.out_dir, "PREEMPT"); t0 = time.time(); acc = {}
     net.train()
@@ -183,15 +225,11 @@ def main():
             n = a.log_every if step % a.log_every == 0 else (step % a.log_every or a.log_every)
             log(f"step {step}/{total} · " + " · ".join(f"{k} {v / n:.4f}" for k, v in acc.items()) + f" · lr {sched.get_last_lr()[0]:.2e} · {(time.time() - t0) / n:.2f} s/step"); acc = {}; t0 = time.time()
         if step % a.save_every == 0 and step < total: save(f"checkpoint-{step}")
-    if step >= total:
-        save("final")
-        if rank == 0:
-            if a.smoke:
-                x = torch.load(os.path.join(a.out_dir, "final", "diar.pt"), map_location=dev); m2 = DiarBranch(**x["cfg"]).to(dev); m2.load_state_dict(x["state"])
-                diff = max(float((p - q).abs().max()) for p, q in zip(model.state_dict().values(), m2.state_dict().values()))
-                log(f"저장·재로드 대조: 최대 차이 {diff:.2e}"); assert diff == 0.0
-            open(os.path.join(a.out_dir, "DONE"), "w").write(f"step {step}\n")
-    if ddp: dist.barrier(); dist.destroy_process_group()
+    d = save("final") if step >= total else None
+    if ddp: dist.barrier(); dist.destroy_process_group()                                           # 대조(인코더 다시 읽기)는 그룹을 닫은 뒤 rank 0 만 — NCCL 대기 없이
+    if d:
+        reload_check(d, [b], model, enc)                                                             # 어긋나면 멈추고 DONE 을 쓰지 않는다
+        open(os.path.join(a.out_dir, "DONE"), "w").write(f"step {step}\n")
 
 
 if __name__ == "__main__":

@@ -37,3 +37,25 @@ def test_der_counts():
 def test_tap_layers():
     assert tap_layers("odd", 24) == tuple(range(1, 23, 2)) and tap_layers("all", 4) == (0, 1, 2) and tap_layers("2,5", 24) == (2, 5)
     with pytest.raises(AssertionError): tap_layers("30", 24)
+
+
+def test_eval_sweep_matches_der_counts(tmp_path):
+    """diar_eval sweep(2026-10-25): --save-probs 로 남긴 창 확률에서 임계별로 다시 센 DER 이 der_counts 를 창마다 합친 값과 같다."""
+    import argparse, importlib.util, json, pathlib
+    import numpy as np
+    spec = importlib.util.spec_from_file_location("_de", pathlib.Path(__file__).parents[1] / "experiments" / "diar_eval.py"); de = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(de)
+    (tmp_path / "probs").mkdir(); g = torch.Generator().manual_seed(0); want = {}
+    with open(tmp_path / "windows-rank0.jsonl", "w") as fo:
+        for j in range(5):
+            K = 30 + j; ref = (torch.rand(K, 4, generator=g) > 0.6).float(); prob = torch.rand(K, 4, generator=g); m = torch.rand(K, generator=g) > 0.1
+            wid = f"ami-sdm:M{j}@{10.0 * j}"; sub = "dev" if j < 3 else "eval"
+            fo.write(json.dumps(dict(id=wid, corpus="ami-sdm", sub=sub)) + "\n")
+            np.savez_compressed(tmp_path / "probs" / f"{wid}.npz", prob=prob.numpy().astype(np.float16), ref=ref.numpy().astype(np.uint8), mask=m.numpy())
+            p16 = torch.from_numpy(prob.numpy().astype(np.float16).astype(np.float32))
+            for t in (0.3, 0.5):
+                c = want.setdefault((sub, t), {}); [c.__setitem__(k, c.get(k, 0.0) + v) for k, v in der_counts((p16 > t).float(), ref, m).items()]
+    de.sweep(argparse.Namespace(out=str(tmp_path), thresholds="0.3,0.5")); res = json.load(open(tmp_path / "sweep.json"))
+    for (sub, t), c in want.items():
+        got = res[f"ami-sdm/{sub}"][f"{t:g}"]
+        assert got["miss"] == round(100 * c["miss"] / c["ref"], 2) and got["conf_best"] == round(100 * c["conf_best"] / c["ref"], 2)

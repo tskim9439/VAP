@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """E1 화자 분리 가지 평가(2026-10-25): AMI 창 평가(cst_stage3_eval 의 ami-bench-v1 창 — 20–90 s, draw 1, 화자 4, seed 0)와 같은 창에서 80 ms 프레임 DER(collar 0)을 잰다.
   python experiments/diar_eval.py run --diar <out/final 또는 checkpoint-N> --nemotron-dir <dir> --out <dir> [--data ami-bench-v1] [--corpora ami-ihmmix,ami-sdm]
-      [--threshold 0.5] [--batch 8] [--rank r --world-size n] [--limit-windows 0]
+      [--threshold 0.5] [--batch 8] [--rank r --world-size n] [--limit-windows 0] [--save-probs]
   python experiments/diar_eval.py summarize --out <dir>
+  python experiments/diar_eval.py sweep --out <dir> [--thresholds 0.2,0.3,0.4,0.5,0.6]   — --save-probs 로 남긴 확률에서 임계별 DER(dev 에서 고른다)
+--save-probs(2026-10-25): 창마다 out/probs/<id>.npz(prob float16 (K, 화자), ref uint8, mask) — 임계 훑기와 E3(예측 활동을 E2 대상 화자 디코드에 주입)의 입력.
 참조 = slot_activity(창 안 먼저 말한 순서), 셈에서 빼는 프레임 = 전사 없는 음성 구간(_bad_spans). DER = (miss + fa + conf)/참조 화자 프레임.
   conf_arrival = 슬롯 순서(도착 순서) 그대로 짝, conf_best = 창마다 혼동이 가장 적은 순열. 공식 분할(manifest dev·eval)·조건·창 화자 수별로 합친다.
   주의: Nemotron 3 Diarization 의 AMI DER(SDM 12.8 @1.04 s)은 세션 단위·강제 정렬 참조라 이 창 단위 값과 바로 비교되지 않는다."""
@@ -29,11 +31,13 @@ def run(a):
     ns = argparse.Namespace(corpora=a.corpora, data=a.data, split=None, deltas=[10], limit_windows=a.limit_windows, backchannel=(1.0, 3), max_speakers=n_spk,
                             window=tuple(float(v) for v in a.window.split(",")), hop=10.0, window_draws=a.window_draws, declare=n_spk)
     sets, items = windows_of(ns, tok); items = [it for j, it in enumerate(items) if j % a.world_size == a.rank]
-    os.makedirs(a.out, exist_ok=True); dest = os.path.join(a.out, f"windows-rank{a.rank}.jsonl")
+    os.makedirs(a.out, exist_ok=True); dest = os.path.join(a.out, f"windows-rank{a.rank}.jsonl"); pdir = os.path.join(a.out, "probs")
+    if a.save_probs: os.makedirs(pdir, exist_ok=True)
     done = {json.loads(l)["id"] for l in open(dest)} if os.path.exists(dest) else set(); t0 = time.time(); n = 0
     with open(dest, "a", buffering=1) as fo, torch.inference_mode():
         for b0 in range(0, len(items), a.batch):
-            batch = [(c, i) for c, i in items[b0: b0 + a.batch] if f"{sets[c].items[i][0]}@{sets[c].items[i][1]}" not in done]
+            batch = [(c, i) for c, i in items[b0: b0 + a.batch] if (wid := f"{sets[c].items[i][0]}@{sets[c].items[i][1]}") not in done
+                     or (a.save_probs and not os.path.exists(os.path.join(pdir, f"{wid}.npz")))]      # 행이 있어도 확률이 없으면 다시(행은 다시 쓰지 않는다)
             if not batch: continue
             wavs, Ks, meta = [], [], []
             for c, i in batch:
@@ -54,7 +58,9 @@ def run(a):
             for j, (c, cid, t0w, L, K, nsp, ref, m) in enumerate(meta):
                 pr = (prob[j, :K] > a.threshold).float(); dc = der_counts(pr, ref, m)
                 row = dict(id=f"{cid}@{t0w}", corpus=c, sub=sub.get(cid.split(":", 1)[1], "?"), L=L, K=K, n_spk=nsp, n_hyp_spk=int((pr.sum(0) > 0).sum()), **dc)
-                fo.write(json.dumps(row) + "\n"); n += 1
+                if a.save_probs:
+                    np.savez_compressed(os.path.join(pdir, f"{row['id']}.npz"), prob=prob[j, :K].numpy().astype(np.float16), ref=ref.numpy().astype(np.uint8), mask=m.numpy())
+                if row["id"] not in done: fo.write(json.dumps(row) + "\n"); n += 1
             print(f"  {min(b0 + a.batch, len(items))}/{len(items)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
     print(f"DONE rank={a.rank} rows={n}", flush=True)
 
@@ -82,14 +88,35 @@ def summarize(a):
               f"화자 수 맞춤 {v['spk_count_acc']} · " + " · ".join(f"{s}인 {b['der_best']}" for s, b in v["by_nspk"].items()))
 
 
+def sweep(a):
+    from vapasr.hf.diar import der_counts
+    meta = {r["id"]: r for r in (json.loads(l) for f in glob.glob(os.path.join(a.out, "windows-rank*.jsonl")) for l in open(f))}
+    ths = [float(x) for x in a.thresholds.split(",")]; acc = collections.defaultdict(collections.Counter); n = 0
+    for p in sorted(glob.glob(os.path.join(a.out, "probs", "*.npz"))):
+        r = meta[os.path.basename(p)[: -len(".npz")]]; z = np.load(p); n += 1
+        prob, ref, m = torch.from_numpy(z["prob"].astype(np.float32)), torch.from_numpy(z["ref"].astype(np.float32)), torch.from_numpy(z["mask"])
+        for t in ths: acc[(r["corpus"], r["sub"], t)].update(der_counts((prob > t).float(), ref, m))
+    assert n, f"확률이 없다 — run --save-probs: {a.out}/probs"
+    pct = lambda g, k: round(100 * g[k] / max(1, g["ref"]), 2); res = {}
+    for (c, s, t), g in sorted(acc.items()):
+        res.setdefault(f"{c}/{s}", {})[f"{t:g}"] = dict(der_arrival=round(pct(g, "miss") + pct(g, "fa") + pct(g, "conf_arrival"), 2),
+                                                       der_best=round(pct(g, "miss") + pct(g, "fa") + pct(g, "conf_best"), 2), miss=pct(g, "miss"), fa=pct(g, "fa"),
+                                                       conf_arrival=pct(g, "conf_arrival"), conf_best=pct(g, "conf_best"))
+    json.dump(res, open(os.path.join(a.out, "sweep.json"), "w"), indent=1); print(f"창 {n} · 임계 {ths}")
+    for k, v in res.items():
+        print(f"{k:16s} " + " · ".join(f"{t}: {x['der_best']:5.2f}/{x['der_arrival']:5.2f}(m {x['miss']:.1f} f {x['fa']:.1f})" for t, x in v.items()))
+
+
 def main():
     ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest="cmd", required=True)
     q = sub.add_parser("run"); q.add_argument("--diar", required=True); q.add_argument("--nemotron-dir", default=None); q.add_argument("--out", required=True)
     q.add_argument("--data", default="/soundai/users/tskim/VAPKT-data/data/ami-bench-v1"); q.add_argument("--corpora", default="ami-ihmmix,ami-sdm")
     q.add_argument("--window", default="20,90"); q.add_argument("--window-draws", type=int, default=1); q.add_argument("--threshold", type=float, default=0.5)
     q.add_argument("--batch", type=int, default=8); q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1); q.add_argument("--limit-windows", type=int, default=0)
+    q.add_argument("--save-probs", action="store_true")
     q = sub.add_parser("summarize"); q.add_argument("--out", required=True)
-    a = ap.parse_args(); {"run": run, "summarize": summarize}[a.cmd](a)
+    q = sub.add_parser("sweep"); q.add_argument("--out", required=True); q.add_argument("--thresholds", default="0.2,0.3,0.4,0.5,0.6")
+    a = ap.parse_args(); {"run": run, "summarize": summarize, "sweep": sweep}[a.cmd](a)
 
 
 if __name__ == "__main__":
