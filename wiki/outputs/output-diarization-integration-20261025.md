@@ -1,0 +1,94 @@
+---
+type: output
+status: active
+created: 2026-10-25
+updated: 2026-10-25
+summary: 화자 분리 통합 검토 — Streaming Sortformer·Nemotron 3 Diarization·화자 커널 주입(SSA)·FastMSS 를 우리 E2E 모델에 넣는 설계와 단계별 시험
+sources:
+  - https://arxiv.org/abs/2507.18446
+  - https://huggingface.co/nvidia/Nemotron-3-Diarization
+  - https://huggingface.co/nvidia/multitalker-parakeet-streaming-0.6b-v1
+  - https://arxiv.org/abs/2506.22646
+  - https://arxiv.org/abs/2605.15442
+  - https://arxiv.org/html/2510.03723v2
+---
+
+# 화자 분리(diarization) 통합 검토 (2026-10-25)
+
+사용자 요청 흐름:
+- "ami sdm 의 수치를 20 미만으로 내리고 싶은데" → [[2026-10-25-ami-sdm-analysis]](raw: `raw/sources/experiments/2026-10-25-ami-sdm-analysis/README.md`)
+- "우리도 Diarization 기능을 학습해 추가하는 건 어떨까?"
+- "2605.15442 · 2507.18446 · nemotron 3 diarization 논문을 참고 해봐"
+
+전제는 사용자 방침인 외부 모듈 없는 단일 E2E 모델이다. 2026-10-25 에 원문·모델 카드를 읽고 정리했다.
+
+## 1. 읽은 자료 요약
+- **Streaming Sortformer**(arXiv:2507.18446, Interspeech 2025, NVIDIA)
+  - 구조: NEST(Fast-Conformer) pre-encoder(80 ms 프레임) 뒤에 Transformer 를 쌓고, 화자 4 명을 sigmoid 로 출력한다(117M).
+  - 출력 순서는 도착 순서다. 손실은 Sort loss + PIT 다.
+  - 스트리밍은 도착 순서 화자 캐시(AOSC)와 FIFO 로 한다.
+    - 캐시는 화자별 프레임 임베딩 188 프레임(15 s)이다.
+    - 점수는 S_i = log P_i + Σ_{j≠i} log(1 − P_j) 로, 혼자 말하는 프레임을 남긴다.
+    - 무음 임베딩, 최근 가산, 화자별 최소 몫 가산이 있다.
+  - 입력은 [캐시, 현재 청크]다. 오프라인 체크포인트를 캐시와 함께 미세조정해야 한다(안 하면 DIHARD 27.6).
+  - DER: DIHARD III 19.0–20.3(지연 0.32–10 s), CALLHOME 10.1–13.7. 학습 데이터는 모의 5,150 h + 실제 2,030 h(AMI SDM 포함)다.
+- **Nemotron 3 Diarization**(HF 모델 카드, 2026-09-23 공개, OpenMDW)
+  - 100M, RoPE Transformer 31 층, 80 ms, 화자 8 명, AOSC(264 프레임)다.
+  - 지연은 30.4 · 1.04 · 0.64 · 0.32 s 를 고를 수 있다.
+  - 학습: 실제 약 10k h + FastMSS 모의 82.6k h(단일 화자 원천 약 28k h). 오프라인(모의) → 스트리밍 미세조정(실제 + 모의) 두 단계다.
+  - **AMI SDM DER 11.1(30.4 s) · 12.8(1.04 s) · 13.0(0.32 s)**(강제 정렬 참조)다. 앞 버전 streaming sortformer v2.1 은 21.4–23.9 였다.
+- **Multitalker Parakeet Streaming 0.6B**(HF 모델 카드, Nemotron-Speech-Streaming 기반 — 우리 인코더 계열)
+  - 화자 분리 출력만 받는다(등록 음성 없음).
+  - 화자 활동으로 만든 커널을 Fast-Conformer pre-encode 층에 넣고, **화자마다 인스턴스 하나**(배치)로 그 화자의 전사를 낸다.
+  - cpWER(Streaming Sortformer v2, 1.12 s): **AMI IHM 21.3 · AMI SDM 37.4** · CH109 15.8 · Mixer 6 23.8.
+  - 단일 화자 WER 은 7.44(기본 모델 7.16)다.
+- **SSA — Self-Speaker Adaptation**(arXiv:2506.22646, Interspeech 2025)
+  - 주입: X_inj = f_inj(X ⊙ y) + X. y 는 대상 화자 활동(0–1), f_inj 는 선형 2 층이고, 위치는 pre-encode 층이다(1.1M).
+  - 학습: 대상 화자를 무작위로 골라 그 화자 전사만 정답으로 한다. 화자 분리기는 고정한다.
+  - LibriSpeechMix 오프라인 cpWER 2.2 / 2.8 / 5.0(1·2·3-mix), 스트리밍 1.12 s 4.0 / 5.4 / 9.8, CH109 26.2 다.
+- **Mind the Gap — FastMSS**(arXiv:2605.15442, Interspeech 2026 제출)
+  - 모의 대화 생성기다: N 화자 HMM 교대(유지·교대·끼어듦·맞장구), RIR·잡음·이득.
+  - 겹침을 늘리면 다화자 ASR 은 좋아지고 화자 분리는 나빠진다. 작업마다 따로 맞춰야 한다.
+  - 원천 다양성이 도메인 일치보다 중요하다.
+  - 잡음 + 잔향이 화자 분리에 크다(AliMeeting 원거리 DER 36.8 → 25.7).
+  - 모의 → 실제 미세조정이 가장 좋다(DiCoW tcpWER 8.7, Sortformer DER 15.5).
+- 참고 상한: DiCoW 는 AMI-SDM cpWER 16.3 이다(arXiv:2510.03723 — 정답 화자 구간 입력, 오프라인, Whisper 계열).
+
+## 2. 우리 모델과의 대응
+- 우리 슬롯 규칙(창 안에서 먼저 말한 사람 = A)이 Sortformer 의 도착 순서와 같다. 출력 형식을 바꾸지 않고 화자 분리 출력을 슬롯에 그대로 대응시킬 수 있다.
+- 우리 AMI SDM 오류(1.7B 회의 + 4 슬롯 avg3, eval δ10 창 cpWER 53.5)와 대응:
+  - 귀속 24.9 pt: 홀로 구간 긴 턴 통째 오배정 11.6 pt, 4 인 창 단어 75 % 를 2 슬롯으로. → "누가 누구인지" 문제. 화자 분리(캐시로 정체 유지)가 바로 겨누는 곳이다.
+  - 받아쓰기 28.6: 겹침 구간 단어 21 % 의 S+D 57 %(오류의 47 %). → 한 스트림에 번갈아 쓰는 형식의 약점이다. SSA 처럼 화자마다 따로 디코드하면 겹침을 각자 받아쓴다.
+  - 회의 통째 붕괴(V3 README 28 절): LLM 문맥 창 밖으로 나간 화자를 다시 알아보지 못한다. AOSC 가 정체를 들고 다니면 LLM 문맥은 최근 몇십 초로 둬도 된다.
+- 기존 자산:
+  - Stage 3 화자 슬롯 활동 헤드(`spk_head`, LLM 오디오 위치, 보조 손실 0.5)는 창 안 활동만 맞춘다. 캐시도 정체 손실도 없다.
+  - 활동 라벨(`slot_activity`)은 대화·회의·합성 셋에 이미 있다.
+
+## 3. 통합 설계 (한 모델 그래프)
+1. **화자 분리 가지**:
+   - 우리 Nemotron 인코더의 pre-encode 출력(80 ms)에 Transformer 를 쌓아 4–8 슬롯 활동을 낸다(Sort loss + PIT). 스트리밍은 AOSC + FIFO 다.
+   - 같은 그래프 안의 가지라서 외부 모듈이 아니다.
+   - 공개 가중치(Nemotron 3 Diarization, OpenMDW)로 초기화할 수 있다. 다만 입력 특징이 달라서 가지를 mel 에서 따로 시작해야 한다. 이건 사용자가 정할 일이다.
+2. **주입(SSA)**: 인코더 pre-encode 출력에 f_inj(X ⊙ y_s) + X 를 넣는다(대상 슬롯 s 의 활동). 이 경로만 슬롯마다 다르다.
+3. **디코드 형식**:
+   - (a) 슬롯마다 따로(대상 화자 받아쓰기·번역 — Stage 2 단일 화자 형식을 그대로 쓴다): 겹침에 강하다. 귀속은 화자 분리가 정한다. 비용은 슬롯 수 배(배치)다.
+     - 실시간 경로가 한 스트림 RTF 0.15 라 4 슬롯이면 약 0.6 으로 어림한다(재지 않음).
+   - (b) 한 스트림 + 모든 슬롯 활동 주입: 싸지만 겹침은 여전히 번갈아 쓴다.
+   - 분석상 겹침이 받아쓰기 오류의 절반이라 (a)가 맞다. 다만 (a)는 대화 단계 학습 형식이 바뀐다.
+4. **긴 회의**: AOSC 로 정체를 유지하고, LLM 은 슬롯마다 최근 문맥만 본다. 회의 통째 평가 `--window full --context-s` 와 맞물린다.
+5. **데이터**: FastMSS 식 모의를 쓴다.
+   - 화자 분리용은 자연 교대 + 잔향·잡음(원거리)이고, 받아쓰기용은 겹침을 늘린다.
+   - 원천은 우리 단일 화자 코퍼스(한·영·독)와 AMI 근접 마이크 등으로 다양하게 잡는다.
+   - 그 뒤 실제 회의(AMI·ICSI·NOTSOFAR 학습 분할)로 미세조정한다.
+
+## 4. 단계별 시험 (싼 것부터, 판가름 기준 포함)
+- E0 분석(학습 없음): 지금 가설 단어를 정답 화자 구간으로 시각 기준 다시 귀속해 cp 를 잰다. 한 스트림 형식에서 화자 분리가 완벽하면 남는 귀속 오류(겹침 모호성)를 어림한다.
+- E1 화자 분리 가지: 우리 인코더 위 Sortformer 가지를 0.6B 로 학습해 AMI SDM DER 을 잰다. 기준은 Nemotron 3 Diarization 의 1.04 s 12.8 이다.
+- E2 상한: 정답 활동 주입 + 슬롯별 디코드(형식 (a))를 0.6B 로 학습해 AMI SDM cp 를 잰다. DiCoW 오라클 16.3 과 같은 조건이다.
+- E3 실제: E1 예측 활동으로 바꾸고, 스트리밍 AOSC 와 회의 통째 평가로 잰다. 공개 기준은 Multitalker Parakeet SDM 37.4(세션 cpWER, 실제 화자 분리, 1.12 s)다.
+- E4 데이터: 모의 대화(3–8 인, 잔향)로 화자 분리·받아쓰기를 함께 개선한다.
+
+## 5. 목표 수치에 대한 판단
+- 공개된 AMI SDM cpWER 20 미만은 정답 화자 구간을 받은 오프라인 시스템(DiCoW 16.3, SA-DiCoW 18.1)뿐이다.
+- 실제 화자 분리 + 스트리밍 공개 수치는 37.4(Multitalker Parakeet 0.6B)다.
+- 우리 창 cpWER 는 창마다 짝을 새로 정해 세션 cpWER 보다 쉽다. 수치를 견줄 때 같은 평가(세션, meeteval 정규화)로 맞춰야 한다.
