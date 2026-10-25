@@ -3,13 +3,15 @@
 # 1.7B 회의 + 4 슬롯 final 에서 --target-spk(창마다 말하는 화자 하나만 한 슬롯 정답, 그 화자 80 ms 활동을 인코더 pre-encode 에 주입 — SSA arXiv:2506.22646)로 학습하고,
 # 끝나면 SLURM 평가 노드로 AMI 정답 활동 평가(v3_eval_task.sh amitgt — 창 화자마다 정답 활동 주입·따로 디코드, 8 몫)를 잇는다. 상한 시험이다(실제 화자 분리는 E3).
 #   학습 run q17-e2-tgt: init stage3-q17-v3-p1-tel-xlw-mt4/final, 대화 10 셋(회의 AMI·ICSI·NOTSOFAR 포함, split v4) + 합성(3–4 인 v3-multi·교차 언어·전화, 번역 없이 받아쓰기만),
-#     replay 없음, 화자 슬롯 헤드 끔, 주입 FFN 은닉 512(마지막 Linear 0 초기화 → 시작 = init 모델), lr 4e-5, 4,000 step, apex 2 노드.
+#     replay 없음, 화자 슬롯 헤드 끔, 주입 FFN 은닉 512(마지막 Linear 0 초기화 → 시작 = init 모델), lr 4e-5, 4,000 step, 2 노드.
 #   비교: E0(1.7B 회의 + 4 슬롯 avg3 를 정답 구간으로 다시 귀속, SDM eval δ10 cp 39.3), 같은 모델의 창 평가(53.5), 문헌 오라클 DiCoW 16.3(세션·meeteval).
-# 쓰기(스케줄러 셸): bash slurm/submit-q17-e2-tgt.sh [--dry-run] [--after-job JOBID] [--partition P(기본 apex)] [--nodes N(기본 2)] [--max-steps N(기본 4000)]
+# 쓰기(스케줄러 셸): bash slurm/submit-q17-e2-tgt.sh [--dry-run] [--after-job JOBID] [--partition P(기본 low_p_hpc)] [--nodes N(기본 2)] [--max-steps N(기본 4000)]
 #   [--exclude N,…|none] [--no-eval]. 아무것도 지우지 않는다.
+#   파티션(2026-10-25 사용자 "low_p_hpc 로 제출할 수 있도록 해줘"): 학습·평가 노드 모두 P. 선점이 잦아 MAX_RESTART 기본 20(apex 면 5) — 학습은 선점 신호에
+#   저장하고 requeue 뒤 마지막 checkpoint 에서, 평가 노드(--requeue)는 끝난 창(원출력 행)을 건너뛰고 이어 한다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-dry=""; exclude=hpc-50,hpc-51,hpc-101,hpc-102; after=""; part=apex; nodes=2; steps=4000; ev=1
+dry=""; exclude=hpc-50,hpc-51,hpc-101,hpc-102; after=""; part=low_p_hpc; nodes=2; steps=4000; ev=1
 while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run) dry=--dry-run; shift ;;  --exclude) exclude=$2; shift 2 ;;  --after-job) after=$2; shift 2 ;;  --partition) part=$2; shift 2 ;;
