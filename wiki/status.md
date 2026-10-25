@@ -55,6 +55,10 @@ summary: 2026-10-24 1.7B 체인 AST 3 차 마무리·Stage 1 은 한·독 0.4–
       - 20 미만에는 귀속, 겹침, 원거리가 함께 풀려야 한다. → `raw/sources/experiments/2026-10-25-ami-sdm-analysis/README.md`
       - 사용자 제안: 화자 분리를 모델 안에서 학습해 통합한다. 활동 헤드 → 주입, 화자 캐시, 화자 임베딩 손실 순으로 검증을 제안했다.
       - 참고 자료 검토(Streaming Sortformer·Nemotron 3 Diarization·SSA·FastMSS) → 화자 분리 가지 + SSA 주입 + 슬롯별 디코드 + AOSC 설계와 E0–E4 시험 순서. → [[output-diarization-integration-20261025]]
+      - 사용자 "계획대로 진행하는 데 1.7b 모델로 진행해".
+        - E0(정답 구간으로 다시 귀속, 학습 없음): SDM eval cp 53.5 → 39.3(귀속 24.9 → 10.7). 한 스트림 형식의 천장이다. 남는 몫은 겹침이다.
+        - E1 화자 분리 가지(1.7B 회의 + 4 슬롯 인코더 동결 + Transformer 12 층 38.9M, 도착 순서 BCE + PIT)는 스모크(30 step·저장 대조)와 평가 경로까지 통과했다.
+          제출은 `slurm/submit-diar-train.sh`(1 노드 apex, 20k step)다.
       - init 은 같은 5 단계 ck3000 이다. 1.7B 점검(dry-run·스모크 20 step·저장 대조)은 통과했다. 평가는 `q17-mt4-v3` 다.
   - 1.7B Stage 1 평가(94840): 같은 레시피 0.6B 대비 한국어·독일어는 모든 δ 에서 0.4–0.7 pt 유의하게 낫다. 영어는 δ4·6 에서 0.3–0.5 나쁘고 δ8 이후 같다. → `raw/sources/experiments/2026-10-22-q17-chain/README.md`
   - 0.6B 합친 Stage 2(94850·94851): 받아쓰기는 나빠진 곳이 없다.

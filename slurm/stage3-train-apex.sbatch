@@ -1,6 +1,7 @@
 #!/bin/bash
 # Stage 3 학습(experiments/stage3_train.py) — 노드당 8 GPU torchrun. 제출은 slurm/submit-stage3-train.sh(사용자).
 # 입력은 sbatch --export 로만: OUT(산출 폴더), ARGS_EXTRA(stage3_train.py 인자, 쉼표는 %2C), MAX_RESTART(실패 재시도 한도, 기본 3).
+# SCRIPT(2026-10-25, 기본 experiments/stage3_train.py): 같은 규약(--nemotron-dir·--out-dir 을 받고 PREEMPT·DONE 을 쓰는)의 다른 학습 스크립트 — 예 experiments/diar_train.py(E1 화자 분리 가지).
 # 선점 신호(USR1/TERM) → PREEMPT 표시 → 학습이 체크포인트를 저장하고 끝나면 requeue. 아무것도 지우지 않는다(PREEMPT 표시 파일만 시작 때 다시 만든다).
 # 감시자(watchdog): 실패(랑데부 시간 초과 등) 뒤 srun 이 한 노드 작업을 못 끝내고 멈추면 WD_GRACE(300 s) 뒤 requeue(한도 넘으면 취소).
 #SBATCH --job-name=SA_SFT_FullDuplex
@@ -48,7 +49,7 @@ MASTER=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1); PORT=$((200
 MASTER_IP=$(ip -4 -o addr show "$NCCL_SOCKET_IFNAME" 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n 1); [ -n "$MASTER_IP" ] || MASTER_IP=$MASTER
 echo "[$(date '+%T')] torchrun × $SLURM_NNODES 노드 × 8 GPU (rdzv $MASTER_IP:$PORT): $ARGS"
 srun --export=ALL --nodes="$SLURM_NNODES" --ntasks="$SLURM_NNODES" --ntasks-per-node=1 --kill-on-bad-exit=1 \
-  /bin/bash -c "torchrun --nnodes=$SLURM_NNODES --nproc_per_node=8 --node_rank=\$SLURM_NODEID --rdzv_backend=c10d --rdzv_endpoint=$MASTER_IP:$PORT --rdzv_id=$SLURM_JOB_ID experiments/stage3_train.py $ARGS" &
+  /bin/bash -c "torchrun --nnodes=$SLURM_NNODES --nproc_per_node=8 --node_rank=\$SLURM_NODEID --rdzv_backend=c10d --rdzv_endpoint=$MASTER_IP:$PORT --rdzv_id=$SLURM_JOB_ID ${SCRIPT:-experiments/stage3_train.py} $ARGS" &
 PID=$!
 watchdog() {  # 랑데부 실패 등으로 srun 이 작업을 끝내라고 했는데도 한 노드 작업이 안 끝나면(91256: hpc-102, 1 시간 넘게 RUNNING) 유예 뒤 스스로 정리
   local err=/soundai/users/tskim/VAPKT/logs/train/$SLURM_JOB_NAME-$SLURM_JOB_ID.err; local off; off=$(stat -c %s "$err" 2>/dev/null || echo 0)
