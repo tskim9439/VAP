@@ -1,0 +1,1046 @@
+{
+ "ami-ihmmix/dev/10": {
+  "windows": 625,
+  "n_ref": 94090,
+  "cp": 56.33,
+  "agn": 21.8,
+  "attr": 34.53,
+  "slot": 84.44,
+  "S": 13.03,
+  "D": 5.36,
+  "I": 3.41,
+  "hyp_ref_ratio": 0.981,
+  "fill_ref_share": 5.59,
+  "fill_hyp_per_ref": 5.09,
+  "fill_err_rate": 30.49,
+  "agn_nofill": 21.14,
+  "cp_nofill": 56.17,
+  "overlap_share": 23.98,
+  "err_rate_overlap": 48.26,
+  "err_rate_solo": 8.96,
+  "err_share_overlap": 62.94,
+  "edge_share": 11.23,
+  "err_rate_edge": 21.96,
+  "err_rate_mid": 17.94,
+  "purity": 0.724,
+  "coverage": 0.837,
+  "mis_share_of_pairs": 0.3027,
+  "by_nspk": {
+   "1": {
+    "word_share": 4.14,
+    "cp": 6.57,
+    "agn": 6.55,
+    "attr": 0.03,
+    "win": 44
+   },
+   "2": {
+    "word_share": 10.67,
+    "cp": 20.21,
+    "agn": 12.59,
+    "attr": 7.61,
+    "win": 84
+   },
+   "3": {
+    "word_share": 23.34,
+    "cp": 48.05,
+    "agn": 19.94,
+    "attr": 28.11,
+    "win": 159
+   },
+   "4": {
+    "word_share": 61.85,
+    "cp": 69.02,
+    "agn": 25.11,
+    "attr": 43.9,
+    "win": 338
+   }
+  },
+  "slot_cells": {
+   "참조1·가설1": {
+    "win": 41,
+    "word_share": 3.87,
+    "cp": 6.6,
+    "attr": 0.0
+   },
+   "참조1·가설2": {
+    "win": 3,
+    "word_share": 0.27,
+    "cp": 6.2,
+    "attr": 0.39
+   },
+   "참조2·가설1": {
+    "win": 13,
+    "word_share": 1.48,
+    "cp": 10.23,
+    "attr": 2.09
+   },
+   "참조2·가설2": {
+    "win": 68,
+    "word_share": 8.86,
+    "cp": 20.37,
+    "attr": 7.04
+   },
+   "참조2·가설3": {
+    "win": 3,
+    "word_share": 0.33,
+    "cp": 60.26,
+    "attr": 47.44
+   },
+   "참조3·가설2": {
+    "win": 144,
+    "word_share": 21.38,
+    "cp": 48.09,
+    "attr": 28.32
+   },
+   "참조3·가설3": {
+    "win": 14,
+    "word_share": 1.85,
+    "cp": 46.26,
+    "attr": 24.83
+   },
+   "참조3·가설4": {
+    "win": 1,
+    "word_share": 0.11,
+    "cp": 69.44,
+    "attr": 41.67
+   },
+   "참조4·가설2": {
+    "win": 269,
+    "word_share": 49.3,
+    "cp": 68.85,
+    "attr": 43.62
+   },
+   "참조4·가설3": {
+    "win": 65,
+    "word_share": 11.71,
+    "cp": 70.6,
+    "attr": 45.6
+   },
+   "참조4·가설4": {
+    "win": 4,
+    "word_share": 0.84,
+    "cp": 56.42,
+    "attr": 36.47
+   }
+  },
+  "by_speaker_share": {
+   "극소(<5%)": {
+    "word_share": 1.12,
+    "cp_err_rate": 112.39,
+    "err_share": 2.24
+   },
+   "소(5–20%)": {
+    "word_share": 12.4,
+    "cp_err_rate": 98.92,
+    "err_share": 21.78
+   },
+   "주(≥50%)": {
+    "word_share": 42.51,
+    "cp_err_rate": 24.27,
+    "err_share": 18.31
+   },
+   "중(20–50%)": {
+    "word_share": 43.96,
+    "cp_err_rate": 73.67,
+    "err_share": 57.49
+   }
+  },
+  "attr_types": {
+   "whole_long/solo": 14.57,
+   "whole_short/ov": 7.51,
+   "whole_long/ov": 2.04,
+   "whole_short/solo": 1.79,
+   "early/solo": 0.72,
+   "early/ov": 0.65,
+   "late/ov": 0.62,
+   "late/solo": 0.49,
+   "inner/ov": 0.14,
+   "inner/solo": 0.1
+  },
+  "meetings": {
+   "TS3004d": {
+    "cp": 81.99,
+    "agn": 26.85,
+    "n_ref": 6276
+   },
+   "IB4002": {
+    "cp": 76.0,
+    "agn": 39.97,
+    "n_ref": 4008
+   },
+   "TS3004c": {
+    "cp": 65.92,
+    "agn": 26.49,
+    "n_ref": 7040
+   },
+   "ES2011d": {
+    "cp": 62.82,
+    "agn": 19.47,
+    "n_ref": 4406
+   },
+   "TS3004a": {
+    "cp": 61.79,
+    "agn": 24.22,
+    "n_ref": 2994
+   },
+   "IB4010": {
+    "cp": 61.75,
+    "agn": 22.9,
+    "n_ref": 9543
+   },
+   "IB4011": {
+    "cp": 57.67,
+    "agn": 22.02,
+    "n_ref": 7711
+   },
+   "ES2011a": {
+    "cp": 57.37,
+    "agn": 23.0,
+    "n_ref": 2470
+   },
+   "TS3004b": {
+    "cp": 56.96,
+    "agn": 22.84,
+    "n_ref": 6506
+   },
+   "ES2011c": {
+    "cp": 54.9,
+    "agn": 18.93,
+    "n_ref": 4690
+   },
+   "IB4004": {
+    "cp": 53.08,
+    "agn": 23.29,
+    "n_ref": 7513
+   },
+   "IB4001": {
+    "cp": 52.7,
+    "agn": 20.84,
+    "n_ref": 4670
+   },
+   "ES2011b": {
+    "cp": 50.75,
+    "agn": 18.29,
+    "n_ref": 4560
+   },
+   "IS1008d": {
+    "cp": 50.25,
+    "agn": 18.19,
+    "n_ref": 4139
+   },
+   "IB4003": {
+    "cp": 45.41,
+    "agn": 18.72,
+    "n_ref": 6604
+   },
+   "IS1008b": {
+    "cp": 36.01,
+    "agn": 11.99,
+    "n_ref": 4313
+   },
+   "IS1008c": {
+    "cp": 35.44,
+    "agn": 14.58,
+    "n_ref": 4094
+   },
+   "IS1008a": {
+    "cp": 26.17,
+    "agn": 11.52,
+    "n_ref": 2553
+   }
+  }
+ },
+ "ami-ihmmix/eval/10": {
+  "windows": 580,
+  "n_ref": 88206,
+  "cp": 49.39,
+  "agn": 21.4,
+  "attr": 27.99,
+  "slot": 77.32,
+  "S": 11.77,
+  "D": 6.65,
+  "I": 2.98,
+  "hyp_ref_ratio": 0.963,
+  "fill_ref_share": 5.02,
+  "fill_hyp_per_ref": 4.57,
+  "fill_err_rate": 30.19,
+  "agn_nofill": 20.69,
+  "cp_nofill": 49.13,
+  "overlap_share": 21.03,
+  "err_rate_overlap": 50.23,
+  "err_rate_solo": 9.95,
+  "err_share_overlap": 57.35,
+  "edge_share": 10.95,
+  "err_rate_edge": 20.86,
+  "err_rate_mid": 18.12,
+  "purity": 0.774,
+  "coverage": 0.854,
+  "mis_share_of_pairs": 0.2539,
+  "by_nspk": {
+   "1": {
+    "word_share": 5.37,
+    "cp": 10.19,
+    "agn": 10.02,
+    "attr": 0.17,
+    "win": 48
+   },
+   "2": {
+    "word_share": 10.15,
+    "cp": 21.65,
+    "agn": 13.79,
+    "attr": 7.86,
+    "win": 73
+   },
+   "3": {
+    "word_share": 32.4,
+    "cp": 44.67,
+    "agn": 20.56,
+    "attr": 24.11,
+    "win": 187
+   },
+   "4": {
+    "word_share": 52.07,
+    "cp": 61.77,
+    "agn": 24.57,
+    "attr": 37.2,
+    "win": 272
+   }
+  },
+  "slot_cells": {
+   "참조1·가설1": {
+    "win": 46,
+    "word_share": 5.21,
+    "cp": 10.12,
+    "attr": 0.0
+   },
+   "참조1·가설2": {
+    "win": 2,
+    "word_share": 0.17,
+    "cp": 12.33,
+    "attr": 5.48
+   },
+   "참조2·가설1": {
+    "win": 10,
+    "word_share": 1.39,
+    "cp": 14.55,
+    "attr": 5.28
+   },
+   "참조2·가설2": {
+    "win": 60,
+    "word_share": 8.35,
+    "cp": 21.16,
+    "attr": 6.87
+   },
+   "참조2·가설3": {
+    "win": 3,
+    "word_share": 0.41,
+    "cp": 55.8,
+    "attr": 36.74
+   },
+   "참조3·가설1": {
+    "win": 4,
+    "word_share": 0.22,
+    "cp": 39.79,
+    "attr": 1.57
+   },
+   "참조3·가설2": {
+    "win": 151,
+    "word_share": 26.7,
+    "cp": 43.11,
+    "attr": 22.67
+   },
+   "참조3·가설3": {
+    "win": 29,
+    "word_share": 4.92,
+    "cp": 51.67,
+    "attr": 32.0
+   },
+   "참조3·가설4": {
+    "win": 3,
+    "word_share": 0.56,
+    "cp": 59.23,
+    "attr": 31.85
+   },
+   "참조4·가설2": {
+    "win": 205,
+    "word_share": 39.39,
+    "cp": 61.35,
+    "attr": 37.2
+   },
+   "참조4·가설3": {
+    "win": 63,
+    "word_share": 11.86,
+    "cp": 62.33,
+    "attr": 36.33
+   },
+   "참조4·가설4": {
+    "win": 4,
+    "word_share": 0.83,
+    "cp": 73.88,
+    "attr": 49.8
+   }
+  },
+  "by_speaker_share": {
+   "극소(<5%)": {
+    "word_share": 1.37,
+    "cp_err_rate": 115.65,
+    "err_share": 3.21
+   },
+   "소(5–20%)": {
+    "word_share": 10.63,
+    "cp_err_rate": 98.44,
+    "err_share": 21.19
+   },
+   "주(≥50%)": {
+    "word_share": 50.31,
+    "cp_err_rate": 23.88,
+    "err_share": 24.33
+   },
+   "중(20–50%)": {
+    "word_share": 37.69,
+    "cp_err_rate": 67.09,
+    "err_share": 51.2
+   }
+  },
+  "attr_types": {
+   "whole_long/solo": 12.18,
+   "whole_short/ov": 5.76,
+   "whole_short/solo": 1.47,
+   "whole_long/ov": 1.3,
+   "early/solo": 0.87,
+   "late/solo": 0.64,
+   "early/ov": 0.56,
+   "late/ov": 0.56,
+   "inner/solo": 0.22,
+   "inner/ov": 0.14
+  },
+  "meetings": {
+   "EN2002a": {
+    "cp": 70.64,
+    "agn": 29.66,
+    "n_ref": 7196
+   },
+   "EN2002d": {
+    "cp": 64.89,
+    "agn": 30.57,
+    "n_ref": 7315
+   },
+   "EN2002b": {
+    "cp": 60.61,
+    "agn": 29.34,
+    "n_ref": 5890
+   },
+   "TS3003d": {
+    "cp": 58.98,
+    "agn": 18.41,
+    "n_ref": 5356
+   },
+   "EN2002c": {
+    "cp": 57.93,
+    "agn": 26.06,
+    "n_ref": 10673
+   },
+   "ES2004d": {
+    "cp": 56.89,
+    "agn": 23.87,
+    "n_ref": 6138
+   },
+   "IS1009a": {
+    "cp": 53.18,
+    "agn": 20.43,
+    "n_ref": 1982
+   },
+   "ES2004a": {
+    "cp": 51.05,
+    "agn": 18.72,
+    "n_ref": 2468
+   },
+   "ES2004c": {
+    "cp": 51.04,
+    "agn": 19.4,
+    "n_ref": 6973
+   },
+   "ES2004b": {
+    "cp": 39.63,
+    "agn": 18.72,
+    "n_ref": 6772
+   },
+   "IS1009d": {
+    "cp": 38.55,
+    "agn": 16.95,
+    "n_ref": 4654
+   },
+   "IS1009b": {
+    "cp": 34.19,
+    "agn": 16.07,
+    "n_ref": 5993
+   },
+   "TS3003c": {
+    "cp": 31.04,
+    "agn": 13.0,
+    "n_ref": 4678
+   },
+   "TS3003a": {
+    "cp": 30.65,
+    "agn": 14.92,
+    "n_ref": 2561
+   },
+   "TS3003b": {
+    "cp": 30.05,
+    "agn": 13.4,
+    "n_ref": 4925
+   },
+   "IS1009c": {
+    "cp": 26.12,
+    "agn": 14.08,
+    "n_ref": 4632
+   }
+  }
+ },
+ "ami-sdm/dev/10": {
+  "windows": 614,
+  "n_ref": 93635,
+  "cp": 60.21,
+  "agn": 26.82,
+  "attr": 33.39,
+  "slot": 85.47,
+  "S": 14.94,
+  "D": 8.73,
+  "I": 3.15,
+  "hyp_ref_ratio": 0.944,
+  "fill_ref_share": 5.57,
+  "fill_hyp_per_ref": 4.58,
+  "fill_err_rate": 37.69,
+  "agn_nofill": 26.17,
+  "cp_nofill": 60.12,
+  "overlap_share": 23.99,
+  "err_rate_overlap": 52.18,
+  "err_rate_solo": 14.67,
+  "err_share_overlap": 52.88,
+  "edge_share": 11.17,
+  "err_rate_edge": 25.72,
+  "err_rate_mid": 23.41,
+  "purity": 0.715,
+  "coverage": 0.829,
+  "mis_share_of_pairs": 0.3164,
+  "by_nspk": {
+   "1": {
+    "word_share": 4.1,
+    "cp": 16.09,
+    "agn": 13.93,
+    "attr": 2.16,
+    "win": 45
+   },
+   "2": {
+    "word_share": 10.64,
+    "cp": 28.27,
+    "agn": 18.26,
+    "attr": 10.01,
+    "win": 78
+   },
+   "3": {
+    "word_share": 23.26,
+    "cp": 50.33,
+    "agn": 25.03,
+    "attr": 25.3,
+    "win": 161
+   },
+   "4": {
+    "word_share": 62.0,
+    "cp": 72.32,
+    "agn": 29.81,
+    "attr": 42.51,
+    "win": 330
+   }
+  },
+  "slot_cells": {
+   "참조1·가설0": {
+    "win": 4,
+    "word_share": 0.07,
+    "cp": 100.0,
+    "attr": 0.0
+   },
+   "참조1·가설1": {
+    "win": 38,
+    "word_share": 3.62,
+    "cp": 13.05,
+    "attr": 0.0
+   },
+   "참조1·가설2": {
+    "win": 3,
+    "word_share": 0.42,
+    "cp": 28.39,
+    "attr": 21.23
+   },
+   "참조2·가설1": {
+    "win": 12,
+    "word_share": 2.12,
+    "cp": 20.11,
+    "attr": 7.24
+   },
+   "참조2·가설2": {
+    "win": 64,
+    "word_share": 8.21,
+    "cp": 30.47,
+    "attr": 10.81
+   },
+   "참조2·가설3": {
+    "win": 2,
+    "word_share": 0.3,
+    "cp": 25.8,
+    "attr": 7.77
+   },
+   "참조3·가설1": {
+    "win": 2,
+    "word_share": 0.34,
+    "cp": 39.56,
+    "attr": 28.48
+   },
+   "참조3·가설2": {
+    "win": 131,
+    "word_share": 18.46,
+    "cp": 49.84,
+    "attr": 25.03
+   },
+   "참조3·가설3": {
+    "win": 26,
+    "word_share": 4.19,
+    "cp": 52.14,
+    "attr": 25.73
+   },
+   "참조3·가설4": {
+    "win": 2,
+    "word_share": 0.28,
+    "cp": 68.7,
+    "attr": 33.21
+   },
+   "참조4·가설1": {
+    "win": 1,
+    "word_share": 0.02,
+    "cp": 70.59,
+    "attr": 52.94
+   },
+   "참조4·가설2": {
+    "win": 268,
+    "word_share": 50.48,
+    "cp": 72.89,
+    "attr": 43.21
+   },
+   "참조4·가설3": {
+    "win": 58,
+    "word_share": 11.03,
+    "cp": 70.16,
+    "attr": 40.02
+   },
+   "참조4·가설4": {
+    "win": 3,
+    "word_share": 0.46,
+    "cp": 61.2,
+    "attr": 24.48
+   }
+  },
+  "by_speaker_share": {
+   "극소(<5%)": {
+    "word_share": 1.08,
+    "cp_err_rate": 106.32,
+    "err_share": 1.91
+   },
+   "소(5–20%)": {
+    "word_share": 13.1,
+    "cp_err_rate": 101.95,
+    "err_share": 22.18
+   },
+   "주(≥50%)": {
+    "word_share": 43.58,
+    "cp_err_rate": 31.03,
+    "err_share": 22.46
+   },
+   "중(20–50%)": {
+    "word_share": 42.24,
+    "cp_err_rate": 76.01,
+    "err_share": 53.32
+   }
+  },
+  "attr_types": {
+   "whole_long/solo": 14.85,
+   "whole_short/ov": 7.33,
+   "whole_long/ov": 2.01,
+   "whole_short/solo": 1.62,
+   "early/solo": 0.9,
+   "late/ov": 0.69,
+   "early/ov": 0.66,
+   "late/solo": 0.62,
+   "inner/ov": 0.12,
+   "inner/solo": 0.09
+  },
+  "meetings": {
+   "TS3004d": {
+    "cp": 78.6,
+    "agn": 36.5,
+    "n_ref": 6313
+   },
+   "IB4002": {
+    "cp": 73.73,
+    "agn": 39.16,
+    "n_ref": 3989
+   },
+   "ES2011a": {
+    "cp": 72.52,
+    "agn": 36.6,
+    "n_ref": 2456
+   },
+   "TS3004c": {
+    "cp": 70.56,
+    "agn": 31.8,
+    "n_ref": 6935
+   },
+   "ES2011d": {
+    "cp": 69.22,
+    "agn": 29.83,
+    "n_ref": 4425
+   },
+   "IB4010": {
+    "cp": 68.3,
+    "agn": 25.95,
+    "n_ref": 9503
+   },
+   "TS3004b": {
+    "cp": 66.51,
+    "agn": 31.82,
+    "n_ref": 6521
+   },
+   "TS3004a": {
+    "cp": 66.05,
+    "agn": 32.54,
+    "n_ref": 2996
+   },
+   "ES2011c": {
+    "cp": 64.37,
+    "agn": 22.17,
+    "n_ref": 4614
+   },
+   "IB4001": {
+    "cp": 58.89,
+    "agn": 26.27,
+    "n_ref": 4683
+   },
+   "IB4011": {
+    "cp": 58.49,
+    "agn": 23.14,
+    "n_ref": 7714
+   },
+   "IB4004": {
+    "cp": 57.9,
+    "agn": 27.69,
+    "n_ref": 7637
+   },
+   "ES2011b": {
+    "cp": 54.43,
+    "agn": 25.26,
+    "n_ref": 4406
+   },
+   "IB4003": {
+    "cp": 49.18,
+    "agn": 20.53,
+    "n_ref": 6497
+   },
+   "IS1008d": {
+    "cp": 46.2,
+    "agn": 21.03,
+    "n_ref": 4084
+   },
+   "IS1008c": {
+    "cp": 37.9,
+    "agn": 19.36,
+    "n_ref": 4040
+   },
+   "IS1008b": {
+    "cp": 34.23,
+    "agn": 16.36,
+    "n_ref": 4303
+   },
+   "IS1008a": {
+    "cp": 31.2,
+    "agn": 14.37,
+    "n_ref": 2519
+   }
+  }
+ },
+ "ami-sdm/eval/10": {
+  "windows": 577,
+  "n_ref": 88061,
+  "cp": 53.48,
+  "agn": 28.61,
+  "attr": 24.87,
+  "slot": 80.65,
+  "S": 14.15,
+  "D": 11.81,
+  "I": 2.64,
+  "hyp_ref_ratio": 0.908,
+  "fill_ref_share": 5.05,
+  "fill_hyp_per_ref": 4.29,
+  "fill_err_rate": 37.07,
+  "agn_nofill": 27.92,
+  "cp_nofill": 53.2,
+  "overlap_share": 21.17,
+  "err_rate_overlap": 57.2,
+  "err_rate_solo": 17.58,
+  "err_share_overlap": 46.62,
+  "edge_share": 10.97,
+  "err_rate_edge": 29.53,
+  "err_rate_mid": 25.53,
+  "purity": 0.775,
+  "coverage": 0.855,
+  "mis_share_of_pairs": 0.2553,
+  "by_nspk": {
+   "1": {
+    "word_share": 5.23,
+    "cp": 12.53,
+    "agn": 12.03,
+    "attr": 0.5,
+    "win": 47
+   },
+   "2": {
+    "word_share": 10.2,
+    "cp": 25.86,
+    "agn": 19.49,
+    "attr": 6.37,
+    "win": 82
+   },
+   "3": {
+    "word_share": 30.97,
+    "cp": 48.01,
+    "agn": 28.49,
+    "attr": 19.52,
+    "win": 171
+   },
+   "4": {
+    "word_share": 53.6,
+    "cp": 65.88,
+    "agn": 32.03,
+    "attr": 33.85,
+    "win": 277
+   }
+  },
+  "slot_cells": {
+   "참조1·가설1": {
+    "win": 43,
+    "word_share": 4.91,
+    "cp": 11.59,
+    "attr": 0.0
+   },
+   "참조1·가설2": {
+    "win": 4,
+    "word_share": 0.32,
+    "cp": 27.05,
+    "attr": 8.19
+   },
+   "참조2·가설0": {
+    "win": 1,
+    "word_share": 0.02,
+    "cp": 100.0,
+    "attr": 0.0
+   },
+   "참조2·가설1": {
+    "win": 19,
+    "word_share": 1.97,
+    "cp": 22.24,
+    "attr": 1.5
+   },
+   "참조2·가설2": {
+    "win": 58,
+    "word_share": 7.8,
+    "cp": 24.89,
+    "attr": 6.7
+   },
+   "참조2·가설3": {
+    "win": 3,
+    "word_share": 0.33,
+    "cp": 48.26,
+    "attr": 16.32
+   },
+   "참조2·가설4": {
+    "win": 1,
+    "word_share": 0.07,
+    "cp": 100.0,
+    "attr": 59.09
+   },
+   "참조3·가설0": {
+    "win": 2,
+    "word_share": 0.16,
+    "cp": 100.0,
+    "attr": 0.0
+   },
+   "참조3·가설1": {
+    "win": 2,
+    "word_share": 0.3,
+    "cp": 13.46,
+    "attr": 0.38
+   },
+   "참조3·가설2": {
+    "win": 142,
+    "word_share": 24.8,
+    "cp": 46.95,
+    "attr": 18.84
+   },
+   "참조3·가설3": {
+    "win": 22,
+    "word_share": 4.93,
+    "cp": 52.33,
+    "attr": 24.62
+   },
+   "참조3·가설4": {
+    "win": 3,
+    "word_share": 0.78,
+    "cp": 56.83,
+    "attr": 20.2
+   },
+   "참조4·가설0": {
+    "win": 2,
+    "word_share": 0.23,
+    "cp": 100.0,
+    "attr": 0.0
+   },
+   "참조4·가설1": {
+    "win": 4,
+    "word_share": 0.27,
+    "cp": 57.5,
+    "attr": 0.42
+   },
+   "참조4·가설2": {
+    "win": 209,
+    "word_share": 40.28,
+    "cp": 63.98,
+    "attr": 32.84
+   },
+   "참조4·가설3": {
+    "win": 49,
+    "word_share": 9.68,
+    "cp": 69.89,
+    "attr": 37.98
+   },
+   "참조4·가설4": {
+    "win": 13,
+    "word_share": 3.14,
+    "cp": 76.2,
+    "attr": 39.44
+   }
+  },
+  "by_speaker_share": {
+   "극소(<5%)": {
+    "word_share": 1.41,
+    "cp_err_rate": 123.08,
+    "err_share": 3.24
+   },
+   "소(5–20%)": {
+    "word_share": 10.33,
+    "cp_err_rate": 96.09,
+    "err_share": 18.56
+   },
+   "주(≥50%)": {
+    "word_share": 52.14,
+    "cp_err_rate": 29.42,
+    "err_share": 28.68
+   },
+   "중(20–50%)": {
+    "word_share": 36.13,
+    "cp_err_rate": 73.02,
+    "err_share": 49.33
+   }
+  },
+  "attr_types": {
+   "whole_long/solo": 11.57,
+   "whole_short/ov": 5.61,
+   "whole_long/ov": 1.3,
+   "whole_short/solo": 1.21,
+   "late/solo": 0.8,
+   "early/solo": 0.62,
+   "late/ov": 0.56,
+   "early/ov": 0.5,
+   "inner/solo": 0.23,
+   "inner/ov": 0.11
+  },
+  "meetings": {
+   "EN2002a": {
+    "cp": 71.46,
+    "agn": 38.22,
+    "n_ref": 7187
+   },
+   "EN2002b": {
+    "cp": 69.72,
+    "agn": 37.1,
+    "n_ref": 5792
+   },
+   "EN2002d": {
+    "cp": 64.79,
+    "agn": 37.74,
+    "n_ref": 7459
+   },
+   "ES2004a": {
+    "cp": 63.91,
+    "agn": 35.37,
+    "n_ref": 2502
+   },
+   "ES2004d": {
+    "cp": 63.0,
+    "agn": 36.39,
+    "n_ref": 5944
+   },
+   "TS3003d": {
+    "cp": 59.16,
+    "agn": 29.96,
+    "n_ref": 5330
+   },
+   "EN2002c": {
+    "cp": 56.96,
+    "agn": 32.86,
+    "n_ref": 10669
+   },
+   "IS1009a": {
+    "cp": 56.17,
+    "agn": 25.55,
+    "n_ref": 1992
+   },
+   "TS3003a": {
+    "cp": 50.89,
+    "agn": 37.47,
+    "n_ref": 2525
+   },
+   "ES2004c": {
+    "cp": 50.81,
+    "agn": 24.34,
+    "n_ref": 6702
+   },
+   "ES2004b": {
+    "cp": 44.59,
+    "agn": 22.75,
+    "n_ref": 6759
+   },
+   "IS1009d": {
+    "cp": 43.23,
+    "agn": 20.2,
+    "n_ref": 4876
+   },
+   "TS3003c": {
+    "cp": 42.23,
+    "agn": 21.04,
+    "n_ref": 4672
+   },
+   "TS3003b": {
+    "cp": 41.23,
+    "agn": 17.86,
+    "n_ref": 4967
+   },
+   "IS1009b": {
+    "cp": 34.7,
+    "agn": 18.64,
+    "n_ref": 5986
+   },
+   "IS1009c": {
+    "cp": 31.54,
+    "agn": 15.71,
+    "n_ref": 4699
+   }
+  }
+ }
+}
