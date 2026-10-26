@@ -3,6 +3,7 @@ title: 결정 — Phase 2 평가 계획 v2 채택(축 분리·held-out 셋·Turn
 summary: 2026-09-17 사용자 결정. 평가는 인식(화자 무관)·화자 귀속·턴 구간·지연 4 축으로 분리하고, 객관 held-out 은 NIKL 2020·TurnBench dev·CHiME-6/DiPCo 로 시작한다. TurnBench 턴 채점은 3 트랙 합의 구간만, 7 코퍼스 세션 split 은 D1c 부터 적용, 서버 env 에 meeteval 설치 허용.
 type: decision
 created: 2026-09-17
+updated: 2026-10-26
 related: [output-phase2-eval-plan, output-phase2-d1-lane-eval]
 ---
 
@@ -13,3 +14,4 @@ related: [output-phase2-eval-plan, output-phase2-d1-lane-eval]
 - **7 코퍼스 세션 split**: D1c 학습부터 제외한다. D1·D1b 는 전량 학습이라 seen 으로만 보고.
 - **meeteval**: 서버 conda env 에 설치 허용(0.4.3 설치, 2026-09-17). cpWER·ORC-WER·tcpWER 대조 열로 쓴다.
 - 근거: 2026-09-17 D1 평가에서 lane 기반 지표의 결함과 seen 편향 확인([[output-phase2-d1-lane-eval]]).
+- **2026-10-26 수정**: CHiME-6 train 세션을 학습에 넣기로 했다([[decision-chime6-train-sessions-20261026]]). dev·eval 세션은 계속 평가에만 쓰지만 그 뒤 학습부터는 같은 도메인 평가이고, 처음 보는 코퍼스 평가는 DiPCo 가 맡는다.

@@ -8,8 +8,10 @@
   (PZM c2·저가 u3 탁상 마이크), ami = <ami-root>/<회의>/<회의>.Array1-0{1..8}.wav, chime6 = <chime6-root>/<세션>_U0{1..6}.CH1.wav.
 시각 맞춤: 변형마다 근접 mono 캐시(<data>/mono/<CORPUS>/<conv>.npy)와 장치 녹음의 로그 에너지 포락선(10 ms) 상호상관을 발화가 많은 60 s 구간 3 개에서 ±2 s 로 재
   offset_s(장치 시각 − 대화 시각)를 정한다. 세 구간의 지연이 50 ms 안에서 맞고 정규화 상관이 --min-corr 이상일 때만 쓰고, 아니면 버린다(build.json 에 사유).
-출력: <data>/<corpus>-far.refined.dialogues.jsonl(이미 있으면 멈춤 — 덮어쓰지 않는다) + <data>/<corpus>-far.build.json.
-  conv_id = "<corpus>-far:<회의>@<장치>", corpus = "<CORPUS>-far". split(held-out)과 split != train 회의는 넣지 않는다. 읽기 전용 입력."""
+출력: <data>/<key>-far.refined.dialogues.jsonl(이미 있으면 멈춤 — 덮어쓰지 않는다) + <data>/<key>-far.build.json. key = --key(기본 --corpus) — 입력도 <data>/<key>.refined.dialogues.jsonl.
+  conv_id = "<key>-far:<회의>@<장치>", corpus = "<CORPUS>-far". split(held-out)과 split != train 회의는 넣지 않는다. 읽기 전용 입력.
+  --key(2026-10-26): 평가 셋과 파일 이름이 겹치는 코퍼스의 학습용 키 — CHiME-6 train 은 chime6tr(phase2/chime6.dialogues.jsonl 은 dev 평가 셋이고, 예전 평가 스크립트가
+  <corpus>.refined 를 먼저 찾는다)."""
 import argparse, glob, json, multiprocessing as mp, os, re, sys, time, zipfile
 import xml.etree.ElementTree as ET
 import numpy as np
@@ -21,6 +23,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--corpus", required=True, choices=["notsofar", "icsi", "ami", "chime6"]); ap.add_argument("--data", required=True); ap.add_argument("--split", required=True)
 ap.add_argument("--icsi-transcripts", default="/soundai/DB/raw/icsi/annotations/ICSI_original_transcripts.zip"); ap.add_argument("--ami-root", default=None)
 ap.add_argument("--chime6-root", default=None); ap.add_argument("--mc-channels", default="0", help="notsofar 어레이에서 쓸 채널(쉼표)")
+ap.add_argument("--key", default=None, help="phase2 파일 키(기본 --corpus) — 예 chime6tr: <data>/chime6tr.refined.dialogues.jsonl → chime6tr-far")
 ap.add_argument("--min-corr", type=float, default=0.3); ap.add_argument("--agree-s", type=float, default=0.05); ap.add_argument("--max-lag-s", type=float, default=2.0)
 ap.add_argument("--procs", type=int, default=16); ap.add_argument("--limit", type=int, default=0); ap.add_argument("--dry-run", action="store_true", help="파일을 쓰지 않고 지연만 잰다")
 a = ap.parse_args() if __name__ == "__main__" else None
@@ -108,9 +111,9 @@ def devices_of(row):
 
 
 def main():
-    src = os.path.join(a.data, f"{a.corpus}.refined.dialogues.jsonl"); out = os.path.join(a.data, f"{a.corpus}-far.refined.dialogues.jsonl")
+    k = a.key or a.corpus; src = os.path.join(a.data, f"{k}.refined.dialogues.jsonl"); out = os.path.join(a.data, f"{k}-far.refined.dialogues.jsonl")
     if not a.dry_run and os.path.exists(out): sys.exit(f"이미 있다(덮어쓰지 않는다): {out}")
-    held = set(json.load(open(a.split))["corpora"].get(a.corpus, {}).get("heldout", []))
+    held = set(json.load(open(a.split))["corpora"].get(k, {}).get("heldout", []))
     rows = [json.loads(l) for l in open(src, encoding="utf-8") if l.strip()]
     rows = [r for r in rows if r["conv_id"] not in held and r.get("split", "train") == "train"]
     if a.limit: rows = rows[: a.limit]
@@ -121,14 +124,14 @@ def main():
         mf = mono_cache_path(os.path.join(a.data, "mono"), Dialogue.from_json(json.dumps(r)))
         if not os.path.exists(mf): print(f"!! 근접 mono 캐시 없음 — 건너뜀 {r['conv_id']}", flush=True); continue
         for d in devices_of(r): jobs.append((r, d, mf))
-    print(f"{a.corpus}: 학습 회의 {len(rows)} · 원거리 변형 {len(jobs)} — 지연 측정", flush=True); t0 = time.time()
+    print(f"{k}: 학습 회의 {len(rows)} · 원거리 변형 {len(jobs)} — 지연 측정", flush=True); t0 = time.time()
     with mp.get_context("fork").Pool(a.procs) as pool: res = pool.map(measure, jobs, chunksize=1)
     keep, drop = [], []
     for (r, d, _), (off, cor, why) in zip(jobs, res):
         rec = dict(conv=r["conv_id"], device=d["device"], offset_s=off, corr=cor, **({"mic": d["mic"]} if "mic" in d else {}))
         (drop if why else keep).append(dict(rec, **({"why": why} if why else {})))
     offs = [k["offset_s"] for k in keep]
-    summary = dict(corpus=a.corpus, meetings=len(rows), variants=len(jobs), kept=len(keep), dropped=len(drop), sec=round(time.time() - t0, 1),
+    summary = dict(corpus=k, meetings=len(rows), variants=len(jobs), kept=len(keep), dropped=len(drop), sec=round(time.time() - t0, 1),
                    offset_ms=dict(median=round(1000 * float(np.median(offs)), 1), p05=round(1000 * float(np.percentile(offs, 5)), 1), p95=round(1000 * float(np.percentile(offs, 95)), 1)) if offs else None,
                    corr_median=round(float(np.median([k["corr"] for k in keep])), 3) if keep else None, drop_reasons=sorted({re.sub(r"[-\d.,\[\] ]+$", "", k["why"]) for k in drop}))
     print(json.dumps(summary, ensure_ascii=False), flush=True)
@@ -139,12 +142,12 @@ def main():
         for (r, d, _), (off, cor, why) in zip(jobs, res):
             if why: continue
             m = r["conv_id"].split(":", 1)[1]; x = dict(r)
-            x["conv_id"] = f"{a.corpus}-far:{m}@{d['device']}"; x["corpus"] = f"{up}-far"
+            x["conv_id"] = f"{k}-far:{m}@{d['device']}"; x["corpus"] = f"{up}-far"
             x["meta"] = dict(r.get("meta") or {}, mono_src=dict(path=d["path"], channel=int(d.get("channel", 0)), offset_s=round(off, 3), device=d["device"], corr=round(cor, 3),
                                                               **({"mic": d["mic"]} if "mic" in d else {})), far_of=r["conv_id"])
             fo.write(json.dumps(x, ensure_ascii=False) + "\n")
     os.replace(out + f".{os.getpid()}.tmp", out)
-    json.dump(dict(summary, kept_rows=keep, dropped_rows=drop), open(os.path.join(a.data, f"{a.corpus}-far.build.json"), "w"), ensure_ascii=False, indent=1)
+    json.dump(dict(summary, kept_rows=keep, dropped_rows=drop), open(os.path.join(a.data, f"{k}-far.build.json"), "w"), ensure_ascii=False, indent=1)
     print(f"FAR_OK {out}", flush=True)
 
 

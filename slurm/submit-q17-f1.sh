@@ -2,7 +2,8 @@
 # F1 데이터 확장 시험(2026-10-26, 사용자 "모두 진행하는 데, 모두 진행하고 나서 E5 E6 학습 진행하자" — wiki task-data-expansion-20261026):
 # 1.7B 회의 + 4 슬롯(q17-v3-p1-tel-xlw-mt4, submit-q17-chain.sh --dlg mt4 의 6 단계)과 같은 init(5 단계 ck3000)·레시피·step·학습률에 새 데이터만 더한다
 # — 같은 계산량에서 데이터 효과를 잰다. 더하는 것:
-#   원거리 회의 녹음(dlg_far: ami-far·icsi-far·notsofar-far·chime6-far — p2_build_far, 회의 번역 타깃은 원본 id 로 쓴다), CHiME-6 근접(chime6 → dlg_mt),
+#   원거리 회의 녹음(dlg_far: ami-far·icsi-far·notsofar-far·chime6tr-far — p2_build_far, 회의 번역 타깃은 원본 id 로 쓴다), CHiME-6 train 근접(chime6tr → dlg_mt;
+#   dev·eval 세션은 평가에만 — 키를 chime6 와 다르게, wiki decision-chime6-train-sessions-20261026),
 #   Switchboard(swbd → dlg_en), 한국어 회의 NIA23(nia23mt → dlg_mtko), 회의형 합성 v4(sim_<l>-meet), 화자별 원거리 증강(--far-aug 0.3, 근접 대화·회의 셋).
 # 쓰기(스케줄러 셸): bash slurm/submit-q17-f1.sh [--dry-run] [--allow-missing] [--partition P(기본 apex)] [--nodes N(기본 2)] [--max-steps N(기본 2500)]
 #   [--run NAME(기본 q17-f1)] [--exclude N,…|none] [--no-eval]. 새 셋이 하나라도 없으면 멈춘다(--allow-missing 이면 빼고 낸다). 아무것도 지우지 않는다.
@@ -21,7 +22,7 @@ done
 export MAX_RESTART=${MAX_RESTART:-$([[ $part == apex ]] && echo 5 || echo 20)}
 D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2; M=/soundai/Model/VAPASR
 CORP=aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar; miss=()
-for c in swbd chime6 nia23mt ami-far icsi-far notsofar-far chime6-far; do
+for c in swbd chime6tr nia23mt ami-far icsi-far notsofar-far chime6tr-far; do
   if [[ -f $P2/$c.refined.dialogues.jsonl ]]; then CORP+=",$c"; else miss+=("$c"); fi
 done
 SIMS=$D/sim-dialogue-v2,$D/sim-dialogue-xl-v1,$D/sim-dialogue-xl-tel-v1; MEET=""

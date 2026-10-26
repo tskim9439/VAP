@@ -2,7 +2,7 @@
 type: output
 status: active
 created: 2026-09-18
-updated: 2026-09-19
+updated: 2026-10-26
 summary: 15개 DB 선별 실행안. MNSC 제외 426만 행 음향 QC 완료 후 886개 시간축·채널 검수 표본과 3교사 대조 진행.
 sources:
   - "[[source-data-selection-plan]]"
@@ -74,6 +74,7 @@ TN quarantine, 제공되지 않은 원음은 원본 DB를 다시 읽는 별도 �
 | ICSI | channel/participant 매핑·SPH/FLAC·긴 회의 | 같은 기준으로 검증, corpus-specific timestamp 오차 확인 |
 
 `nikl2020`, `chime6`, `turnbench`, 모든 dev/test/eval은 학습 선별에서 제외한다.
+(2026-10-26 수정: CHiME-6 train 세션은 학습 키 `chime6tr` 로 넣는다 — dev·eval 세션은 계속 제외, [[decision-chime6-train-sessions-20261026]].)
 P2는 `phase2/splits/v1.json`을 먼저 적용한다. 71631↔134-1의 동일 stem은
 holdout을 전파하고 학습 후보 중복도 방지한다. 이는 **known session/locator dedup**이며
 서로 다른 인코딩·파일명의 음성 중복까지 검사한 content dedup이 아니다.

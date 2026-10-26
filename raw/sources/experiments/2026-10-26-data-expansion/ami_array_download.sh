@@ -18,8 +18,8 @@ one() {
   [ -n "$want" ] || { echo "FAIL $m $c 크기를 못 읽음" >> "$LOG"; return; }
   for try in 1 2 3 4 5 6; do
     have=$(stat -f %z "$f" 2>/dev/null || echo 0)
-    [ "$have" = "$want" ] && { echo "OK $m $c $want $(date '+%F %T')" >> "$LOG"; return; }
-    curl -sS -C - --max-time 7200 --retry 3 --retry-delay 30 -o "$f" "$U/$m/audio/$m.Array1-0$c.wav" 2>>"$OUT/curl.err" || sleep 30
+    [ "$have" = "$want" ] && { [ "$(head -c 4 "$f")" = RIFF ] && echo "OK $m $c $want $(date '+%F %T')" >> "$LOG" || echo "FAIL $m $c 머리가 RIFF 가 아님(오류 페이지가 섞였다 — 지우고 다시 받는다)" >> "$LOG"; return; }
+    curl -sS --fail -C - --max-time 7200 --retry 3 --retry-delay 30 -o "$f" "$U/$m/audio/$m.Array1-0$c.wav" 2>>"$OUT/curl.err" || sleep 30   # --fail: HTTP 오류 본문(HTML)을 파일에 쓰지 않는다(10-26 ES2012d-02 앞 331 B 사고)
   done
   echo "FAIL $m $c $(stat -f %z "$f" 2>/dev/null)/$want" >> "$LOG"
 }

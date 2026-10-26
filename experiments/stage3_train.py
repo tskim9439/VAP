@@ -142,10 +142,12 @@ add_speed_args(ap)
 a = ap.parse_args()
 
 DLG_LANG = {"aihub71631": "Korean", "aihub134-1": "Korean", "aihub134-2": "Korean", "nikl2020": "Korean", "otoSpeech": "English", "kec": "German", "ztc": "German", "nsc": "German", "callhome-de": "German", "ami": "English", "icsi": "English", "notsofar": "English"}
-DLG_LANG.update({"ami-far": "English", "icsi-far": "English", "notsofar-far": "English", "chime6": "English", "chime6-far": "English",   # 2026-10-26 데이터 확장
+DLG_LANG.update({"ami-far": "English", "icsi-far": "English", "notsofar-far": "English", "chime6tr": "English", "chime6tr-far": "English",   # 2026-10-26 데이터 확장
                  "swbd": "English", "nia23mt": "Korean"})
-MEETING = {"ami", "icsi", "notsofar", "chime6", "nia23mt"}                                     # V2: 회의(3–9 인)는 따로 가중한다 — 영어 dlg_mt, 한국어 dlg_mtko(NIA23, 2026-10-26)
-FAR = {"ami-far", "icsi-far", "notsofar-far", "chime6-far"}                                    # 같은 회의의 원거리 녹음(p2_build_far) — dlg_far 로 따로 가중한다
+# CHiME-6 train 세션의 키는 chime6tr(사용자 2026-10-26 "train 세션만 학습에 넣기" — wiki decision-chime6-train-sessions-20261026): phase2/chime6.dialogues.jsonl 은 dev 평가 셋이고
+# 예전 평가 스크립트(p2_eval_lanes·p2_eval_sessions·s3_eval_multispeaker_mono)가 <corpus>.refined 를 먼저 찾으므로 학습 파일은 이름이 겹치면 안 된다. "chime6" 은 받지 않는다.
+MEETING = {"ami", "icsi", "notsofar", "chime6tr", "nia23mt"}                                   # V2: 회의(3–9 인)는 따로 가중한다 — 영어 dlg_mt, 한국어 dlg_mtko(NIA23, 2026-10-26)
+FAR = {"ami-far", "icsi-far", "notsofar-far", "chime6tr-far"}                                  # 같은 회의의 원거리 녹음(p2_build_far) — dlg_far 로 따로 가중한다
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
 delays = tuple(int(x) for x in a.delays.split(",") if x.strip())
 if not delays or not all(1 <= d <= 10 for d in delays): sys.exit(f"--delays {a.delays}: 1–10 의 쉼표 목록")
@@ -154,7 +156,7 @@ if not all(c in DLG_LANG for c in corpora): sys.exit(f"--dlg-corpora: 알 수 �
 win = tuple(float(x) for x in a.window.split(","))
 if len(win) != 2 or not 0 < win[0] <= win[1]: sys.exit(f"--window lo,hi — {a.window}")
 if not 2 <= a.max_speakers <= 4 or not 0 <= a.declare_all_p <= 1 or a.window_draws < 0: sys.exit(f"--max-speakers 2–4 · --declare-all-p [0, 1] · --window-draws ≥ 0 — {a.max_speakers} {a.declare_all_p} {a.window_draws}")
-if any(c in MEETING | FAR for c in corpora) and a.max_speakers < 3: sys.exit("회의 코퍼스(ami·icsi·notsofar·chime6·nia23mt, 원거리 포함)는 --max-speakers 3 이상과 함께")
+if any(c in MEETING | FAR for c in corpora) and a.max_speakers < 3: sys.exit("회의 코퍼스(ami·icsi·notsofar·chime6tr·nia23mt, 원거리 포함)는 --max-speakers 3 이상과 함께")
 VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_speakers=a.window_draws > 0, **({"declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}),
            **({"xl_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))   # 모든 대화 셋 공통(V2, V3 R4)
 bc = None if a.backchannel == "off" else tuple(float(x) for x in a.backchannel.split(","))
