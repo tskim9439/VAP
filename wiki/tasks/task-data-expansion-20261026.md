@@ -35,7 +35,7 @@ sources:
 | D6 | 겹침 늘린 합성(E4) → `sim_<l>-meet`(sim-dialogue-v4-meet) | 완료: en·ko·de 각 10,000 세션(260·252 h …). 영어 겹침 11.7 %(v3-multi 4.4 %), 교대 13.8 회/분, 맞장구 4.4 회/분, 70 % 세션 화자별 원거리 |
 | D7 | 한국어 회의 NIA23 002_Meeting → `nia23mt`(dlg_mtko) | 완료: 전체 7,971 회의 5,621 h 중 빠진 발화 없는 회의에서 종류별로 골라 891 회의 651 h(녹음 251·방송 250·라디오 150 h — 인터넷은 대부분 임시 파일만 남아 제외). 정렬(95691) → 정제(발화 362,025, 미정렬 1,349·이상 2,000 제외) → phase2 → mono 69.9 GiB |
 | D8 | Switchboard(영어 2 인 전화) → `swbd`(dlg_en) | 완료: 2,435 통화, 258 h. 정렬(95683, 5 분) → 정제 → phase2 → mono·stems |
-| F1 | 회의 + 4 슬롯 1.7B 레시피(같은 init·step)에 D1–D8 + 원거리 증강 → AMI·TAXI·FLEURS | 제출 준비 완료(10-26 21:19): 모든 셋으로 dry-run 18 그룹 δ4–10 불일치 0(`dlg_far` 원거리 4 코퍼스 1,974 대화 101,585 창), 20 step 스모크·저장 대조 통과(`ami-far` 앞), 서버 코드 492 파일 md5 일치. 제출은 사용자(`bash slurm/submit-q17-f1.sh`, apex 2 노드) |
+| F1 | 회의 + 4 슬롯 1.7B 레시피(같은 init·step)에 D1–D8 + 원거리 증강 → AMI·TAXI·FLEURS | 제출(10-26 23:03, 사용자): 학습 95854(apex 2 노드, job 95650 이 끝난 뒤 — afterany, 2,500 step, 500 step 저장), 평가 95855(학습 성공 뒤, `q17-f1` 45 작업 — mt4-v3 와 같은 묶음). 점검: 모든 셋 dry-run 18 그룹 불일치 0, 스모크·저장 대조 통과, 서버 코드·평가 스크립트 md5 일치 |
 | E5·E6 | 한 스트림 + 화자 활동 입력([[output-diarization-integration-20261025]] 6 절) | 코드·시험 완료(E5 adapter_slot·act_noise·--act-oracle, E6 인과 diar_head·ρ 혼합·encode 활동 스트림, E1c 인과 가지). 학습은 F1 뒤 |
 
 ## 원거리 버전 규칙
