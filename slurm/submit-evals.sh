@@ -18,19 +18,20 @@
 #            v2-amifull = V2 v2-p1 final(4 슬롯, 의존 없음). mt4-amifull·q17-mt4-amifull = 회의 + 4 슬롯 run 의 final·avg3(평균은 GPU 7 의 첫 작업 — 이미 있으면
 #            DONE 만 맞춘다), --after-job 필수(학습 job). 2 슬롯 모델(R1x 등)은 4 인 회의를 두 슬롯에 담아야 해 세션 cpWER 가 구조적으로 크다 — 묶음에 넣지 않았다.
 #   q17-e2-tgt  E2 대상 화자 모드(slurm/submit-q17-e2-tgt.sh, 2026-10-25): q17-e2-tgt final 을 AMI 정답 활동 주입·화자별 디코드(v3_eval_task.sh amitgt)로 8 몫. --after-job 필수.
-#   q17-f1  F1 데이터 확장 시험(slurm/submit-q17-f1.sh, 2026-10-26): q17-mt4-v3 와 같은 묶음(ck1500·ck2000·final·avg3 × 9 작업 + AMI 4 몫씩). --after-job 필수.
+#   q17-f1  F1 데이터 확장 시험(slurm/submit-q17-f1.sh, 2026-10-26): q17-mt4-v3 와 같은 묶음(체크포인트 둘·final·avg3 × 9 작업 + AMI 4 몫씩 — 5,000 step 이라 --cks 3000,4000). --after-job 필수.
 #   q17-e5  E5 한 스트림 + 슬롯 활동 입력(2026-10-26): q17-e5 final 을 AMI 정답 슬롯 활동 입력(amiact, 8 몫)과 활동 없이(ami, 4 몫 — 입력이 없을 때 얼마나 무너지나)로. --after-job 필수.
 #   q17-e3  E3(2026-10-25): 같은 q17-e2-tgt final 에 정답 대신 E1 화자 분리 가지의 예측 활동(v3_eval_task.sh amie3, 임계 E3_THR — 기본 0.45 = E1 AMI dev 에서 고른 값, 바꾸려면 서브셸에서 export)으로 8 몫.
 #           --after-job 은 E2 학습이 아직 돌 때만 준다(끝났으면 빼고 낸다 — 작업이 DONE 을 확인하고 돈다. 끝난 지 오래된 job 은 스케줄러 기록에서 빠져 의존이 거부될 수 있다).
 #   --after-job JOBID  의존 job 을 바꾼다(재제출 등).   --dry-run  목록·sbatch 명령만 출력(파일·제출 없음).   --partition P  평가 노드 파티션(기본 sbatch 의 apex — 예 low_p_hpc).
+#   --cks A,B  체크포인트 평가·avg3 에 쓸 checkpoint-A·checkpoint-B(기본 1500,2000 — 2,500 step run 의 60·80 %; 2026-10-26 F1 5,000 step 은 3000,4000).
 # 시간 한도는 24 h 로 낸다(sbatch 기본 12 h 를 명령줄로 덮는다). 목록은 VAPKT-data/tmp/evals-<묶음>-<시각>.txt(새 파일).
 # 각 작업은 끝났거나 시작된 산출이 있으면 건너뛰거나 이어 하고(AMI 몫은 이어 한다) 아무것도 지우지 않는다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-set_=${1:-}; [[ $# -gt 0 ]] && shift; dep=""; dry=0; part=""
+set_=${1:-}; [[ $# -gt 0 ]] && shift; dep=""; dry=0; part=""; cks=1500,2000
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --after-job) dep=$2; shift 2 ;;  --dry-run) dry=1; shift ;;  --partition) part=$2; shift 2 ;;
+    --after-job) dep=$2; shift 2 ;;  --dry-run) dry=1; shift ;;  --partition) part=$2; shift 2 ;;  --cks) cks=$2; shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -38,20 +39,21 @@ case $set_ in r1x-ami|v2-amifull|q17-e3) ;; q17-s1) dep=${dep:-94809} ;; q17-v3)
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
+[[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
 L=()
 ami4() { local g0=$1 run=$2 root=$3 r; for r in 0 1 2 3; do L+=("$((g0 + r))|${root:+MODEL_ROOT=$root }bash $X ami $run final $r/4"); done; }   # GPU g0..g0+3 에 4 몫
 v3set() {   # V3 run $1: ck1500·ck2000·final·avg3 × 9 작업 + final·avg3 AMI 4 몫씩 — 평균은 GPU 7 의 첫 작업, 평균 평가는 그 DONE 을 기다린다
   local RUN=$1 AVG=$1-avg3 M=/soundai/Model/VAPASR/stage3-$1 i=0 t k; local -a K=(dlg xl taxi40 stage3 regress xltel xleval taxi90 onset)
-  L+=("7|\${PY:-python} experiments/avg_checkpoints.py --out $MR/stage3-$AVG/final --done $M/checkpoint-1500 $M/checkpoint-2000 $M/final > $D/tmp/avg-$RUN.log 2>&1")
-  for t in checkpoint-1500 checkpoint-2000 final; do for k in "${K[@]}"; do L+=("$((i % 8))|bash $X $k $RUN $t"); i=$((i + 1)); done; done
+  L+=("7|\${PY:-python} experiments/avg_checkpoints.py --out $MR/stage3-$AVG/final --done $M/checkpoint-$CKA $M/checkpoint-$CKB $M/final > $D/tmp/avg-$RUN.log 2>&1")
+  for t in checkpoint-$CKA checkpoint-$CKB final; do for k in "${K[@]}"; do L+=("$((i % 8))|bash $X $k $RUN $t"); i=$((i + 1)); done; done
   for k in "${K[@]}"; do L+=("$((i % 8))|MODEL_ROOT=$MR bash $X $k $AVG final"); i=$((i + 1)); done
   ami4 4 $RUN ""; ami4 0 $AVG $MR                                                           # 단일 체크포인트 작업이 적은 GPU 4–7 에 final 몫
 }
 amifull8() { local run=$1 root=$2 r; for r in 0 1 2 3 4 5 6 7; do L+=("$r|${root:+MODEL_ROOT=$root }bash $X amifull $run final $r/8"); done; }   # 회의 통째 8 몫(GPU 0–7)
 fullset() {   # run $1 의 final·avg3 회의 통째 — 평균은 GPU 7 의 첫 작업(v3set 과 같은 명령), 평균 평가는 그 DONE 을 기다린다
   local RUN=$1 M=/soundai/Model/VAPASR/stage3-$1
-  L+=("7|\${PY:-python} experiments/avg_checkpoints.py --out $MR/stage3-$RUN-avg3/final --done $M/checkpoint-1500 $M/checkpoint-2000 $M/final > $D/tmp/avg-$RUN-amifull.log 2>&1")
+  L+=("7|\${PY:-python} experiments/avg_checkpoints.py --out $MR/stage3-$RUN-avg3/final --done $M/checkpoint-$CKA $M/checkpoint-$CKB $M/final > $D/tmp/avg-$RUN-amifull.log 2>&1")
   amifull8 $RUN ""; amifull8 $RUN-avg3 $MR
 }
 case $set_ in

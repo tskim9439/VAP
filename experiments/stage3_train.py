@@ -43,6 +43,8 @@ ap.add_argument("--out-dir", required=True)
 g = ap.add_argument_group("대화(Stage 3)")
 g.add_argument("--data", required=True, help="Phase 2 폴더(<corpus>.refined.dialogues.jsonl, mono/)")
 g.add_argument("--dlg-corpora", default="aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc")
+g.add_argument("--dlg-group-map", default="", help="코퍼스를 새 대화 그룹으로 따로 가중('corpus:dlg_이름', 쉼표 — 2026-10-26 F1: swbd:dlg_sw. 그 코퍼스는 기본 그룹"
+               "(dlg_<언어>·dlg_mt·dlg_far)에서 빠지고 --weights 의 그 그룹 가중치를 쓴다 — 같은 그룹에 넣은 기존 셋이 묽어지지 않게). 기본 없음(예전과 같다)")
 g.add_argument("--split", required=True, help="held-out split(splits/v2.json) — 그 conv_id 는 학습에서 뺀다")
 g.add_argument("--mono-cache", default=None, help="mono 캐시(기본 <data>/mono, p2_build_mono.py)")
 g.add_argument("--window", default="20,40", help="창 길이 범위 lo,hi(s)"); g.add_argument("--hop", type=float, default=10.0)
@@ -153,6 +155,19 @@ delays = tuple(int(x) for x in a.delays.split(",") if x.strip())
 if not delays or not all(1 <= d <= 10 for d in delays): sys.exit(f"--delays {a.delays}: 1–10 의 쉼표 목록")
 corpora = [c for c in a.dlg_corpora.split(",") if c]
 if not all(c in DLG_LANG for c in corpora): sys.exit(f"--dlg-corpora: 알 수 없는 코퍼스 {[c for c in corpora if c not in DLG_LANG]} (알려진 것 {sorted(DLG_LANG)})")
+BASE_GROUPS = (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "German"), ("dlg_mt", "English"), ("dlg_far", "English"), ("dlg_mtko", "Korean"))
+GMAP = {}                                                                                    # --dlg-group-map: 코퍼스 → 새 그룹
+for x in (y.strip() for y in a.dlg_group_map.split(",")):
+    if not x: continue
+    c, _, gname = (z.strip() for z in x.partition(":"))
+    if c not in corpora or c in GMAP or not re.fullmatch(r"dlg_[a-z0-9]+", gname) or gname in dict(BASE_GROUPS):
+        sys.exit(f"--dlg-group-map 'corpus:dlg_이름' — --dlg-corpora 의 코퍼스 하나에 기본 그룹({', '.join(dict(BASE_GROUPS))})이 아닌 새 이름: {x!r}")
+    GMAP[c] = gname
+EXTRA_GROUPS = []
+for gname in sorted(set(GMAP.values())):
+    ls = {DLG_LANG[c] for c, g in GMAP.items() if g == gname}
+    if len(ls) != 1: sys.exit(f"--dlg-group-map: {gname} 에 언어가 섞였다 {sorted(ls)}")
+    EXTRA_GROUPS.append((gname, ls.pop()))
 win = tuple(float(x) for x in a.window.split(","))
 if len(win) != 2 or not 0 < win[0] <= win[1]: sys.exit(f"--window lo,hi — {a.window}")
 if not 2 <= a.max_speakers <= 4 or not 0 <= a.declare_all_p <= 1 or a.window_draws < 0: sys.exit(f"--max-speakers 2–4 · --declare-all-p [0, 1] · --window-draws ≥ 0 — {a.max_speakers} {a.declare_all_p} {a.window_draws}")
@@ -339,9 +354,10 @@ elif a.dlg_trans_input: sys.exit("--dlg-trans-input 은 --dlg-trans 와 함께")
 def cap(ds):
     """--max-windows: 창 표본(draw 표시와 함께 거른다)."""
     if a.max_windows and len(ds) > a.max_windows: keep = set(random.Random(a.seed).sample(range(len(ds)), a.max_windows)); ds.keep_items([i in keep for i in range(len(ds))])
-def group_of(c): return "dlg_far" if c in FAR else ("dlg_mt" if DLG_LANG[c] == "English" else f"dlg_mt{SHORT[DLG_LANG[c]]}") if c in MEETING else f"dlg_{SHORT[DLG_LANG[c]]}"
-for key, lang in (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "German"), ("dlg_mt", "English"), ("dlg_far", "English"), ("dlg_mtko", "Korean")):
+def group_of(c): return GMAP[c] if c in GMAP else "dlg_far" if c in FAR else ("dlg_mt" if DLG_LANG[c] == "English" else f"dlg_mt{SHORT[DLG_LANG[c]]}") if c in MEETING else f"dlg_{SHORT[DLG_LANG[c]]}"
+for key, lang in BASE_GROUPS + tuple(EXTRA_GROUPS):
     cs = [c for c in corpora if group_of(c) == key]
+    if key in dict(EXTRA_GROUPS) and weights.get(key, 0) <= 0: sys.exit(f"--dlg-group-map 의 그룹 {key} 에 --weights 가중치가 없다(그 코퍼스 {cs} 가 빠진다)")
     if not cs or weights.get(key, 0) <= 0: continue
     files = [os.path.join(a.data, f"{c}.refined.dialogues.jsonl") for c in cs]; dlg_files += files
     held = {cid for c in cs for cid in split["corpora"].get(c, {}).get("heldout", [])}
@@ -450,6 +466,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"replay_sets": {k: file_digest(v) for k, v in sorted(RS.items())}} if RS else {}),
           **({"phone_aug": phone.settings()} if phone is not None else {}),   # 끄면 키 없음(이전 run 지문 그대로)
           **({"far_aug": dict(faug.settings(), sets=a.far_sets)} if faug is not None else {}),   # 2026-10-26: 끄면 키 없음
+          **({"dlg_group_map": GMAP} if GMAP else {}),                                        # 2026-10-26: 끄면 키 없음
           **({"enc_tap": dict(layer=a.enc_tap_layer, hidden=a.enc_tap_hidden or None)} if a.enc_tap_layer >= 0 else {}),
           **({"max_speakers": a.max_speakers, "declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}), **({"window_draws": a.window_draws} if a.window_draws else {}),
           **({"change_tag_weight": a.change_tag_weight} if a.change_tag_weight > 0 else {}), **({"hold_tag_weight": a.hold_tag_weight} if a.hold_tag_weight > 0 else {}),   # V3-p1: 끄면 키 없음
