@@ -6,20 +6,25 @@
 #   dev·eval 세션은 평가에만 — 키를 chime6 와 다르게, wiki decision-chime6-train-sessions-20261026),
 #   Switchboard(swbd → dlg_en), 한국어 회의 NIA23(nia23mt → dlg_mtko), 회의형 합성 v4(sim_<l>-meet), 화자별 원거리 증강(--far-aug 0.3, 근접 대화·회의 셋).
 # 쓰기(스케줄러 셸): bash slurm/submit-q17-f1.sh [--dry-run] [--allow-missing] [--partition P(기본 apex)] [--nodes N(기본 2)] [--max-steps N(기본 2500)]
-#   [--run NAME(기본 q17-f1)] [--exclude N,…|none] [--no-eval]. 새 셋이 하나라도 없으면 멈춘다(--allow-missing 이면 빼고 낸다). 아무것도 지우지 않는다.
+#   [--run NAME(기본 q17-f1)] [--exclude N,…|none] [--no-eval] [--save-every N]. 새 셋이 하나라도 없으면 멈춘다(--allow-missing 이면 빼고 낸다). 아무것도 지우지 않는다.
+#   low_p_hpc(2026-10-26 사용자 "low_p_hpc 로 제출할 수 있도록 해줘"): 선점 유예(≈70 s)가 1.7B 저장(≈3.5 분)보다 짧아 선점 때 저장은 끊긴다 —
+#   재개는 마지막 완성 checkpoint(last_complete_checkpoint)에서. 그래서 apex 가 아니면 --save-every 기본 250(apex 500, 평가 avg3 = ck1500·ck2000·final 그대로),
+#   MAX_RESTART 기본 20(apex 5). 평가 노드도 같은 파티션(--requeue, 끝난 창은 건너뛴다).
 #   평가: 학습 뒤 submit-evals.sh q17-f1(같은 파티션 — q17-mt4-v3 와 같은 묶음: final·ck1500·ck2000·avg3, AMI 4 몫).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-dry=""; allow=0; part=apex; nodes=2; steps=2500; run=q17-f1; exclude=hpc-50,hpc-51,hpc-101,hpc-102; ev=1
+dry=""; allow=0; part=apex; nodes=2; steps=2500; run=q17-f1; exclude=hpc-50,hpc-51,hpc-101,hpc-102; ev=1; save=
 while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run) dry=--dry-run; shift ;;  --allow-missing) allow=1; shift ;;  --partition) part=$2; shift 2 ;;  --nodes) nodes=$2; shift 2 ;;
-    --max-steps) steps=$2; shift 2 ;;  --run) run=$2; shift 2 ;;  --exclude) exclude=$2; shift 2 ;;  --no-eval) ev=0; shift ;;
+    --max-steps) steps=$2; shift 2 ;;  --run) run=$2; shift 2 ;;  --exclude) exclude=$2; shift 2 ;;  --no-eval) ev=0; shift ;;  --save-every) save=$2; shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
 [[ $exclude == none ]] && exclude=""
 export MAX_RESTART=${MAX_RESTART:-$([[ $part == apex ]] && echo 5 || echo 20)}
+[[ -n $save ]] || save=$([[ $part == apex ]] && echo 500 || echo 250)
+(( 1500 % save == 0 && 2000 % save == 0 )) || { echo "--save-every $save: 평가 avg3 가 checkpoint-1500·2000 을 쓴다 — 둘의 약수로" >&2; exit 2; }
 D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2; M=/soundai/Model/VAPASR
 CORP=aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar; miss=()
 for c in swbd chime6tr nia23mt ami-far icsi-far notsofar-far chime6tr-far; do
@@ -38,9 +43,9 @@ ARGS=(--run $run --init $M/stage3-q17-st3-p11-revive/checkpoint-3000 --partition
       --revive-dir $P2/revive-asr-v2 --dlg-trans $D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16,$D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16
       --dlg-trans-input $D/stage4-dlg-units-revive-v1/targets-fix-gen-v3-bf16 --dlg-ast-frac 0.5 --sim-trans-frac 0.8 --trans-lead-space --phone-aug 0.3
       --sim-data $SIMS --weights $W --set-phone sim_en-de-tel:0 --change-tag-weight 3 --hold-tag-weight 1.5 --eot-drop-synth 1.0 --eot-drop-sets xl
-      --lr 4e-5 --max-steps $steps --decision-weight-sets xl --split v4 --dlg-corpora $CORP --max-speakers 4 --declare-all-p 0.5
+      --lr 4e-5 --max-steps $steps --save-every $save --decision-weight-sets xl --split v4 --dlg-corpora $CORP --max-speakers 4 --declare-all-p 0.5
       --extra "--far-aug 0.3 --far-sets dlg_ko,dlg_en,dlg_de,dlg_mt,dlg_mtko")
-echo "[$(date '+%F %T')] F1 $run($part $nodes 노드, $steps step, MAX_RESTART $MAX_RESTART) · 대화 $CORP · 합성 $SIMS" >&2
+echo "[$(date '+%F %T')] F1 $run($part $nodes 노드, $steps step, 저장 $save step 마다, MAX_RESTART $MAX_RESTART) · 대화 $CORP · 합성 $SIMS" >&2
 out=$(bash slurm/submit-stage3-train.sh "${ARGS[@]}" ${EXC[@]+"${EXC[@]}"} $dry 2>&1) || { echo "$out" | tail -5 >&2; echo "!! 학습 제출 실패" >&2; exit 1; }
 echo "$out" | grep -E "^sbatch|Submitted|만들 예정|init 없음|거부" >&2 || true
 dep=$(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1 || true); [[ -n $dep ]] || { [[ -n $dry ]] && dep=0; } || true
