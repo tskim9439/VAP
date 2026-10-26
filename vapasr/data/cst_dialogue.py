@@ -711,6 +711,14 @@ class CstDialogueDataset(DialogueWindowDataset):
             c[cid] = rows
         return c[cid]
 
+    def has_trans(self, cid: str) -> bool:
+        """대화에 번역 타깃 행(trans — 되살린 행의 입력만 번역 trans_input 은 세지 않는다)이 하나라도 있나(캐시, 원거리 버전은 원본 id 로).
+        없는 대화(2026-10-26 새 코퍼스 swbd·nia23mt·chime6tr·chime6tr-far)를 학습 중 번역 모드로 뽑으면 번역 없는 행 규칙으로 그 청크의 태그·<NEXT_AUDIO>·<EOT> 가
+        전부 가려져 전사 글자만 남는다 — cst_sequence 는 그런 대화를 전사(Stage 3) 형식으로 둔다. tgt_options(점검·평가·dry-run)는 언어만 본다."""
+        c = self.__dict__.setdefault("_has_trans", {})
+        if cid not in c: t = self._tcid(cid); c[cid] = any(f"{t}|{w}|{b}" in self.trans for w, b in self._rows(cid))
+        return c[cid]
+
     def _tcid(self, cid: str) -> str:
         """번역 타깃의 대화 id — 원거리 버전(p2_build_far, meta.far_of)은 같은 발화·화자의 원본 회의 타깃을 쓴다(2026-10-26)."""
         return (self.dlgs[cid].meta or {}).get("far_of", cid)
@@ -747,7 +755,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         drop_eot(C5): None 이면 eot_drop_synth > 0 이고 rng 가 있고 meta.mask_eot 대화일 때만 rng 로 뽑는다(그 밖에는 난수를 뽑지 않는다), True/False 면 그대로(점검·dTF)."""
         cid, t0, L = self.items[i]; d = self.dlgs[cid]
         if tgt is None and target is None and rng is not None and self.trans_on and rng.random() < self.ast_frac:   # 대상 화자 모드(E2)는 번역 없음
-            opts = self.tgt_options(i)
+            opts = self.tgt_options(i) if self.has_trans(cid) else []                            # 번역 타깃 행이 하나도 없는 대화는 전사 모드(2026-10-26)
             if opts: tgt = rng.choice(opts)
         spk, langs = self.slots(i, rng)
         if target is not None:                                                                    # E2: 그 화자 하나만 한 슬롯으로(번역 없음)

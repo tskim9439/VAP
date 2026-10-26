@@ -513,3 +513,20 @@ def test_far_variant_uses_original_translation_targets(tmp_path):
     a = CstDialogueDataset([q], tok4(), revive=rv, **kw).cst_sequence(0, 4, tgt="English")
     b = CstDialogueDataset([qf], tok4(), revive=rvf, **dict(kw, windows=[("far:c1", 11.0, 20.0)])).cst_sequence(0, 4, tgt="English")
     assert a["ids"] == b["ids"] and a["labels"] == b["labels"] and a["n_tr"] == b["n_tr"] > 0 and a["win"]["tr_tokens"] == b["win"]["tr_tokens"]
+
+
+def test_training_skips_translation_mode_for_dialogues_without_targets(tmp_path):
+    """번역 타깃 행이 하나도 없는 대화(2026-10-26 새 코퍼스 — swbd·nia23mt·chime6tr)는 학습 중 ast_frac 이 1 이어도 전사(Stage 3) 형식이다.
+    번역 모드로 두면 번역 없는 행 규칙으로 태그·<NEXT_AUDIO>·<EOT> 가 다 가려지기 때문이다. tgt 를 직접 주는 점검·평가 경로와 타깃이 있는 대화는 그대로."""
+    import random
+    q, rv, tr, tri = make4(tmp_path)
+    s3 = CstDialogueDataset([q], tok4(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, seed=1, revive=rv)
+    kw = dict(delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, seed=1, revive=rv, trans_input=tri, ast_frac=1.0)
+    on = CstDialogueDataset([q], tok4(), trans=tr, **kw); off = CstDialogueDataset([q], tok4(), trans={"other|x|x0": {"English": tr[next(iter(tr))]["English"]}}, **kw)
+    assert on.has_trans("c1") and not off.has_trans("c1") and on.trans_on and off.trans_on
+    for i in range(len(on)):
+        assert on.cst_sequence(i, 4, rng=random.Random(i))["tgt"] == ("English", "English")      # 타깃이 있으면 ast_frac 1 → 늘 번역 모드
+        x = off.cst_sequence(i, 4, rng=random.Random(i)); assert x["tgt"] is None and x["n_tr"] == 0
+        assert x["ids"] == s3.cst_sequence(i, 4)["ids"]                                              # 회복 없음 → Stage 3 와 같은 시퀀스
+        assert off.cst_sequence(i, 4, tgt="English")["tgt"] == ("English", "English")             # tgt 를 직접 주면(점검·평가) 번역 모드
+    assert off.tgt_options(0) == ["English"]                                                      # tgt_options 는 언어만 본다

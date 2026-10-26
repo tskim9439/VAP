@@ -352,8 +352,8 @@ for key, lang in (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "Germa
                             **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}), wav_aug=wav_aug_of(key), far_aug=far_of(key), **VKW, **dec_kw(key))
     cap(ds); ds.lang = lang; train_sets[key] = ds
     if DT:
-        rows = {(c, w, b) for c in ds.dlgs for (w, b) in ds._rows(c)}; got = sum(1 for c, w, b in rows if f"{c}|{w}|{b}" in DT or f"{c}|{w}|{b}" in DTI)
-        ds.stats.update(trans_rows=len(rows), trans_rows_with_target=got)
+        rows = {(c, w, b) for c in ds.dlgs for (w, b) in ds._rows(c)}; got = sum(1 for c, w, b in rows if f"{ds._tcid(c)}|{w}|{b}" in DT or f"{ds._tcid(c)}|{w}|{b}" in DTI)   # 원거리 버전은 원본 id(far_of)
+        ds.stats.update(trans_rows=len(rows), trans_rows_with_target=got, trans_dialogues_without_target=sum(1 for c in ds.dlgs if not ds.has_trans(c)))   # 전사 모드만(번역 모드로 뽑지 않는다)
     log(f"  {key} {cs}: {len(ds)} 창 · held-out 제외 {ds.stats['cst_excluded']} 대화 · stats {dict(ds.stats)}")
 sim_files = []
 def sim_dir(key):
