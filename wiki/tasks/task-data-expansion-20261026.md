@@ -29,13 +29,13 @@ sources:
 |---|---|---|
 | D1 | NOTSOFAR train 원거리 장치(어레이 4 대 ch0 + 단일 마이크 5 대) → `notsofar-far` | 완료: 72 회의, 595 변형(지연 0–30 ms, 포락선 상관 0.81), mono 캐시 6.6 GiB |
 | D2 | ICSI 탁상 마이크(.mrt 의 참가자 아닌 채널) → `icsi-far` | 완료: 69 회의, 258 변형(PZM c2 위주, 저가 u3 는 상관이 낮아 버림), mono 캐시 27 GiB |
-| D3 | AMI Array1 8 채널(Full-corpus-ASR train 136 회의 + IB4005 중 Array1 이 있는 135 회의) → `ami-far` | T5 받기 완료(1,080 파일, 69 GB, 실패 0). ES2012d.Array1-02 앞 331 B 에 서버 오류 페이지(HTML)가 섞여 다시 받아 교체했다(크기 확인은 통과했었다 — 스크립트에 `--fail`·RIFF 확인 추가). 업로드(사용자, azcopy → `/soundai/DB/raw/ami-array1`) 대기 |
+| D3 | AMI Array1 8 채널(Full-corpus-ASR train 136 회의 + IB4005 중 Array1 이 있는 135 회의) → `ami-far` | 완료: T5 받기 1,080 파일 69 GB(ES2012d.Array1-02 앞 331 B 서버 오류 페이지 → 다시 받아 교체, 스크립트 `--fail`) → 사용자 azcopy 업로드 `users/tskim/VAPKT-data/data/audio/ami-array1-train`(SAS 는 `DB/raw` 쓰기 403) → 서버 대조 135·1,080·74,174,109,160 B·RIFF → 학습 회의 131 × 8 = 1,048 변형 중 1,032(버림 16, 지연 중앙 10 ms, 상관 0.79) mono 66 GiB |
 | D4 | CHiME-6 train(착용 마이크 + Kinect CH1) → `chime6tr`·`chime6tr-far` — 키를 dev 평가 셋 `chime6` 과 나눈다([[decision-chime6-train-sessions-20261026]]) | 완료: 정렬 95744(16 세션, 71,010 발화) → 정제 → 죽은 착용 마이크 발화 표시 7.4 %·S05 제외 → 15 세션 mono 4.0 GiB·stems 16.1 GiB, 원거리 89 변형(버림 0, 지연 중앙 10 ms, 상관 0.84) mono 23.9 GiB |
 | D5 | 화자별 원거리 증강(`far_aug`) — 화자별 신호 캐시(stems), 같은 방의 다른 RIR | 완료: 실제 대화 10 셋 5,613 대화 351 GiB(실패 8 — aihub134 의 채널 없는 화자, 그 대화는 혼합 신호 하나에 RIR), Switchboard·CHiME-6 train 도 완료(한국어 회의는 혼합 조각이라 없음) |
 | D6 | 겹침 늘린 합성(E4) → `sim_<l>-meet`(sim-dialogue-v4-meet) | 완료: en·ko·de 각 10,000 세션(260·252 h …). 영어 겹침 11.7 %(v3-multi 4.4 %), 교대 13.8 회/분, 맞장구 4.4 회/분, 70 % 세션 화자별 원거리 |
 | D7 | 한국어 회의 NIA23 002_Meeting → `nia23mt`(dlg_mtko) | 완료: 전체 7,971 회의 5,621 h 중 빠진 발화 없는 회의에서 종류별로 골라 891 회의 651 h(녹음 251·방송 250·라디오 150 h — 인터넷은 대부분 임시 파일만 남아 제외). 정렬(95691) → 정제(발화 362,025, 미정렬 1,349·이상 2,000 제외) → phase2 → mono 69.9 GiB |
 | D8 | Switchboard(영어 2 인 전화) → `swbd`(dlg_en) | 완료: 2,435 통화, 258 h. 정렬(95683, 5 분) → 정제 → phase2 → mono·stems |
-| F1 | 회의 + 4 슬롯 1.7B 레시피(같은 init·step)에 D1–D8 + 원거리 증강 → AMI·TAXI·FLEURS | 점검 통과(10-26 19:38, `ami-far` 만 빼고): dry-run 18 그룹 δ4–10 불일치 0, 호스트 GPU 20 step 스모크·저장 대조 통과. 남은 것: `ami-far`(업로드 대기) → 마지막 dry-run → 제출(사용자) |
+| F1 | 회의 + 4 슬롯 1.7B 레시피(같은 init·step)에 D1–D8 + 원거리 증강 → AMI·TAXI·FLEURS | 제출 준비 완료(10-26 21:19): 모든 셋으로 dry-run 18 그룹 δ4–10 불일치 0(`dlg_far` 원거리 4 코퍼스 1,974 대화 101,585 창), 20 step 스모크·저장 대조 통과(`ami-far` 앞), 서버 코드 492 파일 md5 일치. 제출은 사용자(`bash slurm/submit-q17-f1.sh`, apex 2 노드) |
 | E5·E6 | 한 스트림 + 화자 활동 입력([[output-diarization-integration-20261025]] 6 절) | 코드·시험 완료(E5 adapter_slot·act_noise·--act-oracle, E6 인과 diar_head·ρ 혼합·encode 활동 스트림, E1c 인과 가지). 학습은 F1 뒤 |
 
 ## 원거리 버전 규칙
