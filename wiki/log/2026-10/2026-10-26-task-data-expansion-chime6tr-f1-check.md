@@ -1,0 +1,31 @@
+## [2026-10-26] task | 데이터 확장: CHiME-6 train(chime6tr)·NIA23·Switchboard 마무리, F1 점검 통과
+
+- Changed:
+  - 코드
+    - `experiments/p2_flag_channel_level.py`(새), `experiments/p2_build_far.py`(--key)
+    - `experiments/stage3_train.py`(chime6tr 키·커버리지 통계), `vapasr/data/cst_dialogue.py`(has_trans)
+    - `slurm/submit-q17-f1.sh`
+  - 시험: `tests/test_far_data.py`, `tests/test_cst_dialogue.py`
+  - 실행: `raw/sources/experiments/2026-10-26-data-expansion/`(chime6tr_finish.sh 새, ami_array_download.sh --fail)
+  - 위키
+    - [[decision-chime6-train-sessions-20261026]](새), [[decision-phase2-eval-plan-v2]], [[output-data-selection-execution-plan]]
+    - [[task-data-expansion-20261026]], [[status]]
+- Reason:
+  - **CHiME-6**
+    - 정렬(95744)을 마친 뒤 확인하니, 09-17 평가 계획이 CHiME-6 를 객관 held-out 으로 정해 두고 있었다. 사용자에게 물었고 "train 세션만 학습에 넣기"로 정했다.
+    - 예전 평가 스크립트가 `<corpus>.refined` 를 먼저 찾으므로 학습 키를 `chime6tr` 로 나눴다.
+    - 착용 마이크가 죽은 S05 는 뺐다. 자기 채널에서 들리지 않는 발화 7.4 % 는 표시해 학습에서 가린다.
+    - 원거리 89 변형: 지연 중앙 10 ms, 상관 0.84.
+  - **AMI Array1:** 1,080 파일을 받았다. 1 파일 앞 331 B 에 서버 오류 페이지가 섞였지만 크기 확인은 통과했었다 → 다시 받아 교체했다. 69 GB 를 전수 검사해 다른 파일은 깨끗하다.
+  - **F1 점검**
+    - mxc 코드가 E5·E6 커밋 전이었다 → 63 파일을 맞추고 484 파일 md5 를 대조했다.
+    - 번역 타깃이 없는 새 코퍼스 창의 절반이 번역 모드에서 판단 신호를 잃었다 → 그런 대화는 전사 모드로만 쓴다.
+    - dry-run 18 그룹 불일치 0. 20 step 스모크와 저장 대조 통과. 시험: 맥 743 통과(실패 15 는 로컬 환경), mxc 88 통과.
+  - **azcopy**
+    - 맥의 외부망(221.150.177.46)은 스토리지 방화벽에 막힌다(403 AuthorizationFailure).
+    - 사용자 실행에서 AuthorizationPermissionMismatch 가 났다. `--overwrite=false` 의 존재 확인에 읽기 권한이 필요한 것으로 보고 옵션을 뺀 명령을 줬다(확인 대기).
+- Next:
+  - 사용자 AMI 업로드 → `far_build.sh ami --ami-root /soundai/DB/raw/ami-array1` → mono → 마지막 dry-run.
+  - 사용자 F1 제출(`bash slurm/submit-q17-f1.sh`) → mt4 와 비교.
+  - 그다음 E5 → E1c → E6.
+- By: tskim
