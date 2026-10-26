@@ -499,3 +499,17 @@ def test_forward_sem_only_mask_and_eot_soft():
     assert not torch.allclose(m(**x, labels_alt=la, soft_w=sw, next_weight=0.3).loss, out.loss)            # 마스크가 실제로 반영
     bad = dict(x); bad["labels"] = labels.clone(); bad["ids"] = ids.clone(); bad["ids"][0, 2] = SEM; bad["labels"][0, 2] = SEM
     with pytest.raises(AssertionError, match="sem_only_mask"): m(**bad, sem_only_mask=so)
+
+
+def test_far_variant_uses_original_translation_targets(tmp_path):
+    """원거리 버전(p2_build_far — conv_id 가 다르고 meta.far_of = 원본)은 같은 발화·화자의 원본 번역 타깃을 쓴다(2026-10-26): 번역 모드 시퀀스가 원본과 같다."""
+    import json as _json
+    q, rv, tr, tri = make4(tmp_path)
+    rows = [_json.loads(l) for l in open(q, encoding="utf-8")]
+    for r in rows: r["conv_id"] = "far:" + r["conv_id"]; r["meta"] = dict(r.get("meta") or {}, far_of=r["conv_id"][4:])
+    qf = str(tmp_path / "far.refined.dialogues.jsonl"); open(qf, "w", encoding="utf-8").write("".join(_json.dumps(r) + "\n" for r in rows))
+    rvf = {"far:" + k: v for k, v in rv.items()}
+    kw = dict(delays=(4,), windows=[("c1", 11.0, 20.0)], trans=tr, trans_input=tri, ast_frac=1.0)
+    a = CstDialogueDataset([q], tok4(), revive=rv, **kw).cst_sequence(0, 4, tgt="English")
+    b = CstDialogueDataset([qf], tok4(), revive=rvf, **dict(kw, windows=[("far:c1", 11.0, 20.0)])).cst_sequence(0, 4, tgt="English")
+    assert a["ids"] == b["ids"] and a["labels"] == b["labels"] and a["n_tr"] == b["n_tr"] > 0 and a["win"]["tr_tokens"] == b["win"]["tr_tokens"]

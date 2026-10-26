@@ -710,6 +710,10 @@ class CstDialogueDataset(DialogueWindowDataset):
             c[cid] = rows
         return c[cid]
 
+    def _tcid(self, cid: str) -> str:
+        """번역 타깃의 대화 id — 원거리 버전(p2_build_far, meta.far_of)은 같은 발화·화자의 원본 회의 타깃을 쓴다(2026-10-26)."""
+        return (self.dlgs[cid].meta or {}).get("far_of", cid)
+
     def trans_of(self, cid: str, tgt, t0: float):
         """window_streams4 의 trans_of(ep): episode 안 행마다 번역(되살린 행은 trans_input 에서, 입력만). tgt = 목표 언어 | {화자: 목표 언어}(교차 언어).
         확정 시각은 전사 토큰처럼 행 조각 구간으로 자른다(clamp_to_spans — 정렬 토큰이 조각 시작보다 앞서면 전사는 시작으로 당겨지는데 번역만 앞서지 않게).
@@ -722,7 +726,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                 key = (ep.speaker, uid.split("#")[0]); r = rows.get(key)
                 if r is None or key in seen: continue
                 seen.add(key); inp = r["kind"] == "r"
-                tt = None if r["a"] < t0 - 1e-6 else (self.trans_input if inp else self.trans).get(f"{cid}|{key[0]}|{key[1]}", {}).get(tg)
+                tt = None if r["a"] < t0 - 1e-6 else (self.trans_input if inp else self.trans).get(f"{self._tcid(cid)}|{key[0]}|{key[1]}", {}).get(tg)
                 if tt is None: gaps.append((max(r["a"], ep.start), min(r["e"], ep.end), "cut" if r["a"] < t0 - 1e-6 else "miss")); last_ok = False; continue
                 if self.trans_lead_space: tt = lead_space_row(self.tok, tt[0], tt[1], self.word_start)
                 own = (lambda t: ep.ep_id) if len(r["eps"]) == 1 else (lambda t: next((j for j in r["eps"] if t <= E[j].end + 1e-6), r["eps"][-1]))
@@ -884,7 +888,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         if getattr(self, "_est4", None) is not None and len(self._est4) == len(self.items): return self._est4
         per = {}                                                                                 # 번역 모드로 뽑힐 수 있으니 창마다 번역 토큰 n(행의 목표 언어 중 최대) + 태그 2 + n/4 를 더한다
         for cid in {c for c, _, _ in self.items}:                                                # (전사·번역이 번갈면 태그가 는다 — 2026-10-19 시험 dry-run 에서 +2 만으로는 1 % 과소 추정 11 창)
-            n_of = lambda x, w, b: max((len(v[0]) for v in (self.trans_input if x["kind"] == "r" else self.trans).get(f"{cid}|{w}|{b}", {}).values()), default=0)
+            n_of = lambda x, w, b: max((len(v[0]) for v in (self.trans_input if x["kind"] == "r" else self.trans).get(f"{self._tcid(cid)}|{w}|{b}", {}).values()), default=0)
             r = [(x["a"], x["e"], 2 + n + n // 4) for (w, b), x in self._rows(cid).items() for n in (n_of(x, w, b),)]
             per[cid] = (np.array([x[0] for x in r]), np.array([x[1] for x in r]), np.array([x[2] for x in r]))
         add = np.array([int(per[c][2][(per[c][1] > t0) & (per[c][0] < t0 + L)].sum()) if len(per[c][0]) else 0 for c, t0, L in self.items], dtype=np.int64)
