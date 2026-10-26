@@ -173,3 +173,13 @@ def test_row_integrity_cont_pieces_and_empty_translation():
     for x in B: x.cont = True                                                                   # 이어지는 조각뿐이면 맞장구로 쓰지 않는다
     dd = synth_session([fake_units("A", 8), B], st, random.Random(0), 30.0, lambda u: (0.0, u.dur), "s", "sim_ko", "Korean")
     assert dd.meta["bc"] == 0
+
+
+def test_interrupt_raises_overlap_and_off_is_unchanged():
+    """D6 끼어들기(SimConfig.p_interrupt, 2026-10-26): 0 이면 예전과 같은 세션(난수를 더 뽑지 않음), 1 이면 교대가 모두 U(interrupt_fto) 라 겹침이 는다. 자기 겹침은 없다."""
+    st = TimingStats(fto=[0.2, 0.4, 0.8], hold=[0.5], p_hold=0.2, turn=[3.0, 5.0], bc_rate=0.0, bc_pos=[0.5], n_dialogues=1)
+    span = lambda u: (0.0, u.dur)
+    mk = lambda cfg: synth_session([fake_units("A", 30), fake_units("B", 30), fake_units("C", 30)], st, random.Random(3), 80.0, span, "s", "sim_en", "English", cfg=cfg)
+    base, off = mk(SimConfig()), mk(SimConfig(p_interrupt=0.0, interrupt_fto=(-1.5, -0.5)))
+    assert base.to_json() == off.to_json() and overlap_stats(base)["overlap_s"] == 0
+    hi = overlap_stats(mk(SimConfig(p_interrupt=1.0, interrupt_fto=(-1.5, -0.5)))); assert hi["overlap_s"] > 5.0 and hi["self_overlap"] == 0

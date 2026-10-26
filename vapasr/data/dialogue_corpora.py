@@ -201,6 +201,65 @@ def load_nikl_dialogue(json_path: str, idx: Dict[str, str], split: str = "heldou
     dur = max(u.end for u in utts) + 0.5; chans = {s: ChannelRef(path="", pieces=pcs) for s, pcs in pieces.items()}
     return Dialogue(conv_id=f"{corpus}:{dlg_id}", corpus=corpus, lang="Korean", split=split, duration_s=dur, speakers=sorted(chans), utterances=utts, channels=chans, meta=dict(src_json=json_path))
 
+# ───────────────────────────── Switchboard(서버 사본, 2026-10-26 데이터 확장 D8) ─────────────────────────────
+def swbd_times(name: str, dur: float, tol: float = 0.1) -> Optional[Tuple[float, float]]:
+    """발화 파일명 'sw02440B_400303_401980375' 의 시작·끝(초에서 소수점을 지운 숫자 — 정수부 자릿수가 모호) → (start, end).
+    자릿수 조합 중 0 ≤ start < end 이고 end − start 가 파일 길이 dur 에 가장 가까운 것(차이 ≤ tol). 없으면 None."""
+    m = re.fullmatch(r"sw\d+[AB]_(\d+)_(\d+)", name)
+    if not m: return None
+    def cands(x: str): return [float(x[:k] + "." + x[k:]) if k < len(x) else float(x) for k in range(1, len(x) + 1)]
+    best = None
+    for st in cands(m.group(1)):
+        for en in cands(m.group(2)):
+            if en > st >= 0 and abs((en - st) - dur) <= tol and (best is None or abs((en - st) - dur) < abs((best[1] - best[0]) - dur)): best = (st, en)
+    return best
+
+def iter_switchboard(csv_path: str, root: str, split: str = "train") -> Iterator[Dialogue]:
+    """switchboard_<분할>.csv(audio_path|script|sampling_rate|duration[|script_tn], audio_path 는 root 기준 'switchboard/TRAIN/swNNNNNC_s_e.wav') → 통화마다 2 채널 대화.
+    발화 파일을 그 채널(A·B)의 시작 시각에 놓는다(pieces — 발화 사이 무음은 원음 없음). <LAUGH> 등 태그를 지우고 비면 뺀다. 시각을 못 읽은 발화는 뺀다(meta.bad_times)."""
+    import csv
+    rows: Dict[str, list] = {}; bad: Dict[str, int] = {}
+    with open(csv_path, encoding="utf-8") as f:
+        for r in csv.DictReader(f, delimiter="|"):
+            name = os.path.splitext(os.path.basename(r["audio_path"]))[0]; conv = name[:7]
+            t = swbd_times(name, float(r["duration"]))
+            if t is None: bad[conv] = bad.get(conv, 0) + 1; continue
+            raw = re.sub(r"\s+", " ", re.sub(r"<[^>]*>|\[[^\]]*\]", " ", r["script"])).strip()
+            if raw: rows.setdefault(conv, []).append((name[7], t[0], t[1], raw, os.path.join(root, r["audio_path"]), name))
+    for conv in sorted(rows):
+        utts, pieces = [], {}
+        for ch, st, en, raw, path, name in sorted(rows[conv], key=lambda x: (x[1], x[0])):
+            spk = f"{conv}{ch}"; pieces.setdefault(spk, []).append((path, st))
+            utts.append(Utterance(speaker=spk, start=st, end=en, raw=raw, utt_id=name))
+        if len(pieces) < 2: continue
+        yield Dialogue(conv_id=f"swbd:{conv}", corpus="SWBD", lang="English", split=split, duration_s=max(u.end for u in utts) + 0.5, speakers=sorted(pieces),
+                       utterances=utts, channels={k: ChannelRef(path="", pieces=v) for k, v in pieces.items()}, meta=dict(bad_times=bad.get(conv, 0), telephone=True))
+
+# ───────────────────────────── NIA23 002_Meeting(주요 영역별 회의, 한국어 다자 회의 — 2026-10-26 데이터 확장 D7) ─────────────────────────────
+def iter_nia23_meeting(root: str, kinds=("Recording",), split: str = "train", limit: Optional[int] = None) -> Iterator[Dialogue]:
+    """<root>/Jsons/<종류>/<제목>.json(NIKL 형식: utterance[{start, end, speaker_id, speaker_role, form, original_form}] 이 회의 전체를 잇는 구간)
+    + <root>/wav/<종류>/<제목>_<n>.wav(n = 발화 순번(1 부터), 한 혼합 녹음을 발화 시각대로 자른 조각 — B 등급). 같은 폴더의 .azDownload-* 임시 사본은 쓰지 않는다.
+    화자마다 자기 발화 조각을 start 에 놓는다(pieces). 조각이 한 혼합 녹음의 이어진 구간이라 mono 는 게인 없이 이어 붙인다(meta.mixed_pieces — dialogue_mix).
+    텍스트는 original_form(발음대로, 숫자도 한글 — NIKL 과 같음; TN 은 builder 의 'nikl'). 조각이 없거나 끝 ≤ 시작인 발화는 뺀다(meta.missing)."""
+    n = 0
+    for kind in kinds:
+        wavs = {e.name for e in os.scandir(os.path.join(root, "wav", kind)) if not e.name.startswith(".")}
+        for jp in sorted(glob.glob(os.path.join(root, "Jsons", kind, "*.json"))):
+            d = json.load(open(jp, encoding="utf-8")); md = d.get("metadata", {}); title = md.get("title") or os.path.splitext(os.path.basename(jp))[0]
+            utts, pieces, missing = [], {}, []
+            for i, u in enumerate(d.get("utterance", []), 1):
+                w = f"{title}_{i}.wav"; s, e = _num(u.get("start")), _num(u.get("end")); spk = str(u.get("speaker_id") or "")
+                if w not in wavs or not spk or e <= s: missing.append(i); continue
+                pieces.setdefault(spk, []).append((os.path.join(root, "wav", kind, w), s))
+                utts.append(Utterance(speaker=spk, start=s, end=e, raw=_nfc(u.get("original_form") or ""), utt_id=str(u.get("id") or f"{title}.{i}")))
+            if len(pieces) < 2 or not utts: continue
+            yield Dialogue(conv_id=f"nia23mt:{title}", corpus="NIA23MT", lang="Korean", split=split, duration_s=max(u.end for u in utts) + 0.5, speakers=sorted(pieces), utterances=utts,
+                           channels={k: ChannelRef(path="", pieces=v) for k, v in pieces.items()},
+                           meta=dict(mixed_pieces=True, kind=kind, domain=md.get("domain"), topic=md.get("topic"), media=md.get("media"), missing=missing,
+                                     roles={str(x.get("id")): x.get("role") for x in d.get("speaker", [])}))
+            n += 1
+            if limit and n >= limit: return
+
 # ───────────────────────────── held-out 평가용: TurnBench dev (EN 2인 full-duplex, 화자별 채널 + 턴 라벨 3 트랙) ─────────────────────────────
 TURNBENCH_NONSPEECH = {"Non-Speech Noise", "Speech, Non-Linguistic"}
 def _iou(a0, a1, b0, b1) -> float:

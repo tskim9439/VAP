@@ -336,8 +336,8 @@ def sim_dir(key):
     """--sim-data 폴더들 중 <key>.refined.dialogues.jsonl 이 있는 첫 폴더(없으면 첫 폴더 — 뒤에서 없음으로 끝낸다)."""
     ds_ = [x for x in (a.sim_data or "").split(",") if x]
     return next((x for x in ds_ if os.path.exists(os.path.join(x, f"{key}.refined.dialogues.jsonl"))), ds_[0] if ds_ else "")
-for lang in ("Korean", "English", "German"):                                                  # 합성 대화(sim_dialogue): held-out 과 무관한 학습 재료로만 만들었다
-    key = f"sim_{SHORT[lang]}"
+for lang, key in [(l, k) for l in ("Korean", "English", "German") for k in [f"sim_{SHORT[l]}"] + sorted(x for x in weights if re.fullmatch(fr"sim_{SHORT[l]}-[a-z0-9]{{3,}}", x))]:
+    # 합성 대화(sim_dialogue): held-out 과 무관한 학습 재료로만 만들었다. sim_<l>-<접미사>(세 글자 이상, 2026-10-26 — 예 sim_en-meet)는 같은 언어 합성의 다른 셋
     if weights.get(key, 0) <= 0: continue
     if not a.sim_data: sys.exit(f"--weights 에 {key} 가 있는데 --sim-data 가 없다")
     sd = sim_dir(key); f = os.path.join(sd, f"{key}.refined.dialogues.jsonl")

@@ -10,6 +10,7 @@
   python experiments/p2_build_dialogues.py --corpus icsi --root /soundai/DB/raw/icsi --annotations …/ICSI_core_NXT.zip --transcripts …/ICSI_original_transcripts.zip --out <dir>
   python experiments/p2_build_dialogues.py --corpus kec --root <VAPKT-data/data/KEC> --out <dir>      # 독일어(Stage 3, 2026-10-14)
   python experiments/p2_build_dialogues.py --corpus ztc --root <VAPKT-data/data/ZTC> --out <dir>
+  python experiments/p2_build_dialogues.py --corpus swbd --root <…/EN/TRAIN/OPEN> --transcripts <…/switchboard/switchboard_train.csv> --out <dir>   # 2026-10-26
     독일어는 두 번 돈다: (1) 위처럼 빌드 → p2_asr_check → (2) 같은 명령에 --asr-guide <asrcheck>/<corpus>.utts.jsonl 을 붙여 다시 빌드(구어 축약 표기 → 표준 철자,
     C.canon_de). 축약 그대로의 1 차 산출은 <corpus>.verbatim.dialogues.jsonl 로 복사해 둔다.
 출력: <out>/<corpus>.dialogues.jsonl + <out>/<corpus>.stats.json (대화·시간·발화·quarantine·결손). 읽기 전용 입력, 서버 쓰기는 --out 아래만."""
@@ -21,17 +22,17 @@ from vapasr.data.textnorm_de import target_de, target_flags_de, TEXTNORM_DE_ID
 from vapasr.data import dialogue_corpora as C
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--corpus", required=True, choices=["aihub71631", "aihub134-1", "aihub134-2", "otoSpeech", "ami", "notsofar", "icsi", "chime6", "nikl2020", "turnbench", "kec", "ztc"])
+ap.add_argument("--corpus", required=True, choices=["aihub71631", "aihub134-1", "aihub134-2", "otoSpeech", "ami", "notsofar", "icsi", "chime6", "nikl2020", "turnbench", "kec", "ztc", "swbd", "nia23mt"])
 ap.add_argument("--year", default="2020", help="nikl: 연도"); ap.add_argument("--index-cache", default=None, help="nikl: index_year 캐시 디렉토리")
 ap.add_argument("--root"); ap.add_argument("--audio-root"); ap.add_argument("--label-root"); ap.add_argument("--crop-dir")
 ap.add_argument("--annotations"); ap.add_argument("--transcripts"); ap.add_argument("--out", required=True); ap.add_argument("--limit", type=int)
-ap.add_argument("--split", default="train"); ap.add_argument("--workers", type=int, default=1)
+ap.add_argument("--split", default="train"); ap.add_argument("--workers", type=int, default=1); ap.add_argument("--kinds", default="Recording", help="nia23mt: 종류(쉼표)")
 ap.add_argument("--asr-guide", help="독일어: p2_asr_check 의 <corpus>.utts.jsonl — 구어 축약 표기를 같은 발화의 ASR 가설로 표준 철자로 바꾸고(C.canon_de), "
                 "바뀐 전사로 다시 잰 오류율을 <같은 이름>.canon.utts.jsonl 로 쓴다(p2_refine --asr-flags 에 준다)")
 a = ap.parse_args()
 
 def nfc(s): return unicodedata.normalize("NFC", s)
-TN_CORPUS = {"aihub71631": "aihub71631", "aihub134-1": "aihub71631", "aihub134-2": "aihub71631", "otoSpeech": "yodas", "ami": "yodas", "notsofar": "yodas", "icsi": "yodas", "chime6": "yodas", "nikl2020": "nikl", "turnbench": "yodas"}   # EN 대화 코퍼스는 숫자 표기가 있어 NUMERIC_CORPORA_EN 규칙("yodas")으로 숫자를 말로 푼다(textnorm 자체는 동결)
+TN_CORPUS = {"aihub71631": "aihub71631", "aihub134-1": "aihub71631", "aihub134-2": "aihub71631", "otoSpeech": "yodas", "ami": "yodas", "notsofar": "yodas", "icsi": "yodas", "chime6": "yodas", "nikl2020": "nikl", "turnbench": "yodas", "swbd": "yodas", "nia23mt": "nikl"}   # EN 대화 코퍼스는 숫자 표기가 있어 NUMERIC_CORPORA_EN 규칙("yodas")으로 숫자를 말로 푼다(textnorm 자체는 동결)
 
 def gen():
     c = a.corpus
@@ -69,6 +70,10 @@ def gen():
         yield from C.iter_kec(a.root, a.split)
     elif c == "ztc":
         yield from C.iter_ztc(a.root, a.split)
+    elif c == "nia23mt":                                             # 2026-10-26 데이터 확장 D7: --root <…/NIA23/002_Meeting/Training> [--kinds Recording,Broadcast,Internet,Radio]
+        yield from C.iter_nia23_meeting(a.root, tuple(k for k in a.kinds.split(",") if k), a.split, a.limit)
+    elif c == "swbd":                                                # 2026-10-26 데이터 확장 D8: --root <…/EN/TRAIN/OPEN> --transcripts <switchboard/switchboard_train.csv>
+        yield from C.iter_switchboard(a.transcripts, a.root, a.split)
     elif c == "icsi":
         ann = C.IcsiAnnotations(a.annotations, a.transcripts)
         for m in sorted({x.split("/")[2].split(".")[0] for x in ann.members if x.startswith("ICSI/Segments/") and x.endswith(".segs.xml")}):

@@ -2,7 +2,7 @@
 
   load_channel : ChannelRef → (T,) float32 @16 kHz. path 는 streams.load_utt_audio 규약(#chN·리샘플), pieces 는 조각을 offset 에 배치(나머지 무음 0).
   mix_dialogue : 화자별 발화 구간 RMS 를 target_dbfs 로 맞추고(±jitter_db 무작위) 합산, 피크 제한. 미래 통계를 쓰지 않도록 게인은 대화 전체에서 하나(입력 정규화이지 모델 단서가 아님).
-                 원거리 버전(meta.mono_src, 2026-10-26)이면 far_mono 로 장치 녹음 한 채널을 쓴다.
+                 원거리 버전(meta.mono_src, 2026-10-26)이면 far_mono 로 장치 녹음 한 채널을 쓴다. 혼합 조각(meta.mixed_pieces — B 등급)이면 게인 없이 잇는다.
   mix_stems    : mix_dialogue 와 같은 게인의 화자별 신호 (S, T) — 학습 중 화자마다 다른 RIR 을 곱해 다시 섞는 원거리 증강(far_aug)의 재료.
 """
 import math, random
@@ -53,6 +53,14 @@ def mix_dialogue(dlg: Dialogue, sr: int = SR, target_dbfs: float = -23.0, jitter
     """→ (mono (T,), meta{gains, peak_scale}). 채널이 없는 화자는 건너뛴다(meta.missing_channels). meta.mono_src 가 있으면 far_mono."""
     if dlg.meta and dlg.meta.get("mono_src"): return far_mono(dlg, sr, target_dbfs, peak)
     T = int(round(dlg.duration_s * sr)); mono = np.zeros(T, dtype=np.float32); gains = {}; missing = []
+    if dlg.meta and dlg.meta.get("mixed_pieces"):                                            # B 등급(한 혼합 녹음의 조각, NIA23 회의): 게인 없이 이어 붙이고 전체를 맞춘다
+        for spk in dlg.speakers:
+            ref = dlg.channels.get(spk)
+            if ref is None or not (ref.pieces or ref.path): missing.append(spk); continue
+            x = load_channel(ref, dlg.duration_s, sr); n = min(T, len(x)); mono[:n] += x[:n]
+        g = (10 ** (target_dbfs / 20)) / max(_rms_over(mono, [(u.start, u.end) for u in dlg.utterances], sr), 1e-6); mono *= g
+        pk = float(np.max(np.abs(mono))) if T else 0.0; scale = peak / pk if pk > peak else 1.0
+        return mono * scale, dict(gain=float(g), peak_scale=scale, missing_channels=missing, sr=sr, mixed_pieces=True)
     for spk, x, g in _speaker_gains(dlg, sr, target_dbfs, jitter_db, seed):
         if x is None: missing.append(spk); continue
         gains[spk] = float(g); mono += x * g
@@ -62,7 +70,7 @@ def mix_dialogue(dlg: Dialogue, sr: int = SR, target_dbfs: float = -23.0, jitter
 def mix_stems(dlg: Dialogue, sr: int = SR, target_dbfs: float = -23.0, peak: float = 0.98) -> Tuple[np.ndarray, Dict]:
     """→ (stems (S, T), meta{speakers, gains, peak_scale}): mix_dialogue(jitter 0)와 같은 게인·피크 배율의 화자별 신호 — 합이 mono 캐시와 같다.
     채널이 없는 화자·원거리 버전(meta.mono_src)은 만들 수 없다(ValueError) — 화자별로 다시 섞을 재료가 없다."""
-    if dlg.meta and dlg.meta.get("mono_src"): raise ValueError(f"원거리 버전은 화자별 신호가 없다: {dlg.conv_id}")
+    if dlg.meta and (dlg.meta.get("mono_src") or dlg.meta.get("mixed_pieces")): raise ValueError(f"원거리 버전·혼합 조각(B 등급)은 화자별 신호가 없다: {dlg.conv_id}")
     T = int(round(dlg.duration_s * sr)); rows, gains, spk_ok = [], {}, []
     for spk, x, g in _speaker_gains(dlg, sr, target_dbfs, 0.0, 0):
         if x is None: raise ValueError(f"채널 없는 화자 {spk}: {dlg.conv_id}")

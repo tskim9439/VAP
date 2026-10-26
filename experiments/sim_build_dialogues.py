@@ -31,8 +31,14 @@ mono: 화자별 채널(놓인 말소리)을 dialogue_mix.mix_dialogue 와 같은
     난수는 세션 rng 와 따로 random.Random(f'{seed}:{i}:chan:{화자}')(세션 난수열 그대로). gain 은 처리된 트랙의 말소리 구간 RMS 로 다시 재서 레벨 목표(−23 dBFS ± --jitter-db)를 지킨다.
     --phone-same-frac F: 이 비율의 세션은 모든 화자가 같은 채널 파라미터(첫 화자 시드)를 쓴다('회선이 다르면 화자가 다르다' 지름길을 막는다).
     meta.chan = {same, spk: {화자: {phone, low, high, mulaw, level_db}}}(켰을 때만).
-  --name-suffix SUF(교차 언어만): 키 sim_<l1>-<l2>-SUF — 산출 이름(jsonl·stats·targets-·mono/)·conv_id 가 따른다.
-  위 옵션이 하나라도 기본이 아니면 stats.json 에 tel(화자 레벨 차 |Δ|·교대/재개 간격·같은 화자 쉼 히스토그램, hold 비율, 채널 집계)을 더한다."""
+  --name-suffix SUF: 교차 언어 키 sim_<l1>-<l2>-SUF, 같은 언어 키 sim_<l>-SUF(세 글자 이상, 2026-10-26) — 산출 이름(jsonl·stats·targets-·mono/)·conv_id 가 따른다.
+  위 옵션이 하나라도 기본이 아니면 stats.json 에 tel(화자 레벨 차 |Δ|·교대/재개 간격·같은 화자 쉼 히스토그램, hold 비율, 채널 집계)을 더한다.
+
+회의형 겹침·원거리(2026-10-26 데이터 확장 D6 — 기본값이면 예전과 바이트 동일):
+  --p-interrupt P · --interrupt-fto lo,hi: 교대 때 확률 P 로 교대 간격을 U(lo, hi)(음수 = 앞 턴과 겹침)에서 뽑는다(SimConfig.p_interrupt).
+  --far-per-speaker P: 세션마다 확률 P 로 한 방의 화자별 RIR(far_aug.FarFieldAugment.pick_rirs — 모의 방 RoomNNN 의 다른 위치, 일부 실제 RIR)을
+    화자 트랙에 건다(직접음 t=0, 섞기 전·gain 전, 난수는 random.Random(f'{seed}:{i}:far')). 그 세션은 섞은 뒤 잔향을 다시 걸지 않고 잡음만(--noise-p) 더한다.
+    --noise-bank 가 필요하다. meta.far = {화자: RIR 번호}(켰을 때만)."""
 import argparse, collections, hashlib, json, math, os, random, re, sys, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
@@ -167,6 +173,15 @@ def _hist(xs, lo, hi, w):
     return dict(lo=lo, w=w, n=n, under=under, over=over)
 
 
+def far_fx(fa, p, seed, i, speakers):
+    """D6 화자별 원거리(--far-per-speaker): 확률 p 로 한 방의 화자별 RIR 을 고른다 → (fx(ch, 화자) → 잔향 채널, meta {화자: RIR 번호}) 또는 None.
+    난수는 세션 rng 와 따로(세션 난수열 그대로)."""
+    r = random.Random(f"{seed}:{i}:far")
+    if r.random() >= p: return None
+    m = dict(zip(speakers, fa.pick_rirs(len(speakers), r)))
+    return (lambda ch, spk: fa.na.reverb(ch, r, m[spk])), {s: int(k) for s, k in m.items()}
+
+
 def make_session(i):
     import numpy as np
     from vapasr.data.streams import load_utt_audio
@@ -207,19 +222,27 @@ def make_session(i):
             return subs
         try:
             d = synth_session(us, G["stats"], rng, rng.uniform(*a.dur), span, f"sim_{xx}_{i:06d}", f"sim_{xx}", G["lang_name"],
-                              cfg=SimConfig(p_hold=a.p_hold, bc_scale=a.bc_scale, p_back=a.p_back, fto=a.fto_clip, intra_pause=a.intra_pause),
+                              cfg=SimConfig(p_hold=a.p_hold, bc_scale=a.bc_scale, p_back=a.p_back, fto=a.fto_clip, intra_pause=a.intra_pause,
+                                            **({"p_interrupt": a.p_interrupt, "interrupt_fto": tuple(float(v) for v in a.interrupt_fto.split(","))} if a.p_interrupt > 0 else {})),
                               meta=dict(pool=pool, keys=list(ks), attempt=attempt, **({"spk_lang": {"a": a.lang, "b": a.lang2}} if a.lang2 else {})), expand=expand)
             if d.meta["turns"] < 4 or d.duration_s < 25.0: errs.append("too_short"); continue
             if len(us) > 2 and min(collections.Counter(u.speaker for u in d.utterances).get(x, 0) for x in d.speakers) < 2: errs.append("speaker_too_few"); continue   # 3 명 이상: 모두 발화 2 개 이상
             tr = d.meta.pop("trans", None)
             fx, chan = phone_fx(G["phone"], a.seed, i, d.speakers, a.phone_same_frac) if G.get("phone") is not None else (None, None); lv = {} if G.get("tel") else None
+            far = far_fx(G["far"], a.far_per_speaker, a.seed, i, d.speakers) if G.get("far") is not None else None
+            if far is not None:
+                ffx, d.meta["far"] = far; pfx = fx
+                fx = (lambda ch, spk, f1=ffx, f2=pfx: f2(f1(ch, spk), spk)) if pfx is not None else ffx
             LO = G.get("level_offset") or {}; offs = {s: LO.get((d.meta.get("spk_lang") or {}).get(s, a.lang), 0.0) for s in d.speakers} if LO else None
             y, gains = mix_arrays(d, audio, spans, rng, a.jitter_db, fx=fx, levels=lv, offsets=offs); d.meta["gains"] = gains
             if offs and any(offs.values()): d.meta["level_offset_db"] = offs
             if chan is not None:
                 for s, v in chan["spk"].items(): v["level_db"] = lv[s]
                 d.meta["chan"] = chan
-            if G.get("noise") is not None: y = G["noise"](y, random.Random(f"{a.seed}:{i}:aug"))
+            if G.get("noise") is not None:
+                ra = random.Random(f"{a.seed}:{i}:aug")
+                if far is None: y = G["noise"](y, ra)
+                elif G["noise"].p_noise > 0 and ra.random() < G["noise"].p_noise: y = G["noise"].add_noise(y, ra)   # 화자별 원거리 세션: 잔향은 이미 — 잡음만
             f = mono_cache_path(os.path.join(a.out, "mono"), d); os.makedirs(os.path.dirname(f), exist_ok=True)
             tmp = f[:-4] + f".{os.getpid()}.tmp.npy"; np.save(tmp, np.asarray(y, dtype=np.float16)); os.replace(tmp, f)
             return i, d.to_json(), dict(overlap_stats(d), pool=pool, bc=d.meta["bc"], turns=d.meta["turns"], units=d.meta["units"], attempt=attempt, errors=errs,
@@ -261,6 +284,9 @@ def main():
     ap.add_argument("--split-s", type=float, default=4.0, help="이보다 긴 발화는 안쪽 쉼에서 구 단위로 나눈다")
     ap.add_argument("--speakers", default="2:1", help="세션 화자 수 분포 'n:가중,…'(V2 예 2:0.2,3:0.4,4:0.4 — 같은 언어만; 기본 2 인 = 예전과 같은 난수열)")
     ap.add_argument("--p-back", type=float, default=0.2, help="3 명 이상: 교대 때 앞앞 턴 화자에게 되돌아갈 확률(sim_dialogue.SimConfig)")
+    ap.add_argument("--p-interrupt", type=float, default=0.0, help="교대 때 끼어들기 확률(SimConfig.p_interrupt — 기본 끔)"); ap.add_argument("--interrupt-fto", default="-2.0,-0.3")
+    ap.add_argument("--far-per-speaker", type=float, default=0.0, help="세션마다 화자별 RIR(한 방) 확률 — --noise-bank 필요, 기본 끔")
+    ap.add_argument("--far-real-p", type=float, default=0.3, help="--far-per-speaker 에서 실제 RIR 풀을 고를 확률")
     ap.add_argument("--workers", type=int, default=16); ap.add_argument("--seed", type=int, default=0)
     g = ap.add_argument_group("교차 언어·번역(Stage 4)")
     g.add_argument("--lang2", default=None, choices=sorted(SHORT), help="화자 b 의 언어(주면 교차 언어 세션)"); g.add_argument("--phase2-corpora2", default="")
@@ -283,7 +309,8 @@ def main():
         sys.exit(f"--fto-clip·--intra-pause 는 'lo,hi'(lo ≤ hi, 쉼 ≥ 0): {a.fto_clip} {a.intra_pause}")
     if not (0 <= a.phone_per_speaker <= 1 and 0 <= a.phone_same_frac <= 1) or (a.phone_same_frac > 0 and a.phone_per_speaker <= 0):
         sys.exit(f"--phone-per-speaker·--phone-same-frac 는 [0, 1], same-frac 은 per-speaker > 0 일 때만: {a.phone_per_speaker} {a.phone_same_frac}")
-    if a.name_suffix is not None and (not a.lang2 or not re.fullmatch(r"[a-z0-9]+", a.name_suffix)): sys.exit(f"--name-suffix 는 교차 언어(--lang2)에서 [a-z0-9]+: {a.name_suffix!r}")
+    if a.name_suffix is not None and not re.fullmatch(r"[a-z0-9]+" if a.lang2 else r"[a-z0-9]{3,}", a.name_suffix):   # 같은 언어는 세 글자 이상(sim_en-xx 는 교차 언어 키)
+        sys.exit(f"--name-suffix: 교차 언어 [a-z0-9]+, 같은 언어 [a-z0-9]{{3,}}(2026-10-26 — 예 meet → sim_en-meet): {a.name_suffix!r}")
     if a.p_hold < 0: a.p_hold = None
     try: LO = {k.strip(): float(v) for k, v in (x.split(":") for x in a.level_offset_db.split(",") if x.strip())}
     except ValueError: sys.exit(f"--level-offset-db 'LANG:DB[,LANG:DB]': {a.level_offset_db!r}")
@@ -326,6 +353,10 @@ def main():
     if a.phone_per_speaker > 0:
         from vapasr.data.phone_aug import PhoneAugment
         G["phone"] = PhoneAugment(p=a.phone_per_speaker, mulaw_p=0.5)
+    if a.far_per_speaker > 0:                                                      # D6 화자별 원거리(--noise-bank 의 RIR·방 정보)
+        if not a.noise_bank: sys.exit("--far-per-speaker 는 --noise-bank 와 함께")
+        from vapasr.data.far_aug import FarFieldAugment
+        G["far"] = FarFieldAugment(a.noise_bank, p=1.0, p_noise=0.0, p_real=a.far_real_p)
     import multiprocessing as mp
     lines, rows, trans_all = {}, [], {}
     with mp.get_context("fork").Pool(a.workers) as pool:
