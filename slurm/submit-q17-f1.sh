@@ -30,7 +30,8 @@ for l in en ko de; do
 done
 [[ -n $MEET ]] && SIMS+=",$D/sim-dialogue-v4-meet"
 if (( ${#miss[@]} )); then echo "!! 아직 없는 셋: ${miss[*]}" >&2; (( allow )) || { echo "   모두 준비된 뒤 내거나 --allow-missing 으로 빼고 낸다" >&2; exit 1; }; fi
-W=dlg_ko:2,dlg_en:0.7,dlg_de:0.7,dlg_mt:1.0,dlg_far:1.0,dlg_mtko:0.5,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:0.5,sim_en-de-tel:1.0,sim_en-ko:1.0$MEET,rep_ko:1.2,rep_en:1.2,rep_de:1.2
+FARW=""; [[ $CORP == *-far* ]] && FARW=",dlg_far:1.0"; MTKO=""; [[ ,$CORP, == *,nia23mt,* ]] && MTKO=",dlg_mtko:0.5"   # --allow-missing: 코퍼스가 없는 그룹은 가중치에서 뺀다
+W=dlg_ko:2,dlg_en:0.7,dlg_de:0.7,dlg_mt:1.0$FARW$MTKO,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:0.5,sim_en-de-tel:1.0,sim_en-ko:1.0$MEET,rep_ko:1.2,rep_en:1.2,rep_de:1.2
 EXC=(); [[ -n $exclude ]] && EXC=(--exclude "$exclude")
 ARGS=(--run $run --init $M/stage3-q17-st3-p11-revive/checkpoint-3000 --partition $part --nodes $nodes --backchannel 1.0,3 --spk-act-weight 0.5
       --revive-dir $P2/revive-asr-v2 --dlg-trans $D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16,$D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16
