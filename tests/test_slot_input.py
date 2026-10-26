@@ -61,3 +61,33 @@ def test_dataset_act_in_and_collate(tmp_path):
     for it in items: assert it["act_in"].shape == (it["K"], 4) and torch.equal(it["act_in"], it["activity"])   # 깨끗하면 정답 활동 그대로
     b = collate_cst(items); Km = max(int(x["K"]) for x in items); assert b["act_in"].shape == (3, Km, 4)
     off = CstDialogueDataset([q], FakeTok(), **kw); random.seed(0); assert "act_in" not in off[0]
+
+
+def test_e6_diar_head_loss_mixing_and_encode_stream():
+    """E6(2026-10-26): 인코더 탭 위 인과 헤드 — forward 에 Sort·PIT 손실, 표본마다 ρ 로 헤드 예측/흔든 정답을 슬롯 활동 입력으로, encode 는 예측 활동 스트림을 붙이고
+    chunk_embed 가 그것을 쓴다(디코드 경로가 그대로 예측을 쓴다)."""
+    import importlib.util, pathlib
+    spec = importlib.util.spec_from_file_location("_tl", pathlib.Path(__file__).parent / "test_semcommit_tokens_loss.py"); tl = importlib.util.module_from_spec(spec); spec.loader.exec_module(tl)
+    m, _ = tl.tiny_model(); x, _ = tl._batch(m.config.sp_ids); x["labels"] = x["labels"].clone(); x["labels"][0, 4] = -100; x["labels"][0, 8] = -100
+    m.add_slot_input(4)
+    cfg = dict(n_streams=2, d_in=4, d=16, layers=1, heads=2, ffn=16, n_spk=4, dropout=0.0, lookahead=0)   # d 는 위치 conv 그룹(16)의 배수
+    m.add_diar_head(cfg, [0], weight=0.5, threshold=0.5, ramp=(0.0, 1.0)); assert m.config.diar_head_cfg == cfg and m.config.diar_taps == [0]
+
+    class Enc(torch.nn.Module):
+        def forward(self, wav, wav_len, K, taps=(), inject=None):
+            g = torch.Generator().manual_seed(int(wav.shape[1])); y = torch.randn(wav.shape[0], 1 + len(taps), int(K.max()), 4, generator=g)
+            return y if taps else y[:, 0]
+    m.encoder = Enc(); del x["feats"]
+    x.update(wav=torch.zeros(2, 480), wav_len=torch.tensor([320, 480]), K=torch.tensor([2, 3]))
+    act = torch.zeros(2, 3, 4); act[0, :2, 0] = 1; act[1, 1:, 1] = 1; am = torch.tensor([[1., 1., 0.], [1., 1., 1.]]); ai = torch.ones(2, 3, 4)
+    seen = []; orig = m.chunk_embed
+    def spy(feats, a=None): seen.append(None if a is None else a.clone()); return orig(feats, a)
+    m.chunk_embed = spy; m.train()
+    out = m(**x, activity=act, activity_mask=am, act_in=ai); assert out.loss_diar is not None and 0.0 <= out.diar_acc <= 1.0 and torch.isfinite(out.loss)
+    m.act_pred_rho = 0.0; m(**x, activity=act, activity_mask=am, act_in=ai); assert torch.equal(seen[-1], ai)                     # ρ 0 → 흔든 정답
+    m.act_pred_rho = 1.0; m(**x, activity=act, activity_mask=am, act_in=ai)
+    f, dlog = m.encode_diar(x["wav"], x["wav_len"], x["K"]); assert torch.equal(seen[-1], m.predict_act(dlog))                   # ρ 1 → 헤드 예측
+    m.chunk_embed = orig; m.eval()
+    feats = m.encode(x["wav"], x["wav_len"], x["K"]); assert feats.shape == (2, 2, 3, 4)
+    assert torch.allclose(m.chunk_embed(feats), m.chunk_embed(feats[:, :1], m.predict_act(dlog)), atol=1e-6)                      # 예측 활동 스트림 = 명시 입력
+    assert "diar_head" in m.trainable_state()

@@ -141,7 +141,7 @@ def decode_batch(model, feats, prefixes, *, next_bias=0.0, max_flush_rounds=None
     assert len({len(p) for p in prefixes}) == 1, "batch one language/delta at a time"
     emb = model.get_input_embeddings()
     dev = emb.weight.device
-    ce = [model.chunk_embed(f[None], None if acts is None else acts[j][None])[0].to(emb.weight.dtype) for j, f in enumerate(feats)]
+    ce = [(model.chunk_embed(f[None]) if acts is None else model.chunk_embed(f[None], acts[j][None]))[0].to(emb.weight.dtype) for j, f in enumerate(feats)]   # 활동이 없으면 예전 호출 그대로
     flush = model.config.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
     states = [DecodeState(len(c), model.config.runaway_cap, flush, int(6 * len(c)) + 64) for c in ce]
     assert all(s.K > 0 for s in states)

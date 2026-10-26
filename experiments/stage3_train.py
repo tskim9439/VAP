@@ -90,6 +90,10 @@ g.add_argument("--inject-hidden", type=int, default=512, help="--target-spk 주�
 g.add_argument("--slot-input", action="store_true", help="E5 슬롯 활동 입력(2026-10-26, wiki output-diarization-integration-20261025 6 절): 창의 슬롯 활동(정답을 --act-noise 로 흔든 것)을 "
                "오디오 토큰에 Σ a_s·e_s 로 더한다(adapter_slot — 0 초기화 → 붙인 직후 = 원래 모델). 출력 형식은 그대로(한 스트림). 지문 키 slot_input")
 g.add_argument("--act-noise", default="", help="--slot-input 흔들기 'clean=0.3,drop=0.05,short=0.4,short_frac=0.05,jitter=3,ovl=0.3,fa=0.002'(빈 값 = 기본, vapasr/data/act_noise)")
+g.add_argument("--diar-head", default=None, help="E6(2026-10-26): 인과 화자 분리 헤드 시작점(E1c diar.pt — cfg·taps·state). 인코더 탭 위에 붙여 Sort·PIT 손실을 함께 걸고, "
+               "슬롯 활동 입력을 표본마다 확률 ρ 로 헤드 예측(아니면 흔든 정답)으로 준다. --slot-input 과 함께. 지문 키 diar_head")
+g.add_argument("--diar-weight", type=float, default=0.5); g.add_argument("--act-pred-ramp", default="0.3,0.9", help="예측 활동을 쓸 확률 ρ 의 시작,끝(step 따라 선형)")
+g.add_argument("--act-threshold", type=float, default=0.45, help="헤드 예측 활동 임계(E1 AMI dev 에서 고른 값)")
 g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -174,6 +178,10 @@ if not 0 < a.replay_files_frac <= 1: sys.exit("--replay-files-frac 은 (0, 1]")
 if a.target_spk and a.dlg_trans: sys.exit("--target-spk 는 번역 타깃(--dlg-trans)과 함께 쓰지 않는다(E2 는 받아쓰기 상한 시험)")
 if a.target_spk and a.inject_hidden <= 0: sys.exit("--inject-hidden > 0")
 if a.slot_input and a.target_spk: sys.exit("--slot-input 은 --target-spk 와 함께 쓰지 않는다(E5 는 한 스트림 형식)")
+if a.diar_head and not a.slot_input: sys.exit("--diar-head 는 --slot-input 과 함께(E6 — 헤드 예측을 슬롯 활동 입력으로 준다)")
+ramp = tuple(float(x) for x in a.act_pred_ramp.split(","))
+if len(ramp) != 2 or not all(0.0 <= x <= 1.0 for x in ramp): sys.exit(f"--act-pred-ramp 'ρ0,ρ1'(각 0–1): {a.act_pred_ramp}")
+want_act = a.spk_act_weight > 0 or bool(a.diar_head)                                           # 정답 슬롯 활동 타깃(LLM 쪽 화자 헤드 또는 E6 화자 분리 손실)
 from vapasr.data.act_noise import from_spec as act_noise_from_spec
 try: act_noise = act_noise_from_spec(a.act_noise) if a.slot_input else None
 except ValueError as e: sys.exit(f"--act-noise: {e}")
@@ -250,6 +258,10 @@ if not a.dry_run:
     if a.enc_tap_layer >= 0: model.add_enc_tap(a.enc_tap_layer, a.enc_tap_hidden or None)      # V2-a 두 스트림 입력(adapter_tap 도 adapter lr)
     if a.target_spk: model.add_spk_inject(a.inject_hidden)                                      # E2 대상 화자 활동 주입(adapter_inject 도 adapter lr)
     if a.slot_input: model.add_slot_input(max(2, a.max_speakers))                               # E5 슬롯 활동 입력(adapter_slot 도 adapter lr)
+    if a.diar_head:                                                                             # E6 인과 화자 분리 헤드(이름이 adapter 가 아니라 thinker lr)
+        xb = torch.load(a.diar_head, map_location="cpu"); assert xb["cfg"].get("lookahead") is not None, f"인과 헤드(lookahead)가 아니다: {a.diar_head}"
+        model.add_diar_head(xb["cfg"], xb["taps"], state=xb["state"], weight=a.diar_weight, threshold=a.act_threshold, ramp=ramp)
+        if model.spk_head is not None and a.spk_act_weight <= 0: model.config.spk_weight = 0.0   # 활동 타깃이 오므로 LLM 쪽 보조 헤드는 끈다(가중 0)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
     assert not bad, f"tokenizer 특수 토큰 id 가 config 와 다름: {bad}"
@@ -334,7 +346,7 @@ for key, lang in (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "Germa
     rv = [f for f in (os.path.join(a.revive_dir, f"{c}.revive.jsonl") for c in cs) if os.path.exists(f)] if a.revive_dir else []; revive_files += rv
     ds = CstDialogueDataset(files, tok, delays=delays, exclude=held, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac,
                             seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, revive=load_revive(rv) if rv else None,
+                            spk_activity=want_act, revive=load_revive(rv) if rv else None,
                             **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}), wav_aug=wav_aug_of(key), far_aug=far_of(key), **VKW, **dec_kw(key))
     cap(ds); ds.lang = lang; train_sets[key] = ds
     if DT:
@@ -355,7 +367,7 @@ for lang, key in [(l, k) for l in ("Korean", "English", "German") for k in [f"si
     sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, wav_aug=wav_aug_of(key), far_aug=far_of(key), **VKW, **dec_kw(key))
+                            spk_activity=want_act, wav_aug=wav_aug_of(key), far_aug=far_of(key), **VKW, **dec_kw(key))
     cap(ds); ds.lang = lang; train_sets[key] = ds
     log(f"  {key}(합성): {len(ds)} 창 · 대화 {ds.stats['cst_dialogues']} · stats {dict(ds.stats)}")
 sim_trans_fp = {}
@@ -367,7 +379,7 @@ for key in sorted(k for k, w in weights.items() if w > 0 and set_kind(k) == "xl"
     XT, xt_st, sim_trans_fp[key] = load_ast_targets([td]); sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space, wav_aug=wav_aug_of(key), far_aug=far_of(key), **VKW, **dec_kw(key))
+                            spk_activity=want_act, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space, wav_aug=wav_aug_of(key), far_aug=far_of(key), **VKW, **dec_kw(key))
     if not ds.has_xl: sys.exit(f"{key}: 교차 언어 대화(meta.spk_lang)가 아니다")
     cap(ds)
     ds.lang = next(iter(ds.dlgs.values())).lang; train_sets[key] = ds
@@ -445,7 +457,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"set_phone": {k: (aug.settings() if aug is not None else None) for k in sorted(set_phone) for aug in [wav_aug_of(k)]}} if set_phone else {}),
           **({"xl_slot_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}), **({"no_eot": True} if a.no_eot else {}),
           **({"target_spk": dict(inject_hidden=a.inject_hidden)} if a.target_spk else {}),
-          **({"slot_input": dict(slots=max(2, a.max_speakers), noise=act_noise.settings())} if act_noise is not None else {}))
+          **({"slot_input": dict(slots=max(2, a.max_speakers), noise=act_noise.settings())} if act_noise is not None else {}),
+          **({"diar_head": dict(src=os.path.abspath(a.diar_head), weight=a.diar_weight, ramp=list(ramp), threshold=a.act_threshold)} if a.diar_head else {}))
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():

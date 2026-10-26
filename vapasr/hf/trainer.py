@@ -9,7 +9,7 @@ from transformers import Trainer, TrainerCallback, TrainingArguments
 from ..uslm.mono_data import lang_of, CHUNK_S
 from ..data.textnorm import score_en, score_ko
 
-SEM_LOG_KEYS = ("loss_sem", "loss_turn", "top1_sem", "sem_fp")                  # semantic commit 로그(VapAsrOutput 필드, 없으면 None)
+SEM_LOG_KEYS = ("loss_sem", "loss_turn", "top1_sem", "sem_fp", "loss_diar", "diar_acc")   # + E6 화자 분리 헤드(2026-10-26)                  # semantic commit 로그(VapAsrOutput 필드, 없으면 None)
 
 def pct(x, p): return float(np.percentile(x, p)) if len(x) else None
 
@@ -71,6 +71,9 @@ class VapAsrTrainer(Trainer):
 
     # ── 손실
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        m_ = model.module if hasattr(model, "module") else model
+        if getattr(m_, "diar_head", None) is not None:                                          # E6: 예측 활동을 쓸 확률 ρ 를 step 따라 선형으로(config.act_pred_ramp)
+            r0, r1 = m_.config.act_pred_ramp; m_.act_pred_rho = r0 + (r1 - r0) * min(1.0, self.state.global_step / max(1, self.state.max_steps))
         lang = inputs.get("lang", ["English"])[0]
         nw = self.model.config.next_weight_ko if (lang == "Korean" and self.model.config.next_weight_ko is not None) else self.model.config.next_weight
         x = {k: inputs[k] for k in ("wav", "wav_len", "K", "feats", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids", "sem_mask",

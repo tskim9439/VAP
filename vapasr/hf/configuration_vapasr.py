@@ -18,7 +18,8 @@ class VapAsrConfig(PretrainedConfig):
                  prefix_ids: Optional[List[int]] = None, lanes: int = 0, act_weight: float = 1.0, act_hidden: int = 256, eot_weight: float = 2.0, tag_weight: float = 1.0, phase2_registry: Optional[Dict[str, int]] = None,
                  sem_registry: Optional[Dict[str, int]] = None, sem_weight: float = 1.0, turn_weight: float = 1.0, sem_reserved: Optional[List[str]] = None,
                  spk_slots: int = 0, spk_weight: float = 0.5, enc_tap_layer: int = -1, enc_tap_hidden: int = 2048, slot_tokens: Optional[List[str]] = None,
-                 spk_inject_hidden: int = 0, slot_input_slots: int = 0, **kw):
+                 spk_inject_hidden: int = 0, slot_input_slots: int = 0, diar_head_cfg: Optional[dict] = None, diar_taps: Optional[list] = None, diar_weight: float = 0.5,
+                 diar_alpha: float = 0.5, act_threshold: float = 0.45, act_pred_ramp: Optional[list] = None, **kw):
         self.thinker = thinker or {}; self.thinker_name_or_path = thinker_name_or_path
         self.adapter_d_in, self.adapter_d_out, self.adapter_hidden = adapter_d_in, adapter_d_out, adapter_hidden
         self.encoder_type, self.encoder_name = encoder_type, encoder_name; self.encoder_left_context, self.encoder_right_context = encoder_left_context, encoder_right_context
@@ -35,7 +36,10 @@ class VapAsrConfig(PretrainedConfig):
         self.spk_slots, self.spk_weight = int(spk_slots), float(spk_weight)                                         # Stage 3(mono): 화자 슬롯 활동 헤드(슬롯 수, 0 = 없음)·BCE 가중 — 학습 보조 손실
         self.slot_tokens = list(slot_tokens or ["<SPK_A>", "<SPK_B>"])                                            # 화자 슬롯 토큰 순서(V2 enable_slots: + <SPK_3>·<SPK_4> = C·D)
         self.enc_tap_layer, self.enc_tap_hidden = int(enc_tap_layer), int(enc_tap_hidden)                          # V2-a 두 스트림 입력: 인코더 아래층(0 부터) 출력을 adapter_tap 으로 LLM 입력에 더한다(−1 = 끔)
-        self.slot_input_slots = int(slot_input_slots)                                                            # E5(2026-10-26): 슬롯 활동 입력(adapter_slot — 오디오 토큰 += Σ a_s·e_s, 0 = 끔)
+        self.slot_input_slots = int(slot_input_slots)
+        self.diar_head_cfg = dict(diar_head_cfg) if diar_head_cfg else None; self.diar_taps = list(diar_taps or [])                   # E6(2026-10-26): 인과 화자 분리 헤드(DiarBranch cfg·인코더 탭)
+        self.diar_weight, self.diar_alpha, self.act_threshold = float(diar_weight), float(diar_alpha), float(act_threshold)           # 손실 가중·Sort/PIT 비·예측 활동 임계
+        self.act_pred_ramp = list(act_pred_ramp or [1.0, 1.0])                                                                        # 학습 중 예측 활동을 쓸 확률 ρ(시작, 끝 — 선형)                                                            # E5(2026-10-26): 슬롯 활동 입력(adapter_slot — 오디오 토큰 += Σ a_s·e_s, 0 = 끔)
         self.spk_inject_hidden = int(spk_inject_hidden)                                                          # E2(2026-10-25): 대상 화자 활동 주입(adapter_inject — 인코더 pre-encode 출력에 f(X⊙y) 를 더한다, 0 = 끔)
         self.sem_reserved = list(sem_reserved or [])                                                                # mono semcommit 이 예약만 한 Phase 2 이름 — add_phase2_tokens 가 이 행을 다시 초기화하고 비운다
         super().__init__(**kw)

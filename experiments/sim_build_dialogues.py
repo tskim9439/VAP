@@ -42,7 +42,8 @@ mono: 화자별 채널(놓인 말소리)을 dialogue_mix.mix_dialogue 와 같은
 import argparse, collections, hashlib, json, math, os, random, re, sys, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
-TEL_DEFAULTS = dict(fto_clip=(-2.0, 3.0), intra_pause=(0.1, 0.5), phone_per_speaker=0.0, phone_same_frac=0.0, name_suffix=None, level_offset_db="")   # C2 옵션 기본(fto·intra = SimConfig 기본) — 이 값이면 빌드·stats 가 예전과 같다
+TEL_DEFAULTS = dict(fto_clip=(-2.0, 3.0), intra_pause=(0.1, 0.5), phone_per_speaker=0.0, phone_same_frac=0.0, name_suffix=None, level_offset_db="")
+D6_DEFAULTS = dict(p_interrupt=0.0, interrupt_fto="-2.0,-0.3", far_per_speaker=0.0, far_real_p=0.3)   # D6 옵션 기본(2026-10-26) — 이 값이면 stats args 에 넣지 않는다(예전과 같은 기록)   # C2 옵션 기본(fto·intra = SimConfig 기본) — 이 값이면 빌드·stats 가 예전과 같다
 G = {}
 
 
@@ -380,7 +381,8 @@ def main():
                             fto_q10_50_90=[q(stats.fto, p) for p in (0.1, 0.5, 0.9)], hold_q50=q(stats.hold, 0.5), turn_q10_50_90=[q(stats.turn, p) for p in (0.1, 0.5, 0.9)],
                             fto_negative_share=round(sum(x < 0 for x in stats.fto) / max(1, len(stats.fto)), 3)),
                 pool_info=info, errors=dict(collections.Counter(e for r in rows for e in r.get("errors", [])).most_common(20)),
-                args={k: (list(v) if isinstance(v, tuple) else v) for k, v in vars(a).items() if k not in TEL_DEFAULTS or v != TEL_DEFAULTS[k]}, sec=round(time.time() - t0, 1))   # C2 옵션은 기본이 아닐 때만
+                args={k: (list(v) if isinstance(v, tuple) else v) for k, v in vars(a).items()
+                      if (k not in TEL_DEFAULTS or v != TEL_DEFAULTS[k]) and (k not in D6_DEFAULTS or v != D6_DEFAULTS[k])}, sec=round(time.time() - t0, 1))   # C2 옵션은 기본이 아닐 때만
     if G["tel"]:                                                                   # C2 점검: 화자 레벨 차 |Δ|·교대/재개 간격·같은 화자 쉼·채널
         from vapasr.data.dialogue import GAP_S
         R = [r["tel"] for r in ok]; ld = [r["level_diff"] for r in R if r["level_diff"] is not None]; cg, hg, sg = ([x for r in R for x in r[k]] for k in ("change", "hold", "same"))

@@ -157,7 +157,7 @@ def test_p0_draws_no_channel_rng(fx, tmp_path, monkeypatch):
 def test_option_validation(fx, tmp_path):
     for bad in (["--phone-same-frac", "0.1"], ["--phone-per-speaker", "1.5"], ["--fto-clip", "0.8,0.05"], ["--name-suffix", "Tel"], ["--intra-pause", "0.3"]):
         with pytest.raises(SystemExit): _run(_argv(fx, tmp_path / "v") + bad)
-    with pytest.raises(SystemExit): _run(_argv(fx, tmp_path / "v", xl=False) + ["--name-suffix", "tel"])     # 접미사는 교차 언어만(같은 언어 키와 섞이지 않게)
+    with pytest.raises(SystemExit): _run(_argv(fx, tmp_path / "v", xl=False) + ["--name-suffix", "te"])      # 같은 언어 접미사는 세 글자 이상(sim_en-te 는 교차 언어 키 모양, 2026-10-26)
 
 
 # ── tel 빌드

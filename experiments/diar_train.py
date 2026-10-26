@@ -38,6 +38,8 @@ ap.add_argument("--noise-bank", default=None); ap.add_argument("--noise-p", type
 ap.add_argument("--gain-db", type=float, default=6.0); ap.add_argument("--num-workers", type=int, default=4); ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--dry-run", action="store_true", help="데이터만 만들고 표본 몇 개를 점검(GPU 없음)"); ap.add_argument("--smoke", type=int, default=0, help="이 step 만 돌고 저장·재로드 대조")
 ap.add_argument("--check-final", type=int, default=0, help="학습 없이 끝난 run(out/final)의 저장·재로드 대조만 — out/config.json 설정 분포의 배치 N 개")
+ap.add_argument("--lookahead", type=int, default=None, help="인과 가지(2026-10-26, E1c·E6): 프레임 t 의 출력이 t + R 프레임까지만 본다(DiarBranch lookahead, 기본 창 전체)")
+ap.add_argument("--init-branch", default=None, help="가지 가중치 시작점(diar.pt — 예 E1 final, 양방향 가중치를 인과 가지에 그대로). 재개 checkpoint 가 있으면 그것이 우선")
 a = ap.parse_args()
 
 
@@ -107,7 +109,7 @@ def collate(b):
 def fingerprint():
     keys = ("init", "data", "split", "corpora", "sim_data", "weights", "window", "window_draws", "n_spk", "taps", "d", "layers", "heads", "ffn", "dropout", "alpha", "batch",
             "lr", "warmup", "max_steps", "weight_decay", "noise_bank", "noise_p", "rir_p", "noise_snr", "gain_db", "seed")
-    return {k: getattr(a, k) for k in keys}
+    return {**{k: getattr(a, k) for k in keys}, **{k: getattr(a, k) for k in ("lookahead", "init_branch") if getattr(a, k) is not None}}   # 켰을 때만(E1 지문 그대로)
 
 
 def reload_check(final_dir, batches, model=None, enc=None):
@@ -181,7 +183,9 @@ def main():
     enc, n_keys = load_encoder(a.init, a.nemotron_dir, "cuda")
     taps = tap_layers(a.taps, len(enc.enc.layers)); log(f"인코더 ← {a.init}(키 {n_keys}, 동결 fp32) · 탭 {list(taps)} · world {world}")
     torch.manual_seed(a.seed)
-    model = DiarBranch(1 + len(taps), 1024, a.d, a.layers, a.heads, a.ffn, a.n_spk, a.dropout).to(dev)
+    model = DiarBranch(1 + len(taps), 1024, a.d, a.layers, a.heads, a.ffn, a.n_spk, a.dropout, lookahead=a.lookahead).to(dev)
+    if a.init_branch and not last_checkpoint(a.out_dir)[1] and not a.check_final:                 # 새로 시작할 때만(재개는 checkpoint)
+        xb = torch.load(a.init_branch, map_location=dev); model.load_state_dict(xb["state"]); log(f"가지 ← {a.init_branch}(step {xb.get('step')})")
     log(f"가지 {sum(p.numel() for p in model.parameters()) / 1e6:.1f}M · {model.cfg}")
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=a.weight_decay, betas=(0.9, 0.98))
     total = a.smoke or a.max_steps

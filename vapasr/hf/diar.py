@@ -15,18 +15,25 @@ import torch.nn.functional as F
 
 
 class ConvPos(nn.Module):
-    def __init__(self, d: int, k: int = 31, groups: int = 16):
+    def __init__(self, d: int, k: int = 31, groups: int = 16, lookahead: Optional[int] = None):
         super().__init__(); self.conv = nn.Conv1d(d, d, k, padding=k // 2, groups=groups)
+        m = torch.ones(k) if lookahead is None else (torch.arange(k) - k // 2 <= int(lookahead)).float()   # 인과(lookahead R): 미래 R 프레임보다 먼 탭을 0 으로
+        self.register_buffer("tap_mask", m, persistent=False)
 
     def forward(self, x):                                                                      # (B, K, d)
-        return x + F.gelu(self.conv(x.transpose(1, 2)).transpose(1, 2))
+        w = self.conv.weight * self.tap_mask
+        return x + F.gelu(F.conv1d(x.transpose(1, 2), w, self.conv.bias, padding=self.conv.padding, groups=self.conv.groups).transpose(1, 2))
 
 
 class DiarBranch(nn.Module):
-    def __init__(self, n_streams: int, d_in: int = 1024, d: int = 512, layers: int = 12, heads: int = 8, ffn: int = 2048, n_spk: int = 4, dropout: float = 0.1):
+    """lookahead R(2026-10-26, E1c·E6 — 인과): 주면 프레임 t 의 출력이 입력 t + R 프레임까지만 본다 — 앞보기는 위치 conv 에서만(미래 R 프레임보다 먼 탭 0),
+    어텐션은 층마다 엄격히 인과(j ≤ i, 층마다 앞보기를 주면 층 수만큼 쌓인다). 파라미터 모양은 같아 양방향(E1) 가중치를 그대로 불러올 수 있다. None 이면 예전(창 전체)."""
+    def __init__(self, n_streams: int, d_in: int = 1024, d: int = 512, layers: int = 12, heads: int = 8, ffn: int = 2048, n_spk: int = 4, dropout: float = 0.1,
+                 lookahead: Optional[int] = None):
         super().__init__()
-        self.cfg = dict(n_streams=n_streams, d_in=d_in, d=d, layers=layers, heads=heads, ffn=ffn, n_spk=n_spk, dropout=dropout)
-        self.mix = nn.Parameter(torch.zeros(n_streams)); self.ln = nn.LayerNorm(d_in); self.proj = nn.Linear(d_in, d); self.pos = ConvPos(d)
+        self.cfg = dict(n_streams=n_streams, d_in=d_in, d=d, layers=layers, heads=heads, ffn=ffn, n_spk=n_spk, dropout=dropout, **({"lookahead": int(lookahead)} if lookahead is not None else {}))
+        self.lookahead = None if lookahead is None else int(lookahead)
+        self.mix = nn.Parameter(torch.zeros(n_streams)); self.ln = nn.LayerNorm(d_in); self.proj = nn.Linear(d_in, d); self.pos = ConvPos(d, lookahead=self.lookahead)
         self.tf = nn.TransformerEncoder(nn.TransformerEncoderLayer(d, heads, ffn, dropout, batch_first=True, norm_first=True), layers, enable_nested_tensor=False)
         self.norm = nn.LayerNorm(d); self.out = nn.Linear(d, n_spk)
 
@@ -34,8 +41,10 @@ class DiarBranch(nn.Module):
         """feats (B, S, K, D_in) → logits (B, K, N). pad_mask (B, K) True = 패딩 프레임(어텐션에서 뺀다)."""
         w = torch.softmax(self.mix, 0).to(feats.dtype); x = self.proj(self.ln((feats * w[None, :, None, None]).sum(1)))
         if pad_mask is not None: x = x.masked_fill(pad_mask[..., None], 0.0)                     # conv 전에 — 끝 패딩이 0 채움과 같아진다
-        x = self.pos(x)
-        return self.out(self.norm(self.tf(x, src_key_padding_mask=pad_mask)))
+        x = self.pos(x); am = None
+        if self.lookahead is not None:                                                          # (K, K) True = 가린다: j > i(앞보기는 위치 conv 의 R 프레임만)
+            K = x.shape[1]; i = torch.arange(K, device=x.device); am = i[None, :] > i[:, None]
+        return self.out(self.norm(self.tf(x, mask=am, src_key_padding_mask=pad_mask)))
 
 
 def sort_pit_loss(logits, target, mask, alpha: float = 0.5):

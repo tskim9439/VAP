@@ -59,3 +59,14 @@ def test_eval_sweep_matches_der_counts(tmp_path):
     for (sub, t), c in want.items():
         got = res[f"ami-sdm/{sub}"][f"{t:g}"]
         assert got["miss"] == round(100 * c["miss"] / c["ref"], 2) and got["conf_best"] == round(100 * c["conf_best"] / c["ref"], 2)
+
+
+def test_branch_lookahead_is_causal_and_loads_bidirectional_weights():
+    """lookahead R(2026-10-26, E1c·E6): 프레임 t 의 출력은 t + R 까지만 본다. 파라미터 모양이 같아 양방향 가중치를 그대로 불러온다(위치 conv 미래 탭은 0 으로 가린다)."""
+    torch.manual_seed(0); bi = DiarBranch(3, d_in=32, d=32, layers=2, heads=4, ffn=64, n_spk=4).eval()
+    ca = DiarBranch(3, d_in=32, d=32, layers=2, heads=4, ffn=64, n_spk=4, lookahead=2).eval(); ca.load_state_dict(bi.state_dict())
+    assert ca.cfg["lookahead"] == 2 and "lookahead" not in bi.cfg
+    f = torch.randn(1, 3, 60, 32); f2 = f.clone(); f2[:, :, 33:] += 2.0 * torch.randn(1, 3, 27, 32)            # 33 프레임부터 바꾼다(상수는 LayerNorm 이 지운다)
+    y, y2 = ca(f), ca(f2)
+    assert torch.allclose(y[0, :31], y2[0, :31], atol=1e-5) and not torch.allclose(y[0, 31:33], y2[0, 31:33], atol=1e-3)   # t ≤ 30 은 그대로, 31·32 는 33 을 본다
+    assert not torch.allclose(bi(f)[0, :31], bi(f2)[0, :31], atol=1e-3)                                     # 양방향은 미래가 바뀌면 앞도 바뀐다
