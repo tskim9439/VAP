@@ -213,6 +213,19 @@ def build_mono_cache(d: Dialogue, mono_dir: str, mix_kw: Optional[dict] = None) 
     y, _ = mix_dialogue(d, **(mix_kw or {})); os.makedirs(os.path.dirname(f), exist_ok=True)
     tmp = f[:-4] + f".{os.getpid()}.tmp.npy"; np.save(tmp, y.astype(np.float16)); os.replace(tmp, f); return f
 
+def stems_cache_path(mono_dir: str, d: Dialogue) -> str:
+    return mono_cache_path(mono_dir, d)[:-4] + ".stems.npy"
+
+def build_stems_cache(d: Dialogue, mono_dir: str) -> str:
+    """화자별 신호(dialogue_mix.mix_stems — 합이 mono 캐시)를 <mono_dir>/<corpus>/<conv>.stems.npy(float16, (S, T)) + .stems.json(화자 순서·게인) 으로(있으면 그대로).
+    원거리 증강(far_aug, 2026-10-26)이 창마다 잘라 화자별 RIR 을 곱한다. 원자적 저장."""
+    from .dialogue_mix import mix_stems
+    f = stems_cache_path(mono_dir, d)
+    if os.path.exists(f) and os.path.exists(f[:-4] + ".json"): return f
+    st, meta = mix_stems(d); os.makedirs(os.path.dirname(f), exist_ok=True); pid = os.getpid()
+    tmp = f[:-4] + f".{pid}.tmp.npy"; np.save(tmp, st.astype(np.float16)); os.replace(tmp, f)
+    tj = f[:-4] + f".{pid}.tmp.json"; json.dump(meta, open(tj, "w")); os.replace(tj, f[:-4] + ".json"); return f
+
 class TokenBudgetSampler(torch.utils.data.Sampler):
     """동적 길이 배치: 창을 추정 길이순으로 정렬해 배치의 (창 수 × 최장 길이) ≤ max_tokens 가 되도록 연속 구간을 묶는다(패딩 후 실제 토큰 수 기준이라 GPU 메모리가 배치마다 비슷).
     짧은 창(20 s)은 많이, 긴 창(40 s)은 적게 → 고정 bs 보다 step 당 토큰이 균일하고 GPU 활용이 높다. 배치 순서는 epoch 마다 셔플(seed+epoch), DDP 는 BucketBatchSampler 와 같은 규약."""

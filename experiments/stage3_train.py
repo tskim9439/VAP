@@ -103,6 +103,11 @@ g.add_argument("--noise-bank", default=None, help="replay 잡음·잔향 뱅크"
 g.add_argument("--noise-snr", default="5,30"); g.add_argument("--music-snr", default="10,30"); g.add_argument("--rir-p", type=float, default=0.2)
 g.add_argument("--phone-aug", type=float, default=0.0, help="전화 대역 증강 확률(vapasr/data/phone_aug — 8 kHz·300–3400 Hz 대역·μ-law, 영위상). 대화 창(실제·합성)과 단일 화자 셋 모두에, 단일 화자는 잡음·잔향 뒤에 건다. 0 = 끔(지문 그대로)")
 g.add_argument("--phone-aug-mulaw", type=float, default=0.5, help="전화 대역 증강 안에서 μ-law 8 비트 양자화 확률")
+g.add_argument("--far-aug", type=float, default=0.0, help="원거리 증강 확률(vapasr/data/far_aug, 2026-10-26 — 화자별 신호 캐시가 있으면 화자마다 같은 방의 다른 RIR, "
+               "없으면 mono 에 RIR 하나, 그 뒤 잡음). 0 = 끔(지문 그대로)")
+g.add_argument("--far-sets", default="dlg_ko,dlg_en,dlg_de,dlg_mt", help="원거리 증강을 걸 셋 이름 패턴(쉼표, fnmatch — 예 'dlg_*,sim_*'). 원거리 녹음 셋(dlg_far)은 이미 원거리라 기본에 없다")
+g.add_argument("--far-snr", default="5,25"); g.add_argument("--far-noise-p", type=float, default=0.8); g.add_argument("--far-gain-db", type=float, default=3.0)
+g.add_argument("--far-real-p", type=float, default=0.3, help="실제 RIR 풀에서 고를 확률(나머지는 모의 방 RoomNNN)"); g.add_argument("--far-bank", default=None, help="RIR·잡음 뱅크(기본 --noise-bank)")
 g = ap.add_argument_group("섞기·학습")
 g.add_argument("--weights", default="dlg_ko:1,dlg_en:1,dlg_de:1,rep_ko:0.5,rep_en:0.5,rep_de:0.5", help="셋 가중치 'name:w,…' — step 비율(없는 셋 = 0)")
 g.add_argument("--delays", default="4,5,6,7,8,9,10"); g.add_argument("--next-weight", type=float, default=0.3); g.add_argument("--next-weight-ko", type=float, default=0.15)
@@ -130,7 +135,9 @@ add_speed_args(ap)
 a = ap.parse_args()
 
 DLG_LANG = {"aihub71631": "Korean", "aihub134-1": "Korean", "aihub134-2": "Korean", "nikl2020": "Korean", "otoSpeech": "English", "kec": "German", "ztc": "German", "nsc": "German", "callhome-de": "German", "ami": "English", "icsi": "English", "notsofar": "English"}
-MEETING = {"ami", "icsi", "notsofar"}                                                          # V2: 영어 회의(3–7 인)는 dlg_mt 로 따로 가중한다
+DLG_LANG.update({"ami-far": "English", "icsi-far": "English", "notsofar-far": "English", "chime6": "English", "chime6-far": "English"})   # 2026-10-26 데이터 확장
+MEETING = {"ami", "icsi", "notsofar", "chime6"}                                                # V2: 영어 회의(3–7 인)는 dlg_mt 로 따로 가중한다
+FAR = {"ami-far", "icsi-far", "notsofar-far", "chime6-far"}                                    # 같은 회의의 원거리 녹음(p2_build_far) — dlg_far 로 따로 가중한다
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
 delays = tuple(int(x) for x in a.delays.split(",") if x.strip())
 if not delays or not all(1 <= d <= 10 for d in delays): sys.exit(f"--delays {a.delays}: 1–10 의 쉼표 목록")
@@ -139,7 +146,7 @@ if not all(c in DLG_LANG for c in corpora): sys.exit(f"--dlg-corpora: 알 수 �
 win = tuple(float(x) for x in a.window.split(","))
 if len(win) != 2 or not 0 < win[0] <= win[1]: sys.exit(f"--window lo,hi — {a.window}")
 if not 2 <= a.max_speakers <= 4 or not 0 <= a.declare_all_p <= 1 or a.window_draws < 0: sys.exit(f"--max-speakers 2–4 · --declare-all-p [0, 1] · --window-draws ≥ 0 — {a.max_speakers} {a.declare_all_p} {a.window_draws}")
-if any(c in MEETING for c in corpora) and a.max_speakers < 3: sys.exit("회의 코퍼스(ami·icsi·notsofar)는 --max-speakers 3 이상과 함께")
+if any(c in MEETING | FAR for c in corpora) and a.max_speakers < 3: sys.exit("회의 코퍼스(ami·icsi·notsofar·chime6, 원거리 포함)는 --max-speakers 3 이상과 함께")
 VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_speakers=a.window_draws > 0, **({"declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}),
            **({"xl_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))   # 모든 대화 셋 공통(V2, V3 R4)
 bc = None if a.backchannel == "off" else tuple(float(x) for x in a.backchannel.split(","))
@@ -171,6 +178,10 @@ try: naug = noise_aug_from_args(a.noise_bank, a.noise_p, a.noise_snr, a.rir_p, a
 except (ValueError, OSError) as e: sys.exit(f"--noise-bank {a.noise_bank}: {e}")
 from vapasr.data.phone_aug import PhoneAugment, AugChain
 phone = PhoneAugment(p=a.phone_aug, mulaw_p=a.phone_aug_mulaw) if a.phone_aug > 0 else None
+from vapasr.data.far_aug import from_args as far_from_args
+try: faug = far_from_args(a.far_bank or a.noise_bank, a.far_aug, a.far_noise_p, a.far_snr, a.far_gain_db, a.far_real_p)
+except (ValueError, OSError) as e: sys.exit(f"--far-aug: {e}")
+if a.far_aug > 0 and faug is None: sys.exit("--far-aug 는 --far-bank 또는 --noise-bank 와 함께")
 raug = AugChain(naug, phone) if phone is not None else naug                                       # 단일 화자: 잡음·잔향 → 전화 대역
 
 rank, world, local = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1)), int(os.environ.get("LOCAL_RANK", 0))
@@ -280,6 +291,10 @@ def wav_aug_of(key):
     """대화·합성 셋의 창 단위 증강: --set-phone 에 있으면 그 확률(0 = 끔), 없으면 --phone-aug 그대로."""
     p = set_phone.get(key)
     return phone if p is None else PhoneAugment(p=p, mulaw_p=a.phone_aug_mulaw) if p > 0 else None
+def far_of(key):
+    """--far-sets 패턴에 드는 셋이면 원거리 증강(아니면 None — 그 셋은 난수를 더 뽑지 않는다)."""
+    import fnmatch
+    return faug if faug is not None and any(fnmatch.fnmatch(key, x) for x in a.far_sets.split(",") if x) else None
 def dec_kw(key):
     """V3-p1 C1·C5 데이터셋 인자(교대·머무름 가중 — --decision-weight-sets, 합성 EOT-문맥 dropout — --eot-drop-sets). 끄거나 이 셋에 걸지 않으면 빈 dict(데이터셋 기본값)."""
     kind = set_kind(key); kw = decision_weights(kind, a.change_tag_weight, a.hold_tag_weight, a.decision_weight_sets, a.same_lang_change_weight, a.same_lang_hold_weight)
@@ -300,8 +315,9 @@ elif a.dlg_trans_input: sys.exit("--dlg-trans-input 은 --dlg-trans 와 함께")
 def cap(ds):
     """--max-windows: 창 표본(draw 표시와 함께 거른다)."""
     if a.max_windows and len(ds) > a.max_windows: keep = set(random.Random(a.seed).sample(range(len(ds)), a.max_windows)); ds.keep_items([i in keep for i in range(len(ds))])
-for key, lang in (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "German"), ("dlg_mt", "English")):
-    cs = [c for c in corpora if DLG_LANG[c] == lang and (c in MEETING) == (key == "dlg_mt")]
+def group_of(c): return "dlg_far" if c in FAR else "dlg_mt" if c in MEETING else f"dlg_{SHORT[DLG_LANG[c]]}"
+for key, lang in (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "German"), ("dlg_mt", "English"), ("dlg_far", "English")):
+    cs = [c for c in corpora if group_of(c) == key]
     if not cs or weights.get(key, 0) <= 0: continue
     files = [os.path.join(a.data, f"{c}.refined.dialogues.jsonl") for c in cs]; dlg_files += files
     held = {cid for c in cs for cid in split["corpora"].get(c, {}).get("heldout", [])}
@@ -309,7 +325,7 @@ for key, lang in (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "Germa
     ds = CstDialogueDataset(files, tok, delays=delays, exclude=held, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac,
                             seed=a.seed, mono_cache_dir=mono, decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
                             spk_activity=a.spk_act_weight > 0, revive=load_revive(rv) if rv else None,
-                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}), wav_aug=wav_aug_of(key), **VKW, **dec_kw(key))
+                            **(dict(trans=DT, trans_input=DTI, ast_frac=a.dlg_ast_frac, trans_lead_space=a.trans_lead_space) if DT else {}), wav_aug=wav_aug_of(key), far_aug=far_of(key), **VKW, **dec_kw(key))
     cap(ds); ds.lang = lang; train_sets[key] = ds
     if DT:
         rows = {(c, w, b) for c in ds.dlgs for (w, b) in ds._rows(c)}; got = sum(1 for c, w, b in rows if f"{c}|{w}|{b}" in DT or f"{c}|{w}|{b}" in DTI)
@@ -329,7 +345,7 @@ for lang in ("Korean", "English", "German"):                                    
     sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, wav_aug=wav_aug_of(key), **VKW, **dec_kw(key))
+                            spk_activity=a.spk_act_weight > 0, wav_aug=wav_aug_of(key), far_aug=far_of(key), **VKW, **dec_kw(key))
     cap(ds); ds.lang = lang; train_sets[key] = ds
     log(f"  {key}(합성): {len(ds)} 창 · 대화 {ds.stats['cst_dialogues']} · stats {dict(ds.stats)}")
 sim_trans_fp = {}
@@ -341,7 +357,7 @@ for key in sorted(k for k, w in weights.items() if w > 0 and set_kind(k) == "xl"
     XT, xt_st, sim_trans_fp[key] = load_ast_targets([td]); sim_files.append(f)
     ds = CstDialogueDataset([f], tok, delays=delays, exclude=None, window_s=win, hop_s=a.hop, start_mode=a.start_mode, random_frac=a.random_frac, seed=a.seed,
                             mono_cache_dir=os.path.join(sd, "mono"), decision_weight=a.decision_weight, backchannel=bc, eot_mode=a.eot_mode, recover=rc,
-                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space, wav_aug=wav_aug_of(key), **VKW, **dec_kw(key))
+                            spk_activity=a.spk_act_weight > 0, trans=XT, ast_frac=a.sim_trans_frac, trans_lead_space=a.trans_lead_space, wav_aug=wav_aug_of(key), far_aug=far_of(key), **VKW, **dec_kw(key))
     if not ds.has_xl: sys.exit(f"{key}: 교차 언어 대화(meta.spk_lang)가 아니다")
     cap(ds)
     ds.lang = next(iter(ds.dlgs.values())).lang; train_sets[key] = ds
@@ -409,6 +425,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"trans_lead_space": True} if a.trans_lead_space and (DT or sim_trans_fp) else {}),
           **({"replay_sets": {k: file_digest(v) for k, v in sorted(RS.items())}} if RS else {}),
           **({"phone_aug": phone.settings()} if phone is not None else {}),   # 끄면 키 없음(이전 run 지문 그대로)
+          **({"far_aug": dict(faug.settings(), sets=a.far_sets)} if faug is not None else {}),   # 2026-10-26: 끄면 키 없음
           **({"enc_tap": dict(layer=a.enc_tap_layer, hidden=a.enc_tap_hidden or None)} if a.enc_tap_layer >= 0 else {}),
           **({"max_speakers": a.max_speakers, "declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}), **({"window_draws": a.window_draws} if a.window_draws else {}),
           **({"change_tag_weight": a.change_tag_weight} if a.change_tag_weight > 0 else {}), **({"hold_tag_weight": a.hold_tag_weight} if a.hold_tag_weight > 0 else {}),   # V3-p1: 끄면 키 없음

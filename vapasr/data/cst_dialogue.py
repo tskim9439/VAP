@@ -46,6 +46,7 @@ soft label(decision-eot-immediate-soft-label): 결과·p_end 는 대화 전체 �
 """
 import json
 import math
+import os
 import random
 import zlib
 from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple
@@ -589,7 +590,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                  trans: Optional[Dict[str, Dict[str, tuple]]] = None, trans_input: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.0,
                  tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, wav_aug=None, declare_all_p: float = 0.0,
                  declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, xl_order: str = "lang",
-                 no_eot: bool = False, target_spk: bool = False, **kw):
+                 no_eot: bool = False, target_spk: bool = False, far_aug=None, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if xl_order not in ("lang", "arrival"): raise ValueError(f"xl_order lang|arrival — {xl_order}")
         self.xl_order = xl_order                                                                # V3 R4: 'arrival' 이면 교차 언어 창도 먼저 말한 순서 슬롯(slots·cst_prefix)
@@ -626,6 +627,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         self.csp = Specials(next_audio=self.sp.next_audio, empty_audio=self.sp.empty_audio, spk=self.spk_ids)
         self.trans, self.trans_input, self.ast_frac = trans or {}, trans_input or {}, float(ast_frac)
         self.wav_aug = wav_aug                                                                     # 오디오 증강(phone_aug.PhoneAugment 등, 학습 전용) — 시퀀스·K 그대로
+        self.far_aug, self._stems = far_aug, {}                                                     # 원거리 증강(far_aug.FarFieldAugment, 2026-10-26) — 화자별 신호 캐시가 있으면 화자마다 RIR
         self.trans_lead_space = bool(trans_lead_space)                                             # 행 사이 공백(lead_space_row) — Stage 4 본 학습부터
         self.tgt_of = dict(tgt_of) if tgt_of else {"Korean": ["English"], "German": ["English"], "English": ["German", "Korean"]}
         self.trans_id = conv("<TRANS>") if self.trans or self.trans_input else None
@@ -889,6 +891,19 @@ class CstDialogueDataset(DialogueWindowDataset):
         self._est4 = est + add + 12                                                              # translate 줄
         return self._est4
 
+    def stems(self, cid: str):
+        """미리 만든 화자별 신호 캐시(p2_build_mono.py --stems: <mono>/<corpus>/<conv>.stems.npy (S, T), mmap) 또는 None — 학습 중에 만들지 않는다."""
+        if cid not in self._stems:
+            x = None
+            if self.mono_cache_dir:
+                from .dialogue_dataset import stems_cache_path
+                f = stems_cache_path(self.mono_cache_dir, self.dlgs[cid])
+                if os.path.exists(f) and os.path.exists(f[:-4] + ".json"):
+                    try: x = np.load(f, mmap_mode="r")
+                    except Exception: x = None
+            self._stems[cid] = x
+        return self._stems[cid]
+
     def __getitem__(self, i):
         delay = random.choice(self.delays); cid = self.items[i][0]
         drop = (random.random() < self.eot_drop_synth) if self.eot_drop_synth > 0 and self.dlgs[cid].meta.get("mask_eot") else None   # C5 동전은 따로 — 형식 난수(slots·recover·tgt)는 예전 조건 그대로
@@ -896,6 +911,9 @@ class CstDialogueDataset(DialogueWindowDataset):
         s = self.cst_sequence(i, delay, rng=random if (self.recover or (self.trans_on and tsp is None) or self.has_xl) else None,
                               **({"drop_eot": drop} if drop is not None else {}), **({"target": tsp} if tsp is not None else {}))
         wav = np.asarray(crop_audio(self.mono(s["cid"]), s["t0"], s["t0"] + s["L"]), dtype=np.float32)
+        if self.far_aug is not None and random.random() < self.far_aug.p:                          # 원거리 증강(끄면 난수를 더 뽑지 않는다)
+            st = self.stems(s["cid"]); a_, b_ = int(round(s["t0"] * SR)), int(round((s["t0"] + s["L"]) * SR))
+            wav = self.far_aug.render(st[:, a_:b_], wav, random) if st is not None and st.shape[1] >= b_ else self.far_aug.mono(wav, random)
         if self.wav_aug is not None: wav = self.wav_aug(wav, random)                              # 끄면 난수를 더 뽑지 않는다
         return dict(wav=torch.from_numpy(np.ascontiguousarray(wav)), ids=torch.tensor(s["ids"]), is_audio=torch.tensor([c >= 0 for c in s["chunk_of"]]),
                     chunk_of=torch.tensor(s["chunk_of"]), labels=torch.tensor(s["labels"]), pos_weight=torch.tensor(s["pos_weight"], dtype=torch.float32),

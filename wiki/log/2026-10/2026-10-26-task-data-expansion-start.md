@@ -1,0 +1,22 @@
+## [2026-10-26] task | 학습 데이터 확장 시작(원거리 회의 녹음·원거리 증강)
+
+- Changed:
+  - 코드: `vapasr/data/dialogue_mix.py`(far_mono·mix_stems), `vapasr/data/dialogue_dataset.py`(stems 캐시), `vapasr/data/far_aug.py`(새), `vapasr/data/cst_dialogue.py`(far_aug 훅)
+  - 코드: `experiments/p2_build_far.py`(새), `experiments/p2_build_mono.py`(--stems), `experiments/stage3_train.py`(원거리 코퍼스·dlg_far·--far-aug*)
+  - 시험: `tests/test_far_data.py`, `tests/test_far_aug.py`
+  - 실행: `raw/sources/experiments/2026-10-26-data-expansion/`
+  - 위키: [[task-data-expansion-20261026]](새), [[status]]
+- Reason:
+  - 사용자 "데이터도 더 확보하가나 증강해서 학습량을 늘릴순 없을까?" → "모두 진행하는 데, 모두 진행하고 나서 E5 E6 학습 진행하자".
+  - 회의 학습 오디오가 전부 근접 마이크인데, 평가 SDM 은 원거리다. 합성 다자 대화는 겹침이 4–7 % 뿐이다.
+  - 원거리 버전 시각 맞춤(포락선 상호상관):
+    - NOTSOFAR: 72 회의, 595 변형, 지연 0–30 ms, 상관 0.81.
+    - ICSI: 69 회의, 258 변형(저가 마이크는 상관이 낮아 버림), 지연 −50–20 ms(무선 헤드셋 지연).
+  - AMI 공식 Full-corpus-ASR train 136 회의와 IB4005 가운데 미러에 Array1 이 있는 135 회의(IS1003b·IS1007d 는 없음)의 8 채널을 T5 로 받는다.
+  - CHiME-6 train 을 푼다(착용 마이크 + Kinect CH1).
+  - 시험 7 개와 관련 학습·데이터 시험 141 개가 통과했다.
+- Next:
+  - mono 캐시 → stems 캐시를 만든다.
+  - CHiME-6·NIA23 회의·Switchboard 를 빌드·정렬·정제한다.
+  - 합성 v4 와 AMI 업로드 뒤 `ami-far` 를 만든다. 그다음 F1 → E5·E6 이다.
+- By: tskim
