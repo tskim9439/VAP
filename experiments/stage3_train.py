@@ -87,6 +87,9 @@ g.add_argument("--no-eot", action="store_true", help="<EOT> 없는 대화 학습
 g.add_argument("--target-spk", action="store_true", help="E2 대상 화자 모드(2026-10-25, wiki output-diarization-integration-20261025): 대화·합성 창마다 말하는 화자 하나만 "
                "한 슬롯 정답으로 쓰고, 그 화자 80 ms 활동을 인코더 pre-encode 출력에 주입한다(adapter_inject — SSA). 번역 타깃과 함께 쓰지 않는다. 지문 키 target_spk")
 g.add_argument("--inject-hidden", type=int, default=512, help="--target-spk 주입 FFN 은닉 차원(새로 붙이면 마지막 Linear 0 초기화 → 붙인 직후 = 원래 모델)")
+g.add_argument("--slot-input", action="store_true", help="E5 슬롯 활동 입력(2026-10-26, wiki output-diarization-integration-20261025 6 절): 창의 슬롯 활동(정답을 --act-noise 로 흔든 것)을 "
+               "오디오 토큰에 Σ a_s·e_s 로 더한다(adapter_slot — 0 초기화 → 붙인 직후 = 원래 모델). 출력 형식은 그대로(한 스트림). 지문 키 slot_input")
+g.add_argument("--act-noise", default="", help="--slot-input 흔들기 'clean=0.3,drop=0.05,short=0.4,short_frac=0.05,jitter=3,ovl=0.3,fa=0.002'(빈 값 = 기본, vapasr/data/act_noise)")
 g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -170,6 +173,10 @@ speeds = tuple(float(x) for x in a.speed_perturb.split(",") if x.strip())
 if not 0 < a.replay_files_frac <= 1: sys.exit("--replay-files-frac 은 (0, 1]")
 if a.target_spk and a.dlg_trans: sys.exit("--target-spk 는 번역 타깃(--dlg-trans)과 함께 쓰지 않는다(E2 는 받아쓰기 상한 시험)")
 if a.target_spk and a.inject_hidden <= 0: sys.exit("--inject-hidden > 0")
+if a.slot_input and a.target_spk: sys.exit("--slot-input 은 --target-spk 와 함께 쓰지 않는다(E5 는 한 스트림 형식)")
+from vapasr.data.act_noise import from_spec as act_noise_from_spec
+try: act_noise = act_noise_from_spec(a.act_noise) if a.slot_input else None
+except ValueError as e: sys.exit(f"--act-noise: {e}")
 if not (a.batch_max_tokens or a.pack_max_tokens) and not a.dry_run: sys.exit("--batch-max-tokens 또는 --pack-max-tokens 가 필요하다(대화 창은 고정 크기 버킷 배치를 쓰지 않는다)")
 from vapasr.features.online import SpecAugment
 try: SpecAugment.from_spec(a.spec_augment)
@@ -242,6 +249,7 @@ if not a.dry_run:
     if a.spk_act_weight > 0: model.add_spk_head(max(2, a.max_speakers), a.spk_act_weight)     # 화자 슬롯 활동 헤드(새로 붙이면 adapter lr — trainer.create_optimizer; 2 → 4 는 A·B 행 유지)
     if a.enc_tap_layer >= 0: model.add_enc_tap(a.enc_tap_layer, a.enc_tap_hidden or None)      # V2-a 두 스트림 입력(adapter_tap 도 adapter lr)
     if a.target_spk: model.add_spk_inject(a.inject_hidden)                                      # E2 대상 화자 활동 주입(adapter_inject 도 adapter lr)
+    if a.slot_input: model.add_slot_input(max(2, a.max_speakers))                               # E5 슬롯 활동 입력(adapter_slot 도 adapter lr)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
     assert not bad, f"tokenizer 특수 토큰 id 가 config 와 다름: {bad}"
@@ -302,6 +310,7 @@ def dec_kw(key):
     if a.eot_drop_synth > 0 and (kind == "xl" or (a.eot_drop_sets == "synth" and kind == "sim")): kw.update(eot_drop_synth=a.eot_drop_synth)
     if a.no_eot: kw.update(no_eot=True)                                                       # 모든 대화·합성 셋(켤 때만 키 — 끄면 데이터셋 기본값)
     if a.target_spk: kw.update(target_spk=True)                                               # E2 대상 화자 모드(켤 때만 키)
+    if act_noise is not None: kw.update(act_input=act_noise)                                    # E5 슬롯 활동 입력(켤 때만 키)
     return kw
 split = json.load(open(a.split, encoding="utf-8")); mono = a.mono_cache or os.path.join(a.data, "mono")
 train_sets, dlg_files, revive_files = {}, [], []
@@ -435,7 +444,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"eot_drop_synth": a.eot_drop_synth} if a.eot_drop_synth > 0 else {}), **({"eot_drop_sets": a.eot_drop_sets} if a.eot_drop_synth > 0 and a.eot_drop_sets != "xl" else {}),
           **({"set_phone": {k: (aug.settings() if aug is not None else None) for k in sorted(set_phone) for aug in [wav_aug_of(k)]}} if set_phone else {}),
           **({"xl_slot_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}), **({"no_eot": True} if a.no_eot else {}),
-          **({"target_spk": dict(inject_hidden=a.inject_hidden)} if a.target_spk else {}))
+          **({"target_spk": dict(inject_hidden=a.inject_hidden)} if a.target_spk else {}),
+          **({"slot_input": dict(slots=max(2, a.max_speakers), noise=act_noise.settings())} if act_noise is not None else {}))
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():

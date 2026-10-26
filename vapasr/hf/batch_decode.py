@@ -125,7 +125,7 @@ def _guide_slot(probs, k, g):
 
 
 @torch.inference_mode()
-def decode_batch(model, feats, prefixes, *, next_bias=0.0, max_flush_rounds=None, spk_guide=None, switch_bias=None, row_modes=None, word_init=None):
+def decode_batch(model, feats, prefixes, *, next_bias=0.0, max_flush_rounds=None, spk_guide=None, switch_bias=None, row_modes=None, word_init=None, acts=None):
     """feats: list of (1,K,D) encoder outputs, prefixes: equal-length lists.
 
     Reuses features across delta sweeps. Uses the same cap/flush/blocked IDs as
@@ -135,12 +135,13 @@ def decode_batch(model, feats, prefixes, *, next_bias=0.0, max_flush_rounds=None
     switch_bias (SwitchBias, None = off and skipped entirely): needs row_modes (one per row, 'xl' = biased) and
     word_init ((V,) bool, word_init_mask); states get sb_flips (replaced tags) and sb_points (decision points seen),
     dicts keyed eot/res/wi. Not combined with spk_guide.
+    acts (E5, 2026-10-26): list of (K, slots) slot-activity tensors, one per row — added to the audio tokens via model.adapter_slot (chunk_embed act).
     """
-    assert feats and len(feats) == len(prefixes)
+    assert feats and len(feats) == len(prefixes) and (acts is None or len(acts) == len(feats))
     assert len({len(p) for p in prefixes}) == 1, "batch one language/delta at a time"
     emb = model.get_input_embeddings()
     dev = emb.weight.device
-    ce = [model.chunk_embed(f[None])[0].to(emb.weight.dtype) for f in feats]
+    ce = [model.chunk_embed(f[None], None if acts is None else acts[j][None])[0].to(emb.weight.dtype) for j, f in enumerate(feats)]
     flush = model.config.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
     states = [DecodeState(len(c), model.config.runaway_cap, flush, int(6 * len(c)) + 64) for c in ce]
     assert all(s.K > 0 for s in states)

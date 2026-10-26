@@ -590,7 +590,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                  trans: Optional[Dict[str, Dict[str, tuple]]] = None, trans_input: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.0,
                  tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, wav_aug=None, declare_all_p: float = 0.0,
                  declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, xl_order: str = "lang",
-                 no_eot: bool = False, target_spk: bool = False, far_aug=None, **kw):
+                 no_eot: bool = False, target_spk: bool = False, far_aug=None, act_input=None, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if xl_order not in ("lang", "arrival"): raise ValueError(f"xl_order lang|arrival — {xl_order}")
         self.xl_order = xl_order                                                                # V3 R4: 'arrival' 이면 교차 언어 창도 먼저 말한 순서 슬롯(slots·cst_prefix)
@@ -628,6 +628,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         self.trans, self.trans_input, self.ast_frac = trans or {}, trans_input or {}, float(ast_frac)
         self.wav_aug = wav_aug                                                                     # 오디오 증강(phone_aug.PhoneAugment 등, 학습 전용) — 시퀀스·K 그대로
         self.far_aug, self._stems = far_aug, {}                                                     # 원거리 증강(far_aug.FarFieldAugment, 2026-10-26) — 화자별 신호 캐시가 있으면 화자마다 RIR
+        self.act_input = act_input                                                                 # E5 슬롯 활동 입력(act_noise.ActNoise — 정답 활동을 흔들어 act_in 으로, 2026-10-26). 끄면 키 없음
         self.trans_lead_space = bool(trans_lead_space)                                             # 행 사이 공백(lead_space_row) — Stage 4 본 학습부터
         self.tgt_of = dict(tgt_of) if tgt_of else {"Korean": ["English"], "German": ["English"], "English": ["German", "Korean"]}
         self.trans_id = conv("<TRANS>") if self.trans or self.trans_input else None
@@ -927,7 +928,9 @@ class CstDialogueDataset(DialogueWindowDataset):
                     **({"activity": torch.tensor(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"], self.n_slots), dtype=torch.float)} if self.spk_activity else {}),
                     **({"dec_kind": torch.tensor(s["dec_kind"], dtype=torch.int8), "n_switch": s["n_switch"], "n_hold": s["n_hold"]} if "dec_kind" in s else {}),   # C1(켰을 때만)
                     **({"n_eot_drop": int(s["win"].get("eot_dropped", 0))} if self.eot_drop_synth > 0 else {}),                                               # C5(켰을 때만)
-                    **({"target_act": torch.tensor(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"], 1), dtype=torch.float)[:, 0]} if tsp is not None else {}))   # E2
+                    **({"target_act": torch.tensor(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"], 1), dtype=torch.float)[:, 0]} if tsp is not None else {}),   # E2
+                    **({"act_in": torch.from_numpy(self.act_input(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"], self.n_slots), random))}
+                       if self.act_input is not None else {}))   # E5
 
 
 def collate_cst(batch):
@@ -951,6 +954,10 @@ def collate_cst(batch):
         Km = max(int(b["K"]) for b in batch); ta = torch.zeros(B, Km)
         for i, b in enumerate(batch): ta[i, : b["target_act"].shape[0]] = b["target_act"]
         out["target_act"] = ta
+    if "act_in" in batch[0]:                                                                    # E5 슬롯 활동 입력 (B, Kmax, 슬롯) — 인코더 입력과 같은 줄(packing 이 그대로 넘긴다)
+        Km = max(int(b["K"]) for b in batch); ai = torch.zeros(B, Km, batch[0]["act_in"].shape[1])
+        for i, b in enumerate(batch): ai[i, : b["act_in"].shape[0]] = b["act_in"]
+        out["act_in"] = ai
     if "activity" in batch[0]:
         Km = max(int(b["K"]) for b in batch); act = torch.zeros(B, Km, batch[0]["activity"].shape[1]); am = torch.zeros(B, Km)
         for i, b in enumerate(batch):

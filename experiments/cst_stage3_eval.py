@@ -23,6 +23,8 @@
   --target-oracle(E2, 2026-10-25 — wiki output-diarization-integration-20261025): 대상 화자 모드 체크포인트(adapter_inject)를 정답 화자 활동으로 잰다. 창의 화자마다
       그 화자 80 ms 활동을 인코더에 주입해 한 슬롯 prefix(그 화자 언어)로 따로 디코드하고, 화자별 출력을 창 화자 순서의 슬롯으로 모아 같은 규칙으로 채점한다.
       행에 emitted_tgt(화자별 원출력)·spill(슬롯 A 밖으로 낸 단위 수 — 대상 화자 모드인데 다른 슬롯 태그를 낸 말). 배치 디코드만(--verify·--switch-bias·--spk-guide·--window full 없이).
+  --act-oracle(E5, 2026-10-26): 슬롯 활동 입력 체크포인트(adapter_slot)에 창의 정답 슬롯 활동(slot_activity — 창에서 먼저 말한 순서, 학습과 같은 슬롯)을
+      오디오 토큰 입력으로 주고 한 스트림으로 디코드한다(decode_batch acts). 형식 상한 — 화자 분리가 완벽할 때 한 스트림이 얼마까지 가나. --verify·--window full 없이.
   --target-act DIR(E3, 2026-10-25): --target-oracle 의 정답 활동 대신 화자 분리 가지(E1)의 예측 활동 — experiments/diar_eval.py --save-probs 의 DIR/<창 id>.npz.
       예측 슬롯마다(확률 > --target-act-threshold 인 프레임이 --target-act-min-frames 이상) 그 0/1 활동을 주입해 디코드하고, 가설은 예측 슬롯 번호 자리에 둔다
       (cp·agn 은 순열과 무관, slot 은 예측 도착 순서 그대로). 언어는 창 대화 언어. 예측 슬롯이 없는 창도 행을 쓴다(가설 빈 — 모두 탈락). 행에 hyp_slots.
@@ -230,7 +232,11 @@ def run(a):
     spk = tuple(sp[t] for t in SLOTS[:n_parse]); EOT = sp["<EOT>"]
     if EOT in blocked and not a.oracle: print("!! <EOT> 가 decode 차단 목록에 있다(Stage 3 학습 전 체크포인트) — EOT 는 나오지 않는다", flush=True)
     full = is_full(a); bs = 1 if full else a.batch_size                                         # 회의 통째: 창(회의) 하나씩 긴 직렬 디코드
-    tor = bool(getattr(a, "target_oracle", False))
+    tor = bool(getattr(a, "target_oracle", False)); act_or = bool(getattr(a, "act_oracle", False))
+    if act_or:
+        assert model is not None and getattr(model, "adapter_slot", None) is not None and not (tor or a.verify or is_full(a) or a.oracle or a.from_predictions), \
+            "--act-oracle: adapter_slot 이 있는 E5 체크포인트, 배치 디코드만(--target-oracle·--verify·--window full·--oracle 없이)"
+        from vapasr.data.cst_dialogue import slot_activity, window_speakers
     if tor: assert model is not None and getattr(model, "adapter_inject", None) is not None and not (sb or a.spk_guide or a.verify or full), \
         "--target-oracle: adapter_inject 가 있는 E2 체크포인트, 배치 디코드만(--verify·--switch-bias·--spk-guide·--window full 없이)"
     assert full or not a.context_s, "--context-s 는 --window full 전용"
@@ -247,6 +253,7 @@ def run(a):
                 **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **win_conf(a),
                 **({"spk_guide": list(a.spk_guide), "spk_guide_hold": bool(a.spk_guide_hold), **({"spk_guide_no_insert": True} if a.spk_guide_no_insert else {})} if a.spk_guide else {}),
                 **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}), **({"target_oracle": True} if tor else {}),
+                **({"act_oracle": True} if act_or else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
     if a.spk_guide:
@@ -305,6 +312,8 @@ def run(a):
                             states.append(SimpleNamespace(emitted=em, forced=fc, flush_rounds=rd, positions=used, dec_s=round(time.time() - td, 1)))
                             print(f"  {c}: {m[1]} {m[3] / 60:.1f} 분 δ{delta} · 위치 {used} · 토큰 {len(em)} · 인코딩 {enc_s} s · 디코드 {states[-1].dec_s} s", flush=True)
                     else:
+                        acts = [torch.tensor(slot_activity(ds.eps[m[1]], window_speakers(ds.eps[m[1]], m[2], m[3])[:n_slots], m[2], m[3], m[4], int(model.config.slot_input_slots)),
+                                             dtype=torch.float32, device=dev) for m in meta] if act_or else None   # E5 정답 슬롯 활동
                         guide = SpkGuide(delay=delta, on=a.spk_guide[0], margin=a.spk_guide[1], span=int(a.spk_guide[2]) if len(a.spk_guide) > 2 else 2,
                                          hold=a.spk_guide_hold, insert=not a.spk_guide_no_insert, word_start=word_start) if a.spk_guide else None
                         states = [None] * len(meta)
@@ -312,7 +321,8 @@ def run(a):
                         for pre in dict.fromkeys(tuple(p) for p in prefixes):                          # decode_batch 는 한 배치에 prefix 하나 — 선언 슬롯 수가 다른 창은 나눠 돈다
                             js = [j for j, p in enumerate(prefixes) if tuple(p) == pre]
                             for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, spk_guide=guide,
-                                                               **(dict(switch_bias=sb, row_modes=[modes[j] for j in js], word_init=wi) if sb else {}))): states[j] = st_
+                                                               **(dict(switch_bias=sb, row_modes=[modes[j] for j in js], word_init=wi) if sb else {}),
+                                                               **(dict(acts=[acts[j] for j in js]) if acts is not None else {}))): states[j] = st_
                     key = (ds.dlgs[meta[0][1]].lang, delta)
                     if a.verify and model is not None and key not in checked and not full:
                         for j in sorted({0, len(meta) - 1}):
@@ -373,6 +383,7 @@ def main():
     q.add_argument("--context-s", type=float, default=0.0, help="--window full: LLM 문맥 창(초, 0 = 문맥 전부) — 오디오는 자르지 않고 문맥만 prefix + 최근 S 초")
     q.add_argument("--target-oracle", action="store_true", help="E2: 대상 화자 모드 체크포인트를 정답 화자 활동 주입·화자별 디코드로 잰다")
     q.add_argument("--target-act", default=None, help="E3: 정답 대신 예측 활동(diar_eval --save-probs 의 probs 폴더)")
+    q.add_argument("--act-oracle", action="store_true", help="E5: 슬롯 활동 입력 체크포인트에 정답 슬롯 활동을 주고 한 스트림으로 디코드")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")
     q.add_argument("--declare", type=int, default=None, help="prefix 선언 슬롯 수 하한(기본 max(2, 화자 수); 화자 수를 모르는 추론 흉내 = 4)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "
