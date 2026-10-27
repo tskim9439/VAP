@@ -59,6 +59,18 @@ raw_authors:
   - 회의 통째 수치(96172 E7a·96461 E6 기준선)가 나오면 이 표를 다시 맞춘다.
 - **7B 와 견주면 SDM cpWER 가 6 높다.** VibeVoice 쪽은 1.5B → 7B 에서 cpWER 가 12.8 pt(다섯 셋 평균) 내렸다. 화자 귀속이 크기에 민감하다.
 
+## 회의 통째(세션) 첫 결과 — 2026-10-28
+| AMI eval cpWER(표준 정규화 + meeteval) | IHM(-mix) | SDM | 평가 단위 |
+|---|---:|---:|---|
+| 우리 E6 LLM + E7a 헤드 + AOSC(δ10, 0.92 s) | 67.34 | 73.10 | 회의 통째(34 회의) |
+| 우리 E6(같은 모델, 창) | 37.09 | 44.73 | 20–90 s 창 |
+| VibeVoice-ASR-Streaming 1.5B(2.0 s) | 45.15 | 56.83 | 480 s 이하 조각 |
+| VibeVoice-ASR-Streaming 7B(2.0 s) | 27.48 | 39.01 | 480 s 이하 조각 |
+| Multitalker Parakeet v1(1.12 s) | 21.26 | 37.44 | 세션(제3자 재현은 회의 통째) |
+| NVIDIA SSA-v2 + Nemotron 3 Diarization | 13.38 | 20.33 | 세션 |
+
+- 회의 통째에서 우리 귀속이 무너져(46 pt) 창 단위의 우위가 사라졌다. 받아쓰기(agn IHM 21.1·SDM 27.4)는 그대로다. 원인과 대책은 [[output-diarization-integration-20261025]] 7 절 결과 3 에 있다.
+
 ## 받아쓰기 몫(화자 무시)
 | | IHM(-mix) | SDM |
 |---|---:|---:|
