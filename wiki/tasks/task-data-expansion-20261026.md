@@ -36,7 +36,7 @@ sources:
 | D7 | 한국어 회의 NIA23 002_Meeting → `nia23mt`(dlg_mtko) | 완료: 전체 7,971 회의 5,621 h 중 빠진 발화 없는 회의에서 종류별로 골라 891 회의 651 h(녹음 251·방송 250·라디오 150 h — 인터넷은 대부분 임시 파일만 남아 제외). 정렬(95691) → 정제(발화 362,025, 미정렬 1,349·이상 2,000 제외) → phase2 → mono 69.9 GiB |
 | D8 | Switchboard(영어 2 인 전화) → `swbd`(dlg_en) | 완료: 2,435 통화, 258 h. 정렬(95683, 5 분) → 정제 → phase2 → mono·stems |
 | F1 | 회의 + 4 슬롯 1.7B 레시피(같은 init·학습률)에 D1–D8 + 원거리 증강 → AMI·TAXI·FLEURS | 다시 제출(10-26 23:20, 사용자): 학습 95865(apex 2 노드, 95650 뒤 afterany, **5,000 step**, Switchboard 따로 `dlg_sw` 0.7), 평가 95866(ck3000·ck4000·final·avg3, 45 작업). 처음 낸 95854·95855(2,500 step)는 취소. 바꾼 이유는 아래 "step 수" |
-| E5·E6 | 한 스트림 + 화자 활동 입력([[output-diarization-integration-20261025]] 6 절) | 코드·시험 완료(E5 adapter_slot·act_noise·--act-oracle, E6 인과 diar_head·ρ 혼합·encode 활동 스트림, E1c 인과 가지). 학습은 F1 뒤 |
+| E5·E6 | 한 스트림 + 화자 활동 입력([[output-diarization-integration-20261025]] 6 절) | 제출(10-27 09:27, 사용자, `slurm/submit-q17-e56.sh` — F1 레시피·평가 기준): E1c 95932(1 노드, 인과 가지 10,000 step, ck3000 인코더 위, 원거리·새 코퍼스 포함) · E5 학습 95933·평가 95934(q17-e5) · E6 학습 95935(E1c 성공 뒤)·평가 95936(q17-e6 = F1 묶음 + 정답 활동 상한). 준비 중 E5 다중 GPU 버그(replay 행에서 adapter_slot 미사용 → DDP 정지)를 고쳤다. E7(AOSC)은 코드 없음 |
 
 ## 원거리 버전 규칙
 - 근접 마이크로 정렬·정제된 대화를 복사한다. 발화·토큰·플래그는 그대로이고, `meta.mono_src` = {장치 파일, 채널, offset_s} 만 더한다.
