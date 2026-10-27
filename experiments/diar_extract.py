@@ -25,7 +25,8 @@ def extract(model_dir: str) -> dict:
     assert state, f"diar_head.* 가중치가 없다: {model_dir}"
     DiarBranch(**cfg["diar_head_cfg"]).load_state_dict(state)                                      # 키·모양 확인(strict)
     return dict(state=state, cfg=dict(cfg["diar_head_cfg"]), taps=[int(x) for x in cfg["diar_taps"]], init=os.path.abspath(model_dir), step=None,
-                threshold=float(cfg.get("act_threshold", 0.5)), src="diar_extract", **({"aosc": cfg["diar_aosc"]} if cfg.get("diar_aosc") else {}))
+                threshold=float(cfg.get("act_threshold", 0.5)), src="diar_extract", **({"aosc": cfg["diar_aosc"]} if cfg.get("diar_aosc") else {}),
+                **({"shift": int(cfg["act_shift"])} if cfg.get("act_shift") else {}))                     # E8: 헤드 출력 p = 프레임 p − R(diar_eval 이 맞춰 잰다)
 
 
 def main():

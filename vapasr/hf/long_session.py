@@ -46,6 +46,7 @@ def encode_long(model, wav: np.ndarray, K: int, core: int = 4800, ctx: int = 176
     dev = next(model.parameters()).device; out = None
     if aosc is not None:
         assert getattr(model, "diar_head", None) is not None, "aosc 는 화자 분리 헤드(E6·E7) 모델에서만"
+        assert not int(getattr(model.config, "act_shift", 0) or 0), "E8 act_shift 모델은 아직 AOSC 와 함께 쓰지 않는다(캐시 점수가 p − R 시점과 어긋난다)"
         from .diar import aosc_stream
         embs = []
         for seg, Ks, a, c0, n in segment_plan(wav, K, ch, core, ctx, tail):

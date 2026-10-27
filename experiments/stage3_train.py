@@ -96,6 +96,8 @@ g.add_argument("--diar-head", default=None, help="E6(2026-10-26): 인과 화자 
                "슬롯 활동 입력을 표본마다 확률 ρ 로 헤드 예측(아니면 흔든 정답)으로 준다. --slot-input 과 함께. 지문 키 diar_head")
 g.add_argument("--diar-weight", type=float, default=0.5); g.add_argument("--act-pred-ramp", default="0.3,0.9", help="예측 활동을 쓸 확률 ρ 의 시작,끝(step 따라 선형)")
 g.add_argument("--act-threshold", type=float, default=0.45, help="헤드 예측 활동 임계(E1 AMI dev 에서 고른 값)")
+g.add_argument("--act-shift", type=int, default=0, help="E8(2026-10-27): 헤드 위치 p 의 출력이 프레임 p − R 의 활동을 맞히게(헤드 손실 정답·흔든 정답 입력을 R 만큼 민다) — "
+               "인과 헤드가 R 프레임(80 ms) 뒤를 보고 판단하고, 받아쓰기 지연 δ ≥ R 이면 지연이 늘지 않는다(R ≤ 가장 짧은 --delays). --diar-head 와 함께. 지문 키 act_shift")
 g.add_argument("--global-slots", type=float, default=0.0, help="E7(2026-10-27): 학습 창을 이 확률로 대화 전체에서 먼저 말한 순서 슬롯으로(회의 통째·실시간 디코드는 AOSC 로 "
                "회의 내내 같은 슬롯 — 창 안 첫 화자가 A 가 아닐 수 있다). 헤드(--diar-head)가 있으면 헤드 손실은 창 도착 순서, 예측 입력은 정답 자리로 맞춘다(diar_align). 지문 키 global_slots")
 g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
@@ -155,6 +157,7 @@ FAR = {"ami-far", "icsi-far", "notsofar-far", "chime6tr-far"}                   
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
 delays = tuple(int(x) for x in a.delays.split(",") if x.strip())
 if not delays or not all(1 <= d <= 10 for d in delays): sys.exit(f"--delays {a.delays}: 1–10 의 쉼표 목록")
+if a.act_shift > min(delays): sys.exit(f"--act-shift {a.act_shift} > 가장 짧은 지연 δ{min(delays)} — 그 δ 에서는 받아쓸 때 아직 활동이 오지 않는다")
 corpora = [c for c in a.dlg_corpora.split(",") if c]
 if not all(c in DLG_LANG for c in corpora): sys.exit(f"--dlg-corpora: 알 수 없는 코퍼스 {[c for c in corpora if c not in DLG_LANG]} (알려진 것 {sorted(DLG_LANG)})")
 BASE_GROUPS = (("dlg_ko", "Korean"), ("dlg_en", "English"), ("dlg_de", "German"), ("dlg_mt", "English"), ("dlg_far", "English"), ("dlg_mtko", "Korean"))
@@ -199,6 +202,7 @@ if a.target_spk and a.dlg_trans: sys.exit("--target-spk 는 번역 타깃(--dlg-
 if a.target_spk and a.inject_hidden <= 0: sys.exit("--inject-hidden > 0")
 if a.slot_input and a.target_spk: sys.exit("--slot-input 은 --target-spk 와 함께 쓰지 않는다(E5 는 한 스트림 형식)")
 if a.diar_head and not a.slot_input: sys.exit("--diar-head 는 --slot-input 과 함께(E6 — 헤드 예측을 슬롯 활동 입력으로 준다)")
+if a.act_shift < 0 or (a.act_shift and not a.diar_head): sys.exit("--act-shift R(≥ 0)은 --diar-head 와 함께(E8)")
 if not 0.0 <= a.global_slots <= 1.0 or (a.global_slots > 0 and a.target_spk): sys.exit("--global-slots ∈ [0, 1], --target-spk(E2)와 함께 쓰지 않는다")
 ramp = tuple(float(x) for x in a.act_pred_ramp.split(","))
 if len(ramp) != 2 or not all(0.0 <= x <= 1.0 for x in ramp): sys.exit(f"--act-pred-ramp 'ρ0,ρ1'(각 0–1): {a.act_pred_ramp}")
@@ -283,6 +287,7 @@ if not a.dry_run:
         xb = torch.load(a.diar_head, map_location="cpu"); assert xb["cfg"].get("lookahead") is not None, f"인과 헤드(lookahead)가 아니다: {a.diar_head}"
         model.add_diar_head(xb["cfg"], xb["taps"], state=xb["state"], weight=a.diar_weight, threshold=a.act_threshold, ramp=ramp)
         if a.global_slots > 0: model.config.diar_align = True                                      # E7: 헤드 손실은 창 도착 순서, 예측 입력은 정답(대화 전체 순서) 자리로
+        if a.act_shift: model.config.act_shift = int(a.act_shift)                                  # E8: 헤드 출력 p = 프레임 p − R(재개 checkpoint 의 config 와 같은 값)
         if xb.get("aosc"): model.config.diar_aosc = dict(xb["aosc"])                                 # AOSC 로 학습한 헤드에서 시작하면 그 설정을 남긴다(회의 통째 디코드)
         if model.spk_head is not None and a.spk_act_weight <= 0: model.config.spk_weight = 0.0   # 활동 타깃이 오므로 LLM 쪽 보조 헤드는 끈다(가중 0)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
@@ -484,7 +489,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"xl_slot_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}), **({"no_eot": True} if a.no_eot else {}),
           **({"target_spk": dict(inject_hidden=a.inject_hidden)} if a.target_spk else {}),
           **({"slot_input": dict(slots=max(2, a.max_speakers), noise=act_noise.settings())} if act_noise is not None else {}),
-          **({"diar_head": dict(src=os.path.abspath(a.diar_head), weight=a.diar_weight, ramp=list(ramp), threshold=a.act_threshold)} if a.diar_head else {}))
+          **({"diar_head": dict(src=os.path.abspath(a.diar_head), weight=a.diar_weight, ramp=list(ramp), threshold=a.act_threshold)} if a.diar_head else {}),
+          **({"act_shift": a.act_shift} if a.act_shift else {}))                                # 2026-10-27 E8: 끄면 키 없음
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():

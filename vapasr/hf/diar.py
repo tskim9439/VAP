@@ -214,6 +214,15 @@ def aosc_clip_loss(branch: "DiarBranch", emb, target, mask, cfg: AoscConfig, rng
     return tot, st
 
 
+def shift_frames(x, R: int, fill=0):
+    """(B, K, …) 의 프레임 축을 R 만큼 뒤로 민다(위치 p 의 값 = 원래 p − R, 앞 R 프레임은 fill). E8(2026-10-27): 헤드 위치 p 의 출력이 프레임 p − R 의 활동을 맞히게
+    정답·마스크·흔든 정답 입력을 같은 만큼 민다 — 헤드는 R 프레임 뒤를 보고 판단하고, LLM 은 받아쓰기 지연 δ ≥ R 이면 지연이 늘지 않는다. R 0 이면 그대로."""
+    R = int(R)
+    if R <= 0: return x
+    pad = x.new_full((x.shape[0], min(R, x.shape[1])) + tuple(x.shape[2:]), fill)
+    return torch.cat([pad, x[:, : max(0, x.shape[1] - R)]], 1)
+
+
 def arrival_sort(target, mask=None):
     """정답 활동 (B, K, N) → 열을 창 안 첫 활동 프레임 순서로(활동 없는 열은 뒤, 원래 순서 유지) — 창 도착 순서 슬롯. E7: 대화 전체 순서 슬롯 창의
     헤드 손실(헤드는 창만 보므로 창 도착 순서를 배운다 — 회의 전체 정체는 AOSC 캐시가 맡는다)."""

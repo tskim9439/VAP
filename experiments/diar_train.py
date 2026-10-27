@@ -20,7 +20,9 @@ VapAsr 체크포인트(1.7B)의 인코더를 동결(fp32, 평가 경로와 같�
   캐시 화자 순서를 섞는다(정답 슬롯도 같이). 클립마다 확률 --aosc-self 로 캐시를 모델 예측으로 고른다(NeMo 의 스트리밍 학습처럼 — 추론과 같은 규칙, 묶음의 정답 화자는
   겹침 최대 짝). 추론 설정(캐시·FIFO·갱신 주기, 추론 청크 6)은 diar.pt 의 aosc 에 남는다 — aosc_stream·회의 통째 평가가 쓴다. 저장·재로드 대조는 정답 캐시로만
   (모델 예측 캐시는 문턱 근처 예측이 조금만 달라도 캐시가 바뀐다).
-  --init 은 가지가 붙을 모델(E6 final — stage 3 는 인코더도 학습한다), --init-branch 는 experiments/diar_extract.py 로 꺼낸 E6 헤드."""
+  --init 은 가지가 붙을 모델(E6 final — stage 3 는 인코더도 학습한다), --init-branch 는 experiments/diar_extract.py 로 꺼낸 E6 헤드.
+--shift R(E8, 2026-10-27): 위치 p 의 출력이 프레임 p − R 의 활동을 맞히게 정답·마스크를 R 만큼 민다(vapasr.hf.diar.shift_frames) — 인과 가지가 R 프레임 뒤를 보고 판단한다.
+  LLM 은 받아쓰기 지연 δ ≥ R 이면 지연이 늘지 않는다(stage3_train --act-shift 와 같은 규약). diar.pt 의 shift 로 남고 diar_eval 이 맞춰 잰다. --aosc 와는 아직 함께 쓰지 않는다."""
 import argparse, fnmatch, glob, json, math, os, random, sys, time
 
 import numpy as np
@@ -50,8 +52,11 @@ ap.add_argument("--aosc", action="store_true", help="E7 AOSC 스트리밍 학습
 ap.add_argument("--aosc-fifo", type=int, default=188); ap.add_argument("--aosc-period", type=int, default=94); ap.add_argument("--aosc-chunk", type=int, default=47, help="학습 한 step 의 새 프레임(추론은 6)")
 ap.add_argument("--aosc-perm", type=float, default=0.5); ap.add_argument("--aosc-noise", type=float, default=0.5)
 ap.add_argument("--aosc-self", type=float, default=0.5, help="클립마다 이 확률로 캐시를 모델 예측으로(나머지는 정답으로)")
+ap.add_argument("--shift", type=int, default=0, help="E8: 위치 p 의 출력 = 프레임 p − R 의 활동(정답을 R 만큼 민다 — R 프레임 뒤를 보고 판단)")
 a = ap.parse_args()
 assert not a.aosc or a.lookahead is not None, "--aosc 는 인과 가지(--lookahead R, 예 0)와 함께 — 캐시 뒤 청크가 앞만 본다"
+assert a.shift >= 0 and not (a.shift and a.aosc), "--shift R(≥ 0)은 아직 --aosc 와 함께 쓰지 않는다"
+assert not a.shift or a.lookahead is not None, "--shift 는 인과 가지(--lookahead, 예 0)와 함께 — 앞을 이미 보는 가지에 미룰 까닭이 없다"
 
 
 def log(*x):
@@ -121,6 +126,7 @@ def fingerprint():
     keys = ("init", "data", "split", "corpora", "sim_data", "weights", "window", "window_draws", "n_spk", "taps", "d", "layers", "heads", "ffn", "dropout", "alpha", "batch",
             "lr", "warmup", "max_steps", "weight_decay", "noise_bank", "noise_p", "rir_p", "noise_snr", "gain_db", "seed")
     return {**{k: getattr(a, k) for k in keys}, **{k: getattr(a, k) for k in ("lookahead", "init_branch") if getattr(a, k) is not None},   # 켰을 때만(E1 지문 그대로)
+            **({"shift": a.shift} if a.shift else {}),
             **({k: getattr(a, k) for k in ("aosc", "aosc_cache", "aosc_fifo", "aosc_period", "aosc_chunk", "aosc_perm", "aosc_noise", "aosc_self")} if a.aosc else {})}
 
 
@@ -153,8 +159,8 @@ def reload_check(final_dir, batches, model=None, enc=None):
                     with torch.autocast("cuda", dtype=torch.bfloat16): loss, st = m(feats, pad, aosc=aosc_kw(b, dev, f"parity:{len(K)}", self_p=0.0))
                     loss_sum += float(loss); hit += st["hit"]; tot += st["frames"]; continue
                 with torch.autocast("cuda", dtype=torch.bfloat16): lg = m(feats, pad)
-                loss, _, _ = sort_pit_loss(lg.float(), act, mask & ~pad, a.alpha); mm = (mask & ~pad).float()[..., None]
-                loss_sum += loss.item(); hit += float((((lg.float() > 0).float() == act).float() * mm).sum()); tot += float(mm.sum()) * act.shape[-1]
+                tg, mk = shifted(act, mask, pad); loss, _, _ = sort_pit_loss(lg.float(), tg, mk, a.alpha); mm = mk.float()[..., None]
+                loss_sum += loss.item(); hit += float((((lg.float() > 0).float() == tg).float() * mm).sum()); tot += float(mm.sum()) * act.shape[-1]
         return dict(loss=round(loss_sum / len(batches), 6), frame_acc=round(hit / max(1.0, tot), 4))
 
     def max_diff(s1, s2):
@@ -170,6 +176,13 @@ def reload_check(final_dir, batches, model=None, enc=None):
     if model is not None:
         assert out["branch_max_diff"] == 0.0 and out["encoder_max_diff"] == 0.0 and abs(out["memory"]["loss"] - out["reload"]["loss"]) <= 1e-4, f"재로드 불일치: {out}"
     return out
+
+
+def shifted(act, mask, pad):
+    """→ (정답, 손실 마스크) — --shift R 이면 둘 다 R 만큼 민다(끝 패딩 위치는 그대로 뺀다). E8."""
+    from vapasr.hf.diar import shift_frames
+    m = mask & ~pad
+    return (shift_frames(act, a.shift), shift_frames(m, a.shift, False) & ~pad) if a.shift else (act, m)
 
 
 def last_checkpoint(out):
@@ -229,7 +242,8 @@ def main():
     def save(tag):
         if rank != 0: return None
         d = os.path.join(a.out_dir, tag); tmp = d + f".tmp{os.getpid()}"; os.makedirs(tmp, exist_ok=True)
-        torch.save(dict(state=model.state_dict(), cfg=model.cfg, taps=list(taps), init=os.path.abspath(a.init), step=step, **({"aosc": aosc_cfg().to_dict()} if a.aosc else {})),
+        torch.save(dict(state=model.state_dict(), cfg=model.cfg, taps=list(taps), init=os.path.abspath(a.init), step=step, **({"aosc": aosc_cfg().to_dict()} if a.aosc else {}),
+                        **({"shift": a.shift} if a.shift else {})),
                    os.path.join(tmp, "diar.pt"))
         if tag != "final": torch.save(dict(opt=opt.state_dict(), sched=sched.state_dict(), step=step), os.path.join(tmp, "trainer.pt"))
         else: json.dump(dict(cfg=model.cfg, taps=list(taps), init=os.path.abspath(a.init), step=step, args=fingerprint()), open(os.path.join(tmp, "diar.json"), "w"), indent=1)
@@ -251,12 +265,12 @@ def main():
             fr = max(1.0, st["frames"]); stats = dict(sort=st["sort"] / fr, pit=st["pit"] / fr, frame_acc=st["hit"] / fr, steps=float(st["steps"]), self=st["self"] / len(K))
         else:
             with torch.autocast("cuda", dtype=torch.bfloat16): logits = net(feats, pad)
-            loss, srt, pit = sort_pit_loss(logits.float(), act, mask & ~pad, a.alpha)
+            tg, mk = shifted(act, mask, pad); loss, srt, pit = sort_pit_loss(logits.float(), tg, mk, a.alpha)
         opt.zero_grad(set_to_none=True); loss.backward(); gn = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); opt.step(); sched.step(); step += 1
         with torch.no_grad():
             if not a.aosc:
-                m = (mask & ~pad).float()[..., None]; pr = (logits.float() > 0).float()
-                stats = dict(sort=srt.item(), pit=pit.item(), frame_acc=float(((pr == act).float() * m).sum() / (m.sum() * a.n_spk).clamp(min=1)))
+                m = mk.float()[..., None]; pr = (logits.float() > 0).float()
+                stats = dict(sort=srt.item(), pit=pit.item(), frame_acc=float(((pr == tg).float() * m).sum() / (m.sum() * a.n_spk).clamp(min=1)))
             for k, v in dict(loss=loss.item(), gn=float(gn), **stats).items():
                 acc[k] = acc.get(k, 0.0) + v
         if step % a.log_every == 0 or step == total:

@@ -207,25 +207,29 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if wav is not None and self.diar_head is not None:                                         # E6: 인코더 한 번 → ASR 특징 + 화자 분리 logits
             assert target_act is None, "E6 는 대상 화자 모드(target_act)와 함께 쓰지 않는다"
             feats, dlog = self.encode_diar(wav, wav_len, K); pred = self.predict_act(dlog)
+            from .diar import shift_frames
+            R = int(getattr(self.config, "act_shift", 0) or 0)                                     # E8: 헤드 위치 p = 프레임 p − R 의 활동(정답·흔든 정답 입력을 R 만큼 민다)
             if activity is not None:                                                                # 손실은 packing 으로 펴기 전에(활동 (B, Kmax, S))
                 from .diar import sort_pit_loss
                 Ka, N = min(dlog.shape[1], activity.shape[1]), dlog.shape[-1]
                 m = (activity_mask[:, :Ka] if activity_mask is not None else torch.ones(activity.shape[:2], device=dlog.device)[:, :Ka]).bool()
-                m = m & (torch.arange(Ka, device=dlog.device)[None] < K.to(dlog.device)[:, None])
+                valid = torch.arange(Ka, device=dlog.device)[None] < K.to(dlog.device)[:, None]; m = m & valid
                 tgt = F.pad(activity[:, :Ka].float(), (0, max(0, N - activity.shape[-1])))[..., :N]
                 if getattr(self.config, "diar_align", False):                                       # E7: 대화 전체 순서 슬롯 창 — 헤드 손실은 창 도착 순서로
                     from .diar import arrival_sort
                     tgt = arrival_sort(tgt, m)
+                if R: tgt, m = shift_frames(tgt, R), shift_frames(m, R, False) & valid                 # E8: 끝 패딩 위치(p ≥ K)는 그대로 뺀다
                 loss_diar_t, _, _ = sort_pit_loss(dlog[:, :Ka].float(), tgt, m, float(self.config.diar_alpha))
                 with torch.no_grad(): mf = m.float()[..., None]; diar_st = float(((pred[:, :Ka] == tgt).float() * mf).sum() / (mf.sum() * N).clamp(min=1))
             if act_in is not None and self.training:                                               # 표본마다 확률 ρ 로 헤드 예측, 아니면 흔든 정답(E5 와 같은 입력)
                 rho = float(getattr(self, "act_pred_rho", self.config.act_pred_ramp[-1]))
                 ai = act_in.to(pred.device).float(); ai = F.pad(ai, (0, max(0, pred.shape[-1] - ai.shape[-1]), 0, max(0, pred.shape[1] - ai.shape[1])))[:, : pred.shape[1], : pred.shape[-1]]
+                ai = shift_frames(ai, R)                                                            # E8: 흔든 정답도 헤드 예측과 같은 시점(p − R)으로
                 pa = pred
                 if getattr(self.config, "diar_align", False) and activity is not None:             # E7: 예측(창 도착 순서)을 정답(대화 전체 순서일 수 있다) 자리로 — AOSC 흉내
                     from .diar import align_slots
                     ref = F.pad(activity.float(), (0, max(0, pred.shape[-1] - activity.shape[-1]), 0, max(0, pred.shape[1] - activity.shape[1])))[:, : pred.shape[1], : pred.shape[-1]]
-                    pa = align_slots(pred, ref.to(pred.device))
+                    pa = align_slots(pred, shift_frames(ref, R).to(pred.device))
                 act_in = torch.where((torch.rand(pred.shape[0], device=pred.device) < rho)[:, None, None], pa, ai)
             else: act_in = pred
         elif wav is not None: feats = self.encode(wav, wav_len, K, act=target_act)          # target_act (B, Kmax): E2 대상 화자 활동(없으면 예전 그대로)

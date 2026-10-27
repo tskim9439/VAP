@@ -11,7 +11,8 @@
 --save-probs(2026-10-25): 창마다 out/probs/<id>.npz(prob float16 (K, 화자), ref uint8, mask) — 임계 훑기와 E3(예측 활동을 E2 대상 화자 디코드에 주입)의 입력.
 참조 = slot_activity(창 안 먼저 말한 순서), 셈에서 빼는 프레임 = 전사 없는 음성 구간(_bad_spans). DER = (miss + fa + conf)/참조 화자 프레임.
   conf_arrival = 슬롯 순서(도착 순서) 그대로 짝, conf_best = 창마다 혼동이 가장 적은 순열. 공식 분할(manifest dev·eval)·조건·창 화자 수별로 합친다.
-  주의: Nemotron 3 Diarization 의 AMI DER(SDM 12.8 @1.04 s)은 세션 단위·강제 정렬 참조라 이 창 단위 값과 바로 비교되지 않는다."""
+  주의: Nemotron 3 Diarization 의 AMI DER(SDM 12.8 @1.04 s)은 세션 단위·강제 정렬 참조라 이 창 단위 값과 바로 비교되지 않는다.
+E8(2026-10-27): diar.pt 의 shift R(위치 p 의 출력 = 프레임 p − R 의 활동)이면 출력 [R:] 을 참조 [:K − R] 과 맞춘다 — 창·회의 끝 R 프레임은 뒤를 볼 오디오가 없어 셈에서 뺀다."""
 import argparse, collections, glob, json, math, os, sys, time
 
 import numpy as np
@@ -21,13 +22,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHUNK_S, SR = 0.08, 16000
 
 
+def unshift(prob, ref, m, R: int):
+    """E8: (K, N) 출력의 위치 p = 프레임 p − R → (출력 [R:], 참조 [:K − R], 마스크 [:K − R]). R 0 이면 그대로."""
+    if not R: return prob, ref, m
+    K = prob.shape[0]; return prob[R:], ref[: K - R], m[: K - R]
+
+
 def run(a):
     from experiments.cst_stage3_eval import windows_of
     from vapasr.data.cst_dialogue import slot_activity, window_speakers
     from vapasr.hf import load_tokenizer
     from vapasr.hf.diar import DiarBranch, der_counts, load_encoder
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
-    x = torch.load(os.path.join(a.diar, "diar.pt"), map_location="cuda"); n_spk = x["cfg"]["n_spk"]
+    x = torch.load(os.path.join(a.diar, "diar.pt"), map_location="cuda"); n_spk = x["cfg"]["n_spk"]; R = int(x.get("shift", 0) or 0)
     model = DiarBranch(**x["cfg"]).cuda().eval(); model.load_state_dict(x["state"])
     enc, _ = load_encoder(x["init"], a.nemotron_dir, "cuda"); taps = tuple(x["taps"]); tok = load_tokenizer(x["init"])
     man = json.load(open(os.path.join(a.data, "manifest.json"))) if os.path.exists(os.path.join(a.data, "manifest.json")) else {}
@@ -60,10 +67,10 @@ def run(a):
             feats = enc(W.cuda(), torch.tensor([len(w) for w in wavs]).cuda(), Kt.cuda(), taps=taps)
             prob = torch.sigmoid(model(feats, pad.cuda()).float()).cpu()
             for j, (c, cid, t0w, L, K, nsp, ref, m) in enumerate(meta):
-                pr = (prob[j, :K] > a.threshold).float(); dc = der_counts(pr, ref, m)
+                pj, ref, m = unshift(prob[j, :K], ref, m, R); pr = (pj > a.threshold).float(); dc = der_counts(pr, ref, m)
                 row = dict(id=f"{cid}@{t0w}", corpus=c, sub=sub.get(cid.split(":", 1)[1], "?"), L=L, K=K, n_spk=nsp, n_hyp_spk=int((pr.sum(0) > 0).sum()), **dc)
                 if a.save_probs:
-                    np.savez_compressed(os.path.join(pdir, f"{row['id']}.npz"), prob=prob[j, :K].numpy().astype(np.float16), ref=ref.numpy().astype(np.uint8), mask=m.numpy())
+                    np.savez_compressed(os.path.join(pdir, f"{row['id']}.npz"), prob=pj.numpy().astype(np.float16), ref=ref.numpy().astype(np.uint8), mask=m.numpy())
                 if row["id"] not in done: fo.write(json.dumps(row) + "\n"); n += 1
             print(f"  {min(b0 + a.batch, len(items))}/{len(items)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
     print(f"DONE rank={a.rank} rows={n}", flush=True)
@@ -77,7 +84,7 @@ def run_session(a):
     from vapasr.hf.diar import AoscConfig, DiarBranch, aosc_stream, der_counts, load_encoder
     from vapasr.hf.long_session import segment_plan
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
-    x = torch.load(os.path.join(a.diar, "diar.pt"), map_location="cuda"); n_spk = x["cfg"]["n_spk"]
+    x = torch.load(os.path.join(a.diar, "diar.pt"), map_location="cuda"); n_spk = x["cfg"]["n_spk"]; R = int(x.get("shift", 0) or 0)
     model = DiarBranch(**x["cfg"]).cuda().eval(); model.load_state_dict(x["state"])
     enc, _ = load_encoder(x["init"], a.nemotron_dir, "cuda"); taps = tuple(x["taps"]); tok = load_tokenizer(x["init"])
     ch = int(json.load(open(os.path.join(x["init"], "config.json"))).get("encoder_right_context", 0) or 0) + 1
@@ -87,6 +94,7 @@ def run_session(a):
         if v is not None: setattr(cfg, k, int(v))
     modes = [m_ for m_ in a.session_modes.split(",") if m_]
     assert modes and all(m_ == "aosc" or (m_.startswith("reset") and float(m_[5:]) > 0) for m_ in modes), f"--session-modes aosc,resetS — {a.session_modes}"
+    assert not (R and "aosc" in modes), "E8 shift 헤드는 아직 AOSC 와 함께 재지 않는다(캐시 점수가 p − R 시점과 어긋난다)"
     man = json.load(open(os.path.join(a.data, "manifest.json"))) if os.path.exists(os.path.join(a.data, "manifest.json")) else {}
     sub = {**{m: "dev" for m in man.get("dev", [])}, **{m: "eval" for m in man.get("eval", [])}}
     ns = argparse.Namespace(corpora=a.corpora, data=a.data, split=None, deltas=[10], limit_windows=a.limit_windows, backchannel=(1.0, 3), max_speakers=n_spk,
@@ -125,10 +133,10 @@ def run_session(a):
                 if m_ == "aosc": lg = aosc_stream(model, e, cfg)
                 else: S = int(round(float(m_[5:]) / CHUNK_S)); lg = torch.cat([model.head(e[k0: k0 + S][None])[0] for k0 in range(0, K, S)]).float()
                 prob = torch.sigmoid(lg).cpu(); dec_s = time.time() - te
-                pr = (prob > a.threshold).float(); dc = der_counts(pr, ref, m)
+                prob, rf, mk = unshift(prob, ref, m, R); pr = (prob > a.threshold).float(); dc = der_counts(pr, rf, mk)
                 row = dict(id=wid, corpus=c, sub=sub.get(cid.split(":", 1)[1], "?"), L=L, K=K, n_spk=len(sp), n_spk_all=len(allsp), n_hyp_spk=int((pr.sum(0) > 0).sum()),
                            mode=m_, enc_s=round(enc_s, 1), dec_s=round(dec_s, 1), **dc)
-                if a.save_probs: np.savez_compressed(os.path.join(a.out, m_, "probs", f"{wid}.npz"), prob=prob.numpy().astype(np.float16), ref=ref.numpy().astype(np.uint8), mask=m.numpy())
+                if a.save_probs: np.savez_compressed(os.path.join(a.out, m_, "probs", f"{wid}.npz"), prob=prob.numpy().astype(np.float16), ref=rf.numpy().astype(np.uint8), mask=mk.numpy())
                 fos[m_].write(json.dumps(row) + "\n"); n += 1
                 print(f"  {cid} {c}: K {K} · {m_} DER 최적 짝 {100 * (dc['miss'] + dc['fa'] + dc['conf_best']) / max(1, dc['ref']):.2f} · 인코딩 {enc_s:.0f}s · 가지 {dec_s:.0f}s", flush=True)
     for fo in fos.values(): fo.close()

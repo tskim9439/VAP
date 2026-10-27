@@ -183,3 +183,31 @@ def test_e7_diar_align_forward():
     f, dlog = m.encode_diar(x["wav"], x["wav_len"], x["K"]); pred = m.predict_act(dlog); mk = am.bool() & (torch.arange(3)[None] < x["K"][:, None])
     want, _, _ = sort_pit_loss(dlog.float(), arrival_sort(act, mk), mk, float(m.config.diar_alpha))
     assert abs(float(out.loss_diar) - float(want)) < 1e-6 and torch.equal(seen[-1], align_slots(pred, act))
+
+
+def test_e8_act_shift_forward():
+    """E8(2026-10-27): act_shift R — 헤드 손실 정답·마스크를 R 만큼 민다(끝 패딩 위치는 그대로 뺀다), 흔든 정답 입력도 R 만큼 민다(ρ 0), 헤드 예측(ρ 1)은 그대로."""
+    import importlib.util, pathlib
+    from vapasr.hf.diar import shift_frames, sort_pit_loss
+    spec = importlib.util.spec_from_file_location("_tl", pathlib.Path(__file__).parent / "test_semcommit_tokens_loss.py"); tl = importlib.util.module_from_spec(spec); spec.loader.exec_module(tl)
+    m, _ = tl.tiny_model(); x, _ = tl._batch(m.config.sp_ids); x["labels"] = x["labels"].clone(); x["labels"][0, 4] = -100; x["labels"][0, 8] = -100
+    m.add_slot_input(4); m.add_diar_head(dict(n_streams=2, d_in=4, d=16, layers=1, heads=2, ffn=16, n_spk=4, dropout=0.0, lookahead=0), [0], weight=0.5, threshold=0.5, ramp=(1.0, 1.0))
+    m.config.act_shift = 1
+
+    class Enc(torch.nn.Module):
+        def forward(self, wav, wav_len, K, taps=(), inject=None):
+            g = torch.Generator().manual_seed(int(wav.shape[1])); y = torch.randn(wav.shape[0], 1 + len(taps), int(K.max()), 4, generator=g)
+            return y if taps else y[:, 0]
+    m.encoder = Enc(); del x["feats"]; x.update(wav=torch.zeros(2, 480), wav_len=torch.tensor([320, 480]), K=torch.tensor([2, 3]))
+    act = torch.zeros(2, 3, 4); act[0, :2, 0] = 1; act[1, 1:, 1] = 1; act[1, 0, 2] = 1; am = torch.ones(2, 3); ai = torch.rand(2, 3, 4).round()
+    seen = []; orig = m.chunk_embed
+    def spy(feats, a=None): seen.append(None if a is None else a.clone()); return orig(feats, a)
+    m.chunk_embed = spy; m.train(); m.act_pred_rho = 0.0
+    out = m(**x, activity=act, activity_mask=am, act_in=ai)
+    f, dlog = m.encode_diar(x["wav"], x["wav_len"], x["K"]); valid = torch.arange(3)[None] < x["K"][:, None]
+    mk = shift_frames(am.bool() & valid, 1, False) & valid; assert mk.tolist() == [[False, True, False], [False, True, True]]   # 표본 0 의 위치 2 는 끝 패딩
+    want, _, _ = sort_pit_loss(dlog.float(), shift_frames(act, 1), mk, float(m.config.diar_alpha))
+    assert abs(float(out.loss_diar) - float(want)) < 1e-6 and torch.equal(seen[-1], shift_frames(ai, 1))     # ρ 0 → 민 흔든 정답
+    m.act_pred_rho = 1.0; m(**x, activity=act, activity_mask=am, act_in=ai); assert torch.equal(seen[-1], m.predict_act(dlog))   # ρ 1 → 헤드 예측 그대로
+    m.config.act_shift = 0; out0 = m(**x, activity=act, activity_mask=am, act_in=ai)
+    want0, _, _ = sort_pit_loss(dlog.float(), act, am.bool() & valid, float(m.config.diar_alpha)); assert abs(float(out0.loss_diar) - float(want0)) < 1e-6   # 0 이면 예전 그대로

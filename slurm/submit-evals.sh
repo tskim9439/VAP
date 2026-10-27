@@ -23,6 +23,8 @@
 #   q17-e7-amifull  E7: E6 final 에 AOSC 로 학습한 헤드(diar-q17-diar-e7a final)를 끼워 회의 통째 AOSC 8 몫. --after-job(E7a 학습 job) 필수.
 #   q17-e6  E6 인과 화자 분리 헤드 + 슬롯 활동 입력(2026-10-27, slurm/submit-q17-e56.sh): q17-f1 과 같은 묶음(헤드 예측 활동으로 — 모든 디코드 경로가 model.encode 를 쓴다,
 #           --cks 3000,4000) + final 정답 슬롯 활동 입력(amiact, 8 몫 — 헤드 대신 정답일 때의 상한). --after-job 필수.
+#   q17-e8  E8 헤드 출력 지연 R(2026-10-27, slurm/submit-q17-e8.sh — 헤드 위치 p = 프레임 p − R, 받아쓰기 지연 δ ≥ R): q17-e6 과 같은 v3 묶음(헤드 예측 활동).
+#           정답 활동 상한(amiact)은 넣지 않는다 — --act-oracle 이 활동을 R 만큼 밀지 않는다(E6 의 상한과 같은 값이 될 까닭도 없다). --after-job 필수.
 #   q17-e5  E5 한 스트림 + 슬롯 활동 입력(2026-10-26): q17-e5 final 을 AMI 정답 슬롯 활동 입력(amiact, 8 몫)과 활동 없이(ami, 4 몫 — 입력이 없을 때 얼마나 무너지나)로. --after-job 필수.
 #   q17-e3  E3(2026-10-25): 같은 q17-e2-tgt final 에 정답 대신 E1 화자 분리 가지의 예측 활동(v3_eval_task.sh amie3, 임계 E3_THR — 기본 0.45 = E1 AMI dev 에서 고른 값, 바꾸려면 서브셸에서 export)으로 8 몫.
 #           --after-job 은 E2 학습이 아직 돌 때만 준다(끝났으면 빼고 낸다 — 작업이 DONE 을 확인하고 돈다. 끝난 지 오래된 job 은 스케줄러 기록에서 빠져 의존이 거부될 수 있다).
@@ -40,8 +42,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e7-amifull) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e6-amifull | q17-e7-amifull" >&2; exit 2 ;; esac
+  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e7-amifull) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e6-amifull | q17-e7-amifull" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
@@ -73,6 +75,7 @@ case $set_ in
   q17-mt4-v3) v3set q17-v3-p1-tel-xlw-mt4 ;;
   q17-f1) v3set q17-f1 ;;
   q17-e6) v3set q17-e6; for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $X amiact q17-e6 final $r/8"); done ;;
+  q17-e8) v3set q17-e8 ;;
   q17-e6-amifull) amifull8 q17-e6 ""; for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 bash $X amifull q17-e6 final $r/8"); done ;;
   q17-e7-amifull) for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a bash $X amifull q17-e6 final $r/8"); done ;;
   q17-e5) for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $X amiact q17-e5 final $r/8"); done; ami4 0 q17-e5 "" ;;

@@ -227,3 +227,37 @@ AMI δ10 cpWER, 괄호는 귀속 몫이다. 짝 bootstrap 은 회의 단위 1000
 2. E7a(AOSC 헤드 미세조정, 1 노드 5,000 step — 스모크가 공유 GPU 에서 2.4 s/step 이라 3–4 h 어림; job 96171, E6 평가 95936 이 끝난 뒤 시작, 평가 96172)를 학습하고, 회의 단위 DER 과 `q17-e7-amifull`(E6 LLM + E7a 헤드, 회의 통째 cpWER)을 잰다.
 3. 회의 통째에서 LLM 이 회의 단위 슬롯을 따르지 못하면(귀속 몫이 크면) E7b(`--global-slots 0.5`, E6 final 에서 짧게)를 한 뒤, 그 인코더로 헤드를 다시 AOSC 미세조정한다.
 4. 실시간 경로(`realtime.py`·`live.py`)에 헤드·AOSC 를 붙인다.
+
+## 8. E8 — 받아쓰기 지연 안에서 헤드에 앞을 보이기(헤드 출력 지연 R) (2026-10-27)
+사용자: "그런데 아직까지 cpWER 이 한참 모자르네." → "E8 구현해놓자".
+
+### 근거
+- AMI eval δ10 창 cp 는 SDM 45.35 = agn 28.06 + 귀속 17.29 다.
+  - E5 정답 활동이면 귀속이 1.4 로 떨어진다. 가장 큰 몫이 귀속이고, 형식이 아니라 헤드 예측 품질의 문제다(7 절 결과 1).
+- 인과 가지(E1c)의 창 DER 은 양방향(E1)보다 약 4 높고, 대부분 놓침이다(말 시작을 늦게 잡는다 — 6 절).
+- LLM 은 단어를 δ(학습 4–10 프레임, 320–800 ms) 늦게 낸다. 그래서 프레임 f 의 활동이 R ≤ δ 늦게 와도, 그 단어를 낼 때는 이미 와 있다.
+
+### 방법
+- **헤드:** 구조는 그대로 인과다(층마다 j ≤ i). 학습 정답만 R 만큼 민다.
+  - 위치 p 의 출력이 프레임 p − R 의 활동을 맞힌다(`vapasr.hf.diar.shift_frames`). 헤드가 R 프레임 뒤까지 보고 판단하므로 놓침을 겨눈다.
+  - 창 앞 R 프레임과 끝 패딩 위치는 손실에서 뺀다.
+- **LLM 입력:** 위치 p 의 헤드 출력(= 프레임 p − R)을 오디오 토큰 p 에 그대로 더한다. 학습 중 ρ 로 섞는 흔든 정답도 R 만큼 민다.
+  - 추론 코드(encode·chunk_embed·창/회의 디코드)는 바꿀 것이 없다.
+- **R = 4(320 ms):** 학습 지연 δ4–10 의 가장 짧은 값이다. `stage3_train` 은 R > min(δ) 를 막는다.
+- **코드**
+  - `configuration_vapasr.act_shift`
+  - `modeling_vapasr.forward`: 헤드 손실 정답·마스크·흔든 정답 입력을 민다.
+  - `stage3_train --act-shift`
+  - `diar_train --shift`: 헤드만 학습.
+  - `diar_eval`: diar.pt 의 shift 로 출력 [R:] 을 참조 [:K − R] 과 맞춘다. 창 끝 R 프레임은 뒤를 볼 오디오가 없어 뺀다.
+  - `diar_extract`: shift 를 넘긴다.
+  - `cst_stage3_eval --diar-head-override`: shift 가 다르면 멈춘다.
+  - AOSC 경로(`encode_long(aosc)`·`diar_eval --session aosc`)는 아직 막았다. 캐시 점수가 p − R 시점과 어긋난다.
+- **시험:** 맥 test_diar·test_slot_input 25 개가 통과했다(shift_frames·unshift, forward 의 헤드 손실·ρ 0 흔든 정답 이동·ρ 1 헤드 예측·R 0 이면 예전 그대로).
+
+### 실험
+- E8 = E6 레시피 그대로 + `--act-shift 4`(`slurm/submit-q17-e8.sh`).
+  - 시작점·데이터·step·헤드 시작점은 E6 과 같다: 5 단계 ck3000, F1 데이터, 5,000 step, 2 노드, E1c 헤드. E6 대비 차이는 R 하나다.
+- 평가는 `q17-e8` 이다(q17-e6 과 같은 v3 묶음, 헤드 예측 활동, ck3000·ck4000·final·avg3, AMI 4 몫).
+  - 정답 활동 상한(amiact)은 넣지 않았다. `--act-oracle` 이 활동을 밀지 않는다.
+- 판단: AMI 창 cp, 특히 귀속 몫과 TAXI 를 E6 과 회의·세션 짝으로 비교한다. 헤드 DER 은 `diar_extract` → `diar_eval` 로 E1c·E6 헤드와 견준다.

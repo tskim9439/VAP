@@ -164,3 +164,16 @@ def test_forward_aosc_passes_noise_and_self_p():
     for nz in (0.0, 2.0):                                                                          # noise 가 aosc_clip_loss 까지 간다
         ref = sum(aosc_clip_loss(m, e[j], act[j], mask[j], cfg, random.Random(j), chunk=6, noise=nz)[0] for j in range(2)) / 60
         assert torch.allclose(m(f, aosc=dict(kw, noise=nz))[0], ref)
+
+
+def test_e8_shift_frames_and_unshift():
+    import importlib
+    from vapasr.hf.diar import shift_frames
+    x = torch.arange(12.0).reshape(1, 6, 2); y = shift_frames(x, 2)
+    assert torch.equal(y[0, :2], torch.zeros(2, 2)) and torch.equal(y[0, 2:], x[0, :4]) and torch.equal(shift_frames(x, 0), x)
+    m = torch.ones(1, 6, dtype=torch.bool); ms = shift_frames(m, 2, False); assert ms[0].tolist() == [False, False, True, True, True, True]
+    assert shift_frames(x, 9).abs().sum() == 0 and shift_frames(x, 9).shape == x.shape                     # 창보다 길게 밀면 전부 채움 값
+    unshift = importlib.import_module("experiments.diar_eval").unshift
+    p = torch.arange(10.0)[:, None]; r = torch.arange(10.0)[:, None] + 100; mk = torch.ones(10, dtype=torch.bool)
+    p2, r2, m2 = unshift(p, r, mk, 3); assert p2[:, 0].tolist() == list(range(3, 10)) and r2[:, 0].tolist() == list(range(100, 107)) and len(m2) == 7
+    assert unshift(p, r, mk, 0)[0] is p
