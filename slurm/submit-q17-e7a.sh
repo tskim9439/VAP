@@ -5,13 +5,15 @@
 #   캐시는 클립마다 반은 정답·반은 모델 예측(--aosc-self 0.5 — NeMo 의 스트리밍 학습은 모델 예측) — Streaming Sortformer 가 오프라인 모델을 스트리밍으로
 #   미세조정한 것과 같은 단계). 데이터·가중은 E1c 와 같다(원거리·새 코퍼스·회의형 합성). 1 노드.
 #   평가(이 job 성공 뒤): q17-e7-amifull — E6 final 에 이 헤드를 끼워 AMI 회의 통째 AOSC(8 몫). 회의 단위 DER 은 e7_session_eval.sh(호스트 GPU).
-# 쓰기(스케줄러 셸): bash slurm/submit-q17-e7a.sh [--dry-run] [--partition P(기본 apex)] [--max-steps N(기본 5000)] [--no-eval]. 아무것도 지우지 않는다.
+# 쓰기(스케줄러 셸): bash slurm/submit-q17-e7a.sh [--dry-run] [--partition P(기본 apex)] [--max-steps N(기본 5000)] [--no-eval]
+#                   [--after-any JOBID(그 job 이 끝나면 — 예 E6 평가 노드 95936) | --after-job JOBID(그 job 이 성공하면)]. 아무것도 지우지 않는다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-dry=""; part=apex; steps=5000; ev=1
+dry=""; part=apex; steps=5000; ev=1; after=()
 while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run) dry=--dry-run; shift ;;  --partition) part=$2; shift 2 ;;  --max-steps) steps=$2; shift 2 ;;  --no-eval) ev=0; shift ;;
+    --after-any|--after-job) [[ ${2:-} =~ ^[0-9]+$ ]] || { echo "$1 은 job id" >&2; exit 2; }; after=("$1" "$2"); shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -22,7 +24,7 @@ done
 CORP=aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar,ami-far,icsi-far,notsofar-far,chime6tr,chime6tr-far,nia23mt,swbd
 SIMS=$D/sim-dialogue-v2,$D/sim-dialogue-v3-multi,$D/sim-dialogue-xl-v1,$D/sim-dialogue-xl-tel-v1,$D/sim-dialogue-v4-meet
 W=ami:3,icsi:2,notsofar:0.5,ami-far:3,icsi-far:2,notsofar-far:0.5,chime6tr:1,chime6tr-far:1.5,nia23mt:1,swbd:0.5,sim-dialogue-v3-multi:3,sim-dialogue-v4-meet:3,sim-dialogue-v2:1,sim-dialogue-xl-v1:0.5,sim-dialogue-xl-tel-v1:0.5
-out=$(bash slurm/submit-diar-train.sh --run q17-diar-e7a --init $INIT --partition $part --nodes 1 --max-steps $steps --batch 2 --corpora $CORP --sim-data $SIMS --weights $W \
+out=$(bash slurm/submit-diar-train.sh --run q17-diar-e7a --init $INIT --partition $part --nodes 1 ${after[@]+"${after[@]}"} --max-steps $steps --batch 2 --corpora $CORP --sim-data $SIMS --weights $W \
       --extra "--aosc --aosc-self 0.5 --window 90,120 --lookahead 0 --init-branch $HEAD --lr 1e-4 --warmup 300 --save-every 1000" $dry 2>&1) || { echo "$out" | tail -5 >&2; echo "!! E7a 제출 실패" >&2; exit 1; }
 echo "$out" | grep -E "^sbatch|화자 분리" >&2 || true
 dep=$(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1 || true); [[ -n $dep ]] || { [[ -n $dry ]] && dep=0; } || true
