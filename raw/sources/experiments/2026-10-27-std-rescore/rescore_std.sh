@@ -26,7 +26,8 @@ $P experiments/cst_stage3_eval.py run --checkpoint $CK --data $AB --corpora ami-
 grep -q "^DONE rank=0 " $E/run-rank0.log || { echo "재채점 실패 — $E/run-rank0.log"; tail -5 $E/run-rank0.log; exit 1; }
 $P experiments/cst_stage3_eval.py summarize --out $E > $E/summary.log 2>&1
 $P raw/sources/experiments/2026-10-20-v2-multispeaker/ami_report.py $E > $E/ami-report.txt 2>&1
-for n in whisper ours; do $P experiments/meeteval_cpwer.py --pred $S --norm $n --json $E/meeteval-$n.json > $E/meeteval-$n.txt 2>&1 || { echo "meeteval $n 실패"; tail -5 $E/meeteval-$n.txt; }; done
+for n in whisper ours; do R_=(); [ $n = ours ] && R_=(--refs "")                                   # 외부 AMI 기준은 whisper 보고 끝에 한 번
+  $P experiments/meeteval_cpwer.py --pred $S --norm $n "${R_[@]}" --json $E/meeteval-$n.json > $E/meeteval-$n.txt 2>&1 || { echo "meeteval $n 실패"; tail -5 $E/meeteval-$n.txt; }; done
 echo "== 원 채점(ours, 단어마다)"; grep -E "^\s+ami" $S/ami-report.txt
 echo "== Whisper 정규화(단어마다)"; grep -E "^\s+ami" $E/ami-report.txt
 echo "== meeteval cpWER(화자 통째)"; cat $E/meeteval-whisper.txt $E/meeteval-ours.txt

@@ -94,6 +94,9 @@ raw_authors:
   - 채움말 hmm·mm·mhm·mmm·uh·um 을 지운다(mm-hmm 도 지워진다).
   - colour → color, twenty → 20, Mr → mister, won't → will not 로 바꾼다.
 - **채점 코드:** `vapasr.data.cst_eval.set_en_norm`(기본 ours — 예전 값 그대로), `cst_stage3_eval --en-norm`(ours 면 config 키 없음).
+- **외부 기준 자동 첨부(2026-10-28):** `meeteval_cpwer.py` 보고 끝에 외부 AMI 기준 줄이 붙는다(사용자 "앞으로 cpWER 보고할 때 다른 모델들의 수치도 함께 포함해서 비교하기 쉽도록 해줘").
+  - 수치는 `raw/sources/experiments/2026-10-27-std-rescore/external_ami.json` 하나에 둔다. 이 문서의 비교표와 같은 값이다.
+  - 새 외부 수치를 찾으면 두 곳을 함께 고친다.
 - **단어마다 대 문장 단위:** 단어마다 하면 시각을 지켜 agn 을 함께 잴 수 있다. 문장 단위(meeteval)는 여러 단어 숫자까지 표준대로다.
   - 두 값의 차이는 숫자 표기 정도여야 한다. 실제 차이는 재채점 결과로 확인한다.
 

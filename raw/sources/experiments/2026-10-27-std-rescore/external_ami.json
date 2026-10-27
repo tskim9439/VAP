@@ -1,0 +1,11 @@
+{
+ "_note": "AMI cpWER 외부 기준(%) — wiki output-ami-external-comparison-20261027 와 같은 값(2026-10-27 원문 확인). ihm = IHM(-mix, Individual Headset Mix), sdm = SDM. 조건(지연·화자 분리·평가 단위·정규화)이 서로 달라 참고용이다.",
+ "rows": [
+  {"name": "Multitalker Parakeet v1", "ihm": 21.26, "sdm": 37.44, "latency": "스트리밍 1.12 s", "diar": "Streaming Sortformer v2", "src": "HF 카드 nvidia/multitalker-parakeet-streaming-0.6b-v1"},
+  {"name": "NVIDIA SSA-v1", "ihm": 22.10, "sdm": 39.91, "latency": "스트리밍", "diar": "Sortformer v2.1", "src": "arXiv 2609.10265 표 1"},
+  {"name": "NVIDIA SSA-v2 + Nemotron 3 Diarization", "ihm": 13.38, "sdm": 20.33, "latency": "스트리밍", "diar": "Nemotron 3 Diarization", "src": "arXiv 2609.10265 표 1"},
+  {"name": "VibeVoice-ASR-Streaming 7B", "ihm": 27.48, "sdm": 39.01, "latency": "평균 2.0 s", "diar": "종단", "src": "arXiv 2609.02812 표 2(녹음 480 s 상한)"},
+  {"name": "VibeVoice-ASR 7B", "ihm": 20.41, "sdm": 28.82, "latency": "오프라인", "diar": "종단", "src": "arXiv 2601.18184 표 2(NVIDIA 평가 25.50 / 42.19)"},
+  {"name": "DiCoW-v3.3", "ihm": 14.48, "sdm": 18.24, "latency": "오프라인", "diar": "예측(정답이면 11.33 / 14.78)", "src": "arXiv 2609.10265 표 1"}
+ ]
+}
