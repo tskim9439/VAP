@@ -2,11 +2,12 @@
 type: output
 status: active
 created: 2026-10-27
-updated: 2026-10-27
-summary: AMI cpWER 외부 비교 — Parakeet SDM 37.4·NVIDIA SSA-v2 20.3·VibeVoice 대 우리 E6 창 SDM 45.4(표준 정규화 44.7); 귀속이 가장 크고 받아쓰기도 뒤진다
+updated: 2026-10-28
+summary: AMI cpWER 외부 비교 — 우리 E6 창 SDM 45.4(표준 44.7) 대 VibeVoice-Streaming 1.5B 56.8·7B 39.0, Parakeet 37.4, NVIDIA SSA-v2 20.3; 같은 크기면 앞서고 큰 모델·화자 분리에 뒤진다
 sources:
   - '[[output-diarization-integration-20261025]]'
   - '[[output-vibevoice-stream-comparison-20261020]]'
+  - '[[source-vibevoice-asr-streaming-iclr2027]]'
 raw_authors:
   - tskim
 ---
@@ -14,7 +15,9 @@ raw_authors:
 # AMI 외부 비교: 우리 대 Multitalker Parakeet · VibeVoice-ASR (2026-10-27)
 
 사용자 요청은 "https://openreview.net/attachment?id=r6QZahgnJY&name=pdf 이것과 VibeVoice-ASR, "Multitalker Parakeet SDM" 과는 비교해서는 어떠한지 정리해줘"였다.
-- OpenReview 문서는 브라우저 확인 화면(403) 때문에 받지 못했다. 사용자가 PDF 나 제목을 주면 덧붙인다.
+- OpenReview 문서는 **VibeVoice-ASR-Streaming 의 ICLR 2027 투고본**이다. 사용자가 2026-10-28 `raw/inbox/` 에 올렸다 → [[source-vibevoice-asr-streaming-iclr2027]].
+  - AMI 수치는 arXiv 2609.02812 와 같다.
+  - 사용자가 말한 "1.7 B 모델"은 문서에서 1.5B(Qwen2.5-1.5B 백본)다.
 - 외부 수치는 2026-10-27 원문(HF 카드 raw README, arXiv HTML 표)에서 직접 뽑았다.
 
 ## 비교표 (AMI cpWER %, 낮을수록 좋다)
@@ -26,7 +29,11 @@ raw_authors:
 | Multitalker Parakeet v1(카드) | 0.6B × 화자 수 + 117M | 1.12 s | Streaming Sortformer v2 | 21.26 | 37.44 | HF 카드 — split·정규화·세션 여부 미기재 |
 | SSA-v1(arXiv 2609.10265 표 1) | 같음 | 스트리밍(표에 지연 미기재) | Sortformer v2.1 | 22.10 | 39.91 | 정답 화자 구간이면 15.22 · 20.27 |
 | **SSA-v2 + Nemotron 3 Diarization**(같은 표) | 0.6B × 화자 수 + 100M | 스트리밍 | Nemotron 3 Diarization | **13.38** | **20.33** | 정답 화자 구간이면 12.41 · 17.44 |
-| VibeVoice-ASR-Streaming 7B(arXiv 2609.02812 표 2) | 8.7B | 기대 평균 2.0 s(첫 출력 3.5 s) | 종단(모델이 직접) | 27.48 | 39.01 | 녹음 480 s 상한, WER 19.83 · 29.81 |
+| VibeVoice-ASR-Streaming 7B(OpenReview 표 2 = arXiv 2609.02812) | 8.7B | 기대 평균 2.0 s(첫 출력 3.5 s) | 종단(모델이 직접) | 27.48 | 39.01 | 480 s 이하 조각, WER 19.83 · 29.81 |
+| VibeVoice-ASR-Streaming 7B, 15 프레임(표 5) | 8.7B | 1.53 s | 종단 | 35.40 | 42.49 | WER 20.82 · 31.88 |
+| **VibeVoice-ASR-Streaming 1.5B**(표 5) | LLM Qwen2.5-1.5B | 2.00 s | 종단 | **45.15** | **56.83** | WER 22.85 · 34.43 |
+| VibeVoice-ASR-Streaming 1.5B, 15 프레임(표 5) | 같음 | 1.53 s | 종단 | 46.48 | 59.49 | WER 23.39 · 35.90 |
+| Azure Conversation Transcriber(표 2) | 서비스 | 실측 8.21–9.12 s | 서비스 | 31.90 | 41.40 | WER 24.01 · 33.27 |
 | VibeVoice-ASR 7B 오프라인(arXiv 2601.18184 표 2) | 8.7B | 오프라인(60 분 한 번에) | 종단 | 20.41 | 28.82 | WER 18.81 · 24.65, DER 11.92 · 13.43 |
 | DiCoW-v3.3(2609.10265 표 1) | Whisper 계열 | 오프라인 | 정답 / 예측 | 11.33 / 14.48 | 14.78 / 18.24 | 참고 상한 |
 
@@ -36,6 +43,21 @@ raw_authors:
 - **Parakeet 카드 IHM 21.26:** 제3자 재현(transcribe.cpp — AMI IHM test 16 회의, meeteval, 회의 통째)의 NeMo 참조 21.39 와 맞는다.
   - 2609.10265 는 IHM 을 "Individual Headset Mix"(= 우리 IHM-mix)로 정의한다.
 - **카드의 평가 세션 수 표**(AMI IHM 219 등)는 화자 분리 모델 카드의 DIHARD·CALLHOME 수를 옮겨 온 것으로 보여 근거로 쓰지 않는다.
+
+## 같은 LLM 크기: 우리 1.7B 대 VibeVoice-ASR-Streaming 1.5B (2026-10-28)
+| AMI(eval) | 우리 E6 final(LLM 1.7B, δ10 평균 0.92 s) | VibeVoice-Streaming 1.5B(2.00 s) | VibeVoice-Streaming 7B(2.00 s) |
+|---|---:|---:|---:|
+| IHM(-mix) cpWER | 37.68(표준 정규화 37.09) | 45.15 | 27.48 |
+| SDM cpWER | 45.35(표준 정규화 44.73) | 56.83 | 39.01 |
+| IHM(-mix) WER(우리 agn) | 22.54(21.49) | 22.85 | 19.83 |
+| SDM WER(우리 agn) | 28.06(27.16) | 34.43 | 29.81 |
+
+- **비슷한 크기에서는 우리가 앞선다.** cpWER 가 SDM 에서 12, IHM 에서 8 낮고, 지연은 절반 아래다.
+- **받아쓰기:** SDM 은 7 pt 낫고 IHM 은 비슷하다(0.3–1.4 낫다).
+- **조건 차이:**
+  - 우리 수치는 창(20–90 s, 창마다 화자 짝) cpWER 이고, 그쪽은 480 s 이하 조각이다. 조각이 길수록 화자 귀속이 어렵다.
+  - 회의 통째 수치(96172 E7a·96461 E6 기준선)가 나오면 이 표를 다시 맞춘다.
+- **7B 와 견주면 SDM cpWER 가 6 높다.** VibeVoice 쪽은 1.5B → 7B 에서 cpWER 가 12.8 pt(다섯 셋 평균) 내렸다. 화자 귀속이 크기에 민감하다.
 
 ## 받아쓰기 몫(화자 무시)
 | | IHM(-mix) | SDM |

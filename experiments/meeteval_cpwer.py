@@ -65,7 +65,9 @@ def main():
     if a.refs and os.path.exists(a.refs):
         ex = json.load(open(a.refs, encoding="utf-8"))
         print("== 외부 AMI 기준(cpWER %, IHM(-mix) / SDM — 지연·화자 분리·평가 단위·정규화가 서로 다르다, wiki output-ami-external-comparison-20261027)", flush=True)
-        for r in ex["rows"]: print(f"  {r['name']:40s} {r['ihm']:6.2f} / {r['sdm']:6.2f} · {r['latency']} · 화자 분리 {r['diar']} · {r['src']}", flush=True)
+        for r in ex["rows"]:
+            w = f" · WER {r['wer_ihm']:.2f} / {r['wer_sdm']:.2f}" if "wer_ihm" in r else ""
+            print(f"  {r['name']:40s} {r['ihm']:6.2f} / {r['sdm']:6.2f}{w} · {r['latency']} · 화자 분리 {r['diar']} · {r['src']}", flush=True)
     if a.json: json.dump(out, open(a.json, "w"), indent=1, ensure_ascii=False)
 
 
