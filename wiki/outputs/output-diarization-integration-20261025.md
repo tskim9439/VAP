@@ -186,6 +186,6 @@ sources:
 
 ### 순서
 1. E6 헤드 그대로 회의 단위 DER 을 잰다(90 s 조각마다 새로 대 AOSC — AOSC 학습 전 기준선, 호스트 GPU).
-2. E7a(AOSC 헤드 미세조정, 1 노드 5,000 step — 스모크가 공유 GPU 에서 2.4 s/step 이라 3–4 h 어림)를 학습하고, 회의 단위 DER 과 `q17-e7-amifull`(E6 LLM + E7a 헤드, 회의 통째 cpWER)을 잰다.
+2. E7a(AOSC 헤드 미세조정, 1 노드 5,000 step — 스모크가 공유 GPU 에서 2.4 s/step 이라 3–4 h 어림; job 96171, E6 평가 95936 이 끝난 뒤 시작, 평가 96172)를 학습하고, 회의 단위 DER 과 `q17-e7-amifull`(E6 LLM + E7a 헤드, 회의 통째 cpWER)을 잰다.
 3. 회의 통째에서 LLM 이 회의 단위 슬롯을 따르지 못하면(귀속 몫이 크면) E7b(`--global-slots 0.5`, E6 final 에서 짧게)를 한 뒤, 그 인코더로 헤드를 다시 AOSC 미세조정한다.
 4. 실시간 경로(`realtime.py`·`live.py`)에 헤드·AOSC 를 붙인다.

@@ -18,5 +18,8 @@
 - Next:
   - 확인: 호스트 스모크(GPU 6, 20 step)는 손실 0.35 → 0.26, 2.4 s/step 이다. 저장·재로드 대조는 손실 같고 가중치 차이 0 이며, 서버 test_diar 14 개가 통과했다.
   - E6 회의 단위 DER(GPU 4)을 마저 잰다.
-  - 사용자 제출: `bash slurm/submit-q17-e7a.sh`·`bash slurm/submit-evals.sh q17-e6-amifull`.
+  - 사용자 제출(17:00): `bash slurm/submit-q17-e7a.sh --after-any 95936`.
+    - E7a 학습은 job 96171 로, E6 평가 노드 95936 이 끝난 뒤(afterany) 시작한다.
+    - 평가 q17-e7-amifull 은 job 96172 로, 96171 이 성공한 뒤 돈다.
+  - E6 회의 통째 기준선 `q17-e6-amifull` 은 아직 제출하지 않았다.
 - By: tskim
