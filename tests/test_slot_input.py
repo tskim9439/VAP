@@ -91,3 +91,16 @@ def test_e6_diar_head_loss_mixing_and_encode_stream():
     feats = m.encode(x["wav"], x["wav_len"], x["K"]); assert feats.shape == (2, 2, 3, 4)
     assert torch.allclose(m.chunk_embed(feats), m.chunk_embed(feats[:, :1], m.predict_act(dlog)), atol=1e-6)                      # 예측 활동 스트림 = 명시 입력
     assert "diar_head" in m.trainable_state()
+
+
+def test_slot_input_ties_into_loss_without_activity():
+    """E5 학습(2026-10-27): 활동 입력이 없는 행(replay)에서도 adapter_slot 이 손실 그래프에 0 가중으로 묶인다 — DDP(find_unused_parameters=False)가
+    쓰이지 않은 파라미터를 기다리다 멈추지 않게(spk_head·diar_head 와 같은 규칙). 값은 그대로다."""
+    import importlib.util, pathlib
+    spec = importlib.util.spec_from_file_location("_tl", pathlib.Path(__file__).parent / "test_semcommit_tokens_loss.py"); tl = importlib.util.module_from_spec(spec); spec.loader.exec_module(tl)
+    m, _ = tl.tiny_model(); x, _ = tl._batch(m.config.sp_ids); x["labels"] = x["labels"].clone(); x["labels"][0, 4] = -100; x["labels"][0, 8] = -100   # SEM 타깃 빼기(E6 시험과 같다)
+    m.train(); base = m(**x).loss.detach()
+    m.add_slot_input(4); m.train(); out = m(**x); out.loss.backward()
+    assert torch.allclose(out.loss.detach(), base) and m.adapter_slot.weight.grad is not None and not m.adapter_slot.weight.grad.any()
+    m.eval(); m.adapter_slot.weight.grad = None; m(**x).loss                                                    # 평가에서는 묶지 않는다
+    assert m.adapter_slot.weight.grad is None

@@ -272,6 +272,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
             loss = loss + 0.0 * sum(p.sum() for p in self.spk_head.parameters())
         if loss_diar_t is not None: loss = loss + float(self.config.diar_weight) * loss_diar_t
         elif self.diar_head is not None and self.training: loss = loss + 0.0 * sum(p.sum() for p in self.diar_head.parameters())   # 활동 라벨 없는 행(replay): DDP 가 기다리지 않게
+        if self.adapter_slot is not None and act_in is None and self.training: loss = loss + 0.0 * self.adapter_slot.weight.sum()   # E5 활동 입력 없는 행(replay): 같은 이유(E6 은 헤드 예측이 늘 들어간다)
         dec = self._decision_stats(logits, t, dec_kind[:, 1:][sel]) if dec_kind is not None else {}
         out = VapAsrOutput(loss=loss, loss_next=st["loss_next"], loss_text=st["loss_text"], top1_text=st["top1_text"], n_labels=int(t.numel()),
                            loss_eot=st["loss_eot"], loss_act=(loss_act.item() if loss_act is not None else None), act_acc=act_st.get("act_acc"), n_soft=st["n_soft"],
