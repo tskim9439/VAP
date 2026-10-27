@@ -14,7 +14,11 @@ VapAsr 체크포인트(1.7B)의 인코더를 동결(fp32, 평가 경로와 같�
 저장·재로드 대조(2026-10-25, 기본 — 메모리 규칙 checkpoint-save-load-parity): 학습 끝에 final 을 새 가지로, 인코더는 init 에서 새로 읽어 마지막 배치의 손실을 메모리 모델과
   대조하고(가지·인코더 가중치 차이 0, 손실 차이 ≤ 1e-4 — 어긋나면 DONE 을 쓰지 않는다) out/parity.json 에 남긴다. 끝난 run 은 --check-final N 으로 학습 설정(out/config.json)
   분포의 배치 N 개에서 재로드 모델의 손실·frame_acc 만 잰다(학습 로그 끝 값과 비교).
-재개: 마지막 완전한 checkpoint(trainer.pt 있음)에서. 설정 지문(out/config.json)이 다르면 멈춘다."""
+재개: 마지막 완전한 checkpoint(trainer.pt 있음)에서. 설정 지문(out/config.json)이 다르면 멈춘다.
+--aosc(E7, 2026-10-27 — 회의 통째·실시간 화자 유지): 창 대신 긴 클립(--window 예 90,120)을 스트리밍으로 흉내 낸다(vapasr.hf.diar.aosc_clip_loss — Streaming Sortformer AOSC).
+  청크(--aosc-chunk)마다 [화자 캐시 · FIFO · 청크] 를 가지에 넣고 청크 몫에 Sort·PIT 손실, 캐시는 정답으로 고르고(같은 점수는 --aosc-noise 로 흩뜨림) 확률 --aosc-perm 으로
+  캐시 화자 순서를 섞는다(정답 슬롯도 같이). 추론 설정(캐시·FIFO·갱신 주기, 추론 청크 6)은 diar.pt 의 aosc 에 남는다 — aosc_stream·회의 통째 평가가 쓴다.
+  --init 은 가지가 붙을 모델(E6 final — stage 3 는 인코더도 학습한다), --init-branch 는 experiments/diar_extract.py 로 꺼낸 E6 헤드."""
 import argparse, fnmatch, glob, json, math, os, random, sys, time
 
 import numpy as np
@@ -40,7 +44,11 @@ ap.add_argument("--dry-run", action="store_true", help="데이터만 만들고 �
 ap.add_argument("--check-final", type=int, default=0, help="학습 없이 끝난 run(out/final)의 저장·재로드 대조만 — out/config.json 설정 분포의 배치 N 개")
 ap.add_argument("--lookahead", type=int, default=None, help="인과 가지(2026-10-26, E1c·E6): 프레임 t 의 출력이 t + R 프레임까지만 본다(DiarBranch lookahead, 기본 창 전체)")
 ap.add_argument("--init-branch", default=None, help="가지 가중치 시작점(diar.pt — 예 E1 final, 양방향 가중치를 인과 가지에 그대로). 재개 checkpoint 가 있으면 그것이 우선")
+ap.add_argument("--aosc", action="store_true", help="E7 AOSC 스트리밍 학습(긴 클립 — --window 90,120 등)"); ap.add_argument("--aosc-cache", type=int, default=188)
+ap.add_argument("--aosc-fifo", type=int, default=188); ap.add_argument("--aosc-period", type=int, default=94); ap.add_argument("--aosc-chunk", type=int, default=47, help="학습 한 step 의 새 프레임(추론은 6)")
+ap.add_argument("--aosc-perm", type=float, default=0.5); ap.add_argument("--aosc-noise", type=float, default=0.5)
 a = ap.parse_args()
+assert not a.aosc or a.lookahead is not None, "--aosc 는 인과 가지(--lookahead R, 예 0)와 함께 — 캐시 뒤 청크가 앞만 본다"
 
 
 def log(*x):
@@ -109,7 +117,19 @@ def collate(b):
 def fingerprint():
     keys = ("init", "data", "split", "corpora", "sim_data", "weights", "window", "window_draws", "n_spk", "taps", "d", "layers", "heads", "ffn", "dropout", "alpha", "batch",
             "lr", "warmup", "max_steps", "weight_decay", "noise_bank", "noise_p", "rir_p", "noise_snr", "gain_db", "seed")
-    return {**{k: getattr(a, k) for k in keys}, **{k: getattr(a, k) for k in ("lookahead", "init_branch") if getattr(a, k) is not None}}   # 켰을 때만(E1 지문 그대로)
+    return {**{k: getattr(a, k) for k in keys}, **{k: getattr(a, k) for k in ("lookahead", "init_branch") if getattr(a, k) is not None},   # 켰을 때만(E1 지문 그대로)
+            **({k: getattr(a, k) for k in ("aosc", "aosc_cache", "aosc_fifo", "aosc_period", "aosc_chunk", "aosc_perm", "aosc_noise")} if a.aosc else {})}
+
+
+def aosc_cfg():
+    from vapasr.hf.diar import AoscConfig
+    return AoscConfig(cache=a.aosc_cache, fifo=a.aosc_fifo, period=a.aosc_period, chunk=6)
+
+
+def aosc_kw(b, dev, tag):
+    """forward(aosc=…) 인자 — 표본마다 고정 씨앗(tag·표본 번호)이라 재로드 대조가 같은 스트리밍을 다시 돈다."""
+    act, mask, pad, K = b["act"].to(dev), b["mask"].to(dev), b["pad"].to(dev), b["K"]
+    return dict(act=act, mask=mask & ~pad, K=K, cfg=aosc_cfg(), seeds=[f"{tag}:{j}" for j in range(len(K))], alpha=a.alpha, perm_p=a.aosc_perm, chunk=a.aosc_chunk)
 
 
 def reload_check(final_dir, batches, model=None, enc=None):
@@ -125,6 +145,9 @@ def reload_check(final_dir, batches, model=None, enc=None):
             for b in batches:
                 wav, wl, K, act, mask, pad = (b[k].to(dev) for k in ("wav", "wav_len", "K", "act", "mask", "pad"))
                 feats = e(wav, wl, K, taps=taps)
+                if a.aosc:                                                                         # E7: 같은 씨앗의 스트리밍 흉내 손실
+                    with torch.autocast("cuda", dtype=torch.bfloat16): loss, st = m(feats, pad, aosc=aosc_kw(b, dev, f"parity:{len(K)}"))
+                    loss_sum += float(loss); hit += st["hit"]; tot += st["frames"]; continue
                 with torch.autocast("cuda", dtype=torch.bfloat16): lg = m(feats, pad)
                 loss, _, _ = sort_pit_loss(lg.float(), act, mask & ~pad, a.alpha); mm = (mask & ~pad).float()[..., None]
                 loss_sum += loss.item(); hit += float((((lg.float() > 0).float() == act).float() * mm).sum()); tot += float(mm.sum()) * act.shape[-1]
@@ -202,7 +225,8 @@ def main():
     def save(tag):
         if rank != 0: return None
         d = os.path.join(a.out_dir, tag); tmp = d + f".tmp{os.getpid()}"; os.makedirs(tmp, exist_ok=True)
-        torch.save(dict(state=model.state_dict(), cfg=model.cfg, taps=list(taps), init=os.path.abspath(a.init), step=step), os.path.join(tmp, "diar.pt"))
+        torch.save(dict(state=model.state_dict(), cfg=model.cfg, taps=list(taps), init=os.path.abspath(a.init), step=step, **({"aosc": aosc_cfg().to_dict()} if a.aosc else {})),
+                   os.path.join(tmp, "diar.pt"))
         if tag != "final": torch.save(dict(opt=opt.state_dict(), sched=sched.state_dict(), step=step), os.path.join(tmp, "trainer.pt"))
         else: json.dump(dict(cfg=model.cfg, taps=list(taps), init=os.path.abspath(a.init), step=step, args=fingerprint()), open(os.path.join(tmp, "diar.json"), "w"), indent=1)
         if os.path.exists(d): d = f"{d}-dup{step}-{os.getpid()}"; log(f"!! {tag} 가 이미 있다 — 덮어쓰지 않고 {d} 로")
@@ -218,12 +242,18 @@ def main():
         wav, wl, K = b["wav"].to(dev, non_blocking=True), b["wav_len"].to(dev), b["K"].to(dev)
         act, mask, pad = b["act"].to(dev), b["mask"].to(dev), b["pad"].to(dev)
         with torch.no_grad(): feats = enc(wav, wl, K, taps=taps)                                      # (B, 1 + 탭, K, D) fp32
-        with torch.autocast("cuda", dtype=torch.bfloat16): logits = net(feats, pad)
-        loss, srt, pit = sort_pit_loss(logits.float(), act, mask & ~pad, a.alpha)
+        if a.aosc:                                                                                     # E7: 표본(긴 클립)마다 스트리밍 흉내
+            with torch.autocast("cuda", dtype=torch.bfloat16): loss, st = net(feats, pad, aosc=aosc_kw(b, dev, f"{a.seed}:{rank}:{step}"))
+            fr = max(1.0, st["frames"]); stats = dict(sort=st["sort"] / fr, pit=st["pit"] / fr, frame_acc=st["hit"] / fr, steps=float(st["steps"]))
+        else:
+            with torch.autocast("cuda", dtype=torch.bfloat16): logits = net(feats, pad)
+            loss, srt, pit = sort_pit_loss(logits.float(), act, mask & ~pad, a.alpha)
         opt.zero_grad(set_to_none=True); loss.backward(); gn = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0); opt.step(); sched.step(); step += 1
         with torch.no_grad():
-            m = (mask & ~pad).float()[..., None]; pr = (logits.float() > 0).float()
-            for k, v in dict(loss=loss.item(), sort=srt.item(), pit=pit.item(), gn=float(gn), frame_acc=float(((pr == act).float() * m).sum() / (m.sum() * a.n_spk).clamp(min=1))).items():
+            if not a.aosc:
+                m = (mask & ~pad).float()[..., None]; pr = (logits.float() > 0).float()
+                stats = dict(sort=srt.item(), pit=pit.item(), frame_acc=float(((pr == act).float() * m).sum() / (m.sum() * a.n_spk).clamp(min=1)))
+            for k, v in dict(loss=loss.item(), gn=float(gn), **stats).items():
                 acc[k] = acc.get(k, 0.0) + v
         if step % a.log_every == 0 or step == total:
             n = a.log_every if step % a.log_every == 0 else (step % a.log_every or a.log_every)

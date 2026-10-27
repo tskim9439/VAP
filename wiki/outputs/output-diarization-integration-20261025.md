@@ -131,3 +131,48 @@ sources:
     - 같은 AMI 창에서 최적 짝 DER 은 eval IHM-mix 23.08 · SDM 27.04 다(dev 최적 임계 0.45 — E6 의 값과 같다).
     - E1(양방향) 18.67 · 23.03 보다 약 4 pt 높다. 대부분 놓침이다(SDM eval miss 15.4 대 E1 0.5 임계 15.9 → 18.4) — 미래를 못 보니 말 시작을 늦게 잡는다.
     - E6 헤드는 이 가지에서 시작해 함께 학습한다(학습 중 프레임 정확도 0.89 → 0.94).
+
+## 7. E7 — 회의 통째·실시간 화자 유지(AOSC) 구현 (2026-10-27)
+사용자: "E7 을 먼저 구현해놓자".
+
+### 문제
+- 지금 헤드와 LLM 은 창마다 "창에서 먼저 말한 사람 = A" 로 슬롯을 정한다.
+- 회의를 통째로 디코드하면 인코딩 조각마다 슬롯이 새로 정해져, 같은 사람이 조각마다 다른 슬롯이 된다.
+- 예전 V2 의 회의 통째 평가에서 귀속이 무너진 이유가 이것이다.
+
+### 방법(Streaming Sortformer AOSC, arXiv:2507.18446)
+- **입력:** 헤드 입력 임베딩(탭 가중합 → LN → 투영, 512 차원)을 [화자 캐시 · FIFO · 새 청크] 로 이어 인과 헤드에 넣고, 청크 몫 출력만 쓴다.
+- **캐시 순서:** 화자(도착 순서)마다 대표 프레임을 묶어 둔다. 캐시 앞 화자가 늘 앞 슬롯이 되어 회의 내내 같은 슬롯을 유지한다.
+- **캐시 갱신:** FIFO 가 넘치면 가장 오래된 프레임과 지금 캐시를 후보로 고른다.
+  - 점수: S_i = log P_i + Σ_{j≠i} log(1−P_j), P_i < 0.5 이면 −∞.
+  - 가산점: 새 프레임 +0.05, 화자마다 상위 33·66 개 +2 ln 2·+ln 2.
+  - 무음: 무음 평균 임베딩을 화자마다 3 칸 둔다.
+  - 크기: 상위 188 칸.
+- **설정:** 캐시 188, FIFO 188, 갱신 94 프레임, 추론 청크 6(0.48 s) — 헤드가 인과라 청크 크기는 출력에 영향이 없고 갱신 시점만 바꾼다.
+- **학습(E7a):**
+  - 원 논문처럼 오프라인 헤드(E6)를 스트리밍 흉내로 미세조정한다.
+  - 긴 클립(90–120 s)을 청크 47 로 흘린다.
+  - 캐시는 정답으로 고르고(같은 점수는 Gumbel 0.5 로 흩뜨림), 캐시 화자 순서를 0.5 확률로 섞는다(정답 슬롯도 같이).
+  - 원 논문은 미세조정 없이 캐시만 붙이면 DER 27.6, 미세조정하면 19.9 였다.
+- **LLM 쪽(E7b, 필요하면):**
+  - `--global-slots P` 는 학습 창을 확률 P 로 대화 전체 도착 순서 슬롯으로 둔다. 회의 통째 디코드의 문맥 창에서는 첫 화자가 A 가 아닐 수 있기 때문이다.
+  - 헤드가 있으면 `diar_align` 이 켜진다. 헤드 손실은 창 도착 순서로 정렬한 정답에 걸고, 슬롯 입력으로 주는 헤드 예측은 정답 자리로 맞춘다(AOSC 흉내).
+
+### 코드(시험: 맥 753 통과 — 실패 15 는 로컬 환경)
+- `vapasr/hf/diar.py`
+  - DiarBranch.embed/head, AoscConfig, aosc_select, aosc_stream(추론), aosc_clip_loss(학습)
+  - forward(aosc=…)(DDP 경로), arrival_sort, align_slots
+- `experiments/diar_train.py --aosc`, `experiments/diar_extract.py`(E6 헤드 → diar.pt), `experiments/diar_eval.py run --session --session-modes aosc,resetS`(회의 단위 DER)
+- `vapasr/hf/long_session.py`(segment_plan, encode_long(aosc=…))
+- `experiments/cst_stage3_eval.py --aosc --diar-head-override`
+- `v3_eval_task.sh` amifull(AOSC·DIAR), `slurm/submit-evals.sh`
+  - `q17-e6-amifull`: E6 를 조각마다 새로 대 AOSC 로
+  - `q17-e7-amifull`: E7a 헤드로
+- `vapasr/data/cst_dialogue.py`(global_slots), `experiments/stage3_train.py --global-slots`, `modeling_vapasr.py`(diar_align)
+- 제출·평가: `slurm/submit-q17-e7a.sh`(1 노드), `raw/sources/experiments/2026-10-26-data-expansion/e7_session_eval.sh`
+
+### 순서
+1. E6 헤드 그대로 회의 단위 DER 을 잰다(90 s 조각마다 새로 대 AOSC — AOSC 학습 전 기준선, 호스트 GPU).
+2. E7a(AOSC 헤드 미세조정, 1 노드 약 2 h)를 학습하고, 회의 단위 DER 과 `q17-e7-amifull`(E6 LLM + E7a 헤드, 회의 통째 cpWER)을 잰다.
+3. 회의 통째에서 LLM 이 회의 단위 슬롯을 따르지 못하면(귀속 몫이 크면) E7b(`--global-slots 0.5`, E6 final 에서 짧게)를 한 뒤, 그 인코더로 헤드를 다시 AOSC 미세조정한다.
+4. 실시간 경로(`realtime.py`·`live.py`)에 헤드·AOSC 를 붙인다.

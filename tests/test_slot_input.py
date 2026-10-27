@@ -104,3 +104,82 @@ def test_slot_input_ties_into_loss_without_activity():
     assert torch.allclose(out.loss.detach(), base) and m.adapter_slot.weight.grad is not None and not m.adapter_slot.weight.grad.any()
     m.eval(); m.adapter_slot.weight.grad = None; m(**x).loss                                                    # 평가에서는 묶지 않는다
     assert m.adapter_slot.weight.grad is None
+
+
+def test_e7_encode_long_aosc_matches_encode_before_cache_update():
+    """E7(2026-10-27): encode_long(aosc=…) — 조각마다 인코더 탭에서 가지 임베딩을 이어 회의 전체를 AOSC 스트리밍. 캐시를 갱신하기 전(FIFO 안)이면
+    E6 의 model.encode(헤드 예측 활동 스트림)와 같은 값이다. segment_plan 은 프레임을 빠짐없이 한 번씩 덮는다."""
+    import importlib.util, pathlib
+    import numpy as np
+    from vapasr.hf.diar import AoscConfig
+    from vapasr.hf.long_session import encode_long, segment_plan
+    spec = importlib.util.spec_from_file_location("_tl", pathlib.Path(__file__).parent / "test_semcommit_tokens_loss.py"); tl = importlib.util.module_from_spec(spec); spec.loader.exec_module(tl)
+    m, _ = tl.tiny_model(); m.add_slot_input(4)
+    m.add_diar_head(dict(n_streams=2, d_in=4, d=16, layers=1, heads=2, ffn=16, n_spk=4, dropout=0.0, lookahead=0), [0], weight=0.5, threshold=0.5, ramp=(1.0, 1.0))
+
+    class Enc(torch.nn.Module):
+        def forward(self, wav, wav_len, K, taps=(), inject=None):
+            g = torch.Generator().manual_seed(int(wav.shape[1])); y = torch.randn(wav.shape[0], 1 + len(taps), int(K.max()), 4, generator=g)
+            return y if taps else y[:, 0]
+    m.encoder = Enc(); m.eval(); K = 40; wav = np.zeros(K * 1280, np.float32)
+    ref = m.encode(torch.from_numpy(wav)[None], torch.tensor([len(wav)]), torch.tensor([K]))[0]
+    got = encode_long(m, wav, K, aosc=AoscConfig(fifo=64, period=32, chunk=6))
+    assert got.shape == ref.shape == (2, K, 4) and torch.allclose(got, ref, atol=1e-5)
+    long = encode_long(m, np.zeros(300 * 1280, np.float32), 300, aosc=AoscConfig(cache=20, fifo=30, period=10, chunk=7))
+    assert long.shape == (2, 300, 4) and set(long[1, :, :4].unique().tolist()) <= {0.0, 1.0} and not long[1, :, 4:].any()
+    ch = int(getattr(m.config, "encoder_right_context", 0) or 0) + 1; Kb = 10000
+    plan = segment_plan(np.zeros(Kb * 1280, np.float32), Kb, ch)
+    cov = np.zeros(Kb, int)
+    for seg, Ks, a0, c0, n in plan: cov[c0: c0 + n] += 1; assert a0 <= c0 and c0 + n <= a0 + Ks and len(seg) == (Kb - a0) * 1280 or len(seg) == Ks * 1280
+    assert (cov == 1).all()
+
+
+def test_e7_global_slots_dataset_training_only(tmp_path):
+    """E7(2026-10-27): global_slots — 학습 rng 에서 그 확률로 대화 전체 도착 순서 슬롯(태그·활동·슬롯 입력이 모두 따른다). 평가(rng 없음)와 0 이면 창 순서·난수 그대로."""
+    import random
+    from test_dialogue_dataset import FakeTok
+    from test_v2_slots import make_multi
+    from vapasr.data.cst_dialogue import CstDialogueDataset
+    q, d = make_multi(tmp_path); kw = dict(delays=(4,), windows=[("m1", 3.0, 10.0)], max_speakers=4, spk_activity=True)
+    w = CstDialogueDataset([q], FakeTok(), **kw); g = CstDialogueDataset([q], FakeTok(), global_slots=1.0, act_input=ActNoise(clean=1.0), **kw)
+    assert w.slots(0, random.Random(0))[0] == ["p1", "p2", "p3", "p0"] == g.slots(0)[0]                 # 창 순서(학습 끔·평가)
+    assert g.slots(0, random.Random(0))[0] == ["p0", "p1", "p2", "p3"]
+    s = g.cst_sequence(0, 4, rng=random.Random(0)); assert s["speakers"] == ["p0", "p1", "p2", "p3"] and g.problems_of(s) == []
+    random.seed(0); it = g[0]; a = it["activity"]
+    assert it["act_in"].shape == a.shape and torch.equal(it["act_in"], a) and a[:20, 1].all() and not a[:20, 0].any() and a[-5:, 0].all()   # p1 = 슬롯 1(3–5 s), p0 = 슬롯 0(12–13 s)
+    z = CstDialogueDataset([q], FakeTok(), global_slots=0.0, **kw); r1, r2 = random.Random(5), random.Random(5)
+    assert z.slots(0, r1) == w.slots(0, r2) and r1.random() == r2.random()                            # 0 이면 난수를 더 뽑지 않는다
+    with pytest.raises(ValueError): CstDialogueDataset([q], FakeTok(), global_slots=1.5, **kw)
+
+
+def test_e7_arrival_sort_and_align_slots():
+    from vapasr.hf.diar import align_slots, arrival_sort
+    t = torch.zeros(1, 10, 4); t[0, 5:, 0] = 1; t[0, 1:4, 2] = 1; t[0, 8:, 3] = 1                         # 창 안 첫 활동: 2(1) → 0(5) → 3(8), 1 은 없음
+    srt = arrival_sort(t); assert torch.equal(srt[0, :, 0], t[0, :, 2]) and torch.equal(srt[0, :, 1], t[0, :, 0]) and torch.equal(srt[0, :, 2], t[0, :, 3]) and not srt[0, :, 3].any()
+    m = torch.ones(1, 10, dtype=torch.bool); m[0, :4] = False; s2 = arrival_sort(t, m); assert torch.equal(s2[0, :, 0], t[0, :, 0])   # 마스크 밖 활동은 순서에 안 센다
+    p = t[..., [3, 0, 1, 2]]                                                                            # 예측 열이 섞인 것 → 정답 자리로
+    assert torch.equal(align_slots(p, t), t) and torch.equal(align_slots(t, t), t)
+
+
+def test_e7_diar_align_forward():
+    """diar_align: 헤드 손실은 창 도착 순서로 정렬한 정답, 슬롯 활동 입력(ρ 1)은 정답 자리로 맞춘 헤드 예측."""
+    import importlib.util, pathlib
+    from vapasr.hf.diar import align_slots, arrival_sort, sort_pit_loss
+    spec = importlib.util.spec_from_file_location("_tl", pathlib.Path(__file__).parent / "test_semcommit_tokens_loss.py"); tl = importlib.util.module_from_spec(spec); spec.loader.exec_module(tl)
+    m, _ = tl.tiny_model(); x, _ = tl._batch(m.config.sp_ids); x["labels"] = x["labels"].clone(); x["labels"][0, 4] = -100; x["labels"][0, 8] = -100
+    m.add_slot_input(4); m.add_diar_head(dict(n_streams=2, d_in=4, d=16, layers=1, heads=2, ffn=16, n_spk=4, dropout=0.0, lookahead=0), [0], weight=0.5, threshold=0.5, ramp=(1.0, 1.0))
+    m.config.diar_align = True
+
+    class Enc(torch.nn.Module):
+        def forward(self, wav, wav_len, K, taps=(), inject=None):
+            g = torch.Generator().manual_seed(int(wav.shape[1])); y = torch.randn(wav.shape[0], 1 + len(taps), int(K.max()), 4, generator=g)
+            return y if taps else y[:, 0]
+    m.encoder = Enc(); del x["feats"]; x.update(wav=torch.zeros(2, 480), wav_len=torch.tensor([320, 480]), K=torch.tensor([2, 3]))
+    act = torch.zeros(2, 3, 4); act[0, 1:, 1] = 1; act[0, :2, 3] = 1; act[1, :, 2] = 1; am = torch.tensor([[1., 1., 0.], [1., 1., 1.]]); ai = torch.zeros(2, 3, 4)
+    seen = []; orig = m.chunk_embed
+    def spy(feats, a=None): seen.append(None if a is None else a.clone()); return orig(feats, a)
+    m.chunk_embed = spy; m.train(); m.act_pred_rho = 1.0
+    out = m(**x, activity=act, activity_mask=am, act_in=ai)
+    f, dlog = m.encode_diar(x["wav"], x["wav_len"], x["K"]); pred = m.predict_act(dlog); mk = am.bool() & (torch.arange(3)[None] < x["K"][:, None])
+    want, _, _ = sort_pit_loss(dlog.float(), arrival_sort(act, mk), mk, float(m.config.diar_alpha))
+    assert abs(float(out.loss_diar) - float(want)) < 1e-6 and torch.equal(seen[-1], align_slots(pred, act))

@@ -2,6 +2,10 @@
 """E1 화자 분리 가지 평가(2026-10-25): AMI 창 평가(cst_stage3_eval 의 ami-bench-v1 창 — 20–90 s, draw 1, 화자 4, seed 0)와 같은 창에서 80 ms 프레임 DER(collar 0)을 잰다.
   python experiments/diar_eval.py run --diar <out/final 또는 checkpoint-N> --nemotron-dir <dir> --out <dir> [--data ami-bench-v1] [--corpora ami-ihmmix,ami-sdm]
       [--threshold 0.5] [--batch 8] [--rank r --world-size n] [--limit-windows 0] [--save-probs]
+  python experiments/diar_eval.py run --session [--session-modes aosc,reset90] … — 회의 통째(E7, 2026-10-27): 회의 하나 = 행 하나. 인코더를 겹침 조각으로
+      (long_session.segment_plan) 돌려 가지 임베딩을 한 번 만들고, 방식마다 <out>/<방식>/ 에 행을 쓴다. aosc = AOSC 스트리밍(diar.aosc_stream — diar.pt 의 aosc 설정,
+      없으면 기본 · --aosc-chunk·--aosc-cache·--aosc-fifo·--aosc-period 로 덮는다 — 회의 내내 같은 슬롯), resetS = S 초 조각마다 가지를 따로(슬롯이 조각마다 새로 — 비교 기준).
+      참조 = 회의 전체 도착 순서 slot_activity, conf_best = 회의 전체에 한 순열(조각마다 바뀐 슬롯은 혼동으로 센다). 요약은 summarize --out <out>/<방식>.
   python experiments/diar_eval.py summarize --out <dir>
   python experiments/diar_eval.py sweep --out <dir> [--thresholds 0.2,0.3,0.4,0.5,0.6]   — --save-probs 로 남긴 확률에서 임계별 DER(dev 에서 고른다)
 --save-probs(2026-10-25): 창마다 out/probs/<id>.npz(prob float16 (K, 화자), ref uint8, mask) — 임계 훑기와 E3(예측 활동을 E2 대상 화자 디코드에 주입)의 입력.
@@ -65,6 +69,72 @@ def run(a):
     print(f"DONE rank={a.rank} rows={n}", flush=True)
 
 
+def run_session(a):
+    """회의 통째 DER(--session). 행 = 회의(ami-bench-v1 의 대화 하나 × 조건). 화자가 n_spk 보다 많으면 먼저 말한 n_spk 명만 참조에 두고 나머지 화자 프레임은 셈에서 뺀다."""
+    from experiments.cst_stage3_eval import windows_of
+    from vapasr.data.cst_dialogue import slot_activity, window_speakers
+    from vapasr.hf import load_tokenizer
+    from vapasr.hf.diar import AoscConfig, DiarBranch, aosc_stream, der_counts, load_encoder
+    from vapasr.hf.long_session import segment_plan
+    torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
+    x = torch.load(os.path.join(a.diar, "diar.pt"), map_location="cuda"); n_spk = x["cfg"]["n_spk"]
+    model = DiarBranch(**x["cfg"]).cuda().eval(); model.load_state_dict(x["state"])
+    enc, _ = load_encoder(x["init"], a.nemotron_dir, "cuda"); taps = tuple(x["taps"]); tok = load_tokenizer(x["init"])
+    ch = int(json.load(open(os.path.join(x["init"], "config.json"))).get("encoder_right_context", 0) or 0) + 1
+    cfg = AoscConfig.from_dict(x.get("aosc"))
+    for k in ("chunk", "cache", "fifo", "period"):
+        v = getattr(a, f"aosc_{k}", None)
+        if v is not None: setattr(cfg, k, int(v))
+    modes = [m_ for m_ in a.session_modes.split(",") if m_]
+    assert modes and all(m_ == "aosc" or (m_.startswith("reset") and float(m_[5:]) > 0) for m_ in modes), f"--session-modes aosc,resetS — {a.session_modes}"
+    man = json.load(open(os.path.join(a.data, "manifest.json"))) if os.path.exists(os.path.join(a.data, "manifest.json")) else {}
+    sub = {**{m: "dev" for m in man.get("dev", [])}, **{m: "eval" for m in man.get("eval", [])}}
+    ns = argparse.Namespace(corpora=a.corpora, data=a.data, split=None, deltas=[10], limit_windows=a.limit_windows, backchannel=(1.0, 3), max_speakers=n_spk,
+                            window="full", hop=10.0, window_draws=0, declare=n_spk)                    # 화자 n_spk 넘는 회의는 windows_of 가 뺀다(회의 통째 cpWER 평가와 같은 회의)
+    sets, items = windows_of(ns, tok); items = [it for j, it in enumerate(items) if j % a.world_size == a.rank]
+    dests, done, fos = {}, {}, {}
+    for m_ in modes:
+        od = os.path.join(a.out, m_); os.makedirs(od, exist_ok=True); dests[m_] = os.path.join(od, f"windows-rank{a.rank}.jsonl")
+        done[m_] = {json.loads(l)["id"] for l in open(dests[m_])} if os.path.exists(dests[m_]) else set()
+        if a.save_probs: os.makedirs(os.path.join(od, "probs"), exist_ok=True)
+        json.dump(dict(diar=os.path.abspath(a.diar), mode=m_, aosc=cfg.to_dict() if m_ == "aosc" else None, threshold=a.threshold, corpora=a.corpora),
+                  open(os.path.join(od, f"config-rank{a.rank}.json"), "w"), indent=1)
+    t0 = time.time(); n = 0
+    fos = {m_: open(dests[m_], "a", buffering=1) for m_ in modes}
+    with torch.inference_mode():
+        for c, i in items:
+            ds = sets[c]; cid, _, L = ds.items[i]; d = ds.dlgs[cid]; wid = f"{cid}@full"
+            todo = [m_ for m_ in modes if wid not in done[m_]]
+            if not todo: continue
+            K = int(round(L / CHUNK_S)); wav = np.asarray(ds.mono(cid)[: int(round(L * SR))], dtype=np.float32); te = time.time(); embs = []
+            for seg, Ks, s0, c0, nn in segment_plan(wav, K, ch):
+                w = torch.from_numpy(np.ascontiguousarray(seg, dtype=np.float32)).cuda()
+                f = enc(w[None], torch.tensor([len(seg)]).cuda(), torch.tensor([Ks]).cuda(), taps=taps)
+                embs.append(model.embed(f)[0, c0 - s0: c0 - s0 + nn]); del f
+            e = torch.cat(embs); enc_s = time.time() - te
+            allsp = window_speakers(ds.eps[cid], 0.0, L); sp = allsp[:n_spk]
+            ref = torch.tensor(slot_activity(ds.eps[cid], sp, 0.0, L, K, n_slots=n_spk), dtype=torch.float32).reshape(K, n_spk)
+            m = torch.ones(K, dtype=torch.bool)
+            for s_, e_ in ds._bad_spans(d):
+                m[max(0, int(s_ / CHUNK_S)): min(K, int(math.ceil(e_ / CHUNK_S)))] = False
+            if len(allsp) > n_spk:                                                                 # 참조 밖 화자가 말하는 프레임은 셈에서 뺀다
+                extra = torch.tensor(slot_activity(ds.eps[cid], allsp[n_spk:], 0.0, L, K, n_slots=len(allsp) - n_spk), dtype=torch.float32).reshape(K, -1)
+                m &= ~(extra.sum(-1) > 0)
+            for m_ in todo:
+                te = time.time()
+                if m_ == "aosc": lg = aosc_stream(model, e, cfg)
+                else: S = int(round(float(m_[5:]) / CHUNK_S)); lg = torch.cat([model.head(e[k0: k0 + S][None])[0] for k0 in range(0, K, S)]).float()
+                prob = torch.sigmoid(lg).cpu(); dec_s = time.time() - te
+                pr = (prob > a.threshold).float(); dc = der_counts(pr, ref, m)
+                row = dict(id=wid, corpus=c, sub=sub.get(cid.split(":", 1)[1], "?"), L=L, K=K, n_spk=len(sp), n_spk_all=len(allsp), n_hyp_spk=int((pr.sum(0) > 0).sum()),
+                           mode=m_, enc_s=round(enc_s, 1), dec_s=round(dec_s, 1), **dc)
+                if a.save_probs: np.savez_compressed(os.path.join(a.out, m_, "probs", f"{wid}.npz"), prob=prob.numpy().astype(np.float16), ref=ref.numpy().astype(np.uint8), mask=m.numpy())
+                fos[m_].write(json.dumps(row) + "\n"); n += 1
+                print(f"  {cid} {c}: K {K} · {m_} DER 최적 짝 {100 * (dc['miss'] + dc['fa'] + dc['conf_best']) / max(1, dc['ref']):.2f} · 인코딩 {enc_s:.0f}s · 가지 {dec_s:.0f}s", flush=True)
+    for fo in fos.values(): fo.close()
+    print(f"DONE rank={a.rank} rows={n} {time.time() - t0:.0f}s", flush=True)
+
+
 def summarize(a):
     rows = [json.loads(l) for f in sorted(glob.glob(os.path.join(a.out, "windows-rank*.jsonl"))) for l in open(f)]
     res = {}; der = lambda g, k: round(100 * (g["miss"] + g["fa"] + g[k]) / max(1, g["ref"]), 2)
@@ -114,9 +184,14 @@ def main():
     q.add_argument("--window", default="20,90"); q.add_argument("--window-draws", type=int, default=1); q.add_argument("--threshold", type=float, default=0.5)
     q.add_argument("--batch", type=int, default=8); q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1); q.add_argument("--limit-windows", type=int, default=0)
     q.add_argument("--save-probs", action="store_true")
+    q.add_argument("--session", action="store_true", help="회의 통째 — 회의 하나 = 행 하나, 방식마다 <out>/<방식>/")
+    q.add_argument("--session-modes", default="aosc", help="쉼표: aosc(회의 전체 AOSC) · resetS(S 초 조각마다 슬롯 새로 — 예 reset90)")
+    for k in ("chunk", "cache", "fifo", "period"): q.add_argument(f"--aosc-{k}", type=int, default=None)
     q = sub.add_parser("summarize"); q.add_argument("--out", required=True)
     q = sub.add_parser("sweep"); q.add_argument("--out", required=True); q.add_argument("--thresholds", default="0.2,0.3,0.4,0.5,0.6")
-    a = ap.parse_args(); {"run": run, "summarize": summarize, "sweep": sweep}[a.cmd](a)
+    a = ap.parse_args()
+    if a.cmd == "run" and a.session: run_session(a); return
+    {"run": run, "summarize": summarize, "sweep": sweep}[a.cmd](a)
 
 
 if __name__ == "__main__":

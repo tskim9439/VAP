@@ -10,11 +10,14 @@
   fp32 SDPA(math 커널 — GQA 확장)는 위치 10 만에서 층마다 2.4–5.2 ms, 블록 행렬곱은 0.43–0.48 ms 다(2026-10-24 H200 실측, 출력 차이 ≤ 4e-8).
 - long_decode: realtime.realtime_decode 에 GraphThinker 대신 LongThinker 를 넣는다(run·embed 규약이 같다) — 청크 상한·flush·전체 상한 규칙은
   stream_decode·decode_batch 와 같다(2026-10-12 192 디코드 토큰 대조).
+- AOSC(E7, 2026-10-27): 화자 분리 헤드(E6·E7) 모델이면 encode_long(aosc=…)이 조각마다 인코더 탭에서 가지 임베딩을 이어 붙여 회의 전체를 AOSC 스트리밍
+  (diar.aosc_stream)으로 돌린다 — 예측 슬롯이 회의 내내 같은 화자다(조각마다 model.encode 로 예측하면 조각마다 새로 정해진다).
 - 문맥 창(context_s, 2026-10-24): V2 final 을 14 분 회의에 문맥 전부로 디코드하면 앞 3.5 분(약 5,600 위치 — 학습 창 20–90 s 는 2,500 위치 안팎)만
   받아쓰고 나머지는 말을 내지 않았다. 오디오는 자르지 않고 한 스트림으로 계속 디코드하되 LLM 이 보는 문맥만 prefix + 최근 context_s 초로 둔다.
 """
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from .realtime import _rotate_half
 
@@ -22,20 +25,41 @@ SR, FRAME_S = 16000, 0.08
 HOP = int(round(SR * FRAME_S))                                                                # 인코더 프레임 하나 = 1280 샘플
 
 
-@torch.inference_mode()
-def encode_long(model, wav: np.ndarray, K: int, core: int = 4800, ctx: int = 1760, tail: int = 32) -> torch.Tensor:
-    """wav (N,) float32 16 kHz 세션 전체 → 특징 (S, K, D) — model.encode(wav, N, K)[0] 과 같은 값. 조각 [c0 − ctx, c0 + core + tail) 프레임을 돌려
-    [c0, c0 + core) 만 쓴다. core·ctx 는 청크(encoder_right_context + 1 프레임) 배수, tail ≥ 청크. K ≤ core 면 model.encode 한 번과 같은 호출이다."""
-    ch = int(getattr(model.config, "encoder_right_context", 0) or 0) + 1
+def segment_plan(wav: np.ndarray, K: int, ch: int, core: int = 4800, ctx: int = 1760, tail: int = 32):
+    """겹침 조각 인코딩 계획(encode_long·화자 분리 회의 평가 공용) → [(조각 오디오, 조각 프레임 수, 조각 첫 프레임 a, 쓸 몫 첫 프레임 c0, 쓸 몫 길이 n)].
+    조각 = 프레임 [c0 − ctx, c0 + core + tail), 쓸 몫 = [c0, c0 + core). core·ctx 는 청크(ch 프레임) 배수, tail ≥ 청크."""
     assert core > 0 and core % ch == 0 and ctx % ch == 0 and tail >= ch, f"core {core}·ctx {ctx} 는 청크 {ch} 프레임 배수, tail {tail} ≥ 청크"
-    dev = next(model.parameters()).device; out = None
+    out = []
     for c0 in range(0, K, core):
         a = max(0, c0 - ctx); b = min(K, c0 + core + tail)
         seg = wav[a * HOP:] if b == K else wav[a * HOP: b * HOP]                              # 끝 조각은 오디오 끝까지(전체 forward 와 같은 끝 처리)
+        out.append((seg, b - a, a, c0, min(core, K - c0)))
+    return out
+
+
+@torch.inference_mode()
+def encode_long(model, wav: np.ndarray, K: int, core: int = 4800, ctx: int = 1760, tail: int = 32, aosc=None) -> torch.Tensor:
+    """wav (N,) float32 16 kHz 세션 전체 → 특징 (S, K, D) — model.encode(wav, N, K)[0] 과 같은 값. 조각 [c0 − ctx, c0 + core + tail) 프레임을 돌려
+    [c0, c0 + core) 만 쓴다. core·ctx 는 청크(encoder_right_context + 1 프레임) 배수, tail ≥ 청크. K ≤ core 면 model.encode 한 번과 같은 호출이다.
+    aosc(diar.AoscConfig, E7): 화자 분리 헤드 모델 — 스트림 0 은 같고, 스트림 1(예측 슬롯 활동)을 회의 전체 AOSC 스트리밍으로 만든다(model.encode 와 같은 꼴)."""
+    ch = int(getattr(model.config, "encoder_right_context", 0) or 0) + 1
+    dev = next(model.parameters()).device; out = None
+    if aosc is not None:
+        assert getattr(model, "diar_head", None) is not None, "aosc 는 화자 분리 헤드(E6·E7) 모델에서만"
+        from .diar import aosc_stream
+        embs = []
+        for seg, Ks, a, c0, n in segment_plan(wav, K, ch, core, ctx, tail):
+            w = torch.from_numpy(np.ascontiguousarray(seg, dtype=np.float32)).to(dev)
+            allf = model.encoder(w[None], torch.tensor([len(seg)], device=dev), torch.tensor([Ks], device=dev), taps=tuple(model.config.diar_taps))   # (1, 1 + 탭, Ks, D)
+            if out is None: out = allf.new_zeros(1, K, allf.shape[-1])
+            out[:, c0: c0 + n] = allf[0, :1, c0 - a: c0 - a + n]; embs.append(model.diar_head.embed(allf)[0, c0 - a: c0 - a + n]); del allf
+        act = model.predict_act(aosc_stream(model.diar_head, torch.cat(embs), aosc)).to(out.dtype)          # (K, N) — 임계 config.act_threshold
+        return torch.cat([out, F.pad(act, (0, out.shape[-1] - act.shape[-1]))[None]], 0)
+    for seg, Ks, a, c0, n in segment_plan(wav, K, ch, core, ctx, tail):
         w = torch.from_numpy(np.ascontiguousarray(seg, dtype=np.float32)).to(dev)
-        f = model.encode(w[None], torch.tensor([len(seg)], device=dev), torch.tensor([b - a], device=dev))[0]   # (S, b − a, D)
+        f = model.encode(w[None], torch.tensor([len(seg)], device=dev), torch.tensor([Ks], device=dev))[0]   # (S, b − a, D)
         if out is None: out = f.new_zeros(f.shape[0], K, f.shape[2])
-        n = min(core, K - c0); out[:, c0: c0 + n] = f[:, c0 - a: c0 - a + n]; del f
+        out[:, c0: c0 + n] = f[:, c0 - a: c0 - a + n]; del f
     return out
 
 

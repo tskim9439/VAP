@@ -96,6 +96,8 @@ g.add_argument("--diar-head", default=None, help="E6(2026-10-26): 인과 화자 
                "슬롯 활동 입력을 표본마다 확률 ρ 로 헤드 예측(아니면 흔든 정답)으로 준다. --slot-input 과 함께. 지문 키 diar_head")
 g.add_argument("--diar-weight", type=float, default=0.5); g.add_argument("--act-pred-ramp", default="0.3,0.9", help="예측 활동을 쓸 확률 ρ 의 시작,끝(step 따라 선형)")
 g.add_argument("--act-threshold", type=float, default=0.45, help="헤드 예측 활동 임계(E1 AMI dev 에서 고른 값)")
+g.add_argument("--global-slots", type=float, default=0.0, help="E7(2026-10-27): 학습 창을 이 확률로 대화 전체에서 먼저 말한 순서 슬롯으로(회의 통째·실시간 디코드는 AOSC 로 "
+               "회의 내내 같은 슬롯 — 창 안 첫 화자가 A 가 아닐 수 있다). 헤드(--diar-head)가 있으면 헤드 손실은 창 도착 순서, 예측 입력은 정답 자리로 맞춘다(diar_align). 지문 키 global_slots")
 g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -173,6 +175,7 @@ if len(win) != 2 or not 0 < win[0] <= win[1]: sys.exit(f"--window lo,hi — {a.w
 if not 2 <= a.max_speakers <= 4 or not 0 <= a.declare_all_p <= 1 or a.window_draws < 0: sys.exit(f"--max-speakers 2–4 · --declare-all-p [0, 1] · --window-draws ≥ 0 — {a.max_speakers} {a.declare_all_p} {a.window_draws}")
 if any(c in MEETING | FAR for c in corpora) and a.max_speakers < 3: sys.exit("회의 코퍼스(ami·icsi·notsofar·chime6tr·nia23mt, 원거리 포함)는 --max-speakers 3 이상과 함께")
 VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_speakers=a.window_draws > 0, **({"declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}),
+           **({"global_slots": a.global_slots} if a.global_slots > 0 else {}),                 # E7(2026-10-27): 끄면 키 없음(데이터셋 기본 0 — 난수 그대로)
            **({"xl_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))   # 모든 대화 셋 공통(V2, V3 R4)
 bc = None if a.backchannel == "off" else tuple(float(x) for x in a.backchannel.split(","))
 if bc is not None and len(bc) != 2: sys.exit(f"--backchannel max_s,max_tokens | off — {a.backchannel}")
@@ -196,6 +199,7 @@ if a.target_spk and a.dlg_trans: sys.exit("--target-spk 는 번역 타깃(--dlg-
 if a.target_spk and a.inject_hidden <= 0: sys.exit("--inject-hidden > 0")
 if a.slot_input and a.target_spk: sys.exit("--slot-input 은 --target-spk 와 함께 쓰지 않는다(E5 는 한 스트림 형식)")
 if a.diar_head and not a.slot_input: sys.exit("--diar-head 는 --slot-input 과 함께(E6 — 헤드 예측을 슬롯 활동 입력으로 준다)")
+if not 0.0 <= a.global_slots <= 1.0 or (a.global_slots > 0 and a.target_spk): sys.exit("--global-slots ∈ [0, 1], --target-spk(E2)와 함께 쓰지 않는다")
 ramp = tuple(float(x) for x in a.act_pred_ramp.split(","))
 if len(ramp) != 2 or not all(0.0 <= x <= 1.0 for x in ramp): sys.exit(f"--act-pred-ramp 'ρ0,ρ1'(각 0–1): {a.act_pred_ramp}")
 want_act = a.spk_act_weight > 0 or bool(a.diar_head)                                           # 정답 슬롯 활동 타깃(LLM 쪽 화자 헤드 또는 E6 화자 분리 손실)
@@ -278,6 +282,8 @@ if not a.dry_run:
     if a.diar_head:                                                                             # E6 인과 화자 분리 헤드(이름이 adapter 가 아니라 thinker lr)
         xb = torch.load(a.diar_head, map_location="cpu"); assert xb["cfg"].get("lookahead") is not None, f"인과 헤드(lookahead)가 아니다: {a.diar_head}"
         model.add_diar_head(xb["cfg"], xb["taps"], state=xb["state"], weight=a.diar_weight, threshold=a.act_threshold, ramp=ramp)
+        if a.global_slots > 0: model.config.diar_align = True                                      # E7: 헤드 손실은 창 도착 순서, 예측 입력은 정답(대화 전체 순서) 자리로
+        if xb.get("aosc"): model.config.diar_aosc = dict(xb["aosc"])                                 # AOSC 로 학습한 헤드에서 시작하면 그 설정을 남긴다(회의 통째 디코드)
         if model.spk_head is not None and a.spk_act_weight <= 0: model.config.spk_weight = 0.0   # 활동 타깃이 오므로 LLM 쪽 보조 헤드는 끈다(가중 0)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
@@ -467,6 +473,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"phone_aug": phone.settings()} if phone is not None else {}),   # 끄면 키 없음(이전 run 지문 그대로)
           **({"far_aug": dict(faug.settings(), sets=a.far_sets)} if faug is not None else {}),   # 2026-10-26: 끄면 키 없음
           **({"dlg_group_map": GMAP} if GMAP else {}),                                        # 2026-10-26: 끄면 키 없음
+          **({"global_slots": a.global_slots} if a.global_slots > 0 else {}),                  # 2026-10-27 E7: 끄면 키 없음
           **({"enc_tap": dict(layer=a.enc_tap_layer, hidden=a.enc_tap_hidden or None)} if a.enc_tap_layer >= 0 else {}),
           **({"max_speakers": a.max_speakers, "declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}), **({"window_draws": a.window_draws} if a.window_draws else {}),
           **({"change_tag_weight": a.change_tag_weight} if a.change_tag_weight > 0 else {}), **({"hold_tag_weight": a.hold_tag_weight} if a.hold_tag_weight > 0 else {}),   # V3-p1: 끄면 키 없음

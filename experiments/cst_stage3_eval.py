@@ -222,6 +222,12 @@ def run(a):
         from vapasr.hf.infer import load_model
         from vapasr.hf.batch_decode import decode_batch, SpkGuide, word_init_mask, logits_size
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
+        if getattr(a, "diar_head_override", None):                                              # E7: AOSC 로 학습한 헤드로 바꿔 끼운다(같은 cfg·탭 — diar_train --aosc final)
+            xo = torch.load(a.diar_head_override, map_location="cpu"); assert model.diar_head is not None and dict(xo["cfg"]) == dict(model.config.diar_head_cfg) \
+                and list(xo["taps"]) == list(model.config.diar_taps), f"헤드 cfg·탭이 다르다: {a.diar_head_override}"
+            model.diar_head.load_state_dict(xo["state"])
+            if xo.get("aosc"): model.config.diar_aosc = dict(xo["aosc"])
+            print(f"  화자 분리 헤드 ← {a.diar_head_override}(aosc {xo.get('aosc')})", flush=True)
         wi = word_init_mask(tok, logits_size(model)) if sb else None
     a.xl_order = (cfg.get("xl_slot_order") if model is None else getattr(model.config, "xl_slot_order", None)) or "lang"   # V3 R4: 교차 언어 슬롯 순서(창·prefix)
     from vapasr.data.cst_dialogue import SLOTS
@@ -233,6 +239,13 @@ def run(a):
     if EOT in blocked and not a.oracle: print("!! <EOT> 가 decode 차단 목록에 있다(Stage 3 학습 전 체크포인트) — EOT 는 나오지 않는다", flush=True)
     full = is_full(a); bs = 1 if full else a.batch_size                                         # 회의 통째: 창(회의) 하나씩 긴 직렬 디코드
     tor = bool(getattr(a, "target_oracle", False)); act_or = bool(getattr(a, "act_oracle", False))
+    acfg = None
+    if getattr(a, "aosc", False):                                                              # E7: 회의 통째의 예측 활동을 AOSC 스트리밍으로(회의 내내 같은 슬롯)
+        from vapasr.hf.diar import AoscConfig
+        assert full and model is not None and getattr(model, "diar_head", None) is not None, "--aosc 는 --window full 과 화자 분리 헤드(E6·E7) 모델"
+        acfg = AoscConfig.from_dict(getattr(model.config, "diar_aosc", None))
+        if getattr(a, "aosc_chunk", None): acfg.chunk = int(a.aosc_chunk)
+        print(f"  AOSC {acfg.to_dict()}", flush=True)
     if act_or:
         assert model is not None and getattr(model, "adapter_slot", None) is not None and not (tor or a.verify or is_full(a) or a.oracle or a.from_predictions), \
             "--act-oracle: adapter_slot 이 있는 E5 체크포인트, 배치 디코드만(--target-oracle·--verify·--window full·--oracle 없이)"
@@ -253,7 +266,8 @@ def run(a):
                 **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **win_conf(a),
                 **({"spk_guide": list(a.spk_guide), "spk_guide_hold": bool(a.spk_guide_hold), **({"spk_guide_no_insert": True} if a.spk_guide_no_insert else {})} if a.spk_guide else {}),
                 **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}), **({"target_oracle": True} if tor else {}),
-                **({"act_oracle": True} if act_or else {}),
+                **({"act_oracle": True} if act_or else {}), **({"aosc": acfg.to_dict()} if acfg is not None else {}),
+                **({"diar_head_override": os.path.abspath(a.diar_head_override)} if getattr(a, "diar_head_override", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
     if a.spk_guide:
@@ -287,7 +301,7 @@ def run(a):
                         if all((f"{cid}@{t0w}", dl) in done for dl in a.deltas): continue           # 끝난 회의는 인코딩도 건너뛴다(아래 δ 고리도 건너뜀)
                         if a.verify and "full" not in checked:
                             verify_long(model, wav, ds.cst_prefix(ds.slots(i)[1][:n_slots], a.deltas[0]), a.max_flush); checked.add("full")
-                        te = time.time(); feats.append(encode_long(model, wav, K)); enc_s = round(time.time() - te, 1); continue
+                        te = time.time(); feats.append(encode_long(model, wav, K, aosc=acfg)); enc_s = round(time.time() - te, 1); continue
                     w = torch.from_numpy(wav).to(dev)
                     feats.append(model.encode(w[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))[0])
                 for delta in a.deltas:
@@ -384,6 +398,9 @@ def main():
     q.add_argument("--target-oracle", action="store_true", help="E2: 대상 화자 모드 체크포인트를 정답 화자 활동 주입·화자별 디코드로 잰다")
     q.add_argument("--target-act", default=None, help="E3: 정답 대신 예측 활동(diar_eval --save-probs 의 probs 폴더)")
     q.add_argument("--act-oracle", action="store_true", help="E5: 슬롯 활동 입력 체크포인트에 정답 슬롯 활동을 주고 한 스트림으로 디코드")
+    q.add_argument("--aosc", action="store_true", help="E7: --window full 에서 화자 분리 헤드 예측을 회의 전체 AOSC 스트리밍으로(diar.aosc_stream — config.diar_aosc 또는 기본)")
+    q.add_argument("--aosc-chunk", type=int, default=None, help="--aosc 추론 청크(프레임, 기본 6)")
+    q.add_argument("--diar-head-override", default=None, help="E7: 모델의 화자 분리 헤드를 이 diar.pt(diar_train --aosc final)로 바꾼다 — aosc 설정도 따라온다")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")
     q.add_argument("--declare", type=int, default=None, help="prefix 선언 슬롯 수 하한(기본 max(2, 화자 수); 화자 수를 모르는 추론 흉내 = 4)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "

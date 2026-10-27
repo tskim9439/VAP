@@ -70,3 +70,60 @@ def test_branch_lookahead_is_causal_and_loads_bidirectional_weights():
     y, y2 = ca(f), ca(f2)
     assert torch.allclose(y[0, :31], y2[0, :31], atol=1e-5) and not torch.allclose(y[0, 31:33], y2[0, 31:33], atol=1e-3)   # t ≤ 30 은 그대로, 31·32 는 33 을 본다
     assert not torch.allclose(bi(f)[0, :31], bi(f2)[0, :31], atol=1e-3)                                     # 양방향은 미래가 바뀌면 앞도 바뀐다
+
+
+def _causal(n_streams=2, d=16):
+    torch.manual_seed(0); return DiarBranch(n_streams, d_in=8, d=d, layers=2, heads=4, ffn=32, n_spk=4, dropout=0.0, lookahead=0).eval()
+
+
+def test_embed_head_split_is_forward():
+    m = _causal(); f = torch.randn(2, 2, 30, 8); pad = torch.zeros(2, 30, dtype=torch.bool); pad[1, 20:] = True
+    assert torch.equal(m(f, pad), m.head(m.embed(f), pad))
+
+
+def test_aosc_select_rules():
+    from vapasr.hf.diar import AoscConfig, aosc_select
+    cfg = AoscConfig(cache=10, sil=2, k1=2, k2=3)
+    p = torch.full((12, 4), 0.01); p[0:4, 0] = 0.95; p[4:8, 1] = 0.9; p[8:10, 0] = 0.99; p[9, 1] = 0.9      # 9 = 겹침, 10·11 = 무음
+    new = torch.zeros(12, dtype=torch.bool)
+    fi, si = aosc_select(p, new, cfg)
+    assert len(fi) <= 10 and si.tolist() == sorted(si.tolist())                                   # 화자(도착 순서)로 묶인다
+    for s_ in (0, 1):                                                                             # 화자마다 무음 칸 2 개가 그 화자 프레임 뒤에
+        fs = fi[si == s_].tolist(); assert fs[-2:] == [-1, -1] and all(x >= 0 for x in fs[:-2]) and fs[:-2] == sorted(fs[:-2])
+    assert set(fi[si == 0].tolist()) - {-1} <= {0, 1, 2, 3, 8, 9} and 10 not in fi.tolist() and 11 not in fi.tolist()   # 무음 프레임은 화자 칸이 아니다
+    small = AoscConfig(cache=6, sil=1, k1=1, k2=1); fi2, si2 = aosc_select(p, new, small)
+    assert len(fi2) == 6 and (si2 == 0).any() and (si2 == 1).any()                               # 상한 안에서도 두 화자가 남는다(상위 k 가산점)
+    n2 = new.clone(); n2[4] = True; q = p.clone(); q[4:8, 1] = 0.9                                  # 같은 점수면 새 프레임이 먼저 남는다(+recency)
+    fi3, si3 = aosc_select(q, n2, AoscConfig(cache=4, sil=0, k1=0, k2=0)); assert 4 in fi3.tolist() or (si3 == 1).sum() == 0
+    assert aosc_select(torch.zeros(0, 4), torch.zeros(0, dtype=torch.bool), cfg)[0].numel() == 0
+
+
+def test_aosc_stream_matches_full_forward_before_first_update():
+    from vapasr.hf.diar import AoscConfig, aosc_stream
+    m = _causal(); f = torch.randn(1, 2, 40, 8); e = m.embed(f)[0]
+    full = m.head(e[None])[0]
+    for ch in (1, 6, 40):                                                                          # FIFO 가 넘치기 전이면 청크 크기와 상관없이 통째 인과 forward 와 같다
+        y = aosc_stream(m, e, AoscConfig(fifo=64, period=32, chunk=ch)); assert torch.allclose(y, full, atol=1e-5)
+    y = aosc_stream(m, torch.randn(300, 16), AoscConfig(cache=20, fifo=30, period=10, chunk=7)); assert y.shape == (300, 4) and torch.isfinite(y).all()
+
+
+def test_aosc_clip_loss_single_step_and_grad():
+    import random
+    from vapasr.hf.diar import AoscConfig, aosc_clip_loss
+    m = _causal(); f = torch.randn(1, 2, 50, 8); t = torch.zeros(50, 4); t[5:20, 0] = 1; t[18:40, 1] = 1; t[42:48, 2] = 1; mask = torch.ones(50, dtype=torch.bool)
+    e = m.embed(f)[0]
+    tot, st = aosc_clip_loss(m, e, t, mask, AoscConfig(fifo=64), random.Random(0), chunk=50)          # 한 step(캐시 없음) = 통째 손실
+    ref, _, _ = sort_pit_loss(m.head(e[None]).float(), t[None], mask[None])
+    assert st["steps"] == 1 and abs(float(tot) / st["frames"] - float(ref)) < 1e-5
+    m.train(); e = m.embed(f)[0]
+    tot, st = aosc_clip_loss(m, e, t, mask, AoscConfig(cache=12, fifo=10, period=5, sil=1, k1=2, k2=3), random.Random(1), chunk=4, perm_p=1.0)
+    assert st["steps"] == 13 and st["frames"] == 50 and torch.isfinite(tot); tot.backward()
+    assert m.proj.weight.grad is not None and m.out.weight.grad.abs().sum() > 0
+
+
+def test_forward_aosc_mode_returns_mean_loss():
+    from vapasr.hf.diar import AoscConfig
+    m = _causal(); f = torch.randn(2, 2, 30, 8); act = torch.zeros(2, 30, 4); act[0, 2:10, 0] = 1; act[0, 12:25, 1] = 1; act[1, 5:28, 0] = 1
+    mask = torch.ones(2, 30, dtype=torch.bool); mask[1, 25:] = False
+    loss, st = m(f, aosc=dict(act=act, mask=mask, K=torch.tensor([30, 25]), cfg=AoscConfig(cache=8, fifo=10, period=5, sil=1), seeds=[0, 1], chunk=6))
+    assert torch.isfinite(loss) and st["frames"] == 55 and st["steps"] == 10

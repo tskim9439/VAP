@@ -19,7 +19,7 @@ class VapAsrConfig(PretrainedConfig):
                  sem_registry: Optional[Dict[str, int]] = None, sem_weight: float = 1.0, turn_weight: float = 1.0, sem_reserved: Optional[List[str]] = None,
                  spk_slots: int = 0, spk_weight: float = 0.5, enc_tap_layer: int = -1, enc_tap_hidden: int = 2048, slot_tokens: Optional[List[str]] = None,
                  spk_inject_hidden: int = 0, slot_input_slots: int = 0, diar_head_cfg: Optional[dict] = None, diar_taps: Optional[list] = None, diar_weight: float = 0.5,
-                 diar_alpha: float = 0.5, act_threshold: float = 0.45, act_pred_ramp: Optional[list] = None, **kw):
+                 diar_alpha: float = 0.5, act_threshold: float = 0.45, act_pred_ramp: Optional[list] = None, diar_aosc: Optional[dict] = None, diar_align: bool = False, **kw):
         self.thinker = thinker or {}; self.thinker_name_or_path = thinker_name_or_path
         self.adapter_d_in, self.adapter_d_out, self.adapter_hidden = adapter_d_in, adapter_d_out, adapter_hidden
         self.encoder_type, self.encoder_name = encoder_type, encoder_name; self.encoder_left_context, self.encoder_right_context = encoder_left_context, encoder_right_context
@@ -39,6 +39,8 @@ class VapAsrConfig(PretrainedConfig):
         self.slot_input_slots = int(slot_input_slots)
         self.diar_head_cfg = dict(diar_head_cfg) if diar_head_cfg else None; self.diar_taps = list(diar_taps or [])                   # E6(2026-10-26): 인과 화자 분리 헤드(DiarBranch cfg·인코더 탭)
         self.diar_weight, self.diar_alpha, self.act_threshold = float(diar_weight), float(diar_alpha), float(act_threshold)           # 손실 가중·Sort/PIT 비·예측 활동 임계
+        self.diar_align = bool(diar_align)                                                                                            # E7 학습: 대화 전체 순서 슬롯 창 — 헤드 손실은 창 도착 순서, 예측 입력은 정답 자리로
+        self.diar_aosc = dict(diar_aosc) if diar_aosc else None                                                                       # E7(2026-10-27): 헤드가 AOSC 로 학습됐으면 그 설정(diar.AoscConfig — 회의 통째·실시간)
         self.act_pred_ramp = list(act_pred_ramp or [1.0, 1.0])                                                                        # 학습 중 예측 활동을 쓸 확률 ρ(시작, 끝 — 선형)                                                            # E5(2026-10-26): 슬롯 활동 입력(adapter_slot — 오디오 토큰 += Σ a_s·e_s, 0 = 끔)
         self.spk_inject_hidden = int(spk_inject_hidden)                                                          # E2(2026-10-25): 대상 화자 활동 주입(adapter_inject — 인코더 pre-encode 출력에 f(X⊙y) 를 더한다, 0 = 끔)
         self.sem_reserved = list(sem_reserved or [])                                                                # mono semcommit 이 예약만 한 Phase 2 이름 — add_phase2_tokens 가 이 행을 다시 초기화하고 비운다

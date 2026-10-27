@@ -590,7 +590,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                  trans: Optional[Dict[str, Dict[str, tuple]]] = None, trans_input: Optional[Dict[str, Dict[str, tuple]]] = None, ast_frac: float = 0.0,
                  tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, wav_aug=None, declare_all_p: float = 0.0,
                  declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, xl_order: str = "lang",
-                 no_eot: bool = False, target_spk: bool = False, far_aug=None, act_input=None, **kw):
+                 no_eot: bool = False, target_spk: bool = False, far_aug=None, act_input=None, global_slots: float = 0.0, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if xl_order not in ("lang", "arrival"): raise ValueError(f"xl_order lang|arrival — {xl_order}")
         self.xl_order = xl_order                                                                # V3 R4: 'arrival' 이면 교차 언어 창도 먼저 말한 순서 슬롯(slots·cst_prefix)
@@ -629,6 +629,9 @@ class CstDialogueDataset(DialogueWindowDataset):
         self.wav_aug = wav_aug                                                                     # 오디오 증강(phone_aug.PhoneAugment 등, 학습 전용) — 시퀀스·K 그대로
         self.far_aug, self._stems = far_aug, {}                                                     # 원거리 증강(far_aug.FarFieldAugment, 2026-10-26) — 화자별 신호 캐시가 있으면 화자마다 RIR
         self.act_input = act_input                                                                 # E5 슬롯 활동 입력(act_noise.ActNoise — 정답 활동을 흔들어 act_in 으로, 2026-10-26). 끄면 키 없음
+        self.global_slots = float(global_slots)                                                    # E7(2026-10-27): 학습 창을 이 확률로 대화 전체 도착 순서 슬롯으로(slots — 회의 통째 디코드는 AOSC 로
+                                                                                                   # 회의 내내 같은 슬롯이라 창 안 첫 화자가 A 가 아닐 수 있다). 0 이면 난수를 더 뽑지 않는다
+        if not 0.0 <= self.global_slots <= 1.0: raise ValueError(f"global_slots ∈ [0, 1] — {global_slots}")
         self.trans_lead_space = bool(trans_lead_space)                                             # 행 사이 공백(lead_space_row) — Stage 4 본 학습부터
         self.tgt_of = dict(tgt_of) if tgt_of else {"Korean": ["English"], "German": ["English"], "English": ["German", "Korean"]}
         self.trans_id = conv("<TRANS>") if self.trans or self.trans_input else None
@@ -670,10 +673,16 @@ class CstDialogueDataset(DialogueWindowDataset):
         선언 슬롯 수 = max(2, 화자 수) — 학습(rng)에서는 declare_all_p 확률로 n_slots 전부(추론 때 화자 수를 모르면 최대를 선언하므로), 평가는 declare 가 있으면
         max(그 수, 화자 수). 2 슬롯 데이터셋(n_slots 2)은 예전과 같고 난수도 더 뽑지 않는다.
         교차 언어: 두 화자를 언어 이름순으로 두고 rng(학습) 또는 창 id 해시(평가·점검 — 재현)로 반을 뒤집는다(언어·위치 편향 방지).
-        xl_order 'arrival'(V3 R4): 교차 언어도 창 안에서 먼저 말한 사람 = A(창에서 말하지 않은 화자는 뒤) — 난수를 뽑지 않고, prefix 는 cst_head_text_xl."""
+        xl_order 'arrival'(V3 R4): 교차 언어도 창 안에서 먼저 말한 사람 = A(창에서 말하지 않은 화자는 뒤) — 난수를 뽑지 않고, prefix 는 cst_head_text_xl.
+        global_slots(E7, 학습 rng 만): 같은 언어 대화에서 그 확률로 대화 전체에서 먼저 말한 순서 슬롯(대화 화자 수 ≤ 슬롯 수일 때 — 창에서 말하지 않는 화자도 자리를 갖는다,
+        선언 = 대화 화자 수). 태그·활동 타깃·슬롯 활동 입력이 모두 이 순서를 따른다."""
         cid, t0, L = self.items[i]; d = self.dlgs[cid]; sl = self.xl_langs(d)
         if sl is None:
-            spk = window_speakers(self.eps[cid], t0, L); D = max(2, len(spk))
+            spk = window_speakers(self.eps[cid], t0, L)
+            if rng is not None and self.global_slots > 0 and rng.random() < self.global_slots:
+                allsp = window_speakers(self.eps[cid], 0.0, float(d.duration_s) + 1.0)
+                if len(allsp) <= self.n_slots and set(spk) <= set(allsp): spk = allsp
+            D = max(2, len(spk))
             if self.declare is not None: D = max(D, self.declare)
             elif rng is not None and self.n_slots > D and self.declare_all_p > 0 and rng.random() < self.declare_all_p: D = self.n_slots
             return spk, [d.lang] * D
@@ -921,7 +930,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         delay = random.choice(self.delays); cid = self.items[i][0]
         drop = (random.random() < self.eot_drop_synth) if self.eot_drop_synth > 0 and self.dlgs[cid].meta.get("mask_eot") else None   # C5 동전은 따로 — 형식 난수(slots·recover·tgt)는 예전 조건 그대로
         tsp = random.choice(window_speakers(self.eps[cid], self.items[i][1], self.items[i][2])) if self.target_spk else None   # E2 대상 화자(끄면 난수를 뽑지 않는다)
-        s = self.cst_sequence(i, delay, rng=random if (self.recover or (self.trans_on and tsp is None) or self.has_xl) else None,
+        s = self.cst_sequence(i, delay, rng=random if (self.recover or (self.trans_on and tsp is None) or self.has_xl or self.global_slots > 0) else None,
                               **({"drop_eot": drop} if drop is not None else {}), **({"target": tsp} if tsp is not None else {}))
         wav = np.asarray(crop_audio(self.mono(s["cid"]), s["t0"], s["t0"] + s["L"]), dtype=np.float32)
         if self.far_aug is not None and random.random() < self.far_aug.p:                          # 원거리 증강(끄면 난수를 더 뽑지 않는다)
