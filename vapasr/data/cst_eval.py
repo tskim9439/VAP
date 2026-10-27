@@ -5,6 +5,9 @@ Stage 4(experiments/cst_stage4_eval.py): parse_emitted4(전사·번역 네 흐�
 출력 해석(parse_emitted): 스트리밍 [(k, tid)] — <SPK_A>/<SPK_B> 태그가 슬롯을 열고, 그 뒤 토큰·<EOT> 는 그 슬롯 것이다. 첫 태그 앞 토큰은 슬롯 A 로 본다
   (태그를 빠뜨려도 받아쓰기 평가는 되게). 방출 시각 = 청크 끝 (k+1)·80 ms (ast_eval.word_emission_times 와 같은 규약).
 단위(units): 한국어 = 글자(공백 없는 CER, score_ko), 영어 = 단어(score_en), 독일어 = 단어(score_de).
+  영어 정규화(set_en_norm, 2026-10-27): ours = score_en(소문자·문장부호·숫자, 채움말 남김 — 기본, 예전 값) | whisper = Whisper EnglishTextNormalizer
+  (whisper_normalizer — 채움말 hmm·mm·mhm·mmm·uh·um 제거, 줄임말·영국 철자·숫자·호칭 표준화; 외부 AMI 수치와 견줄 때). 시각을 지키려고 단어마다 정규화한다
+  — 여러 단어 숫자("twenty one")는 단어별로 바뀌지만 참조·가설에 같게 적용된다. 회의 통째 문장 단위 대조는 experiments/meeteval_cpwer.py.
 창 점수(score_window):
   slot  : 슬롯을 그대로(A↔A, B↔B) 맞춘 오류 합 — 형식 규칙(먼저 말한 사람 = A)까지 지킨 화자 귀속
   cp    : 두 슬롯 순열 중 작은 쪽(cpWER/cpCER, 2 화자) — 화자 귀속
@@ -14,9 +17,12 @@ Stage 4(experiments/cst_stage4_eval.py): parse_emitted4(전사·번역 네 흐�
   가설 <EOT>(슬롯·방출 시각)는 cp 순열로 참조 슬롯에 옮긴 뒤 같은 슬롯의 참조 끝 e 와 e ≤ t ≤ e + tol 이면 짝(시간순 탐욕 1:1).
   recall = 짝지은 양성 / 양성, precision = (p ≥ 0.5 참조와 짝지은 가설) / 가설, hold_fire = 보류 참조와 짝지은 가설 / 보류 참조, 지연 = t − e(양성 짝).
 """
+import functools
 from typing import Dict, List, Optional, Sequence, Tuple
 
 CHUNK_S = 0.08
+EN_NORM = "ours"
+_WN = None
 
 
 def parse_emitted(emitted: Sequence, spk_ids: Sequence[int], eot_id: int, drop_chunks=()) -> Tuple[List[List[Tuple[float, int]]], List[Tuple[int, float]]]:
@@ -69,6 +75,23 @@ def emitted_from_sequence(ids: Sequence[int], is_input: Sequence[bool], chunk_of
     return out
 
 
+def set_en_norm(name: str) -> None:
+    """영어 채점 정규화를 고른다 — ours(기본) | whisper. 모듈 전체(이 프로세스의 채점)에 걸린다."""
+    global EN_NORM
+    assert name in ("ours", "whisper"), f"영어 정규화 ours|whisper: {name}"
+    EN_NORM = name
+
+
+@functools.lru_cache(maxsize=1 << 20)
+def whisper_en(text: str) -> Tuple[str, ...]:
+    """Whisper EnglishTextNormalizer 단어열(같은 문자열은 캐시 — 채점은 단어마다 부른다)."""
+    global _WN
+    if _WN is None:
+        from whisper_normalizer.english import EnglishTextNormalizer
+        _WN = EnglishTextNormalizer()
+    return tuple(_WN(text).split())
+
+
 def units(text: str, lang: str) -> List[str]:
     if lang == "Korean":
         from .textnorm import score_ko
@@ -76,6 +99,7 @@ def units(text: str, lang: str) -> List[str]:
     if lang == "German":
         from .textnorm_de import score_de
         return score_de(text).split()
+    if EN_NORM == "whisper": return list(whisper_en(text))
     from .textnorm import score_en
     return score_en(text).split()
 

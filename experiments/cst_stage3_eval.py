@@ -11,6 +11,8 @@
   --verify: 언어·δ 마다 첫 배치의 처음·끝 창을 model.stream_decode 로 다시 풀어 토큰·시각이 같은지 확인한다.
   --oracle: 모델 없이 학습 타깃 시퀀스(정답)를 디코드 출력처럼 바꿔 채점한다 — 지표 sanity(slot·cp 0, 양성 EOT 재현율 1).
   --from-predictions DIR: 그 폴더 predictions-rank*.jsonl 의 원출력(emitted)을 다시 채점한다(디코드 없이 — 채점 규칙을 고친 뒤).
+  --en-norm whisper(2026-10-27): 영어 채점을 Whisper EnglishTextNormalizer 로(채움말 제거 등 — vapasr.data.cst_eval.set_en_norm). 외부 AMI 수치와 견줄 때
+    --from-predictions 와 함께 새 --out 에 다시 매긴다(raw/sources/experiments/2026-10-27-std-rescore/rescore_std.sh). config 에 en_norm 이 남는다(ours 면 키 없음).
   --spk-guide on,margin[,span] [--spk-guide-hold] [--spk-guide-no-insert]: 화자 헤드 안내 디코딩(batch_decode.SpkGuide — model.spk_head 가 있는 Stage 3 체크포인트).
       2026-10-18 p9 ck3000: 삽입은 귀속을 나쁘게 한다(δ10 cp +4.1). 삽입 + 막기는 δ10 중립·δ4 cp −1.3.
       직렬 stream_decode 에는 안내가 없어 --verify 와 함께 쓰지 않는다. 행에 guide_insert·guide_hold(바꾼 태그 수)를 남긴다.
@@ -200,8 +202,9 @@ def target_oracle_loop(a, model, tok, sets, items, dest, done, spk, EOT, n_slots
 
 def run(a):
     import numpy as np, torch
-    from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, emitted_from_sequence
+    from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, emitted_from_sequence, set_en_norm
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
+    set_en_norm(getattr(a, "en_norm", "ours"))                                                # 영어 채점 정규화(ours 기본 · whisper 외부 비교용)
     sb = None
     if getattr(a, "switch_bias", None):                                                        # V3 C3 상태 인지 교대 bias(교차 언어 창만) — 없으면 예전 디코드 그대로
         from vapasr.hf.batch_decode import SwitchBias
@@ -225,6 +228,7 @@ def run(a):
         if getattr(a, "diar_head_override", None):                                              # E7: AOSC 로 학습한 헤드로 바꿔 끼운다(같은 cfg·탭 — diar_train --aosc final)
             xo = torch.load(a.diar_head_override, map_location="cpu"); assert model.diar_head is not None and dict(xo["cfg"]) == dict(model.config.diar_head_cfg) \
                 and list(xo["taps"]) == list(model.config.diar_taps), f"헤드 cfg·탭이 다르다: {a.diar_head_override}"
+            assert int(xo.get("shift", 0) or 0) == int(getattr(model.config, "act_shift", 0) or 0), f"헤드 shift {xo.get('shift', 0)} ≠ 모델 act_shift — E8 규약이 다르다"
             model.diar_head.load_state_dict(xo["state"])
             if xo.get("aosc"): model.config.diar_aosc = dict(xo["aosc"])
             print(f"  화자 분리 헤드 ← {a.diar_head_override}(aosc {xo.get('aosc')})", flush=True)
@@ -268,6 +272,7 @@ def run(a):
                 **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}), **({"target_oracle": True} if tor else {}),
                 **({"act_oracle": True} if act_or else {}), **({"aosc": acfg.to_dict()} if acfg is not None else {}),
                 **({"diar_head_override": os.path.abspath(a.diar_head_override)} if getattr(a, "diar_head_override", None) else {}),
+                **({"en_norm": a.en_norm} if getattr(a, "en_norm", "ours") != "ours" else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
     if a.spk_guide:
@@ -388,6 +393,7 @@ def main():
     q.add_argument("--spk-guide-hold", action="store_true", help="안내: 헤드가 현재 화자를 가리키면 모델의 태그 전환을 막는다(EOT 용 태그도 막혀 EOT 재현율이 줄 수 있다)")
     q.add_argument("--spk-guide-no-insert", action="store_true", help="안내: 태그 삽입을 끈다(--spk-guide-hold 와 함께 = 막기만)")
     q.add_argument("--from-predictions", default=None, help="이 폴더의 원출력을 다시 채점(디코드 없음)")
+    q.add_argument("--en-norm", choices=["ours", "whisper"], default="ours", help="영어 채점 정규화 — whisper = Whisper EnglishTextNormalizer(채움말 제거 등, 외부 비교용)")
     q.add_argument("--backchannel", default=None, type=lambda s: (float(s.split(",")[0]), int(s.split(",")[1])),
                    help="참조 EOT 를 맞장구 규칙(최대초,최대토큰)으로 — 그 규칙으로 학습한 모델(--backchannel)을 같은 정의로 잰다. 창·전사 참조는 같다")
     q.add_argument("--max-speakers", type=int, default=2, help="V2: 창 화자 상한(최대 4 — 슬롯 C·D 를 켠 체크포인트)")

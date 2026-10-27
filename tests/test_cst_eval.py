@@ -88,3 +88,19 @@ def test_lag_matched():
     from vapasr.data.cst_eval import lag_matched
     ref = [("a", 1.0), ("b", 1.2), ("c", 2.0)]; hyp = [("a", 1.16), ("x", 1.3), ("c", 2.4)]
     assert lag_matched(ref, hyp) == [0.16, 0.4] and lag_matched(ref, []) == [] and lag_matched(ref, ref) == [0.0, 0.0, 0.0]
+
+
+def test_en_norm_whisper_switch():
+    """2026-10-27: 영어 채점 정규화 — 기본 ours 는 예전 그대로, whisper 는 채움말을 지우고 철자·숫자를 표준화한다(단어마다). 끝나면 ours 로 되돌린다."""
+    import pytest
+    pytest.importorskip("whisper_normalizer")
+    from vapasr.data import cst_eval
+    ref = [[("Um", 0.1), ("the", 0.2), ("colour", 0.3), ("twenty", 0.4)]]; hyp = [[("the", 0.2), ("color", 0.3), ("20", 0.4)]]
+    base = cst_eval.score_window(ref, hyp, "English"); assert base["n_ref"] == 4 and base["cp"] >= 2       # ours: 채움말·영국 철자가 남는다
+    try:
+        cst_eval.set_en_norm("whisper"); w = cst_eval.score_window(ref, hyp, "English")
+        assert w["n_ref"] == 3 and w["cp"] == 0 and w["agn"] == 0                                          # um 제거, colour → color, twenty → 20
+    finally:
+        cst_eval.set_en_norm("ours")
+    assert cst_eval.score_window(ref, hyp, "English") == base
+    with pytest.raises(AssertionError): cst_eval.set_en_norm("chime8")
