@@ -111,9 +111,9 @@ def devices_of(row):
 
 
 def main():
-    k = a.key or a.corpus; src = os.path.join(a.data, f"{k}.refined.dialogues.jsonl"); out = os.path.join(a.data, f"{k}-far.refined.dialogues.jsonl")
+    key = a.key or a.corpus; src = os.path.join(a.data, f"{key}.refined.dialogues.jsonl"); out = os.path.join(a.data, f"{key}-far.refined.dialogues.jsonl")
     if not a.dry_run and os.path.exists(out): sys.exit(f"이미 있다(덮어쓰지 않는다): {out}")
-    held = set(json.load(open(a.split))["corpora"].get(k, {}).get("heldout", []))
+    held = set(json.load(open(a.split))["corpora"].get(key, {}).get("heldout", []))
     rows = [json.loads(l) for l in open(src, encoding="utf-8") if l.strip()]
     rows = [r for r in rows if r["conv_id"] not in held and r.get("split", "train") == "train"]
     if a.limit: rows = rows[: a.limit]
@@ -124,30 +124,30 @@ def main():
         mf = mono_cache_path(os.path.join(a.data, "mono"), Dialogue.from_json(json.dumps(r)))
         if not os.path.exists(mf): print(f"!! 근접 mono 캐시 없음 — 건너뜀 {r['conv_id']}", flush=True); continue
         for d in devices_of(r): jobs.append((r, d, mf))
-    print(f"{k}: 학습 회의 {len(rows)} · 원거리 변형 {len(jobs)} — 지연 측정", flush=True); t0 = time.time()
+    print(f"{key}: 학습 회의 {len(rows)} · 원거리 변형 {len(jobs)} — 지연 측정", flush=True); t0 = time.time()
     with mp.get_context("fork").Pool(a.procs) as pool: res = pool.map(measure, jobs, chunksize=1)
     keep, drop = [], []
     for (r, d, _), (off, cor, why) in zip(jobs, res):
         rec = dict(conv=r["conv_id"], device=d["device"], offset_s=off, corr=cor, **({"mic": d["mic"]} if "mic" in d else {}))
         (drop if why else keep).append(dict(rec, **({"why": why} if why else {})))
     offs = [k["offset_s"] for k in keep]
-    summary = dict(corpus=k, meetings=len(rows), variants=len(jobs), kept=len(keep), dropped=len(drop), sec=round(time.time() - t0, 1),
+    summary = dict(corpus=key, meetings=len(rows), variants=len(jobs), kept=len(keep), dropped=len(drop), sec=round(time.time() - t0, 1),
                    offset_ms=dict(median=round(1000 * float(np.median(offs)), 1), p05=round(1000 * float(np.percentile(offs, 5)), 1), p95=round(1000 * float(np.percentile(offs, 95)), 1)) if offs else None,
                    corr_median=round(float(np.median([k["corr"] for k in keep])), 3) if keep else None, drop_reasons=sorted({re.sub(r"[-\d.,\[\] ]+$", "", k["why"]) for k in drop}))
     print(json.dumps(summary, ensure_ascii=False), flush=True)
-    for k in drop[:15]: print("  버림", k, flush=True)
+    for x_ in drop[:15]: print("  버림", x_, flush=True)                                      # 2026-10-27: 예전엔 k 로 돌아 출력 키를 덮었다(ami-far conv_id·build.json 이름 사고)
     if a.dry_run: return
     up = a.corpus.upper() if a.corpus != "chime6" else "CHiME6"
     with open(out + f".{os.getpid()}.tmp", "w", encoding="utf-8") as fo:
         for (r, d, _), (off, cor, why) in zip(jobs, res):
             if why: continue
             m = r["conv_id"].split(":", 1)[1]; x = dict(r)
-            x["conv_id"] = f"{k}-far:{m}@{d['device']}"; x["corpus"] = f"{up}-far"
+            x["conv_id"] = f"{key}-far:{m}@{d['device']}"; x["corpus"] = f"{up}-far"
             x["meta"] = dict(r.get("meta") or {}, mono_src=dict(path=d["path"], channel=int(d.get("channel", 0)), offset_s=round(off, 3), device=d["device"], corr=round(cor, 3),
                                                               **({"mic": d["mic"]} if "mic" in d else {})), far_of=r["conv_id"])
             fo.write(json.dumps(x, ensure_ascii=False) + "\n")
     os.replace(out + f".{os.getpid()}.tmp", out)
-    json.dump(dict(summary, kept_rows=keep, dropped_rows=drop), open(os.path.join(a.data, f"{k}-far.build.json"), "w"), ensure_ascii=False, indent=1)
+    json.dump(dict(summary, kept_rows=keep, dropped_rows=drop), open(os.path.join(a.data, f"{key}-far.build.json"), "w"), ensure_ascii=False, indent=1)
     print(f"FAR_OK {out}", flush=True)
 
 

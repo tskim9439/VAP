@@ -1,0 +1,24 @@
+## [2026-10-27] task | E7a 회의 단위 DER·E6 비교 정리, AMI train 만 학습 결정, ami-far conv_id 고침
+
+- Changed:
+  - 위키
+    - [[output-diarization-integration-20261025]] 7 절: 결과 1(E6 창 단위)·결과 2(회의 단위 DER E6·E7a)
+    - [[decision-ami-train-only-20261027]](새)
+  - 코드
+    - `experiments/p2_build_far.py`: 출력 키 변수 덮어쓰기 버그 수정
+    - `experiments/p2_fix_far_ids.py`(새)
+  - mxc 데이터: `phase2/ami-far.refined.dialogues.jsonl` 의 conv_id 1032 행
+    - 옛 파일은 `.bad-conv-id` 로 남겼다.
+    - mono 캐시 1032 개를 새 이름 심볼릭 링크로 이었다(하드 링크는 Errno 524 로 막힘).
+    - `ami-far.build.json` 을 복사했다.
+- Reason:
+  - 사용자 "E7a 회의 단위 DER 나오면 비교 결과 정리해줘", "ami-far conv_id 고쳐줘. 그리고 지금처럼 train 만 학습하자".
+  - E7a + AOSC 회의 단위 DER: IHM-mix dev 34.95·eval 32.23, SDM dev 40.82·eval 40.12.
+    - E6 + AOSC(52.23·54.32·57.06·51.72)보다 11.6–22.1 낮다.
+    - 조각마다 새로 정하는 방식(66–68)보다 26–35 낮다.
+  - AMI eval 화자는 train·dev 와 겹치지 않는다(meetings.xml 확인). dev 를 학습에 넣어도 eval 은 새지 않지만, 관행과 선택용 held-out 때문에 train 만 학습한다.
+  - ami-far conv_id 버그는 이름 문자열만 틀렸다. 발화·토큰·원거리 소리·번역 타깃·학습/평가 분리는 맞아서, F1·E5·E6·E1c·E7a 를 다시 학습할 필요는 없다.
+- Next:
+  - 회의 통째 cpWER 를 기다린다: E7a 헤드 96172(02–03 시), E6 기준선 96461(06:30 무렵).
+  - 그 뒤 E7b(LLM 회의 단위 슬롯) 필요 여부를 판단한다.
+- By: tskim
