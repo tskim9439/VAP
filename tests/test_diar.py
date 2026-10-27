@@ -127,3 +127,40 @@ def test_forward_aosc_mode_returns_mean_loss():
     mask = torch.ones(2, 30, dtype=torch.bool); mask[1, 25:] = False
     loss, st = m(f, aosc=dict(act=act, mask=mask, K=torch.tensor([30, 25]), cfg=AoscConfig(cache=8, fifo=10, period=5, sil=1), seeds=[0, 1], chunk=6))
     assert torch.isfinite(loss) and st["frames"] == 55 and st["steps"] == 10
+
+
+def test_aosc_select_min_pos_drops_overlap_frames():
+    from vapasr.hf.diar import AoscConfig, aosc_select
+    p = torch.full((30, 4), 0.01); p[0:25, 0] = 0.95; p[25:28, 0] = 0.9; p[25:28, 1] = 0.9; p[28:30, 1] = 0.95   # 0: 혼자 25 + 겹침 3, 1: 겹침 3 + 혼자 2
+    new = torch.zeros(30, dtype=torch.bool)
+    fi, si = aosc_select(p, new, AoscConfig(cache=40, sil=0, min_pos=22))
+    assert set(fi[si == 0].tolist()) == set(range(25)) and set(fi[si == 1].tolist()) == set(range(25, 30))   # 혼자 프레임이 22 개 이상인 화자만 겹침을 뺀다
+    fi2, si2 = aosc_select(p, new, AoscConfig(cache=40, sil=0, min_pos=0)); assert set(fi2[si2 == 0].tolist()) == set(range(28))
+
+
+def test_aosc_owners_and_self_cache_loss():
+    import random
+    from vapasr.hf.diar import AoscConfig, _owners, aosc_clip_loss
+    t = torch.zeros(10, 4); t[0:4, 2] = 1; t[4:8, 0] = 1; t[8, 1] = 1
+    c_idx = torch.tensor([0, 1, -1, 4, 5, 9, -1])                                                  # 묶음: 화자 2 프레임 · 화자 0 프레임 · 정답 활동 없는 프레임(무음 칸 포함)
+    assert _owners([(0, [0, 1, 2]), (1, [3, 4]), (3, [5, 6])], c_idx, t, 4) == [2, 0, -1]
+    assert _owners([(0, [0, 1]), (1, [3])], torch.tensor([0, 1, 9, 2]), t, 4) == [2, -1]              # 같은 정답 화자는 한 묶음만(일대일)
+    m = _causal(); m.train(); e = m.embed(torch.randn(1, 2, 60, 8))[0]
+    tgt = torch.zeros(60, 4); tgt[0:25, 0] = 1; tgt[20:50, 1] = 1; tgt[52:58, 2] = 1; mask = torch.ones(60, dtype=torch.bool)
+    cfg = AoscConfig(cache=12, fifo=10, period=5, sil=1, k1=2, k2=3, thr=0.0)                       # thr 0: 학습 안 된 모델 예측으로도 캐시가 찬다
+    tot, st = aosc_clip_loss(m, e, tgt, mask, cfg, random.Random(0), chunk=4, self_cache=True)
+    assert st["self"] == 1.0 and st["steps"] == 15 and st["frames"] == 60 and torch.isfinite(tot); tot.backward()
+    assert m.out.weight.grad.abs().sum() > 0 and m.proj.weight.grad is not None
+
+
+def test_forward_aosc_passes_noise_and_self_p():
+    import random
+    from vapasr.hf.diar import AoscConfig, aosc_clip_loss
+    m = _causal(); f = torch.randn(2, 2, 30, 8); act = torch.zeros(2, 30, 4); act[0, 2:10, 0] = 1; act[0, 12:25, 1] = 1; act[1, 5:28, 0] = 1; act[1, 9:20, 1] = 1
+    mask = torch.ones(2, 30, dtype=torch.bool); cfg = AoscConfig(cache=8, fifo=10, period=5, sil=1)
+    kw = dict(act=act, mask=mask, K=torch.tensor([30, 30]), cfg=cfg, seeds=[0, 1], chunk=6)
+    assert m(f, aosc=dict(kw, self_p=1.0))[1]["self"] == 2.0 and m(f, aosc=dict(kw, self_p=0.0))[1]["self"] == 0.0
+    e = m.embed(f)
+    for nz in (0.0, 2.0):                                                                          # noise 가 aosc_clip_loss 까지 간다
+        ref = sum(aosc_clip_loss(m, e[j], act[j], mask[j], cfg, random.Random(j), chunk=6, noise=nz)[0] for j in range(2)) / 60
+        assert torch.allclose(m(f, aosc=dict(kw, noise=nz))[0], ref)

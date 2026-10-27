@@ -152,7 +152,14 @@ sources:
 - **학습(E7a):**
   - 원 논문처럼 오프라인 헤드(E6)를 스트리밍 흉내로 미세조정한다.
   - 긴 클립(90–120 s)을 청크 47 로 흘린다.
-  - 캐시는 정답으로 고르고(같은 점수는 Gumbel 0.5 로 흩뜨림), 캐시 화자 순서를 0.5 확률로 섞는다(정답 슬롯도 같이).
+  - 캐시는 클립마다 반은 정답으로(같은 점수는 Gumbel 0.5 로 흩뜨림), 반은 그 pass 의 모델 예측으로 고른다(`--aosc-self 0.5`).
+    - NeMo 의 스트리밍 학습은 모델 예측 캐시라 추론과 규칙이 같다. 정답 캐시만 쓰면 추론에서 만나는 오류 섞인 캐시를 학습에서 보지 못한다.
+    - 모델 예측 캐시에서는 화자 묶음마다 정답 화자를 겹침이 가장 큰 일대일 짝으로 정하고, 정답과 겹침이 없는 묶음의 슬롯 정답은 0 이다.
+  - 캐시 화자 순서를 0.5 확률로 섞는다(정답 슬롯도 같이).
+  - 점수 세부는 NeMo `sortformer_modules` 와 맞췄다(2026-10-27 원본 코드 대조).
+    - 겹침·불확실 프레임 제외: '그 화자만' 프레임(점수 > log 0.5)이 22 개 이상인 화자는 나머지 프레임을 캐시 후보에서 뺀다.
+    - log(1 − P_j) 하한은 0.25 이다.
+    - 무음은 화자 확률 합 < 0.2 인 프레임이다.
   - 원 논문은 미세조정 없이 캐시만 붙이면 DER 27.6, 미세조정하면 19.9 였다.
 - **LLM 쪽(E7b, 필요하면):**
   - `--global-slots P` 는 학습 창을 확률 P 로 대화 전체 도착 순서 슬롯으로 둔다. 회의 통째 디코드의 문맥 창에서는 첫 화자가 A 가 아닐 수 있기 때문이다.
@@ -171,8 +178,14 @@ sources:
 - `vapasr/data/cst_dialogue.py`(global_slots), `experiments/stage3_train.py --global-slots`, `modeling_vapasr.py`(diar_align)
 - 제출·평가: `slurm/submit-q17-e7a.sh`(1 노드), `raw/sources/experiments/2026-10-26-data-expansion/e7_session_eval.sh`
 
+### 확인(2026-10-27)
+- 호스트 스모크(GPU 6, E6 헤드에서 20 step, 정답·모델 예측 캐시 섞음): 손실 0.35 → 0.26, frame_acc 0.81 → 0.86, 2.4 s/step(배치 2, 클립당 청크 약 27 개).
+- 저장·재로드 대조: 손실 0.389247 같음, 가중치 차이 0.
+- 서버 시험: test_diar 14 통과. test_long_session·test_slot_input·test_cst_dialogue 등은 107 통과.
+  - 실패 1 은 test_stage3_train_flags 하위 프로세스 300 s 시간 초과(NFS import 지연)다. 맥에서는 4 s 에 통과한다.
+
 ### 순서
 1. E6 헤드 그대로 회의 단위 DER 을 잰다(90 s 조각마다 새로 대 AOSC — AOSC 학습 전 기준선, 호스트 GPU).
-2. E7a(AOSC 헤드 미세조정, 1 노드 약 2 h)를 학습하고, 회의 단위 DER 과 `q17-e7-amifull`(E6 LLM + E7a 헤드, 회의 통째 cpWER)을 잰다.
+2. E7a(AOSC 헤드 미세조정, 1 노드 5,000 step — 스모크가 공유 GPU 에서 2.4 s/step 이라 3–4 h 어림)를 학습하고, 회의 단위 DER 과 `q17-e7-amifull`(E6 LLM + E7a 헤드, 회의 통째 cpWER)을 잰다.
 3. 회의 통째에서 LLM 이 회의 단위 슬롯을 따르지 못하면(귀속 몫이 크면) E7b(`--global-slots 0.5`, E6 final 에서 짧게)를 한 뒤, 그 인코더로 헤드를 다시 AOSC 미세조정한다.
 4. 실시간 경로(`realtime.py`·`live.py`)에 헤드·AOSC 를 붙인다.

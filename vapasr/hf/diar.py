@@ -7,7 +7,7 @@ Sortformer(arXiv:2409.06656)·Streaming Sortformer(arXiv:2507.18446)와 같은 �
 - load_encoder: VapAsr 체크포인트(조각 저장 포함)에서 인코더(encoder.enc.*)만 읽어 NemotronOnline 을 만든다(동결·fp32).
 - AOSC(E7, 2026-10-27 — 회의 통째·실시간 화자 유지): Streaming Sortformer(arXiv:2507.18446)의 도착 순서 화자 캐시. 가지 입력 임베딩(embed)을
   [화자 캐시 · FIFO · 새 청크] 로 이어 인과 가지(head)에 넣고 청크 몫 출력만 쓴다. 캐시는 화자(도착 순서)마다 묶은 대표 프레임이라, 그 화자가 늘 같은 슬롯이 된다.
-  aosc_select(캐시 갱신 규칙) · aosc_stream(추론, 모델 예측으로 캐시) · aosc_clip_loss(학습, 정답으로 캐시·캐시 화자 순서 섞기).
+  aosc_select(캐시 갱신 규칙) · aosc_stream(추론, 모델 예측으로 캐시) · aosc_clip_loss(학습, 정답 또는 모델 예측(self)으로 캐시·캐시 화자 순서 섞기).
 """
 import itertools, json, math, os, random
 from dataclasses import asdict, dataclass
@@ -55,13 +55,14 @@ class DiarBranch(nn.Module):
 
     def forward(self, feats, pad_mask: Optional[torch.Tensor] = None, aosc: Optional[dict] = None):
         """feats (B, S, K, D_in) → logits (B, K, N). pad_mask (B, K) True = 패딩 프레임(어텐션에서 뺀다).
-        aosc(E7 학습 — DDP forward 를 거치게 여기서): dict(act (B, K, N), mask (B, K), K (B,), cfg AoscConfig, seeds [표본마다], alpha, perm_p, chunk)
-        → (손실, 통계 dict) — 표본마다 aosc_clip_loss(스트리밍 흉내)의 프레임 가중 평균."""
+        aosc(E7 학습 — DDP forward 를 거치게 여기서): dict(act (B, K, N), mask (B, K), K (B,), cfg AoscConfig, seeds [표본마다], alpha, perm_p, chunk, noise,
+        self_p — 표본마다 이 확률로 모델 예측 캐시(씨앗으로 정한다)) → (손실, 통계 dict) — 표본마다 aosc_clip_loss(스트리밍 흉내)의 프레임 가중 평균."""
         if aosc is None: return self.head(self.embed(feats), pad_mask)
-        e = self.embed(feats); tot = e.new_zeros(()); st = dict(frames=0.0, hit=0.0, sort=0.0, pit=0.0, steps=0)
+        e = self.embed(feats); tot = e.new_zeros(()); st = dict(frames=0.0, hit=0.0, sort=0.0, pit=0.0, steps=0, self=0.0); sp = aosc.get("self_p", 0.0)
         for j in range(e.shape[0]):
-            Kj = int(aosc["K"][j]); l, s = aosc_clip_loss(self, e[j, :Kj], aosc["act"][j, :Kj], aosc["mask"][j, :Kj], aosc["cfg"], random.Random(aosc["seeds"][j]),
-                                                         alpha=aosc.get("alpha", 0.5), perm_p=aosc.get("perm_p", 0.5), chunk=aosc.get("chunk", 24))
+            Kj = int(aosc["K"][j]); sc = sp > 0 and random.Random(f"{aosc['seeds'][j]}:self").random() < sp
+            l, s = aosc_clip_loss(self, e[j, :Kj], aosc["act"][j, :Kj], aosc["mask"][j, :Kj], aosc["cfg"], random.Random(aosc["seeds"][j]), alpha=aosc.get("alpha", 0.5),
+                                  perm_p=aosc.get("perm_p", 0.5), chunk=aosc.get("chunk", 24), noise=aosc.get("noise", 0.5), self_cache=sc)
             tot = tot + l
             for k in st: st[k] += s[k]
         return tot / max(1.0, st["frames"]), st
@@ -70,7 +71,9 @@ class DiarBranch(nn.Module):
 @dataclass
 class AoscConfig:
     """AOSC 설정(프레임 = 80 ms). Streaming Sortformer 기본: 캐시 188, 점수 규칙(임계 0.5 · 새 프레임 +0.05 · 화자마다 상위 33 개 +2 ln 2 · 상위 66 개 +ln 2 · 무음 칸 3).
-    FIFO 가 fifo 를 넘으면 가장 오래된 period 프레임을 캐시 후보로 내보내 갱신한다. chunk = 추론 한 step 의 새 프레임(가지가 인과라 출력은 청크 크기와 무관하고 갱신 시점만 바뀐다)."""
+    FIFO 가 fifo 를 넘으면 가장 오래된 period 프레임을 캐시 후보로 내보내 갱신한다. chunk = 추론 한 step 의 새 프레임(가지가 인과라 출력은 청크 크기와 무관하고 갱신 시점만 바뀐다).
+    NeMo sortformer_modules 와 같은 세부(2026-10-27): min_pos(화자의 '그 화자만' 프레임 — 점수 > log 0.5 — 이 이만큼 있으면 나머지(겹침·불확실) 프레임은 뺀다,
+    min_pos_scores_rate 0.5 × (188 // 4 − 3)) · floor(log(1 − P_j) 하한 — pred_score_threshold) · sil_thr(무음 = 화자 확률 합 < sil_thr — sil_threshold)."""
     cache: int = 188
     fifo: int = 188
     period: int = 94
@@ -82,6 +85,9 @@ class AoscConfig:
     k2: int = 66
     d2: float = math.log(2.0)
     sil: int = 3
+    min_pos: int = 22
+    floor: float = 0.25
+    sil_thr: float = 0.2
 
     @classmethod
     def from_dict(cls, d: Optional[dict]) -> "AoscConfig":
@@ -93,14 +99,17 @@ class AoscConfig:
 
 def aosc_select(prob, new, cfg: AoscConfig, noise: float = 0.0, rng: Optional[torch.Generator] = None):
     """캐시 갱신 규칙(Streaming Sortformer AOSC). 후보 프레임 확률 prob (n, N)·새 프레임 표시 new (n,) → 고른 칸 (frame (M',) long — 후보 번호, −1 = 무음 칸,
-    spk (M',) long). 점수 S_i = log P_i + Σ_{j≠i} log(1 − P_j), P_i < thr 이면 −∞, 새 프레임 +recency, 화자마다 상위 k1·k2 개에 d1·d2 를 더한다.
+    spk (M',) long). 점수 S_i = log P_i + Σ_{j≠i} log max(1 − P_j, floor), P_i < thr 이면 −∞, 그 화자만 프레임(S_i > log 0.5)이 min_pos 개 이상인 화자는
+    나머지 프레임도 −∞, 새 프레임 +recency, 화자마다 상위 k1·k2 개에 d1·d2 를 더한다.
     후보에 있는(점수가 유한한) 화자마다 무음 칸 sil 개(+∞). 점수 상위 cache 칸을 고른 뒤 (화자, 무음 칸은 그 화자 프레임 뒤, 후보 순서)로 늘어놓는다
     — 화자 번호 = 도착 순서라 캐시 앞쪽 화자가 앞 슬롯이 된다. noise > 0 이면 유한 점수에 Gumbel(0, noise)를 더한다(학습 — 같은 점수의 정답 프레임 고르기를 흩뜨린다)."""
     n, N = prob.shape; dev = prob.device
     if n == 0: return torch.zeros(0, dtype=torch.long, device=dev), torch.zeros(0, dtype=torch.long, device=dev)
-    p = prob.float().clamp(1e-6, 1 - 1e-6); l1 = torch.log1p(-p)
-    S = torch.log(p) - l1 + l1.sum(-1, keepdim=True)
-    S = S.masked_fill(p < cfg.thr, float("-inf")) + cfg.recency * new.float()[:, None]
+    p = prob.float().clamp(1e-6, 1 - 1e-6); l1 = torch.log((1 - p).clamp(min=cfg.floor))
+    S = (torch.log(p) - l1 + l1.sum(-1, keepdim=True)).masked_fill(p < cfg.thr, float("-inf"))
+    if cfg.min_pos > 0:
+        pos = S > math.log(0.5); S = S.masked_fill(~pos & (pos.sum(0) >= cfg.min_pos)[None, :], float("-inf"))
+    S = S + cfg.recency * new.float()[:, None]
     fin = torch.isfinite(S)
     if noise > 0 and fin.any():
         u = torch.rand(S.shape, generator=rng, device="cpu").to(dev).clamp(1e-9, 1 - 1e-9); S = torch.where(fin, S - noise * torch.log(-torch.log(u)), S)
@@ -124,7 +133,7 @@ def aosc_select(prob, new, cfg: AoscConfig, noise: float = 0.0, rng: Optional[to
 def aosc_stream(branch: "DiarBranch", emb, cfg: AoscConfig) -> torch.Tensor:
     """추론: 한 세션의 가지 입력 임베딩 emb (K, d)(branch.embed) → logits (K, N). 청크마다 [캐시 · FIFO · 청크] 를 head 에 넣고 청크 몫을 쓴다.
     FIFO 가 cfg.fifo 를 넘으면 가장 오래된 cfg.period 프레임과 지금 캐시(무음 칸 빼고)를 후보로, 이번 pass 의 예측 확률로 aosc_select 해 캐시를 바꾼다.
-    무음 평균 = 지금까지 내보낸 프레임 중 모든 화자 확률이 thr 미만인 프레임 임베딩의 평균."""
+    무음 평균 = 지금까지 내보낸 프레임 중 화자 확률 합이 sil_thr 미만인 프레임 임베딩의 평균."""
     K, d = emb.shape; N = branch.out.out_features; dev = emb.device; out = emb.new_zeros(K, N, dtype=torch.float32)
     c_emb, f_emb = emb.new_zeros(0, d), emb.new_zeros(0, d); c_sil = torch.zeros(0, dtype=torch.bool, device=dev)
     sil_sum, sil_n = emb.new_zeros(d, dtype=torch.float32), 0
@@ -134,7 +143,7 @@ def aosc_stream(branch: "DiarBranch", emb, cfg: AoscConfig) -> torch.Tensor:
         pr = torch.sigmoid(lg); f_emb = torch.cat([f_emb, x]); f_pr = pr[Lc:]
         if f_emb.shape[0] <= cfg.fifo: continue
         m = min(cfg.period, f_emb.shape[0]); pe, pp = f_emb[:m], f_pr[:m]; f_emb = f_emb[m:]
-        quiet = (pp < cfg.thr).all(-1)
+        quiet = pp.sum(-1) < cfg.sil_thr
         if quiet.any(): sil_sum += pe[quiet].float().sum(0); sil_n += int(quiet.sum())
         keep = ~c_sil; ce, cp = c_emb[keep], pr[:Lc][keep]
         cand, prob = torch.cat([ce, pe]), torch.cat([cp, pp]); new = torch.cat([torch.zeros(len(ce), dtype=torch.bool, device=dev), torch.ones(m, dtype=torch.bool, device=dev)])
@@ -144,33 +153,47 @@ def aosc_stream(branch: "DiarBranch", emb, cfg: AoscConfig) -> torch.Tensor:
     return out
 
 
+def _owners(groups, c_idx, tgt, N: int) -> list:
+    """self 캐시(E7): 캐시 화자 묶음 [(표시, 칸 번호들)] 마다 정답 화자 — 묶음 프레임의 정답 활동 합이 가장 큰 일대일 짝(묶음 ≤ N 이라 순열 전수),
+    겹침이 0 이면 −1(그 슬롯의 정답은 0 — 모델이 잘못 만든 화자 묶음)."""
+    O = []
+    for _, js in groups:
+        fr = c_idx[js]; fr = fr[fr >= 0]; O.append(tgt[fr].sum(0).tolist() if len(fr) else [0.0] * N)
+    best = max(itertools.permutations(range(N), len(groups)), key=lambda q: sum(O[g][q[g]] for g in range(len(groups))))
+    return [s_ if O[g][s_] > 0 else -1 for g, s_ in enumerate(best)]
+
+
 def aosc_clip_loss(branch: "DiarBranch", emb, target, mask, cfg: AoscConfig, rng: random.Random, alpha: float = 0.5, perm_p: float = 0.5, chunk: int = 24,
-                   noise: float = 0.5):
-    """학습(E7): 한 클립의 스트리밍 흉내 → (손실 합(프레임 가중), 통계 dict(frames·hit·sort·pit·steps)). emb (K, d)(grad), target (K, N) 클립 도착 순서 정답,
+                   noise: float = 0.5, self_cache: bool = False):
+    """학습(E7): 한 클립의 스트리밍 흉내 → (손실 합(프레임 가중), 통계 dict(frames·hit·sort·pit·steps·self)). emb (K, d)(grad), target (K, N) 클립 도착 순서 정답,
     mask (K,) bool(손실에 넣는 프레임). 청크(chunk 프레임)마다 [캐시 · FIFO · 청크] 를 head 에 넣고 청크 몫에 Sort·PIT 손실을 건다.
     캐시는 정답 확률(0.025/0.975)로 aosc_select(noise 로 같은 점수 흩뜨리기)해 고르고, 확률 perm_p 로 캐시 화자 묶음 순서를 섞는다.
-    그 step 의 슬롯 = 캐시 화자 묶음 순서, 그다음 캐시에 없는 화자를 [FIFO · 청크] 안 첫 발화 순으로 — 정답 열도 그 순서로 바꾼다(추론은 모델 예측으로 같은 규칙)."""
+    self_cache(2026-10-27 — NeMo 의 스트리밍 학습처럼, 추론 aosc_stream 과 같은 규칙): 캐시·무음을 그 pass 의 모델 예측(detach)으로 고른다 — 자기 오류가 든 캐시에
+    익숙해진다. 묶음의 정답 화자는 _owners. 그 step 의 슬롯 = 캐시 화자 묶음 순서(묶음의 정답 화자), 그다음 캐시에 없는 화자를 [FIFO · 청크] 안 첫 발화 순으로
+    — 정답 열도 그 순서로 바꾼다."""
     K, N = target.shape; dev = emb.device; g = torch.Generator().manual_seed(rng.randrange(2 ** 31))
     tgt = target.float(); pr_or = 0.025 + 0.95 * tgt
-    c_idx = torch.zeros(0, dtype=torch.long, device=dev); c_spk = torch.zeros(0, dtype=torch.long, device=dev); f0 = 0
+    c_idx = torch.zeros(0, dtype=torch.long, device=dev); c_grp = torch.zeros(0, dtype=torch.long, device=dev); f0 = 0
     sil_sum, sil_n = emb.new_zeros(emb.shape[1], dtype=torch.float32), 0; tot = emb.new_zeros((), dtype=torch.float32)
-    st = dict(frames=0.0, hit=0.0, sort=0.0, pit=0.0, steps=0)
+    st = dict(frames=0.0, hit=0.0, sort=0.0, pit=0.0, steps=0, self=float(self_cache))
     for k0 in range(0, K, chunk):
         k1 = min(K, k0 + chunk); n = k1 - k0
-        groups = []                                                                                # 캐시 화자 묶음(캐시 순서) — [(화자, 칸 번호들)]
-        for j, s_ in enumerate(c_spk.tolist()):
+        groups = []                                                                                # 캐시 화자 묶음(캐시 순서) — [(표시, 칸 번호들)]
+        for j, s_ in enumerate(c_grp.tolist()):
             if groups and groups[-1][0] == s_: groups[-1][1].append(j)
             else: groups.append((s_, [j]))
         if len(groups) > 1 and rng.random() < perm_p: rng.shuffle(groups)
-        order = [j for _, js in groups for j in js]; cached = [s_ for s_, _ in groups]
+        order = [j for _, js in groups for j in js]
+        owners = _owners(groups, c_idx, tgt, N) if self_cache else [s_ for s_, _ in groups]       # 정답 캐시는 묶음 표시 = 정답 화자
         sil = (sil_sum / max(1, sil_n)).to(emb.dtype).detach()
-        ci = c_idx[order] if order else c_idx
-        ce = torch.where((ci < 0)[:, None], sil[None], emb[ci.clamp(min=0)]) if len(ci) else emb.new_zeros(0, emb.shape[1])
-        seq = torch.cat([ce, emb[f0:k1]]); lg = branch.head(seq[None])[0][-n:].float()
-        act_win = tgt[f0:k1]; first = [(int(torch.nonzero(act_win[:, s_])[0]) if act_win[:, s_].any() else 10 ** 9, s_) for s_ in range(N) if s_ not in cached]
-        slots = cached + [s_ for f_, s_ in sorted(first) if f_ < 10 ** 9]
+        ci = c_idx[order] if order else c_idx; Lc = len(ci)
+        ce = torch.where((ci < 0)[:, None], sil[None], emb[ci.clamp(min=0)]) if Lc else emb.new_zeros(0, emb.shape[1])
+        lg_all = branch.head(torch.cat([ce, emb[f0:k1]])[None])[0]; lg = lg_all[-n:].float()
+        act_win = tgt[f0:k1]; first = [(int(torch.nonzero(act_win[:, s_])[0]) if act_win[:, s_].any() else 10 ** 9, s_) for s_ in range(N) if s_ not in owners]
+        slots = owners + [s_ for f_, s_ in sorted(first) if f_ < 10 ** 9]
         t_step = torch.zeros(n, N, device=dev)
-        for slot, s_ in enumerate(slots[:N]): t_step[:, slot] = tgt[k0:k1, s_]
+        for slot, s_ in enumerate(slots[:N]):
+            if s_ >= 0: t_step[:, slot] = tgt[k0:k1, s_]
         m = mask[k0:k1]
         if m.any():
             l, so, pi = sort_pit_loss(lg[None], t_step[None], m[None], alpha); w = float(m.sum())
@@ -179,12 +202,15 @@ def aosc_clip_loss(branch: "DiarBranch", emb, target, mask, cfg: AoscConfig, rng
         st["steps"] += 1
         if k1 - f0 <= cfg.fifo: continue
         mm = min(cfg.period, k1 - f0); pop = torch.arange(f0, f0 + mm, device=dev); f0 += mm
-        quiet = ~tgt[pop].bool().any(-1)
+        if self_cache:                                                                             # 이번 pass 예측(열 = 지금 슬롯) — 캐시는 지금 순서(ci)
+            pr = torch.sigmoid(lg_all.detach().float()); kc = ci >= 0; pp = pr[Lc: Lc + mm]
+            cand = torch.cat([ci[kc], pop]); prob = torch.cat([pr[:Lc][kc], pp]); quiet = pp.sum(-1) < cfg.sil_thr; nz = 0.0
+        else:
+            kc = c_idx >= 0; cand = torch.cat([c_idx[kc], pop]); prob = pr_or[cand]; quiet = ~tgt[pop].bool().any(-1); nz = noise
         if quiet.any(): sil_sum = sil_sum + emb[pop[quiet]].detach().float().sum(0); sil_n += int(quiet.sum())
-        keep = c_idx >= 0; cand = torch.cat([c_idx[keep], pop])
-        prob = pr_or[cand]; new = torch.cat([torch.zeros(int(keep.sum()), dtype=torch.bool, device=dev), torch.ones(mm, dtype=torch.bool, device=dev)])
-        fi, si = aosc_select(prob, new, cfg, noise=noise, rng=g)
-        c_idx = torch.where(fi < 0, fi, cand[fi.clamp(min=0)]); c_spk = si
+        new = torch.cat([torch.zeros(int(kc.sum()), dtype=torch.bool, device=dev), torch.ones(mm, dtype=torch.bool, device=dev)])
+        fi, si = aosc_select(prob, new, cfg, noise=nz, rng=g)
+        c_idx = torch.where(fi < 0, fi, cand[fi.clamp(min=0)]); c_grp = si
     return tot, st
 
 

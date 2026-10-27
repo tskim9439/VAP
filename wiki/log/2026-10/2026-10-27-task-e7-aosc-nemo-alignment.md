@@ -1,0 +1,22 @@
+## [2026-10-27] task | E7 AOSC 를 NeMo 원본 코드와 맞춤(모델 예측 캐시 학습·점수 세부)
+
+- Changed:
+  - `vapasr/hf/diar.py`
+    - `aosc_clip_loss(self_cache=…)`, `_owners`(캐시 묶음 ↔ 정답 화자 일대일 짝)
+    - AoscConfig `min_pos 22`·`floor 0.25`·`sil_thr 0.2`
+    - forward 의 `noise`·`self_p` 전달
+  - `experiments/diar_train.py`: `--aosc-self`(기본 0.5)·`--aosc-noise` 실제 전달, 재로드 대조는 정답 캐시로
+  - `slurm/submit-q17-e7a.sh`: `--aosc-self 0.5`
+  - `tests/test_diar.py`: 시험 3 개
+  - 위키: [[output-diarization-integration-20261025]] 7 절 학습(E7a)
+- Reason:
+  - NVIDIA NeMo `sortformer_modules.py`·`sortformer_diar_models.py`(main, 2026-10-27 확인)와 대조하니 두 가지가 달랐다.
+    - NeMo 스트리밍 학습은 캐시를 모델 자신의 예측으로 고른다(추론과 같은 규칙). 우리 구현은 정답으로만 골라, 추론에서 만나는 오류 섞인 캐시를 학습에서 보지 못한다.
+    - `--aosc-noise` 가 손실 함수까지 전달되지 않았다(기본 0.5 와 같아 결과는 같았다).
+  - 점수 세부(겹침 프레임 제외 규칙·하한·무음 기준)도 NeMo 기본값에 맞췄다.
+  - 그 전에 띄운 E7a 스모크와 E6 회의 단위 평가는 결과가 나오기 전에 멈추고 새 코드로 다시 띄웠다.
+- Next:
+  - 확인: 호스트 스모크(GPU 6, 20 step)는 손실 0.35 → 0.26, 2.4 s/step 이다. 저장·재로드 대조는 손실 같고 가중치 차이 0 이며, 서버 test_diar 14 개가 통과했다.
+  - E6 회의 단위 DER(GPU 4)을 마저 잰다.
+  - 사용자 제출: `bash slurm/submit-q17-e7a.sh`·`bash slurm/submit-evals.sh q17-e6-amifull`.
+- By: tskim
