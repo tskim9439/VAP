@@ -29,6 +29,7 @@
 #   --exclude N,…      더 뺄 노드(hpc-102 처럼 짧게 써도 된다) — sbatch 기본 제외 hpc-52·hpc-4 에 더한다
 #   --max-steps N(기본 2000)  --epochs E  --lr LR  --warmup N(기본 300)  --save-every N(기본 500)  --batch-tokens N(기본 16384)  --max-bs N(기본 64)
 #   --nodes N(기본 1)  --partition P(기본 apex)  --time HH:MM:SS(기본 24:00:00)  --after JOBID  --init DIR(기본 q06-s4-ast/final)
+#   --after JOBID[,JOBID…](2026-10-27: 여럿이면 모두 끝난 뒤 — afterany:A:B)
 #   --afterok JOBID    그 job 이 성공한 뒤에만 시작(afterok) — 그 job 이 --init 을 만들 예정이면 init 존재 검사를 건너뛴다(체인 제출, --after 와 함께 쓰지 않는다)
 #   --extra "..."      stage3_train.py 에 그대로 붙일 인자   --dry-run   sbatch 대신 명령만 출력
 set -euo pipefail
@@ -68,7 +69,7 @@ while [[ $# -gt 0 ]]; do
 done
 [[ $run =~ ^[A-Za-z0-9._-]+$ ]] || { echo "--run 이름 필요(영숫자·._-)" >&2; exit 2; }
 [[ $nodes =~ ^[1-9][0-9]*$ ]] || { echo "--nodes 는 양의 정수" >&2; exit 2; }
-[[ -z $after || $after =~ ^[0-9]+$ ]] || { echo "--after 는 job id" >&2; exit 2; }
+[[ -z $after || $after =~ ^[0-9]+([,:][0-9]+)*$ ]] || { echo "--after 는 job id(여럿은 쉼표)" >&2; exit 2; }; after=${after//,/:}
 [[ -z $afterok || $afterok =~ ^[0-9]+$ ]] || { echo "--afterok 는 job id" >&2; exit 2; }
 [[ -z $after || -z $afterok ]] || { echo "--after 와 --afterok 는 함께 쓰지 않는다" >&2; exit 2; }
 [[ $eot_mode =~ ^(soft|hard)$ ]] || { echo "--eot-mode soft|hard" >&2; exit 2; }

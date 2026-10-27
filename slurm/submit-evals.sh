@@ -28,16 +28,18 @@
 #   q17-e5  E5 한 스트림 + 슬롯 활동 입력(2026-10-26): q17-e5 final 을 AMI 정답 슬롯 활동 입력(amiact, 8 몫)과 활동 없이(ami, 4 몫 — 입력이 없을 때 얼마나 무너지나)로. --after-job 필수.
 #   q17-e3  E3(2026-10-25): 같은 q17-e2-tgt final 에 정답 대신 E1 화자 분리 가지의 예측 활동(v3_eval_task.sh amie3, 임계 E3_THR — 기본 0.45 = E1 AMI dev 에서 고른 값, 바꾸려면 서브셸에서 export)으로 8 몫.
 #           --after-job 은 E2 학습이 아직 돌 때만 준다(끝났으면 빼고 낸다 — 작업이 DONE 을 확인하고 돈다. 끝난 지 오래된 job 은 스케줄러 기록에서 빠져 의존이 거부될 수 있다).
+#   --job-name NAME(2026-10-27, 사용자 "Job 이름은 SA_EVAL_FullDuplex 로 설정해주고") 평가 노드 job 이름(기본 SA_EVAL_FullDuplex — 그 전에는 sbatch 의 SA_V3_EVAL;
+#              로그는 logs/train/<이름>-<job>.out).
 #   --after-job JOBID  의존 job 을 바꾼다(재제출 등).   --dry-run  목록·sbatch 명령만 출력(파일·제출 없음).   --partition P  평가 노드 파티션(기본 sbatch 의 apex — 예 low_p_hpc).
 #   --cks A,B  체크포인트 평가·avg3 에 쓸 checkpoint-A·checkpoint-B(기본 1500,2000 — 2,500 step run 의 60·80 %; 2026-10-26 F1 5,000 step 은 3000,4000).
 # 시간 한도는 24 h 로 낸다(sbatch 기본 12 h 를 명령줄로 덮는다). 목록은 VAPKT-data/tmp/evals-<묶음>-<시각>.txt(새 파일).
 # 각 작업은 끝났거나 시작된 산출이 있으면 건너뛰거나 이어 하고(AMI 몫은 이어 한다) 아무것도 지우지 않는다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-set_=${1:-}; [[ $# -gt 0 ]] && shift; dep=""; dry=0; part=""; cks=1500,2000
+set_=${1:-}; [[ $# -gt 0 ]] && shift; dep=""; dry=0; part=""; cks=1500,2000; jname=SA_EVAL_FullDuplex
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --after-job) dep=$2; shift 2 ;;  --dry-run) dry=1; shift ;;  --partition) part=$2; shift 2 ;;  --cks) cks=$2; shift 2 ;;
+    --after-job) dep=$2; shift 2 ;;  --job-name) jname=$2; shift 2 ;;  --dry-run) dry=1; shift ;;  --partition) part=$2; shift 2 ;;  --cks) cks=$2; shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -88,7 +90,7 @@ case $set_ in
   q17-e3) for r in 0 1 2 3 4 5 6 7; do L+=("$r|E3_THR=${E3_THR:-0.45} bash $X amie3 q17-e2-tgt final $r/8"); done ;;
 esac
 T=$D/tmp/evals-$set_-$(date +%Y%m%d-%H%M%S).txt
-cmd="sbatch ${part:+--partition=$part }${dep:+--dependency=afterok:$dep }--time=24:00:00 --export=ALL,TASKS=$T slurm/v3-eval-node.sbatch"
+cmd="sbatch --job-name=$jname ${part:+--partition=$part }${dep:+--dependency=afterok:$dep }--time=24:00:00 --export=ALL,TASKS=$T slurm/v3-eval-node.sbatch"
 if (( dry )); then printf '%s\n' "${L[@]}"; echo "$cmd"; echo "Submitted batch job 0"; exit 0; fi
 [[ -e $T ]] && { echo "이미 있다: $T" >&2; exit 1; }
 { echo "# 평가 묶음 $set_(slurm/submit-evals.sh, $(date '+%F %T'))${dep:+ — job $dep 성공 뒤}"; printf '%s\n' "${L[@]}"; } > "$T"

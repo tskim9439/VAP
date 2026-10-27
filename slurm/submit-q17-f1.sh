@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 [[ $exclude == none ]] && exclude=""
-[[ -z $after || $after =~ ^[0-9]+$ ]] || { echo "--after 는 job id: $after" >&2; exit 2; }
+[[ -z $after || $after =~ ^[0-9]+([,:][0-9]+)*$ ]] || { echo "--after 는 job id(여럿은 쉼표 — 모두 끝난 뒤): $after" >&2; exit 2; }
 [[ -z $afterok || $afterok =~ ^[0-9]+$ ]] || { echo "--afterok 는 job id: $afterok" >&2; exit 2; }
 [[ -z $after || -z $afterok ]] || { echo "--after 와 --afterok 는 함께 쓰지 않는다" >&2; exit 2; }
 export MAX_RESTART=${MAX_RESTART:-$([[ $part == apex ]] && echo 5 || echo 20)}
@@ -56,7 +56,7 @@ ARGS=(--run $run --init $M/stage3-q17-st3-p11-revive/checkpoint-3000 --partition
       --sim-data $SIMS --weights $W --set-phone sim_en-de-tel:0 --change-tag-weight 3 --hold-tag-weight 1.5 --eot-drop-synth 1.0 --eot-drop-sets xl
       --lr 4e-5 --max-steps $steps --save-every $save --decision-weight-sets xl --split v4 --dlg-corpora $CORP --max-speakers 4 --declare-all-p 0.5
       --extra "--far-aug 0.3 --far-sets dlg_ko,dlg_en,dlg_de,dlg_mt,dlg_mtko$GMAP${textra:+ $textra}")
-echo "[$(date '+%F %T')] F1 $run($part $nodes 노드, $steps step, 저장 $save step 마다, 평가 ck$CKA·ck$CKB·final, MAX_RESTART $MAX_RESTART${after:+, job $after 끝난 뒤}${afterok:+, job $afterok 성공 뒤}${textra:+, 덧붙임 $textra}, 평가 $evset) · 대화 $CORP · 합성 $SIMS" >&2
+echo "[$(date '+%F %T')] F1 $run($part $nodes 노드, $steps step, 저장 $save step 마다, 평가 ck$CKA·ck$CKB·final, MAX_RESTART $MAX_RESTART${after:+, job ${after//[,:]/·} 끝난 뒤}${afterok:+, job $afterok 성공 뒤}${textra:+, 덧붙임 $textra}, 평가 $evset) · 대화 $CORP · 합성 $SIMS" >&2
 out=$(bash slurm/submit-stage3-train.sh "${ARGS[@]}" ${EXC[@]+"${EXC[@]}"} $dry 2>&1) || { echo "$out" | tail -5 >&2; echo "!! 학습 제출 실패" >&2; exit 1; }
 echo "$out" | grep -E "^sbatch|Submitted|만들 예정|init 없음|거부" >&2 || true
 dep=$(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1 || true); [[ -n $dep ]] || { [[ -n $dry ]] && dep=0; } || true
