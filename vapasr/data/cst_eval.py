@@ -4,6 +4,8 @@ Stage 4(experiments/cst_stage4_eval.py): parse_emitted4(전사·번역 네 흐�
 
 출력 해석(parse_emitted): 스트리밍 [(k, tid)] — <SPK_A>/<SPK_B> 태그가 슬롯을 열고, 그 뒤 토큰·<EOT> 는 그 슬롯 것이다. 첫 태그 앞 토큰은 슬롯 A 로 본다
   (태그를 빠뜨려도 받아쓰기 평가는 되게). 방출 시각 = 청크 끝 (k+1)·80 ms (ast_eval.word_emission_times 와 같은 규약).
+  E9 슬롯 블록(2026-10-28): 디코더가 슬롯 출력 앞에 그 슬롯 태그를 기록하므로 같은 규칙으로 읽는다. <BEGIN>·<EOT> 는 activity_from_events 로 슬롯 활동이 된다
+  (LLM 쪽 화자 분리 — vapasr.hf.diar.der_counts 로 DER).
 단위(units): 한국어 = 글자(공백 없는 CER, score_ko), 영어 = 단어(score_en), 독일어 = 단어(score_de).
   영어 정규화(set_en_norm, 2026-10-27): ours = score_en(소문자·문장부호·숫자, 채움말 남김 — 기본, 예전 값) | whisper = Whisper EnglishTextNormalizer
   (whisper_normalizer — 채움말 hmm·mm·mhm·mmm·uh·um 제거, 줄임말·영국 철자·숫자·호칭 표준화; 외부 AMI 수치와 견줄 때). 시각을 지키려고 단어마다 정규화한다
@@ -25,17 +27,57 @@ EN_NORM = "ours"
 _WN = None
 
 
-def parse_emitted(emitted: Sequence, spk_ids: Sequence[int], eot_id: int, drop_chunks=()) -> Tuple[List[List[Tuple[float, int]]], List[Tuple[int, float]]]:
-    """→ (슬롯별 [(방출 시각 s, tid)], [(슬롯, 방출 시각 s)] <EOT>). drop_chunks 의 청크에서 나온 토큰·EOT 는 버린다(전사 없는 음성 구간)."""
+def parse_emitted(emitted: Sequence, spk_ids: Sequence[int], eot_id: int, drop_chunks=(), begin_id: Optional[int] = None,
+                  events: Optional[list] = None) -> Tuple[List[List[Tuple[float, int]]], List[Tuple[int, float]]]:
+    """→ (슬롯별 [(방출 시각 s, tid)], [(슬롯, 방출 시각 s)] <EOT>). drop_chunks 의 청크에서 나온 토큰·EOT 는 버린다(전사 없는 음성 구간).
+    begin_id(E9 <BEGIN>): 주면 그 토큰은 글자가 아니다. events(list 를 주면 채운다 — E9 LLM 쪽 화자 분리): drop 과 무관하게 모든
+    ('B' | 'E', 슬롯, 청크 k) — <BEGIN>·<EOT>, 그리고 ('W', 슬롯, k) — 글자 토큰(구간 추정 보조, activity_from_events)."""
     slots: List[List[Tuple[float, int]]] = [[] for _ in spk_ids]; eots: List[Tuple[int, float]] = []; cur = 0; drop = set(drop_chunks)
     for k, t in emitted:
         t = int(t)
         if t in spk_ids: cur = list(spk_ids).index(t); continue
-        if k in drop: continue
+        if events is not None: events.append(("B" if t == begin_id else "E" if t == eot_id else "W", cur, int(k)))
+        if t == begin_id or k in drop: continue
         tt = (int(k) + 1) * CHUNK_S
         if t == eot_id: eots.append((cur, tt))
         else: slots[cur].append((tt, t))
     return slots, eots
+
+
+def activity_from_events(events: Sequence[Tuple[str, int, int]], K: int, n: int, delay: int, begin_lag: int = 4):
+    """E9 LLM 쪽 화자 분리: parse_emitted events → 슬롯 활동 (K, n) 0/1 numpy. 학습 규칙의 역: <BEGIN> 청크 − begin_lag = 시작 프레임,
+    <EOT> 청크 − δ = 마지막 프레임(cst_dialogue.block_streams). 슬롯마다 시간순으로 <BEGIN> 이 구간을 열고 <EOT> 가 닫는다.
+    열린 구간 없이 <EOT> 가 오면 지난 닫힘 뒤 첫 글자(청크 − δ), 글자도 없고 앞 사건도 없으면 창 시작(창 앞에서 시작한 발화)부터, 그 밖에는 그 프레임 하나.
+    열린 채 <BEGIN> 이 또 오면 앞 구간은 새 시작 직전에 닫고, 끝까지 열려 있으면 K 까지. 슬롯 n 개 밖은 버린다."""
+    import numpy as np
+    act = np.zeros((K, n), np.uint8)
+    for s in range(n):
+        ev = [(k, typ) for typ, sl, k in events if sl == s]; open_at, seen, word = None, False, None
+        for k, typ in ev:
+            if typ == "W":
+                if open_at is None and word is None: word = max(0, k - delay)
+                continue
+            if typ == "B":
+                a = max(0, min(K, k - begin_lag))
+                if open_at is not None: act[open_at: max(open_at, a), s] = 1
+                open_at, seen, word = a, True, None; continue
+            e = max(0, min(K, k - delay + 1))                                                     # <EOT>
+            a = open_at if open_at is not None else word if word is not None else (0 if not seen else max(0, e - 1))
+            act[min(a, e): e, s] = 1; open_at, seen, word = None, True, None
+        if open_at is not None: act[open_at:, s] = 1
+    return act
+
+
+def emitted_from_blocks(ids: Sequence[int], is_input: Sequence[bool], tag_chunk: Sequence[int], slot_at: Sequence[int], spk_ids: Sequence[int]) -> List[Tuple[int, int]]:
+    """E9 학습 시퀀스(정답, cst_dialogue.build_block_sequence) → batch_decode.decode_blocks_batch 와 같은 [(k, tid)](슬롯 출력 앞에 그 슬롯 태그 — 오라클 평가)."""
+    out: List[Tuple[int, int]] = []; cur = None; tagged = False
+    for p, (t, inp) in enumerate(zip(ids, is_input)):
+        if inp:
+            if tag_chunk[p] >= 0: cur, tagged = (int(tag_chunk[p]), int(slot_at[p])), False
+            continue
+        if not tagged: out.append((cur[0], int(spk_ids[cur[1]]))); tagged = True
+        out.append((cur[0], int(t)))
+    return out
 
 
 def parse_emitted4(emitted: Sequence, spk_ids: Sequence[int], trans_id: int, eot_id: int, drop_chunks=(), drop_tr_chunks=()):

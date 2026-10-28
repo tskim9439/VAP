@@ -27,7 +27,7 @@ def one(job):
     from vapasr.data.cst_eval import parse_emitted, score_window, attr_errors
     r = job; c, i = G["index"][r["id"]]; ds = G["sets"][c]; tok = G["tok"]; d = ds.dlgs[ds.items[i][0]]
     ref_w, _, mask, sp_order = window_ref(ds, i, r["delta"], G["eot"], tok)
-    hs, _ = parse_emitted([tuple(e) for e in r["emitted"]], G["spk"], G["eot"], drop_chunks=mask)
+    hs, _ = parse_emitted([tuple(e) for e in r["emitted"]], G["spk"], G["eot"], drop_chunks=mask, begin_id=G.get("begin"))   # E9 <BEGIN> 은 글자가 아니다
     hyp_w = [words_of(tok, h) for h in hs]
     sc = score_window(ref_w, hyp_w, d.lang); same = all(sc[k] == r[k] for k in ("n_ref", "cp", "agn"))
     busy, ov, chg = busy_of(ds.eps[ds.items[i][0]], sp_order, ds.items[i][1], ds.items[i][2])
@@ -81,7 +81,7 @@ def main():
     sets, items = windows_of(ns, tok)
     from vapasr.data.cst_dialogue import SLOTS
     n_parse = len(ck.get("slot_tokens") or SLOTS[:2]) if not conf.get("oracle") else max(2, int(ns.max_speakers))   # 평가(cst_stage3_eval)와 같은 출력 해석 슬롯 수
-    G.update(sets=sets, tok=tok, eot=sp["<EOT>"], spk=tuple(sp[t] for t in SLOTS[:n_parse]), short_words=a.short_words,
+    G.update(sets=sets, tok=tok, eot=sp["<EOT>"], spk=tuple(sp[t] for t in SLOTS[:n_parse]), short_words=a.short_words, begin=sp.get("<ONSET>") if ck.get("slot_blocks") else None,
              index={f"{sets[c].items[i][0]}@{sets[c].items[i][1]}": (c, i) for c, i in items})
     miss = [r["id"] for r in rows if r["id"] not in G["index"]]; assert not miss, f"평가 창에 없는 원출력 {len(miss)} 개: {miss[:3]}"
     print(f"원출력 {len(rows)} 행(δ {a.deltas}) · 워커 {a.workers}", flush=True)

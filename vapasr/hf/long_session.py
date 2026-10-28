@@ -16,6 +16,8 @@
   받아쓰고 나머지는 말을 내지 않았다. 오디오는 자르지 않고 한 스트림으로 계속 디코드하되 LLM 이 보는 문맥만 prefix + 최근 context_s 초로 둔다.
 - 태그 이끌기(make_retag, 2026-10-28 — E7): E6 LLM 이 회의 통째에서 헤드의 회의 단위 슬롯을 따르지 않아(96172 귀속 46 pt) 화자 태그를 낼 때 그 뒤 말이 올 오디오의
   활동이 가장 많은 슬롯으로 바꾼다(학습 없이).
+- E9 슬롯 블록(long_block_decode, 2026-10-28): 청크마다 [오디오, 태그 D 개]를 한 forward 로 미리 넣고 말이 있는 슬롯에서만 되돌아가 한 토큰씩 낸다
+  (realtime.realtime_block_decode — LongThinker.run_all).
 """
 from typing import Optional
 
@@ -170,6 +172,11 @@ class LongThinker:
         logits = self.lm_head(self.norm(self.hidden(x, start)[:, -1]))[0].float()
         return int(logits.masked_fill(self.block, float("-inf")).argmax())
 
+    def run_all(self, x, start: int) -> list:
+        """run 과 같고 위치마다 다음 토큰 id 목록(E9 추측 prefill — realtime.realtime_block_decode)."""
+        logits = self.lm_head(self.norm(self.hidden(x, start)))[0].float()
+        return logits.masked_fill(self.block, float("-inf")).argmax(-1).tolist()
+
 
 def make_retag(act, slot_ids, delta: int, back: int = 2, stats: Optional[dict] = None):
     """E7 회의 통째(2026-10-28 — LLM 태그가 헤드의 회의 단위 슬롯을 따르지 않아 귀속이 무너졌다): 모델이 화자 태그를 내면, 청크 k 에서 그 뒤 말이 올 오디오
@@ -199,3 +206,16 @@ def long_decode(model, feats, prefix_ids, max_flush_rounds=None, blk: int = 4096
     lt = LongThinker(model.thinker, model.config.blocked_ids, max_len=len(prefix_ids) + (4 * C + 2048 if C else int(2.6 * K) + 1024), blk=blk, context=C)
     out, forced, _, rounds, _ = realtime_decode(model, lt, feats, list(prefix_ids), max_flush_rounds=max_flush_rounds, on_chunk=lt.on_chunk if C else None, retag=retag)
     return out, forced, rounds, lt.used
+
+
+def long_block_decode(model, feats, prefix_ids, D: int, act=None, max_flush_rounds=None, blk: int = 4096, context_s: float = 0.0):
+    """E9 회의 통째 디코드(2026-10-28): realtime.realtime_block_decode 에 LongThinker(추측 prefill·되돌리기 — 출력 규칙은 batch_decode.decode_blocks_batch 와 같다).
+    feats (S, K, D)(encode_long — aosc 면 스트림 1 = 회의 단위 예측 활동이 태그·오디오 활동이 된다), D = 선언 슬롯 수.
+    KV 는 prefix + (D + 2.6)·K + 1024 위치로 시작한다(청크마다 오디오 + 태그 D 개 + 말). context_s > 0 = 문맥 창(LongThinker).
+    → (emitted, forced, flush_rounds, 넣은 위치 수, forward 수, 청크 ms 목록)."""
+    from .realtime import realtime_block_decode
+    K = int(feats.shape[-2]); C = int(round(context_s / FRAME_S)) if context_s else 0
+    lt = LongThinker(model.thinker, model.config.blocked_ids, max_len=len(prefix_ids) + ((D + 4) * C + 2048 if C else int((D + 2.6) * K) + 1024), blk=blk, context=C)
+    out, forced, ticks, rounds, _, nf = realtime_block_decode(model, lt, feats, list(prefix_ids), D, act=act, max_flush_rounds=max_flush_rounds,
+                                                              on_chunk=lt.on_chunk if C else None)
+    return out, forced, rounds, lt.used, nf, ticks

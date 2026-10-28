@@ -99,12 +99,15 @@ def pack_batch(b: dict) -> dict:
     the model flattens the encoder output to (1, B·Kmax) so chunk_of here is sample·Kmax + chunk."""
     mask = b["mask"].bool(); B = mask.shape[0]; n = mask.sum(1).tolist()
     Kmax = int(b["K"].max()) if "K" in b else int(b["feats"].shape[2])
-    out = {k: v for k, v in b.items() if k not in ROW_KEYS + ("mask", "chunk_of")}
+    out = {k: v for k, v in b.items() if k not in ROW_KEYS + ("mask", "chunk_of", "tag_chunk")}
     for k in ROW_KEYS:
         if k in b and torch.is_tensor(b[k]) and b[k].dim() == 2:
             out[k] = torch.cat([b[k][i, : n[i]] for i in range(B)])[None]
     ch = b["chunk_of"]
     out["chunk_of"] = torch.cat([torch.where(ch[i, : n[i]] >= 0, ch[i, : n[i]] + i * Kmax, ch[i, : n[i]]) for i in range(B)])[None]
+    if "tag_chunk" in b:                                         # E9 tag positions: chunk → sample·TAG_STRIDE + chunk (the model reads both back; flush rounds go past Kmax)
+        from ..data.cst_dialogue import TAG_STRIDE
+        tc = b["tag_chunk"]; out["tag_chunk"] = torch.cat([torch.where(tc[i, : n[i]] >= 0, tc[i, : n[i]] + i * TAG_STRIDE, tc[i, : n[i]]) for i in range(B)])[None]
     out["position_ids"] = torch.cat([torch.arange(k, device=mask.device) for k in n])[None]
     if "soft_pos" in b and "soft_b" in b:                       # collate_dialogue's flat soft targets (row, col) → (0, packed col)
         off = torch.tensor([0] + n[:-1], device=b["soft_pos"].device).cumsum(0)

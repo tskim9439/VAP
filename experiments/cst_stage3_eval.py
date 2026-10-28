@@ -15,6 +15,10 @@
     그 뒤 말이 올 오디오 [k − δ − 2, k] 의 활동이 가장 많은 슬롯으로, 모델 슬롯도 말하고 있으면 그대로). 행에 retag{tags, changed}.
   --relabel-act DIR [--relabel-oracle](2026-10-28, 진단 — --from-predictions · --window full): 가설 단어를 활동으로 다시 귀속해 채점한다(cst_eval.relabel_by_activity).
     DIR = diar_eval run --session --save-probs 의 <out>/aosc/probs(회의마다 <cid>@full.npz — prob·ref), --relabel-oracle 이면 그 npz 의 정답 활동(ref)으로.
+  E9 슬롯 블록 체크포인트(config.slot_blocks, 2026-10-28)는 자동으로 슬롯 블록 디코드(창: batch_decode.decode_blocks_batch, --window full: long_session.long_block_decode
+    — 추측 prefill)·오라클(block_sequence)을 쓰고, 행에 llm_der(<BEGIN>·<EOT> 로 만든 슬롯 활동의 DER 셈 — diar.der_counts, diar_eval 과 같은 프레임 마스크),
+    --window full 이면 forwards·chunk_ms(청크 디코드 ms 평균)·chunk_ms_p90. --verify 는 배치 대 추측 prefill 직렬을 대조한다. 참조·채점은 같다.
+    --oracle --blocks: 학습 전에 E9 정답 시퀀스를 같은 규칙으로 채점한다(cp·agn 0, LLM DER 는 구간 끝 반올림만).
   --en-norm whisper(2026-10-27): 영어 채점을 Whisper EnglishTextNormalizer 로(채움말 제거 등 — vapasr.data.cst_eval.set_en_norm). 외부 AMI 수치와 견줄 때
     --from-predictions 와 함께 새 --out 에 다시 매긴다(raw/sources/experiments/2026-10-27-std-rescore/rescore_std.sh). config 에 en_norm 이 남는다(ours 면 키 없음).
   --spk-guide on,margin[,span] [--spk-guide-hold] [--spk-guide-no-insert]: 화자 헤드 안내 디코딩(batch_decode.SpkGuide — model.spk_head 가 있는 Stage 3 체크포인트).
@@ -122,11 +126,12 @@ def window_ref(ds, i, delta, eot_id, tok):
     return [words_of(tok, r) for r in ref_tok], ref_eot, mask, sp_order
 
 
-def verify_long(model, wav, prefix, max_flush) -> None:
+def verify_long(model, wav, prefix, max_flush, D=None) -> None:
     """--window full --verify: 겹침 조각 인코딩(encode_long)을 파일 전체 forward 와 앞 300 s 로(조각 1000 프레임 — 조각 넷), 긴 디코드(long_decode)를
     E6 이후(화자 분리 헤드 — 스트림 1 = 예측 활동)는 스트림 0(인코더 특징)만 대조한다(2026-10-28: 인과 헤드 예측은 조각 앞 맥락에 따라 몇 프레임 달라져
     96461 몫 0 이 max|Δ| 1.0 으로 멈췄다 — 그 차이는 몫으로만 적는다).
-    배치 디코드(decode_batch)와 앞 60 s 특징으로(블록 256 위치 — 블록·나머지 경로 둘 다) 대조한다."""
+    배치 디코드(decode_batch)와 앞 60 s 특징으로(블록 256 위치 — 블록·나머지 경로 둘 다) 대조한다.
+    D(E9 슬롯 블록 — 선언 슬롯 수): 긴 디코드는 long_block_decode(추측 prefill), 배치는 decode_blocks_batch 로 대조한다."""
     import numpy as np, torch
     from vapasr.hf.batch_decode import decode_batch
     from vapasr.hf.long_session import encode_long, long_decode
@@ -138,8 +143,15 @@ def verify_long(model, wav, prefix, max_flush) -> None:
         if getattr(model, "diar_head", None) is not None and whole.shape[0] > 1 else ""
     print(f"ENC-PARITY 앞 {n / 16000:.0f} s(조각 1000 프레임·앞 겹침 1760): 스트림 0 max|Δ| {d:.2e}{act}", flush=True)
     assert d < 1e-3, f"겹침 조각 인코딩이 파일 전체 forward 와 다르다 {d}"
-    f60 = whole[:, :750]; ref = decode_batch(model, [f60], [list(prefix)], max_flush_rounds=max_flush)[0]
-    out, forced, rounds, used = long_decode(model, f60, prefix, max_flush_rounds=max_flush, blk=256)
+    f60 = whole[:, :750]
+    if D:
+        from vapasr.hf.batch_decode import decode_blocks_batch
+        from vapasr.hf.long_session import long_block_decode
+        ref = decode_blocks_batch(model, [f60], [list(prefix)], D, max_flush_rounds=max_flush)[0]
+        out, forced, rounds, used, _, _ = long_block_decode(model, f60, prefix, D, max_flush_rounds=max_flush, blk=256)
+    else:
+        ref = decode_batch(model, [f60], [list(prefix)], max_flush_rounds=max_flush)[0]
+        out, forced, rounds, used = long_decode(model, f60, prefix, max_flush_rounds=max_flush, blk=256)
     assert out == ref.emitted and forced == ref.forced and rounds == ref.flush_rounds, f"긴 디코드 ≠ 배치 디코드: 토큰 {len(out)}/{len(ref.emitted)} forced {forced}/{ref.forced}"
     print(f"DEC-PARITY 앞 60 s: 토큰 {len(out)} 같음(위치 {used})", flush=True)
 
@@ -211,7 +223,7 @@ def target_oracle_loop(a, model, tok, sets, items, dest, done, spk, EOT, n_slots
 
 def run(a):
     import numpy as np, torch
-    from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, emitted_from_sequence, set_en_norm
+    from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, emitted_from_sequence, set_en_norm, emitted_from_blocks, activity_from_events
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
     set_en_norm(getattr(a, "en_norm", "ours"))                                                # 영어 채점 정규화(ours 기본 · whisper 외부 비교용)
     sb = None
@@ -249,6 +261,15 @@ def run(a):
         print(f"  모델 슬롯 {model.config.slot_tokens} < 창 화자 상한 {n_slots} — 모델 슬롯 수로 디코드·채점(참조는 창 화자 전부)", flush=True); n_slots = len(model.config.slot_tokens)
     n_parse = len(model.config.slot_tokens) if model is not None else n_slots              # 출력 해석은 모델 슬롯 전부(V2 4) — 2 인 창에서 C·D 로 낸 말은 삽입으로 센다(텍스트로 읽지 않는다)
     spk = tuple(sp[t] for t in SLOTS[:n_parse]); EOT = sp["<EOT>"]
+    blocks = bool(cfg.get("slot_blocks") if model is None else getattr(model.config, "slot_blocks", False)) or bool(getattr(a, "blocks", False))   # E9 슬롯 블록(2026-10-28)
+    assert not getattr(a, "blocks", False) or a.oracle, "--blocks 는 --oracle 과 함께(학습 전 E9 형식 점검)"
+    BEGIN = sp.get("<ONSET>") if blocks else None
+    if blocks:
+        assert not (sb or a.spk_guide or getattr(a, "target_oracle", False) or getattr(a, "act_tag_guide", False)), \
+            "E9 슬롯 블록은 --switch-bias·--spk-guide·--target-oracle·--act-tag-guide 와 함께 쓰지 않는다(태그는 정해진 입력)"
+        from vapasr.hf.batch_decode import decode_blocks_batch
+        from vapasr.hf.diar import der_counts
+        from vapasr.data.cst_dialogue import slot_activity as _slot_act
     if EOT in blocked and not a.oracle: print("!! <EOT> 가 decode 차단 목록에 있다(Stage 3 학습 전 체크포인트) — EOT 는 나오지 않는다", flush=True)
     full = is_full(a); bs = 1 if full else a.batch_size                                         # 회의 통째: 창(회의) 하나씩 긴 직렬 디코드
     tor = bool(getattr(a, "target_oracle", False)); act_or = bool(getattr(a, "act_oracle", False))
@@ -272,7 +293,7 @@ def run(a):
     assert tor or not getattr(a, "target_act", None), "--target-act 는 --target-oracle 과 함께(E3 — 정답 대신 예측 활동)"
     if full:
         assert not (sb or a.spk_guide), "--window full 은 긴 직렬 디코드(long_decode)라 --switch-bias·--spk-guide 와 함께 쓰지 않는다"
-        if model is not None: from vapasr.hf.long_session import encode_long, long_decode
+        if model is not None: from vapasr.hf.long_session import encode_long, long_decode, long_block_decode
     sets, items = windows_of(a, tok)
     items = [x for j, x in enumerate(items) if j % a.world_size == a.rank]
     out = os.path.join(a.out); os.makedirs(out, exist_ok=True)
@@ -285,7 +306,7 @@ def run(a):
                 **({"act_oracle": True} if act_or else {}), **({"aosc": acfg.to_dict()} if acfg is not None else {}),
                 **({"diar_head_override": os.path.abspath(a.diar_head_override)} if getattr(a, "diar_head_override", None) else {}),
                 **({"en_norm": a.en_norm} if getattr(a, "en_norm", "ours") != "ours" else {}),
-                **({"act_tag_guide": True} if getattr(a, "act_tag_guide", False) else {}),
+                **({"act_tag_guide": True} if getattr(a, "act_tag_guide", False) else {}), **({"slot_blocks": True} if blocks else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
@@ -319,7 +340,7 @@ def run(a):
                     if full:
                         if all((f"{cid}@{t0w}", dl) in done for dl in a.deltas): continue           # 끝난 회의는 인코딩도 건너뛴다(아래 δ 고리도 건너뜀)
                         if a.verify and "full" not in checked:
-                            verify_long(model, wav, ds.cst_prefix(ds.slots(i)[1][:n_slots], a.deltas[0]), a.max_flush); checked.add("full")
+                            verify_long(model, wav, ds.cst_prefix(ds.slots(i)[1][:n_slots], a.deltas[0]), a.max_flush, D=len(ds.slots(i)[1][:n_slots]) if blocks else None); checked.add("full")
                         te = time.time(); feats.append(encode_long(model, wav, K, aosc=acfg)); enc_s = round(time.time() - te, 1); continue
                     w = torch.from_numpy(wav).to(dev)
                     feats.append(model.encode(w[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))[0])
@@ -335,8 +356,11 @@ def run(a):
                         from types import SimpleNamespace
                         states = []
                         for m in meta:
-                            q = ds.cst_sequence(m[0], delta)
-                            states.append(SimpleNamespace(emitted=emitted_from_sequence(q["ids"], q["is_input"], q["chunk_of"], sp["<NEXT_AUDIO>"], sp["<EMPTY_AUDIO>"]), forced=0, flush_rounds=0))
+                            if blocks:                                                                          # E9: 슬롯 블록 정답 시퀀스
+                                q = ds.block_sequence(m[0], delta); em = emitted_from_blocks(q["ids"], q["is_input"], q["tag_chunk"], q["slot_at"], spk)
+                            else:
+                                q = ds.cst_sequence(m[0], delta); em = emitted_from_sequence(q["ids"], q["is_input"], q["chunk_of"], sp["<NEXT_AUDIO>"], sp["<EMPTY_AUDIO>"])
+                            states.append(SimpleNamespace(emitted=em, forced=0, flush_rounds=0))
                     elif full:
                         from types import SimpleNamespace
                         states = []
@@ -345,8 +369,13 @@ def run(a):
                             if getattr(a, "act_tag_guide", False):                                   # E7: 화자 태그를 활동(스트림 1)으로 이끈다
                                 from vapasr.hf.long_session import make_retag
                                 Na = int(model.adapter_slot.in_features); rs = {}; rt = make_retag(feats[j][1, :, :Na], spk[:Na], delta, stats=rs)
-                            td = time.time(); em, fc, rd, used = long_decode(model, feats[j], prefixes[j], max_flush_rounds=a.max_flush, context_s=a.context_s, retag=rt)
-                            states.append(SimpleNamespace(emitted=em, forced=fc, flush_rounds=rd, positions=used, dec_s=round(time.time() - td, 1), **({"retag": rs} if rs is not None else {})))
+                            td = time.time(); bx = {}
+                            if blocks:                                                                          # E9: 추측 prefill 긴 디코드
+                                em, fc, rd, used, nf, tk = long_block_decode(model, feats[j], prefixes[j], len(ds.slots(m[0])[1][:n_slots]), max_flush_rounds=a.max_flush, context_s=a.context_s)
+                                bx = dict(forwards=nf, chunk_ms=round(float(np.mean(tk)), 2), chunk_ms_p90=round(float(np.percentile(tk, 90)), 2))
+                            else: em, fc, rd, used = long_decode(model, feats[j], prefixes[j], max_flush_rounds=a.max_flush, context_s=a.context_s, retag=rt)
+                            states.append(SimpleNamespace(emitted=em, forced=fc, flush_rounds=rd, positions=used, dec_s=round(time.time() - td, 1), **({"retag": rs} if rs is not None else {}),
+                                                          **({"blk": bx} if bx else {})))
                             print(f"  {c}: {m[1]} {m[3] / 60:.1f} 분 δ{delta} · 위치 {used} · 토큰 {len(em)} · 인코딩 {enc_s} s · 디코드 {states[-1].dec_s} s", flush=True)
                     else:
                         acts = [torch.tensor(slot_activity(ds.eps[m[1]], window_speakers(ds.eps[m[1]], m[2], m[3])[:n_slots], m[2], m[3], m[4], int(model.config.slot_input_slots)),
@@ -357,20 +386,38 @@ def run(a):
                         modes = ["xl" if len(set(ds.slots(m[0])[1][:n_slots])) > 1 else "same" for m in meta] if sb else None   # 교차 언어 = 선언 언어가 다른 창
                         for pre in dict.fromkeys(tuple(p) for p in prefixes):                          # decode_batch 는 한 배치에 prefix 하나 — 선언 슬롯 수가 다른 창은 나눠 돈다
                             js = [j for j, p in enumerate(prefixes) if tuple(p) == pre]
+                            if blocks:                                                                      # E9: 슬롯 블록 배치 디코드(선언 슬롯 수 = prefix 의 언어 수)
+                                Dj = len(ds.slots(meta[js[0]][0])[1][:n_slots])
+                                for j, st_ in zip(js, decode_blocks_batch(model, [feats[j] for j in js], [list(pre)] * len(js), Dj, max_flush_rounds=a.max_flush,
+                                                                          acts=[acts[j] for j in js] if acts is not None else None)): states[j] = st_
+                                continue
                             for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, spk_guide=guide,
                                                                **(dict(switch_bias=sb, row_modes=[modes[j] for j in js], word_init=wi) if sb else {}),
                                                                **(dict(acts=[acts[j] for j in js]) if acts is not None else {}))): states[j] = st_
                     key = (ds.dlgs[meta[0][1]].lang, delta)
                     if a.verify and model is not None and key not in checked and not full:
                         for j in sorted({0, len(meta) - 1}):
-                            serial, forced, _, rounds = model.stream_decode(feats[j], prefixes[j], max_flush_rounds=a.max_flush)
+                            if blocks:                                                                      # E9: 추측 prefill 직렬(LongThinker) 대 배치
+                                from vapasr.hf.long_session import long_block_decode as _lbd
+                                serial, forced, _, _, _, _ = _lbd(model, feats[j], prefixes[j], len(ds.slots(meta[j][0])[1][:n_slots]), max_flush_rounds=a.max_flush, blk=256)
+                            else: serial, forced, _, rounds = model.stream_decode(feats[j], prefixes[j], max_flush_rounds=a.max_flush)
                             assert serial == states[j].emitted and forced == states[j].forced, f"직렬/배치 불일치 {meta[j][1]}@{meta[j][2]} δ{delta}"
                         checked.add(key); print(f"PARITY {key} PASS", flush=True)
                     for (i, cid, t0w, L, K, d), s in zip(meta, states):
                         if (f"{cid}@{t0w}", delta) in done: continue
                         ref_w, ref_eot, mask, sp_order = window_ref(ds, i, delta, EOT, tok)
-                        hs, he = parse_emitted(s.emitted, spk, EOT, drop_chunks=mask)
+                        ev = [] if blocks else None
+                        hs, he = parse_emitted(s.emitted, spk, EOT, drop_chunks=mask, begin_id=BEGIN, events=ev)
                         hw = [words(h) for h in hs]
+                        llm_der = None
+                        if blocks:                                                                      # E9 LLM 쪽 화자 분리(<BEGIN>·<EOT> 구간) — diar_eval 과 같은 프레임 마스크
+                            Nd = max(len(spk), len(sp_order)); ha = torch.from_numpy(activity_from_events(ev, K, len(spk), delta).astype(np.float32))
+                            ra = torch.tensor(_slot_act(ds.eps[cid], sp_order, t0w, L, K, n_slots=Nd), dtype=torch.float32).reshape(K, Nd)
+                            fm = torch.ones(K, dtype=torch.bool)
+                            for s_, e_ in ds._bad_spans(d):
+                                x0, x1 = s_ - t0w, e_ - t0w
+                                if x1 > 0 and x0 < L: fm[max(0, int(x0 / 0.08)): min(K, int(np.ceil(x1 / 0.08)))] = False
+                            llm_der = der_counts(torch.nn.functional.pad(ha, (0, Nd - ha.shape[1])), ra, fm)
                         if getattr(a, "relabel_act", None):                                             # 진단: 가설 단어를 활동으로 다시 귀속
                             from vapasr.data.cst_eval import relabel_by_activity
                             z = np.load(os.path.join(a.relabel_act, f"{cid}@full.npz")); A_ = z["ref" if a.relabel_oracle else "prob"].astype(np.float32)
@@ -383,7 +430,7 @@ def run(a):
                                    **({"guide_insert": s.guide_insert, "guide_hold": s.guide_hold} if hasattr(s, "guide_insert") else {}),
                                    **({"sb_flips": s.sb_flips, "sb_points": s.sb_points} if hasattr(s, "sb_flips") else {}),
                                    **({"positions": s.positions, "enc_s": enc_s, "dec_s": s.dec_s} if hasattr(s, "positions") else {}),
-                                   **({"retag": s.retag} if hasattr(s, "retag") else {}),
+                                   **({"retag": s.retag} if hasattr(s, "retag") else {}), **({"llm_der": llm_der} if llm_der is not None else {}), **(s.blk if hasattr(s, "blk") else {}),
                                    ref_text=[" ".join(w for w, _ in r) for r in ref_w], hyp_text=[" ".join(w for w, _ in h) for h in hw], **sc)
                         fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
                 print(f"  {c}: {min(b0 + bs, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
@@ -400,10 +447,17 @@ def summarize(a):
             rr = [r for r in rows if r["corpus"] == c and r["delta"] == d]
             res[f"{c}/d{d}"] = dict(pool(rr), exposure=SEEN.get(c, "unseen"), unit="CER" if rr[0]["lang"] == "Korean" else "WER",
                                     one_speaker_windows=sum(r["n_spk"] == 1 for r in rr), forced_tokens=sum(r["forced"] for r in rr))
+            dz = [r["llm_der"] for r in rr if "llm_der" in r]                                    # E9 LLM 쪽 화자 분리(<BEGIN>·<EOT>) — 프레임 × 화자 합
+            if dz:
+                n_ = max(1.0, sum(x["ref"] for x in dz)); m_, f_, c_ = (sum(x[k] for x in dz) for k in ("miss", "fa", "conf_best"))
+                res[f"{c}/d{d}"].update(llm_der=round(100 * (m_ + f_ + c_) / n_, 2), llm_miss=round(100 * m_ / n_, 2), llm_fa=round(100 * f_ / n_, 2), llm_conf=round(100 * c_ / n_, 2))
+            if any("chunk_ms" in r for r in rr): res[f"{c}/d{d}"]["chunk_ms_mean"] = round(sum(r["chunk_ms"] * r["K"] for r in rr if "chunk_ms" in r) / max(1, sum(r["K"] for r in rr if "chunk_ms" in r)), 2)
     json.dump(res, open(os.path.join(a.out, "summary.json"), "w"), indent=1, ensure_ascii=False)
     for k, v in res.items():
         print(f"{k:22s} {v['unit']} slot {v['err_slot']:6.2f} cp {v['err_cp']:6.2f} agn {v['err_agn']:6.2f} swap {v['swap_share']:.3f} · "
-              f"EOT R {v['eot_recall']:.3f} P {v['eot_precision']:.3f} hold {v['eot_hold_fire']:.3f} lat {v['eot_lat_median']} · 창 {v['windows']} ({v['exposure']})")
+              f"EOT R {v['eot_recall']:.3f} P {v['eot_precision']:.3f} hold {v['eot_hold_fire']:.3f} lat {v['eot_lat_median']} · 창 {v['windows']} ({v['exposure']})"
+              + (f" · LLM DER {v['llm_der']:.2f}(놓침 {v['llm_miss']:.2f} 헛 {v['llm_fa']:.2f} 혼동 {v['llm_conf']:.2f})" if "llm_der" in v else "")
+              + (f" · 청크 {v['chunk_ms_mean']} ms" if "chunk_ms_mean" in v else ""))
 
 
 def main():
@@ -414,6 +468,7 @@ def main():
     q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1); q.add_argument("--batch-size", type=int, default=32)
     q.add_argument("--max-flush", type=int, default=None); q.add_argument("--dtype", default="float32"); q.add_argument("--encoder", default=None); q.add_argument("--verify", action="store_true")
     q.add_argument("--oracle", action="store_true", help="모델 없이 정답 시퀀스를 채점(지표 sanity)")
+    q.add_argument("--blocks", action="store_true", help="--oracle 을 E9 슬롯 블록 정답(block_sequence)으로 — 체크포인트 config 에 slot_blocks 가 없어도(학습 전 점검)")
     q.add_argument("--spk-guide", default=None, type=lambda s: [float(x) for x in s.split(",")], help="화자 헤드 안내 디코딩 'on,margin[,span]'(예 0.5,0.3)")
     q.add_argument("--spk-guide-hold", action="store_true", help="안내: 헤드가 현재 화자를 가리키면 모델의 태그 전환을 막는다(EOT 용 태그도 막혀 EOT 재현율이 줄 수 있다)")
     q.add_argument("--spk-guide-no-insert", action="store_true", help="안내: 태그 삽입을 끈다(--spk-guide-hold 와 함께 = 막기만)")

@@ -27,7 +27,7 @@ def _rotate_half(x):
 class GraphThinker:
     """thinker(Qwen3ASRThinkerForConditionalGeneration)의 언어모델을 고정 KV 캐시(max_len)로 돌린다. forward(x (q,D), pos (q,)) → 다음 토큰 id."""
 
-    def __init__(self, thinker, blocked_ids, max_len: int = 2048, graph_lens=(1, 2)):
+    def __init__(self, thinker, blocked_ids, max_len: int = 2048, graph_lens=(1, 2), all_lens=()):
         tm = thinker.model; cfg = tm.config
         self.layers, self.norm, self.lm_head, self.embed = tm.layers, tm.norm, thinker.lm_head, tm.embed_tokens.weight
         self.H, self.KV, self.HD = cfg.num_attention_heads, cfg.num_key_value_heads, cfg.head_dim
@@ -44,12 +44,25 @@ class GraphThinker:
         self.ar = torch.arange(max_len, device=dev)
         self.block = torch.zeros(self.embed.shape[0], dtype=torch.bool, device=dev)
         self.block[torch.as_tensor(list(blocked_ids), dtype=torch.long, device=dev)] = True
-        self.graphs = {}
+        self.graphs, self.graphs_all = {}, {}
         self._capture(graph_lens)
+        self._capture(all_lens, every=True)                                                  # E9 run_all(위치마다 argmax) — 기본 없음
 
     @torch.inference_mode()
     def _forward(self, x, pos):
         """x (q, D), pos (q,) long → 다음 토큰 id (0-dim long, 차단 토큰 −∞ 후 argmax). KV 캐시의 pos 자리에 쓴다."""
+        logits = self.lm_head(self.norm(self._hidden(x, pos)[:, -1]))[0].float()
+        return logits.masked_fill(self.block, float("-inf")).argmax()
+
+    @torch.inference_mode()
+    def _forward_all(self, x, pos):
+        """_forward 와 같고 위치마다 다음 토큰 id (q,) long 을 돌려준다(E9 추측 prefill — realtime_block_decode)."""
+        logits = self.lm_head(self.norm(self._hidden(x, pos)))[0].float()
+        return logits.masked_fill(self.block, float("-inf")).argmax(-1)
+
+    @torch.inference_mode()
+    def _hidden(self, x, pos):
+        """x (q, D), pos (q,) long → 마지막 층 hidden (1, q, D)(norm 전). KV 캐시의 pos 자리에 쓴다."""
         q = x.shape[0]
         h = x[None]
         cos, sin = self.cos[pos][None, None], self.sin[pos][None, None]                # (1,1,q,HD)
@@ -66,21 +79,21 @@ class GraphThinker:
             o = F.scaled_dot_product_attention(qs, self.k[li], self.v[li], attn_mask=mask, scale=a.scaling, enable_gqa=True)
             h = r + a.o_proj(o.transpose(1, 2).reshape(1, q, self.H * self.HD))
             h = h + layer.mlp(layer.post_attention_layernorm(h))
-        logits = self.lm_head(self.norm(h[:, -1]))[0].float()
-        return logits.masked_fill(self.block, float("-inf")).argmax()
+        return h
 
-    def _capture(self, lens):
+    def _capture(self, lens, every: bool = False):
+        fwd, store = (self._forward_all, self.graphs_all) if every else (self._forward, self.graphs)
         for q in lens:
             xb = torch.zeros(q, self.embed.shape[1], device=self.device, dtype=self.dtype)
             pb = torch.arange(q, device=self.device)
             s = torch.cuda.Stream(); s.wait_stream(torch.cuda.current_stream())
             with torch.cuda.stream(s):
-                for _ in range(3): self._forward(xb, pb)                                   # 준비(할당기·커널 선택)
+                for _ in range(3): fwd(xb, pb)                                               # 준비(할당기·커널 선택)
             torch.cuda.current_stream().wait_stream(s)
             g = torch.cuda.CUDAGraph()
             with torch.cuda.graph(g):
-                out = self._forward(xb, pb)
-            self.graphs[q] = (g, xb, pb, out)
+                out = fwd(xb, pb)
+            store[q] = (g, xb, pb, out)
 
     def run(self, x, start: int) -> int:
         """x (q, D) 를 위치 start.. 에 넣고 다음 토큰 id 를 돌려준다(q 가 잡아 둔 길이면 graph, 아니면 eager — prefix 등)."""
@@ -91,6 +104,16 @@ class GraphThinker:
             xb.copy_(x); pb.copy_(torch.arange(start, start + q, device=self.device)); g.replay()
             return int(out)
         return int(self._forward(x, torch.arange(start, start + q, device=self.device)))
+
+    def run_all(self, x, start: int) -> List[int]:
+        """run 과 같고 위치마다 다음 토큰 id 목록(E9 추측 prefill — 잡아 둔 길이(all_lens)면 graph, 아니면 eager)."""
+        q = x.shape[0]
+        assert start + q <= self.max_len, f"KV 캐시 길이 {self.max_len} 를 넘는다"
+        if q in self.graphs_all:
+            g, xb, pb, out = self.graphs_all[q]
+            xb.copy_(x); pb.copy_(torch.arange(start, start + q, device=self.device)); g.replay()
+            return out.tolist()
+        return self._forward_all(x, torch.arange(start, start + q, device=self.device)).tolist()
 
 
 @torch.inference_mode()
@@ -135,6 +158,60 @@ def realtime_decode(model, gt: GraphThinker, feats, prefix_ids: List[int], max_f
         if emit_round(K + r, e_empty) == 0: break
     torch.cuda.synchronize()
     return out, forced, ticks, rounds, (time.perf_counter() - t) * 1000
+
+
+@torch.inference_mode()
+def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=None, max_flush_rounds: Optional[int] = None, max_per_chunk: int = 0,
+                          max_total_per_chunk: float = 6.0, on_chunk=None):
+    """E9 슬롯 블록 디코드(2026-10-28 — cst_dialogue 모듈 설명 E9): batch_decode.decode_blocks_batch 와 같은 출력 규칙을 GraphThinker·LongThinker(run·run_all)로 돈다.
+    청크마다 [오디오 k, 태그 0 … D−1] 를 한 forward 로 미리 넣고(run_all — 위치마다 argmax), 태그 s 뒤 예측이 멈춤이 아니면 태그 s 바로 뒤로 되돌아가 그 슬롯 출력을
+    한 토큰씩 낸 뒤(뒤 태그 자리는 덮어쓴다 — 쿼리는 자기 위치까지만 본다) 남은 태그를 다시 한 forward 로 넣는다. 모든 슬롯이 멈추는 청크는 forward 한 번이다.
+    feats (1,K,Din)·(S,K,Din) 또는 (K,Din), act (K, N) 태그 활동(없으면 model.block_act). on_chunk(k, 오디오 k 위치): LongThinker 문맥 창.
+    → (emitted [(k, tid)] — 슬롯 출력 앞에 그 슬롯 태그, forced, step_ms [K], flush_rounds, flush_ms, forward 수)."""
+    from .batch_decode import block_stops
+    cfg = model.config
+    max_flush_rounds = cfg.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
+    if feats.dim() == 2: feats = feats[None]
+    emb = gt.embed
+    ce = model.chunk_embed(feats[None])[0].to(emb.dtype)                                 # (K, D) — decode_blocks_batch 와 같은 adapter·형변환
+    A = model.block_act(feats, act)
+    K = ce.shape[0]; max_total = int(max_total_per_chunk * K) + 64
+    cap = min(max_per_chunk, cfg.runaway_cap) if max_per_chunk else cfg.runaway_cap
+    tags, stop, e_empty = model.slot_ids(D), block_stops(model, D), emb[model.empty_audio]
+    sync = torch.cuda.synchronize if emb.is_cuda else (lambda: None)
+    gt.run(emb[torch.as_tensor(prefix_ids, device=emb.device)], 0); pos = len(prefix_ids)    # prefix: 마지막 logits 는 쓰지 않는다
+    out, ticks, st = [], [], dict(forced=0, total=0, forwards=1)
+
+    def block_round(k, head):
+        """라운드 k(머리 = 오디오 k 또는 <EMPTY_AUDIO>) → 이 라운드에 낸 출력 수."""
+        nonlocal pos
+        te = model.tag_embeds(k, A, D).to(emb.dtype)
+        r = gt.run_all(torch.cat([head[None], te]), pos); st["forwards"] += 1
+        pr = dict(enumerate(r[1:])); at = {j: pos + 1 + j for j in range(D)}; pos += 1 + D; n_round = 0   # 태그 j 뒤 예측·태그 j 위치
+        for s in range(D):
+            tid = pr[s]
+            if tid in stop: continue
+            pos = at[s] + 1; n = 0; tagged = False                                              # 태그 s 바로 뒤로 되돌아간다
+            while True:
+                if tid in stop or n >= cap or st["total"] >= max_total: st["forced"] += int(tid not in stop); break
+                if not tagged: out.append((k, tags[s])); tagged = True
+                out.append((k, int(tid))); n += 1; n_round += 1; st["total"] += 1
+                tid = gt.run(emb[tid][None], pos); pos += 1; st["forwards"] += 1
+            if s + 1 < D:                                                                      # 남은 태그를 다시 미리 넣는다
+                r = gt.run_all(te[s + 1:], pos); st["forwards"] += 1
+                for j in range(s + 1, D): pr[j], at[j] = r[j - s - 1], pos + j - s - 1
+                pos += D - s - 1
+        return n_round
+    for k in range(K):
+        if on_chunk is not None: on_chunk(k, pos)
+        sync(); t = time.perf_counter()
+        block_round(k, ce[k]); sync(); ticks.append((time.perf_counter() - t) * 1000)
+    rounds = 0; t = time.perf_counter()
+    for r_ in range(max_flush_rounds):
+        rounds += 1
+        if block_round(K + r_, e_empty) == 0: break
+    sync()
+    return out, st["forced"], ticks, rounds, (time.perf_counter() - t) * 1000, st["forwards"]
 
 
 class StreamingEncoder:

@@ -393,7 +393,7 @@ def test_forward_decision_stats_do_not_change_loss():
     assert b.n_hold == 1 and b.top1_hold == float(p_ho == 53) and abs(b.loss_switch - float(torch.nn.functional.cross_entropy(lg[5:6], torch.tensor([SB])))) < 1e-5
     c = m(**x, dec_kind=torch.zeros_like(dk)); assert torch.equal(c.loss, a.loss) and c.top1_switch is None and c.top1_hold is None   # 위치가 없으면 키도 None
     src = (ROOT / "vapasr/hf/trainer.py").read_text(); i = src.index("def compute_loss")             # Trainer 가 모델로 넘긴다(transformers.trainer import 없이 소스로 확인)
-    assert '"dec_kind", "target_act", "act_in") if k in inputs}' in src[i: src.index("def log", i)]   # dec_kind·E2 target_act·E5 act_in 을 함께 넘긴다
+    assert '"dec_kind", "target_act", "act_in", "tag_chunk") if k in inputs}' in src[i: src.index("def log", i)]   # dec_kind·E2 target_act·E5 act_in·E9 tag_chunk 를 함께 넘긴다
 
 
 def test_packed_forward_passes_dec_kind():

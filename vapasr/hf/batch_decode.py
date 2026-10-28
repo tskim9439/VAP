@@ -222,3 +222,110 @@ def decode_batch(model, feats, prefixes, *, next_bias=0.0, max_flush_rounds=None
 
 def logits_size(model):
     return model.thinker.lm_head.weight.shape[0]
+
+
+@dataclass
+class BlockState:
+    """E9 slot-block decoding state for one row (cst_dialogue module doc E9). Input order per chunk: audio k -> tag 0 -> (outputs) ->
+    tag 1 -> ... -> tag D-1 -> (outputs) -> audio k+1. The prediction after the audio is discarded (the next input is always tag 0).
+    After a tag or an output, a stop (<NEXT_AUDIO>, a slot tag or <EMPTY_AUDIO>), the slot's per-chunk cap or the total cap moves
+    on to the next tag (after the last slot: the next audio, or an <EMPTY_AUDIO> flush round once the audio is over). A flush round
+    with no output, or max_flush rounds, ends the row. emitted gets (k, slot tag) before a slot's first output in a chunk, then
+    (k, token) -- the same shape as DecodeState.emitted, so cst_eval.parse_emitted reads it unchanged."""
+    K: int
+    D: int
+    cap: int
+    max_flush: int
+    max_total: int
+    tags: tuple
+    k: int = 0
+    s: int = -1
+    n: int = 0
+    n_round: int = 0
+    n_total: int = 0
+    done: bool = False
+    forced: int = 0
+    flush_rounds: int = 0
+    emitted: list = field(default_factory=list)
+
+    def consume(self, tid, stop):
+        """Prediction tid after the current input -> (next input kind, value): ('tag', (k, s)) | ('text', tid) | ('audio', k) | ('empty', 0) | ('pad', 0)."""
+        if self.done:
+            return "pad", 0
+        if self.s < 0:
+            self.s, self.n = 0, 0
+            return "tag", (self.k, 0)
+        if tid in stop or self.n >= self.cap or self.n_total >= self.max_total:
+            self.forced += int(tid not in stop)
+            if self.s + 1 < self.D:
+                self.s += 1
+                self.n = 0
+                return "tag", (self.k, self.s)
+            if self.k >= self.K:
+                self.flush_rounds += 1
+                if self.n_round == 0 or self.flush_rounds >= self.max_flush:
+                    self.done = True
+                    return "pad", 0
+            elif self.k == self.K - 1 and self.max_flush == 0:
+                self.done = True
+                return "pad", 0
+            self.k += 1
+            self.s = -1
+            self.n_round = 0
+            return ("audio", self.k) if self.k < self.K else ("empty", 0)
+        if self.n == 0:
+            self.emitted.append((self.k, self.tags[self.s]))
+        self.emitted.append((self.k, int(tid)))
+        self.n += 1
+        self.n_round += 1
+        self.n_total += 1
+        return "text", int(tid)
+
+
+def block_stops(model, D):
+    """E9 stop set: <NEXT_AUDIO>, <EMPTY_AUDIO> and every slot tag (tags are inputs, never outputs)."""
+    return frozenset(model.slot_ids()) | {model.next_audio, model.empty_audio}
+
+
+@torch.inference_mode()
+def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, acts=None):
+    """E9 slot-block greedy decoding, one input per row per step (BlockState) on a dense KV-cache batch.
+    feats: list of (S,K,D) encoder outputs, prefixes: equal-length lists declaring D slots. The audio tokens use model.chunk_embed (with acts
+    or the E6 predicted-activity stream, as decode_batch); each tag gets model.tag_embeds (tag row + that slot's recent activity, model.block_act).
+    Caps: model.config.runaway_cap per slot per chunk, 6 K + 64 outputs per row, max_flush_rounds (default config)."""
+    assert feats and len(feats) == len(prefixes) and (acts is None or len(acts) == len(feats))
+    assert len({len(p) for p in prefixes}) == 1, "batch one language/delta at a time"
+    emb = model.get_input_embeddings()
+    dev = emb.weight.device
+    ce = [(model.chunk_embed(f[None]) if acts is None else model.chunk_embed(f[None], acts[j][None]))[0].to(emb.weight.dtype) for j, f in enumerate(feats)]
+    A = [model.block_act(f, acts[j] if acts is not None else None) for j, f in enumerate(feats)]
+    flush = model.config.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
+    tags = tuple(model.slot_ids(D))
+    stop = block_stops(model, D)
+    states = [BlockState(len(c), D, model.config.runaway_cap, flush, int(6 * len(c)) + 64, tags) for c in ce]
+    assert all(s.K > 0 for s in states)
+    cache = DynamicCache()
+    model.thinker.model(inputs_embeds=emb(torch.tensor(prefixes, device=dev)), past_key_values=cache, use_cache=True)
+    x = torch.stack([c[0] for c in ce])[:, None]
+    tag_cache = [{} for _ in states]                                                             # row -> {k: (D, H) tag embeddings}
+    while not all(s.done for s in states):
+        h = model.thinker.model(inputs_embeds=x, past_key_values=cache, use_cache=True).last_hidden_state
+        logits = model.thinker.lm_head(h[:, -1]).float()
+        logits[:, model.blocked] = -torch.inf
+        tids = logits.argmax(-1).tolist()
+        nxt = []
+        for i, (s, tid) in enumerate(zip(states, tids)):
+            kind, value = s.consume(tid, stop)
+            if kind == "audio":
+                nxt.append(ce[i][value])
+            elif kind == "tag":
+                k, j = value
+                if k not in tag_cache[i]:
+                    tag_cache[i] = {k: model.tag_embeds(k, A[i], D).to(emb.weight.dtype)}
+                nxt.append(tag_cache[i][k][j])
+            elif kind == "text":
+                nxt.append(emb.weight[value])
+            else:
+                nxt.append(emb.weight[model.empty_audio if kind == "empty" else model.next_audio])
+        x = torch.stack(nxt)[:, None]
+    return states

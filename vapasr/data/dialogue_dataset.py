@@ -126,8 +126,12 @@ class DialogueWindowDataset(Dataset):
 
     def _bad_spans(self, d: Dialogue):
         """전사 없는 음성 구간: quarantine(flags) · 토큰도 텍스트도 없음 · 텍스트는 있는데 미정렬(allow_unaligned 가 아니면) · 결손 조각. 보정으로 분할된 조각은 text="" 이지만 tokens 가 있어 정상."""
-        bad = [(u.start, u.end) for u in d.utterances if self._untranscribed(d, u)]
-        missing = set(d.meta.get("missing", [])); bad += [(u.start, u.end) for i, u in enumerate(d.utterances, 1) if i in missing]
+        return [(s, e) for _, s, e in self._bad_spans_spk(d)]
+
+    def _bad_spans_spk(self, d: Dialogue):
+        """_bad_spans 와 같은 구간을 화자와 함께 (화자, start, end) — E9 슬롯별 마스크(cst_dialogue.CstDialogueDataset.slot_mask_chunks)."""
+        bad = [(u.speaker, u.start, u.end) for u in d.utterances if self._untranscribed(d, u)]
+        missing = set(d.meta.get("missing", [])); bad += [(u.speaker, u.start, u.end) for i, u in enumerate(d.utterances, 1) if i in missing]
         return bad
 
     def _untranscribed(self, d: Dialogue, u) -> bool:
