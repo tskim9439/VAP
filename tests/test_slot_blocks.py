@@ -47,13 +47,31 @@ def test_layout_events_and_stop_labels(tmp_path):
             assert sum(1 for inp, y in zip(s["is_input"], s["labels"]) if inp and y == NA) == (K + s["n_rounds"]) * D     # (라운드, 슬롯)마다 멈춤 하나(가림 없음)
             assert {p for p, w in enumerate(s["pos_weight"]) if w > 0} == set(s["begin_pos"]) and all(s["pos_weight"][p] == 2.0 for p in s["begin_pos"])
             eps = [e for e in ds.eps[cid] if e.end > t0 and e.start < t0 + L]
-            starts = sorted(min(K, int((e.start - t0) / 0.08 + 1e-9) + 4) for e in eps if e.start >= t0)
-            ends = sorted(min(K, int((e.end - t0) / 0.08 + 1e-9) + dl) for e in eps if e.end <= t0 + L)
+            starts = sorted(min(K, int((e.start - t0) / 0.08) + 4) for e in eps if e.start >= t0)
+            ends = sorted(min(K, int((e.end - t0) / 0.08) + dl) for e in eps if e.end <= t0 + L)
             assert sorted(s["chunk_at"][p] for p in s["begin_pos"]) == starts and sorted(s["chunk_at"][p] for p in s["eot_pos"]) == ends
             assert all(s["tag_chunk"][p] >= 0 for p in range(len(s["ids"])) if s["ids"][p] in ds.spk_ids and s["is_input"][p] and p >= len(ds.cst_prefix(s["langs"], dl)))
             assert not any(s["ids"][p] == NA for p in range(len(s["ids"])))                    # <NEXT_AUDIO> 는 ids 에 없다(label 로만)
     with pytest.raises(ValueError): CstDialogueDataset([q], _tok(), delays=(2, 4), window_s=(20.0, 20.0), hop_s=5.0, max_speakers=4, slot_blocks=True)   # δ < <BEGIN> 지연
     with pytest.raises(ValueError): CstDialogueDataset([q], _tok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, max_speakers=4, slot_blocks=True, no_eot=True)
+
+
+def test_begin_not_after_first_word_at_float_boundary(tmp_path):
+    """2026-10-28 서버 dry-run 회귀: 창 시작을 뺀 시각이 경계 바로 아래(100.24 − 100 = 0.2399…, /0.08 = 2.999…)이고 첫 글자 시각 = 발화 시작이면
+    chunk_of(+1e-9)와 글자 버킷 int() 가 한 청크 어긋나 δ4 에서 <BEGIN> 이 첫 글자 뒤로 갔다 — k_min 을 버킷과 같은 식으로."""
+    SR = 16000; dur = 130.0; p = str(tmp_path / "f.wav"); t = np.arange(int(dur * SR)) / SR
+    sf.write(p, np.stack([0.3 * np.sin(2 * np.pi * 440 * t), 0.3 * np.sin(2 * np.pi * 660 * t)], 1).astype(np.float32), SR)
+    u = [Utterance("a", 100.24, 101.04, "ab", "ab", tokens=[(11, 100.24), (12, 101.04)], utt_id="a1"),          # 첫 글자 시각 = 발화 시작
+         Utterance("b", 102.16, 103.2, "cd", "cd", tokens=[(13, 102.16), (14, 103.2)], utt_id="b1"), Utterance("a", 104.08, 105.0, "ef", "ef", tokens=[(15, 104.08), (16, 105.0)], utt_id="a2")]
+    d = Dialogue(conv_id="f", corpus="t", lang="English", split="train", duration_s=dur, speakers=["a", "b"], utterances=u,
+                 channels={"a": ChannelRef(path=p + "#ch0"), "b": ChannelRef(path=p + "#ch1")})
+    q = str(tmp_path / "t.refined.dialogues.jsonl"); open(q, "w").write(d.to_json() + "\n")
+    ds = CstDialogueDataset([q], _tok(), delays=(4, 5), windows=[("f", 100.0, 8.0)], max_speakers=2, slot_blocks=True)
+    assert (100.24 - 100.0) / 0.08 < 3 and int((100.24 - 100.0) / 0.08 + 1e-9) == 3                     # 경계 바로 아래(시험 전제)
+    for dl in (4, 5):
+        s = ds.cst_sequence(0, dl); assert ds.problems_of(s) == [], (dl, ds.problems_of(s))
+        b = [s["chunk_at"][p_] for p_ in s["begin_pos"]]; w = {s["ids"][p_]: s["chunk_at"][p_] for p_ in range(len(s["ids"])) if not s["is_input"][p_] and s["ids"][p_] in (11, 13, 15)}
+        assert b[0] <= w[11] and b[0] == 2 + 4                                                            # <BEGIN> 청크 = int(2.999…) + 4
 
 
 def test_untranscribed_masks_only_that_slot(tmp_path):

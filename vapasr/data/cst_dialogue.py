@@ -414,16 +414,18 @@ def block_streams(eps: List[Episode], speakers: Sequence[str], t0: float, L: flo
     (build_interleaved_events — 같은 슬롯의 앞 원소가 다 나간 뒤 k_min 이상인 첫 청크).
     <BEGIN>(토큰 <ONSET>) = 창 안에서 시작한 episode 의 첫 원소, k_min = ⌊start/0.08⌋ + begin_lag(δ 와 무관 — δ ≥ begin_lag 이면 첫 단어보다 늦지 않다).
     <EOT> = 창 안에서 끝난 episode 의 마지막 원소, k_min = ⌊end/0.08⌋ + δ. 둘 다 발화 구간 표지라 전사 없는 episode·맞장구·합성 대화에도 낸다(soft label 없음).
+    k_min 은 build_interleaved_events 의 글자 버킷과 같은 식 int(t/0.08)(chunk_of 의 +1e-9 없이)이다 — 창 시작을 뺀 시각이 경계 바로 아래(2.999…)면 둘이 한 청크
+    어긋나 δ = begin_lag 에서 <BEGIN> 이 첫 글자보다 늦게 나갔다(2026-10-28 서버 dry-run, δ4 순서 위반 21 창).
     → (streams, 통계 dict(begin, begin_before — 창 앞에서 시작, eot, eot_truncated — 창 끝을 넘음))."""
     t1 = t0 + L; streams: List[list] = [[] for _ in speakers]; slot = {s: i for i, s in enumerate(speakers)}; st = dict(begin=0, begin_before=0, eot=0, eot_truncated=0)
     for ep in eps:
         if ep.end <= t0 or ep.start >= t1 or ep.speaker not in slot: continue
         s = slot[ep.speaker]
-        if ep.start >= t0: a = ep.start - t0; streams[s].append((int(begin_id), a, chunk_of(a) + begin_lag)); st["begin"] += 1
+        if ep.start >= t0: a = ep.start - t0; streams[s].append((int(begin_id), a, int(a / CHUNK_S) + begin_lag)); st["begin"] += 1
         else: st["begin_before"] += 1
         streams[s] += [(int(tid), float(t) - t0) for tid, t in ep.tokens if t0 <= t <= t1]
         if ep.end > t1 + 1e-9: st["eot_truncated"] += 1; continue
-        e = ep.end - t0; streams[s].append((int(eot_id), e, chunk_of(e) + delay)); st["eot"] += 1
+        e = ep.end - t0; streams[s].append((int(eot_id), e, int(e / CHUNK_S) + delay)); st["eot"] += 1
     return streams, st
 
 
