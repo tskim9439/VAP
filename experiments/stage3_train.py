@@ -75,6 +75,8 @@ g.add_argument("--spk-act-weight", type=float, default=0.0, help="화자 슬롯 
 g.add_argument("--max-speakers", type=int, default=2, help="V2: 창 화자 상한(최대 4 — 슬롯 C·D = <SPK_3>·<SPK_4>, model.enable_slots·화자 헤드 4 출력). 모든 대화 셋에 같은 슬롯 수")
 g.add_argument("--declare-all-p", type=float, default=0.5, help="V2(--max-speakers > 2): 학습 창을 이 확률로 슬롯 전부 선언(나머지는 max(2, 화자 수)) — 추론 때 화자 수를 모르면 최대를 선언")
 g.add_argument("--window-draws", type=int, default=0, help="V2: 창 draw 수 R(> 0 이면 격자 대신 대화를 U(--window) 창으로 이어 덮고 epoch e 에 draw e mod R — 매 epoch 다른 창). 화자 상한을 넘는 창은 줄인다")
+g.add_argument("--shrink-speakers", action="store_true", help="2026-10-28 E9b: 격자 창도 화자 상한을 넘으면 버리지 않고 (상한+1) 번째 화자가 처음 말하기 직전까지 줄인다(길이 ≥ --window 하한일 때만 — "
+               "--window-draws 는 늘 줄인다). 긴 창(20–90 s)에서 회의 창이 버려지지 않게. 지문 키 shrink_speakers")
 g.add_argument("--enc-tap-layer", type=int, default=-1, help="V2-a 두 스트림 입력: 인코더 이 층(0 부터) 출력을 adapter_tap 으로 LLM 입력에 더한다(−1 = 끔, V1). 새로 붙이면 마지막 Linear 0 초기화")
 g.add_argument("--enc-tap-hidden", type=int, default=0, help="adapter_tap 은닉 차원(0 = adapter 와 같게)")
 g.add_argument("--change-tag-weight", type=float, default=0.0, help="V3-p1 C1: 교대 태그 결정 가중(다른 슬롯 태그 + 단어 첫 글자 위치의 pos_weight, 0 = 끔; cst_dialogue.decision_positions)")
@@ -188,7 +190,7 @@ if len(win) != 2 or not 0 < win[0] <= win[1]: sys.exit(f"--window lo,hi — {a.w
 if a.declare_range and a.max_speakers < 3: sys.exit("--declare-range 는 --max-speakers 3 이상과 함께(선언 수를 고를 범위)")
 if not 2 <= a.max_speakers <= 4 or not 0 <= a.declare_all_p <= 1 or a.window_draws < 0: sys.exit(f"--max-speakers 2–4 · --declare-all-p [0, 1] · --window-draws ≥ 0 — {a.max_speakers} {a.declare_all_p} {a.window_draws}")
 if any(c in MEETING | FAR for c in corpora) and a.max_speakers < 3: sys.exit("회의 코퍼스(ami·icsi·notsofar·chime6tr·nia23mt, 원거리 포함)는 --max-speakers 3 이상과 함께")
-VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_speakers=a.window_draws > 0, **({"declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}),
+VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_speakers=a.window_draws > 0 or a.shrink_speakers, **({"declare_all_p": a.declare_all_p} if a.max_speakers > 2 else {}),
            **({"global_slots": a.global_slots} if a.global_slots > 0 else {}),                 # E7(2026-10-27): 끄면 키 없음(데이터셋 기본 0 — 난수 그대로)
            **({"slot_blocks": True, "begin_weight": a.begin_weight} if a.slot_blocks else {}),   # E9(2026-10-28): 끄면 키 없음
            **({"declare_range": True} if a.declare_range else {}),                               # 2026-10-28: 끄면 키 없음
@@ -515,7 +517,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"diar_head": dict(src=os.path.abspath(a.diar_head), weight=a.diar_weight, ramp=list(ramp), threshold=a.act_threshold)} if a.diar_head else {}),
           **({"act_shift": a.act_shift} if a.act_shift else {}),                                # 2026-10-27 E8: 끄면 키 없음
           **({"slot_blocks": dict(begin_weight=a.begin_weight, begin_lag=4, tag_act_lags=a.tag_act_lags)} if a.slot_blocks else {}),   # 2026-10-28 E9: 끄면 키 없음
-          **({"declare_range": True} if a.declare_range else {}))                               # 2026-10-28: 끄면 키 없음
+          **({"declare_range": True} if a.declare_range else {}),                               # 2026-10-28: 끄면 키 없음
+          **({"shrink_speakers": True} if a.shrink_speakers and not a.window_draws else {}))    # 2026-10-28 E9b: 격자 창 줄이기(끄면 키 없음)
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():
