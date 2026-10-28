@@ -2,8 +2,8 @@
 type: output
 status: active
 created: 2026-10-25
-updated: 2026-10-26
-summary: 화자 분리 통합 — 설계, E0–E3 결과(SDM eval 53.6→E2 28.6·E3 34.5), 화자별 디코드의 구조 요건 충돌과 한 스트림 대안(E5)
+updated: 2026-10-28
+summary: 화자 분리 통합 — 설계, E0–E8 결과(회의 통째 귀속 붕괴·태그 이끌기·E7b·헤드 지연), E9 슬롯 블록 형식(청크마다 모든 슬롯 태그 입력·<BEGIN>) 구현
 sources:
   - https://arxiv.org/abs/2507.18446
   - https://huggingface.co/nvidia/Nemotron-3-Diarization
@@ -259,6 +259,32 @@ AMI 34 회의 × IHM-mix·SDM 을 통째로 디코드했다(LLM 문맥 30 s). �
   - cp 가 모든 회의에서 내렸다: ES2011a 69.2 → 49.9, IS1009a 80.9 → 46.0, TS3003a 48.6 → 23.7 등.
   - 바꾼 태그는 10–25 % 다.
 
+### 결과 5 — 태그 이끌기 회의 통째 전체(job 96942, 2026-10-28 13:01, `results/stage3-eval-amifull-c30-aosc-e7a-guide-d10-q17-e6-final`, 재채점 `-wn`)
+| AMI 회의 통째 δ10 | 태그 그대로(96172) | **태그 이끌기** | E7a 활동 사후 재귀속(결과 4) | agn(이끌기) |
+|---|---:|---:|---:|---:|
+| IHM-mix eval | 67.34 | **47.50** | 41.93 | 21.06 |
+| IHM-mix dev | 71.78 | **57.36** | 53.32 | 21.80 |
+| SDM eval | 73.10 | **61.57** | 55.49 | 27.90 |
+| SDM dev | 79.62 | **67.79** | 60.45 | 26.28 |
+
+- 앞 두 열은 meeteval(Whisper 문장 정규화) cpWER 다. 사후 재귀속과 agn 은 Whisper 단어 정규화다. 이끌기의 단어 정규화 cp 는 47.37·57.40·61.44·67.82 로 meeteval 과 0.1–0.2 차이다.
+- **학습 없이 eval cp 가 IHM-mix 19.8 pt, SDM 11.5 pt 내렸다.** 사후 재귀속(진단 상한)과의 차이는 5.6·6.1 pt 남는다.
+  - 이끈 태그를 다시 넣어 이후 디코드가 그 슬롯을 보므로 받아쓰기(agn)는 거의 그대로다(21.06·27.36 → 21.06·27.90).
+- **외부와 비교(세션 단위):** IHM-mix 47.50 은 VibeVoice-Streaming 1.5B(45.15, 480 s 조각, 2.0 s)와 비슷하고 SDM 61.57 은 그보다 높다(56.83). Parakeet v1 21.26·37.44, VibeVoice 7B 27.48·39.01 과는 거리가 크다.
+
+### 결과 6 — E7b 창(job 96963 AMI 창 δ10, 2026-10-28 13:16, `results/stage3-eval-ami-d10-q17-e7b-final`, 재채점 `-wn`)
+| AMI 창 δ10 | E6 cp | **E7b cp** | agn E6 → E7b | 귀속 몫 E6 → E7b |
+|---|---:|---:|---|---|
+| IHM-mix eval | 37.09 | **35.74** | 21.49 → 22.72 | 15.52 → 12.92 |
+| IHM-mix dev | 42.31 | **41.38** | 21.61 → 22.88 | 20.70 → 18.46 |
+| SDM eval | 44.73 | **44.05** | 27.16 → 29.03 | 17.53 → 14.95 |
+| SDM dev | 48.36 | **47.79** | 25.61 → 27.29 | 22.66 → 20.43 |
+
+- cp 는 meeteval(Whisper), agn·귀속 몫은 Whisper 단어 정규화다.
+- **귀속 몫은 2.2–2.6 pt 줄었지만 받아쓰기(agn)가 1.2–1.9 pt 나빠져** cp 는 0.6–1.4 pt 만 내렸다.
+  - E7b 는 인코더를 얼리고 E6 final 에서 2,500 step 을 lr 4e-5 로 다시 데웠다. 받아쓰기가 나빠진 까닭은 아직 가르지 않았다.
+- 회의 통째(E7a 헤드 + AOSC) 평가는 돌고 있다.
+
 ### 대책 셋 (2026-10-28, 사용자 "… 1·2·3 … 진행해보자")
 1. **사후 진단:** `cst_stage3_eval --from-predictions … --window full --relabel-act <probs> [--relabel-oracle]`(`cst_eval.relabel_by_activity`).
    - 가설 단어를 방출 청크 − δ 근처 활동이 가장 큰 슬롯으로 다시 나눠 cp 를 잰다. 근거는 E7a AOSC 확률(`diar_eval --session --save-probs`)과 정답 활동 둘이다.
@@ -327,3 +353,81 @@ AMI 34 회의 × IHM-mix·SDM 을 통째로 디코드했다(LLM 문맥 30 s). �
 - **해석:** LLM 이 활동 입력을 충분히 따르지 않아(7 절 결과 3·4 와 같은 뿌리) 헤드 개선이 cp 로 옮겨 가지 않는다. 태그가 활동을 따르게 되면(태그 이끌기·E7b) 헤드 개선이 cp 로 이어질 수 있다.
 - **외부 참고(세션 단위·조건 다름):** Streaming Sortformer DER 은 IHM 16.67·SDM 20.57 이다(arXiv 2609.10265 표 1). Nemotron 3 Diarization 은 AMI SDM 12.8 @1.04 s 다.
 
+## 9. E9 — 슬롯 블록 형식: 청크마다 모든 슬롯 태그를 입력으로 (2026-10-28)
+사용자: "그럼 시퀀스를 개선해볼까? … 1 블록 내에서 <SPK_A~D> 가 한번씩 무조건 입력으로 주어지게끔" → "<SPK_B> 토큰을 예측해야 하잖아 … 손해가 있지 않을까"
+→ "<BEGIN> 등의 특수 토큰도 예측하도록 하면 좋을거 같은데" → "응 그렇게 E9 구현해놓자" → "<SPK_*> 의 수를 추후에 조절할 수 있도록 해줘. 즉 최소 샘플의 화자 수, 최대 4명 화자로 해서 랜덤으로 선택되게끔".
+
+### 근거
+- 7 절 결과 4: LLM 이 태그를 헤드 활동대로만 내도 회의 통째 eval cpWER 가 IHM-mix 25 pt, SDM 18 pt 내린다. 지금 형식에서는 LLM 이 태그를 고르고, 그 선택이 활동 입력을 따르지 않는다.
+- E9 는 LLM 이 태그를 고르지 않게 한다. 청크마다 선언 슬롯 태그를 모두 정해진 입력으로 주고, 슬롯마다 "이 슬롯이 이번 청크에 낼 것"만 묻는다. 태그 임베딩에 그 슬롯의 활동을 더해 활동이 그 결정에 바로 닿게 한다.
+
+### 형식
+```
+청크 k:  ▮k  <SPK_A> [<BEGIN>] [단어…] [<EOT>]  <SPK_B> …  <SPK_C> …  <SPK_D> …  ▮k+1
+라벨 :   각 슬롯 자리 = <BEGIN> | 단어 | <EOT> | <NEXT_AUDIO>(이 슬롯은 이번 청크 끝)
+```
+- **태그는 입력이다.** label 이 없다.
+  - 슬롯의 멈춤은 다음 입력 위치(다음 태그·다음 청크 오디오)의 label `<NEXT_AUDIO>` 다. 위치를 더하지 않는다. 가중은 next_weight(0.3, 한국어 0.15)다.
+  - 오디오 바로 뒤 첫 태그의 label 은 없다(태그는 정해져 있다).
+- **`<BEGIN>`** = 동결 registry 의 `<ONSET>`(151721)이다. 새 어휘는 없다.
+  - E6 config 에서 예약·차단된 행이라 평균 + 잡음으로 다시 초기화하고 차단을 푼다.
+  - episode 시작 + 4 청크(δ 와 무관)에 그 슬롯의 첫 출력으로 낸다. δ ≥ 4 라 첫 단어보다 늦지 않다. 가중 2.
+- **`<EOT>`** = episode 끝 + δ 청크(마지막 단어 뒤)다.
+  - 발화 구간 표지라 soft label 이 없다. 전사 없는 발화·맞장구·합성 대화에도 낸다. E6 의 턴 끝 `<EOT>`(p_end soft, 맞장구·합성 제외)와 다르다.
+- **전사 없는 음성**은 그 화자 슬롯의 전사·멈춤 label 만 가리고 `<BEGIN>`·`<EOT>` 는 학습한다. E6 는 그 청크를 모든 슬롯에서 가렸다.
+- **flush**는 `<EMPTY_AUDIO>` + 태그 블록(남은 출력), 빈 라운드, 마지막 멈춤 label 을 실을 `<EMPTY_AUDIO>` 순이다.
+- **선언 슬롯 수**(사용자 요청)는 학습 창마다 [창 화자 수, 4] 에서 고르게 뽑는다(`--declare-range`). 한 화자 창은 1–4 다. 추론 때는 prefix 의 선언 수(`--declare`)로 정한다.
+- **길이**: 청크당 위치가 E6 의 2 + 말에서 1 + D + 말로 는다(4 슬롯이면 약 2.3 배). 학습 예산(GPU 당 16,384 토큰)은 같아서 step 당 창 수가 준다.
+
+### 모델
+- `add_slot_blocks`: `<ONSET>` 행 재초기화·차단 해제, `adapter_tagact` = Linear(12 → D, bias 없음) 0 초기화(붙인 직후 출력은 그대로).
+- 태그 위치 임베딩 += adapter_tagact([a_s(k), a_s(k − 1), …, a_s(k − 11)]) — 그 슬롯의 최근 12 청크 활동이다.
+  - δ(최대 10) 안의 어느 시점을 볼지는 LLM 이 고른다(지연 벡터로 준다).
+  - 학습은 오디오 토큰과 같은 act_in(ρ 로 헤드 예측 또는 흔든 정답)이고, 디코드는 헤드 예측·AOSC 다.
+- 오디오 토큰의 슬롯 활동 입력(E6 `adapter_slot`)은 그대로 둔다.
+
+### 디코드
+- **창(배치)**: `batch_decode.decode_blocks_batch` — 행마다 한 위치씩 넣는다(`BlockState`). 태그·출력 뒤 예측이 멈춤(`<NEXT_AUDIO>`·슬롯 태그·`<EMPTY_AUDIO>`)이면 다음 태그로 간다.
+- **회의 통째·실시간**: `realtime.realtime_block_decode`(LongThinker·GraphThinker `run_all`).
+  - [오디오, 태그 D 개]를 한 forward 로 미리 넣는다. 멈춤이 아닌 슬롯에서만 그 태그 뒤로 되돌아가 한 토큰씩 낸다.
+  - 모든 슬롯이 멈추는 청크는 forward 한 번이다. 출력은 한 토큰씩 디코드와 같다(시험).
+- 출력 기록은 E6 와 같은 [(k, 태그), (k, 토큰) …] 꼴이다. 채점(`parse_emitted`)·재채점·meeteval·귀속 오류 분해가 그대로 돈다.
+
+### 평가
+- AMI 창 δ10과 회의 통째(E7a 헤드 + AOSC) δ10 이다(묶음 `q17-e9`). 평가가 config.slot_blocks 로 슬롯 블록 디코드를 고른다.
+- **LLM 쪽 DER**: 가설 `<BEGIN>`·`<EOT>` 를 학습 규칙의 역으로 슬롯 구간으로 바꾼다(`cst_eval.activity_from_events`). 헤드 DER 과 같은 프레임 마스크로 잰다(행·요약 `llm_der`, `ami_report`).
+- **디코드 비용**: 회의 통째 행에 forwards·chunk_ms(청크 ms 평균)·chunk_ms_p90 이 남는다.
+
+### 코드
+- 데이터(`vapasr/data/cst_dialogue.py`): `block_streams`·`build_block_sequence`·`block_problems`, `CstDialogueDataset(slot_blocks, declare_range)`·`block_sequence`·`slot_mask_chunks`, `collate_cst` tag_chunk.
+- 패킹: `packing.pack_batch` tag_chunk(표본 · 2²⁰ + 청크).
+- 모델(`modeling_vapasr.py`): `add_slot_blocks`·`tag_act_embed`·`tag_embeds`·`block_act`, `build(tag_chunk)`. 태그 없는 행(replay)은 0 가중으로 묶는다(DDP).
+- 디코드: `batch_decode.BlockState`·`decode_blocks_batch`, `realtime.realtime_block_decode`·`GraphThinker.run_all`, `long_session.LongThinker.run_all`·`long_block_decode`.
+- 평가: `cst_eval.parse_emitted(begin_id, events)`·`activity_from_events`·`emitted_from_blocks`, `cst_stage3_eval`(자동 선택·`--oracle --blocks`·llm_der·chunk_ms), `cst_attr_errors`, `ami_report`.
+- 학습: `stage3_train --slot-blocks --begin-weight --tag-act-lags --declare-range`, `submit-q17-f1.sh --transcribe-only`, `slurm/submit-q17-e9.sh`, 평가 묶음 `q17-e9`.
+- 시험 `tests/test_slot_blocks.py` 13 개가 통과했다(아래 서버 dry-run 이 찾은 경계 회귀 시험 포함).
+  - 배치 디코드 상태기계가 정답 시퀀스를 그대로 따라간다.
+  - 추측 prefill 이 한 토큰씩 디코드와 같다.
+  - 오라클 글자·시각·슬롯이 E6 정답과 같다.
+  - 슬롯별 마스크, 선언 수 범위, 태그 활동 값, packing 을 확인했다.
+  - 맥 관련 시험 223 개도 통과했다. 실패 5 개는 로컬 환경(rapidfuzz 없음 등) 문제다.
+- **서버 확인(2026-10-28, mxc 호스트 CPU — 코드 18 파일 md5 대조 뒤)**
+  - 시험 97 개가 통과했다(test_slot_blocks·test_cst_decision·test_slot_input·test_v2_slots·test_long_session·test_packing).
+  - **첫 dry-run 이 순서 위반을 찾았다.** 셋마다 64 창 × δ7 의 불변식 검사에서 δ4 에서만 21 창(dlg_de 4·dlg_mt 4·dlg_far 10·dlg_sw 3)이 나왔다.
+    - 창 시작을 뺀 시각이 80 ms 경계 바로 아래(2.999…)면 `chunk_of`(+1e-9)와 글자 버킷 `int()` 가 한 청크 어긋난다.
+    - 그래서 δ = begin_lag(4)이고 첫 글자 시각 = 발화 시작이면 `<BEGIN>` 이 첫 글자 뒤로 갔다.
+    - `<BEGIN>`·`<EOT>` k_min 을 버킷과 같은 식 int(t/0.08)로 고치고 회귀 시험을 더했다(예전 식이면 실패). 커밋 6496db0.
+  - **고친 뒤 dry-run**(E9 제출 인자 그대로, `tmp/e9-check/dryrun2`): 19 셋 모두 불일치 0 이다.
+    - 지문은 slot_blocks{begin_weight 2, begin_lag 4, tag_act_lags 12}·declare_range·ast_frac 0·sim_trans_frac 0·번역 타깃 없음·global_slots 0.5 다.
+    - 시퀀스 예(ami ES2008d, δ10, ↵ = 입력 위치의 멈춤 label): `A <SPK_A> <SPK_B>↵ <SPK_3>↵ <SPK_4>↵ A↵ <SPK_A> <ONSET> <SPK_B>↵ … <SPK_A> ' guess' <SPK_B>↵ …`
+  - **AMI 오라클**(`--oracle --blocks`, 창 20–90 s 이어 덮기, 2,396 창 × δ4·10, `tmp/e9-check/oracle-ami-blocks2`)
+    - cp·slot 0.00, EOT 재현율 0.999–1.000 이다.
+    - agn 2.3–2.4 는 겹침 구간을 시각순으로 잇는 순서 차이(정답 시각 대 방출 시각)라 형식 오류가 아니다.
+    - LLM DER 바닥값은 δ4 0.33–0.49 %, δ10 1.19–1.36 % 다(대부분 놓침). 창 앞에서 시작한 발화는 첫 글자 − δ 부터 잡히고 구간 끝은 청크 단위라서다.
+
+### 실험(제출 대기 — dry-run 통과)
+- E9 는 E6 final 에서 시작한다. F1 데이터·가중치·lr 4e-5 를 쓰고 받아쓰기만 한다(`--transcribe-only`: 번역·교대/머무름 가중·EOT-문맥 dropout 없음, replay 번역 끔).
+  - 덧붙임: `--slot-input --diar-head <E1c> --slot-blocks --declare-range --global-slots 0.5 --freeze-encoder`.
+  - 5,000 step, 2 노드다. 인코더를 얼려 E7a 헤드를 회의 통째 평가에 끼운다.
+- 제출: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e9.sh)` — 학습 뒤 평가 `q17-e9` 가 잇는다.
+- 판단: E6·E7b 와 같은 조건(δ10, 표준 정규화)으로 창 cp·회의 통째 cp·LLM DER·청크 ms 를 비교한다.
