@@ -23,9 +23,12 @@
 #   q17-e7-amifull  E7: E6 final 에 AOSC 로 학습한 헤드(diar-q17-diar-e7a final)를 끼워 회의 통째 AOSC 8 몫. --after-job(E7a 학습 job) 필수.
 #   q17-e6  E6 인과 화자 분리 헤드 + 슬롯 활동 입력(2026-10-27, slurm/submit-q17-e56.sh): q17-f1 과 같은 묶음(헤드 예측 활동으로 — 모든 디코드 경로가 model.encode 를 쓴다,
 #           --cks 3000,4000) + final 정답 슬롯 활동 입력(amiact, 8 몫 — 헤드 대신 정답일 때의 상한). --after-job 필수.
-#   q17-e7-amifull-guide  E7(2026-10-28): q17-e7-amifull 과 같되 화자 태그를 활동으로 이끈다(GUIDE=1 — --act-tag-guide, 학습 없음). 의존 없음.
-#   q17-e7b  E7b(2026-10-28, slurm/submit-q17-e7b.sh — LLM 이 회의 단위 슬롯을 따르게 --global-slots 로 미세조정): final 회의 통째 AOSC + E7a 헤드(8 몫) + AMI 창(4 몫,
-#            창 귀속이 나빠지지 않았는지). --after-job 필수.
+#   δ10 빠른 평가(2026-10-28, 사용자 "평가하는 데, 너무 오래 걸린다. 일단 AMI IHM 이랑 SDM 두개에 대해 delta 10 으로만 평가해서 비교해서 의사결정을 빠르게 하자"):
+#     AMI 작업을 DELTAS=10 으로(산출 이름에 -d10). 창 AMI 는 8 몫(GPU 0–7)으로 나눠 한 노드에서 약 20 분.
+#   q17-e8-ami10  E8 final AMI 창 δ10 8 몫. --after-job 필수.   q17-e6-amifull-d10  E6 회의 통째 조각마다 새로(AOSC 없음) δ10 8 몫 — 기준선(의존 없음).
+#   q17-e7-amifull-guide  E7(2026-10-28): q17-e7-amifull 과 같되 화자 태그를 활동으로 이끈다(GUIDE=1 — --act-tag-guide, 학습 없음), δ10. 의존 없음.
+#   q17-e7b  E7b(2026-10-28, slurm/submit-q17-e7b.sh — LLM 이 회의 단위 슬롯을 따르게 --global-slots 로 미세조정): final 회의 통째 AOSC + E7a 헤드(8 몫) + AMI 창(8 몫,
+#            창 귀속이 나빠지지 않았는지) — 모두 δ10. --after-job 필수.
 #   q17-e8  E8 헤드 출력 지연 R(2026-10-27, slurm/submit-q17-e8.sh — 헤드 위치 p = 프레임 p − R, 받아쓰기 지연 δ ≥ R): q17-e6 과 같은 v3 묶음(헤드 예측 활동).
 #           정답 활동 상한(amiact)은 넣지 않는다 — --act-oracle 이 활동을 R 만큼 밀지 않는다(E6 의 상한과 같은 값이 될 까닭도 없다). --after-job 필수.
 #   q17-e5  E5 한 스트림 + 슬롯 활동 입력(2026-10-26): q17-e5 final 을 AMI 정답 슬롯 활동 입력(amiact, 8 몫)과 활동 없이(ami, 4 몫 — 입력이 없을 때 얼마나 무너지나)로. --after-job 필수.
@@ -46,14 +49,15 @@ while [[ $# -gt 0 ]]; do
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
-case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e7b|q17-e7-amifull) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e7b | q17-e7-amifull-guide | q17-e6-amifull | q17-e7-amifull" >&2; exit 2 ;; esac
+case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
+  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e7-amifull) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
 L=()
 ami4() { local g0=$1 run=$2 root=$3 r; for r in 0 1 2 3; do L+=("$((g0 + r))|${root:+MODEL_ROOT=$root }bash $X ami $run final $r/4"); done; }   # GPU g0..g0+3 에 4 몫
+ami8d10() { local run=$1 r; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X ami $run final $r/8"); done; }                # δ10 만, GPU 0–7 에 8 몫(2026-10-28)
 v3set() {   # V3 run $1: ck1500·ck2000·final·avg3 × 9 작업 + final·avg3 AMI 4 몫씩 — 평균은 GPU 7 의 첫 작업, 평균 평가는 그 DONE 을 기다린다
   local RUN=$1 AVG=$1-avg3 M=/soundai/Model/VAPASR/stage3-$1 i=0 t k; local -a K=(dlg xl taxi40 stage3 regress xltel xleval taxi90 onset)
   L+=("7|\${PY:-python} experiments/avg_checkpoints.py --out $MR/stage3-$AVG/final --done $M/checkpoint-$CKA $M/checkpoint-$CKB $M/final > $D/tmp/avg-$RUN.log 2>&1")
@@ -81,8 +85,10 @@ case $set_ in
   q17-f1) v3set q17-f1 ;;
   q17-e6) v3set q17-e6; for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $X amiact q17-e6 final $r/8"); done ;;
   q17-e8) v3set q17-e8 ;;
-  q17-e7-amifull-guide) for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a GUIDE=1 bash $X amifull q17-e6 final $r/8"); done ;;
-  q17-e7b) for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a bash $X amifull q17-e7b final $r/8"); done; ami4 0 q17-e7b "" ;;   # 창 AMI 4 몫은 GPU 0–3(회의 통째 몫 0–3 이 짧은 회의)
+  q17-e7-amifull-guide) for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a GUIDE=1 bash $X amifull q17-e6 final $r/8"); done ;;
+  q17-e8-ami10) ami8d10 q17-e8 ;;
+  q17-e6-amifull-d10) for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull q17-e6 final $r/8"); done ;;
+  q17-e7b) ami8d10 q17-e7b; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a bash $X amifull q17-e7b final $r/8"); done ;;   # 창 AMI 를 먼저(약 20 분)
   q17-e6-amifull) amifull8 q17-e6 ""; for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 bash $X amifull q17-e6 final $r/8"); done ;;
   q17-e7-amifull) for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a bash $X amifull q17-e6 final $r/8"); done ;;
   q17-e5) for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $X amiact q17-e5 final $r/8"); done; ami4 0 q17-e5 "" ;;

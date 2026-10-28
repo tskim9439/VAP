@@ -16,6 +16,8 @@
 #     E7(2026-10-27): AOSC=1 이면 화자 분리 헤드(E6·E7) 예측을 회의 전체 AOSC 스트리밍으로(--aosc — 회의 내내 같은 슬롯, 없으면 조각마다 새로),
 #     DIAR=<diar.pt>(DIAR_TAG=이름)이면 헤드를 그것으로 바꿔 끼운다(--diar-head-override — diar_train --aosc final). 산출 이름에 -aosc·-<DIAR_TAG> 가 붙는다.
 #     GUIDE=1(2026-10-28): 화자 태그를 활동으로 이끈다(--act-tag-guide — long_session.make_retag). 산출 이름에 -guide 가 붙는다.
+#   DELTAS(2026-10-28, 사용자 "AMI IHM 이랑 SDM 두개에 대해 delta 10 으로만 평가해서 비교해서 의사결정을 빠르게 하자"): AMI 작업(ami·amiact·amitgt·amie3·amifull)의 δ
+#     (기본 4,10 — 예전 산출 그대로). 다르면 산출 이름에 -d<δ> 가 붙는다(예 DELTAS=10 → stage3-eval-ami-d10-<run>-<대상>).
 #   amitgt(2026-10-25, E2 — wiki output-diarization-integration-20261025): 대상 화자 모드 체크포인트(adapter_inject)를 ami 와 같은 창에서 정답 화자 활동 주입·화자별
 #     디코드로 잰다(cst_stage3_eval --target-oracle). 몫 r/w·합치기는 ami 와 같고, 귀속 오류 분해는 원출력 형식이 달라 돌리지 않는다. 산출 results/stage3-eval-amitgt-<run>-<태그>.
 #   amiact(2026-10-26, E5): 슬롯 활동 입력 체크포인트(adapter_slot)를 ami 와 같은 창에서 정답 슬롯 활동을 오디오 토큰에 넣어 한 스트림으로 잰다(cst_stage3_eval --act-oracle).
@@ -28,6 +30,7 @@ SD0=${VAPASR_STAGE_DIR:-}                                                       
 CODE=/soundai/users/tskim/VAPKT; cd $CODE; set -a; source .env; set +a
 export PYTHONPATH=$CODE PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false VAPASR_STAGE_DIR=${SD0:-/tmp/sa_tskim/vapasr-stage}   # 2026-10-23 전에는 .env 값이 이겨 "stage 실패 → 원본에서 읽음"(NFS 직접)
 P=${PY:-/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python}; R=/soundai/users/tskim/VAPKT-data/results; D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2
+DL=${DELTAS:-4,10}; [[ $DL =~ ^[0-9]+(,[0-9]+)*$ ]] || { echo "DELTAS 는 쉼표 목록: $DL"; exit 2; }; DS=""; [ "$DL" = "4,10" ] || DS="-d${DL//,/-}"   # 2026-10-28: AMI 작업 δ(산출 이름에 -d10 등)
 S1=$D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16; XE=$D/sim-dialogue-xl-eval-v1; TAXI=$D/cst/taxi/cstbench-v0.1/taxi-natural/sessions.jsonl; DEV=$D/v3-dev
 CH=$D/evaluation/single-turn-callhome-de-v1/manifest.jsonl; X=raw/sources/experiments/2026-10-21-v3-attribution
 OUT=${MODEL_ROOT:-/soundai/Model/VAPASR}/stage3-$RUN; CK=$OUT/$t; tag=${t#checkpoint-}; [ "$t" != final ] && tag=ck$tag; O=$R/stage4-eval-$RUN-$tag; E3=$R/stage3-eval-$RUN-$tag
@@ -68,35 +71,35 @@ case $K in
   onset) o=$R/taxi-v3onset-$RUN-$tag; [ -f $o/onset-classes-d10.json ] && { say "이미 끝 — 건너뜀"; exit 0; }; mkdir -p $o
          $P $X/taxi_v3_probe.py --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --sessions $TAXI --out $o --deltas 10 --max-window 90 --classify-onsets > $o/run.log 2>&1 ;;
   ami) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
-       E=$R/stage3-eval-ami-$RUN-$tag; A=$R/stage3-attr-errors-ami-$RUN-$tag; AB=$D/ami-bench-v1
+       E=$R/stage3-eval-ami$DS-$RUN-$tag; A=$R/stage3-attr-errors-ami$DS-$RUN-$tag; AB=$D/ami-bench-v1
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
-       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas 4,10 --batch-size 16 \
+       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL --batch-size 16 \
          --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
        [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }
        ( flock 9; [ -f $E/summary.json ] && exit 0
          $P experiments/cst_stage3_eval.py summarize --out $E > $E/summary.log 2>&1
-         mkdir -p $A; $P experiments/cst_attr_errors.py --pred $E --data $AB --out $A --deltas 4,10 --workers 16 > $A/run.log 2>&1
+         mkdir -p $A; $P experiments/cst_attr_errors.py --pred $E --data $AB --out $A --deltas $DL --workers 16 > $A/run.log 2>&1
          $P raw/sources/experiments/2026-10-20-v2-multispeaker/ami_report.py $E > $E/ami-report.txt 2>&1 ) 9> $E/.sum.lock
        say "AMI 합침 → $E/ami-report.txt" ;;
   amiact) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
-       E=$R/stage3-eval-amiact-$RUN-$tag; A=$R/stage3-attr-errors-amiact-$RUN-$tag; AB=$D/ami-bench-v1
+       E=$R/stage3-eval-amiact$DS-$RUN-$tag; A=$R/stage3-attr-errors-amiact$DS-$RUN-$tag; AB=$D/ami-bench-v1
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
-       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas 4,10 --batch-size 16 \
+       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL --batch-size 16 \
          --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 --act-oracle --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
        [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }
        ( flock 9; [ -f $E/summary.json ] && exit 0
          $P experiments/cst_stage3_eval.py summarize --out $E > $E/summary.log 2>&1
-         mkdir -p $A; $P experiments/cst_attr_errors.py --pred $E --data $AB --out $A --deltas 4,10 --workers 16 > $A/run.log 2>&1
+         mkdir -p $A; $P experiments/cst_attr_errors.py --pred $E --data $AB --out $A --deltas $DL --workers 16 > $A/run.log 2>&1
          $P raw/sources/experiments/2026-10-20-v2-multispeaker/ami_report.py $E > $E/ami-report.txt 2>&1 ) 9> $E/.sum.lock
        say "AMI 정답 슬롯 활동 입력(E5) 합침 → $E/ami-report.txt" ;;
   amitgt) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
-       E=$R/stage3-eval-amitgt-$RUN-$tag; AB=$D/ami-bench-v1
+       E=$R/stage3-eval-amitgt$DS-$RUN-$tag; AB=$D/ami-bench-v1
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
-       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas 4,10 --batch-size 16 \
+       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL --batch-size 16 \
          --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 --target-oracle --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
@@ -106,10 +109,10 @@ case $K in
          $P raw/sources/experiments/2026-10-20-v2-multispeaker/ami_report.py $E > $E/ami-report.txt 2>&1 ) 9> $E/.sum.lock
        say "AMI 대상 화자(정답 활동) 합침 → $E/ami-report.txt" ;;
   amie3) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
-       TH=${E3_THR:-0.45}; PD=${E3_PROBS:-$R/diar-eval-ami-q17-diar-e1-final/probs}; E=$R/stage3-eval-amie3-t$TH-$RUN-$tag; AB=$D/ami-bench-v1
+       TH=${E3_THR:-0.45}; PD=${E3_PROBS:-$R/diar-eval-ami-q17-diar-e1-final/probs}; E=$R/stage3-eval-amie3-t$TH$DS-$RUN-$tag; AB=$D/ami-bench-v1
        [ -n "$(ls -A $PD 2>/dev/null)" ] || { say "예측 활동이 없다(diar_eval run --save-probs): $PD"; exit 2; }
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
-       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas 4,10 --batch-size 16 \
+       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL --batch-size 16 \
          --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 --target-oracle --target-act $PD --target-act-threshold $TH \
          --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
@@ -122,9 +125,9 @@ case $K in
   amifull) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
        AO=""; [ "${AOSC:-0}" = 1 ] && AO=--aosc; DO=""; DT=""; [ -n "${DIAR:-}" ] && { DO="--diar-head-override $DIAR"; DT="-${DIAR_TAG:-diar}"; }   # E7(2026-10-27): AOSC·헤드 바꿔 끼우기
        GD=""; [ "${GUIDE:-0}" = 1 ] && GD=--act-tag-guide                                                # E7(2026-10-28): 화자 태그를 활동으로
-       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
+       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}$DS-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
-       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas 4,10 \
+       $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL \
          --backchannel 1.0,3 --max-speakers 4 --window full --context-s $C --declare 4 $V $AO $DO $GD --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
