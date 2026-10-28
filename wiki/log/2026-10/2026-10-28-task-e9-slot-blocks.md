@@ -21,6 +21,7 @@
   - 확인: 맥 시험 13 개·관련 223 개, 서버 시험 97 개 통과.
     - 첫 서버 dry-run 이 δ4 순서 위반 21 창을 찾았다. <BEGIN>·<EOT> 청크와 글자 버킷의 부동소수 경계 차이였고, 고친 뒤 dry-run 은 19 셋 모두 불일치 0 이다.
     - AMI 오라클은 cp 0, LLM DER 바닥값 δ4 0.3–0.5 %·δ10 1.2–1.4 % 다.
-  - 사용자 제출: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e9.sh)` — E6 final 에서 5,000 step, 2 노드, 학습 뒤 평가 q17-e9(AMI 창 δ10 + 회의 통째 AOSC·E7a δ10).
+  - 사용자 제출(15:51): `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e9.sh)` — 학습 job 97163(hpc-34·35), 평가 job 97164(97163 성공 뒤).
+    E6 final 에서 5,000 step, 2 노드, 평가 q17-e9(AMI 창 δ10 + 회의 통째 AOSC·E7a δ10).
   - 판단: E6·E7b·태그 이끌기와 같은 조건(δ10, 표준 정규화)으로 창 cp·회의 통째 cp·LLM DER·청크 ms 를 외부 기준과 함께 비교한다.
 - By: tskim

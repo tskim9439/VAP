@@ -425,9 +425,10 @@ AMI 34 회의 × IHM-mix·SDM 을 통째로 디코드했다(LLM 문맥 30 s). �
     - agn 2.3–2.4 는 겹침 구간을 시각순으로 잇는 순서 차이(정답 시각 대 방출 시각)라 형식 오류가 아니다.
     - LLM DER 바닥값은 δ4 0.33–0.49 %, δ10 1.19–1.36 % 다(대부분 놓침). 창 앞에서 시작한 발화는 첫 글자 − δ 부터 잡히고 구간 끝은 청크 단위라서다.
 
-### 실험(제출 대기 — dry-run 통과)
+### 실험(제출 2026-10-28 15:51 — 학습 job 97163, 평가 job 97164)
 - E9 는 E6 final 에서 시작한다. F1 데이터·가중치·lr 4e-5 를 쓰고 받아쓰기만 한다(`--transcribe-only`: 번역·교대/머무름 가중·EOT-문맥 dropout 없음, replay 번역 끔).
   - 덧붙임: `--slot-input --diar-head <E1c> --slot-blocks --declare-range --global-slots 0.5 --freeze-encoder`.
   - 5,000 step, 2 노드다. 인코더를 얼려 E7a 헤드를 회의 통째 평가에 끼운다.
 - 제출: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e9.sh)` — 학습 뒤 평가 `q17-e9` 가 잇는다.
+  - 사용자가 15:51 에 냈다. 학습 job 97163(SA_SFT_FullDuplex, hpc-34·35, 산출 `/soundai/Model/VAPASR/stage3-q17-e9`), 평가 job 97164(SA_EVAL_FullDuplex, 97163 성공 뒤)다.
 - 판단: E6·E7b 와 같은 조건(δ10, 표준 정규화)으로 창 cp·회의 통째 cp·LLM DER·청크 ms 를 비교한다.
