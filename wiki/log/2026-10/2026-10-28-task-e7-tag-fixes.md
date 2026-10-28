@@ -12,5 +12,9 @@
   - 96172 회의 통째 cpWER 의 귀속이 46 pt 다. LLM 이 헤드의 회의 단위 슬롯을 따르지 않는다.
 - Next:
   - 사후 진단: E7a AOSC 확률 저장 중(호스트 GPU 6·7, `results/diar-session-e7a-probs`). 끝나면 96172 원출력을 E7a·정답 활동으로 다시 귀속해 잰다.
-  - 사용자 제출: `bash slurm/submit-evals.sh q17-e7-amifull-guide`(1 노드), `bash slurm/submit-q17-e7b.sh`(2 노드 + 평가 1 노드). E7b stage3 dry-run 이 확인 중이다.
+  - 사용자 제출
+    - 태그 이끌기 q17-e7-amifull-guide 는 job 96942(10:35, δ10)다.
+    - E7b 는 11:12 에 냈다. 학습은 job 96962(2 노드)이고, 평가 q17-e7b 는 job 96963 이다.
+  - E7b stage3 dry-run 은 두 번째에 통과했다. 첫 번째는 --freeze-encoder·--train-encoder 배타 옵션 때문에 exit 2 로 멈췄고, submit-stage3-train 을 고쳤다.
+  - 사후 진단 결과는 [[output-diarization-integration-20261025]] 7 절 결과 4 다.
 - By: tskim
