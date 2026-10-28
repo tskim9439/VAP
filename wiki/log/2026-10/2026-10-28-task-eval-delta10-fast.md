@@ -10,6 +10,11 @@
   - 사용자 "평가하는 데, 너무 오래 걸린다. 일단 AMI IHM 이랑 SDM 두개에 대해 delta 10 으로만 평가해서 비교해서 의사결정을 빠르게 하자".
   - E8 의 예전 평가 묶음(q17-e8, v3 묶음 45 과제)은 약 4 h 다. 창 AMI δ10 8 몫이면 한 노드에서 약 20 분이다.
 - Next:
-  - 사용자: `scancel 96582` 뒤 `bash slurm/submit-evals.sh q17-e8-ami10 --after-job 96581`.
-  - 태그 이끌기 `q17-e7-amifull-guide`(δ10, 1 노드)를 낸다. E7b 는 stage3 dry-run 이 확인되면 낸다.
+  - 사용자 제출(10:35)
+    - E8 예전 평가 96582 를 취소했다.
+    - E8 빠른 평가 q17-e8-ami10 은 job 96941(96581 성공 뒤)이다.
+    - 태그 이끌기 q17-e7-amifull-guide 는 job 96942 다.
+  - E7b 는 stage3 dry-run 이 확인되면 낸다.
+    - 첫 dry-run 은 `--freeze-encoder` 와 `--train-encoder` 가 배타 옵션이라 exit 2 였다.
+    - submit-stage3-train 을 고쳐 다시 돌리고 있다.
 - By: tskim
