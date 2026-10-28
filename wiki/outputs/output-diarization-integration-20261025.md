@@ -283,7 +283,19 @@ AMI 34 회의 × IHM-mix·SDM 을 통째로 디코드했다(LLM 문맥 30 s). �
 - cp 는 meeteval(Whisper), agn·귀속 몫은 Whisper 단어 정규화다.
 - **귀속 몫은 2.2–2.6 pt 줄었지만 받아쓰기(agn)가 1.2–1.9 pt 나빠져** cp 는 0.6–1.4 pt 만 내렸다.
   - E7b 는 인코더를 얼리고 E6 final 에서 2,500 step 을 lr 4e-5 로 다시 데웠다. 받아쓰기가 나빠진 까닭은 아직 가르지 않았다.
-- 회의 통째(E7a 헤드 + AOSC) 평가는 돌고 있다.
+
+**회의 통째(E7a 헤드 + AOSC, 96963 의 몫 8 개, 16:16 끝, `results/stage3-eval-amifull-c30-aosc-e7a-d10-q17-e7b-final`, 재채점 `-wn`)**
+
+| AMI 회의 통째 δ10(meeteval cpWER) | E6 태그 그대로 | **E7b** | E6 + 태그 이끌기 | agn E6 → E7b |
+|---|---:|---:|---:|---|
+| IHM-mix eval | 67.34 | **55.53** | 47.50 | 21.06 → 21.92 |
+| IHM-mix dev | 71.78 | **63.24** | 57.36 | 21.14 → 22.21 |
+| SDM eval | 73.10 | **68.37** | 61.57 | 27.36 → 28.63 |
+| SDM dev | 79.62 | **70.88** | 67.79 | 26.67 → 27.07 |
+
+- E7b 학습으로 회의 통째 cp 가 4.7–11.8 pt 내렸다. 그래도 학습 없는 태그 이끌기(E6)보다 6–8 pt 높다. 귀속 몫은 여전히 33.6–43.9 다.
+- 받아쓰기(agn)는 창과 같이 0.4–1.3 pt 나빠졌다.
+- 남은 조합: E7b 에 태그 이끌기를 함께 쓰기(학습 없음, 평가 8 몫).
 
 ### 대책 셋 (2026-10-28, 사용자 "… 1·2·3 … 진행해보자")
 1. **사후 진단:** `cst_stage3_eval --from-predictions … --window full --relabel-act <probs> [--relabel-oracle]`(`cst_eval.relabel_by_activity`).
