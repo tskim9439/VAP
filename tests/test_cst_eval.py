@@ -104,3 +104,15 @@ def test_en_norm_whisper_switch():
         cst_eval.set_en_norm("ours")
     assert cst_eval.score_window(ref, hyp, "English") == base
     with pytest.raises(AssertionError): cst_eval.set_en_norm("chime8")
+
+
+def test_relabel_by_activity():
+    """2026-10-28 E7 진단: 가설 단어를 방출 청크 − δ 근처 활동이 가장 큰 슬롯으로 다시 나눈다(근처 활동이 약하면 넓힌다)."""
+    import numpy as np
+    from vapasr.data.cst_eval import relabel_by_activity
+    act = np.zeros((40, 3), np.float32); act[0:10, 2] = 1; act[10:25, 0] = 0.9; act[30:40, 1] = 1                 # 무음 25–29
+    t = lambda k: (k + 1) * 0.08                                                                              # 방출 시각 = 청크 끝
+    hyp = [[("a", t(5 + 4)), ("b", t(20 + 4))], [("c", t(33 + 4))], [("d", t(28 + 4))]]                        # δ 4: 오디오 프레임 5·20·33·28(근처 25–29 무음)
+    out = relabel_by_activity(hyp, act, delta=4)
+    assert [w for w, _ in out[2]] == ["a"] and [w for w, _ in out[0]] == ["b"] and set(w for w, _ in out[1]) == {"c", "d"}   # d(무음) 는 ±12 로 넓혀 30–39 의 1 을 고른다
+    assert sum(len(x) for x in out) == 4 and all(x == sorted(x, key=lambda z: z[1]) for x in out)

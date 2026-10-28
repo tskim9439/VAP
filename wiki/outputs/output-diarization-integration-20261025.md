@@ -239,6 +239,19 @@ AMI 34 회의 × IHM-mix·SDM 을 통째로 디코드했다(LLM 문맥 30 s). �
   - 그런데 cp 가 크다(예: IHM-mix IS1009b 는 agn 16.0 에 cp 76.3). 한 화자의 말이 회의 동안 여러 슬롯으로 흩어진다.
   - E6 LLM 은 창 도착 순서 슬롯(창 안 첫 화자 = A)으로만 학습했다. 문맥 30 s 안의 첫 화자가 A 가 아닌 회의 단위 슬롯 입력과 부딪친다는 가설이다(7 절 순서 3 의 E7b 조건).
 - 96461(E6 헤드로 조각마다 새로·AOSC)과 견주면 AOSC 가 LLM 에 무엇을 바꾸는지 가른다.
+- 96461 의 E6 헤드 + AOSC 는 IHM-mix eval 77.81·SDM 82.75 다(우리 정규화, δ10). E7a 헤드가 8–9 낮지만 둘 다 귀속이 무너졌다.
+  - 조각마다 새로 쪽은 몫 0 이 `--verify` 대조 버그로 멈췄다. 예측 활동 스트림까지 대조했기 때문이다. 대조를 고쳤고, 다시 내면 몫 0 만 돈다.
+
+### 대책 셋 (2026-10-28, 사용자 "… 1·2·3 … 진행해보자")
+1. **사후 진단:** `cst_stage3_eval --from-predictions … --window full --relabel-act <probs> [--relabel-oracle]`(`cst_eval.relabel_by_activity`).
+   - 가설 단어를 방출 청크 − δ 근처 활동이 가장 큰 슬롯으로 다시 나눠 cp 를 잰다. 근거는 E7a AOSC 확률(`diar_eval --session --save-probs`)과 정답 활동 둘이다.
+   - LLM 태그가 헤드 슬롯을 따랐다면 얻었을 귀속을 어림한다.
+2. **디코드 때 태그 이끌기:** `--act-tag-guide`(`long_session.make_retag`, `realtime_decode(retag=)`), 평가 묶음 `q17-e7-amifull-guide`.
+   - 모델이 화자 태그를 내면, 그 뒤 말이 올 오디오 [k − δ − 2, k] 의 활동이 가장 많은 슬롯 태그로 바꾼다. 모델 슬롯도 그 구간에서 말하면 그대로 둔다.
+   - 바꾼 태그를 다시 넣으므로 이후 디코드도 그 슬롯을 본다. 행에 retag{tags, changed} 가 남는다.
+3. **E7b:** `slurm/submit-q17-e7b.sh`.
+   - E6 final 에서 F1 레시피로 2,500 step(2 노드), `--global-slots 0.5 --freeze-encoder` 다. 인코더를 얼려 E7a 헤드를 그대로 끼울 수 있다.
+   - 평가 q17-e7b 는 회의 통째 AOSC + E7a 헤드 8 몫과 AMI 창 4 몫이다.
 
 ### 순서
 1. E6 헤드 그대로 회의 단위 DER 을 잰다(90 s 조각마다 새로 대 AOSC — AOSC 학습 전 기준선, 호스트 GPU).

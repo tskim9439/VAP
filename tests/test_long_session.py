@@ -124,3 +124,15 @@ def test_attend_with_prefix_matches_naive():
     K = torch.cat([kp, kw], 1).repeat_interleave(H // KV, 0); V = torch.cat([vp, vw], 1).repeat_interleave(H // KV, 0)
     s = qs @ K.transpose(-1, -2) * sc; s[:, 0, P + i0 + 1:] = float("-inf")                      # 쿼리 0 은 자기 다음(쿼리 1 의 키)을 못 본다
     assert torch.allclose(got, torch.softmax(s, -1) @ V, atol=1e-6)
+
+
+def test_make_retag_follows_activity():
+    """2026-10-28 E7: 화자 태그를 그 뒤 말이 올 오디오 [k − δ − 2, k] 의 활동이 가장 많은 슬롯으로 — 활동 없음·모델 슬롯도 말함(겹침)이면 그대로, 태그 아닌 토큰은 그대로."""
+    import torch
+    from vapasr.hf.long_session import make_retag
+    act = torch.zeros(50, 4); act[0:20, 1] = 1; act[18:30, 2] = 1                                            # 18–19 겹침, 30– 무음
+    ids = [101, 102, 103, 104]; st = {}; rt = make_retag(act, ids, delta=4, stats=st)
+    assert rt(10, 101) == 102                                                                                # 4–10 은 슬롯 1 → B
+    assert rt(10, 102) == 102 and rt(22, 103) == 103 and rt(22, 102) == 102                                  # 이미 맞음 / 겹침(16–22 에 1·2 둘 다)
+    assert rt(40, 101) == 101 and rt(10, 7) == 7                                                             # 활동 없음 / 태그 아님
+    assert st == {"tags": 5, "changed": 1}

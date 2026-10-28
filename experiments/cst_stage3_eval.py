@@ -11,6 +11,10 @@
   --verify: 언어·δ 마다 첫 배치의 처음·끝 창을 model.stream_decode 로 다시 풀어 토큰·시각이 같은지 확인한다.
   --oracle: 모델 없이 학습 타깃 시퀀스(정답)를 디코드 출력처럼 바꿔 채점한다 — 지표 sanity(slot·cp 0, 양성 EOT 재현율 1).
   --from-predictions DIR: 그 폴더 predictions-rank*.jsonl 의 원출력(emitted)을 다시 채점한다(디코드 없이 — 채점 규칙을 고친 뒤).
+  --act-tag-guide(2026-10-28, E7 — --window full · 화자 분리 헤드 모델): 회의 통째 디코드에서 화자 태그를 활동으로 이끈다(long_session.make_retag — 태그를 내면
+    그 뒤 말이 올 오디오 [k − δ − 2, k] 의 활동이 가장 많은 슬롯으로, 모델 슬롯도 말하고 있으면 그대로). 행에 retag{tags, changed}.
+  --relabel-act DIR [--relabel-oracle](2026-10-28, 진단 — --from-predictions · --window full): 가설 단어를 활동으로 다시 귀속해 채점한다(cst_eval.relabel_by_activity).
+    DIR = diar_eval run --session --save-probs 의 <out>/aosc/probs(회의마다 <cid>@full.npz — prob·ref), --relabel-oracle 이면 그 npz 의 정답 활동(ref)으로.
   --en-norm whisper(2026-10-27): 영어 채점을 Whisper EnglishTextNormalizer 로(채움말 제거 등 — vapasr.data.cst_eval.set_en_norm). 외부 AMI 수치와 견줄 때
     --from-predictions 와 함께 새 --out 에 다시 매긴다(raw/sources/experiments/2026-10-27-std-rescore/rescore_std.sh). config 에 en_norm 이 남는다(ours 면 키 없음).
   --spk-guide on,margin[,span] [--spk-guide-hold] [--spk-guide-no-insert]: 화자 헤드 안내 디코딩(batch_decode.SpkGuide — model.spk_head 가 있는 Stage 3 체크포인트).
@@ -262,6 +266,9 @@ def run(a):
     if tor: assert model is not None and getattr(model, "adapter_inject", None) is not None and not (sb or a.spk_guide or a.verify or full), \
         "--target-oracle: adapter_inject 가 있는 E2 체크포인트, 배치 디코드만(--verify·--switch-bias·--spk-guide·--window full 없이)"
     assert full or not a.context_s, "--context-s 는 --window full 전용"
+    assert not getattr(a, "act_tag_guide", False) or (full and model is not None and getattr(model, "diar_head", None) is not None), "--act-tag-guide 는 --window full 과 화자 분리 헤드 모델(E6·E7) 디코드"
+    assert not getattr(a, "relabel_act", None) or (full and a.from_predictions), "--relabel-act 는 --from-predictions 와 --window full(진단 재채점)"
+    assert not getattr(a, "relabel_oracle", False) or getattr(a, "relabel_act", None), "--relabel-oracle 은 --relabel-act 와 함께"
     assert tor or not getattr(a, "target_act", None), "--target-act 는 --target-oracle 과 함께(E3 — 정답 대신 예측 활동)"
     if full:
         assert not (sb or a.spk_guide), "--window full 은 긴 직렬 디코드(long_decode)라 --switch-bias·--spk-guide 와 함께 쓰지 않는다"
@@ -278,6 +285,8 @@ def run(a):
                 **({"act_oracle": True} if act_or else {}), **({"aosc": acfg.to_dict()} if acfg is not None else {}),
                 **({"diar_head_override": os.path.abspath(a.diar_head_override)} if getattr(a, "diar_head_override", None) else {}),
                 **({"en_norm": a.en_norm} if getattr(a, "en_norm", "ours") != "ours" else {}),
+                **({"act_tag_guide": True} if getattr(a, "act_tag_guide", False) else {}),
+                **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
     if a.spk_guide:
@@ -332,8 +341,12 @@ def run(a):
                         from types import SimpleNamespace
                         states = []
                         for j, m in enumerate(meta):
-                            td = time.time(); em, fc, rd, used = long_decode(model, feats[j], prefixes[j], max_flush_rounds=a.max_flush, context_s=a.context_s)
-                            states.append(SimpleNamespace(emitted=em, forced=fc, flush_rounds=rd, positions=used, dec_s=round(time.time() - td, 1)))
+                            rt, rs = None, None
+                            if getattr(a, "act_tag_guide", False):                                   # E7: 화자 태그를 활동(스트림 1)으로 이끈다
+                                from vapasr.hf.long_session import make_retag
+                                Na = int(model.adapter_slot.in_features); rs = {}; rt = make_retag(feats[j][1, :, :Na], spk[:Na], delta, stats=rs)
+                            td = time.time(); em, fc, rd, used = long_decode(model, feats[j], prefixes[j], max_flush_rounds=a.max_flush, context_s=a.context_s, retag=rt)
+                            states.append(SimpleNamespace(emitted=em, forced=fc, flush_rounds=rd, positions=used, dec_s=round(time.time() - td, 1), **({"retag": rs} if rs is not None else {})))
                             print(f"  {c}: {m[1]} {m[3] / 60:.1f} 분 δ{delta} · 위치 {used} · 토큰 {len(em)} · 인코딩 {enc_s} s · 디코드 {states[-1].dec_s} s", flush=True)
                     else:
                         acts = [torch.tensor(slot_activity(ds.eps[m[1]], window_speakers(ds.eps[m[1]], m[2], m[3])[:n_slots], m[2], m[3], m[4], int(model.config.slot_input_slots)),
@@ -357,14 +370,21 @@ def run(a):
                         if (f"{cid}@{t0w}", delta) in done: continue
                         ref_w, ref_eot, mask, sp_order = window_ref(ds, i, delta, EOT, tok)
                         hs, he = parse_emitted(s.emitted, spk, EOT, drop_chunks=mask)
-                        sc = score_window(ref_w, [words(h) for h in hs], d.lang)
+                        hw = [words(h) for h in hs]
+                        if getattr(a, "relabel_act", None):                                             # 진단: 가설 단어를 활동으로 다시 귀속
+                            from vapasr.data.cst_eval import relabel_by_activity
+                            z = np.load(os.path.join(a.relabel_act, f"{cid}@full.npz")); A_ = z["ref" if a.relabel_oracle else "prob"].astype(np.float32)
+                            assert A_.shape[0] == K, f"활동 프레임 {A_.shape[0]} ≠ 회의 프레임 {K}: {cid}"
+                            hw = relabel_by_activity(hw, A_, delta)
+                        sc = score_window(ref_w, hw, d.lang)
                         sc["eot"] = match_eot(ref_eot, he, sc["perm"], eot_tol(delta))
                         row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, delta=delta, L=L, K=K, speakers=sp_order, n_spk=len(sp_order), masked_chunks=len(mask),
                                    forced=s.forced, flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted],
                                    **({"guide_insert": s.guide_insert, "guide_hold": s.guide_hold} if hasattr(s, "guide_insert") else {}),
                                    **({"sb_flips": s.sb_flips, "sb_points": s.sb_points} if hasattr(s, "sb_flips") else {}),
                                    **({"positions": s.positions, "enc_s": enc_s, "dec_s": s.dec_s} if hasattr(s, "positions") else {}),
-                                   ref_text=[" ".join(w for w, _ in r) for r in ref_w], hyp_text=[" ".join(w for w, _ in words(h)) for h in hs], **sc)
+                                   **({"retag": s.retag} if hasattr(s, "retag") else {}),
+                                   ref_text=[" ".join(w for w, _ in r) for r in ref_w], hyp_text=[" ".join(w for w, _ in h) for h in hw], **sc)
                         fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
                 print(f"  {c}: {min(b0 + bs, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
     print(f"DONE rank={a.rank} rows={n}", flush=True)
@@ -399,6 +419,9 @@ def main():
     q.add_argument("--spk-guide-no-insert", action="store_true", help="안내: 태그 삽입을 끈다(--spk-guide-hold 와 함께 = 막기만)")
     q.add_argument("--from-predictions", default=None, help="이 폴더의 원출력을 다시 채점(디코드 없음)")
     q.add_argument("--en-norm", choices=["ours", "whisper"], default="ours", help="영어 채점 정규화 — whisper = Whisper EnglishTextNormalizer(채움말 제거 등, 외부 비교용)")
+    q.add_argument("--act-tag-guide", action="store_true", help="E7: --window full 에서 화자 태그를 활동으로 이끈다(long_session.make_retag)")
+    q.add_argument("--relabel-act", default=None, help="진단: --from-predictions·--window full 에서 가설 단어를 활동(diar_eval --save-probs 의 probs 폴더)으로 다시 귀속")
+    q.add_argument("--relabel-oracle", action="store_true", help="--relabel-act 의 npz 에서 예측 대신 정답 활동(ref)으로")
     q.add_argument("--backchannel", default=None, type=lambda s: (float(s.split(",")[0]), int(s.split(",")[1])),
                    help="참조 EOT 를 맞장구 규칙(최대초,최대토큰)으로 — 그 규칙으로 학습한 모델(--backchannel)을 같은 정의로 잰다. 창·전사 참조는 같다")
     q.add_argument("--max-speakers", type=int, default=2, help="V2: 창 화자 상한(최대 4 — 슬롯 C·D 를 켠 체크포인트)")

@@ -14,7 +14,11 @@
   (diar.aosc_stream)으로 돌린다 — 예측 슬롯이 회의 내내 같은 화자다(조각마다 model.encode 로 예측하면 조각마다 새로 정해진다).
 - 문맥 창(context_s, 2026-10-24): V2 final 을 14 분 회의에 문맥 전부로 디코드하면 앞 3.5 분(약 5,600 위치 — 학습 창 20–90 s 는 2,500 위치 안팎)만
   받아쓰고 나머지는 말을 내지 않았다. 오디오는 자르지 않고 한 스트림으로 계속 디코드하되 LLM 이 보는 문맥만 prefix + 최근 context_s 초로 둔다.
+- 태그 이끌기(make_retag, 2026-10-28 — E7): E6 LLM 이 회의 통째에서 헤드의 회의 단위 슬롯을 따르지 않아(96172 귀속 46 pt) 화자 태그를 낼 때 그 뒤 말이 올 오디오의
+  활동이 가장 많은 슬롯으로 바꾼다(학습 없이).
 """
+from typing import Optional
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -167,11 +171,31 @@ class LongThinker:
         return int(logits.masked_fill(self.block, float("-inf")).argmax())
 
 
-def long_decode(model, feats, prefix_ids, max_flush_rounds=None, blk: int = 4096, context_s: float = 0.0):
+def make_retag(act, slot_ids, delta: int, back: int = 2, stats: Optional[dict] = None):
+    """E7 회의 통째(2026-10-28 — LLM 태그가 헤드의 회의 단위 슬롯을 따르지 않아 귀속이 무너졌다): 모델이 화자 태그를 내면, 청크 k 에서 그 뒤 말이 올 오디오
+    [k − δ − back, k] 의 활동(act (K, N) 0/1 — encode_long(aosc) 스트림 1)이 가장 많은 슬롯 태그로 바꾼다. 활동이 없거나 모델이 고른 슬롯도 그 구간에서
+    말하고 있으면(겹침) 그대로. stats(dict)에 tags·changed 를 센다."""
+    ids = [int(x) for x in slot_ids]; A = act.float().cpu(); K, N = A.shape
+    if stats is not None: stats.update(tags=0, changed=0)
+    def retag(k, tid):
+        if int(tid) not in ids: return tid
+        if stats is not None: stats["tags"] += 1
+        lo, hi = max(0, int(k) - int(delta) - back), min(K, int(k) + 1)
+        if hi <= lo: return tid
+        c = A[lo:hi, : min(N, len(ids))].sum(0)
+        cur = ids.index(int(tid))
+        if float(c.max()) <= 0 or (cur < len(c) and float(c[cur]) > 0): return tid
+        if stats is not None: stats["changed"] += 1
+        return ids[int(c.argmax())]
+    return retag
+
+
+def long_decode(model, feats, prefix_ids, max_flush_rounds=None, blk: int = 4096, context_s: float = 0.0, retag=None):
     """feats (S, K, D)(model.encode·encode_long 출력) → (emitted [(k, tid)], forced, flush_rounds, 넣은 위치 수). KV 는 prefix + 2.6·K + 1024 위치로 시작한다
-    (청크마다 오디오·<NEXT_AUDIO> 두 위치 + 말 — AMI 회의는 2.3·K 안팎). context_s > 0 = 문맥 창(최근 그 초의 청크만, LongThinker) — KV 는 창 크기로."""
+    (청크마다 오디오·<NEXT_AUDIO> 두 위치 + 말 — AMI 회의는 2.3·K 안팎). context_s > 0 = 문맥 창(최근 그 초의 청크만, LongThinker) — KV 는 창 크기로.
+    retag: make_retag(…)(E7 — 화자 태그를 활동으로 이끈다, 없으면 예전 그대로)."""
     from .realtime import realtime_decode
     K = int(feats.shape[-2]); C = int(round(context_s / FRAME_S)) if context_s else 0
     lt = LongThinker(model.thinker, model.config.blocked_ids, max_len=len(prefix_ids) + (4 * C + 2048 if C else int(2.6 * K) + 1024), blk=blk, context=C)
-    out, forced, _, rounds, _ = realtime_decode(model, lt, feats, list(prefix_ids), max_flush_rounds=max_flush_rounds, on_chunk=lt.on_chunk if C else None)
+    out, forced, _, rounds, _ = realtime_decode(model, lt, feats, list(prefix_ids), max_flush_rounds=max_flush_rounds, on_chunk=lt.on_chunk if C else None, retag=retag)
     return out, forced, rounds, lt.used

@@ -10,7 +10,7 @@
 # 쓰기(스케줄러 셸): bash slurm/submit-q17-f1.sh [--dry-run] [--allow-missing] [--partition P(기본 apex)] [--nodes N(기본 2)] [--max-steps N(기본 2500)]
 #   [--run NAME(기본 q17-f1)] [--exclude N,…|none] [--no-eval] [--save-every N] [--after JOBID(그 job 이 끝난 뒤 — 성패 무관, afterany)]
 #   [--afterok JOBID(그 job 이 성공한 뒤 — 예 E6 은 E1c)] [--train-extra "stage3_train.py 인자"(F1 레시피에 덧붙임 — E5 --slot-input, E6 + --diar-head …)]
-#   [--eval-set 묶음(기본 q17-f1 — E5 q17-e5, E6 q17-e6; submit-evals.sh)].
+#   [--eval-set 묶음(기본 q17-f1 — E5 q17-e5, E6 q17-e6; submit-evals.sh)] [--init DIR(2026-10-28, 기본 5 단계 ck3000 — E7b 는 E6 final 에서)].
 #   새 셋이 하나라도 없으면 멈춘다(--allow-missing 이면 빼고 낸다). 아무것도 지우지 않는다.
 #   low_p_hpc(2026-10-26 사용자 "low_p_hpc 로 제출할 수 있도록 해줘"): 선점 유예(≈70 s)가 1.7B 저장(≈3.5 분)보다 짧아 선점 때 저장은 끊긴다 —
 #   재개는 마지막 완성 checkpoint(last_complete_checkpoint)에서. 그래서 apex 가 아니면 --save-every 기본 250(apex 500, 평가 avg3 = ck1500·ck2000·final 그대로),
@@ -18,11 +18,11 @@
 #   평가: 학습 뒤 submit-evals.sh q17-f1(같은 파티션 — q17-mt4-v3 와 같은 묶음: final·ck1500·ck2000·avg3, AMI 4 몫).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-dry=""; allow=0; part=apex; nodes=2; steps=5000; run=q17-f1; exclude=hpc-50,hpc-51,hpc-101,hpc-102; ev=1; save=""; after=""; afterok=""; textra=""; evset=q17-f1
+dry=""; allow=0; part=apex; nodes=2; steps=5000; run=q17-f1; exclude=hpc-50,hpc-51,hpc-101,hpc-102; ev=1; save=""; after=""; afterok=""; textra=""; evset=q17-f1; init=""
 while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run) dry=--dry-run; shift ;;  --allow-missing) allow=1; shift ;;  --partition) part=$2; shift 2 ;;  --nodes) nodes=$2; shift 2 ;;
-    --max-steps) steps=$2; shift 2 ;;  --run) run=$2; shift 2 ;;  --exclude) exclude=$2; shift 2 ;;  --no-eval) ev=0; shift ;;  --save-every) save=$2; shift 2 ;;  --after) after=$2; shift 2 ;;  --afterok) afterok=$2; shift 2 ;;  --train-extra) textra=$2; shift 2 ;;  --eval-set) evset=$2; shift 2 ;;
+    --max-steps) steps=$2; shift 2 ;;  --run) run=$2; shift 2 ;;  --exclude) exclude=$2; shift 2 ;;  --no-eval) ev=0; shift ;;  --save-every) save=$2; shift 2 ;;  --after) after=$2; shift 2 ;;  --afterok) afterok=$2; shift 2 ;;  --init) init=$2; shift 2 ;;  --train-extra) textra=$2; shift 2 ;;  --eval-set) evset=$2; shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -34,7 +34,7 @@ export MAX_RESTART=${MAX_RESTART:-$([[ $part == apex ]] && echo 5 || echo 20)}
 [[ -n $save ]] || save=$([[ $part == apex ]] && echo 500 || echo 250)
 CKA=$((steps * 3 / 5)); CKB=$((steps * 4 / 5))                                                 # 평가 체크포인트(60·80 %) — mt4 2,500 step 의 1500·2000 과 같은 위치
 (( CKA % save == 0 && CKB % save == 0 )) || { echo "--save-every $save: 평가가 checkpoint-$CKA·$CKB 를 쓴다 — 둘의 약수로" >&2; exit 2; }
-D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2; M=/soundai/Model/VAPASR
+D=/soundai/users/tskim/VAPKT-data/data; P2=$D/phase2; M=/soundai/Model/VAPASR; init=${init:-$M/stage3-q17-st3-p11-revive/checkpoint-3000}
 CORP=aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar; miss=()
 for c in swbd chime6tr nia23mt ami-far icsi-far notsofar-far chime6tr-far; do
   if [[ -f $P2/$c.refined.dialogues.jsonl ]]; then CORP+=",$c"; else miss+=("$c"); fi
@@ -50,7 +50,7 @@ SW=""; GMAP=""; [[ ,$CORP, == *,swbd,* ]] && { SW=",dlg_sw:0.7"; GMAP=" --dlg-gr
 W=dlg_ko:2,dlg_en:0.7,dlg_de:0.7,dlg_mt:1.0$FARW$MTKO$SW,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:0.5,sim_en-de-tel:1.0,sim_en-ko:1.0$MEET,rep_ko:1.2,rep_en:1.2,rep_de:1.2
 EXC=(); [[ -n $exclude ]] && EXC=(--exclude "$exclude"); [[ -n $after ]] && EXC+=(--after "$after")   # submit-stage3-train.sh --after = afterany
 [[ -n $afterok ]] && EXC+=(--afterok "$afterok")                                                # 성공 뒤(afterok)
-ARGS=(--run $run --init $M/stage3-q17-st3-p11-revive/checkpoint-3000 --partition $part --nodes $nodes --backchannel 1.0,3 --spk-act-weight 0.5
+ARGS=(--run $run --init $init --partition $part --nodes $nodes --backchannel 1.0,3 --spk-act-weight 0.5
       --revive-dir $P2/revive-asr-v2 --dlg-trans $D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16,$D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16
       --dlg-trans-input $D/stage4-dlg-units-revive-v1/targets-fix-gen-v3-bf16 --dlg-ast-frac 0.5 --sim-trans-frac 0.8 --trans-lead-space --phone-aug 0.3
       --sim-data $SIMS --weights $W --set-phone sim_en-de-tel:0 --change-tag-weight 3 --hold-tag-weight 1.5 --eot-drop-synth 1.0 --eot-drop-sets xl

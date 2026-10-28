@@ -132,6 +132,22 @@ def ed(a: Sequence, b: Sequence) -> int:
     return prev[-1]
 
 
+def relabel_by_activity(hyp: Sequence[Sequence[Tuple[str, float]]], act, delta: int, back: int = 3, fwd: int = 1, wide: int = 12, floor: float = 0.2):
+    """진단(E7, 2026-10-28 — 회의 통째 귀속 붕괴): 가설 단어 [(단어, 방출 시각)] 를 슬롯과 상관없이 활동으로 다시 나눈다. 단어의 오디오 프레임 ≈ 방출 청크 − δ
+    (방출 시각 = (k + 1)·80 ms), 그 근처 [−back, +fwd] 프레임 활동 합이 가장 큰 슬롯으로. 근처 최대 활동이 floor 아래면 ±wide 로 넓힌다.
+    act (K, N) 활동 확률 또는 0/1 정답 → 슬롯 N 개 [(단어, 시각)](시각순). LLM 태그가 회의 내내 같은 사람을 가리켰다면 얻었을 귀속을 어림한다."""
+    import numpy as np
+    A = np.asarray(act, dtype=np.float32); K, N = A.shape; out: List[List[Tuple[str, float]]] = [[] for _ in range(N)]
+    for sl in hyp:
+        for w, t in sl:
+            k = int(round(t / CHUNK_S)) - 1 - int(delta)
+            lo, hi = max(0, k - back), min(K, k + fwd + 1)
+            if hi <= lo: lo, hi = max(0, min(k, K - 1)), max(0, min(k, K - 1)) + 1
+            if A[lo:hi].max() < floor: lo, hi = max(0, k - wide), max(1, min(K, k + wide + 1))
+            out[int(A[lo:hi].sum(0).argmax())].append((w, t))
+    return [sorted(x, key=lambda z: z[1]) for x in out]
+
+
 def score_window(ref: Sequence[Sequence[Tuple[str, float]]], hyp: Sequence[Sequence[Tuple[str, float]]], lang: str) -> Dict:
     """ref·hyp: 슬롯별 [(단어 문자열, 시각 s)](슬롯 수는 서로 달라도 된다 — 모자란 쪽은 빈 슬롯). → dict(n_ref, slot, cp, agn, swap, perm).
     perm[h] = 가설 슬롯 h 를 짝지은 참조 슬롯(참조 슬롯 수 이상이면 참조에 없는 슬롯 — 그 말은 모두 삽입). 2 슬롯은 예전 정의와 같다."""

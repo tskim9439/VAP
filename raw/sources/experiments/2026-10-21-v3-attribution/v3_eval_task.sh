@@ -15,6 +15,7 @@
 #     정렬이 O(단어²)라 돌리지 않는다. 산출 results/stage3-eval-amifull-c<CTX>-<run>-<태그>(+ ami-report.txt).
 #     E7(2026-10-27): AOSC=1 이면 화자 분리 헤드(E6·E7) 예측을 회의 전체 AOSC 스트리밍으로(--aosc — 회의 내내 같은 슬롯, 없으면 조각마다 새로),
 #     DIAR=<diar.pt>(DIAR_TAG=이름)이면 헤드를 그것으로 바꿔 끼운다(--diar-head-override — diar_train --aosc final). 산출 이름에 -aosc·-<DIAR_TAG> 가 붙는다.
+#     GUIDE=1(2026-10-28): 화자 태그를 활동으로 이끈다(--act-tag-guide — long_session.make_retag). 산출 이름에 -guide 가 붙는다.
 #   amitgt(2026-10-25, E2 — wiki output-diarization-integration-20261025): 대상 화자 모드 체크포인트(adapter_inject)를 ami 와 같은 창에서 정답 화자 활동 주입·화자별
 #     디코드로 잰다(cst_stage3_eval --target-oracle). 몫 r/w·합치기는 ami 와 같고, 귀속 오류 분해는 원출력 형식이 달라 돌리지 않는다. 산출 results/stage3-eval-amitgt-<run>-<태그>.
 #   amiact(2026-10-26, E5): 슬롯 활동 입력 체크포인트(adapter_slot)를 ami 와 같은 창에서 정답 슬롯 활동을 오디오 토큰에 넣어 한 스트림으로 잰다(cst_stage3_eval --act-oracle).
@@ -120,10 +121,11 @@ case $K in
        say "AMI 대상 화자(E1 예측 활동, 임계 $TH) 합침 → $E/ami-report.txt" ;;
   amifull) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
        AO=""; [ "${AOSC:-0}" = 1 ] && AO=--aosc; DO=""; DT=""; [ -n "${DIAR:-}" ] && { DO="--diar-head-override $DIAR"; DT="-${DIAR_TAG:-diar}"; }   # E7(2026-10-27): AOSC·헤드 바꿔 끼우기
-       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
+       GD=""; [ "${GUIDE:-0}" = 1 ] && GD=--act-tag-guide                                                # E7(2026-10-28): 화자 태그를 활동으로
+       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
        $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas 4,10 \
-         --backchannel 1.0,3 --max-speakers 4 --window full --context-s $C --declare 4 $V $AO $DO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
+         --backchannel 1.0,3 --max-speakers 4 --window full --context-s $C --declare 4 $V $AO $DO $GD --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
        [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }

@@ -95,10 +95,11 @@ class GraphThinker:
 
 @torch.inference_mode()
 def realtime_decode(model, gt: GraphThinker, feats, prefix_ids: List[int], max_flush_rounds: Optional[int] = None,
-                    max_per_chunk: int = 0, max_total_per_chunk: float = 6.0, on_chunk=None):
+                    max_per_chunk: int = 0, max_total_per_chunk: float = 6.0, on_chunk=None, retag=None):
     """stream_decode 와 같은 규칙의 디코드. feats (1,K,Din) 또는 (K,Din) → (out [(k, tid)], forced, step_ms [K], flush_rounds, flush_ms).
     step_ms[k] = 오디오 프레임 k 를 넣고 그 프레임의 토큰을 다 낼 때까지의 GPU 동기 시간(ms).
-    on_chunk(k, 오디오 k 가 놓일 위치): 청크 k 라운드 직전에 부른다(long_session.LongThinker 의 문맥 창 — 없으면 예전 그대로)."""
+    on_chunk(k, 오디오 k 가 놓일 위치): 청크 k 라운드 직전에 부른다(long_session.LongThinker 의 문맥 창 — 없으면 예전 그대로).
+    retag(k, tid) → tid(2026-10-28, E7 회의 통째 — long_session.make_retag): 낼 토큰을 바꾼다(화자 태그를 활동으로). 바꾼 토큰을 그대로 다시 넣는다."""
     cfg = model.config
     max_flush_rounds = cfg.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
     runaway_cap = cfg.runaway_cap
@@ -122,6 +123,7 @@ def realtime_decode(model, gt: GraphThinker, feats, prefix_ids: List[int], max_f
         while True:
             if tid == model.next_audio or n >= cap or len(out) >= max_total:
                 forced += int(tid != model.next_audio); pending = True; return n
+            if retag is not None: tid = retag(k, tid)
             out.append((k, tid)); n += 1; tid = feed(emb[tid][None])
     for k in range(K):
         if on_chunk is not None: on_chunk(k, pos + int(pending))                       # 오디오 k 는 앞 라운드 <NEXT_AUDIO> 뒤에 놓인다
