@@ -120,14 +120,19 @@ def window_ref(ds, i, delta, eot_id, tok):
 
 def verify_long(model, wav, prefix, max_flush) -> None:
     """--window full --verify: 겹침 조각 인코딩(encode_long)을 파일 전체 forward 와 앞 300 s 로(조각 1000 프레임 — 조각 넷), 긴 디코드(long_decode)를
+    E6 이후(화자 분리 헤드 — 스트림 1 = 예측 활동)는 스트림 0(인코더 특징)만 대조한다(2026-10-28: 인과 헤드 예측은 조각 앞 맥락에 따라 몇 프레임 달라져
+    96461 몫 0 이 max|Δ| 1.0 으로 멈췄다 — 그 차이는 몫으로만 적는다).
     배치 디코드(decode_batch)와 앞 60 s 특징으로(블록 256 위치 — 블록·나머지 경로 둘 다) 대조한다."""
     import numpy as np, torch
     from vapasr.hf.batch_decode import decode_batch
     from vapasr.hf.long_session import encode_long, long_decode
     dev = next(model.parameters()).device; n = min(len(wav), 300 * 16000); w0 = np.asarray(wav[:n], dtype=np.float32); K0 = int(round(n / 16000 / 0.08))
     whole = model.encode(torch.from_numpy(w0).to(dev)[None], torch.tensor([n], device=dev), torch.tensor([K0], device=dev))[0]
-    d = (whole - encode_long(model, w0, K0, core=1000)).abs().max().item()
-    print(f"ENC-PARITY 앞 {n / 16000:.0f} s(조각 1000 프레임·앞 겹침 1760): max|Δ| {d:.2e}", flush=True)
+    seg = encode_long(model, w0, K0, core=1000)
+    d = (whole[:1] - seg[:1]).abs().max().item()                                               # 스트림 0(인코더 특징)만 — 2026-10-28
+    act = f" · 예측 활동 스트림 다른 프레임 몫 {float((whole[1] != seg[1]).any(-1).float().mean()):.4f}(인과 헤드는 조각 앞 맥락에 따라 달라진다 — 대조 밖)" \
+        if getattr(model, "diar_head", None) is not None and whole.shape[0] > 1 else ""
+    print(f"ENC-PARITY 앞 {n / 16000:.0f} s(조각 1000 프레임·앞 겹침 1760): 스트림 0 max|Δ| {d:.2e}{act}", flush=True)
     assert d < 1e-3, f"겹침 조각 인코딩이 파일 전체 forward 와 다르다 {d}"
     f60 = whole[:, :750]; ref = decode_batch(model, [f60], [list(prefix)], max_flush_rounds=max_flush)[0]
     out, forced, rounds, used = long_decode(model, f60, prefix, max_flush_rounds=max_flush, blk=256)

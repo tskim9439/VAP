@@ -34,10 +34,11 @@ if [ -n "$VAPASR_LOCAL_ENV" ]; then
 fi
 export VAPASR_STAGE_DIR=/tmp/sa_tskim/vapasr-stage
 worker() {
-  local g=$1 cmd n=0
+  local g=$1 cmd n=0 rc
   while IFS= read -r cmd; do
     n=$((n + 1)); echo "[$(date '+%F %T')] GPU $g ← $n: $cmd"
-    CUDA_VISIBLE_DEVICES=$g GPU_IDX=$g bash -c "$cmd"; echo "[$(date '+%F %T')] GPU $g 끝 $n (exit $?)"
+    CUDA_VISIBLE_DEVICES=$g GPU_IDX=$g bash -c "$cmd"; rc=$?                                   # 2026-10-28: $(date) 가 먼저 돌아 $? 가 늘 0 이었다
+    echo "[$(date '+%F %T')] GPU $g 끝 $n (exit $rc)"
   done < <(grep "^$g|" "$TASKS" | cut -d'|' -f2-)
 }
 for g in 0 1 2 3 4 5 6 7; do worker $g & sleep 20; done                                         # 20 s 간격(NFS 부하 분산)
