@@ -466,7 +466,7 @@ AMI 34 회의 × IHM-mix·SDM 을 통째로 디코드했다(LLM 문맥 30 s). �
 - **표준 재채점**(Whisper + meeteval, 전체 창): E9 는 IHM-mix eval 37.57·dev 43.57, SDM eval 44.75·dev 47.88 이다(E6 37.09·42.31·44.73·48.36).
   - 긴 창의 `<EOT>` 반복 때문에 삭제가 는다(IHM-mix eval 12,150 → 17,360). 60 s 미만 창의 이득이 이것으로 상쇄된다.
 
-### E9 결과 2 — 회의 통째(E7a 헤드 + AOSC, 문맥 30 s, 평가 97164 22:2x 끝, `results/stage3-eval-amifull-c30-aosc-e7a-d10-q17-e9-final`, 재채점 `-wn`)
+### E9 결과 2 — 회의 통째(E7a 헤드 + AOSC, 문맥 30 s, 평가 97164 22:42 끝, `results/stage3-eval-amifull-c30-aosc-e7a-d10-q17-e9-final`, 재채점 `-wn`)
 | AMI 회의 통째 δ10(meeteval cpWER) | E6 태그 그대로 | E7b | **E9** | E6 + 태그 이끌기 | agn E6 → E9 |
 |---|---:|---:|---:|---:|---|
 | IHM-mix eval | 67.34 | 55.53 | **53.47** | 47.50 | 21.06 → 20.45 |
