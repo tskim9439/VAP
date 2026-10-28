@@ -104,7 +104,8 @@ out=/soundai/Model/VAPASR/stage3-$run
 args="--init $init --data $D --split $D/splits/$split.json --weights $weights --eot-mode $eot_mode --backchannel $backchannel --decision-weight $decision_weight"
 args+=" --start-mode $start_mode --recover-p $recover_p --spk-act-weight $spk_act --replay-words @$SNAP/main-words.list --replay-words @$ASR --replay-words @$CV4 --replay-de-words @$DE --replay-files-frac $frac"
 args+=" --ast-targets $AST,$AST_CV4 --ast-frac 0.8 --offline-frac 0.3 --gain-augment 0.5,-70,-20 --gain-augment-langs English"
-args+=" --speed-perturb 0.9,1.0,1.1 --noise-bank $NB --train-encoder --lr-encoder 1e-5 --encoder-right-context 3 --encoder-context-sampling fixed --spec-augment 2,27,2,0.03"
+enc_tr="--train-encoder --lr-encoder 1e-5"; [[ " $extra " == *" --freeze-encoder "* ]] && enc_tr=""   # 2026-10-28 E7b: --extra 의 --freeze-encoder 와 함께 쓰지 않는다(배타 옵션)
+args+=" --speed-perturb 0.9,1.0,1.1 --noise-bank $NB${enc_tr:+ $enc_tr} --encoder-right-context 3 --encoder-context-sampling fixed --spec-augment 2,27,2,0.03"
 args+=" --attn-impl varlen --batch-max-tokens $batch_tokens --pack-max-bs $max_bs --delays 4,5,6,7,8,9,10 --lr $lr --warmup $warmup --epochs $epochs --max-steps $max_steps"
 args+=" --save-every $save_every --num-workers 4 ${sim_data:+--sim-data $sim_data} ${revive_dir:+--revive-dir $revive_dir}"
 [[ -n $dlg_trans ]] && args+=" --dlg-trans $dlg_trans --dlg-ast-frac $dlg_ast_frac ${dlg_trans_input:+--dlg-trans-input $dlg_trans_input}"
