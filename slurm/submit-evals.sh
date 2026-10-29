@@ -34,7 +34,7 @@
 #   q17-e9b  E9b(2026-10-28, slurm/submit-q17-e9b.sh — 학습 창 20–90 s): q17-e9 와 같은 묶음. --after-job 필수.
 #   q17-e10  E10(2026-10-29, slurm/submit-q17-e10.sh — 슬롯 추출기): GPU 마다 AMI 창 δ10 → 회의 통째 AOSC·E7a δ10 → 섞인 소리 끈(MIXOFF=1) 창 → 섞인 소리 끈 회의 통째.
 #            --after-job 필수.
-#   q17-e9-n3d  E11 진단(2026-10-29, wiki output-n3d-branch-20261029 — 학습 없음): Nemotron 3 Diarization(고정 전문가, N3D=.nemo — 기본 VAPKT-data/models/…)의
+#   q17-e9-n3d  E11 진단(2026-10-29, wiki output-n3d-branch-20261029 — 학습 없음): Nemotron 3 Diarization(고정 전문가, N3D=.nemo — 기본 VAPKT-data/vapkt-baselines/Nemotron-3-Diarization/…)의
 #            AMI 창·회의 DER(diar_eval run --n3d, 우리 참조 — results/diar-n3d-c4-win·-session) + E9 final 의 슬롯 활동을 전문가 활동으로 바꾼 AMI 창 δ10·회의 통째 δ10(8 몫씩).
 #            의존 없음. 순서: 창 DER → 창 cpWER → 회의 DER → 회의 cpWER.
 #   q17-e10-n3d  같은 진단을 E10 final 에(창·회의 통째 × 섞인 소리 켬·끔). --after-job(E10 학습 job) 필수.
@@ -105,13 +105,13 @@ case $set_ in
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 AOSC=1 DIAR=$E7A DIAR_TAG=e7a bash $X amifull q17-e10 final $r/8"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 MIXOFF=1 bash $X ami q17-e10 final $r/8"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 MIXOFF=1 AOSC=1 DIAR=$E7A DIAR_TAG=e7a bash $X amifull q17-e10 final $r/8"); done ;;
-  q17-e9-n3d) N3=${N3D:-$MR/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3(사용자 업로드)" >&2; exit 1; }
+  q17-e9-n3d) N3=${N3D:-$D/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3(사용자 업로드)" >&2; exit 1; }
     DW=$D/results/diar-n3d-c4-win; DSS=$D/results/diar-n3d-c4-session
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DW && \${PY:-python} experiments/diar_eval.py run --n3d $N3 --out $DW --rank $r --world-size 8 >> $DW/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DW > $DW/summary.log 2>&1"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 N3D=$N3 bash $X ami q17-e9 final $r/8"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DSS && \${PY:-python} experiments/diar_eval.py run --n3d $N3 --session --out $DSS --rank $r --world-size 8 >> $DSS/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DSS/n3d > $DSS/summary.log 2>&1"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 N3D=$N3 bash $X amifull q17-e9 final $r/8"); done ;;
-  q17-e10-n3d) N3=${N3D:-$MR/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3(사용자 업로드)" >&2; exit 1; }
+  q17-e10-n3d) N3=${N3D:-$D/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3(사용자 업로드)" >&2; exit 1; }
     for t in ami amifull; do for mo in 0 1; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 MIXOFF=$mo N3D=$N3 bash $X $t q17-e10 final $r/8"); done; done; done ;;
   q17-e11|q17-e11b) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull $set_ final $r/8"); done ;;
   q17-e6-amifull) amifull8 q17-e6 ""; for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 bash $X amifull q17-e6 final $r/8"); done ;;

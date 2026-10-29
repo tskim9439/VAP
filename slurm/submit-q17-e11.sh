@@ -7,11 +7,11 @@
 #   평가 q17-e11: AMI 창 δ10 8 몫 → 회의 통째 δ10 8 몫(전문가가 회의 전체 스트리밍 — AOSC·E7a 헤드 없음).
 # 쓰기(스케줄러 셸): bash slurm/submit-q17-e11.sh [--dry-run] [--partition P(기본 apex)] [--max-steps N(기본 5000)] [--global-slots P(기본 0.5)] [--from-e10]
 #                   [--init DIR] [--n3d PATH] [--after JOBID[,JOBID…](모두 끝난 뒤 — afterany)] [--no-eval].
-#   .nemo 가 서버에 있어야 한다(기본 VAPKT-data/models/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo — 사용자 업로드). 아무것도 지우지 않는다. 산출 /soundai/Model/VAPASR/stage3-q17-e11.
+#   .nemo 가 서버에 있어야 한다(기본 VAPKT-data/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo — 사용자 업로드, xcomet 과 같은 곳). 아무것도 지우지 않는다. 산출 /soundai/Model/VAPASR/stage3-q17-e11.
 #   low_p_hpc: --partition low_p_hpc — submit-q17-f1.sh 가 선점 파티션 설정을 자동으로 건다(저장 250 step, MAX_RESTART 20, requeue).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-dry=""; part=apex; steps=5000; gs=0.5; dep=(); ev=(); init=""; e10=0; n3d=/soundai/users/tskim/VAPKT-data/models/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo; run=q17-e11
+dry=""; part=apex; steps=5000; gs=0.5; dep=(); ev=(); init=""; e10=0; n3d=/soundai/users/tskim/VAPKT-data/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo; run=q17-e11
 while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run) dry=--dry-run; shift ;;  --partition) part=$2; shift 2 ;;  --max-steps) steps=$2; shift 2 ;;  --global-slots) gs=$2; shift 2 ;;

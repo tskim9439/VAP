@@ -137,7 +137,9 @@ raw_authors:
 
 ## 5. 사용자 할 일
 1. **.nemo 업로드**: 맥 T5 `/Volumes/Samsung_T5/vapkt-models/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo`(198,676,480 B, sha256 `867c53f5…` — HF LFS 와 같다)
-   → 서버 `/soundai/users/tskim/VAPKT-data/models/Nemotron-3-Diarization/`.
+   → 서버 `/soundai/users/tskim/VAPKT-data/vapkt-baselines/Nemotron-3-Diarization/`(xcomet 과 같은 곳).
+   - 2026-10-29 첫 시도(`VAPKT-data/models/…`)는 403 AuthorizationPermissionMismatch 였다. `models` 폴더는 775(sa_tskim)이고, azcopy 주체는 NFS 에서 uid 65533(other)이라 쓸 수 없다.
+   - 777 폴더(`VAPKT-data`·`data`·`data/audio`)나 azcopy 가 만든 폴더(`vapkt-baselines`, 소유 65533) 아래는 된다.
 2. **진단**: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh q17-e9-n3d)`(선점 파티션이면 `--partition low_p_hpc`)
 3. **E11**: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e11.sh)`(`--partition low_p_hpc` 가능)
 4. **G0 이식 층 고르기**: 업로드 뒤 호스트 GPU 한 장으로 돌린다(약 10–20 분, 읽기만).
