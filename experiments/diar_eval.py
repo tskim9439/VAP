@@ -15,7 +15,9 @@
 E8(2026-10-27): diar.pt 의 shift R(위치 p 의 출력 = 프레임 p − R 의 활동)이면 출력 [R:] 을 참조 [:K − R] 과 맞춘다 — 창·회의 끝 R 프레임은 뒤를 볼 오디오가 없어 셈에서 뺀다.
 E11(2026-10-29): run --n3d <.nemo> [--session] [--n3d-chunk 4 --n3d-rc 0] — 고정 화자 분리 전문가 Nemotron 3 Diarization(vapasr/hf/n3d)을 같은 창(창마다 새로)·
   같은 회의(회의 전체 스트리밍 한 번)·같은 참조로 잰다(--diar 대신, 창 목록용 tokenizer 는 --tok-from). 행의 DER 은 모델이 쓰는 앞 4 채널(슬롯) 기준이고,
-  extra = 채널 4–7 에만 있는 활성 프레임(우리 슬롯 밖으로 간 말 — DER 에서는 놓침), n_hyp_spk8 = 8 채널 중 활성 채널 수. 회의 통째는 <out>/n3d/ 에 쓴다."""
+  extra = 채널 4–7 에만 있는 활성 프레임(우리 슬롯 밖으로 간 말 — DER 에서는 놓침), n_hyp_spk8 = 8 채널 중 활성 채널 수. 회의 통째는 <out>/n3d/ 에 쓴다.
+G1(2026-10-29): run --graft <graft.pt> [--graft-offline] [--session] — 이식 학생(우리 인코더 탭 → 어댑터 → N3D 위층, vapasr/hf/n3d_graft.GraftExpert)을 같은
+  창·회의·참조로 잰다(기본 스트리밍 청크 --n3d-chunk 4, --graft-offline 이면 창 통째). --n3d 는 graft.pt 의 .nemo 를 덮을 때만. 회의 통째는 <out>/graft/ 에 쓴다."""
 import argparse, collections, glob, json, math, os, sys, time
 
 import numpy as np
@@ -87,14 +89,24 @@ def run_n3d(a):
     from vapasr.hf.n3d import N3DExpert
     from transformers import AutoTokenizer
     n_spk = 4; tok = AutoTokenizer.from_pretrained(a.tok_from)
-    ex = N3DExpert({"path": os.path.abspath(a.n3d), **({"chunk": a.n3d_chunk} if a.n3d_chunk else {}), **({"rc": a.n3d_rc} if a.n3d_rc is not None else {})})
+    if a.graft:                                                                                       # G1: 이식 학생(우리 인코더 → 어댑터 → N3D 위층)
+        from vapasr.hf.n3d_graft import GraftExpert
+        gx = GraftExpert(a.graft, n3d_path=os.path.abspath(a.n3d) if a.n3d else None, nemotron_dir=a.nemotron_dir, chunk=a.n3d_chunk or 4, rc=a.n3d_rc or 0)
+        class _Graft:                                                                                 # N3DExpert 와 같은 probs·cfg 꼴
+            cfg = {**gx.cfg, "offline": bool(a.graft_offline)}
+
+            @staticmethod
+            def probs(w, wl_, k): return gx.probs(w, wl_, k, offline=a.graft_offline)
+        ex = _Graft()
+    else:
+        ex = N3DExpert({"path": os.path.abspath(a.n3d), **({"chunk": a.n3d_chunk} if a.n3d_chunk else {}), **({"rc": a.n3d_rc} if a.n3d_rc is not None else {})})
     man = json.load(open(os.path.join(a.data, "manifest.json"))) if os.path.exists(os.path.join(a.data, "manifest.json")) else {}
     sub = {**{m: "dev" for m in man.get("dev", [])}, **{m: "eval" for m in man.get("eval", [])}}
     full = bool(a.session)
     ns = argparse.Namespace(corpora=a.corpora, data=a.data, split=None, deltas=[10], limit_windows=a.limit_windows, backchannel=(1.0, 3), max_speakers=n_spk,
                             window="full" if full else tuple(float(v) for v in a.window.split(",")), hop=10.0, window_draws=0 if full else a.window_draws, declare=n_spk)
     sets, items = windows_of(ns, tok); items = [it for j, it in enumerate(items) if j % a.world_size == a.rank]
-    od = os.path.join(a.out, "n3d") if full else a.out; os.makedirs(od, exist_ok=True); dest = os.path.join(od, f"windows-rank{a.rank}.jsonl"); pdir = os.path.join(od, "probs")
+    od = os.path.join(a.out, "graft" if a.graft else "n3d") if full else a.out; os.makedirs(od, exist_ok=True); dest = os.path.join(od, f"windows-rank{a.rank}.jsonl"); pdir = os.path.join(od, "probs")
     if a.save_probs: os.makedirs(pdir, exist_ok=True)
     json.dump(dict(n3d=ex.cfg, threshold=a.threshold, corpora=a.corpora, session=full, window=a.window, window_draws=a.window_draws),
               open(os.path.join(od, f"config-rank{a.rank}.json"), "w"), indent=1)
@@ -249,7 +261,9 @@ def main():
     q = sub.add_parser("run"); q.add_argument("--diar", default=None); q.add_argument("--nemotron-dir", default=None); q.add_argument("--out", required=True)
     q.add_argument("--n3d", default=None, help="E11: --diar 대신 고정 화자 분리 전문가 Nemotron 3 Diarization(.nemo)을 잰다")
     q.add_argument("--n3d-chunk", type=int, default=None, help="--n3d 스트리밍 청크(80 ms 프레임, 기본 4)"); q.add_argument("--n3d-rc", type=int, default=None, help="--n3d 오른쪽 문맥(기본 0)")
-    q.add_argument("--tok-from", default="/soundai/Model/VAPASR/stage3-q17-e9/final", help="--n3d: 창 목록(windows_of)용 tokenizer 체크포인트")
+    q.add_argument("--tok-from", default="/soundai/Model/VAPASR/stage3-q17-e9/final", help="--n3d·--graft: 창 목록(windows_of)용 tokenizer 체크포인트")
+    q.add_argument("--graft", default=None, help="G1: 이식 학생 graft.pt(n3d_graft_train 산출)를 잰다 — 기본 스트리밍 청크 --n3d-chunk(4)")
+    q.add_argument("--graft-offline", action="store_true", help="--graft 를 창 통째(오프라인)로")
     q.add_argument("--data", default="/soundai/users/tskim/VAPKT-data/data/ami-bench-v1"); q.add_argument("--corpora", default="ami-ihmmix,ami-sdm")
     q.add_argument("--window", default="20,90"); q.add_argument("--window-draws", type=int, default=1); q.add_argument("--threshold", type=float, default=0.5)
     q.add_argument("--batch", type=int, default=8); q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1); q.add_argument("--limit-windows", type=int, default=0)
@@ -260,8 +274,8 @@ def main():
     q = sub.add_parser("summarize"); q.add_argument("--out", required=True)
     q = sub.add_parser("sweep"); q.add_argument("--out", required=True); q.add_argument("--thresholds", default="0.2,0.3,0.4,0.5,0.6")
     a = ap.parse_args()
-    if a.cmd == "run": assert bool(a.diar) != bool(a.n3d), "run 은 --diar 와 --n3d 중 하나"
-    if a.cmd == "run" and a.n3d: run_n3d(a); return
+    if a.cmd == "run": assert bool(a.diar) + bool(a.n3d and not a.graft) + bool(a.graft) == 1, "run 은 --diar · --n3d · --graft 중 하나(--graft 에 --n3d 는 .nemo 덮기)"
+    if a.cmd == "run" and (a.n3d or a.graft): run_n3d(a); return
     if a.cmd == "run" and a.session: run_session(a); return
     {"run": run, "summarize": summarize, "sweep": sweep}[a.cmd](a)
 
