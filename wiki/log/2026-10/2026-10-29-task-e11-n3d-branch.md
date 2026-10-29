@@ -66,3 +66,18 @@
   - 사용자 제출: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-n3d-graft.sh)`(학습 → q17-graft 평가)
   - 판단: 학생 DER 이 교사 + 1.5 안이면 G3(E11 의 전문가를 학생으로 바꿔 끼우기).
 - By: tskim
+## [2026-10-29] task | E11·G1·진단 제출(사용자) — job 98305(q17-e9-n3d)·98306/98307(E11)·98308/98309(G1)
+
+- Changed:
+  - 위키: [[output-n3d-branch-20261029]] 5 절 제출 기록
+- Reason:
+  - 사용자 23:40 제출(모두 apex)
+    - `submit-evals.sh q17-e9-n3d` → 평가 job 98305(32 작업)
+    - `submit-q17-e11.sh` → 학습 98306(2 노드) · 평가 98307
+    - `submit-n3d-graft.sh` → 학습 98308(1 노드) · 평가 98309(q17-graft)
+  - 같은 때 E10 학습 97922 는 22:37 에 끝났고(PARITY OK), 평가 97923 은 진행 중이다(22:45 선점 뒤 22:50 다시 시작).
+- Next:
+  - E11·G1 첫 step 확인(새 경로: 학습 forward 안의 전문가, rank 0 능형 회귀 동안 다른 rank 대기)
+  - 진단 결과 → E9 헤드 대비 정리
+  - G1 DER 이 교사 + 1.5 안이면 G3
+- By: tskim

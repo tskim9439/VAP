@@ -219,3 +219,4 @@ raw_authors:
 2. **진단**: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh q17-e9-n3d)`(선점 파티션이면 `--partition low_p_hpc`)
 3. **E11**: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e11.sh)`(`--partition low_p_hpc` 가능)
 4. **G0 이식 층 고르기**: 업로드 뒤 호스트 GPU 한 장으로 돌린다(약 10–20 분, 읽기만).
+5. **제출(2026-10-29 23:40, 사용자 — 모두 apex)**: 진단 q17-e9-n3d 평가 job 98305, E11 학습 98306·평가 98307, G1 학습 98308·평가 98309(q17-graft).
