@@ -537,6 +537,7 @@ AMI 34 회의 × IHM-mix·SDM 을 통째로 디코드했다(LLM 문맥 30 s). �
   - 창 하나(26 s)를 배치 디코드와 추측 prefill 긴 디코드로 풀면 섞인 소리 켬·끔 모두 출력이 같다.
 - **제출**: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e10.sh)`.
   - E9 final 에서 5,000 step, 2 노드, 창 20–40 s, mix-drop 0.5 다. 산출은 `/soundai/Model/VAPASR/stage3-q17-e10` 이다.
+  - 사용자가 2026-10-29 11:50 에 low_p_hpc 로 냈다(`--partition low_p_hpc` — 저장 250 step 마다, MAX_RESTART 20). 학습 job 97922, 평가 job 97923(97922 성공 뒤, 같은 파티션)이다.
   - 평가 q17-e10 은 GPU 마다 창 → 회의 통째 → 섞인 소리 끈 창 → 끈 회의 통째 순이다.
 - **판단 기준**:
   - 창 귀속 몫이 E9(60 s 미만 IHM-mix eval 약 11)에서 E3 수준(약 6)으로 내려가는가.
