@@ -48,3 +48,21 @@
     - `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e11.sh)`
   - G1(어댑터 학습) 구현은 사용자 결정 뒤.
 - By: tskim
+## [2026-10-29] task | G1 — 이식 어댑터(우리 인코더 탭 → 어댑터 → Nemotron 3 Diarization 8 층 위) 구현
+
+- Changed:
+  - 코드(커밋 38cc9d3)
+    - `vapasr/hf/n3d_graft.py`(새): GraftAdapter, teacher·student_offline, stream(AOSC — 캐시가 ĥ_8 을 담고 무음 자리는 8 층 꼴 sil), GraftExpert
+    - `experiments/n3d_graft_train.py`(새): 교사 10 ms 확률 BCE + h_8 MSE, 능형 회귀 시작점, 무음 프로필, DDP·선점·재개·재로드 대조
+    - `experiments/diar_eval.py run --graft`
+    - 제출: `slurm/submit-n3d-graft.sh`(새), `slurm/submit-evals.sh` q17-graft
+  - 시험: `tests/test_n3d_graft.py` 3 개(새)
+  - 위키: [[output-n3d-branch-20261029]] 4.2 절 G1 구현
+- Reason:
+  - 사용자 "G1 도 구현해놓자". G0 결과 이식 층은 8 이다.
+- Next:
+  - 확인(맥, 실제 .nemo): layer 0 이식에 교사 h_0 을 넣은 스트리밍이 교사 스트리밍과 같다(청크 4·16). layer 0·8 오프라인 학생에 교사 h 를 넣으면 교사와 같다. 관련 시험 20 개 통과.
+  - 서버: 코드 반영·md5 대조, 제출 dry-run 확인. 학습 스모크(AMI 만, batch 2, 6 step)에서 능형 회귀 시작점(68 s)·step 0.2 s·final 저장·재로드 대조 같음·DONE 을 확인했다.
+  - 사용자 제출: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-n3d-graft.sh)`(학습 → q17-graft 평가)
+  - 판단: 학생 DER 이 교사 + 1.5 안이면 G3(E11 의 전문가를 학생으로 바꿔 끼우기).
+- By: tskim
