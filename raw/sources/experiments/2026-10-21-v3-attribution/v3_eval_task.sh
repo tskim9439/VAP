@@ -17,6 +17,9 @@
 #     DIAR=<diar.pt>(DIAR_TAG=이름)이면 헤드를 그것으로 바꿔 끼운다(--diar-head-override — diar_train --aosc final). 산출 이름에 -aosc·-<DIAR_TAG> 가 붙는다.
 #     GUIDE=1(2026-10-28): 화자 태그를 활동으로 이끈다(--act-tag-guide — long_session.make_retag). 산출 이름에 -guide 가 붙는다.
 #   MIXOFF=1(2026-10-29, E10 슬롯 추출기 체크포인트): AMI 작업(ami·amifull)을 섞인 소리 토큰 없이(--mix-off) — 산출 이름에 -mixoff 가 붙는다.
+#   N3D=<.nemo>(2026-10-29, E11): AMI 작업(ami·amifull)의 슬롯 활동을 고정 화자 분리 전문가 Nemotron 3 Diarization 으로(--n3d — 창은 창마다, 회의 통째는 회의 전체
+#     스트리밍 한 번, N3D_CHUNK 기본 4). 슬롯 활동 입력 체크포인트(E6·E9·E10)에 붙이는 학습 없는 진단 — 산출 이름에 -n3d(청크가 4 가 아니면 -n3dc<청크>)가 붙는다.
+#     E11 체크포인트는 config 에 전문가가 있어 N3D 없이도 그것을 쓴다(이름은 그대로).
 #   DELTAS(2026-10-28, 사용자 "AMI IHM 이랑 SDM 두개에 대해 delta 10 으로만 평가해서 비교해서 의사결정을 빠르게 하자"): AMI 작업(ami·amiact·amitgt·amie3·amifull)의 δ
 #     (기본 4,10 — 예전 산출 그대로). 다르면 산출 이름에 -d<δ> 가 붙는다(예 DELTAS=10 → stage3-eval-ami-d10-<run>-<대상>).
 #   amitgt(2026-10-25, E2 — wiki output-diarization-integration-20261025): 대상 화자 모드 체크포인트(adapter_inject)를 ami 와 같은 창에서 정답 화자 활동 주입·화자별
@@ -73,10 +76,11 @@ case $K in
          $P $X/taxi_v3_probe.py --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --sessions $TAXI --out $o --deltas 10 --max-window 90 --classify-onsets > $o/run.log 2>&1 ;;
   ami) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
        MO=""; [ "${MIXOFF:-0}" = 1 ] && MO=--mix-off                                                   # E10(2026-10-29): 섞인 소리 토큰 없이
-       E=$R/stage3-eval-ami$DS${MO:+-mixoff}-$RUN-$tag; A=$R/stage3-attr-errors-ami$DS${MO:+-mixoff}-$RUN-$tag; AB=$D/ami-bench-v1
+       NO=""; NT=""; [ -n "${N3D:-}" ] && { NO="--n3d $N3D --n3d-chunk ${N3D_CHUNK:-4}"; NT=-n3d; [ "${N3D_CHUNK:-4}" = 4 ] || NT=-n3dc$N3D_CHUNK; }   # E11(2026-10-29): 고정 화자 분리 전문가
+       E=$R/stage3-eval-ami$DS${MO:+-mixoff}$NT-$RUN-$tag; A=$R/stage3-attr-errors-ami$DS${MO:+-mixoff}$NT-$RUN-$tag; AB=$D/ami-bench-v1
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
        $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL --batch-size 16 \
-         --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 $MO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
+         --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 $MO $NO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
        [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }
@@ -128,10 +132,12 @@ case $K in
        AO=""; [ "${AOSC:-0}" = 1 ] && AO=--aosc; DO=""; DT=""; [ -n "${DIAR:-}" ] && { DO="--diar-head-override $DIAR"; DT="-${DIAR_TAG:-diar}"; }   # E7(2026-10-27): AOSC·헤드 바꿔 끼우기
        GD=""; [ "${GUIDE:-0}" = 1 ] && GD=--act-tag-guide                                                # E7(2026-10-28): 화자 태그를 활동으로
        MO=""; [ "${MIXOFF:-0}" = 1 ] && MO=--mix-off                                                   # E10(2026-10-29): 섞인 소리 토큰 없이
-       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}${MO:+-mixoff}$DS-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
+       NO=""; NT=""; [ -n "${N3D:-}" ] && { NO="--n3d $N3D --n3d-chunk ${N3D_CHUNK:-4}"; NT=-n3d; [ "${N3D_CHUNK:-4}" = 4 ] || NT=-n3dc$N3D_CHUNK; }   # E11(2026-10-29): 고정 화자 분리 전문가
+       [ -n "$NO" ] && [ -n "$AO$DO$GD" ] && { say "N3D 는 AOSC·DIAR·GUIDE 와 함께 쓰지 않는다"; exit 2; }
+       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}${MO:+-mixoff}$NT$DS-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
        $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL \
-         --backchannel 1.0,3 --max-speakers 4 --window full --context-s $C --declare 4 $V $AO $DO $GD $MO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
+         --backchannel 1.0,3 --max-speakers 4 --window full --context-s $C --declare 4 $V $AO $DO $GD $MO $NO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
        [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }

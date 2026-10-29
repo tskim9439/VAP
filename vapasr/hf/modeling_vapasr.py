@@ -80,6 +80,11 @@ class VapAsrForStreamingASR(PreTrainedModel):
             from .diar import DiarBranch
             self.diar_head = DiarBranch(**dh)
         else: self.diar_head = None
+        nc = getattr(config, "n3d_cfg", None)                                                    # E11 고정 화자 분리 전문가(vapasr/hf/n3d — nn.Module 이 아니라 state_dict·DDP 밖, 처음 쓸 때 읽는다)
+        if nc:
+            from .n3d import N3DExpert
+            self.n3d = N3DExpert(nc)
+        else: self.n3d = None
         if thinker is None:
             from qwen_asr.core.transformers_backend.configuration_qwen3_asr import Qwen3ASRThinkerConfig
             from qwen_asr.core.transformers_backend.modeling_qwen3_asr import Qwen3ASRThinkerForConditionalGeneration
@@ -107,12 +112,17 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if state_dict: enc.enc.load_state_dict(state_dict)
         tr = self.config.encoder_trainable if trainable is None else trainable; enc.set_trainable(tr); self.config.encoder_trainable = tr
         self.encoder = enc.to(next(self.adapter.parameters()).device); return self
-    def encode(self, wav, wav_len, K, act=None):                                  # (B,L) → (B,S,Kmax,Din) — S = 1, 탭이 있으면 2(마지막 층, 탭 층)
+    def encode(self, wav, wav_len, K, act=None, n3d: bool = True):               # (B,L) → (B,S,Kmax,Din) — S = 1, 탭이 있으면 2(마지막 층, 탭 층)
         """act (B, ≥Kmax) 대상 화자 활동(0–1, E2) — 있으면 adapter_inject 로 인코더 pre-encode 출력에 주입한다(없으면 예전 그대로).
         E6(화자 분리 헤드가 있으면): (B, 2, Kmax, Din) — 스트림 1 = 헤드 예측 슬롯 활동(앞 N 차원, 나머지 0). chunk_embed 가 그 스트림을 슬롯 활동 입력으로 쓴다
         → 디코드 경로(decode_batch·stream_decode·realtime·회의 통째)가 그대로 헤드 예측을 쓴다.
-        E10(슬롯 추출기가 있으면): (B, 3, Kmax, Din) — 스트림 2 = 추출기의 화자 단서 임베딩(adapter_slotx.embed, 앞 d_emb 차원) — slot_audio_of 가 쓴다."""
+        E10(슬롯 추출기가 있으면): (B, 3, Kmax, Din) — 스트림 2 = 추출기의 화자 단서 임베딩(adapter_slotx.embed, 앞 d_emb 차원) — slot_audio_of 가 쓴다.
+        E11(고정 화자 분리 전문가 n3d 가 있고 n3d=True 면): 스트림 1 을 전문가 활동(이 오디오로 스트리밍, 앞 N 채널 0/1)으로 바꾼다(헤드가 없으면 스트림 1 을 더한다).
+        회의 통째(long_session.encode_long)는 조각마다 n3d=False 로 부르고 회의 전체로 한 번 바꾼다(화자 캐시가 회의 내내 이어지게)."""
         assert self.encoder is not None, "encoder 없음 — attach_encoder() 먼저"
+        if self.n3d is not None and act is None and n3d:
+            f = self.encode(wav, wav_len, K, n3d=False); a = self.n3d_act(wav, wav_len, K).to(f.dtype)
+            return self.with_act_stream(f, a)
         if self.diar_head is not None and act is None:
             if self.adapter_slotx is not None:
                 f, dlog, e = self.encode_diar(wav, wav_len, K, with_emb=True); a = self.predict_act(dlog).to(f.dtype)
@@ -275,6 +285,31 @@ class VapAsrForStreamingASR(PreTrainedModel):
         """화자 분리 logits → 0/1 슬롯 활동(임계 config.act_threshold)."""
         return (torch.sigmoid(logits.float()) > float(self.config.act_threshold)).float()
 
+    def add_n3d(self, path: Optional[str] = None, **cfg) -> None:
+        """E11(2026-10-29 — wiki output-n3d-branch-20261029): 고정 화자 분리 전문가 Nemotron 3 Diarization 을 붙인다(vapasr/hf/n3d — 가중치는 체크포인트 밖, config 의 경로).
+        활동(도착 순서 앞 N 채널, N = 슬롯 활동 입력 수)이 헤드 예측 대신 슬롯 활동 입력이 된다 — 학습은 표본마다 확률 ρ 로 전문가 활동(정답 슬롯 자리로 맞춤),
+        아니면 흔든 정답. cfg: n3d.DEFAULTS 키(chunk·rc 추론, train_chunk·train_rc 학습, fifo·cache·period, threshold, dtype). 다시 부르면 설정을 바꾼다(평가에서 경로·청크)."""
+        assert int(getattr(self.config, "slot_input_slots", 0) or 0) > 0, "고정 화자 분리 전문가는 슬롯 활동 입력(add_slot_input)과 함께"
+        assert self.adapter_tap is None and self.adapter_inject is None, "E11 은 두 스트림 입력(enc_tap)·대상 화자 주입(E2)과 함께 쓰지 않는다"
+        assert not int(getattr(self.config, "act_shift", 0) or 0), "E11 은 E8 act_shift 와 함께 쓰지 않는다"
+        from .n3d import DEFAULTS, N3DExpert
+        old = dict(getattr(self.config, "n3d_cfg", None) or {})
+        new = {**DEFAULTS, **old, **{k: v for k, v in cfg.items() if v is not None}, **({"path": os.path.abspath(path)} if path else {})}
+        assert set(new) <= set(DEFAULTS) | {"path"}, f"모르는 n3d 설정: {sorted(set(new) - set(DEFAULTS) - {'path'})}"
+        self.config.n3d_cfg = new
+        if self.n3d is None or self.n3d.cfg.get("path") != new.get("path"): self.n3d = N3DExpert(new)
+        else: self.n3d.cfg = {**self.n3d.cfg, **new}
+
+    def n3d_act(self, wav, wav_len, K):
+        """고정 전문가 활동 (B, max K, N) 0/1 — 학습 중(self.training)이면 학습 청크(train_chunk·train_rc), 아니면 추론 청크(chunk·rc)."""
+        return self.n3d.act(wav, wav_len, K, int(self.config.slot_input_slots), train=self.training)
+
+    @staticmethod
+    def with_act_stream(f, a):
+        """특징 스트림 f (B, S, K, D) 의 스트림 1 을 슬롯 활동 a (B, K', N)(앞 N 차원, 나머지 0)로 바꾼다 — 스트림이 하나면 더한다. K' ≠ K 면 0 채움·자름."""
+        K = f.shape[2]; a = F.pad(a.to(f.dtype), (0, f.shape[-1] - a.shape[-1], 0, max(0, K - a.shape[1])))[:, :K][:, None]
+        return torch.cat([f[:, :1], a, f[:, 2:]], 1) if f.shape[1] >= 2 else torch.cat([f, a], 1)
+
     def add_enc_tap(self, layer: int, hidden: Optional[int] = None) -> None:
         """V2-a 두 스트림 입력을 켠다: 인코더 layer 층(0 부터) 출력 → adapter_tap(adapter 와 같은 LN·MLP) → adapter 출력에 더한다.
         adapter_tap 의 마지막 Linear 를 0 으로 초기화 → 붙인 직후 모델 출력은 V1 과 같다(학습이 탭을 쓰는 만큼만 바뀐다). 이미 같은 층이면 그대로(재개)."""
@@ -322,14 +357,21 @@ class VapAsrForStreamingASR(PreTrainedModel):
         tag_chunk (E9 슬롯 블록, labels 와 같은 인덱싱): 태그 위치 임베딩에 그 슬롯 최근 활동(act_in)을 더한다(build). 멈춤 label 은 다음 입력 위치의 <NEXT_AUDIO> 라
         손실 규칙은 그대로다."""
         loss_diar_t = diar_st = None; self._tagact_used = False; self._slotx_used = False; demb = None
-        if wav is not None and self.diar_head is not None:                                         # E6: 인코더 한 번 → ASR 특징 + 화자 분리 logits
+        n3 = self.n3d is not None and wav is not None
+        if wav is not None and (self.diar_head is not None or n3):                                 # E6: 인코더 한 번 → ASR 특징 + 화자 분리 logits(E11: 활동은 고정 전문가)
             assert target_act is None, "E6 는 대상 화자 모드(target_act)와 함께 쓰지 않는다"
-            if self.adapter_slotx is not None: feats, dlog, demb = self.encode_diar(wav, wav_len, K, with_emb=True)   # E10: 헤드 임베딩도(슬롯 추출기 입력)
-            else: feats, dlog = self.encode_diar(wav, wav_len, K); demb = None
-            pred = self.predict_act(dlog)
+            if self.diar_head is not None:
+                if self.adapter_slotx is not None: feats, dlog, demb = self.encode_diar(wav, wav_len, K, with_emb=True)   # E10: 헤드 임베딩도(슬롯 추출기 입력)
+                else: feats, dlog = self.encode_diar(wav, wav_len, K); demb = None
+                pred = self.predict_act(dlog)
+            else:
+                assert self.adapter_slotx is None, "E10 슬롯 추출기는 화자 분리 헤드(탭 임베딩)와 함께"
+                feats, dlog = self.encode(wav, wav_len, K, n3d=False), None; pred = None
+            hpred = pred                                                                            # 헤드 통계(diar_st)는 헤드 예측으로
+            if n3: pred = self.n3d_act(wav, wav_len, K).to(feats.device)                             # E11: 슬롯 활동 입력 = 고정 전문가 활동(헤드 손실은 그대로)
             from .diar import shift_frames
             R = int(getattr(self.config, "act_shift", 0) or 0)                                     # E8: 헤드 위치 p = 프레임 p − R 의 활동(정답·흔든 정답 입력을 R 만큼 민다)
-            if activity is not None:                                                                # 손실은 packing 으로 펴기 전에(활동 (B, Kmax, S))
+            if activity is not None and dlog is not None:                                          # 손실은 packing 으로 펴기 전에(활동 (B, Kmax, S))
                 from .diar import sort_pit_loss
                 Ka, N = min(dlog.shape[1], activity.shape[1]), dlog.shape[-1]
                 m = (activity_mask[:, :Ka] if activity_mask is not None else torch.ones(activity.shape[:2], device=dlog.device)[:, :Ka]).bool()
@@ -340,13 +382,14 @@ class VapAsrForStreamingASR(PreTrainedModel):
                     tgt = arrival_sort(tgt, m)
                 if R: tgt, m = shift_frames(tgt, R), shift_frames(m, R, False) & valid                 # E8: 끝 패딩 위치(p ≥ K)는 그대로 뺀다
                 loss_diar_t, _, _ = sort_pit_loss(dlog[:, :Ka].float(), tgt, m, float(self.config.diar_alpha))
-                with torch.no_grad(): mf = m.float()[..., None]; diar_st = float(((pred[:, :Ka] == tgt).float() * mf).sum() / (mf.sum() * N).clamp(min=1))
+                with torch.no_grad(): mf = m.float()[..., None]; diar_st = float(((hpred[:, :Ka] == tgt).float() * mf).sum() / (mf.sum() * N).clamp(min=1))
             if act_in is not None and self.training:                                               # 표본마다 확률 ρ 로 헤드 예측, 아니면 흔든 정답(E5 와 같은 입력)
                 rho = float(getattr(self, "act_pred_rho", self.config.act_pred_ramp[-1]))
                 ai = act_in.to(pred.device).float(); ai = F.pad(ai, (0, max(0, pred.shape[-1] - ai.shape[-1]), 0, max(0, pred.shape[1] - ai.shape[1])))[:, : pred.shape[1], : pred.shape[-1]]
                 ai = shift_frames(ai, R)                                                            # E8: 흔든 정답도 헤드 예측과 같은 시점(p − R)으로
                 pa = pred
-                if getattr(self.config, "diar_align", False) and activity is not None:             # E7: 예측(창 도착 순서)을 정답(대화 전체 순서일 수 있다) 자리로 — AOSC 흉내
+                if (getattr(self.config, "diar_align", False) or n3) and activity is not None:     # E7: 예측(창 도착 순서)을 정답(대화 전체 순서일 수 있다) 자리로 — AOSC 흉내
+                    # E11: 전문가 채널 순서(전문가가 정한 도착 순서)도 정답 자리로 — 순열이 어긋난 입력이 라벨과 부딪히지 않게(추론은 채널 k = 슬롯 k, cpWER 는 순열 불변)
                     from .diar import align_slots
                     ref = F.pad(activity.float(), (0, max(0, pred.shape[-1] - activity.shape[-1]), 0, max(0, pred.shape[1] - activity.shape[1])))[:, : pred.shape[1], : pred.shape[-1]]
                     pa = align_slots(pred, shift_frames(ref, R).to(pred.device))

@@ -34,6 +34,11 @@
 #   q17-e9b  E9b(2026-10-28, slurm/submit-q17-e9b.sh — 학습 창 20–90 s): q17-e9 와 같은 묶음. --after-job 필수.
 #   q17-e10  E10(2026-10-29, slurm/submit-q17-e10.sh — 슬롯 추출기): GPU 마다 AMI 창 δ10 → 회의 통째 AOSC·E7a δ10 → 섞인 소리 끈(MIXOFF=1) 창 → 섞인 소리 끈 회의 통째.
 #            --after-job 필수.
+#   q17-e9-n3d  E11 진단(2026-10-29, wiki output-n3d-branch-20261029 — 학습 없음): Nemotron 3 Diarization(고정 전문가, N3D=.nemo — 기본 VAPKT-data/models/…)의
+#            AMI 창·회의 DER(diar_eval run --n3d, 우리 참조 — results/diar-n3d-c4-win·-session) + E9 final 의 슬롯 활동을 전문가 활동으로 바꾼 AMI 창 δ10·회의 통째 δ10(8 몫씩).
+#            의존 없음. 순서: 창 DER → 창 cpWER → 회의 DER → 회의 cpWER.
+#   q17-e10-n3d  같은 진단을 E10 final 에(창·회의 통째 × 섞인 소리 켬·끔). --after-job(E10 학습 job) 필수.
+#   q17-e11 · q17-e11b  E11(slurm/submit-q17-e11.sh — 전문가 활동으로 학습, b = E10 에서): AMI 창 δ10 8 몫 → 회의 통째 δ10 8 몫(config 의 전문가). --after-job 필수.
 #   q17-e8  E8 헤드 출력 지연 R(2026-10-27, slurm/submit-q17-e8.sh — 헤드 위치 p = 프레임 p − R, 받아쓰기 지연 δ ≥ R): q17-e6 과 같은 v3 묶음(헤드 예측 활동).
 #           정답 활동 상한(amiact)은 넣지 않는다 — --act-oracle 이 활동을 R 만큼 밀지 않는다(E6 의 상한과 같은 값이 될 까닭도 없다). --after-job 필수.
 #   q17-e5  E5 한 스트림 + 슬롯 활동 입력(2026-10-26): q17-e5 final 을 AMI 정답 슬롯 활동 입력(amiact, 8 몫)과 활동 없이(ami, 4 몫 — 입력이 없을 때 얼마나 무너지나)로. --after-job 필수.
@@ -55,8 +60,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull" >&2; exit 2 ;; esac
+  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e10-n3d|q17-e11|q17-e11b) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+  q17-e9-n3d) ;;
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e11b" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
@@ -99,6 +105,15 @@ case $set_ in
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 AOSC=1 DIAR=$E7A DIAR_TAG=e7a bash $X amifull q17-e10 final $r/8"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 MIXOFF=1 bash $X ami q17-e10 final $r/8"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 MIXOFF=1 AOSC=1 DIAR=$E7A DIAR_TAG=e7a bash $X amifull q17-e10 final $r/8"); done ;;
+  q17-e9-n3d) N3=${N3D:-$MR/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3(사용자 업로드)" >&2; exit 1; }
+    DW=$D/results/diar-n3d-c4-win; DSS=$D/results/diar-n3d-c4-session
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DW && \${PY:-python} experiments/diar_eval.py run --n3d $N3 --out $DW --rank $r --world-size 8 >> $DW/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DW > $DW/summary.log 2>&1"); done
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 N3D=$N3 bash $X ami q17-e9 final $r/8"); done
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DSS && \${PY:-python} experiments/diar_eval.py run --n3d $N3 --session --out $DSS --rank $r --world-size 8 >> $DSS/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DSS/n3d > $DSS/summary.log 2>&1"); done
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 N3D=$N3 bash $X amifull q17-e9 final $r/8"); done ;;
+  q17-e10-n3d) N3=${N3D:-$MR/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3(사용자 업로드)" >&2; exit 1; }
+    for t in ami amifull; do for mo in 0 1; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 MIXOFF=$mo N3D=$N3 bash $X $t q17-e10 final $r/8"); done; done; done ;;
+  q17-e11|q17-e11b) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull $set_ final $r/8"); done ;;
   q17-e6-amifull) amifull8 q17-e6 ""; for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 bash $X amifull q17-e6 final $r/8"); done ;;
   q17-e7-amifull) for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a bash $X amifull q17-e6 final $r/8"); done ;;
   q17-e5) for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $X amiact q17-e5 final $r/8"); done; ami4 0 q17-e5 "" ;;

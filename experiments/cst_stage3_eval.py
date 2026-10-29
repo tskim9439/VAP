@@ -20,6 +20,8 @@
     --window full 이면 forwards·chunk_ms(청크 디코드 ms 평균)·chunk_ms_p90. --verify 는 배치 대 추측 prefill 직렬을 대조한다. 참조·채점은 같다.
     --oracle --blocks: 학습 전에 E9 정답 시퀀스를 같은 규칙으로 채점한다(cp·agn 0, LLM DER 는 구간 끝 반올림만).
   E10 슬롯 추출기 체크포인트(2026-10-29)는 태그마다 슬롯 소리 토큰을 더해 디코드한다(model.slot_audio_of). --mix-off: 섞인 소리 토큰을 빈 임베딩으로 — 슬롯 소리만으로(config 에 mix_off).
+  --n3d PATH(E11, 2026-10-29): 고정 화자 분리 전문가 Nemotron 3 Diarization 의 활동을 슬롯 활동으로 쓴다(model.add_n3d — 창은 창마다 새로, --window full 은 회의 전체
+    스트리밍 한 번). E9·E10 체크포인트에 붙이면 학습 없는 진단, E11 체크포인트는 config 의 경로가 기본이다. --aosc 와 함께 쓰지 않는다(config 에 n3d).
   --en-norm whisper(2026-10-27): 영어 채점을 Whisper EnglishTextNormalizer 로(채움말 제거 등 — vapasr.data.cst_eval.set_en_norm). 외부 AMI 수치와 견줄 때
     --from-predictions 와 함께 새 --out 에 다시 매긴다(raw/sources/experiments/2026-10-27-std-rescore/rescore_std.sh). config 에 en_norm 이 남는다(ours 면 키 없음).
   --spk-guide on,margin[,span] [--spk-guide-hold] [--spk-guide-no-insert]: 화자 헤드 안내 디코딩(batch_decode.SpkGuide — model.spk_head 가 있는 Stage 3 체크포인트).
@@ -254,6 +256,9 @@ def run(a):
             model.diar_head.load_state_dict(xo["state"])
             if xo.get("aosc"): model.config.diar_aosc = dict(xo["aosc"])
             print(f"  화자 분리 헤드 ← {a.diar_head_override}(aosc {xo.get('aosc')})", flush=True)
+        if getattr(a, "n3d", None) or getattr(model, "n3d", None) is not None:                 # E11: 고정 화자 분리 전문가(평가에서 붙이거나 — E9·E10 진단 — 설정을 바꾼다)
+            model.add_n3d(a.n3d or None, chunk=a.n3d_chunk, rc=a.n3d_rc, threshold=a.n3d_threshold)
+            print(f"  고정 화자 분리 전문가 n3d ← {model.config.n3d_cfg}", flush=True)
         wi = word_init_mask(tok, logits_size(model)) if sb else None
     a.xl_order = (cfg.get("xl_slot_order") if model is None else getattr(model.config, "xl_slot_order", None)) or "lang"   # V3 R4: 교차 언어 슬롯 순서(창·prefix)
     from vapasr.data.cst_dialogue import SLOTS
@@ -277,6 +282,7 @@ def run(a):
     full = is_full(a); bs = 1 if full else a.batch_size                                         # 회의 통째: 창(회의) 하나씩 긴 직렬 디코드
     tor = bool(getattr(a, "target_oracle", False)); act_or = bool(getattr(a, "act_oracle", False))
     acfg = None
+    assert not (getattr(a, "aosc", False) and model is not None and getattr(model, "n3d", None) is not None), "--aosc 는 고정 화자 분리 전문가(n3d) 모델과 함께 쓰지 않는다(활동은 전문가가)"
     if getattr(a, "aosc", False):                                                              # E7: 회의 통째의 예측 활동을 AOSC 스트리밍으로(회의 내내 같은 슬롯)
         from vapasr.hf.diar import AoscConfig
         assert full and model is not None and getattr(model, "diar_head", None) is not None, "--aosc 는 --window full 과 화자 분리 헤드(E6·E7) 모델"
@@ -308,6 +314,7 @@ def run(a):
                 **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}), **({"target_oracle": True} if tor else {}),
                 **({"act_oracle": True} if act_or else {}), **({"aosc": acfg.to_dict()} if acfg is not None else {}),
                 **({"diar_head_override": os.path.abspath(a.diar_head_override)} if getattr(a, "diar_head_override", None) else {}),
+                **({"n3d": dict(model.config.n3d_cfg)} if model is not None and getattr(model, "n3d", None) is not None else {}),
                 **({"en_norm": a.en_norm} if getattr(a, "en_norm", "ours") != "ours" else {}),
                 **({"act_tag_guide": True} if getattr(a, "act_tag_guide", False) else {}), **({"slot_blocks": True} if blocks else {}), **({"mix_off": True} if mix_off else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
@@ -495,6 +502,10 @@ def main():
     q.add_argument("--aosc", action="store_true", help="E7: --window full 에서 화자 분리 헤드 예측을 회의 전체 AOSC 스트리밍으로(diar.aosc_stream — config.diar_aosc 또는 기본)")
     q.add_argument("--aosc-chunk", type=int, default=None, help="--aosc 추론 청크(프레임, 기본 6)")
     q.add_argument("--diar-head-override", default=None, help="E7: 모델의 화자 분리 헤드를 이 diar.pt(diar_train --aosc final)로 바꾼다 — aosc 설정도 따라온다")
+    q.add_argument("--n3d", default=None, help="E11(2026-10-29): 고정 화자 분리 전문가 Nemotron 3 Diarization(.nemo)을 붙여 슬롯 활동을 그것으로(vapasr/hf/n3d — 창은 창마다, "
+                                               "--window full 은 회의 전체 스트리밍). 슬롯 활동 입력(E6·E9·E10) 체크포인트에서 헤드 활동 대신 — E11 체크포인트는 config 의 경로가 기본")
+    q.add_argument("--n3d-chunk", type=int, default=None, help="--n3d 추론 청크(80 ms 프레임, 기본 4 = 인코더 블록)"); q.add_argument("--n3d-rc", type=int, default=None, help="--n3d 오른쪽 문맥(기본 0)")
+    q.add_argument("--n3d-threshold", type=float, default=None, help="--n3d 활동 임계(기본 0.5)")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")
     q.add_argument("--declare", type=int, default=None, help="prefix 선언 슬롯 수 하한(기본 max(2, 화자 수); 화자 수를 모르는 추론 흉내 = 4)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "

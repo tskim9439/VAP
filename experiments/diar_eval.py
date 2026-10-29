@@ -12,7 +12,10 @@
 참조 = slot_activity(창 안 먼저 말한 순서), 셈에서 빼는 프레임 = 전사 없는 음성 구간(_bad_spans). DER = (miss + fa + conf)/참조 화자 프레임.
   conf_arrival = 슬롯 순서(도착 순서) 그대로 짝, conf_best = 창마다 혼동이 가장 적은 순열. 공식 분할(manifest dev·eval)·조건·창 화자 수별로 합친다.
   주의: Nemotron 3 Diarization 의 AMI DER(SDM 12.8 @1.04 s)은 세션 단위·강제 정렬 참조라 이 창 단위 값과 바로 비교되지 않는다.
-E8(2026-10-27): diar.pt 의 shift R(위치 p 의 출력 = 프레임 p − R 의 활동)이면 출력 [R:] 을 참조 [:K − R] 과 맞춘다 — 창·회의 끝 R 프레임은 뒤를 볼 오디오가 없어 셈에서 뺀다."""
+E8(2026-10-27): diar.pt 의 shift R(위치 p 의 출력 = 프레임 p − R 의 활동)이면 출력 [R:] 을 참조 [:K − R] 과 맞춘다 — 창·회의 끝 R 프레임은 뒤를 볼 오디오가 없어 셈에서 뺀다.
+E11(2026-10-29): run --n3d <.nemo> [--session] [--n3d-chunk 4 --n3d-rc 0] — 고정 화자 분리 전문가 Nemotron 3 Diarization(vapasr/hf/n3d)을 같은 창(창마다 새로)·
+  같은 회의(회의 전체 스트리밍 한 번)·같은 참조로 잰다(--diar 대신, 창 목록용 tokenizer 는 --tok-from). 행의 DER 은 모델이 쓰는 앞 4 채널(슬롯) 기준이고,
+  extra = 채널 4–7 에만 있는 활성 프레임(우리 슬롯 밖으로 간 말 — DER 에서는 놓침), n_hyp_spk8 = 8 채널 중 활성 채널 수. 회의 통째는 <out>/n3d/ 에 쓴다."""
 import argparse, collections, glob, json, math, os, sys, time
 
 import numpy as np
@@ -74,6 +77,62 @@ def run(a):
                 if row["id"] not in done: fo.write(json.dumps(row) + "\n"); n += 1
             print(f"  {min(b0 + a.batch, len(items))}/{len(items)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
     print(f"DONE rank={a.rank} rows={n}", flush=True)
+
+
+def run_n3d(a):
+    """E11: 고정 화자 분리 전문가(Nemotron 3 Diarization)의 창·회의 DER — run·run_session 과 같은 창·회의·참조·마스크·행 꼴(summarize 그대로)."""
+    from experiments.cst_stage3_eval import windows_of
+    from vapasr.data.cst_dialogue import slot_activity, window_speakers
+    from vapasr.hf.diar import der_counts
+    from vapasr.hf.n3d import N3DExpert
+    from transformers import AutoTokenizer
+    n_spk = 4; tok = AutoTokenizer.from_pretrained(a.tok_from)
+    ex = N3DExpert({"path": os.path.abspath(a.n3d), **({"chunk": a.n3d_chunk} if a.n3d_chunk else {}), **({"rc": a.n3d_rc} if a.n3d_rc is not None else {})})
+    man = json.load(open(os.path.join(a.data, "manifest.json"))) if os.path.exists(os.path.join(a.data, "manifest.json")) else {}
+    sub = {**{m: "dev" for m in man.get("dev", [])}, **{m: "eval" for m in man.get("eval", [])}}
+    full = bool(a.session)
+    ns = argparse.Namespace(corpora=a.corpora, data=a.data, split=None, deltas=[10], limit_windows=a.limit_windows, backchannel=(1.0, 3), max_speakers=n_spk,
+                            window="full" if full else tuple(float(v) for v in a.window.split(",")), hop=10.0, window_draws=0 if full else a.window_draws, declare=n_spk)
+    sets, items = windows_of(ns, tok); items = [it for j, it in enumerate(items) if j % a.world_size == a.rank]
+    od = os.path.join(a.out, "n3d") if full else a.out; os.makedirs(od, exist_ok=True); dest = os.path.join(od, f"windows-rank{a.rank}.jsonl"); pdir = os.path.join(od, "probs")
+    if a.save_probs: os.makedirs(pdir, exist_ok=True)
+    json.dump(dict(n3d=ex.cfg, threshold=a.threshold, corpora=a.corpora, session=full, window=a.window, window_draws=a.window_draws),
+              open(os.path.join(od, f"config-rank{a.rank}.json"), "w"), indent=1)
+    done = {json.loads(l)["id"] for l in open(dest)} if os.path.exists(dest) else set(); t0 = time.time(); n = 0
+    bs = 1 if full else a.batch
+    with open(dest, "a", buffering=1) as fo, torch.inference_mode():
+        for b0 in range(0, len(items), bs):
+            batch = [(c, i) for c, i in items[b0: b0 + bs] if f"{sets[c].items[i][0]}@{'full' if full else sets[c].items[i][1]}" not in done]
+            if not batch: continue
+            wavs, Ks, meta = [], [], []
+            for c, i in batch:
+                ds = sets[c]; cid, t0w, L = ds.items[i]; d = ds.dlgs[cid]; t0w = 0.0 if full else t0w; K = int(round(L / CHUNK_S))
+                wavs.append(np.asarray(ds.mono(cid)[int(round(t0w * SR)): int(round((t0w + L) * SR))], dtype=np.float32)); Ks.append(K)
+                allsp = window_speakers(ds.eps[cid], t0w, L); sp = allsp[:n_spk]
+                ref = torch.tensor(slot_activity(ds.eps[cid], sp, t0w, L, K, n_slots=n_spk), dtype=torch.float32).reshape(K, n_spk)
+                m = torch.ones(K, dtype=torch.bool)
+                for s_, e_ in ds._bad_spans(d):
+                    x0, x1 = s_ - t0w, e_ - t0w
+                    if x1 > 0 and x0 < L: m[max(0, int(x0 / CHUNK_S)): min(K, int(math.ceil(x1 / CHUNK_S)))] = False
+                if len(allsp) > n_spk:                                                             # 참조 밖 화자가 말하는 프레임은 셈에서 뺀다(run_session 과 같다)
+                    extra_ref = torch.tensor(slot_activity(ds.eps[cid], allsp[n_spk:], t0w, L, K, n_slots=len(allsp) - n_spk), dtype=torch.float32).reshape(K, -1)
+                    m &= ~(extra_ref.sum(-1) > 0)
+                meta.append((c, cid, t0w, L, K, len(sp), len(allsp), ref, m))
+            W = torch.zeros(len(wavs), max(len(w) for w in wavs))
+            for j, w in enumerate(wavs): W[j, : len(w)] = torch.from_numpy(w)
+            te = time.time(); prob = ex.probs(W.cuda(), torch.tensor([len(w) for w in wavs]).cuda(), torch.tensor(Ks).cuda()).cpu(); dec_s = time.time() - te
+            for j, (c, cid, t0w, L, K, nsp, nall, ref, m) in enumerate(meta):
+                p8 = (prob[j, :K] > a.threshold).float(); pr = p8[:, :n_spk]; dc = der_counts(pr, ref, m)
+                extra = float(((p8[:, n_spk:].sum(-1) > 0) & (pr.sum(-1) == 0) & m).sum())
+                wid = f"{cid}@{'full' if full else t0w}"
+                row = dict(id=wid, corpus=c, sub=sub.get(cid.split(":", 1)[1], "?"), L=L, K=K, n_spk=nsp, n_spk_all=nall, n_hyp_spk=int((pr.sum(0) > 0).sum()),
+                           n_hyp_spk8=int((p8.sum(0) > 0).sum()), extra=extra, dec_s=round(dec_s, 1), **dc)
+                if a.save_probs: np.savez_compressed(os.path.join(pdir, f"{wid}.npz"), prob=prob[j, :K].numpy().astype(np.float16), ref=ref.numpy().astype(np.uint8), mask=m.numpy())
+                fo.write(json.dumps(row) + "\n"); n += 1
+                if full: print(f"  {cid} {c}: K {K} · DER 최적 짝 {100 * (dc['miss'] + dc['fa'] + dc['conf_best']) / max(1, dc['ref']):.2f} · 도착 순서 "
+                               f"{100 * (dc['miss'] + dc['fa'] + dc['conf_arrival']) / max(1, dc['ref']):.2f} · 채널 {row['n_hyp_spk8']} · {dec_s:.0f}s", flush=True)
+            if not full: print(f"  {min(b0 + bs, len(items))}/{len(items)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
+    print(f"DONE rank={a.rank} rows={n} {time.time() - t0:.0f}s", flush=True)
 
 
 def run_session(a):
@@ -187,7 +246,10 @@ def sweep(a):
 
 def main():
     ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest="cmd", required=True)
-    q = sub.add_parser("run"); q.add_argument("--diar", required=True); q.add_argument("--nemotron-dir", default=None); q.add_argument("--out", required=True)
+    q = sub.add_parser("run"); q.add_argument("--diar", default=None); q.add_argument("--nemotron-dir", default=None); q.add_argument("--out", required=True)
+    q.add_argument("--n3d", default=None, help="E11: --diar 대신 고정 화자 분리 전문가 Nemotron 3 Diarization(.nemo)을 잰다")
+    q.add_argument("--n3d-chunk", type=int, default=None, help="--n3d 스트리밍 청크(80 ms 프레임, 기본 4)"); q.add_argument("--n3d-rc", type=int, default=None, help="--n3d 오른쪽 문맥(기본 0)")
+    q.add_argument("--tok-from", default="/soundai/Model/VAPASR/stage3-q17-e9/final", help="--n3d: 창 목록(windows_of)용 tokenizer 체크포인트")
     q.add_argument("--data", default="/soundai/users/tskim/VAPKT-data/data/ami-bench-v1"); q.add_argument("--corpora", default="ami-ihmmix,ami-sdm")
     q.add_argument("--window", default="20,90"); q.add_argument("--window-draws", type=int, default=1); q.add_argument("--threshold", type=float, default=0.5)
     q.add_argument("--batch", type=int, default=8); q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1); q.add_argument("--limit-windows", type=int, default=0)
@@ -198,6 +260,8 @@ def main():
     q = sub.add_parser("summarize"); q.add_argument("--out", required=True)
     q = sub.add_parser("sweep"); q.add_argument("--out", required=True); q.add_argument("--thresholds", default="0.2,0.3,0.4,0.5,0.6")
     a = ap.parse_args()
+    if a.cmd == "run": assert bool(a.diar) != bool(a.n3d), "run 은 --diar 와 --n3d 중 하나"
+    if a.cmd == "run" and a.n3d: run_n3d(a); return
     if a.cmd == "run" and a.session: run_session(a); return
     {"run": run, "summarize": summarize, "sweep": sweep}[a.cmd](a)
 
