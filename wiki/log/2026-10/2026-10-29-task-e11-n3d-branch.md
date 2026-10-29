@@ -25,3 +25,26 @@
   - 업로드 뒤 할 일: GPU 스모크, 이식 층 고르기(G0)
   - 통합 설계는 U2(전문가 위층을 우리 인코더 위로 이식 + 어댑터 증류)다. G0 결과로 이식 층을 정한 뒤 G1(어댑터 학습)을 구현한다.
 - By: tskim
+## [2026-10-29] task | E11 서버 검증 — 업로드 경로, FlexAttention → SDPA, GPU 스모크, 이식 층 고르기(G0)
+
+- Changed:
+  - 코드: 커밋 3987fb8(기본 경로 vapkt-baselines), 93c18c7(use_sdpa·sync_max_audio_length 끔·run_layers), 85e546d(창 평가 배치 전문가)
+  - 위키: [[output-n3d-branch-20261029]] 검증·G0 결과
+  - 메모리: azcopy 403 원인(NFS 상위 폴더 권한)
+- Reason:
+  - 사용자 업로드가 `VAPKT-data/models/` 에서 403 이었다. `models` 는 775 이고 azcopy 주체는 uid 65533(other)이다 → `vapkt-baselines/` 로 옮겼다.
+  - 사용자 "업로드 완료했어" → 서버 대조(크기·sha256 같음) 뒤 GPU 스모크를 돌렸다.
+  - 첫 스모크에서 FlexAttention 이 길이마다 다시 컴파일했다(첫 forward 617 s, 26 s 창 55 s). SDPA 로 바꿨다.
+- Next:
+  - 확인:
+    - SDPA 판 학습 step: 전문가 끔 0.86 s · 켬 1.81–1.91 s(창 3 개)
+    - 추론: 실시간 0.14 배(청크 4)
+    - NeMo 와 차이 0, 청크 4 대 16 일치 0.9954
+    - 창 평가 PARITY PASS
+    - 서버 시험 6 개 통과(실제 .nemo 포함)
+  - G0(AMI SDM 창 300/300, 오프라인, 우리 참조): 교사 DER 22.10(혼동 1.06), 선형 이식은 m = 8 이 26.88(혼동 4.12)로 가장 낫다 → G1 은 m = 8.
+  - 사용자 제출:
+    - `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh q17-e9-n3d)`
+    - `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e11.sh)`
+  - G1(어댑터 학습) 구현은 사용자 결정 뒤.
+- By: tskim
