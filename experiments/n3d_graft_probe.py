@@ -35,15 +35,9 @@ def n3d_hidden(m, wav, wav_len):
 
 
 def n3d_from_layer(m, x, length, j):
-    """j 층 입력 x (B, T, 512) → N3D j 층 위 + 머리 → 화자 확률 (B, T, 8) 80 ms."""
-    from torch.nn.attention.flex_attention import create_block_mask
-    enc = m.encoder; B, T, _ = x.shape
-    bm = create_block_mask(enc._build_mask_mod(length), B=B, H=1, Q_LEN=T, KV_LEN=T, device=x.device)
-    for layer in enc.layers[j:]: x = layer(x, block_mask=bm, pos_emb=None)
-    x = enc.final_norm(x)
-    if enc.out_proj is not None: x = enc.out_proj(x)
-    if m.sortformer_modules.encoder_proj is not None: x = m.sortformer_modules.encoder_proj(x)
-    p = m.forward_infer(x, length)
+    """j 층 입력 x (B, T, 512) → N3D j 층 위 + 머리 → 화자 확률 (B, T, 8) 80 ms(load_n3d 의 SDPA 주의 — n3d.run_layers)."""
+    from vapasr.hf.n3d import run_layers
+    p = m.forward_infer(run_layers(m, x, length, j), length)
     return m.sortformer_modules.downsample_preds(p, m.upsample_factor, lengths=length * m.upsample_factor) if m.high_resolution else p
 
 

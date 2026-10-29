@@ -10,6 +10,7 @@
 - 청크(80 ms 프레임 단위): 추론 기본 chunk 4 · rc 0 = 우리 인코더 블록([56,3], 320 ms)과 같은 경계 — 블록 오디오가 다 오면 인코더 출력과 같은 때에
   활동이 나온다(지연을 더하지 않는다. NVIDIA 다화자 스트리밍 예제도 화자 분리 청크를 ASR 청크에 맞춘다). 학습은 기본 chunk 16(고리 수 1/4) —
   모델 카드의 지연별 DER 차이(AMI SDM 0.32 s 12.95 · 1.04 s 12.80)가 작아 학습·추론 활동 품질 차이가 작다.
+- use_sdpa(로드 기본): 주의를 FlexAttention(torch.compile — 길이마다 다시 컴파일) 대신 같은 계산의 SDPA 로, 분산 all_reduce(sync_max_audio_length)는 끈다.
 - N3DExpert: 모델에 붙는 고정 전문가. 가중치는 체크포인트에 넣지 않는다(nn.Module 이 아니라 state_dict·parameters·DDP 밖) — config 의 경로
   (없으면 환경 변수 VAPASR_N3D_PATH)에서 처음 쓸 때 그 장치로 읽는다.
 """
@@ -23,8 +24,57 @@ FRAME_FACTOR = 8                                                                
 DEFAULTS = dict(chunk=4, rc=0, train_chunk=16, train_rc=0, fifo=264, cache=264, period=222, threshold=0.5, dtype="bf16")
 
 
-def load_n3d(path: str, device: str = "cpu"):
-    """.nemo → (SortformerEncLabelModel(eval, requires_grad False), 뺀 보조 키 목록). 생성자의 random.seed(42) 가 학습 난수를 건드리지 않게 상태를 되돌린다."""
+def use_sdpa(m) -> None:
+    """N3D 인코더의 주의를 FlexAttention 대신 SDPA 로(인스턴스만 — 다른 NeMo 모듈은 그대로). NeMo TransformerEncoder 는 CUDA 에서
+    torch.compile(flex_attention, dynamic=True)을 쓰는데, 스트리밍처럼 길이가 바뀌면 블록 수마다 다시 컴파일한다(2026-10-29 서버 GPU: 첫 forward 617 s,
+    26 s 창 활동 55 s — 다시 컴파일 한도 8 을 넘었다). N3D 는 attn_mode full + RoPE 라 마스크가 키 패딩(kv < 길이, _make_padding_mod)뿐이어서 SDPA 의
+    키 패딩 마스크와 같은 계산이다. 함께 encoder.sync_max_audio_length 를 끈다 — 켜 두면 forward 마다 분산 all_reduce 를 해서 rank 마다 고리 수가 다른
+    학습·평가에서 collective 가 어긋난다(우리 ASR 인코더에 2026-09-08 고친 것과 같은 문제)."""
+    import types
+    import torch.nn.functional as F
+    enc = m.encoder; attns = [layer.attn for layer in enc.layers]
+    assert enc.attn_mode == "full" and enc.self_attention_model == "rope" and type(enc.pre_encode).__name__ == "FeatureStacking", "N3D(feature_stacking·rope·full) 전용"
+    assert all(a._uses_rope and not a._uses_rel_pos for a in attns)
+
+    def attn_forward(self, x, block_mask=None, pos_emb=None):
+        B, T, _ = x.shape; H, D = self.n_heads, self.head_dim
+        q, k, v = self.w_qkv(x).view(B, T, 3, H, D).permute(2, 0, 3, 1, 4).unbind(0)
+        if self.qk_norm: q = self.q_norm(q).to(v.dtype); k = self.k_norm(k).to(v.dtype)
+        q, k = self.rope(q, k)
+        keep = (torch.arange(T, device=x.device)[None] < self._vap_len.to(x.device)[:, None])[:, None, None, :]
+        return self.out_proj(F.scaled_dot_product_attention(q, k, v, attn_mask=keep).transpose(1, 2).reshape(B, T, self.d_model))
+
+    def forward_internal(self, audio_signal, length, bypass_pre_encode=False):                    # NeMo forward_internal 의 N3D 경로(블록 마스크만 뺐다)
+        if length is None:
+            length = audio_signal.new_full((audio_signal.size(0),), audio_signal.size(1) if bypass_pre_encode else audio_signal.size(-1), dtype=torch.int64)
+        if bypass_pre_encode: x = audio_signal
+        else: x, length = self.pre_encode(audio_signal, length)
+        length = length.to(torch.int64)
+        if self.xscale: x = x * self.xscale
+        x = self.embed_norm(self.dropout_pre_encoder(x))
+        for a in attns: a._vap_len = length
+        for layer in self.layers: x = layer(x)
+        x = self.final_norm(x)
+        if self.out_proj is not None: x = self.out_proj(x)
+        return x.transpose(1, 2), length
+
+    for a in attns: a.forward = types.MethodType(attn_forward, a)
+    enc.forward_internal = types.MethodType(forward_internal, enc); enc.sync_max_audio_length = False
+
+
+def run_layers(m, x, length, start: int = 0):
+    """use_sdpa 를 건 N3D 에서 start 층 입력 x (B, T, 512)(embed_norm 뒤 = 0 층 입력) → 층 start… 뒤 머리 입력 (B, T, 192)(final_norm·encoder_proj) — 이식 시험용."""
+    enc = m.encoder
+    for layer in enc.layers: layer.attn._vap_len = length
+    for layer in enc.layers[start:]: x = layer(x)
+    x = enc.final_norm(x)
+    if enc.out_proj is not None: x = enc.out_proj(x)
+    return m.sortformer_modules.encoder_proj(x) if m.sortformer_modules.encoder_proj is not None else x
+
+
+def load_n3d(path: str, device: str = "cpu", sdpa: bool = True):
+    """.nemo → (SortformerEncLabelModel(eval, requires_grad False), 뺀 보조 키 목록). 생성자의 random.seed(42) 가 학습 난수를 건드리지 않게 상태를 되돌린다.
+    sdpa(기본): use_sdpa — FlexAttention 다시 컴파일과 분산 all_reduce 를 피한다(끄면 NeMo 그대로 — 대조 시험용)."""
     from omegaconf import open_dict
     from nemo.collections.asr.models import SortformerEncLabelModel
     from nemo.utils import logging as nlog
@@ -48,6 +98,7 @@ def load_n3d(path: str, device: str = "cpu"):
         random.setstate(st[0]); np.random.set_state(st[1]); torch.set_rng_state(st[2]); nlog.setLevel(lvl)
     m.eval()
     for p in m.parameters(): p.requires_grad_(False)
+    if sdpa: use_sdpa(m)
     return m.to(device), aux
 
 

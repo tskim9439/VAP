@@ -98,3 +98,23 @@ def test_real_n3d_streaming_matches_nemo_and_batch_rows():
     x2 = x[: 16000 * 7]; W = torch.zeros(2, len(x)); W[0] = x; W[1, : len(x2)] = x2
     pb = stream_probs(m, W, torch.tensor([len(x), len(x2)]), 4, 0, dtype="fp32"); ps = stream_probs(m, x2[None], torch.tensor([len(x2)]), 4, 0, dtype="fp32")
     assert torch.allclose(pb[0], p[0], atol=1e-5) and torch.allclose(pb[1, : ps.shape[1]], ps[0], atol=1e-5) and not pb[1, ps.shape[1]:].any()
+
+
+@pytest.mark.skipif(not (_N3D and os.path.exists(_N3D) and importlib.util.find_spec("nemo") is not None), reason="VAPASR_N3D_PATH(.nemo)·NeMo 가 있을 때만")
+def test_real_n3d_sdpa_matches_flex_attention():
+    """use_sdpa(FlexAttention → SDPA, 키 패딩 마스크)가 NeMo 원래 주의와 같은 값 — 스트리밍 확률과 오프라인 층 출력·run_layers."""
+    from vapasr.hf.n3d import load_n3d, run_layers, stream_probs
+    m0, _ = load_n3d(_N3D, sdpa=False); m1, _ = load_n3d(_N3D)
+    assert m1.encoder.sync_max_audio_length is False
+    g = torch.Generator().manual_seed(1); x = (torch.randn(16000 * 9, generator=g) * 0.05).float()
+    t = torch.arange(len(x)) / 16000.0; x[: 16000 * 4] += 0.3 * torch.sin(2 * np.pi * 180 * t[: 16000 * 4])
+    for ch in (4, 16):
+        p0 = stream_probs(m0, x[None], torch.tensor([len(x)]), ch, 0, dtype="fp32"); p1 = stream_probs(m1, x[None], torch.tensor([len(x)]), ch, 0, dtype="fp32")
+        assert torch.allclose(p0, p1, atol=1e-4), (ch, float((p0 - p1).abs().max()))
+    W = torch.zeros(2, len(x)); W[0] = x; W[1, : 16000 * 6] = x[: 16000 * 6]; wl = torch.tensor([len(x), 16000 * 6])
+    with torch.inference_mode():
+        f0, l0 = m0.preprocessor(input_signal=W, length=wl); f1, l1 = m1.preprocessor(input_signal=W, length=wl)
+        e0, n0 = m0.frontend_encoder(processed_signal=f0, processed_signal_length=l0); e1, n1 = m1.frontend_encoder(processed_signal=f1, processed_signal_length=l1)
+        assert torch.equal(n0, n1) and torch.allclose(e0[0], e1[0], atol=1e-4) and torch.allclose(e1[1, : int(n1[1])], e0[1, : int(n0[1])], atol=1e-4)
+        h0, hl = m1.encoder.pre_encode(f1, l1); h0 = m1.encoder.embed_norm(h0)
+        assert torch.allclose(run_layers(m1, h0, hl.long(), 0)[0], e1[0], atol=1e-4)                               # 0 층부터 = 인코더 전체
