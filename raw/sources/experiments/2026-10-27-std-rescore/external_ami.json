@@ -1,5 +1,5 @@
 {
- "_note": "AMI cpWER 외부 기준(%) — wiki output-ami-external-comparison-20261027 와 같은 값(2026-10-27 원문 확인). ihm = IHM(-mix, Individual Headset Mix), sdm = SDM. 조건(지연·화자 분리·평가 단위·정규화)이 서로 달라 참고용이다. wer_ihm·wer_sdm = 화자 무시 WER(있을 때). VibeVoice-ASR-Streaming 은 OpenReview r6QZahgnJY(ICLR 2027 투고, raw/sources/15369_VibeVoice_ASR_Streaming_.pdf)와 arXiv 2609.02812 가 같은 값 — 녹음을 480 s 이하 조각으로 잰다.",
+ "_note": "AMI cpWER 외부 기준(%) — wiki output-ami-external-comparison-20261027 와 같은 값(2026-10-27 원문 확인). ihm = IHM(-mix, Individual Headset Mix), sdm = SDM. 조건(지연·화자 분리·평가 단위·정규화)이 서로 달라 참고용이다. wer_ihm·wer_sdm = 화자 무시 WER(있을 때). VibeVoice-ASR-Streaming 은 OpenReview r6QZahgnJY(ICLR 2027 투고, raw/sources/15369_VibeVoice_ASR_Streaming_.pdf)와 arXiv 2609.02812 가 같은 값 — 녹음을 480 s 이하 조각으로 잰다. 2026-10-29: Nemotron 3.5 Transcribe·MOSS-Transcribe-Diarize 추가(N3.5T 보고서 표 14 — SSA-v2 + Nemotron 3 Diarization 과 DiCoW 값은 그 표와 같다).",
  "rows": [
   {
    "name": "Multitalker Parakeet v1",
@@ -81,7 +81,7 @@
    "sdm": 28.82,
    "latency": "오프라인",
    "diar": "종단",
-   "src": "arXiv 2601.18184 표 2(NVIDIA 평가 25.50 / 42.19)",
+   "src": "arXiv 2601.18184 표 2(NVIDIA 평가 25.50 / 42.19, Nemotron 3.5 Transcribe 보고서 표 14 의 회의 통째 평가 22.13 / 32.12)",
    "wer_ihm": 18.81,
    "wer_sdm": 24.65
   },
@@ -92,6 +92,22 @@
    "latency": "오프라인",
    "diar": "예측(정답이면 11.33 / 14.78)",
    "src": "arXiv 2609.10265 표 1"
+  },
+  {
+   "name": "Nemotron 3.5 Transcribe",
+   "ihm": 10.29,
+   "sdm": 17.34,
+   "latency": "오프라인(40 s 청크 + 좌우 4 s, 회의 통째)",
+   "diar": "고정 Nemotron 3 Diarization 가지(한 체크포인트)",
+   "src": "NVIDIA Nemotron 3.5 Transcribe 기술 보고서 표 14(2026-10-28, 34B·활성 4.3B, Open ASR 정규화)"
+  },
+  {
+   "name": "MOSS-Transcribe-Diarize",
+   "ihm": 15.4,
+   "sdm": 24.72,
+   "latency": "오프라인",
+   "diar": "종단",
+   "src": "Nemotron 3.5 Transcribe 보고서 표 14(NVIDIA 평가, 회의 통째)"
   }
  ]
 }

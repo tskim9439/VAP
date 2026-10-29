@@ -1,0 +1,22 @@
+## [2026-10-29] query | Nemotron 3.5 Transcribe 대비 — 아이디어·우리 기여·실시간 번역
+
+- Changed:
+  - 위키: [[source-nemotron-3-5-transcribe-tech-report]](새), [[output-nemotron35-transcribe-comparison-20261029]](새)
+  - 위키: [[output-ami-external-comparison-20261027]] 에 Nemotron 3.5 Transcribe·MOSS-Transcribe-Diarize·VibeVoice-ASR(NVIDIA 회의 통째 평가) 행
+  - 외부 기준: `raw/sources/experiments/2026-10-27-std-rescore/external_ami.json` 에 같은 두 행(재채점 보고 끝에 붙는다)
+- Reason:
+  - 사용자 "https://research.nvidia.com/labs/nemotron/NVIDIA-Nemotron-3.5-Transcribe/ 이 자료도 참고해서 아이디어를 얻어봐. 그리고 이와 비교해서 우리의 기여가 뭐가있을지, 실시간 번역에서 기여가 있을지도 검토해봐."
+  - 기술 보고서(2026-10-28, 67 쪽) 전체를 읽었다.
+    - N3.5T 는 오프라인 전용이다. AMI 회의 통째 cpWER 은 10.29 / 17.34 다.
+    - 번역은 단일 화자·오프라인이고 화자 귀속과 묶이지 않는다. 스트리밍은 향후 과제로 남겼다.
+- Next:
+  - 결론: 회의 SA-ASR 정확도로는 기여가 없다(우리 E9 회의 통째 53.47 / 66.35). 실시간 번역(CST — 화자 귀속 양방향 대화 동시 번역)에서는 기여가 있다.
+  - 제안:
+    - E9b 제출
+    - 활동 품질 스윕(정답·헤드 활동을 구간 단위로 섞어 DER 0 → 27, 학습 없음) — 결정 B 의 근거
+    - 슬롯 문법 마스크(닫힌 슬롯의 `<EOT>` 반복 차단)
+    - 결정 B: N3 Diarization 0.32 s 를 고정 가지로
+    - N3.5T 를 TAXI 오프라인 상한으로 평가
+    - 논문 관련 연구 문장 수정("These systems transcribe but do not translate")
+  - 사용자 결정 대기.
+- By: tskim

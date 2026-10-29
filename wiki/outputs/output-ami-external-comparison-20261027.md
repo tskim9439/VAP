@@ -2,12 +2,13 @@
 type: output
 status: active
 created: 2026-10-27
-updated: 2026-10-28
-summary: AMI cpWER 외부 비교 — 우리 E6 창 SDM 45.4(표준 44.7) 대 VibeVoice-Streaming 1.5B 56.8·7B 39.0, Parakeet 37.4, NVIDIA SSA-v2 20.3; 같은 크기면 앞서고 큰 모델·화자 분리에 뒤진다
+updated: 2026-10-29
+summary: AMI cpWER 외부 비교 — 우리 E6 창 SDM 45.4(표준 44.7) 대 VibeVoice-Streaming 1.5B 56.8·7B 39.0, Parakeet 37.4, NVIDIA SSA-v2 20.3, Nemotron 3.5 Transcribe(오프라인) 17.3; 같은 크기면 앞서고 큰 모델·화자 분리에 뒤진다
 sources:
   - '[[output-diarization-integration-20261025]]'
   - '[[output-vibevoice-stream-comparison-20261020]]'
   - '[[source-vibevoice-asr-streaming-iclr2027]]'
+  - '[[source-nemotron-3-5-transcribe-tech-report]]'
 raw_authors:
   - tskim
 ---
@@ -36,12 +37,16 @@ raw_authors:
 | Azure Conversation Transcriber(표 2) | 서비스 | 실측 8.21–9.12 s | 서비스 | 31.90 | 41.40 | WER 24.01 · 33.27 |
 | VibeVoice-ASR 7B 오프라인(arXiv 2601.18184 표 2) | 8.7B | 오프라인(60 분 한 번에) | 종단 | 20.41 | 28.82 | WER 18.81 · 24.65, DER 11.92 · 13.43 |
 | DiCoW-v3.3(2609.10265 표 1) | Whisper 계열 | 오프라인 | 정답 / 예측 | 11.33 / 14.48 | 14.78 / 18.24 | 참고 상한 |
+| **Nemotron 3.5 Transcribe**(N3.5T 보고서 표 14, 2026-10-29 추가) | 34B(활성 4.3B) | 오프라인(40 s 청크 + 좌우 4 s) | 고정 N3 Diarization 가지(한 체크포인트) | **10.29** | **17.34** | 회의 통째, Open ASR 정규화 — [[source-nemotron-3-5-transcribe-tech-report]] |
+| MOSS-Transcribe-Diarize(같은 표) | – | 오프라인 | 종단 | 15.40 | 24.72 | 회의 통째, NVIDIA 평가 |
+| VibeVoice-ASR 7B(같은 표) | 8.7B | 오프라인 | 종단 | 22.13 | 32.12 | 회의 통째, NVIDIA 평가 |
 
 ### 같은 시스템인데 출처마다 다른 값
-- **VibeVoice-ASR 오프라인 SDM:** 28.82(자체), 42.19(NVIDIA 평가 셋), 28.42(arXiv 2609.15218, 2·5 분 조각 평균), 36.09(제3자 재현, GitHub VibeVoice issue #237).
+- **VibeVoice-ASR 오프라인 SDM:** 28.82(자체), 42.19(NVIDIA 평가 셋), 32.12(N3.5T 보고서 표 14, 회의 통째), 28.42(arXiv 2609.15218, 2·5 분 조각 평균), 36.09(제3자 재현, GitHub VibeVoice issue #237).
   - 채점 조건에 따라 14 pt 가까이 흔들린다.
 - **Parakeet 카드 IHM 21.26:** 제3자 재현(transcribe.cpp — AMI IHM test 16 회의, meeteval, 회의 통째)의 NeMo 참조 21.39 와 맞는다.
   - 2609.10265 는 IHM 을 "Individual Headset Mix"(= 우리 IHM-mix)로 정의한다.
+- **SSA-v2 + Nemotron 3 Diarization(13.38 / 20.33)** 은 N3.5T 보고서 표 14 에서 "Multi-talker Parakeet + Nemotron 3 Diarization" 으로 같은 값이 나온다. DiCoW-v3.3 + DiariZen-v2(14.48 / 18.24)도 두 문서가 같다.
 - **카드의 평가 세션 수 표**(AMI IHM 219 등)는 화자 분리 모델 카드의 DIHARD·CALLHOME 수를 옮겨 온 것으로 보여 근거로 쓰지 않는다.
 
 ## 같은 LLM 크기: 우리 1.7B 대 VibeVoice-ASR-Streaming 1.5B (2026-10-28)
@@ -68,6 +73,7 @@ raw_authors:
 | VibeVoice-ASR-Streaming 7B(2.0 s) | 27.48 | 39.01 | 480 s 이하 조각 |
 | Multitalker Parakeet v1(1.12 s) | 21.26 | 37.44 | 세션(제3자 재현은 회의 통째) |
 | NVIDIA SSA-v2 + Nemotron 3 Diarization | 13.38 | 20.33 | 세션 |
+| Nemotron 3.5 Transcribe(오프라인, 2026-10-29 추가) | 10.29 | 17.34 | 회의 통째 |
 
 - 회의 통째에서 우리 귀속이 무너져(46 pt) 창 단위의 우위가 사라졌다. 받아쓰기(agn IHM 21.1·SDM 27.4)는 그대로다. 원인과 대책은 [[output-diarization-integration-20261025]] 7 절 결과 3 에 있다.
 
@@ -137,6 +143,7 @@ raw_authors:
 ## 출처
 - Multitalker Parakeet 카드: https://huggingface.co/nvidia/multitalker-parakeet-streaming-0.6b-v1/raw/main/README.md (commit 8749fc71fd)
 - NVIDIA SSA-v2: https://arxiv.org/html/2609.10265v2 표 1
+- Nemotron 3.5 Transcribe: https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3.5-Transcribe-Technical-Report.pdf 표 13·14(2026-10-29 확인) — 우리 기여 검토는 [[output-nemotron35-transcribe-comparison-20261029]]
 - VibeVoice-ASR: https://arxiv.org/html/2601.18184v2 표 2
 - VibeVoice-ASR-Streaming: https://arxiv.org/html/2609.02812v2 표 2·5·7
 - arXiv 2609.15218 표 2, VibeVoice GitHub issue #237, transcribe.cpp 재현(https://github.com/handy-computer/transcribe.cpp/blob/main/docs/models/multitalker-parakeet-streaming-0.6b-v1.md)
