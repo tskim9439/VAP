@@ -1,0 +1,27 @@
+## [2026-10-29] task | E11 — Nemotron 3 Diarization 고정 가지 구현, 인코더 하나로 합치는 방법(이식 + 증류) 설계
+
+- Changed:
+  - 코드(커밋 92dffd9)
+    - `vapasr/hf/n3d.py`(새): 로드(NeMo 3.1.0 — 손실 대상 교체·보조 activity_head 만 빼고 엄격히), 스트리밍 고리, N3DExpert
+    - `vapasr/hf/modeling_vapasr.py`(add_n3d·n3d_act·with_act_stream·encode·학습 forward), `vapasr/hf/long_session.py`(회의 전체 한 번)
+    - `experiments/stage3_train.py --n3d`, `experiments/cst_stage3_eval.py --n3d`, `experiments/diar_eval.py run --n3d`, `experiments/n3d_graft_probe.py`(새 — 이식 층 고르기)
+    - 제출: `slurm/submit-q17-e11.sh`(새), `slurm/submit-evals.sh`(q17-e9-n3d·q17-e10-n3d·q17-e11·q17-e11b), `v3_eval_task.sh`(N3D=)
+  - 시험: `tests/test_n3d.py` 5 개(새)
+  - 위키: [[output-n3d-branch-20261029]](새)
+  - 가중치: 맥 T5 `vapkt-models/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo`(HF f667ed7, sha256 HF LFS 와 같다 — 서버 업로드는 사용자)
+- Reason:
+  - 사용자 "E9b 는 굳이 할 필요 없을거 같고. "Nemotron 3 Diarization 을 고정 가지"로 넣되 하나로 통합할 방법도 고안해놔."
+  - E9b 는 제출하지 않는다.
+- Next:
+  - 확인(맥):
+    - 실제 .nemo 의 스트리밍 출력이 NeMo forward 와 같다(최대 차 0). 배치 줄은 단독과 같다.
+    - 청크 4 대 공식 0.32 s 설정의 이진 일치는 99.2 % 다.
+    - 시험: 새 5 개, 관련 144 개, 전체 814 개가 통과했다(실패 5 개는 이번 변경과 무관).
+  - 서버: 코드 반영·md5 대조(실행 파일 같음).
+  - 사용자 할 일:
+    - .nemo 업로드
+    - `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh q17-e9-n3d)`(진단: 전문가 DER + E9 활동만 바꿈)
+    - `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e11.sh)`
+  - 업로드 뒤 할 일: GPU 스모크, 이식 층 고르기(G0)
+  - 통합 설계는 U2(전문가 위층을 우리 인코더 위로 이식 + 어댑터 증류)다. G0 결과로 이식 층을 정한 뒤 G1(어댑터 학습)을 구현한다.
+- By: tskim

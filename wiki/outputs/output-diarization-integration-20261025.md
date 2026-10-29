@@ -2,8 +2,8 @@
 type: output
 status: active
 created: 2026-10-25
-updated: 2026-10-28
-summary: 화자 분리 통합 — 설계, E0–E8 결과(회의 통째 귀속 붕괴·태그 이끌기·E7b·헤드 지연), E9 슬롯 블록 형식(청크마다 모든 슬롯 태그 입력·<BEGIN>) 구현
+updated: 2026-10-29
+summary: 화자 분리 통합 — 설계, E0–E8 결과(회의 통째 귀속 붕괴·태그 이끌기·E7b·헤드 지연), E9 슬롯 블록 결과, E10 슬롯별 소리 토큰, E11 고정 화자 분리 전문가(N3 Diarization)
 sources:
   - https://arxiv.org/abs/2507.18446
   - https://huggingface.co/nvidia/Nemotron-3-Diarization
@@ -542,3 +542,8 @@ AMI 34 회의 × IHM-mix·SDM 을 통째로 디코드했다(LLM 문맥 30 s). �
 - **판단 기준**:
   - 창 귀속 몫이 E9(60 s 미만 IHM-mix eval 약 11)에서 E3 수준(약 6)으로 내려가는가.
   - 회의 통째 LLM DER 혼동이 23.5–32.5 에서 헤드 수준(13.4–19.5)으로 내려가는가.
+
+## 11. E11 — Nemotron 3 Diarization 고정 가지 (2026-10-29)
+- 사용자 "E9b 는 굳이 할 필요 없을거 같고. "Nemotron 3 Diarization 을 고정 가지"로 넣되 하나로 통합할 방법도 고안해놔." → E9b 는 내지 않는다.
+- 구현·검증·실험 계획·통합 설계(전문가 위층 이식 + 어댑터 증류)는 [[output-n3d-branch-20261029]] 에 있다.
+- 슬롯 활동 입력의 출처만 바꾼다(헤드 E1c·E7a → 고정 전문가). 출력 형식·디코드 경로는 E9·E10 그대로다.
