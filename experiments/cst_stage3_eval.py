@@ -338,11 +338,12 @@ def run(a):
     if tor:
         n = target_oracle_loop(a, model, tok, sets, items, dest, done, spk, EOT, n_slots, dev)
         print(f"DONE rank={a.rank} rows={n}", flush=True); return
+    n3 = model is not None and getattr(model, "n3d", None) is not None                       # E11: 창 평가는 고정 전문가를 배치로(창마다 새로)
     with open(dest, "a", buffering=1) as fo, torch.inference_mode():
         for c in dict.fromkeys(x[0] for x in items):
             ds = sets[c]; todo = [i for cc, i in items if cc == c]
             for b0 in range(0, len(todo), bs):
-                batch = todo[b0:b0 + bs]; feats = []; meta = []; enc_s = None
+                batch = todo[b0:b0 + bs]; feats = []; meta = []; enc_s = None; n3w = []
                 for i in batch:
                     cid, t0w, L = ds.items[i]; d = ds.dlgs[cid]; K = int(round(L / 0.08)); meta.append((i, cid, t0w, L, K, d))
                     if a.oracle or a.from_predictions: continue
@@ -353,7 +354,12 @@ def run(a):
                             verify_long(model, wav, ds.cst_prefix(ds.slots(i)[1][:n_slots], a.deltas[0]), a.max_flush, D=len(ds.slots(i)[1][:n_slots]) if blocks else None); checked.add("full")
                         te = time.time(); feats.append(encode_long(model, wav, K, aosc=acfg)); enc_s = round(time.time() - te, 1); continue
                     w = torch.from_numpy(wav).to(dev)
-                    feats.append(model.encode(w[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))[0])
+                    if n3: n3w.append(w)                                                                # E11: 전문가는 아래에서 배치 창을 한 번에
+                    feats.append(model.encode(w[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev), **({"n3d": False} if n3 else {}))[0])
+                if n3 and feats and not full:                                                           # E11: 고정 전문가를 배치로 한 번 돌려 스트림 1 에(창마다 새로 — model.encode 와 같은 값)
+                    Kb = torch.tensor([m[4] for m in meta], device=dev)
+                    A = model.n3d_act(torch.nn.utils.rnn.pad_sequence(n3w, batch_first=True), torch.tensor([len(x) for x in n3w], device=dev), Kb)
+                    feats = [model.with_act_stream(f[None], A[j: j + 1, : int(Kb[j])])[0] for j, f in enumerate(feats)]
                 for delta in a.deltas:
                     if all((f"{cid}@{t0w}", delta) in done for _, cid, t0w, *_ in meta): continue
                     prefixes = [ds.cst_prefix(ds.slots(m[0])[1][:n_slots], delta) for m in meta]        # 선언 슬롯 수 = max(2, 화자 수) 또는 --declare, 모델 슬롯 수까지(2 화자 셋은 예전과 같다)
