@@ -93,6 +93,9 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.thinker = thinker
         self.encoder: Optional[nn.Module] = None                                  # attach_encoder 로 붙인다(무거운 NeMo 복원은 __init__ 밖에서)
         self.sp_ids = dict(config.sp_ids); self.next_audio = self.sp_ids.get("<NEXT_AUDIO>"); self.empty_audio = self.sp_ids.get("<EMPTY_AUDIO>")
+        if getattr(config, "slot_blocks", False):                                            # E9 <BEGIN>(<ONSET>)은 디코드에서 막지 않는다 — 막힌 채 저장된 체크포인트
+            bid = int(config.sp_ids.get(getattr(config, "begin_token", None) or BEGIN_TOKEN, -1))   # (E10 final·E11 — add_slot_blocks 수정 전 학습)도 읽을 때 푼다(2026-10-30)
+            if bid in set(config.blocked_ids): config.blocked_ids = sorted(set(config.blocked_ids) - {bid})
         self.register_buffer("blocked", torch.tensor(sorted(set(config.blocked_ids)), dtype=torch.long), persistent=False)
         self.act_head = nn.Sequential(nn.Linear(config.hidden_size, config.act_hidden), nn.GELU(), nn.Linear(config.act_hidden, config.lanes)) if config.lanes > 0 else None   # Phase 2 lane 활동 헤드(audio 위치)
         self.spk_head = self._spk_head(config.spk_slots) if getattr(config, "spk_slots", 0) > 0 and config.lanes == 0 else None   # Stage 3 화자 슬롯 활동 헤드(audio 위치, 학습 보조)
@@ -177,7 +180,11 @@ class VapAsrForStreamingASR(PreTrainedModel):
         from ..data.dialogue_tokens import FROZEN_REGISTRY
         bid = int(tok.convert_tokens_to_ids(BEGIN_TOKEN)); assert bid == FROZEN_REGISTRY[BEGIN_TOKEN], f"{BEGIN_TOKEN} id {bid} ≠ 동결 registry {FROZEN_REGISTRY[BEGIN_TOKEN]}"
         if self.adapter_tagact is not None:
-            assert int(self.config.tag_act_lags) == int(lags), f"이미 태그 활동 {self.config.tag_act_lags} 청크 — {lags} 로 바꾸지 않는다"; return bid
+            assert int(self.config.tag_act_lags) == int(lags), f"이미 태그 활동 {self.config.tag_act_lags} 청크 — {lags} 로 바꾸지 않는다"
+            if bid in set(self.config.blocked_ids):                                             # 2026-10-30 E10 사고: 슬롯 블록 init(E9 final)에서 stage3_train 의
+                self.config.blocked_ids = sorted(set(self.config.blocked_ids) - {bid})         # add_semantic_tokens 가 <ONSET> 을 다시 막았는데 여기서 일찍 돌아가 풀지 못했다
+                self.blocked = torch.tensor(self.config.blocked_ids, dtype=torch.long, device=self.blocked.device)   # → 디코드가 <BEGIN> 을 못 내 새 턴을 시작하지 못했다
+            return bid
         W = self.get_input_embeddings().weight; assert bid < W.shape[0], "임베딩 여유 행 없음"
         if BEGIN_TOKEN in set(getattr(self.config, "sem_reserved", None) or []): init_rows_mean_noise(W, [bid], upto=BASE_VOCAB, seed=seed)
         self.config.sem_reserved = [t for t in (self.config.sem_reserved or []) if t != BEGIN_TOKEN]

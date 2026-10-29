@@ -150,6 +150,18 @@ def test_add_slot_blocks_reinit_unblock_idempotent():
     with pytest.raises(AssertionError): m.add_slot_blocks(tok, 8)
 
 
+def test_begin_unblocked_when_init_already_has_slot_blocks():
+    """2026-10-30 E10 사고: 슬롯 블록 init(E9 final)에서 stage3_train 처럼 add_semantic_tokens(turn=True)를 다시 부르면 <ONSET> 이 다시 막힌다 —
+    add_slot_blocks(이미 있음)가 풀어야 하고, 막힌 채 저장된 config 로 모델을 만들어도 풀려 있어야 한다."""
+    from vapasr.hf import VapAsrForStreamingASR
+    m, tok, bid = _tiny_blocks(); t = _load("test_semcommit_tokens_loss")
+    m.add_semantic_tokens(tok, turn=True); assert bid in m.config.blocked_ids                     # stage3_train 의 순서 그대로 — 다시 막힌다
+    m.enable_slots(tok, 4); m.add_slot_input(4); assert m.add_slot_blocks(tok, 6) == bid
+    assert bid not in m.config.blocked_ids and bid not in m.blocked.tolist() and m.blocked.tolist() == m.config.blocked_ids
+    m.config.blocked_ids = sorted(set(m.config.blocked_ids) | {bid})                                 # 수정 전에 저장된 체크포인트(E10 final)
+    m2 = VapAsrForStreamingASR(m.config, thinker=t._Thinker()); assert bid not in m2.blocked.tolist() and bid not in m2.config.blocked_ids
+
+
 def _batch(m, K=(5, 3)):
     """두 표본: [prefix 2][오디오 0][A][B][C][D][글자][오디오 1][A][B][C][D] … — 태그 위치 tag_chunk = 청크."""
     tags = m.slot_ids(4); rows, iss, cos, tcs = [], [], [], []
