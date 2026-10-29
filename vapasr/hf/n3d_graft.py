@@ -5,7 +5,7 @@
   (layer 0 이면 embed_norm 뒤, layer ≥ 1 이면 layer − 1 층 출력 — 잔차 흐름). 인과: 프레임 k 의 출력은 탭 ≤ k 만 본다(우리 탭은 블록 [56,3] 스트리밍 값).
 - teacher(m, wav, wav_len, layer): N3D 오프라인 한 번 → (h_layer, 10 ms 확률, 80 ms 프레임 길이) — 학습 교사(창 통째).
 - student_offline(m, h, length, layer): ĥ → layer 층 위·머리 → 10 ms 확률(가중치는 고정, gradient 는 ĥ 로 흐른다).
-- stream(m, h, length, layer, sil, chunk, rc, …): 스트리밍(AOSC). 캐시·FIFO 가 ĥ 를 담고 걸음마다 [캐시, FIFO, 청크] 위에서 layer 층 위·머리만 돈다 —
+- stream(m, h, length, layer, sil, chunk, rc, …, grad): 스트리밍(AOSC — grad 면 G1b 스트리밍 상태 학습). 캐시·FIFO 가 ĥ 를 담고 걸음마다 [캐시, FIFO, 청크] 위에서 layer 층 위·머리만 돈다 —
   NeMo forward_streaming_step(동기·고해상도)과 같은 갱신(streaming_update). 캐시의 무음 자리(learnable_sil_emb — 0 층 입력 전 꼴)는 layer 층 입력 꼴의
   sil 로 바꿔 넣는다(학습 데이터에서 교사가 모두 무음이라 본 프레임의 h_layer 평균 — graft.pt). layer 0 · ĥ = 교사 h_0 · sil = embed_norm(learnable_sil_emb)
   이면 교사 스트리밍과 같다(tests/test_n3d_graft.py).
@@ -84,24 +84,26 @@ def pool80(p10, length=None):
     return SortformerModules.downsample_preds(p10, FRAME_FACTOR, lengths=None if length is None else length * FRAME_FACTOR)
 
 
-@torch.no_grad()
-def stream(m, h, length, layer: int, sil, chunk: int = 4, rc: int = 0, fifo: int = 264, cache: int = 264, period: int = 222):
+def stream(m, h, length, layer: int, sil, chunk: int = 4, rc: int = 0, fifo: int = 264, cache: int = 264, period: int = 222, grad: bool = False):
     """ĥ (B, T, 512)(인과), length (B,) 80 ms 프레임 → (B, T, 8) 80 ms 확률(도착 순서). NeMo 동기 스트리밍 고리와 같은 갱신(모듈 설명).
-    줄마다 길이가 달라도 단독 실행과 같다(패딩 줄은 길이 뒤만 다르다 — n3d.stream_probs 와 같은 규약)."""
+    줄마다 길이가 달라도 단독 실행과 같다(패딩 줄은 길이 뒤만 다르다 — n3d.stream_probs 와 같은 규약).
+    grad(G1b — 스트리밍 상태 학습): gradient 가 ĥ 로 흐른다. 캐시·FIFO 는 ĥ 를 그대로 담아(이어 붙이기·gather) 앞 청크의 ĥ 도 뒤 걸음의 손실에서 gradient 를 받는다.
+    캐시 고르기(점수·무음 판정)는 확률을 떼어(detach) 쓴다 — 값은 grad=False 와 같다."""
     set_streaming(m, chunk, rc, fifo, cache, period)
     sm = m.sortformer_modules; B, T, _ = h.shape; dev = h.device; L = length.to(dev).long()
     state = sm.init_streaming_state(batch_size=B, async_streaming=False, device=dev)
     old = sm.learnable_sil_emb.data; sm.learnable_sil_emb.data = sil.to(device=old.device, dtype=old.dtype)   # 캐시 무음 자리 = layer 층 입력 꼴
     out = []
     try:
-        for s0 in range(0, T, int(chunk)):
-            s1 = min(T, s0 + int(chunk)); r1 = min(T, s1 + int(rc))
-            ch = h[:, s0:r1].float(); cl = (L - s0).clamp(0, r1 - s0)
-            x = torch.cat([state.spkcache, state.fifo, ch], 1); xl = state.spkcache.shape[1] + state.fifo.shape[1] + cl
-            hr = m.forward_infer(run_layers(m, x, xl, layer), xl)
-            p = sm.apply_mask_to_preds(sm.downsample_preds(hr, m.upsample_factor) if m.high_resolution else hr, xl).float()
-            state, cp = sm.streaming_update(streaming_state=state, chunk=ch, preds=p, lc=0, rc=r1 - s1)
-            out.append(cp)
+        with torch.set_grad_enabled(grad):
+            for s0 in range(0, T, int(chunk)):
+                s1 = min(T, s0 + int(chunk)); r1 = min(T, s1 + int(rc))
+                ch = h[:, s0:r1].float(); cl = (L - s0).clamp(0, r1 - s0)
+                x = torch.cat([state.spkcache, state.fifo, ch], 1); n0 = state.spkcache.shape[1] + state.fifo.shape[1]; xl = n0 + cl
+                hr = m.forward_infer(run_layers(m, x, xl, layer), xl)
+                p = sm.apply_mask_to_preds(sm.downsample_preds(hr, m.upsample_factor) if m.high_resolution else hr, xl).float()
+                state, cp = sm.streaming_update(streaming_state=state, chunk=ch, preds=p.detach() if grad else p, lc=0, rc=r1 - s1)
+                out.append(p[:, n0: n0 + (s1 - s0)] if grad else cp)                                       # 같은 몫(streaming_update 의 chunk_preds — 순열은 eval 이라 없다)
     finally:
         sm.learnable_sil_emb.data = old
     p = torch.cat(out, 1)[:, :T]

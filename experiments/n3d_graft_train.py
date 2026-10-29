@@ -14,7 +14,10 @@
   정답 활동은 --ref-weight 를 켤 때만 쓴다.
 산출: out/checkpoint-N/{graft.pt, trainer.pt}, out/final/{graft.pt, graft.json}, out/parity.json, out/DONE. out/PREEMPT 가 생기면 저장하고 끝낸다(sbatch 가 requeue).
   graft.pt = dict(state, cfg, layer, taps, sil, init, n3d, step). 평가: experiments/diar_eval.py run --graft <out>/final/graft.pt(창·회의, 스트리밍 청크 4).
-저장·재로드 대조: 학습 끝에 final 을 새 어댑터로 읽어 마지막 배치 손실을 메모리 모델과 대조한다(가중치 차이 0, 손실 차이 ≤ 1e-4 — 어긋나면 DONE 을 쓰지 않는다)."""
+저장·재로드 대조: 학습 끝에 final 을 새 어댑터로 읽어 마지막 배치 손실을 메모리 모델과 대조한다(가중치 차이 0, 손실 차이 ≤ 1e-4 — 어긋나면 DONE 을 쓰지 않는다).
+G1b 스트리밍 상태 학습(2026-10-30 — G1 첫 학생이 창 DER 에서 교사 + 6 이었다, 오프라인만 학습해 스트리밍 캐시가 분포 밖 ĥ 를 담는 것으로 본다):
+  --init-graft <graft.pt>(G1 final 에서 — 무음 sil 도 그것을 고정해 쓴다) --stream-chunk N: 교사·학생 모두 청크 N 스트리밍(AOSC)으로 돌려 80 ms 확률 BCE 를 건다
+  (n3d.stream_probs 대 n3d_graft.stream(grad) — gradient 는 캐시·FIFO 에 담긴 앞 청크의 ĥ 로도 흐른다). h_layer MSE 는 오프라인 교사 h 로 그대로."""
 import argparse, datetime, fnmatch, glob, json, math, os, random, sys, time
 
 import numpy as np
@@ -30,6 +33,8 @@ ap.add_argument("--n3d", required=True, help="Nemotron 3 Diarization .nemo(교�
 ap.add_argument("--taps", default="odd", help="인코더 탭 층('odd'·'all'·'1,3,5') — 마지막 층은 늘 들어간다(E9 헤드와 같은 odd)")
 ap.add_argument("--blocks", type=int, default=3); ap.add_argument("--kernel", type=int, default=5); ap.add_argument("--ffn", type=int, default=2048)
 ap.add_argument("--kd-weight", type=float, default=1.0); ap.add_argument("--hid-weight", type=float, default=0.1); ap.add_argument("--ref-weight", type=float, default=0.0)
+ap.add_argument("--init-graft", default=None, help="G1b: 시작 어댑터 graft.pt(능형 회귀 대신, 무음 sil 도 그것) — 재개 checkpoint 가 있으면 그것이 우선")
+ap.add_argument("--stream-chunk", type=int, default=0, help="G1b: 0 이면 창 통째(오프라인) 학습, N 이면 교사·학생 모두 청크 N 스트리밍(AOSC)으로 증류 — --init-graft 와 함께")
 ap.add_argument("--ridge-windows", type=int, default=256, help="처음 시작 때 능형 회귀로 입력 Linear 를 둘 창 수(0 = 기본 초기화)"); ap.add_argument("--ridge", type=float, default=10.0)
 ap.add_argument("--data", default="/soundai/users/tskim/VAPKT-data/data/phase2"); ap.add_argument("--split", default="/soundai/users/tskim/VAPKT-data/data/phase2/splits/v4.json")
 ap.add_argument("--corpora", default="aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar")
@@ -44,6 +49,7 @@ ap.add_argument("--dry-run", action="store_true", help="데이터만 만들고 �
 a = ap.parse_args()
 assert 0 <= a.graft_layer <= 30, "--graft-layer 0–30(N3D 31 층)"
 assert a.kd_weight > 0 or a.hid_weight > 0 or a.ref_weight > 0, "손실 가중이 모두 0 이다"
+assert a.stream_chunk >= 0 and (not a.stream_chunk or a.init_graft), "--stream-chunk(G1b)는 --init-graft(G1 final)와 함께 — 무음 sil 을 거기서 고정해 쓴다"
 
 
 def log(*x):
@@ -112,7 +118,7 @@ def fingerprint():
     keys = ("init", "n3d", "graft_layer", "taps", "blocks", "kernel", "ffn", "kd_weight", "hid_weight", "ref_weight", "ridge_windows", "ridge", "data", "split", "corpora",
             "sim_data", "weights", "window", "window_draws", "n_spk", "batch", "lr", "warmup", "max_steps", "weight_decay", "noise_bank", "noise_p", "rir_p", "noise_snr",
             "gain_db", "seed")
-    return {k: getattr(a, k) for k in keys}
+    return {**{k: getattr(a, k) for k in keys}, **({k: getattr(a, k) for k in ("init_graft", "stream_chunk")} if a.stream_chunk or a.init_graft else {})}   # 켰을 때만(G1 지문 그대로)
 
 
 def last_checkpoint(out):
@@ -121,33 +127,44 @@ def last_checkpoint(out):
 
 
 # ── 한 배치의 교사·학생·손실
-def batch_terms(b, enc, taps, n3, adapter, dev):
-    """→ (손실, 통계 dict, 무음 프로필 (합 (512,), 프레임 수)). 교사(N3D 오프라인)와 학생(탭 → 어댑터 → layer 층 위·머리)이 같은 오디오를 본다."""
+def batch_terms(b, enc, taps, n3, adapter, dev, sil0=None):
+    """→ (손실, 통계 dict, 무음 프로필 (합 (512,), 프레임 수)). 교사(N3D 오프라인)와 학생(탭 → 어댑터 → layer 층 위·머리)이 같은 오디오를 본다.
+    --stream-chunk(G1b)면 확률 손실은 교사 스트리밍 대 학생 스트리밍(sil0 — 캐시 무음 자리)의 80 ms BCE 다."""
     from vapasr.hf.diar import sort_pit_loss
-    from vapasr.hf.n3d_graft import pool80, student_offline, teacher
+    from vapasr.hf.n3d import stream_probs
+    from vapasr.hf.n3d_graft import pool80, stream, student_offline, teacher
     wav, wl, K = b["wav"].to(dev, non_blocking=True), b["wav_len"].to(dev), b["K"].to(dev)
     with torch.no_grad():
         f = enc(wav, wl, K, taps=taps)                                                               # (B, 1 + 탭, Kmax, 1024) fp32
         with torch.autocast("cuda", dtype=torch.bfloat16): h, p10, elen = teacher(n3, wav, wl, a.graft_layer)
     T = min(f.shape[2], h.shape[1]); L = torch.minimum(elen.to(dev).long(), K.long()).clamp(max=T)   # 우리 프레임 K 와 N3D 프레임(80 ms 격자 같음) 중 짧은 쪽
     h = h[:, :T].float(); pt = p10[:, : T * 8].float()
-    with torch.autocast("cuda", dtype=torch.bfloat16):
-        hh = adapter(f[:, :, :T])
-        ps = student_offline(n3, hh, L, a.graft_layer)
-    ps = ps.float(); hh = hh.float()
     v10 = (torch.arange(T * 8, device=dev)[None] < (L * 8)[:, None]).float()[..., None]               # 10 ms 유효
     v80 = (torch.arange(T, device=dev)[None] < L[:, None])                                           # 80 ms 유효
-    kd = (F.binary_cross_entropy(ps.clamp(1e-6, 1 - 1e-6), pt, reduction="none") * v10).sum() / (v10.sum() * pt.shape[-1]).clamp(min=1)
+    if a.stream_chunk:                                                                               # G1b: 교사·학생 모두 스트리밍(AOSC) — 80 ms 확률
+        with torch.no_grad(): t80s = stream_probs(n3, wav, wl, a.stream_chunk, 0)[:, :T].float()
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            hh = adapter(f[:, :, :T])
+            s80s = stream(n3, hh.float(), L, a.graft_layer, sil0, chunk=a.stream_chunk, grad=True)
+        hh = hh.float(); s80s = s80s.float(); vs = v80.float()[..., None]
+        kd = (F.binary_cross_entropy(s80s.clamp(1e-6, 1 - 1e-6), t80s, reduction="none") * vs).sum() / (vs.sum() * t80s.shape[-1]).clamp(min=1)
+        ps = None
+    else:
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            hh = adapter(f[:, :, :T])
+            ps = student_offline(n3, hh, L, a.graft_layer)
+        ps = ps.float(); hh = hh.float()
+        kd = (F.binary_cross_entropy(ps.clamp(1e-6, 1 - 1e-6), pt, reduction="none") * v10).sum() / (v10.sum() * pt.shape[-1]).clamp(min=1)
     vh = v80.float()[..., None]; mu = (h * vh).sum((0, 1)) / vh.sum().clamp(min=1)
     var = (((h - mu) ** 2) * vh).sum() / (vh.sum() * h.shape[-1]).clamp(min=1)
     hid = (((hh - h) ** 2) * vh).sum() / (vh.sum() * h.shape[-1]).clamp(min=1) / var.clamp(min=1e-6)
     loss = a.kd_weight * kd + a.hid_weight * hid
-    s80, t80 = pool80(ps, L), pool80(pt, L)
+    s80g = s80s if a.stream_chunk else pool80(ps, L); t80 = t80s if a.stream_chunk else pool80(pt, L); s80 = s80g.detach()
     st = dict(kd=float(kd), hid=float(hid), agree=float((((s80 > 0.5) == (t80 > 0.5)).all(-1) & v80).sum() / v80.sum().clamp(min=1)),
               t_act=float(((t80 > 0.5).any(-1) & v80).sum() / v80.sum().clamp(min=1)))
     if a.ref_weight > 0:                                                                             # 정답 슬롯 활동(앞 n-spk 채널, Sort·PIT)
         act = b["act"].to(dev)[:, :T]; mk = b["mask"].to(dev)[:, :T] & v80
-        lg = torch.logit(s80[..., : a.n_spk].clamp(1e-5, 1 - 1e-5)); ref, _, _ = sort_pit_loss(lg, act, mk, 0.5)
+        lg = torch.logit(s80g[..., : a.n_spk].clamp(1e-5, 1 - 1e-5)); ref, _, _ = sort_pit_loss(lg, act, mk, 0.5)
         loss = loss + a.ref_weight * ref; st["ref"] = float(ref)
     with torch.no_grad():
         sil = ((t80.max(-1).values < 0.1) & v80)
@@ -192,12 +209,17 @@ def main():
     total = a.smoke or a.max_steps
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / max(1, a.warmup)) * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * min(1.0, s / max(1, total))))))
     step, ck = last_checkpoint(a.out_dir) if not a.smoke else (0, None)
-    sil_sum = torch.zeros(512, device=dev, dtype=torch.float64); sil_n = torch.zeros((), device=dev, dtype=torch.float64)
+    sil_sum = torch.zeros(512, device=dev, dtype=torch.float64); sil_n = torch.zeros((), device=dev, dtype=torch.float64); sil0 = None
+    if a.init_graft:                                                                                 # G1b: 무음 sil 은 시작 graft.pt 의 값으로 고정(교사 h_layer 의 무음 평균 — 어댑터와 무관)
+        xg = torch.load(a.init_graft, map_location=dev); sil0 = xg["sil"].float().to(dev)
+        assert xg["layer"] == a.graft_layer and list(xg["taps"]) == list(taps) and xg["cfg"] == adapter.cfg, f"--init-graft 의 층·탭·어댑터 설정이 다르다: {a.init_graft}"
     if ck:
         x = torch.load(os.path.join(ck, "graft.pt"), map_location=dev); adapter.load_state_dict(x["state"])
         st = torch.load(os.path.join(ck, "trainer.pt"), map_location=dev, weights_only=False); opt.load_state_dict(st["opt"]); sched.load_state_dict(st["sched"])
         if rank == 0: sil_sum += st["sil_sum"].to(dev); sil_n += st["sil_n"]                          # 무음 프로필은 rank 0 이 합을 들고 간다(저장 때 모은 값)
         log(f"재개 ← {ck}(step {step})")
+    elif a.init_graft:
+        adapter.load_state_dict(xg["state"]); log(f"어댑터 ← {a.init_graft}(step {xg.get('step')}) · 스트리밍 청크 {a.stream_chunk or '없음(오프라인)'}")
     elif a.ridge_windows > 0 and rank == 0:                                                          # G0 와 같은 능형 회귀 해에서 시작(블록은 0 — 붙인 직후 = 선형 이식)
         from vapasr.hf.n3d_graft import pool80, teacher
         t0 = time.time(); it = iter(Stream(sources, wts, aug, f"{a.seed}:ridge")); XtX = XtY = Xs = Ys = None; nw = nfr = 0
@@ -243,7 +265,7 @@ def main():
         flag = torch.tensor([1.0 if rank == 0 and os.path.exists(preempt) else 0.0], device=dev)
         if ddp: dist.all_reduce(flag)
         if flag.item() > 0: save(f"checkpoint-{step}"); log("PREEMPT → 저장하고 끝낸다"); break
-        loss, st, (ps_, pn_) = batch_terms(b, enc, taps, n3, net, dev)
+        loss, st, (ps_, pn_) = batch_terms(b, enc, taps, n3, net, dev, sil0)
         opt.zero_grad(set_to_none=True); loss.backward(); gn = torch.nn.utils.clip_grad_norm_(adapter.parameters(), 1.0); opt.step(); sched.step(); step += 1
         sil_sum += ps_.double(); sil_n += pn_
         for k, v in dict(loss=float(loss), gn=float(gn), **st).items(): acc[k] = acc.get(k, 0.0) + v
@@ -254,17 +276,17 @@ def main():
     d = save("final") if step >= total else None
     if ddp: dist.barrier(); dist.destroy_process_group()                                           # 대조는 그룹을 닫은 뒤 rank 0 만
     if d and b is not None:
-        reload_check(d, b, adapter, enc, taps, n3, dev)                                             # 어긋나면 멈추고 DONE 을 쓰지 않는다
+        reload_check(d, b, adapter, enc, taps, n3, dev, sil0)                                       # 어긋나면 멈추고 DONE 을 쓰지 않는다
         open(os.path.join(a.out_dir, "DONE"), "w").write(f"step {step}\n")
 
 
-def reload_check(final_dir, b, adapter, enc, taps, n3, dev):
+def reload_check(final_dir, b, adapter, enc, taps, n3, dev, sil0=None):
     """final/graft.pt 를 새 어댑터로 읽어 마지막 배치의 손실을 메모리 어댑터와 대조한다(가중치 차이 0, 손실 차이 ≤ 1e-4). out/parity.json."""
     from vapasr.hf.n3d_graft import GraftAdapter
     x = torch.load(os.path.join(final_dir, "graft.pt"), map_location=dev); m2 = GraftAdapter(**x["cfg"]).to(dev); m2.load_state_dict(x["state"])
     adapter.eval(); m2.eval()
     with torch.no_grad():
-        l1, s1, _ = batch_terms(b, enc, taps, n3, adapter, dev); l2, s2, _ = batch_terms(b, enc, taps, n3, m2, dev)
+        l1, s1, _ = batch_terms(b, enc, taps, n3, adapter, dev, sil0); l2, s2, _ = batch_terms(b, enc, taps, n3, m2, dev, sil0)
     diff = max(float((p - q).abs().max()) for p, q in zip(adapter.state_dict().values(), m2.state_dict().values()))
     out = dict(final=final_dir, step=x["step"], windows=len(b["K"]), memory=dict(loss=round(float(l1), 6), **s1), reload=dict(loss=round(float(l2), 6), **s2), max_diff=diff,
                layer=x["layer"], sil_frames=x.get("sil_frames"))

@@ -73,3 +73,17 @@ def test_offline_student_with_teacher_hidden_equals_teacher():
         for j in range(2):
             n = int(elen[j]) * 8; assert torch.allclose(ps[j, :n], p10[j, :n], atol=1e-4), (layer, j, float((ps[j, :n] - p10[j, :n]).abs().max()))
     assert pool80(p10, elen.long()).shape[1] == p10.shape[1] // 8
+
+
+@real
+def test_stream_grad_matches_values_and_reaches_cached_frames():
+    """G1b: grad=True 스트리밍은 grad=False 와 값이 같고, 뒤 청크의 손실이 캐시·FIFO 에 담긴 앞 청크 ĥ 까지 gradient 를 보낸다."""
+    from vapasr.hf.n3d import load_n3d
+    from vapasr.hf.n3d_graft import stream, teacher
+    m, _ = load_n3d(_N3D); x = _signal(9.0, 7); w = x[None]; wl = torch.tensor([len(x)])
+    h, _, elen = teacher(m, w, wl, 8); sil = h[0].mean(0).detach()
+    p0 = stream(m, h, elen.long(), 8, sil, chunk=16)
+    hg = h.detach().clone().requires_grad_(True); p1 = stream(m, hg, elen.long(), 8, sil, chunk=16, grad=True)
+    assert torch.allclose(p0, p1.detach(), atol=1e-5)
+    T = p1.shape[1]; p1[:, T - 16:].sum().backward()                                                   # 마지막 청크만의 손실
+    g = hg.grad[0].abs().sum(-1); assert g[: T - 16].sum() > 0 and g[T - 16:].sum() > 0                      # 앞 프레임(캐시·FIFO)도 gradient 를 받는다
