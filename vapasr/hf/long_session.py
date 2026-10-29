@@ -54,14 +54,18 @@ def encode_long(model, wav: np.ndarray, K: int, core: int = 4800, ctx: int = 176
         assert getattr(model, "diar_head", None) is not None, "aosc 는 화자 분리 헤드(E6·E7) 모델에서만"
         assert not int(getattr(model.config, "act_shift", 0) or 0), "E8 act_shift 모델은 아직 AOSC 와 함께 쓰지 않는다(캐시 점수가 p − R 시점과 어긋난다)"
         from .diar import aosc_stream
-        embs = []
+        embs, sembs = [], []; sx = getattr(model, "adapter_slotx", None)
         for seg, Ks, a, c0, n in segment_plan(wav, K, ch, core, ctx, tail):
             w = torch.from_numpy(np.ascontiguousarray(seg, dtype=np.float32)).to(dev)
             allf = model.encoder(w[None], torch.tensor([len(seg)], device=dev), torch.tensor([Ks], device=dev), taps=tuple(model.config.diar_taps))   # (1, 1 + 탭, Ks, D)
             if out is None: out = allf.new_zeros(1, K, allf.shape[-1])
-            out[:, c0: c0 + n] = allf[0, :1, c0 - a: c0 - a + n]; embs.append(model.diar_head.embed(allf)[0, c0 - a: c0 - a + n]); del allf
-        act = model.predict_act(aosc_stream(model.diar_head, torch.cat(embs), aosc)).to(out.dtype)          # (K, N) — 임계 config.act_threshold
-        return torch.cat([out, F.pad(act, (0, out.shape[-1] - act.shape[-1]))[None]], 0)
+            out[:, c0: c0 + n] = allf[0, :1, c0 - a: c0 - a + n]; embs.append(model.diar_head.embed(allf)[0, c0 - a: c0 - a + n])
+            if sx is not None: sembs.append(sx.embed(allf)[0, c0 - a: c0 - a + n])             # E10: 추출기의 화자 단서 임베딩(헤드를 바꿔 끼워도 그대로)
+            del allf
+        E_ = torch.cat(embs); act = model.predict_act(aosc_stream(model.diar_head, E_, aosc)).to(out.dtype)          # (K, N) — 임계 config.act_threshold
+        streams = [out, F.pad(act, (0, out.shape[-1] - act.shape[-1]))[None]]
+        if sx is not None: S_ = torch.cat(sembs); streams.append(F.pad(S_.to(out.dtype), (0, out.shape[-1] - S_.shape[-1]))[None])   # E10: 화자 단서 임베딩 스트림
+        return torch.cat(streams, 0)
     for seg, Ks, a, c0, n in segment_plan(wav, K, ch, core, ctx, tail):
         w = torch.from_numpy(np.ascontiguousarray(seg, dtype=np.float32)).to(dev)
         f = model.encode(w[None], torch.tensor([len(seg)], device=dev), torch.tensor([Ks], device=dev))[0]   # (S, b − a, D)
@@ -208,7 +212,7 @@ def long_decode(model, feats, prefix_ids, max_flush_rounds=None, blk: int = 4096
     return out, forced, rounds, lt.used
 
 
-def long_block_decode(model, feats, prefix_ids, D: int, act=None, max_flush_rounds=None, blk: int = 4096, context_s: float = 0.0):
+def long_block_decode(model, feats, prefix_ids, D: int, act=None, max_flush_rounds=None, blk: int = 4096, context_s: float = 0.0, mix_off: bool = False):
     """E9 회의 통째 디코드(2026-10-28): realtime.realtime_block_decode 에 LongThinker(추측 prefill·되돌리기 — 출력 규칙은 batch_decode.decode_blocks_batch 와 같다).
     feats (S, K, D)(encode_long — aosc 면 스트림 1 = 회의 단위 예측 활동이 태그·오디오 활동이 된다), D = 선언 슬롯 수.
     KV 는 prefix + (D + 2.6)·K + 1024 위치로 시작한다(청크마다 오디오 + 태그 D 개 + 말). context_s > 0 = 문맥 창(LongThinker).
@@ -217,5 +221,5 @@ def long_block_decode(model, feats, prefix_ids, D: int, act=None, max_flush_roun
     K = int(feats.shape[-2]); C = int(round(context_s / FRAME_S)) if context_s else 0
     lt = LongThinker(model.thinker, model.config.blocked_ids, max_len=len(prefix_ids) + ((D + 4) * C + 2048 if C else int((D + 2.6) * K) + 1024), blk=blk, context=C)
     out, forced, ticks, rounds, _, nf = realtime_block_decode(model, lt, feats, list(prefix_ids), D, act=act, max_flush_rounds=max_flush_rounds,
-                                                              on_chunk=lt.on_chunk if C else None)
+                                                              on_chunk=lt.on_chunk if C else None, mix_off=mix_off)
     return out, forced, rounds, lt.used, nf, ticks

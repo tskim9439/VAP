@@ -33,6 +33,7 @@
   LLM 입력에 더한다(model.add_enc_tap). init 에 이미 탭이 있으면 같은 층이어야 한다. 지문 키 enc_tap(끄면 키 없음).
   --slot-blocks(E9, 2026-10-28): 대화·합성 창을 슬롯 블록 형식으로(cst_dialogue 모듈 설명 E9 — 청크마다 선언 슬롯 태그를 모두 입력, <BEGIN>·전사·<EOT> 출력,
   멈춤 = 다음 입력 위치 label <NEXT_AUDIO>), model.add_slot_blocks(<ONSET> 행·adapter_tagact). 받아쓰기만. 지문 키 slot_blocks(끄면 키 없음).
+  --slot-audio(E10, 2026-10-29): 슬롯 추출기(model.add_slot_audio)가 슬롯별 소리 토큰을 태그 자리에 더하고, --mix-drop 확률로 섞인 소리 토큰을 지운다. 지문 키 slot_audio.
 나머지(인코더 학습·att_context 고정·SpecAugment·속도/잡음/음량 증강·packing·선점 저장·재개 지문·final 재로드 parity)는 semcommit_train.py 와 같은 규약.
 지문: config.stage3(형식·코퍼스·split·창·EOT 규칙·가중치·δ·replay 입력·tokenizer 어휘) — 재개는 같은 지문일 때만(--force-resume 로만 진행).
 저장: checkpoint-N 을 지우지 않는다(--save-total-limit 0). 완료 시 out-dir/final + parity.json(PARITY OK/FAIL) + DONE."""
@@ -108,6 +109,10 @@ g.add_argument("--slot-blocks", action="store_true", help="E9(2026-10-28, wiki o
                "선언 슬롯 태그를 모두 입력으로 넣고 각 태그 뒤에 그 슬롯 출력(<BEGIN>·전사·<EOT>), 멈춤은 다음 입력 위치 label <NEXT_AUDIO>(cst_dialogue 모듈 설명 E9). "
                "<BEGIN> = <ONSET>(episode 시작 + 4 청크), 태그 임베딩에 그 슬롯 최근 활동(adapter_tagact). 받아쓰기만(번역·정체 회복·교대/머무름 가중·EOT-문맥 dropout·"
                "no_eot·대상 화자·act_shift 없이), --slot-input 과 함께. 지문 키 slot_blocks")
+g.add_argument("--slot-audio", action="store_true", help="E10(2026-10-29, wiki output-diarization-integration-20261025 10 절): 슬롯 추출기(vapasr/hf/slot_audio — 인코더 마지막 층 + "
+               "화자 단서 임베딩 + 슬롯 활동 → 슬롯별 소리 토큰을 태그 자리에, 출력 0 초기화). --slot-blocks·--diar-head 와 함께. 지문 키 slot_audio")
+g.add_argument("--slot-audio-dim", type=int, default=512); g.add_argument("--slot-audio-blocks", type=int, default=4); g.add_argument("--slot-audio-kernel", type=int, default=15)
+g.add_argument("--mix-drop", type=float, default=0.5, help="--slot-audio: 학습 표본마다 이 확률로 섞인 소리 토큰을 빈 임베딩으로 바꾼다(슬롯 소리에 기대게 — 평가는 --mix-off 로 켜고 끈 둘 다 잰다)")
 g.add_argument("--declare-range", action="store_true", help="2026-10-28: 같은 언어 창의 선언 슬롯 수(<SPK_*> 개수)를 [창 화자 수, --max-speakers] 에서 고르게 뽑는다"
                "(--declare-all-p 대신 — 추론 때 선언 수를 화자 수 이상 아무 값으로나). 지문 키 declare_range")
 g.add_argument("--begin-weight", type=float, default=2.0, help="--slot-blocks: <BEGIN> label 위치 가중(pos_weight)")
@@ -227,6 +232,8 @@ if a.slot_blocks:                                                               
     if not a.slot_input: sys.exit("--slot-blocks 는 --slot-input 과 함께(태그 임베딩에 슬롯 활동을 더한다)")
     if any(set_kind(k) == "xl" for k, w in weights.items() if w > 0) and a.sim_trans_frac > 0: sys.exit("--slot-blocks: 교차 언어 합성 셋은 --sim-trans-frac 0 으로(받아쓰기만)")
     if min(delays) < 4 or a.begin_weight < 0 or a.tag_act_lags < 1: sys.exit(f"--slot-blocks: 가장 짧은 δ ≥ 4(<BEGIN> 지연) · --begin-weight ≥ 0 · --tag-act-lags ≥ 1 — {delays} {a.begin_weight} {a.tag_act_lags}")
+if a.slot_audio and not (a.slot_blocks and a.diar_head): sys.exit("--slot-audio(E10)는 --slot-blocks 와 --diar-head 와 함께")
+if a.slot_audio and not (0.0 <= a.mix_drop <= 1.0 and a.slot_audio_dim > 0 and a.slot_audio_blocks > 0 and a.slot_audio_kernel > 1): sys.exit("--mix-drop [0, 1] · --slot-audio-dim·blocks > 0 · kernel > 1")
 ramp = tuple(float(x) for x in a.act_pred_ramp.split(","))
 if len(ramp) != 2 or not all(0.0 <= x <= 1.0 for x in ramp): sys.exit(f"--act-pred-ramp 'ρ0,ρ1'(각 0–1): {a.act_pred_ramp}")
 want_act = a.spk_act_weight > 0 or bool(a.diar_head)                                           # 정답 슬롯 활동 타깃(LLM 쪽 화자 헤드 또는 E6 화자 분리 손실)
@@ -315,6 +322,7 @@ if not a.dry_run:
         if a.act_shift: model.config.act_shift = int(a.act_shift)                                  # E8: 헤드 출력 p = 프레임 p − R(재개 checkpoint 의 config 와 같은 값)
         if xb.get("aosc"): model.config.diar_aosc = dict(xb["aosc"])                                 # AOSC 로 학습한 헤드에서 시작하면 그 설정을 남긴다(회의 통째 디코드)
         if model.spk_head is not None and a.spk_act_weight <= 0: model.config.spk_weight = 0.0   # 활동 타깃이 오므로 LLM 쪽 보조 헤드는 끈다(가중 0)
+        if a.slot_audio: model.add_slot_audio(d=a.slot_audio_dim, blocks=a.slot_audio_blocks, kernel=a.slot_audio_kernel, mix_drop=a.mix_drop)   # E10(헤드 뒤 — 헤드 embed 로 시작)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
     assert not bad, f"tokenizer 특수 토큰 id 가 config 와 다름: {bad}"
@@ -518,7 +526,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"act_shift": a.act_shift} if a.act_shift else {}),                                # 2026-10-27 E8: 끄면 키 없음
           **({"slot_blocks": dict(begin_weight=a.begin_weight, begin_lag=4, tag_act_lags=a.tag_act_lags)} if a.slot_blocks else {}),   # 2026-10-28 E9: 끄면 키 없음
           **({"declare_range": True} if a.declare_range else {}),                               # 2026-10-28: 끄면 키 없음
-          **({"shrink_speakers": True} if a.shrink_speakers and not a.window_draws else {}))    # 2026-10-28 E9b: 격자 창 줄이기(끄면 키 없음)
+          **({"shrink_speakers": True} if a.shrink_speakers and not a.window_draws else {}),    # 2026-10-28 E9b: 격자 창 줄이기(끄면 키 없음)
+          **({"slot_audio": dict(d=a.slot_audio_dim, blocks=a.slot_audio_blocks, kernel=a.slot_audio_kernel, mix_drop=a.mix_drop)} if a.slot_audio else {}))   # 2026-10-29 E10
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}
     for key, ds in train_sets.items():

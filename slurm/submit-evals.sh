@@ -32,6 +32,8 @@
 #   q17-e9  E9 슬롯 블록 형식(2026-10-28, slurm/submit-q17-e9.sh): q17-e7b 와 같은 묶음(AMI 창 δ10 8 몫 + 회의 통째 AOSC·E7a 헤드 δ10 8 몫) — 평가가 config.slot_blocks 로
 #           슬롯 블록 디코드를 고르고 행에 LLM DER(<BEGIN>·<EOT>)·청크 ms 를 남긴다. --after-job 필수.
 #   q17-e9b  E9b(2026-10-28, slurm/submit-q17-e9b.sh — 학습 창 20–90 s): q17-e9 와 같은 묶음. --after-job 필수.
+#   q17-e10  E10(2026-10-29, slurm/submit-q17-e10.sh — 슬롯 추출기): GPU 마다 AMI 창 δ10 → 회의 통째 AOSC·E7a δ10 → 섞인 소리 끈(MIXOFF=1) 창 → 섞인 소리 끈 회의 통째.
+#            --after-job 필수.
 #   q17-e8  E8 헤드 출력 지연 R(2026-10-27, slurm/submit-q17-e8.sh — 헤드 위치 p = 프레임 p − R, 받아쓰기 지연 δ ≥ R): q17-e6 과 같은 v3 묶음(헤드 예측 활동).
 #           정답 활동 상한(amiact)은 넣지 않는다 — --act-oracle 이 활동을 R 만큼 밀지 않는다(E6 의 상한과 같은 값이 될 까닭도 없다). --after-job 필수.
 #   q17-e5  E5 한 스트림 + 슬롯 활동 입력(2026-10-26): q17-e5 final 을 AMI 정답 슬롯 활동 입력(amiact, 8 몫)과 활동 없이(ami, 4 몫 — 입력이 없을 때 얼마나 무너지나)로. --after-job 필수.
@@ -53,8 +55,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e7-amifull) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull" >&2; exit 2 ;; esac
+  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
@@ -93,6 +95,10 @@ case $set_ in
   q17-e6-amifull-d10) for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull q17-e6 final $r/8"); done ;;
   q17-e7b) ami8d10 q17-e7b; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a bash $X amifull q17-e7b final $r/8"); done ;;   # 창 AMI 를 먼저(약 20 분)
   q17-e9|q17-e9b) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a bash $X amifull $set_ final $r/8"); done ;;
+  q17-e10) E7A=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt; ami8d10 q17-e10                       # 평가 순서: 창 → 회의 통째 → 섞인 소리 끈 창 → 끈 회의 통째
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 AOSC=1 DIAR=$E7A DIAR_TAG=e7a bash $X amifull q17-e10 final $r/8"); done
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 MIXOFF=1 bash $X ami q17-e10 final $r/8"); done
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 MIXOFF=1 AOSC=1 DIAR=$E7A DIAR_TAG=e7a bash $X amifull q17-e10 final $r/8"); done ;;
   q17-e6-amifull) amifull8 q17-e6 ""; for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 bash $X amifull q17-e6 final $r/8"); done ;;
   q17-e7-amifull) for r in 0 1 2 3 4 5 6 7; do L+=("$r|AOSC=1 DIAR=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt DIAR_TAG=e7a bash $X amifull q17-e6 final $r/8"); done ;;
   q17-e5) for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $X amiact q17-e5 final $r/8"); done; ami4 0 q17-e5 "" ;;

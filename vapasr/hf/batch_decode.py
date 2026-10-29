@@ -288,17 +288,22 @@ def block_stops(model, D):
 
 
 @torch.inference_mode()
-def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, acts=None):
+def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, acts=None, mix_off=False):
     """E9 slot-block greedy decoding, one input per row per step (BlockState) on a dense KV-cache batch.
     feats: list of (S,K,D) encoder outputs, prefixes: equal-length lists declaring D slots. The audio tokens use model.chunk_embed (with acts
     or the E6 predicted-activity stream, as decode_batch); each tag gets model.tag_embeds (tag row + that slot's recent activity, model.block_act).
-    Caps: model.config.runaway_cap per slot per chunk, 6 K + 64 outputs per row, max_flush_rounds (default config)."""
+    Caps: model.config.runaway_cap per slot per chunk, 6 K + 64 outputs per row, max_flush_rounds (default config).
+    E10 (model.adapter_slotx): each tag also gets that slot's audio token (model.slot_audio_of — feats need the head-embedding stream);
+    mix_off replaces the mixed audio token with model.adapter_mixnull (the chunk keeps its activity part)."""
     assert feats and len(feats) == len(prefixes) and (acts is None or len(acts) == len(feats))
     assert len({len(p) for p in prefixes}) == 1, "batch one language/delta at a time"
     emb = model.get_input_embeddings()
     dev = emb.weight.device
-    ce = [(model.chunk_embed(f[None]) if acts is None else model.chunk_embed(f[None], acts[j][None]))[0].to(emb.weight.dtype) for j, f in enumerate(feats)]
+    mm = torch.ones(1, dtype=torch.bool, device=dev) if mix_off else None
+    assert not mix_off or getattr(model, "adapter_mixnull", None) is not None, "mix_off needs an E10 model (adapter_mixnull)"
+    ce = [(model.chunk_embed(f[None], mix_mask=mm) if acts is None else model.chunk_embed(f[None], acts[j][None], mix_mask=mm))[0].to(emb.weight.dtype) for j, f in enumerate(feats)]
     A = [model.block_act(f, acts[j] if acts is not None else None) for j, f in enumerate(feats)]
+    X = [model.slot_audio_of(f, a) if getattr(model, "adapter_slotx", None) is not None else None for f, a in zip(feats, A)]
     flush = model.config.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
     tags = tuple(model.slot_ids(D))
     stop = block_stops(model, D)
@@ -321,7 +326,7 @@ def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, act
             elif kind == "tag":
                 k, j = value
                 if k not in tag_cache[i]:
-                    tag_cache[i] = {k: model.tag_embeds(k, A[i], D).to(emb.weight.dtype)}
+                    tag_cache[i] = {k: model.tag_embeds(k, A[i], D, X[i]).to(emb.weight.dtype)}
                 nxt.append(tag_cache[i][k][j])
             elif kind == "text":
                 nxt.append(emb.weight[value])

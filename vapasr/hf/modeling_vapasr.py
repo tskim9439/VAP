@@ -70,6 +70,11 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.adapter_slot = nn.Linear(n, config.adapter_d_out, bias=False) if n > 0 else None
         n = int(getattr(config, "tag_act_lags", 0) or 0)                                         # E9 태그 활동 입력(태그 임베딩 += W·[a_s(k) … a_s(k − n + 1)], 이름이 adapter 로 시작 → adapter lr 그룹)
         self.adapter_tagact = nn.Linear(n, config.adapter_d_out, bias=False) if n > 0 else None
+        sa = getattr(config, "slot_audio_cfg", None)                                               # E10 슬롯 추출기(vapasr/hf/slot_audio — 슬롯별 소리 토큰을 태그 자리에, adapter lr 그룹)
+        if sa:
+            from .slot_audio import SlotAudio
+            self.adapter_slotx = SlotAudio(**sa); self.adapter_mixnull = nn.Parameter(torch.zeros(config.adapter_d_out))   # 섞인 소리 토큰을 지울 때 넣는 빈 오디오 임베딩
+        else: self.adapter_slotx = None; self.adapter_mixnull = None
         dh = getattr(config, "diar_head_cfg", None)                                              # E6 인과 화자 분리 헤드(인코더 탭 위, 같은 그래프 — 이름이 adapter 가 아니라 thinker lr 그룹)
         if dh:
             from .diar import DiarBranch
@@ -105,9 +110,13 @@ class VapAsrForStreamingASR(PreTrainedModel):
     def encode(self, wav, wav_len, K, act=None):                                  # (B,L) → (B,S,Kmax,Din) — S = 1, 탭이 있으면 2(마지막 층, 탭 층)
         """act (B, ≥Kmax) 대상 화자 활동(0–1, E2) — 있으면 adapter_inject 로 인코더 pre-encode 출력에 주입한다(없으면 예전 그대로).
         E6(화자 분리 헤드가 있으면): (B, 2, Kmax, Din) — 스트림 1 = 헤드 예측 슬롯 활동(앞 N 차원, 나머지 0). chunk_embed 가 그 스트림을 슬롯 활동 입력으로 쓴다
-        → 디코드 경로(decode_batch·stream_decode·realtime·회의 통째)가 그대로 헤드 예측을 쓴다."""
+        → 디코드 경로(decode_batch·stream_decode·realtime·회의 통째)가 그대로 헤드 예측을 쓴다.
+        E10(슬롯 추출기가 있으면): (B, 3, Kmax, Din) — 스트림 2 = 추출기의 화자 단서 임베딩(adapter_slotx.embed, 앞 d_emb 차원) — slot_audio_of 가 쓴다."""
         assert self.encoder is not None, "encoder 없음 — attach_encoder() 먼저"
         if self.diar_head is not None and act is None:
+            if self.adapter_slotx is not None:
+                f, dlog, e = self.encode_diar(wav, wav_len, K, with_emb=True); a = self.predict_act(dlog).to(f.dtype)
+                return torch.cat([f, F.pad(a, (0, f.shape[-1] - a.shape[-1]))[:, None], F.pad(e.to(f.dtype), (0, f.shape[-1] - e.shape[-1]))[:, None]], 1)
             f, dlog = self.encode_diar(wav, wav_len, K); a = self.predict_act(dlog).to(f.dtype)
             return torch.cat([f, F.pad(a, (0, f.shape[-1] - a.shape[-1]))[:, None]], 1)
         assert act is None or self.adapter_inject is not None, "대상 화자 활동을 주었는데 adapter_inject 가 없다(add_spk_inject)"
@@ -122,12 +131,15 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.adapter_inject = nn.Sequential(nn.Linear(d, int(hidden)), nn.GELU(), nn.Linear(int(hidden), d)).to(dev)
         with torch.no_grad(): self.adapter_inject[-1].weight.zero_(); self.adapter_inject[-1].bias.zero_()
         self.config.spk_inject_hidden = int(hidden)
-    def chunk_embed(self, feats, act=None):                                       # (B,S,K,Din) → (B,K,D)
-        """act (B, K', ≤n) 슬롯 활동(0–1, E5 — 슬롯 순서 = 창에서 먼저 말한 순서) — 있으면 오디오 토큰에 adapter_slot(act) = Σ a_s·e_s 를 더한다(K' ≠ K 면 0 채움·자름)."""
+    def chunk_embed(self, feats, act=None, mix_mask=None):                       # (B,S,K,Din) → (B,K,D)
+        """act (B, K', ≤n) 슬롯 활동(0–1, E5 — 슬롯 순서 = 창에서 먼저 말한 순서) — 있으면 오디오 토큰에 adapter_slot(act) = Σ a_s·e_s 를 더한다(K' ≠ K 면 0 채움·자름).
+        mix_mask (B,) bool(E10): True 인 행은 섞인 소리(어댑터 출력)를 빈 오디오 임베딩 adapter_mixnull 로 바꾼다(활동 몫 adapter_slot 은 그대로)."""
         ce = self.adapter(feats[:, 0].float())
         if self.adapter_tap is not None:
             assert feats.shape[1] >= 2, f"두 스트림 모델(enc_tap_layer {self.config.enc_tap_layer})인데 특징 스트림이 {feats.shape[1]} 개 — model.encode 로 만든 특징을 쓴다"
             ce = ce + self.adapter_tap(feats[:, 1].float())
+        if mix_mask is not None and self.adapter_mixnull is not None:
+            ce = torch.where(mix_mask.to(ce.device)[:, None, None], self.adapter_mixnull.to(ce.dtype)[None, None].expand_as(ce), ce)
         if act is None and self.diar_head is not None and feats.shape[1] >= 2: act = feats[:, 1, :, : self.adapter_slot.in_features]   # E6 encode 의 예측 활동 스트림
         if act is not None:
             assert self.adapter_slot is not None, "슬롯 활동을 주었는데 adapter_slot 이 없다(add_slot_input)"
@@ -179,12 +191,42 @@ class VapAsrForStreamingASR(PreTrainedModel):
         v = act[b[:, None], j.clamp(0, Kp - 1), s.clamp(max=N - 1)[:, None]].float() * ok
         return self.adapter_tagact(v.to(self.adapter_tagact.weight.dtype))
 
-    def tag_embeds(self, k: int, act, n: int):
-        """E9 디코드: 청크(라운드) k 의 태그 n 개 입력 임베딩 (n, D) — 태그 행 + 그 슬롯 활동(act (K, N) 0/1, None 이면 태그 행만)."""
+    def tag_embeds(self, k: int, act, n: int, X=None):
+        """E9 디코드: 청크(라운드) k 의 태그 n 개 입력 임베딩 (n, D) — 태그 행 + 그 슬롯 활동(act (K, N) 0/1, None 이면 태그 행만)
+        + E10 슬롯 소리 토큰 X (K, N, D)[k](k ≥ K — flush — 는 더하지 않는다)."""
         emb = self.get_input_embeddings().weight; E = emb[torch.tensor(self.slot_ids(n), device=emb.device)]
-        if self.adapter_tagact is None or act is None: return E
-        s = torch.arange(n, device=emb.device)
-        return E + self.tag_act_embed(act[None].to(emb.device), torch.zeros_like(s), torch.full_like(s, int(k)), s).to(E.dtype)
+        if self.adapter_tagact is not None and act is not None:
+            s = torch.arange(n, device=emb.device)
+            E = E + self.tag_act_embed(act[None].to(emb.device), torch.zeros_like(s), torch.full_like(s, int(k)), s).to(E.dtype)
+        if X is not None and int(k) < X.shape[0]: E = E + X[int(k), :n].to(device=E.device, dtype=E.dtype)
+        return E
+
+    def add_slot_audio(self, d: int = 512, blocks: int = 4, kernel: int = 15, ffn: int = 2048, mix_drop: float = 0.5) -> None:
+        """E10 슬롯 추출기를 켠다(2026-10-29 — wiki output-diarization-integration-20261025 10 절, vapasr/hf/slot_audio): 인코더 마지막 층 + 화자 단서 임베딩 + 슬롯 활동 →
+        슬롯별 소리 토큰(태그 자리에 더한다), 출력 Linear 0 초기화 → 붙인 직후 출력은 그대로. adapter_mixnull = 섞인 소리 토큰을 지울 때의 빈 임베딩(0 초기화).
+        화자 단서 임베딩(추출기 embed — 탭 가중합·LN·투영)은 지금 헤드의 embed 값으로 시작한다(헤드를 나중에 바꿔 끼워도 추출기 입력은 그대로).
+        mix_drop: 학습 표본마다 이 확률로 섞인 소리 토큰을 지운다(config.slot_mix_drop). 슬롯 블록(E9)·화자 분리 헤드(E6)가 있어야 한다. 이미 있으면 같은 설정인지만 본다."""
+        assert getattr(self.config, "slot_blocks", False) and self.diar_head is not None, "E10 은 슬롯 블록(add_slot_blocks)과 화자 분리 헤드(add_diar_head) 뒤에"
+        from .slot_audio import SlotAudio
+        hc = self.diar_head.cfg
+        cfg = dict(n_streams=int(hc["n_streams"]), d_enc=int(hc["d_in"]), d_emb=int(hc["d"]), d=int(d), blocks=int(blocks), kernel=int(kernel), ffn=int(ffn), d_out=int(self.config.adapter_d_out))
+        assert cfg["d_emb"] <= int(self.config.adapter_d_in) == cfg["d_enc"], f"화자 단서 임베딩 {cfg['d_emb']} 차원은 인코더 특징 {self.config.adapter_d_in} 차원 안에 담겨야 한다(encode 셋째 스트림)"
+        self.config.slot_mix_drop = float(mix_drop)
+        if self.adapter_slotx is not None:
+            assert dict(self.config.slot_audio_cfg) == cfg, f"이미 다른 슬롯 추출기 {self.config.slot_audio_cfg} — {cfg}"; return
+        dev = next(self.adapter.parameters()).device
+        self.adapter_slotx = SlotAudio(**cfg).to(dev); self.adapter_mixnull = nn.Parameter(torch.zeros(self.config.adapter_d_out, device=dev))
+        with torch.no_grad():                                                                     # 화자 단서 임베딩 = 지금 헤드의 embed 에서 시작
+            self.adapter_slotx.mix.copy_(self.diar_head.mix); self.adapter_slotx.ln_t.load_state_dict(self.diar_head.ln.state_dict())
+            self.adapter_slotx.proj_t.load_state_dict(self.diar_head.proj.state_dict())
+        self.config.slot_audio_cfg = cfg
+
+    def slot_audio_of(self, feats, act, seg: int = 4096):
+        """E10 디코드: feats (S ≥ 3, K, D)(model.encode·encode_long — 스트림 0 내용·2 헤드 임베딩), act (K, N) → 슬롯 소리 토큰 (K, N, D) 또는 None(E10 아님)."""
+        if self.adapter_slotx is None or act is None: return None
+        assert feats.dim() == 3 and feats.shape[0] >= 3, f"E10 특징은 (3, K, D)(내용·활동·헤드 임베딩) — {tuple(feats.shape)}"
+        de = int(self.config.slot_audio_cfg["d_emb"])
+        return self.adapter_slotx(feats[0][None], feats[2][None, :, :de], act[None].to(feats.device), seg=seg)[0]
 
     def block_act(self, feats, act=None):
         """E9 디코드의 태그 활동 (K, N): act 를 주면 그것, 화자 분리 헤드(E6) 특징이면 예측 활동 스트림(chunk_embed 와 같은 것), 아니면 None. feats (S, K, D)."""
@@ -192,16 +234,21 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if self.diar_head is not None and self.adapter_slot is not None and feats.shape[0] >= 2: return feats[1, :, : self.adapter_slot.in_features]
         return None
 
-    def _tag_add(self, E, ids, tag_chunk, act, packed: bool):
-        """build: 태그 위치(tag_chunk ≥ 0) 임베딩에 tag_act_embed 를 더한다(act 없으면 그대로). packing 이면 tag_chunk = 표본 · TAG_STRIDE + 청크."""
+    def _tag_add(self, E, ids, tag_chunk, act, packed: bool, slot_x=None):
+        """build: 태그 위치(tag_chunk ≥ 0) 임베딩에 tag_act_embed 를 더한다(act 없으면 그대로). packing 이면 tag_chunk = 표본 · TAG_STRIDE + 청크.
+        slot_x (B, Kx, N, D)(E10): 태그 (b, k, s) 에 slot_x[b, k, s] 를 더한다(k ≥ Kx 는 0)."""
         sel = tag_chunk >= 0
-        if act is None or not bool(sel.any()): return E
+        if (act is None and slot_x is None) or not bool(sel.any()): return E
         tc = tag_chunk[sel]
         b = tc // TAG_STRIDE if packed else torch.arange(tag_chunk.shape[0], device=tc.device)[:, None].expand_as(tag_chunk)[sel]
         k = tc % TAG_STRIDE if packed else tc
         s = (ids[sel][:, None] == torch.tensor(self.slot_ids(), device=ids.device)[None]).long().argmax(-1)
-        self._tagact_used = True
-        return E.index_put((sel,), E[sel] + self.tag_act_embed(act.to(E.device), b, k, s).to(E.dtype))
+        add = 0
+        if act is not None: self._tagact_used = True; add = self.tag_act_embed(act.to(E.device), b, k, s).to(E.dtype)
+        if slot_x is not None:
+            Kx, Nx = slot_x.shape[1], slot_x.shape[2]; ok = (k < Kx) & (s < Nx)
+            add = add + slot_x[b, k.clamp(max=Kx - 1), s.clamp(max=Nx - 1)].to(E.dtype) * ok[:, None].to(E.dtype); self._slotx_used = True
+        return E.index_put((sel,), E[sel] + add)
 
     def add_diar_head(self, cfg: dict, taps, state: Optional[dict] = None, weight: float = 0.5, alpha: float = 0.5, threshold: float = 0.45, ramp=(0.3, 0.9)) -> None:
         """E6(2026-10-26 — output-diarization-integration-20261025 6 절): 인과 화자 분리 헤드(vapasr.hf.diar.DiarBranch, cfg 의 lookahead)를 인코더 탭(taps — 층 번호,
@@ -215,11 +262,13 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.config.diar_head_cfg, self.config.diar_taps = dict(cfg), [int(x) for x in taps]
         self.config.diar_weight, self.config.diar_alpha, self.config.act_threshold, self.config.act_pred_ramp = float(weight), float(alpha), float(threshold), [float(x) for x in ramp]
 
-    def encode_diar(self, wav, wav_len, K):
-        """E6: 인코더를 한 번 돌려 (ASR 특징 (B, 1, Kmax, D), 화자 분리 logits (B, Kmax, N)) — 헤드는 탭 스트림 전부(0 = 마지막 층)를 본다."""
+    def encode_diar(self, wav, wav_len, K, with_emb: bool = False):
+        """E6: 인코더를 한 번 돌려 (ASR 특징 (B, 1, Kmax, D), 화자 분리 logits (B, Kmax, N)) — 헤드는 탭 스트림 전부(0 = 마지막 층)를 본다.
+        with_emb(E10): 슬롯 추출기의 화자 단서 임베딩 (B, Kmax, d_emb)(adapter_slotx.embed — 같은 탭 스트림에서)도 함께 → 셋."""
         assert self.encoder is not None and self.diar_head is not None
         allf = self.encoder(wav, wav_len, K, taps=tuple(self.config.diar_taps))
         pad = torch.arange(allf.shape[2], device=allf.device)[None] >= K.to(allf.device)[:, None]
+        if with_emb: return allf[:, :1], self.diar_head(allf, pad), self.adapter_slotx.embed(allf)
         return allf[:, :1], self.diar_head(allf, pad)
 
     def predict_act(self, logits):
@@ -239,12 +288,14 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.config.enc_tap_layer, self.config.enc_tap_hidden = int(layer), h
 
     # ── 학습 forward
-    def build(self, feats, ids, is_audio, chunk_of, packed: bool = False, act_in=None, tag_chunk=None):
-        """tag_chunk(E9 — (B, L) 또는 packing (1, N)): 태그 위치 임베딩에 그 슬롯 최근 활동(act_in, 없으면 E6 예측 활동 스트림)을 더한다(_tag_add)."""
-        emb = self.get_input_embeddings(); E = emb(ids); ce = self.chunk_embed(feats, act_in).to(E.dtype); D = E.shape[-1]
+    def build(self, feats, ids, is_audio, chunk_of, packed: bool = False, act_in=None, tag_chunk=None, slot_x=None, mix_mask=None):
+        """tag_chunk(E9 — (B, L) 또는 packing (1, N)): 태그 위치 임베딩에 그 슬롯 최근 활동(act_in, 없으면 E6 예측 활동 스트림)을 더한다(_tag_add).
+        slot_x (B, Kmax, N, D)(E10 슬롯 소리 토큰)가 있으면 태그 위치에 그 슬롯·청크의 x 도 더한다(청크 ≥ Kmax — flush — 는 0). mix_mask: chunk_embed."""
+        emb = self.get_input_embeddings(); E = emb(ids); D = E.shape[-1]
+        ce = (self.chunk_embed(feats, act_in) if mix_mask is None else self.chunk_embed(feats, act_in, mix_mask=mix_mask)).to(E.dtype)   # 지우지 않으면 예전 호출 그대로
         if tag_chunk is not None and self.adapter_tagact is not None:
             a = act_in if act_in is not None else (feats[:, 1, :, : self.adapter_slot.in_features] if self.diar_head is not None and self.adapter_slot is not None and feats.shape[1] >= 2 else None)
-            E = self._tag_add(E, ids, tag_chunk, a, packed)
+            E = self._tag_add(E, ids, tag_chunk, a, packed, slot_x=slot_x)
         if packed: ce = ce.reshape(1, -1, D)                                          # (B,Kmax,D) → (1,B·Kmax,D); chunk_of 는 packing.pack_batch 의 전역 인덱스
         g = torch.gather(ce, 1, chunk_of.clamp(min=0)[..., None].expand(-1, -1, D))
         return torch.where(is_audio[..., None], g, E)
@@ -270,10 +321,12 @@ class VapAsrForStreamingASR(PreTrainedModel):
         loss_switch·top1_hold)만 계산한다 — 손실은 그대로(가중은 데이터셋의 pos_weight 가 맡는다).
         tag_chunk (E9 슬롯 블록, labels 와 같은 인덱싱): 태그 위치 임베딩에 그 슬롯 최근 활동(act_in)을 더한다(build). 멈춤 label 은 다음 입력 위치의 <NEXT_AUDIO> 라
         손실 규칙은 그대로다."""
-        loss_diar_t = diar_st = None; self._tagact_used = False
+        loss_diar_t = diar_st = None; self._tagact_used = False; self._slotx_used = False; demb = None
         if wav is not None and self.diar_head is not None:                                         # E6: 인코더 한 번 → ASR 특징 + 화자 분리 logits
             assert target_act is None, "E6 는 대상 화자 모드(target_act)와 함께 쓰지 않는다"
-            feats, dlog = self.encode_diar(wav, wav_len, K); pred = self.predict_act(dlog)
+            if self.adapter_slotx is not None: feats, dlog, demb = self.encode_diar(wav, wav_len, K, with_emb=True)   # E10: 헤드 임베딩도(슬롯 추출기 입력)
+            else: feats, dlog = self.encode_diar(wav, wav_len, K); demb = None
+            pred = self.predict_act(dlog)
             from .diar import shift_frames
             R = int(getattr(self.config, "act_shift", 0) or 0)                                     # E8: 헤드 위치 p = 프레임 p − R 의 활동(정답·흔든 정답 입력을 R 만큼 민다)
             if activity is not None:                                                                # 손실은 packing 으로 펴기 전에(활동 (B, Kmax, S))
@@ -300,19 +353,24 @@ class VapAsrForStreamingASR(PreTrainedModel):
                 act_in = torch.where((torch.rand(pred.shape[0], device=pred.device) < rho)[:, None, None], pa, ai)
             else: act_in = pred
         elif wav is not None: feats = self.encode(wav, wav_len, K, act=target_act)          # target_act (B, Kmax): E2 대상 화자 활동(없으면 예전 그대로)
+        slot_x = mix_mask = None
+        if self.adapter_slotx is not None and tag_chunk is not None and demb is not None and act_in is not None:   # E10: 슬롯 소리 토큰(같은 활동 입력으로)
+            slot_x = self.adapter_slotx(feats[:, 0], demb, act_in)
+            p_ = float(getattr(self.config, "slot_mix_drop", 0.0) or 0.0)
+            if self.training and p_ > 0: mix_mask = torch.rand(feats.shape[0], device=feats.device) < p_
         nw = self.config.next_weight if next_weight is None else float(next_weight)
         packed = position_ids is not None; varlen = is_varlen(self.thinker)
         if packed:
             fa = packed_kwargs(position_ids=position_ids) if varlen else {}
-            h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of, packed=True, act_in=act_in, tag_chunk=tag_chunk), attention_mask=None, position_ids=position_ids,
+            h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of, packed=True, act_in=act_in, tag_chunk=tag_chunk, slot_x=slot_x, mix_mask=mix_mask), attention_mask=None, position_ids=position_ids,
                                    use_cache=False, **fa).last_hidden_state
             if activity is not None:
                 activity = activity.reshape(1, -1, activity.shape[-1])
                 activity_mask = activity_mask.reshape(1, -1) if activity_mask is not None else None
         elif varlen and mask is not None:
-            h = self._thinker_unpadded(self.build(feats, ids, is_audio, chunk_of, act_in=act_in, tag_chunk=tag_chunk), mask.bool())
+            h = self._thinker_unpadded(self.build(feats, ids, is_audio, chunk_of, act_in=act_in, tag_chunk=tag_chunk, slot_x=slot_x, mix_mask=mix_mask), mask.bool())
         else:
-            h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of, act_in=act_in, tag_chunk=tag_chunk), attention_mask=mask).last_hidden_state
+            h = self.thinker.model(inputs_embeds=self.build(feats, ids, is_audio, chunk_of, act_in=act_in, tag_chunk=tag_chunk, slot_x=slot_x, mix_mask=mix_mask), attention_mask=mask).last_hidden_state
         tgt = labels[:, 1:]; sel = tgt != -100; t = tgt[sel]
         logits = self.thinker.lm_head(h[:, :-1][sel]).float()                       # 라벨 위치만 (전 위치 fp32 logits 는 OOM)
         alt = labels_alt[:, 1:][sel] if labels_alt is not None else None; w = soft_w[:, 1:][sel] if soft_w is not None else None
@@ -353,6 +411,9 @@ class VapAsrForStreamingASR(PreTrainedModel):
         elif self.diar_head is not None and self.training: loss = loss + 0.0 * sum(p.sum() for p in self.diar_head.parameters())   # 활동 라벨 없는 행(replay): DDP 가 기다리지 않게
         if self.adapter_slot is not None and act_in is None and self.training: loss = loss + 0.0 * self.adapter_slot.weight.sum()   # E5 활동 입력 없는 행(replay): 같은 이유(E6 은 헤드 예측이 늘 들어간다)
         if self.adapter_tagact is not None and not self._tagact_used and self.training: loss = loss + 0.0 * self.adapter_tagact.weight.sum()   # E9 태그 없는 행(replay): 같은 이유
+        if self.adapter_slotx is not None and self.training:                                    # E10: 쓰지 않은 행(replay)·지우지 않은 배치도 그래프에 묶는다(DDP)
+            if not self._slotx_used: loss = loss + 0.0 * sum(p.sum() for p in self.adapter_slotx.parameters())
+            loss = loss + 0.0 * self.adapter_mixnull.sum()
         dec = self._decision_stats(logits, t, dec_kind[:, 1:][sel]) if dec_kind is not None else {}
         out = VapAsrOutput(loss=loss, loss_next=st["loss_next"], loss_text=st["loss_text"], top1_text=st["top1_text"], n_labels=int(t.numel()),
                            loss_eot=st["loss_eot"], loss_act=(loss_act.item() if loss_act is not None else None), act_acc=act_st.get("act_acc"), n_soft=st["n_soft"],
@@ -576,5 +637,6 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if self.adapter_inject is not None: enc["adapter_inject"] = self.adapter_inject.state_dict()
         if self.adapter_slot is not None: enc["adapter_slot"] = self.adapter_slot.state_dict()
         if self.adapter_tagact is not None: enc["adapter_tagact"] = self.adapter_tagact.state_dict()
+        if self.adapter_slotx is not None: enc["adapter_slotx"] = self.adapter_slotx.state_dict(); enc["adapter_mixnull"] = self.adapter_mixnull.detach().cpu()
         if self.diar_head is not None: enc["diar_head"] = self.diar_head.state_dict()
         return dict(adapter=self.adapter.state_dict(), thinker={k: v.detach().to(torch.bfloat16).cpu() for k, v in self.thinker.state_dict().items()}, sp_ids=self.sp_ids, mono=True, full_ft=True, **enc)

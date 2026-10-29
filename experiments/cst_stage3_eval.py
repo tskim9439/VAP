@@ -19,6 +19,7 @@
     — 추측 prefill)·오라클(block_sequence)을 쓰고, 행에 llm_der(<BEGIN>·<EOT> 로 만든 슬롯 활동의 DER 셈 — diar.der_counts, diar_eval 과 같은 프레임 마스크),
     --window full 이면 forwards·chunk_ms(청크 디코드 ms 평균)·chunk_ms_p90. --verify 는 배치 대 추측 prefill 직렬을 대조한다. 참조·채점은 같다.
     --oracle --blocks: 학습 전에 E9 정답 시퀀스를 같은 규칙으로 채점한다(cp·agn 0, LLM DER 는 구간 끝 반올림만).
+  E10 슬롯 추출기 체크포인트(2026-10-29)는 태그마다 슬롯 소리 토큰을 더해 디코드한다(model.slot_audio_of). --mix-off: 섞인 소리 토큰을 빈 임베딩으로 — 슬롯 소리만으로(config 에 mix_off).
   --en-norm whisper(2026-10-27): 영어 채점을 Whisper EnglishTextNormalizer 로(채움말 제거 등 — vapasr.data.cst_eval.set_en_norm). 외부 AMI 수치와 견줄 때
     --from-predictions 와 함께 새 --out 에 다시 매긴다(raw/sources/experiments/2026-10-27-std-rescore/rescore_std.sh). config 에 en_norm 이 남는다(ours 면 키 없음).
   --spk-guide on,margin[,span] [--spk-guide-hold] [--spk-guide-no-insert]: 화자 헤드 안내 디코딩(batch_decode.SpkGuide — model.spk_head 가 있는 Stage 3 체크포인트).
@@ -264,6 +265,8 @@ def run(a):
     blocks = bool(cfg.get("slot_blocks") if model is None else getattr(model.config, "slot_blocks", False)) or bool(getattr(a, "blocks", False))   # E9 슬롯 블록(2026-10-28)
     assert not getattr(a, "blocks", False) or a.oracle, "--blocks 는 --oracle 과 함께(학습 전 E9 형식 점검)"
     BEGIN = sp.get("<ONSET>") if blocks else None
+    mix_off = bool(getattr(a, "mix_off", False))
+    assert not mix_off or (model is not None and getattr(model, "adapter_mixnull", None) is not None) or a.from_predictions, "--mix-off 는 E10(슬롯 추출기) 체크포인트 디코드"
     if blocks:
         assert not (sb or a.spk_guide or getattr(a, "target_oracle", False) or getattr(a, "act_tag_guide", False)), \
             "E9 슬롯 블록은 --switch-bias·--spk-guide·--target-oracle·--act-tag-guide 와 함께 쓰지 않는다(태그는 정해진 입력)"
@@ -306,7 +309,7 @@ def run(a):
                 **({"act_oracle": True} if act_or else {}), **({"aosc": acfg.to_dict()} if acfg is not None else {}),
                 **({"diar_head_override": os.path.abspath(a.diar_head_override)} if getattr(a, "diar_head_override", None) else {}),
                 **({"en_norm": a.en_norm} if getattr(a, "en_norm", "ours") != "ours" else {}),
-                **({"act_tag_guide": True} if getattr(a, "act_tag_guide", False) else {}), **({"slot_blocks": True} if blocks else {}),
+                **({"act_tag_guide": True} if getattr(a, "act_tag_guide", False) else {}), **({"slot_blocks": True} if blocks else {}), **({"mix_off": True} if mix_off else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
@@ -371,7 +374,8 @@ def run(a):
                                 Na = int(model.adapter_slot.in_features); rs = {}; rt = make_retag(feats[j][1, :, :Na], spk[:Na], delta, stats=rs)
                             td = time.time(); bx = {}
                             if blocks:                                                                          # E9: 추측 prefill 긴 디코드
-                                em, fc, rd, used, nf, tk = long_block_decode(model, feats[j], prefixes[j], len(ds.slots(m[0])[1][:n_slots]), max_flush_rounds=a.max_flush, context_s=a.context_s)
+                                em, fc, rd, used, nf, tk = long_block_decode(model, feats[j], prefixes[j], len(ds.slots(m[0])[1][:n_slots]), max_flush_rounds=a.max_flush, context_s=a.context_s,
+                                                                             mix_off=mix_off)
                                 bx = dict(forwards=nf, chunk_ms=round(float(np.mean(tk)), 2), chunk_ms_p90=round(float(np.percentile(tk, 90)), 2))
                             else: em, fc, rd, used = long_decode(model, feats[j], prefixes[j], max_flush_rounds=a.max_flush, context_s=a.context_s, retag=rt)
                             states.append(SimpleNamespace(emitted=em, forced=fc, flush_rounds=rd, positions=used, dec_s=round(time.time() - td, 1), **({"retag": rs} if rs is not None else {}),
@@ -389,7 +393,7 @@ def run(a):
                             if blocks:                                                                      # E9: 슬롯 블록 배치 디코드(선언 슬롯 수 = prefix 의 언어 수)
                                 Dj = len(ds.slots(meta[js[0]][0])[1][:n_slots])
                                 for j, st_ in zip(js, decode_blocks_batch(model, [feats[j] for j in js], [list(pre)] * len(js), Dj, max_flush_rounds=a.max_flush,
-                                                                          acts=[acts[j] for j in js] if acts is not None else None)): states[j] = st_
+                                                                          acts=[acts[j] for j in js] if acts is not None else None, mix_off=mix_off)): states[j] = st_
                                 continue
                             for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush, spk_guide=guide,
                                                                **(dict(switch_bias=sb, row_modes=[modes[j] for j in js], word_init=wi) if sb else {}),
@@ -399,7 +403,7 @@ def run(a):
                         for j in sorted({0, len(meta) - 1}):
                             if blocks:                                                                      # E9: 추측 prefill 직렬(LongThinker) 대 배치
                                 from vapasr.hf.long_session import long_block_decode as _lbd
-                                serial, forced, _, _, _, _ = _lbd(model, feats[j], prefixes[j], len(ds.slots(meta[j][0])[1][:n_slots]), max_flush_rounds=a.max_flush, blk=256)
+                                serial, forced, _, _, _, _ = _lbd(model, feats[j], prefixes[j], len(ds.slots(meta[j][0])[1][:n_slots]), max_flush_rounds=a.max_flush, blk=256, mix_off=mix_off)
                             else: serial, forced, _, rounds = model.stream_decode(feats[j], prefixes[j], max_flush_rounds=a.max_flush)
                             assert serial == states[j].emitted and forced == states[j].forced, f"직렬/배치 불일치 {meta[j][1]}@{meta[j][2]} δ{delta}"
                         checked.add(key); print(f"PARITY {key} PASS", flush=True)
@@ -468,6 +472,7 @@ def main():
     q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1); q.add_argument("--batch-size", type=int, default=32)
     q.add_argument("--max-flush", type=int, default=None); q.add_argument("--dtype", default="float32"); q.add_argument("--encoder", default=None); q.add_argument("--verify", action="store_true")
     q.add_argument("--oracle", action="store_true", help="모델 없이 정답 시퀀스를 채점(지표 sanity)")
+    q.add_argument("--mix-off", action="store_true", help="E10 슬롯 추출기 체크포인트: 섞인 소리 토큰을 빈 임베딩으로(슬롯 소리 토큰만으로 받아쓰기)")
     q.add_argument("--blocks", action="store_true", help="--oracle 을 E9 슬롯 블록 정답(block_sequence)으로 — 체크포인트 config 에 slot_blocks 가 없어도(학습 전 점검)")
     q.add_argument("--spk-guide", default=None, type=lambda s: [float(x) for x in s.split(",")], help="화자 헤드 안내 디코딩 'on,margin[,span]'(예 0.5,0.3)")
     q.add_argument("--spk-guide-hold", action="store_true", help="안내: 헤드가 현재 화자를 가리키면 모델의 태그 전환을 막는다(EOT 용 태그도 막혀 EOT 재현율이 줄 수 있다)")

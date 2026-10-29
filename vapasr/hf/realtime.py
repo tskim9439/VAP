@@ -162,19 +162,20 @@ def realtime_decode(model, gt: GraphThinker, feats, prefix_ids: List[int], max_f
 
 @torch.inference_mode()
 def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=None, max_flush_rounds: Optional[int] = None, max_per_chunk: int = 0,
-                          max_total_per_chunk: float = 6.0, on_chunk=None):
+                          max_total_per_chunk: float = 6.0, on_chunk=None, mix_off: bool = False):
     """E9 슬롯 블록 디코드(2026-10-28 — cst_dialogue 모듈 설명 E9): batch_decode.decode_blocks_batch 와 같은 출력 규칙을 GraphThinker·LongThinker(run·run_all)로 돈다.
     청크마다 [오디오 k, 태그 0 … D−1] 를 한 forward 로 미리 넣고(run_all — 위치마다 argmax), 태그 s 뒤 예측이 멈춤이 아니면 태그 s 바로 뒤로 되돌아가 그 슬롯 출력을
     한 토큰씩 낸 뒤(뒤 태그 자리는 덮어쓴다 — 쿼리는 자기 위치까지만 본다) 남은 태그를 다시 한 forward 로 넣는다. 모든 슬롯이 멈추는 청크는 forward 한 번이다.
     feats (1,K,Din)·(S,K,Din) 또는 (K,Din), act (K, N) 태그 활동(없으면 model.block_act). on_chunk(k, 오디오 k 위치): LongThinker 문맥 창.
+    E10(model.adapter_slotx): 태그마다 그 슬롯 소리 토큰(model.slot_audio_of)을 더한다. mix_off: 섞인 소리 토큰을 adapter_mixnull 로(decode_blocks_batch 와 같다).
     → (emitted [(k, tid)] — 슬롯 출력 앞에 그 슬롯 태그, forced, step_ms [K], flush_rounds, flush_ms, forward 수)."""
     from .batch_decode import block_stops
     cfg = model.config
     max_flush_rounds = cfg.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
     if feats.dim() == 2: feats = feats[None]
     emb = gt.embed
-    ce = model.chunk_embed(feats[None])[0].to(emb.dtype)                                 # (K, D) — decode_blocks_batch 와 같은 adapter·형변환
-    A = model.block_act(feats, act)
+    ce = model.chunk_embed(feats[None], mix_mask=torch.ones(1, dtype=torch.bool, device=emb.device) if mix_off else None)[0].to(emb.dtype)   # (K, D) — decode_blocks_batch 와 같다
+    A = model.block_act(feats, act); X = model.slot_audio_of(feats, A) if getattr(model, "adapter_slotx", None) is not None else None
     K = ce.shape[0]; max_total = int(max_total_per_chunk * K) + 64
     cap = min(max_per_chunk, cfg.runaway_cap) if max_per_chunk else cfg.runaway_cap
     tags, stop, e_empty = model.slot_ids(D), block_stops(model, D), emb[model.empty_audio]
@@ -185,7 +186,7 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
     def block_round(k, head):
         """라운드 k(머리 = 오디오 k 또는 <EMPTY_AUDIO>) → 이 라운드에 낸 출력 수."""
         nonlocal pos
-        te = model.tag_embeds(k, A, D).to(emb.dtype)
+        te = model.tag_embeds(k, A, D, X).to(emb.dtype)
         r = gt.run_all(torch.cat([head[None], te]), pos); st["forwards"] += 1
         pr = dict(enumerate(r[1:])); at = {j: pos + 1 + j for j in range(D)}; pos += 1 + D; n_round = 0   # 태그 j 뒤 예측·태그 j 위치
         for s in range(D):
