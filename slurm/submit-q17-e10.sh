@@ -9,6 +9,8 @@
 # 쓰기(스케줄러 셸): bash slurm/submit-q17-e10.sh [--dry-run] [--partition P(기본 apex)] [--max-steps N(기본 5000)] [--global-slots P(기본 0.5)] [--mix-drop P(기본 0.5)]
 #                   [--window lo,hi] [--init DIR(기본 E9 final)] [--after JOBID[,JOBID…](모두 끝난 뒤 — afterany)] [--no-eval].
 #   아무것도 지우지 않는다. 산출 /soundai/Model/VAPASR/stage3-q17-e10.
+#   low_p_hpc(2026-10-29, 사용자 "low_p_hpc 로 제출할 수 있도록 해줘"): --partition low_p_hpc — submit-q17-f1.sh 가 선점 파티션 설정을 자동으로 건다
+#   (저장 250 step 마다 — 평가 ck3000·ck4000 은 그대로, MAX_RESTART 20, 선점 신호 → 저장 뒤 requeue, 재개는 마지막 완성 checkpoint). 평가 노드도 같은 파티션(--requeue).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 dry=""; part=apex; steps=5000; gs=0.5; md=0.5; dep=(); ev=(); win=(); init=""
