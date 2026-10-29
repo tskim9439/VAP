@@ -514,4 +514,30 @@ AMI 34 회의 × IHM-mix·SDM 을 통째로 디코드했다(LLM 문맥 30 s). �
   - 약하면 변형 A′(인코더 위쪽 m 층만 슬롯별로 다시 — 인코더 계산 +3m/L)로 간다.
   - 함께 볼 것: B 헤드 키우기(합성 대규모·앞보기 + AOSC·Sortformer 초기화는 결정 필요), C 슬롯 선언에 AOSC 프로필 임베딩.
 - 그림 설명 페이지: https://claude.ai/artifact/GB7BVFF3kktDWN1oVzdmoV
-- 사용자 결정 대기: E10 구현 여부, B 와 Sortformer 초기화 허용, A′ 허용.
+- 사용자 결정(2026-10-29): "E10 구현해놓자". B 와 A′ 는 아직 정하지 않았다.
+
+### E10 구현 (2026-10-29)
+- **슬롯 추출기** `vapasr/hf/slot_audio.SlotAudio`(16.6M, 이름이 adapter_ 로 시작해 adapter lr):
+  - 입력은 인코더 마지막 층(내용)과 화자 단서 임베딩(12 탭 가중합 → LN → 512)이다. 임베딩은 추출기 자신의 것이라 헤드를 E7a 로 바꿔 끼워도 입력이 그대로다. 헤드 embed 값으로 초기화한다.
+  - 슬롯마다 활동 [a_s, 다른 슬롯, 단독]과 프로필(그 슬롯 단독 활동 프레임의 누적 평균 임베딩 — 회의 통째면 회의 단위)로 FiLM 조건을 준다.
+  - 인과 depthwise conv 블록 4 개(kernel 15, 수용 영역 56 프레임 4.5 s)를 거친다. 출력 Linear 는 0 초기화라 붙인 직후는 E9 와 같다.
+  - 긴 입력은 조각으로 돌린다(통째와 같은 값).
+- **자리**: E9 슬롯 블록의 `<SPK_s>` 입력 = 태그 행 + 활동 지연 벡터(E9) + 슬롯 소리 토큰 x_s(k). 위치 수는 E9 와 같다.
+- **섞인 소리 토큰**: 학습 표본마다 0.5 확률로 빈 임베딩(adapter_mixnull)으로 바꾼다(`--mix-drop`). 평가는 켬(기본)과 끔(`--mix-off`) 둘 다 잰다.
+- **코드**:
+  - 모델: `add_slot_audio`·`slot_audio_of`, `encode` 셋째 스트림(화자 단서 임베딩), forward·build 의 slot_x·mix_mask, DDP 묶음.
+  - 디코드: `decode_blocks_batch`·`realtime_block_decode`·`long_block_decode(mix_off)`, `encode_long` AOSC 셋째 스트림.
+  - 학습: `stage3_train --slot-audio --mix-drop`.
+  - 평가: `cst_stage3_eval --mix-off`, `v3_eval_task.sh MIXOFF=1`.
+  - 제출: `slurm/submit-q17-e10.sh`, 평가 묶음 `q17-e10`.
+- **시험**: 맥 `tests/test_slot_audio.py` 7 개, 관련 183 개가 통과했다. 서버 시험 39 개도 통과했다.
+  - 다룬 것: 인과, 조각 = 통째, 헤드 embed 에서 시작, 태그 자리 더하기, 섞인 소리 지우기, gradient·묶음, 추측 prefill = 한 토큰씩.
+- **서버 GPU 스모크**(호스트 GPU 한 장, E9 final + 추출기, AMI 학습 창 3 개, `tmp/e9-check/e10_smoke.log`):
+  - forward/backward bf16 에서 손실이 유한하다. 추출기 출력층·빈 임베딩 모두 gradient 를 받는다. 메모리 최대는 39.1 GB 다.
+  - 창 하나(26 s)를 배치 디코드와 추측 prefill 긴 디코드로 풀면 섞인 소리 켬·끔 모두 출력이 같다.
+- **제출**: `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-q17-e10.sh)`.
+  - E9 final 에서 5,000 step, 2 노드, 창 20–40 s, mix-drop 0.5 다. 산출은 `/soundai/Model/VAPASR/stage3-q17-e10` 이다.
+  - 평가 q17-e10 은 GPU 마다 창 → 회의 통째 → 섞인 소리 끈 창 → 끈 회의 통째 순이다.
+- **판단 기준**:
+  - 창 귀속 몫이 E9(60 s 미만 IHM-mix eval 약 11)에서 E3 수준(약 6)으로 내려가는가.
+  - 회의 통째 LLM DER 혼동이 23.5–32.5 에서 헤드 수준(13.4–19.5)으로 내려가는가.
