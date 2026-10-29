@@ -10,8 +10,10 @@
   sil 로 바꿔 넣는다(학습 데이터에서 교사가 모두 무음이라 본 프레임의 h_layer 평균 — graft.pt). layer 0 · ĥ = 교사 h_0 · sil = embed_norm(learnable_sil_emb)
   이면 교사 스트리밍과 같다(tests/test_n3d_graft.py).
 - GraftExpert: 평가에 붙는 학생(N3DExpert 와 같은 probs·act 꼴) — graft.pt(어댑터·층·탭·sil·init) + N3D(.nemo) + 인코더(graft.pt 의 init, 고정)."""
+import json, os
 from typing import Optional
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -106,6 +108,19 @@ def stream(m, h, length, layer: int, sil, chunk: int = 4, rc: int = 0, fifo: int
     return p * (torch.arange(T, device=dev)[None] < L[:, None])[..., None]
 
 
+def encoder_taps(enc, wav, wav_len, K, taps, ch: int, core: int = 4800):
+    """우리 인코더 탭 (B, 1 + 탭, Kmax, D). 긴 한 줄(B = 1, K > core — 회의 통째)은 encode_long 과 같은 겹침 조각(long_session.segment_plan)으로 돌린다 —
+    인코더 메모리가 조각 크기다(2026-10-30: q17-graft 회의 DER 이 회의 통째 한 번에 OOM). 조각 = 통째와 같은 값(인코더 블록 ch 배수 경계)."""
+    if wav.shape[0] != 1 or int(K[0]) <= core: return enc(wav, wav_len, K, taps=taps)
+    from .long_session import segment_plan
+    w = wav[0, : int(wav_len[0])].detach().cpu().numpy(); Kk = int(K[0]); dev = wav.device; out = None
+    for seg, Ks, a0, c0, n in segment_plan(w, Kk, ch, core=core):
+        f = enc(torch.from_numpy(np.ascontiguousarray(seg, dtype=np.float32)).to(dev)[None], torch.tensor([len(seg)], device=dev), torch.tensor([Ks], device=dev), taps=taps)
+        if out is None: out = f.new_zeros(1, f.shape[1], Kk, f.shape[-1])
+        out[:, :, c0: c0 + n] = f[:, :, c0 - a0: c0 - a0 + n]; del f
+    return out
+
+
 class GraftExpert:
     """평가용 학생(N3DExpert 와 같은 probs·act 꼴). graft.pt = dict(state, cfg, layer, taps, sil, init, n3d, step) — n3d_graft_train 이 쓴다."""
 
@@ -117,12 +132,14 @@ class GraftExpert:
         self.adapter = GraftAdapter(**x["cfg"]); self.adapter.load_state_dict(x["state"]); self.adapter.to(device).eval()
         self.m, _ = load_n3d(n3d_path or x["n3d"], device)
         self.enc, _ = load_encoder(x["init"], nemotron_dir, device)
+        self.ch = int(json.load(open(os.path.join(x["init"], "config.json"))).get("encoder_right_context", 0) or 0) + 1   # 인코더 블록(조각 경계)
         self.cfg = dict(graft=graft_path, layer=self.layer, chunk=self.chunk, rc=self.rc, threshold=self.threshold, step=x.get("step"))
 
     @torch.no_grad()
     def probs(self, wav, wav_len, K, offline: bool = False) -> torch.Tensor:
-        """→ (B, max K, 8) 80 ms 확률 — 기본 스트리밍(청크 chunk), offline 이면 창 통째."""
-        f = self.enc(wav, wav_len, K, taps=self.taps)
+        """→ (B, max K, 8) 80 ms 확률 — 기본 스트리밍(청크 chunk), offline 이면 창 통째(창 길이만 — 회의 통째는 스트리밍으로)."""
+        assert not offline or int(K.max()) <= 4800, "offline 은 창(≤ 4800 프레임)만 — 회의 통째는 스트리밍으로"
+        f = encoder_taps(self.enc, wav, wav_len, K, self.taps, self.ch)
         with torch.autocast(wav.device.type, dtype=torch.bfloat16, enabled=wav.device.type == "cuda"):
             h = self.adapter(f)
             Km = int(K.max()); L = K.to(wav.device).long()

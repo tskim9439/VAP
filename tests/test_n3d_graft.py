@@ -20,6 +20,21 @@ def test_adapter_starts_linear_and_is_causal():
     assert torch.allclose(y[:, :t], y2[:, :t], atol=1e-5) and not torch.allclose(y[:, t:], y2[:, t:])           # 인과 — t 이후를 바꿔도 앞은 같다
 
 
+def test_encoder_taps_segments_equal_whole():
+    """긴 한 줄은 겹침 조각으로 — 프레임마다 그 프레임 오디오만 보는 가짜 인코더면 조각 = 통째(조각 경계·자르기 점검)."""
+    from vapasr.hf.n3d_graft import encoder_taps
+
+    class Enc:
+        def __call__(self, wav, wav_len, K, taps=()):
+            Kk = int(K.max()); x = torch.nn.functional.pad(wav, (0, max(0, Kk * 1280 - wav.shape[1])))[:, : Kk * 1280].reshape(wav.shape[0], Kk, 1280)
+            base = torch.stack([x.mean(-1), x.std(-1), x[..., 0]], -1)                                   # (B, K, 3)
+            return torch.stack([base * (j + 1) for j in range(1 + len(taps))], 1)                           # (B, 1 + 탭, K, 3)
+    g = torch.Generator().manual_seed(0); K = 130; w = torch.randn(1, K * 1280, generator=g)
+    whole = Enc()(w, torch.tensor([w.shape[1]]), torch.tensor([K]), taps=(1, 3))
+    seg = encoder_taps(Enc(), w, torch.tensor([w.shape[1]]), torch.tensor([K]), (1, 3), ch=4, core=32)
+    assert seg.shape == whole.shape and torch.allclose(seg, whole, atol=1e-6)
+
+
 _N3D = os.environ.get("VAPASR_N3D_PATH", "")
 real = pytest.mark.skipif(not (_N3D and os.path.exists(_N3D) and importlib.util.find_spec("nemo") is not None), reason="VAPASR_N3D_PATH(.nemo)·NeMo 가 있을 때만")
 
