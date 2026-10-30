@@ -29,6 +29,9 @@
     그 슬롯 활동이 없을 때 그 라운드 그 슬롯을 버린다(<EOT> 는 그대로). 행에 gated{text, begin}, config 에 act_gate. --verify(배치 대 직렬)도 같은 게이트로 대조한다.
     --follow-n3d(--from-predictions 전용): 원출력 행에 act_runs 가 없으면(2026-10-30 전 E11·--n3d 평가) 원출력 config 의 전문가 설정(n3d)으로 활동을 다시 계산한다(GPU —
     전문가만 읽는다). 창은 원 평가처럼 배치로 돌리므로 --batch-size·--world-size 를 원 평가와 같게 준다(AMI 창은 16·8).
+  --relabel-follow(2026-10-30, 사용자 "출력 쪽 재귀속을 먼저 실험하고 그 다음에 학습으로 고치는 것이 시도하는 게 나을거 같아"): 가설 단어 중 그 단어 슬롯의
+    활동이 꺼지고 다른 슬롯이 켜진 단어(follow_stats 의 off_other — 창 --follow-window)만 활동 슬롯으로 옮겨 채점한다. 단어 오디오 프레임 + FWD 까지의 활동만 쓰고
+    LLM 문맥은 바꾸지 않으므로 스트리밍 디코드에서 그대로 낼 수 있는 출력이다(원출력 재채점 = 온라인 결과). 행 follow 는 옮기기 전 셈, relabeled = 옮긴 단어 수.
   --encoder-state <graft.pt>(U3, 2026-10-30): 모델의 인코더를 그 graft.pt 의 enc(화자 분리와 함께 학습한 인코더 — n3d_graft_train --unfreeze-layers)로 바꿔
     디코드한다 — ASR 지킴 확인(E11 의 cp·agn 이 그대로인가). config 에 encoder_state.
   --en-norm whisper(2026-10-27): 영어 채점을 Whisper EnglishTextNormalizer 로(채움말 제거 등 — vapasr.data.cst_eval.set_en_norm). 외부 AMI 수치와 견줄 때
@@ -246,6 +249,8 @@ def run(a):
     assert not gate_w or not (a.oracle or a.from_predictions), "--act-gate 는 모델 디코드 전용(--oracle·--from-predictions 없이)"
     assert not fn3 or a.from_predictions, "--follow-n3d 는 --from-predictions 와 함께(원출력에 활동이 없을 때 전문가 활동을 다시 계산한다)"
     assert not getattr(a, "encoder_state", None) or not (a.oracle or a.from_predictions), "--encoder-state 는 모델 디코드 전용"
+    rlf = bool(getattr(a, "relabel_follow", False))
+    assert not (rlf and getattr(a, "relabel_act", None)), "--relabel-follow 와 --relabel-act 는 함께 쓰지 않는다"
     sb = None
     if getattr(a, "switch_bias", None):                                                        # V3 C3 상태 인지 교대 bias(교차 언어 창만) — 없으면 예전 디코드 그대로
         from vapasr.hf.batch_decode import SwitchBias
@@ -350,6 +355,7 @@ def run(a):
                 **({"act_tag_guide": True} if getattr(a, "act_tag_guide", False) else {}), **({"slot_blocks": True} if blocks else {}), **({"mix_off": True} if mix_off else {}),
                 **({"act_gate": list(gate_w)} if gate_w else {}), **({"follow_window": list(fwin)} if fwin != (3, 1) else {}), **({"follow_n3d": True} if fn3 else {}),
                 **({"encoder_state": os.path.abspath(a.encoder_state)} if getattr(a, "encoder_state", None) else {}),
+                **({"relabel_follow": list(fwin)} if rlf else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
@@ -488,6 +494,10 @@ def run(a):
                             llm_der = der_counts(torch.nn.functional.pad(ha, (0, Nd - ha.shape[1])), ra, fm)
                         pr_ = prev.get((f"{cid}@{t0w}", delta), {})                                     # 활동 추종: 디코드 활동 > 다시 계산한 전문가 활동 > 원출력 act_runs
                         fa = A_np[j] if A_np[j] is not None else FA[j] if FA[j] is not None else act_from_runs(pr_["act_runs"], K) if blocks and "act_runs" in pr_ else None
+                        nrl = None
+                        if rlf:                                                                         # 출력 쪽 재귀속: 활동을 어긴 단어만 활동 슬롯으로(스트리밍 그대로)
+                            assert blocks and fa is not None, f"--relabel-follow: 활동이 없다(슬롯 블록 디코드 행·act_runs 또는 --follow-n3d) {cid}@{t0w}"
+                            fs_, hw = follow_stats(hw0, fa, delta, frame_mask=fm.numpy(), back=fwin[0], fwd=fwin[1]); nrl = fs_["off_other"]
                         if getattr(a, "relabel_act", None):                                             # 진단: 가설 단어를 활동으로 다시 귀속
                             from vapasr.data.cst_eval import relabel_by_activity
                             z = np.load(os.path.join(a.relabel_act, f"{cid}@full.npz")); A_ = z["ref" if a.relabel_oracle else "prob"].astype(np.float32)
@@ -506,7 +516,7 @@ def run(a):
                                    **({"sb_flips": s.sb_flips, "sb_points": s.sb_points} if hasattr(s, "sb_flips") else {}),
                                    **({"positions": s.positions, "enc_s": enc_s, "dec_s": s.dec_s} if hasattr(s, "positions") else {}),
                                    **({"retag": s.retag} if hasattr(s, "retag") else {}), **({"llm_der": llm_der} if llm_der is not None else {}), **(s.blk if hasattr(s, "blk") else {}),
-                                   **({"gated": s.gated} if hasattr(s, "gated") else {}), **fx_row,
+                                   **({"gated": s.gated} if hasattr(s, "gated") else {}), **fx_row, **({"relabeled": nrl} if nrl is not None else {}),
                                    ref_text=[" ".join(w for w, _ in r) for r in ref_w], hyp_text=[" ".join(w for w, _ in h) for h in hw], **sc)
                         fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
                 print(f"  {c}: {min(b0 + bs, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
@@ -578,6 +588,7 @@ def main():
     q.add_argument("--follow-window", default=(3, 1), type=ints, help="활동 추종 진단 창 BACK,FWD(단어 오디오 프레임 기준, 기본 3,1 — cst_eval.follow_stats)")
     q.add_argument("--follow-n3d", action="store_true", help="--from-predictions: 원출력에 act_runs 가 없으면 원 평가 config 의 전문가(n3d)로 활동을 다시 계산(GPU)")
     q.add_argument("--encoder-state", default=None, help="U3: 인코더를 이 graft.pt 의 enc(화자 분리와 함께 학습)로 바꿔 디코드 — ASR 지킴 확인")
+    q.add_argument("--relabel-follow", action="store_true", help="출력 쪽 재귀속: 활동을 어긴 가설 단어만 활동 슬롯으로 옮겨 채점(창 --follow-window, 스트리밍 그대로 낼 수 있는 출력)")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")
     q.add_argument("--declare", type=int, default=None, help="prefix 선언 슬롯 수 하한(기본 max(2, 화자 수); 화자 수를 모르는 추론 흉내 = 4)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "
