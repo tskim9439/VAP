@@ -32,6 +32,7 @@
   --relabel-follow(2026-10-30, 사용자 "출력 쪽 재귀속을 먼저 실험하고 그 다음에 학습으로 고치는 것이 시도하는 게 나을거 같아"): 가설 단어 중 그 단어 슬롯의
     활동이 꺼지고 다른 슬롯이 켜진 단어(follow_stats 의 off_other — 창 --follow-window)만 활동 슬롯으로 옮겨 채점한다. 단어 오디오 프레임 + FWD 까지의 활동만 쓰고
     LLM 문맥은 바꾸지 않으므로 스트리밍 디코드에서 그대로 낼 수 있는 출력이다(원출력 재채점 = 온라인 결과). 행 follow 는 옮기기 전 셈, relabeled = 옮긴 단어 수.
+  --follow-detail(2026-10-30, 활동 추종 학습 설계용): 행에 follow_detail(센 단어마다 cst_eval.follow_stats detail 꼴 — 범주·슬롯·말 차례 위치·직전 화자)을 남긴다.
   --encoder-state <graft.pt>(U3, 2026-10-30): 모델의 인코더를 그 graft.pt 의 enc(화자 분리와 함께 학습한 인코더 — n3d_graft_train --unfreeze-layers)로 바꿔
     디코드한다 — ASR 지킴 확인(E11 의 cp·agn 이 그대로인가). config 에 encoder_state.
   --en-norm whisper(2026-10-27): 영어 채점을 Whisper EnglishTextNormalizer 로(채움말 제거 등 — vapasr.data.cst_eval.set_en_norm). 외부 AMI 수치와 견줄 때
@@ -508,8 +509,9 @@ def run(a):
                         fx_row = {}
                         if blocks and fa is not None:                                                   # 활동 추종(LLM 원래 슬롯 — relabel 전)
                             perm0 = sc["perm"] if hw is hw0 else score_window(ref_w, hw0, d.lang)["perm"]
-                            fst, moved = follow_stats(hw0, fa, delta, ref_act=ra.numpy(), perm=perm0, frame_mask=fm.numpy(), back=fwin[0], fwd=fwin[1])
-                            fx_row = dict(follow=fst, cp_follow=score_window(ref_w, moved, d.lang)["cp"], act_runs=act_runs(fa))
+                            fdl = [] if getattr(a, "follow_detail", False) else None
+                            fst, moved = follow_stats(hw0, fa, delta, ref_act=ra.numpy(), perm=perm0, frame_mask=fm.numpy(), back=fwin[0], fwd=fwin[1], detail=fdl)
+                            fx_row = dict(follow=fst, cp_follow=score_window(ref_w, moved, d.lang)["cp"], act_runs=act_runs(fa), **({"follow_detail": fdl} if fdl is not None else {}))
                         row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, delta=delta, L=L, K=K, speakers=sp_order, n_spk=len(sp_order), masked_chunks=len(mask),
                                    forced=s.forced, flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted],
                                    **({"guide_insert": s.guide_insert, "guide_hold": s.guide_hold} if hasattr(s, "guide_insert") else {}),
@@ -589,6 +591,7 @@ def main():
     q.add_argument("--follow-n3d", action="store_true", help="--from-predictions: 원출력에 act_runs 가 없으면 원 평가 config 의 전문가(n3d)로 활동을 다시 계산(GPU)")
     q.add_argument("--encoder-state", default=None, help="U3: 인코더를 이 graft.pt 의 enc(화자 분리와 함께 학습)로 바꿔 디코드 — ASR 지킴 확인")
     q.add_argument("--relabel-follow", action="store_true", help="출력 쪽 재귀속: 활동을 어긴 가설 단어만 활동 슬롯으로 옮겨 채점(창 --follow-window, 스트리밍 그대로 낼 수 있는 출력)")
+    q.add_argument("--follow-detail", action="store_true", help="행에 follow_detail(단어마다 추종 범주·슬롯·말 차례 위치·직전 화자 — cst_eval.follow_stats detail)을 남긴다")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")
     q.add_argument("--declare", type=int, default=None, help="prefix 선언 슬롯 수 하한(기본 max(2, 화자 수); 화자 수를 모르는 추론 흉내 = 4)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "

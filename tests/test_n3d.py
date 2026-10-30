@@ -71,6 +71,34 @@ def test_forward_feeds_expert_activity_aligned_to_reference(tmp_path):
     assert torch.equal(seen[-1], (P[..., :4] > 0.5).float())
 
 
+def test_forward_slot_remap_aligns_expert_per_identity_then_remaps(tmp_path):
+    """slot_remap(2026-10-30): 전문가 채널(화자 정체 고정)은 바꾸기 전 순서로 정답에 맞춘 뒤, 바꾼 프레임부터 새 슬롯으로 옮긴다 — LLM 쪽 정답(바꾼 슬롯)과 같아진다."""
+    tb = _load("test_slot_blocks")
+    ref = torch.zeros(2, 5, 4); ref[0, :2, 0] = 1; ref[0, 3:, 0] = 1                                # 표본 0: A(옛 슬롯 0) 0–1, B(옛 슬롯 1 → 새 슬롯 0) 3–4 — 둘 다 슬롯 0
+    ref[1, 1:, 2] = 1; ref[1, :2, 3] = 1                                                            # 표본 1: 바꾸지 않음
+    P = torch.zeros(2, 5, 8); P[0, :2, 3] = 0.9; P[0, 3:, 1] = 0.9; P[1, 1:, 0] = 0.9; P[1, :2, 2] = 0.9   # 전문가: A = 채널 3, B = 채널 1, C = 0, D = 2
+    m, _ = _model_with_n3d(tmp_path, lambda wav, wav_len, Kt, train=False: P[:, : int(Kt.max())])
+    b = tb._batch(m, (5, 3)); x = {k: b[k] for k in ("ids", "is_audio", "chunk_of", "labels", "mask")}
+    seen = []; orig = m.build
+    def spy(*a, **k): seen.append(k.get("act_in")); return orig(*a, **k)
+    m.build = spy
+    wav = torch.zeros(2, 5 * 1280); wl = torch.tensor([5 * 1280, 3 * 1280]); K = torch.tensor([5, 3])
+    m.train(); m.act_pred_rho = 1.0
+    rk, rp = torch.tensor([2, -1]), torch.tensor([[2, 0, 1, 3], [0, 1, 2, 3]])                     # 옛 슬롯 j → 새 슬롯 rp[j]
+    out = m(**x, wav=wav, wav_len=wl, K=K, activity=ref, activity_mask=torch.ones(2, 5), act_in=torch.zeros(2, 5, 4), tag_chunk=b["tag_chunk"], remap_k=rk, remap_perm=rp)
+    assert torch.isfinite(out.loss) and torch.equal(seen[-1], ref)
+    m(**x, wav=wav, wav_len=wl, K=K, activity=ref, activity_mask=torch.ones(2, 5), act_in=torch.zeros(2, 5, 4), tag_chunk=b["tag_chunk"])
+    assert not torch.equal(seen[-1], ref)                                                            # 되돌리지 않으면 한 순열로는 맞출 수 없다
+
+
+def test_remap_cols_roundtrip():
+    from vapasr.hf.diar import remap_cols
+    x = torch.randn(3, 6, 4); k = torch.tensor([2, -1, 0]); p = torch.tensor([[2, 0, 1, 3], [1, 0, 3, 2], [3, 2, 1, 0]])
+    y = remap_cols(x, k, p)
+    assert torch.equal(y[0, :2], x[0, :2]) and torch.equal(y[1], x[1]) and torch.equal(y[0, 2:, 2], x[0, 2:, 0]) and torch.equal(y[2, :, 0], x[2, :, 3])   # new[perm[j]] = old[j]
+    assert torch.equal(remap_cols(y, k, p, inverse=True), x) and remap_cols(x, None, None) is x
+
+
 def test_encode_long_runs_expert_once_over_session(tmp_path):
     from vapasr.hf.long_session import encode_long
     calls = []; K = 40; P = _fake_probs(1, K + 4, 3)

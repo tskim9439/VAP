@@ -56,6 +56,78 @@ def test_layout_events_and_stop_labels(tmp_path):
     with pytest.raises(ValueError): CstDialogueDataset([q], _tok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, max_speakers=4, slot_blocks=True, no_eot=True)
 
 
+def test_slot_shuffle_training_only(tmp_path):
+    """2026-10-30 활동 추종 학습: slot_shuffle — 학습 rng 에서 그 확률로 선언 슬롯 안 화자 자리를 무작위로(빈 자리는 가짜 화자). 이벤트열·활동 타깃·흔든 활동 입력이 같은 순서를
+    따르고, 평가(rng 없음)와 0 이면 예전 그대로(난수도 더 뽑지 않는다)."""
+    from vapasr.data.act_noise import ActNoise
+    from vapasr.data.cst_dialogue import EMPTY_SLOT
+    q, d = _multi(tmp_path)
+    kw = dict(delays=(4, 10), window_s=(20.0, 20.0), hop_s=5.0, seed=1, max_speakers=4, slot_blocks=True, begin_weight=2.0, declare=4, spk_activity=True)
+    base = CstDialogueDataset([q], _tok(), **kw); sh = CstDialogueDataset([q], _tok(), slot_shuffle=1.0, act_input=ActNoise(clean=1.0), **kw)
+    real = lambda sp: [w for w in sp if not w.startswith(EMPTY_SLOT)]
+    orders = set()
+    for i in range(len(sh)):
+        spk0 = base.slots(i, random.Random(3))[0]; assert sh.slots(i) == base.slots(i)                     # 평가(rng 없음)는 그대로
+        for seed in range(6):
+            spk1, langs1 = sh.slots(i, random.Random(seed)); orders.add(tuple(spk1))
+            assert len(spk1) == len(langs1) == 4 and sorted(real(spk1)) == sorted(spk0) and len(set(spk1)) == 4
+            s0, s1 = base.cst_sequence(i, 10, rng=random.Random(3)), sh.cst_sequence(i, 10, rng=random.Random(seed))
+            assert s1["speakers"] == spk1 and sh.problems_of(s1) == []
+            for w in spk0: assert s1["streams"][spk1.index(w)] == s0["streams"][spk0.index(w)]            # 같은 화자의 이벤트열이 자리만 바뀐다
+            assert all(s1["streams"][j] == [] for j, w in enumerate(spk1) if w.startswith(EMPTY_SLOT))
+    assert len(orders) > len(sh)                                                                          # 창마다 여러 순서가 나온다
+    random.seed(7); a0 = base[0]["activity"]; random.seed(7); it = sh[0]; a1 = it["activity"]
+    assert sorted(map(tuple, a1.T.tolist())) == sorted(map(tuple, a0.T.tolist())) and torch.equal(it["act_in"], a1)   # 활동 열이 같은 순서로 섞이고 흔든 입력도 같다
+    assert it["n_spk"] == base[0]["n_spk"] == len(base.slots(0)[0])                                      # 가짜 화자는 화자 수에 안 센다
+    z = CstDialogueDataset([q], _tok(), slot_shuffle=0.0, **kw); r1, r2 = random.Random(5), random.Random(5)
+    assert z.slots(0, r1) == base.slots(0, r2) and r1.random() == r2.random()                            # 0 이면 난수를 더 뽑지 않는다
+    with pytest.raises(ValueError): CstDialogueDataset([q], _tok(), slot_shuffle=1.5, **kw)
+
+
+def test_slot_remap_training_only(tmp_path):
+    """2026-10-30 활동 추종 학습: slot_remap — 학습 rng 에서 그 확률로 창 안 무음 틈 하나에서 슬롯 대응을 바꾼다. 틈 앞 episode 는 원래 슬롯, 뒤는 새 슬롯
+    (이벤트열·활동 타깃·흔든 입력), 표본에 remap_k·remap_perm 이 붙고 collate 가 묶는다. 평가(rng 없음)와 0 이면 예전 그대로."""
+    from vapasr.data.act_noise import ActNoise
+    from vapasr.data.cst_dialogue import remap_perm
+    q, d = _multi(tmp_path)
+    kw = dict(delays=(4, 10), window_s=(20.0, 20.0), hop_s=5.0, seed=1, max_speakers=4, slot_blocks=True, begin_weight=2.0, declare=4, spk_activity=True)
+    base = CstDialogueDataset([q], _tok(), **kw); rm = CstDialogueDataset([q], _tok(), slot_remap=1.0, act_input=ActNoise(clean=1.0), **kw)
+    n_rm, hit = 0, None
+    for i in range(len(rm)):
+        cid, t0, L = rm.items[i]; K = int(round(L / 0.08))
+        assert rm.cst_sequence(i, 10)["ids"] == base.cst_sequence(i, 10)["ids"]                          # 평가(rng 없음)는 그대로
+        for seed in range(4):
+            s = rm.cst_sequence(i, 10, rng=random.Random(seed)); assert rm.problems_of(s) == [], rm.problems_of(s)
+            if "remap" not in s: continue
+            n_rm += 1; tr, sp2 = s["remap"]; spk = s["speakers"]
+            assert sorted(sp2) == sorted(spk) and sp2 != spk and t0 + 2.0 <= tr <= t0 + L - 2.0
+            assert not any(e.start < tr < e.end for e in rm.eps[cid])                                     # 틈에 걸친 말이 없다
+            for j, st_ in enumerate(s["streams"]):                                                       # 시험 대화의 전사 토큰 11+i·21+i = 화자 p_i
+                for el in st_:
+                    if 11 <= el[0] < 31: assert f"p{(el[0] - 11) % 10}" == (spk[j] if t0 + el[1] < tr else sp2[j])
+            A = np.asarray(rm.slot_act_of(s, 4))
+            for e in rm.eps[cid]:
+                if t0 + 0.2 < e.start and e.end < t0 + L - 0.2:
+                    f = int(((e.start + e.end) / 2 - t0) / 0.08); col = (spk if e.start < tr else sp2).index(e.speaker)
+                    assert A[f, col] == 1 and A[f].sum() == 1
+            hit = hit or (i, seed)
+    assert n_rm > 0
+    for i in range(len(rm)):                                                                             # __getitem__ 이 고른 바꾸기와 같은 값이 붙는지(같은 난수로 다시 만든다)
+        random.seed(100 + i); it = rm[i]; random.seed(100 + i); s = rm.cst_sequence(i, random.choice(rm.delays), rng=random)
+        if "remap" not in s: assert "remap_k" not in it; continue
+        assert it["remap_k"] == int(round((s["remap"][0] - s["t0"]) / 0.08)) and it["remap_perm"].tolist() == remap_perm(s["speakers"], s["remap"][1], 4)
+        assert torch.equal(it["act_in"], it["activity"]) and torch.equal(it["activity"], torch.tensor(rm.slot_act_of(s, 4), dtype=torch.float))
+        random.seed(3); plain = CstDialogueDataset([q], _tok(), act_input=ActNoise(clean=1.0), **kw)[0]; out = collate_cst([it, plain])
+        assert out["remap_k"].tolist() == [it["remap_k"], -1] and out["remap_perm"][1].tolist() == [0, 1, 2, 3] and torch.equal(out["remap_perm"][0], it["remap_perm"])
+        assert out["n_remap"] == 1                                                                       # 학습 로그 remap_per_dlg_step
+        break
+    else: pytest.fail("__getitem__ 에서 바꾼 창이 하나도 없다")
+    z = CstDialogueDataset([q], _tok(), slot_remap=0.0, **kw); r1, r2 = random.Random(5), random.Random(5)
+    assert z.cst_sequence(0, 10, rng=r1)["ids"] == base.cst_sequence(0, 10, rng=r2)["ids"] and r1.random() == r2.random()   # 0 이면 난수를 더 뽑지 않는다
+    with pytest.raises(ValueError): CstDialogueDataset([q], _tok(), slot_remap=1.5, **kw)
+    with pytest.raises(ValueError): CstDialogueDataset([q], _tok(), delays=(4,), window_s=(20.0, 20.0), hop_s=5.0, max_speakers=4, slot_remap=0.5)   # 슬롯 블록 없이
+
+
 def test_begin_not_after_first_word_at_float_boundary(tmp_path):
     """2026-10-28 서버 dry-run 회귀: 창 시작을 뺀 시각이 경계 바로 아래(100.24 − 100 = 0.2399…, /0.08 = 2.999…)이고 첫 글자 시각 = 발화 시작이면
     chunk_of(+1e-9)와 글자 버킷 int() 가 한 청크 어긋나 δ4 에서 <BEGIN> 이 첫 글자 뒤로 갔다 — k_min 을 버킷과 같은 식으로."""

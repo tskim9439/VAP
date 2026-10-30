@@ -244,6 +244,21 @@ def align_slots(pred, ref):
     return torch.zeros_like(pred).scatter_(2, best[:, None, :].expand(B, K, N), pred)
 
 
+def remap_cols(x, k, perm, inverse: bool = False):
+    """slot_remap(2026-10-30, 활동 추종 학습): x (B, K, N) 의 표본 b 프레임 k[b] 부터 열(슬롯)을 perm[b](옛 슬롯 j → 새 슬롯 perm[b, j])대로 옮긴다 —
+    new[..., perm[j]] = old[..., j]. inverse 면 거꾸로(새 → 옛, 헤드 손실·전문가 정렬은 화자 정체가 창 내내 같은 옛 순서로). k 가 None·음수면 그대로."""
+    if k is None: return x
+    y = x.clone(); B, Kx, N = x.shape
+    for b in range(B):
+        kb = int(k[b])
+        if kb < 0 or kb >= Kx: continue
+        p = [int(v) for v in perm[b][:N]]; p += list(range(len(p), N))
+        inv = [0] * N
+        for j, q in enumerate(p): inv[q] = j
+        y[b, kb:] = x[b, kb:].index_select(-1, torch.tensor(p if inverse else inv, device=x.device))
+    return y
+
+
 def sort_pit_loss(logits, target, mask, alpha: float = 0.5):
     """logits·target (B, K, N), mask (B, K) 1 = 손실에 넣는 프레임 → (loss, sort, pit). 둘 다 (마스크 프레임 × N) 평균 BCE.
     sort = 도착 순서 그대로, pit = 창마다 가장 작은 슬롯 순열. loss = α·sort + (1 − α)·pit."""

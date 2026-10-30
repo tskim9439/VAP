@@ -344,7 +344,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
 
     def forward(self, ids=None, is_audio=None, chunk_of=None, labels=None, mask=None, wav=None, wav_len=None, K=None, feats=None, next_weight: Optional[float] = None, return_dict: bool = True,
                 labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, position_ids=None, sem_mask=None,
-                sem_only_mask=None, dec_kind=None, target_act=None, act_in=None, tag_chunk=None, **_):
+                sem_only_mask=None, dec_kind=None, target_act=None, act_in=None, tag_chunk=None, remap_k=None, remap_perm=None, **_):
         """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight.
         Phase 2(config.lanes>0): labels_alt/soft_w 가 있으면 EOT 후보 위치의 label 을 (labels: w, labels_alt: 1−w) 두 점 분포로 학습(정본 §5.2),
         activity (B,K,R)·activity_mask (B,K) 가 있으면 audio 위치 hidden 으로 lane 활동 BCE 를 더한다(정본 §6). EOT 위치 가중 config.eot_weight.
@@ -384,6 +384,9 @@ class VapAsrForStreamingASR(PreTrainedModel):
                 m = (activity_mask[:, :Ka] if activity_mask is not None else torch.ones(activity.shape[:2], device=dlog.device)[:, :Ka]).bool()
                 valid = torch.arange(Ka, device=dlog.device)[None] < K.to(dlog.device)[:, None]; m = m & valid
                 tgt = F.pad(activity[:, :Ka].float(), (0, max(0, N - activity.shape[-1])))[..., :N]
+                if remap_k is not None:                                                             # slot_remap: 헤드 목표는 창 내내 같은 화자 정체(바꾸기 전 순서)로 되돌린다
+                    from .diar import remap_cols
+                    tgt = remap_cols(tgt, remap_k, remap_perm, inverse=True)
                 if getattr(self.config, "diar_align", False):                                       # E7: 대화 전체 순서 슬롯 창 — 헤드 손실은 창 도착 순서로
                     from .diar import arrival_sort
                     tgt = arrival_sort(tgt, m)
@@ -399,7 +402,11 @@ class VapAsrForStreamingASR(PreTrainedModel):
                     # E11: 전문가 채널 순서(전문가가 정한 도착 순서)도 정답 자리로 — 순열이 어긋난 입력이 라벨과 부딪히지 않게(추론은 채널 k = 슬롯 k, cpWER 는 순열 불변)
                     from .diar import align_slots
                     ref = F.pad(activity.float(), (0, max(0, pred.shape[-1] - activity.shape[-1]), 0, max(0, pred.shape[1] - activity.shape[1])))[:, : pred.shape[1], : pred.shape[-1]]
+                    if remap_k is not None:                                                         # slot_remap: 예측(화자 정체 고정)은 바꾸기 전 순서로 맞추고, 바꾼 프레임부터 새 슬롯으로 옮긴다
+                        from .diar import remap_cols
+                        ref = remap_cols(ref, remap_k, remap_perm, inverse=True)
                     pa = align_slots(pred, shift_frames(ref, R).to(pred.device))
+                    if remap_k is not None: pa = remap_cols(pa, remap_k, remap_perm)
                 act_in = torch.where((torch.rand(pred.shape[0], device=pred.device) < rho)[:, None, None], pa, ai)
             else: act_in = pred
         elif wav is not None: feats = self.encode(wav, wav_len, K, act=target_act)          # target_act (B, Kmax): E2 대상 화자 활동(없으면 예전 그대로)

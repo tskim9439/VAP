@@ -149,6 +149,29 @@ def test_follow_stats_categories_truth_and_moved():
     assert st2["skipped"] == 1 and st2["n"] == 5 and "on_ok" not in st2 and "b" in [w for w, _ in moved2[0]]
 
 
+def test_follow_stats_detail():
+    """detail: 단어마다 [범주, f, s, e, 활성 슬롯 수, s 가 마지막 활성이던 뒤 프레임, e 의 말 차례 시작 뒤 프레임, 직전 화자 = s, LLM 맞음, 활동 맞음,
+    e 가 그 차례 전에 쉰 프레임] — 셈·moved 는 그대로."""
+    import numpy as np
+    from vapasr.data.cst_eval import follow_stats
+    t = lambda f, d=4: (f + d + 1) * 0.08
+    act = np.zeros((60, 2), np.uint8); act[0:20, 0] = 1; act[15:30, 1] = 1; act[40:50, 1] = 1
+    ref = np.zeros((60, 2), np.uint8); ref[0:20, 0] = 1; ref[20:30, 1] = 1; ref[40:50, 0] = 1
+    hyp = [[("a", t(5)), ("b", t(25)), ("c", t(45)), ("x", t(35))], [("d", t(17)), ("e", t(8))]]
+    det = []
+    st, moved = follow_stats(hyp, act, 4, ref_act=ref, perm=[0, 1], detail=det)
+    assert (st, moved) == follow_stats(hyp, act, 4, ref_act=ref, perm=[0, 1])
+    # a: on, 차례(슬롯 0, 0 시작) 안 5 · b: off_other → 1, 슬롯 0 은 19 에 마지막(6 전), 1 의 차례는 15 시작(10 전), 직전 화자 0 = LLM 슬롯
+    # c: off_other, 슬롯 0 마지막 19(26 전), 1 의 차례 40 시작(5 전), 직전 화자 0 · x: 무음, 0 의 마지막 19(16 전)
+    # d: 겹침 on, 1 의 차례 15 시작(2 전) · e: off_other → 0, 슬롯 1 은 그 전에 활성인 적 없음(−1), 0 의 차례 0 시작(8 전), 직전 화자 없음
+    # 재등장 간격: c 의 활동 슬롯 1 은 29 에 마지막으로 말하고 40 에 다시 시작(11), 나머지는 처음 말하는 차례거나 무음(−1)
+    assert det == [[0, 5, 0, 0, 1, 0, 5, 0, 1, -1, -1], [1, 25, 0, 1, 1, 6, 10, 1, 0, 1, -1], [1, 45, 0, 1, 1, 26, 5, 1, 1, 0, 11], [2, 35, 0, 0, 0, 16, -1, 0, 0, -1, -1],
+                   [0, 17, 1, 1, 2, 0, 2, 0, 0, -1, -1], [1, 8, 1, 0, 1, -1, 8, 0, 0, 1, -1]]
+    m = np.ones(60, bool); m[20:30] = False; det2 = []
+    follow_stats(hyp, act, 4, frame_mask=m, detail=det2)
+    assert len(det2) == 5 and all(r[1] != 25 for r in det2) and all(r[8] == r[9] == -1 for r in det2)   # 마스크 단어(b) 빠짐, 정답 없으면 맞음 −1
+
+
 def test_follow_pool_and_line():
     from vapasr.data.cst_eval import follow_pool, follow_line
     f = lambda **k: dict(dict.fromkeys(("n", "on", "off_other", "off_none", "sg", "sg_off", "ov", "ov_off", "skipped", "on_ok", "none_ok", "oo_l1e1", "oo_l1e0", "oo_l0e1", "oo_l0e0"), 0), **k)

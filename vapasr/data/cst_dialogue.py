@@ -69,6 +69,7 @@ from .semcommit_dataset import build_interleaved_events
 from ..uslm.mono_data import collate_streams
 
 SLOTS = ("<SPK_A>", "<SPK_B>", "<SPK_3>", "<SPK_4>")                # 슬롯 A·B·C·D(V2 최대 4 화자 — C·D 는 Phase 2 예약 토큰, 모델 enable_slots). 2 화자 데이터셋은 앞 둘만 쓴다
+EMPTY_SLOT = "\x00빈슬롯"                                             # slot_shuffle(2026-10-30)이 빈 선언 슬롯에 넣는 가짜 화자 이름 접두 — 말이 없어 이벤트·활동이 비고 실제 화자 ID 와 겹치지 않는다
 BEGIN_TOKEN = "<ONSET>"                                              # E9 발화 시작 표지 <BEGIN> — 동결 registry 151721(새 어휘 없음, 모델 add_slot_blocks)
 SR = 16000
 REVIVABLE = frozenset({"asr_disagree"})                         # 되살릴 격리 사유(시각·화자는 믿을 수 있고 전사만 의심) — implausible_rate·TN 사유는 그대로 마스크
@@ -409,6 +410,18 @@ def read_back(ids: Sequence[int], is_input: Sequence[bool], sp: Specials, eot_id
 TAG_STRIDE = 1 << 20                                                                          # packing 의 tag_chunk 전역 값 = 표본 · TAG_STRIDE + 청크(packing.pack_batch, 모델 build)
 
 
+def split_episodes(eps: List[Episode], tr: float) -> Tuple[List[Episode], List[Episode]]:
+    """slot_remap: episode 를 시작 시각으로 바꾸는 시각 tr 앞·뒤로 나눈다(tr 은 무음 틈이라 걸치는 episode 가 없다)."""
+    return [e for e in eps if e.start < tr], [e for e in eps if e.start >= tr]
+
+
+def remap_perm(old: Sequence[str], new: Sequence[str], n: int) -> List[int]:
+    """slot_remap: 옛 슬롯 j → 새 슬롯 perm[j](같은 화자의 자리, 길이 n — 선언 밖 슬롯은 그대로). 모델이 전문가 활동 정렬·헤드 손실에서 되돌리는 데 쓴다."""
+    p = [new.index(w) for w in old] + list(range(len(old), n))
+    assert sorted(p) == list(range(n)), f"순열이 아니다: {old} → {new} (n {n})"
+    return p
+
+
 def block_streams(eps: List[Episode], speakers: Sequence[str], t0: float, L: float, eot_id: int, begin_id: int, delay: int, begin_lag: int = 4):
     """E9: episode → 슬롯별 이벤트열(창 기준 시각). 원소 = (tid, t) 전사 토큰 | (begin_id, start, k_min) | (eot_id, end, k_min) 명시 청크 이벤트
     (build_interleaved_events — 같은 슬롯의 앞 원소가 다 나간 뒤 k_min 이상인 첫 청크).
@@ -716,7 +729,7 @@ class CstDialogueDataset(DialogueWindowDataset):
                  tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, wav_aug=None, declare_all_p: float = 0.0,
                  declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, xl_order: str = "lang",
                  no_eot: bool = False, target_spk: bool = False, far_aug=None, act_input=None, global_slots: float = 0.0, slot_blocks: bool = False,
-                 begin_lag: int = 4, begin_weight: float = 0.0, declare_range: bool = False, **kw):
+                 begin_lag: int = 4, begin_weight: float = 0.0, declare_range: bool = False, slot_shuffle: float = 0.0, slot_remap: float = 0.0, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if xl_order not in ("lang", "arrival"): raise ValueError(f"xl_order lang|arrival — {xl_order}")
         self.xl_order = xl_order                                                                # V3 R4: 'arrival' 이면 교차 언어 창도 먼저 말한 순서 슬롯(slots·cst_prefix)
@@ -759,6 +772,11 @@ class CstDialogueDataset(DialogueWindowDataset):
         self.global_slots = float(global_slots)                                                    # E7(2026-10-27): 학습 창을 이 확률로 대화 전체 도착 순서 슬롯으로(slots — 회의 통째 디코드는 AOSC 로
                                                                                                    # 회의 내내 같은 슬롯이라 창 안 첫 화자가 A 가 아닐 수 있다). 0 이면 난수를 더 뽑지 않는다
         if not 0.0 <= self.global_slots <= 1.0: raise ValueError(f"global_slots ∈ [0, 1] — {global_slots}")
+        self.slot_shuffle = float(slot_shuffle)                                                    # 2026-10-30 활동 추종 학습: 학습 창을 이 확률로 선언 슬롯 안에서 화자 자리를 무작위로(slots)
+        if not 0.0 <= self.slot_shuffle <= 1.0 or (self.slot_shuffle > 0 and target_spk): raise ValueError(f"slot_shuffle ∈ [0, 1], 대상 화자(E2)와 함께 쓰지 않는다 — {slot_shuffle}")
+        self.slot_remap = float(slot_remap)                                                        # 2026-10-30 활동 추종 학습: 학습 창을 이 확률로 무음 틈에서 슬롯 대응을 바꾼다(remap_point·block_sequence)
+        if not 0.0 <= self.slot_remap <= 1.0 or (self.slot_remap > 0 and (target_spk or not slot_blocks)):
+            raise ValueError(f"slot_remap ∈ [0, 1], 슬롯 블록(E9)과 함께, 대상 화자(E2)와 함께 쓰지 않는다 — {slot_remap}")
         self.trans_lead_space = bool(trans_lead_space)                                             # 행 사이 공백(lead_space_row) — Stage 4 본 학습부터
         self.tgt_of = dict(tgt_of) if tgt_of else {"Korean": ["English"], "German": ["English"], "English": ["German", "Korean"]}
         self.trans_id = conv("<TRANS>") if self.trans or self.trans_input else None
@@ -811,7 +829,10 @@ class CstDialogueDataset(DialogueWindowDataset):
         global_slots(E7, 학습 rng 만): 같은 언어 대화에서 그 확률로 대화 전체에서 먼저 말한 순서 슬롯(대화 화자 수 ≤ 슬롯 수일 때 — 창에서 말하지 않는 화자도 자리를 갖는다,
         선언 = 대화 화자 수). 태그·활동 타깃·슬롯 활동 입력이 모두 이 순서를 따른다.
         declare_range(2026-10-28 사용자 "<SPK_*> 의 수를 추후에 조절할 수 있도록 … 최소 샘플의 화자 수, 최대 4명 화자로 해서 랜덤으로", 학습 rng 만): 같은 언어 창의 선언 슬롯 수를
-        [화자 수, n_slots] 에서 고르게 뽑는다(declare_all_p 대신 — 하한은 E9 슬롯 블록 1, 그 밖 2) — 추론 때 선언 수(--declare)를 화자 수 이상 아무 값으로나 정할 수 있게."""
+        [화자 수, n_slots] 에서 고르게 뽑는다(declare_all_p 대신 — 하한은 E9 슬롯 블록 1, 그 밖 2) — 추론 때 선언 수(--declare)를 화자 수 이상 아무 값으로나 정할 수 있게.
+        slot_shuffle(2026-10-30, 사용자 "LLM 활동 추종 학습 구현해놓자", 학습 rng 만): 같은 언어 창을 그 확률로 선언 슬롯 D 개 안에서 화자 자리를 무작위로 바꾼다
+        (빈 자리는 EMPTY_SLOT 가짜 화자 — 이벤트·활동이 비고, 태그·활동 타깃·슬롯 활동 입력이 모두 이 순서를 따른다). 먼저 말한 순서(창·대화)라는 단서를 지워
+        LLM 이 슬롯을 활동 입력으로만 고르게 한다 — 회의 통째 디코드는 슬롯이 회의 단위 도착 순서라 창 안 순서와 다르다(wiki output-n3d-branch-20261029 6.8 절)."""
         cid, t0, L = self.items[i]; d = self.dlgs[cid]; sl = self.xl_langs(d)
         if sl is None:
             spk = window_speakers(self.eps[cid], t0, L)
@@ -822,6 +843,8 @@ class CstDialogueDataset(DialogueWindowDataset):
             if self.declare is not None: D = max(D, self.declare)
             elif rng is not None and self.declare_range: D = rng.randint(max(1 if self.slot_blocks else 2, len(spk)), max(self.n_slots, len(spk)))   # E9 한 화자 창은 한 슬롯 선언도
             elif rng is not None and self.n_slots > D and self.declare_all_p > 0 and rng.random() < self.declare_all_p: D = self.n_slots
+            if rng is not None and self.slot_shuffle > 0 and rng.random() < self.slot_shuffle:      # 끄면 난수를 더 뽑지 않는다
+                spk = list(spk) + [f"{EMPTY_SLOT}{j}" for j in range(D - len(spk))]; rng.shuffle(spk)
             return spk, [d.lang] * D
         sp = sorted(d.speakers, key=lambda s: sl[s])
         if self.xl_order == "arrival":
@@ -928,24 +951,59 @@ class CstDialogueDataset(DialogueWindowDataset):
 
     def block_sequence(self, i: int, delay: int, rng=None) -> dict:
         """E9 슬롯 블록 시퀀스(block_streams → build_block_sequence). 슬롯·선언 슬롯 수는 slots(i, rng)(cst_sequence 와 같은 난수). 전사 없는 음성은 그 화자 슬롯만 가린다
-        (slot_mask_chunks), 되살린 발화는 그 슬롯의 전사·멈춤 label 만 −100. slot_blocks 를 켜지 않은 데이터셋(평가 — 오라클 디코드)도 부를 수 있다."""
+        (slot_mask_chunks), 되살린 발화는 그 슬롯의 전사·멈춤 label 만 −100. slot_blocks 를 켜지 않은 데이터셋(평가 — 오라클 디코드)도 부를 수 있다.
+        slot_remap(학습 rng): remap_point 가 고른 무음 틈 뒤 episode 는 새 순서 슬롯으로 — 이벤트열·마스크가 나눠 따르고, 결과에 remap = (바꾸는 시각, 새 순서)."""
         cid, t0, L = self.items[i]; d = self.dlgs[cid]; spk, langs = self.slots(i, rng); K = int(round(L / CHUNK_S))
         if delay < self.begin_lag: raise ValueError(f"δ{delay} < <BEGIN> 지연 {self.begin_lag}")
-        streams, wst = block_streams(self.eps[cid], spk, t0, L, self.eot_id, self.begin_id, delay, self.begin_lag)
         rv = [x for x in self.revived.get(cid, {}).values() if x[2] > t0 and x[1] < t0 + L]
+        rm = None if rv else self.remap_point(cid, t0, L, spk, rng)                                  # 되살린 발화가 있는 창은 바꾸지 않는다
+        if rm is None: streams, wst = block_streams(self.eps[cid], spk, t0, L, self.eot_id, self.begin_id, delay, self.begin_lag)
+        else:
+            ea, eb = split_episodes(self.eps[cid], rm[0])
+            (sa, wa), (sb, wb) = (block_streams(e_, sp_, t0, L, self.eot_id, self.begin_id, delay, self.begin_lag) for e_, sp_ in ((ea, spk), (eb, rm[1])))
+            streams = [x + y for x, y in zip(sa, sb)]; wst = {k: wa[k] + wb[k] for k in wa}
         s = build_block_sequence(streams, K, len(langs), self.cst_prefix(langs, delay), self.audio_pad, self.csp, delay, self.begin_id, self.eot_id,
-                                 slot_mask=self.slot_mask_chunks(d, spk, t0, L, K, delay), lex_mask=revived_elements(streams, spk, rv, t0) if rv else (),
+                                 slot_mask=self.slot_mask_chunks(d, spk, t0, L, K, delay, remap=rm), lex_mask=revived_elements(streams, spk, rv, t0) if rv else (),
                                  lex_chunks=[revived_chunks(rv, [w], t0, K, delay) for w in spk] if rv else None, begin_weight=self.begin_weight)
-        return dict(s, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, langs=langs, streams=streams, win=wst, tgt=None, n_tr=0, blocks=True)
+        return dict(s, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, langs=langs, streams=streams, win=wst, tgt=None, n_tr=0, blocks=True,
+                    **({"remap": rm} if rm else {}))
 
-    def slot_mask_chunks(self, d: Dialogue, speakers: Sequence[str], t0: float, L: float, K: int, delay: int) -> List[set]:
+    def remap_point(self, cid: str, t0: float, L: float, spk: Sequence[str], rng) -> Optional[Tuple[float, List[str]]]:
+        """slot_remap(2026-10-30, 사용자 "LLM 활동 추종 학습 구현해놓자", 학습 rng 만): 그 확률로 창 안 깨끗한 틈(어느 episode 도 걸치지 않는 0.4 s 이상 무음, 가운데가
+        창 앞뒤 2 s 안쪽) 하나를 골라, 그 뒤에 시작하는 episode 의 슬롯 대응을 다른 순열로 바꾼다 — 같은 목소리라도 바꾼 뒤에는 활동이 가리키는 새 슬롯에 써야 맞다
+        (회의 통째에서 LLM 이 활동 대신 자기 화자 추적·이력으로 슬롯을 골라 한 차례를 통째로 어긴다 — wiki output-n3d-branch-20261029 6.8 절).
+        → (바꾸는 시각 = 틈 가운데, 새 순서) 또는 None(끔·틈 없음·틈 뒤 화자의 슬롯이 그대로인 순열만 나옴). 끄면 난수를 더 뽑지 않는다."""
+        if rng is None or self.slot_remap <= 0 or len(spk) < 2 or rng.random() >= self.slot_remap: return None
+        iv = sorted((max(e.start, t0), min(e.end, t0 + L)) for e in self.eps[cid] if e.end > t0 and e.start < t0 + L)
+        gaps, end = [], (iv[0][1] if iv else None)
+        for a, b in iv[1:]:
+            if a - end >= 0.4 and t0 + 2.0 <= (a + end) / 2 <= t0 + L - 2.0: gaps.append((a + end) / 2)
+            end = max(end, b)
+        if not gaps: return None
+        tr = rng.choice(gaps); after = [w for w in spk if any(e.speaker == w and tr <= e.start < t0 + L for e in self.eps[cid])]
+        sp2 = list(spk)
+        for _ in range(8):
+            rng.shuffle(sp2)
+            if any(sp2.index(w) != spk.index(w) for w in after): return tr, sp2
+        return None
+
+    def slot_act_of(self, s: dict, n: int):
+        """시퀀스 s 의 슬롯 활동(K × n, slot_activity 꼴) — slot_remap 이면 바꾸는 시각 앞에서 시작한 episode 는 원래 순서, 뒤는 새 순서 슬롯(LLM 쪽 슬롯과 같다)."""
+        eps = self.eps[s["cid"]]
+        if not s.get("remap"): return slot_activity(eps, s["speakers"], s["t0"], s["L"], s["K"], n)
+        (ea, eb), (tr, sp2) = split_episodes(eps, s["remap"][0]), s["remap"]
+        return np.maximum(np.asarray(slot_activity(ea, s["speakers"], s["t0"], s["L"], s["K"], n)), np.asarray(slot_activity(eb, sp2, s["t0"], s["L"], s["K"], n))).tolist()
+
+    def slot_mask_chunks(self, d: Dialogue, speakers: Sequence[str], t0: float, L: float, K: int, delay: int, remap=None) -> List[set]:
         """E9: 슬롯별 전사 없는 음성 청크 — mask_chunks 와 같은 범위(시작 청크 … 끝 + (δ+1)·0.08 + 0.24 s)를 그 발화 화자의 슬롯에만(슬롯 밖 화자 구간은 모든 슬롯에).
-        K 이상은 K(오디오 뒤 첫 라운드)로 둔다."""
-        slot = {w: j for j, w in enumerate(speakers)}; out: List[set] = [set() for _ in speakers]; tail = (delay + 1) * CHUNK_S + 0.24
+        K 이상은 K(오디오 뒤 첫 라운드)로 둔다. remap = (바꾸는 시각, 새 순서)면 그 시각 뒤에 시작한 구간은 새 순서 슬롯에."""
+        slots_ = [{w: j for j, w in enumerate(sp_)} for sp_ in ([speakers] + ([remap[1]] if remap else []))]
+        out: List[set] = [set() for _ in speakers]; tail = (delay + 1) * CHUNK_S + 0.24
         for w, s, e in self._bad_spans_spk(d):
             a, b = s - t0, e - t0
             if b <= 0 or a >= L: continue
             ks = range(max(0, int(a / CHUNK_S)), min(K + 1, int(math.ceil((b + tail) / CHUNK_S))))
+            slot = slots_[1] if remap and s >= remap[0] else slots_[0]
             for j in ([slot[w]] if w in slot else range(len(speakers))): out[j].update(ks)
         return out
 
@@ -1099,7 +1157,8 @@ class CstDialogueDataset(DialogueWindowDataset):
         delay = random.choice(self.delays); cid = self.items[i][0]
         drop = (random.random() < self.eot_drop_synth) if self.eot_drop_synth > 0 and self.dlgs[cid].meta.get("mask_eot") else None   # C5 동전은 따로 — 형식 난수(slots·recover·tgt)는 예전 조건 그대로
         tsp = random.choice(window_speakers(self.eps[cid], self.items[i][1], self.items[i][2])) if self.target_spk else None   # E2 대상 화자(끄면 난수를 뽑지 않는다)
-        s = self.cst_sequence(i, delay, rng=random if (self.recover or (self.trans_on and tsp is None) or self.has_xl or self.global_slots > 0 or self.declare_range) else None,
+        s = self.cst_sequence(i, delay, rng=random if (self.recover or (self.trans_on and tsp is None) or self.has_xl or self.global_slots > 0 or self.declare_range
+                                                       or self.slot_shuffle > 0 or self.slot_remap > 0) else None,
                               **({"drop_eot": drop} if drop is not None else {}), **({"target": tsp} if tsp is not None else {}))
         wav = np.asarray(crop_audio(self.mono(s["cid"]), s["t0"], s["t0"] + s["L"]), dtype=np.float32)
         if self.far_aug is not None and random.random() < self.far_aug.p:                          # 원거리 증강(끄면 난수를 더 뽑지 않는다)
@@ -1110,13 +1169,15 @@ class CstDialogueDataset(DialogueWindowDataset):
                     chunk_of=torch.tensor(s["chunk_of"]), labels=torch.tensor(s["labels"]), pos_weight=torch.tensor(s["pos_weight"], dtype=torch.float32),
                     labels_alt=torch.tensor(s["labels_alt"]), soft_w=torch.tensor(s["soft_w"], dtype=torch.float32),
                     lang=s["lang"], delay=delay, name=s["corpus"], id=f"{s['cid']}@{s['t0']}", n_text=s["st"].tokens, overflow=s["st"].overflow_tokens,
-                    n_flush=s["n_flush"], K=s["K"], rounds=s["n_rounds"], n_eot=s["n_eot"], n_soft=s["n_soft"], n_spk=len(s["speakers"]), n_flip=int(s["flip"] is not None), n_rev=len(s["lex"]), n_tr=int(s.get("n_tr", 0)),
-                    **({"activity": torch.tensor(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"], self.n_slots), dtype=torch.float)} if self.spk_activity else {}),
+                    n_flush=s["n_flush"], K=s["K"], rounds=s["n_rounds"], n_eot=s["n_eot"], n_soft=s["n_soft"], n_spk=sum(not str(w).startswith(EMPTY_SLOT) for w in s["speakers"]), n_flip=int(s["flip"] is not None), n_rev=len(s["lex"]), n_tr=int(s.get("n_tr", 0)),
+                    **({"activity": torch.tensor(self.slot_act_of(s, self.n_slots), dtype=torch.float)} if self.spk_activity else {}),                  # slot_remap 이면 LLM 쪽 슬롯(나눠서)
+                    **({"remap_k": int(round((s["remap"][0] - s["t0"]) / CHUNK_S)), "remap_perm": torch.tensor(remap_perm(s["speakers"], s["remap"][1], self.n_slots)),
+                        "n_remap": 1} if s.get("remap") else {}),                                                                                     # slot_remap(바꾼 창만)
                     **({"dec_kind": torch.tensor(s["dec_kind"], dtype=torch.int8), "n_switch": s["n_switch"], "n_hold": s["n_hold"]} if "dec_kind" in s else {}),   # C1(켰을 때만)
                     **({"n_eot_drop": int(s["win"].get("eot_dropped", 0))} if self.eot_drop_synth > 0 else {}),                                               # C5(켰을 때만)
                     **({"tag_chunk": torch.tensor(s["tag_chunk"]), "n_begin": s["n_begin"]} if s.get("blocks") else {}),                                       # E9(켰을 때만)
                     **({"target_act": torch.tensor(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"], 1), dtype=torch.float)[:, 0]} if tsp is not None else {}),   # E2
-                    **({"act_in": torch.from_numpy(self.act_input(slot_activity(self.eps[s["cid"]], s["speakers"], s["t0"], s["L"], s["K"], self.n_slots), random))}
+                    **({"act_in": torch.from_numpy(self.act_input(self.slot_act_of(s, self.n_slots), random))}
                        if self.act_input is not None else {}))   # E5
 
 
@@ -1136,7 +1197,7 @@ def collate_cst(batch):
         for i, b in enumerate(batch):
             if "dec_kind" in b: dk[i, : len(b["ids"])] = b["dec_kind"]
         out["dec_kind"] = dk
-    for k in ("n_switch", "n_hold", "n_eot_drop", "n_begin"):
+    for k in ("n_switch", "n_hold", "n_eot_drop", "n_begin", "n_remap"):
         if any(k in b for b in batch): out[k] = sum(int(b.get(k, 0)) for b in batch)
     if "tag_chunk" in batch[0]:                                                                 # E9 태그 위치의 청크 (B, L)(그 밖·패딩 −1) — packing.pack_batch 가 표본 · TAG_STRIDE 를 더한다
         tc = torch.full((B, L), -1, dtype=torch.long)
@@ -1155,4 +1216,8 @@ def collate_cst(batch):
         for i, b in enumerate(batch):
             k = b["activity"].shape[0]; assert k == int(b["K"]), f"activity 길이 {k} ≠ K {b['K']}"; act[i, :k] = b["activity"]; am[i, :k] = 1
         out.update(activity=act, activity_mask=am)
+    if any("remap_k" in b for b in batch):                                                      # slot_remap: 바꾼 프레임(−1 = 안 바꿈)·옛 슬롯 → 새 슬롯 순열(안 바꾼 표본은 그대로)
+        S = max(len(b["remap_perm"]) for b in batch if "remap_perm" in b)
+        out["remap_k"] = torch.tensor([int(b.get("remap_k", -1)) for b in batch], dtype=torch.long)
+        out["remap_perm"] = torch.stack([b["remap_perm"].long() if "remap_perm" in b else torch.arange(S) for b in batch])
     return out

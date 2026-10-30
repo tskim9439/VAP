@@ -123,6 +123,12 @@ g.add_argument("--n3d-chunk", type=int, default=4, help="--n3d 추론 청크(80 
 g.add_argument("--n3d-threshold", type=float, default=0.5, help="--n3d 활동 임계(Nemotron 3.5 Transcribe 와 같은 0.5)")
 g.add_argument("--declare-range", action="store_true", help="2026-10-28: 같은 언어 창의 선언 슬롯 수(<SPK_*> 개수)를 [창 화자 수, --max-speakers] 에서 고르게 뽑는다"
                "(--declare-all-p 대신 — 추론 때 선언 수를 화자 수 이상 아무 값으로나). 지문 키 declare_range")
+g.add_argument("--slot-shuffle", type=float, default=0.0, help="2026-10-30 활동 추종 학습(wiki output-n3d-branch-20261029 6.8 절): 같은 언어 학습 창을 이 확률로 선언 슬롯 안에서 "
+               "화자 자리를 무작위로(빈 자리는 말 없는 가짜 화자) — 태그·활동 타깃·슬롯 활동 입력이 모두 따른다. 먼저 말한 순서라는 단서를 지워 슬롯을 활동 입력으로만 고르게 한다"
+               "(회의 통째는 슬롯이 회의 단위 도착 순서). --slot-input 과 함께, 헤드 손실은 창 도착 순서(diar_align). 지문 키 slot_shuffle")
+g.add_argument("--slot-remap", type=float, default=0.0, help="2026-10-30 활동 추종 학습(wiki output-n3d-branch-20261029 6.8 절): 학습 창을 이 확률로 창 안 무음 틈(0.4 s 이상)에서 "
+               "슬롯 대응을 다른 순열로 바꾼다 — 같은 목소리라도 바꾼 뒤에는 활동이 가리키는 새 슬롯에 써야 맞다(LLM 이 자기 화자 추적·이력보다 활동을 따르게). "
+               "이벤트열·활동 타깃·흔든 입력은 나눠 따르고, 헤드 손실·전문가 정렬은 바꾸기 전 순서로(remap_k·remap_perm). --slot-input·--slot-blocks 와 함께. 지문 키 slot_remap")
 g.add_argument("--begin-weight", type=float, default=2.0, help="--slot-blocks: <BEGIN> label 위치 가중(pos_weight)")
 g.add_argument("--tag-act-lags", type=int, default=12, help="--slot-blocks: 태그 임베딩에 더할 슬롯 활동 청크 수(a_s(k) … a_s(k − n + 1))")
 g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
@@ -207,6 +213,8 @@ VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_spea
            **({"global_slots": a.global_slots} if a.global_slots > 0 else {}),                 # E7(2026-10-27): 끄면 키 없음(데이터셋 기본 0 — 난수 그대로)
            **({"slot_blocks": True, "begin_weight": a.begin_weight} if a.slot_blocks else {}),   # E9(2026-10-28): 끄면 키 없음
            **({"declare_range": True} if a.declare_range else {}),                               # 2026-10-28: 끄면 키 없음
+           **({"slot_shuffle": a.slot_shuffle} if a.slot_shuffle > 0 else {}),                   # 2026-10-30 활동 추종 학습: 끄면 키 없음
+           **({"slot_remap": a.slot_remap} if a.slot_remap > 0 else {}),                         # 2026-10-30 활동 추종 학습: 끄면 키 없음
            **({"xl_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))   # 모든 대화 셋 공통(V2, V3 R4)
 bc = None if a.backchannel == "off" else tuple(float(x) for x in a.backchannel.split(","))
 if bc is not None and len(bc) != 2: sys.exit(f"--backchannel max_s,max_tokens | off — {a.backchannel}")
@@ -232,6 +240,9 @@ if a.slot_input and a.target_spk: sys.exit("--slot-input 은 --target-spk 와 �
 if a.diar_head and not a.slot_input: sys.exit("--diar-head 는 --slot-input 과 함께(E6 — 헤드 예측을 슬롯 활동 입력으로 준다)")
 if a.act_shift < 0 or (a.act_shift and not a.diar_head): sys.exit("--act-shift R(≥ 0)은 --diar-head 와 함께(E8)")
 if not 0.0 <= a.global_slots <= 1.0 or (a.global_slots > 0 and a.target_spk): sys.exit("--global-slots ∈ [0, 1], --target-spk(E2)와 함께 쓰지 않는다")
+if not 0.0 <= a.slot_shuffle <= 1.0 or (a.slot_shuffle > 0 and (a.target_spk or not a.slot_input)): sys.exit("--slot-shuffle ∈ [0, 1], --slot-input 과 함께, --target-spk(E2)와 함께 쓰지 않는다")
+if not 0.0 <= a.slot_remap <= 1.0 or (a.slot_remap > 0 and (a.target_spk or a.act_shift or not (a.slot_input and a.slot_blocks))):
+    sys.exit("--slot-remap ∈ [0, 1], --slot-input·--slot-blocks 와 함께, --target-spk(E2)·--act-shift(E8)와 함께 쓰지 않는다")
 if a.slot_blocks:                                                                               # E9: 받아쓰기만 — 슬롯 블록 빌더가 다루지 않는 형식·가중은 켜지 않는다
     bad = [n for n, on in (("--dlg-trans", bool(a.dlg_trans)), ("--recover-p", a.recover_p > 0), ("--change/hold-tag-weight", a.change_tag_weight > 0 or a.hold_tag_weight > 0),
                            ("--same-lang-*-weight", bool(a.same_lang_change_weight or a.same_lang_hold_weight)), ("--eot-drop-synth", a.eot_drop_synth > 0), ("--no-eot", a.no_eot),
@@ -299,7 +310,7 @@ torch.manual_seed(a.seed); random.seed(a.seed); torch.backends.cuda.matmul.allow
 out = a.out_dir; os.makedirs(out, exist_ok=True)
 if not a.dry_run and world == 1 and torch.cuda.is_available() and torch.cuda.device_count() > 1: sys.exit("GPU 가 여러 장 보인다 — --gpu N 또는 torchrun")
 IN_KEYS = ("wav", "wav_len", "K", "ids", "is_audio", "chunk_of", "labels", "mask", "pos_weight", "position_ids", "labels_alt", "sem_mask", "sem_only_mask", "activity", "activity_mask", "dec_kind",
-           "tag_chunk")
+           "tag_chunk", "remap_k", "remap_perm")
 LOSS_KEYS = ("loss_next", "loss_text", "top1_text", "loss_turn", "top1_turn", "loss_act")
 
 # ── 모델 + tokenizer
@@ -335,6 +346,7 @@ if not a.dry_run:
         if model.spk_head is not None and a.spk_act_weight <= 0: model.config.spk_weight = 0.0   # 활동 타깃이 오므로 LLM 쪽 보조 헤드는 끈다(가중 0)
         if a.slot_audio: model.add_slot_audio(d=a.slot_audio_dim, blocks=a.slot_audio_blocks, kernel=a.slot_audio_kernel, mix_drop=a.mix_drop)   # E10(헤드 뒤 — 헤드 embed 로 시작)
     if a.n3d: model.add_n3d(a.n3d, chunk=a.n3d_chunk, rc=0, train_chunk=a.n3d_train_chunk, train_rc=0, threshold=a.n3d_threshold)   # E11 고정 화자 분리 전문가(체크포인트 밖)
+    if a.slot_shuffle > 0 or a.slot_remap > 0: model.config.diar_align = True                    # 2026-10-30: 섞은·바꾼 슬롯 순서 — 헤드 손실은 창 도착 순서, 예측 입력은 정답 자리로(헤드가 체크포인트에서 와도)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
     assert not bad, f"tokenizer 특수 토큰 id 가 config 와 다름: {bad}"
@@ -538,6 +550,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"act_shift": a.act_shift} if a.act_shift else {}),                                # 2026-10-27 E8: 끄면 키 없음
           **({"slot_blocks": dict(begin_weight=a.begin_weight, begin_lag=4, tag_act_lags=a.tag_act_lags)} if a.slot_blocks else {}),   # 2026-10-28 E9: 끄면 키 없음
           **({"declare_range": True} if a.declare_range else {}),                               # 2026-10-28: 끄면 키 없음
+          **({"slot_shuffle": a.slot_shuffle} if a.slot_shuffle > 0 else {}),                   # 2026-10-30 활동 추종 학습: 끄면 키 없음
+          **({"slot_remap": a.slot_remap} if a.slot_remap > 0 else {}),                         # 2026-10-30 활동 추종 학습: 끄면 키 없음
           **({"shrink_speakers": True} if a.shrink_speakers and not a.window_draws else {}),    # 2026-10-28 E9b: 격자 창 줄이기(끄면 키 없음)
           **({"slot_audio": dict(d=a.slot_audio_dim, blocks=a.slot_audio_blocks, kernel=a.slot_audio_kernel, mix_drop=a.mix_drop)} if a.slot_audio else {}),   # 2026-10-29 E10
           **({"n3d": dict(path=os.path.abspath(a.n3d), train_chunk=a.n3d_train_chunk, chunk=a.n3d_chunk, threshold=a.n3d_threshold)} if a.n3d else {}))   # 2026-10-29 E11
@@ -590,7 +604,7 @@ class Stage3Trainer(VapAsrTrainer):
         if kind == "dlg": c.setdefault("soft", []).append(int(inputs.get("n_soft", 0))); c.setdefault("flip", []).append(int(inputs.get("n_flip", 0))); c.setdefault("rev", []).append(int(inputs.get("n_rev", 0))); c.setdefault("tr", []).append(int(inputs.get("n_tr", 0)))
         if kind == "dlg" and getattr(o, "loss_act", None) is not None: c.setdefault("loss_spk", []).append(float(o.loss_act)); c.setdefault("spk_acc", []).append(float(o.act_acc))
         if kind == "dlg":                                                                      # V3-p1 교대·머무름 통계·EOT-문맥 dropout(켰을 때만 — 없으면 로그 키도 없다)
-            for k in ("n_switch", "n_hold", "n_eot_drop"):
+            for k in ("n_switch", "n_hold", "n_eot_drop", "n_remap"):
                 if k in inputs: c.setdefault(k[2:], []).append(int(inputs[k]))
             for k in ("top1_switch", "switch_miss", "switch_wrong_slot", "top1_hold"):
                 if getattr(o, k, None) is not None: c.setdefault(k, []).append(float(getattr(o, k)))
@@ -600,7 +614,7 @@ class Stage3Trainer(VapAsrTrainer):
         if c and "loss" in logs:
             for k, v in c.items():
                 if v: logs[{"soft": "soft_per_dlg_step", "flip": "flip_per_dlg_step", "rev": "rev_per_dlg_step", "tr": "tr_per_dlg_step", "switch": "switch_per_dlg_step",
-                            "hold": "hold_per_dlg_step", "eot_drop": "eot_drop_per_dlg_step"}.get(k, k)] = round(sum(v) / len(v), 4)
+                            "hold": "hold_per_dlg_step", "eot_drop": "eot_drop_per_dlg_step", "remap": "remap_per_dlg_step"}.get(k, k)] = round(sum(v) / len(v), 4)
             self._kind = {}
         return super().log(logs, start_time)
 

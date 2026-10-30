@@ -212,7 +212,7 @@ def act_from_runs(runs, K: int):
 
 
 def follow_stats(hyp: Sequence[Sequence[Tuple[str, float]]], act, delta: int, ref_act=None, perm: Optional[Sequence[int]] = None, frame_mask=None,
-                 back: int = 3, fwd: int = 1):
+                 back: int = 3, fwd: int = 1, detail: Optional[List] = None):
     """진단(2026-10-30, 사용자 "LLM 활동 추종 진단 구현해놓자" — wiki output-n3d-branch-20261029 6.5 절): LLM 이 슬롯 활동 입력을 얼마나 따르나.
     hyp: 슬롯별 [(단어, 방출 시각 s)](score_window 의 가설), act (K, N): 디코드가 받은 슬롯 활동 0/1(채널 s = 슬롯 s — E11 이면 고정 전문가, E9 면 헤드).
     단어의 오디오 프레임 f = 방출 청크 − δ(relabel_by_activity 와 같은 규약), 창 [f − back, f + fwd] 에 그 단어 슬롯이 활성이면 on, 아니고 다른 슬롯이 활성이면
@@ -220,10 +220,24 @@ def follow_stats(hyp: Sequence[Sequence[Tuple[str, float]]], act, delta: int, re
     ref_act (K, Nr) 정답 슬롯 활동·perm(score_window — 가설 슬롯 → 참조 슬롯)을 주면 누가 맞았나도 센다: 단어 슬롯의 참조 화자가 창 안에서 말했으면 LLM 맞음,
     off_other 단어의 활동 슬롯(창 활동 합이 가장 큰 슬롯)의 참조 화자가 말했으면 활동 맞음 — oo_l{0,1}e{0,1}(LLM·활동 맞음). on_ok·none_ok 는 LLM 맞음 수.
     frame_mask (K,) bool(False = 전사를 못 믿는 구간 — LLM DER 마스크)이면 그 프레임 단어는 세지 않는다(skipped, 슬롯은 그대로).
+    detail(2026-10-30, 활동 추종 학습 설계용 진단): 리스트를 주면 센 단어마다 [범주(0 on·1 off_other·2 off_none), f, 단어 슬롯 s, 활동 슬롯 e, 창 안 활성 슬롯 수,
+    s 가 마지막으로 활성이던 뒤 프레임(창 앞, 없으면 −1), e 의 말 차례(활성 구간) 시작 뒤 프레임(창에서 처음 활성인 구간, 무음이면 −1), 그 차례 직전 화자 = s(0/1),
+    LLM 맞음, 활동 맞음(ref_act 없으면 −1), e 가 그 차례 전에 쉰 프레임(재등장 간격 — 처음 말하는 차례·무음이면 −1)] 을 붙인다.
     → (셈 dict, moved — off_other 단어만 활동 슬롯으로 옮긴 슬롯별 [(단어, 시각)] 시각순: LLM 이 활동을 따랐다면의 가설, score_window 로 cp 를 잰다)."""
     import numpy as np
     A = np.asarray(act) > 0; K, N = A.shape; R = None if ref_act is None else np.asarray(ref_act) > 0
     M = None if frame_mask is None else np.asarray(frame_mask, dtype=bool)
+    if detail is not None:
+        idx = [np.nonzero(A[:, x])[0] for x in range(N)]; anyo = [np.nonzero(np.delete(A, x, axis=1).any(1))[0] for x in range(N)]
+        def last_before(x, j):                                                                      # 프레임 j 앞(< j)에서 슬롯 x 가 마지막으로 활성인 프레임, 없으면 −1
+            k = np.searchsorted(idx[x], j) - 1; return int(idx[x][k]) if k >= 0 else -1
+        def turn(e, lo, hi):                                                                        # 창에서 e 가 처음 활성인 프레임이 든 구간의 시작, 그 직전(구간 앞)에 말한 다른 슬롯, e 가 쉰 프레임
+            j = lo + int(np.argmax(A[lo:hi, e])); st_ = j
+            while st_ > 0 and A[st_ - 1, e]: st_ -= 1
+            k = np.searchsorted(anyo[e], st_) - 1
+            prev = -1 if k < 0 else int(np.argmax(np.where(np.arange(N) == e, -1, A[anyo[e][k]].astype(int))))
+            le = last_before(e, st_)
+            return st_, prev, (st_ - le if le >= 0 else -1)
     st = dict.fromkeys(("n", "on", "off_other", "off_none", "sg", "sg_off", "ov", "ov_off", "skipped")
                        + (("on_ok", "none_ok", "oo_l1e1", "oo_l1e0", "oo_l0e1", "oo_l0e0") if R is not None else ()), 0)
     moved: List[List[Tuple[str, float]]] = [[] for _ in range(max(N, len(hyp)))]
@@ -240,11 +254,18 @@ def follow_stats(hyp: Sequence[Sequence[Tuple[str, float]]], act, delta: int, re
             elif n_on: st["off_other"] += 1; e = int(a.sum(0).argmax())
             else: st["off_none"] += 1
             moved[e].append((w, t))
-            if R is None: continue
-            llm = ok(s, lo, hi)
-            if mine: st["on_ok"] += int(llm)
-            elif n_on: st[f"oo_l{int(llm)}e{int(ok(e, lo, hi))}"] += 1
-            else: st["none_ok"] += int(llm)
+            llm = act_ok = -1
+            if R is not None:
+                llm = ok(s, lo, hi)
+                if mine: st["on_ok"] += int(llm)
+                elif n_on: act_ok = ok(e, lo, hi); st[f"oo_l{int(llm)}e{int(act_ok)}"] += 1
+                else: st["none_ok"] += int(llm)
+            if detail is not None:
+                c = 0 if mine else 1 if n_on else 2
+                since = (f - last_before(s, lo)) if (c and s < N and last_before(s, lo) >= 0) else (0 if c == 0 else -1)
+                if n_on: st_, prev, gap = turn(e, lo, hi); d0, ps = f - st_, int(c == 1 and prev == s)
+                else: d0, ps, gap = -1, 0, -1
+                detail.append([c, f, s, e, n_on, since, d0, ps, int(llm), int(act_ok), gap])
     return st, [sorted(x, key=lambda z: z[1]) for x in moved]
 
 

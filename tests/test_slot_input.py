@@ -185,6 +185,32 @@ def test_e7_diar_align_forward():
     assert abs(float(out.loss_diar) - float(want)) < 1e-6 and torch.equal(seen[-1], align_slots(pred, act))
 
 
+def test_slot_remap_head_loss_uses_identity_order():
+    """slot_remap(2026-10-30): 바꾼 슬롯 활동을 넣어도 헤드 손실은 바꾸기 전(화자 정체 고정) 활동의 창 도착 순서로, 슬롯 활동 입력(ρ 1)은 그 순서로 맞춘 예측을
+    바꾼 프레임부터 새 슬롯으로 옮긴 것이다."""
+    import importlib.util, pathlib
+    from vapasr.hf.diar import align_slots, arrival_sort, sort_pit_loss, remap_cols
+    spec = importlib.util.spec_from_file_location("_tl", pathlib.Path(__file__).parent / "test_semcommit_tokens_loss.py"); tl = importlib.util.module_from_spec(spec); spec.loader.exec_module(tl)
+    m, _ = tl.tiny_model(); x, _ = tl._batch(m.config.sp_ids); x["labels"] = x["labels"].clone(); x["labels"][0, 4] = -100; x["labels"][0, 8] = -100
+    m.add_slot_input(4); m.add_diar_head(dict(n_streams=2, d_in=4, d=16, layers=1, heads=2, ffn=16, n_spk=4, dropout=0.0, lookahead=0), [0], weight=0.5, threshold=0.5, ramp=(1.0, 1.0))
+    m.config.diar_align = True
+
+    class Enc(torch.nn.Module):
+        def forward(self, wav, wav_len, K, taps=(), inject=None):
+            g = torch.Generator().manual_seed(int(wav.shape[1])); y = torch.randn(wav.shape[0], 1 + len(taps), int(K.max()), 4, generator=g)
+            return y if taps else y[:, 0]
+    m.encoder = Enc(); del x["feats"]; x.update(wav=torch.zeros(2, 480), wav_len=torch.tensor([320, 480]), K=torch.tensor([2, 3]))
+    old = torch.zeros(2, 3, 4); old[0, 0, 1] = 1; old[0, 1:, 3] = 1; old[1, :, 2] = 1; am = torch.tensor([[1., 1., 0.], [1., 1., 1.]])
+    rk, rp = torch.tensor([1, -1]), torch.tensor([[3, 2, 1, 0], [0, 1, 2, 3]]); new = remap_cols(old, rk, rp)
+    seen = []; orig = m.chunk_embed
+    def spy(feats, a=None): seen.append(None if a is None else a.clone()); return orig(feats, a)
+    m.chunk_embed = spy; m.train(); m.act_pred_rho = 1.0
+    out = m(**x, activity=new, activity_mask=am, act_in=torch.zeros(2, 3, 4), remap_k=rk, remap_perm=rp)
+    f, dlog = m.encode_diar(x["wav"], x["wav_len"], x["K"]); pred = m.predict_act(dlog); mk = am.bool() & (torch.arange(3)[None] < x["K"][:, None])
+    want, _, _ = sort_pit_loss(dlog.float(), arrival_sort(old, mk), mk, float(m.config.diar_alpha))
+    assert abs(float(out.loss_diar) - float(want)) < 1e-6 and torch.equal(seen[-1], remap_cols(align_slots(pred, old), rk, rp))
+
+
 def test_e8_act_shift_forward():
     """E8(2026-10-27): act_shift R — 헤드 손실 정답·마스크를 R 만큼 민다(끝 패딩 위치는 그대로 뺀다), 흔든 정답 입력도 R 만큼 민다(ρ 0), 헤드 예측(ρ 1)은 그대로."""
     import importlib.util, pathlib
