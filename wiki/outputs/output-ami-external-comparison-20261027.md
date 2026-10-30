@@ -3,7 +3,7 @@ type: output
 status: active
 created: 2026-10-27
 updated: 2026-10-30
-summary: AMI cpWER 외부 비교 — 직접 재면 Parakeet + N3 Diarization 회의 통째 15.9·20.5(보고 재현) 대 우리 E11 30.5·43.5, VibeVoice 7B 화자 쏠림
+summary: AMI cpWER 외부 비교 — 직접 재면 Parakeet + N3 Diarization 15.9·20.5(보고 재현) 대 우리 E11 30.5·43.5(재귀속 23.1·29.6), VibeVoice 7B 화자 쏠림
 sources:
   - '[[output-diarization-integration-20261025]]'
   - '[[output-vibevoice-stream-comparison-20261020]]'
@@ -142,12 +142,17 @@ raw_authors:
 | **Multitalker Parakeet v1 + Nemotron 3 Diarization** | 1.12 s | **15.86** | **20.50** | 13.01 | 17.60 | NVIDIA(같은 조합) 13.38 / 20.33 |
 | 우리 E11(같은 N3 Diarization 활동) | 0.92 s | 30.50 | 43.48 | 29.74 | 36.51 | – |
 | 우리 E9 + 전문가(학습 없음) | 0.92 s | 33.32 | 42.75 | 34.18 | 38.91 | – |
+| 우리 E11 + 출력 재귀속(학습 없음, 2026-10-30) | 0.92 s | 23.07 | 29.62 | 21.21 | 26.54 | – |
+| 우리 E9 + 전문가 + 출력 재귀속 | 0.92 s | 23.53 | 29.28 | 21.81 | 26.48 | – |
 
 - 산출: `results/ext-ami-mtp-sortv2`·`ext-ami-mtp-n3d`(행 68 개씩 — 참조는 우리 E11 회의 통째 행과 같다). 8 GPU 에서 두 조합 모두 약 15 분이다.
 - **우리 평가 틀이 보고값을 재현한다.** N3 Diarization 조합 SDM 20.50 은 NVIDIA 보고 20.33 과 같다. Sortformer v2 조합은 카드보다 3–4 낮다(참조·정규화 차이로 본다).
 - **같은 화자 분리기(N3 Diarization)를 써도 Parakeet 가 우리보다 IHM-mix 14.6·SDM 23.0 낮다.** 차이는 이제 화자 분리 품질이 아니라 활동을 쓰는 방식과 받아쓰기에서 온다.
   - Parakeet 는 화자마다 인스턴스를 두고 그 화자 활동을 인코더에 주입해 따로 디코드한다(화자 수 × 0.6B). 우리는 한 스트림 LLM 이 슬롯을 고른다.
   - 받아쓰기도 뒤진다. Parakeet 의 SDM cpWER(20.50)이 우리 SDM 받아쓰기 오류(Whisper 정규화 agn 26.44)보다 낮다.
+- **출력 재귀속(2026-10-30) 뒤 차이는 IHM-mix 7.2·SDM 9.1 로 줄었다.**
+  - 재귀속은 활동을 어긴 단어만 활동 슬롯으로 옮기는 학습 없는 후처리다. 스트리밍 출력에 그대로 붙는다([[output-n3d-branch-20261029]] 6.7 절).
+  - 귀속 몫이 2–3 pt 만 남아 남은 차이는 대부분 받아쓰기다. Sortformer v2 조합보다는 SDM 이 5.0 낮다.
 - dev 는 N3 Diarization 이 AMI dev 로 학습해 섞여 있다. 판단은 eval 로 한다.
 - 외부 시스템의 agn(시각순 화자 무시)은 비교에 쓰지 않는다. 단어 시각을 SegLST 문장 구간 안에 고르게 놓은 근사라 겹침 구간 순서가 틀어져 부풀려진다(cp 가 agn 보다 낮은 회의가 나온다). cp·meeteval cpWER 은 시각과 무관하다.
 - 평가 노드의 로컬 env 복사본에 meeteval 이 없어 묶음의 meeteval 단계가 실패했다. 서버 호스트에서 NFS env 로 다시 매겼고, 작업 스크립트는 meeteval 만 NFS env 로 돌게 고쳤다.
@@ -158,7 +163,10 @@ raw_authors:
 | VibeVoice-ASR-Streaming 7B(우리 틀) | 48.17 | 43.16 | 50.80 | 43.97 | 27.48 / 39.01 |
 | 받아쓰기(agn, 우리 정규화) | 22.03 | 30.77 | 22.87 | 29.10 | WER 19.83 / 29.81 |
 
-- 산출 `results/ext-ami-vv7b-seg480`(조각 318 개). 회의 통째 단계(`ext-ami-vv7b-full`)는 이어서 돈다.
+- 산출 `results/ext-ami-vv7b-seg480`(조각 318 개)·`ext-ami-vv7b-full`(회의 통째).
+- **회의 통째(사용 범위 밖)**: 표준 cpWER IHM-mix eval 82.07·SDM 63.14(dev 60.75·78.80), agn(우리 정규화) 22.36·31.55.
+  - 받아쓰기는 조각과 같다. 긴 회의에서는 화자를 놓친다(화자 놓침 eval IHM-mix 23·SDM 10, dev 14·20). IS1009a 스모크와 같은 꼴이다.
+  - 논문 조건이 아니므로 비교에는 480 s 조각을 쓴다.
 - **받아쓰기는 논문과 맞고 화자 귀속이 차이 난다.** 가설 화자는 조각마다 평균 2.7–3.2 명(참조 4 명)이고, 화자 놓침이 IHM-mix eval 96·SDM eval 58 이다. 최다 화자 단어 몫은 중앙값 0.51–0.69, 0.9 이상인 조각이 IHM-mix eval 76 개 중 26 개다.
 - **SDM 은 논문보다 4.2 높고 IHM 은 20.7 높다.** IHM 차이가 유독 크다.
 - **"논문 AMI-IHM 이 다른 입력" 가설 검토(2026-10-30, 사용자 요청)** — 기각에 가깝다.
