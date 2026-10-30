@@ -26,7 +26,7 @@ def load_vibevoice(a):
     from vibevoice.processor.vibevoice_asr_processor import VibeVoiceASRProcessor
     kw = {"language_model_pretrained_name": a.lm_tokenizer} if a.mode == "offline" else {}
     proc = VibeVoiceASRProcessor.from_pretrained(a.model, **kw)
-    model = VibeVoiceASRForConditionalGeneration.from_pretrained(a.model, dtype=torch.bfloat16, attn_implementation="sdpa").to("cuda").eval()
+    model = VibeVoiceASRForConditionalGeneration.from_pretrained(a.model, dtype=torch.bfloat16, attn_implementation=getattr(a, "attn", None) or "sdpa").to("cuda").eval()   # attn: 2026-10-30 Flash Attention 대조
     frame = None
     if a.mode == "stream":
         cfg = json.load(open(os.path.join(a.model, "preprocessor_config.json")))

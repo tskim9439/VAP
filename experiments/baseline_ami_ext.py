@@ -98,8 +98,10 @@ def hyp_by_speaker(hw):
 class VibeVoiceStream:
     def __init__(self, a):
         from baseline_vibevoice import load_vibevoice
-        self.a = a; self.model, self.proc, self.frame = load_vibevoice(argparse.Namespace(mode="stream", model=a.model, src=a.src, lm_tokenizer=None))
-        self.info = dict(system="vibevoice-stream", model=os.path.abspath(a.model), chunk_s=round(self.frame["chunk"], 4), lookahead_s=round(self.frame["lookahead"], 4))
+        import torch
+        self.a = a; self.model, self.proc, self.frame = load_vibevoice(argparse.Namespace(mode="stream", model=a.model, src=a.src, lm_tokenizer=None, attn=a.attn))
+        self.info = dict(system="vibevoice-stream", model=os.path.abspath(a.model), chunk_s=round(self.frame["chunk"], 4), lookahead_s=round(self.frame["lookahead"], 4),
+                         **({"attn": a.attn, "torch": torch.__version__} if a.attn != "sdpa" or not torch.__version__.startswith("2.9") else {}))
 
     def __call__(self, units):
         """units [(키, wav16)] → {키: ([(화자, 단어, 시각 s)], 원출력)}."""
@@ -315,6 +317,7 @@ def main():
     q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1)
     q.add_argument("--model", default=None, help="vibevoice: VibeVoice-ASR-Streaming 폴더"); q.add_argument("--src", default=None, help="vibevoice: 소스 폴더")
     q.add_argument("--max-new-tokens", type=int, default=256, help="vibevoice: 청크당 토큰 상한(데모 기본)")
+    q.add_argument("--attn", choices=["sdpa", "flash_attention_2", "eager"], default="sdpa", help="vibevoice: 어텐션 구현(2026-10-30 — 저자 측이 Flash Attention 으로 쟀다고 함)")
     q.add_argument("--asr", default=None, help="parakeet: multitalker .nemo"); q.add_argument("--diar", default=None, help="parakeet: 화자 분리기 .nemo")
     q.add_argument("--diar-kind", choices=["sortformer", "n3d"], default="sortformer"); q.add_argument("--att-context", type=lambda s: [int(x) for x in s.split(",")], default=[70, 13])
     q.add_argument("--batch-size", type=int, default=8, help="parakeet: 한 번에 스트리밍할 회의·조각 수"); q.add_argument("--wav-dir", default=None, help="parakeet: 회의 wav 를 쓸 노드 로컬 폴더")
