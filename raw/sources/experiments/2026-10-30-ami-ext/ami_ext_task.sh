@@ -14,7 +14,7 @@ CODE=/soundai/users/tskim/VAPKT; cd $CODE; set -a; source .env; set +a
 export PYTHONPATH=$CODE PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false VAPASR_STAGE_DIR=${SD0:-/tmp/sa_tskim/vapasr-stage}
 P=${PY:-/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python}; D=/soundai/users/tskim/VAPKT-data; R=$D/results; AB=$D/data/ami-bench-v1
 CK=/soundai/Model/VAPASR/stage3-q17-e11/final; V=$D/models/vibevoice; VB=$D/vapkt-baselines
-MTP=$VB/multitalker-parakeet-streaming-0.6b-v1/multitalker-parakeet-streaming-0.6b-v1.nemo
+MTP=$VB/multitalker-parakeet-v1/multitalker-parakeet-streaming-0.6b-v1.nemo   # 폴더 이름은 업로드 전 조회하지 않은 새 이름(NFS "없음" 캐시)
 say() { echo "[$(date '+%F %T')] ami-ext $SYS $r/$w(GPU ${GPU_IDX:-${CUDA_VISIBLE_DEVICES:-?}}): $*"; }
 case $SYS in
   vv7b-full|vv7b-seg480) SRC=$(ls -d $V/src/VibeVoice-* | head -1); export PYTHONPATH=$CODE:$V/pydeps

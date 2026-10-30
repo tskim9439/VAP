@@ -111,8 +111,8 @@ raw_authors:
 - **확인**
   - 맥 CPU 배선 점검(AMI ES2002a 38 s 클립): 두 화자 분리기 모두 4 명을 가르고 받아썼다. N3D 쪽이 첫 "Um well"·맞장구 "Mm-hmm" 까지 잡았다.
   - 순수 함수(조각 경계·7 명 이상 헝가리안 채점·화자 묶기)를 손으로 대조했다.
-- **사용자 할 일**: T5 `vapkt-models/` 의 두 폴더를 서버 `VAPKT-data/vapkt-baselines/` 아래 같은 이름으로 올린다.
-  - `multitalker-parakeet-streaming-0.6b-v1/`(2.49 GB, sha256 `afaefe89…`)
+- **사용자 할 일**: T5 `vapkt-models/` 의 두 .nemo 를 서버 `VAPKT-data/vapkt-baselines/` 아래로 올린다(azcopy, 사내망).
+  - Parakeet → `vapkt-baselines/multitalker-parakeet-v1/`(2.49 GB, sha256 `afaefe89…`). T5 폴더 이름과 다르다 — 원래 이름은 업로드 전에 서버에서 조회해 NFS 에 "없음"이 남았을 수 있다.
   - `diar_streaming_sortformer_4spk-v2/`(471 MB, sha256 `b371afce…`)
   - 그다음 `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh ext-parakeet)`. VibeVoice 는 바로 낼 수 있다: `… ext-vibevoice`.
 

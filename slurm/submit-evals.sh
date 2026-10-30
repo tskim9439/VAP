@@ -135,7 +135,7 @@ case $set_ in
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 bash $X $t q17-e11 final $r/8"); done; done
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 N3D=$N3 bash $X $t q17-e9 final $r/8"); done; done ;;
   ext-vibevoice|ext-parakeet) XT=raw/sources/experiments/2026-10-30-ami-ext/ami_ext_task.sh
-    if [ $set_ = ext-parakeet ]; then for f in multitalker-parakeet-streaming-0.6b-v1/multitalker-parakeet-streaming-0.6b-v1.nemo diar_streaming_sortformer_4spk-v2/diar_streaming_sortformer_4spk-v2.nemo; do
+    if [ $set_ = ext-parakeet ]; then for f in multitalker-parakeet-v1/multitalker-parakeet-streaming-0.6b-v1.nemo diar_streaming_sortformer_4spk-v2/diar_streaming_sortformer_4spk-v2.nemo; do
       [[ -f $D/vapkt-baselines/$f ]] || { echo "없음(사용자 업로드): $D/vapkt-baselines/$f" >&2; exit 1; }; done; S2=(mtp-sortv2 mtp-n3d); else S2=(vv7b-full vv7b-seg480); fi
     for s_ in "${S2[@]}"; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $XT $s_ $r/8"); done; done ;;
   q17-e11-gate) G=${GATE:-3,1}; [[ $G =~ ^[0-9]+,[0-9]+$ ]] || { echo "GATE 는 BACK,FWD: $G" >&2; exit 2; }

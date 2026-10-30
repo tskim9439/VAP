@@ -9,6 +9,6 @@
   - 외부 수치는 출처마다 평가 단위(480 s 조각·세션·회의 통째)·정규화·참조가 달라 같은 시스템도 14 pt 넘게 흔들린다.
   - 맥 CPU 배선 점검: Parakeet + Sortformer v2·+ N3D 모두 AMI ES2002a 38 s 클립에서 4 명을 가르고 받아썼다.
 - Next:
-  - 사용자: T5 의 두 폴더를 `VAPKT-data/vapkt-baselines/` 아래 같은 이름으로 올린 뒤 `bash slurm/submit-evals.sh ext-parakeet`. VibeVoice 는 `… ext-vibevoice` 로 바로 낸다.
+  - 사용자: 두 .nemo 를 `VAPKT-data/vapkt-baselines/multitalker-parakeet-v1/`·`diar_streaming_sortformer_4spk-v2/` 로 올린 뒤 `bash slurm/submit-evals.sh ext-parakeet`. VibeVoice 는 `… ext-vibevoice` 로 바로 낸다.
   - 재현 점검: VibeVoice 480 s 조각 대 보고 27.48 / 39.01, Parakeet + Sortformer v2 회의 통째 대 카드 21.26 / 37.44.
 - By: tskim
