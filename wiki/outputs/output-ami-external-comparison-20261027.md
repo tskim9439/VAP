@@ -152,6 +152,17 @@ raw_authors:
 - 외부 시스템의 agn(시각순 화자 무시)은 비교에 쓰지 않는다. 단어 시각을 SegLST 문장 구간 안에 고르게 놓은 근사라 겹침 구간 순서가 틀어져 부풀려진다(cp 가 agn 보다 낮은 회의가 나온다). cp·meeteval cpWER 은 시각과 무관하다.
 - 평가 노드의 로컬 env 복사본에 meeteval 이 없어 묶음의 meeteval 단계가 실패했다. 서버 호스트에서 NFS env 로 다시 매겼고, 작업 스크립트는 meeteval 만 NFS env 로 돌게 고쳤다.
 
+## 직접 잰 결과 — VibeVoice-ASR-Streaming 7B (2026-10-30, job 98672)
+| 480 s 조각(논문 조건), 표준 정규화 + meeteval cpWER | IHM-mix eval | SDM eval | IHM-mix dev | SDM dev | 논문 보고(IHM / SDM) |
+|---|---:|---:|---:|---:|---|
+| VibeVoice-ASR-Streaming 7B(우리 틀) | 48.17 | 43.16 | 50.80 | 43.97 | 27.48 / 39.01 |
+| 받아쓰기(agn, 우리 정규화) | 22.03 | 30.77 | 22.87 | 29.10 | WER 19.83 / 29.81 |
+
+- 산출 `results/ext-ami-vv7b-seg480`(조각 318 개). 회의 통째 단계(`ext-ami-vv7b-full`)는 이어서 돈다.
+- **받아쓰기는 논문과 맞고 화자 귀속이 차이 난다.** 가설 화자는 조각마다 평균 2.7–3.2 명(참조 4 명)이고, 화자 놓침이 IHM-mix eval 96·SDM eval 58 이다. 최다 화자 단어 몫은 중앙값 0.51–0.69, 0.9 이상인 조각이 IHM-mix eval 76 개 중 26 개다.
+- **SDM 은 논문보다 4.2 높고 IHM 은 20.7 높다.** IHM 차이가 유독 크다. 논문의 "AMI-IHM"(individual-headset)이 우리 IHM-mix(헤드셋 혼합)와 다른 입력일 수 있다 — 확인되지 않은 가설이다.
+- 같은 크기대 비교가 아니라도, 우리 E11 은 더 어려운 회의 통째 조건에서 IHM-mix 30.50·SDM 43.48 이다(SDM 은 비슷, IHM-mix 는 우리가 낮다).
+
 ## 받아쓰기 몫(화자 무시)
 | | IHM(-mix) | SDM |
 |---|---:|---:|
