@@ -34,6 +34,7 @@ touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
 ( flock 9; [ -f $E/summary.json ] && exit 0
   $P experiments/cst_stage3_eval.py summarize --out $E > $E/summary.log 2>&1
   $P raw/sources/experiments/2026-10-20-v2-multispeaker/ami_report.py $E > $E/ami-report.txt 2>&1
+  MP=/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python                                # meeteval 은 NFS env 에만 있다(평가 노드의 로컬 복사본에는 없다 — 2026-10-30 98631)
   for nm in whisper ours; do R_=(); [ $nm = ours ] && R_=(--refs "")
-    $P experiments/meeteval_cpwer.py --pred $E --norm $nm "${R_[@]}" --json $E/meeteval-$nm.json > $E/meeteval-$nm.txt 2>&1; done ) 9> $E/.sum.lock
+    $MP experiments/meeteval_cpwer.py --pred $E --norm $nm "${R_[@]}" --json $E/meeteval-$nm.json > $E/meeteval-$nm.txt 2>&1; done ) 9> $E/.sum.lock
 say "합침 → $E/ami-report.txt · meeteval-whisper.txt"

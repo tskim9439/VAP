@@ -3,7 +3,7 @@ type: output
 status: active
 created: 2026-10-27
 updated: 2026-10-30
-summary: AMI cpWER 외부 비교 — E11 회의 통째(표준) IHM 30.5·SDM 43.5 대 VibeVoice-Streaming 1.5B 45.2·56.8, 7B 27.5·39.0, Parakeet 21.3·37.4
+summary: AMI cpWER 외부 비교 — 직접 재면 Parakeet + N3 Diarization 회의 통째 15.9·20.5(보고 재현) 대 우리 E11 30.5·43.5, VibeVoice 7B 화자 쏠림
 sources:
   - '[[output-diarization-integration-20261025]]'
   - '[[output-vibevoice-stream-comparison-20261020]]'
@@ -111,10 +111,46 @@ raw_authors:
 - **확인**
   - 맥 CPU 배선 점검(AMI ES2002a 38 s 클립): 두 화자 분리기 모두 4 명을 가르고 받아썼다. N3D 쪽이 첫 "Um well"·맞장구 "Mm-hmm" 까지 잡았다.
   - 순수 함수(조각 경계·7 명 이상 헝가리안 채점·화자 묶기)를 손으로 대조했다.
+  - 외부 기준 행의 참조가 우리 E11 회의 통째 행과 같다(IS1009a SDM: 참조 단어 1,944 · 마스크 청크 434 · 화자 순서까지).
+- **VibeVoice 7B 서버 스모크**(호스트 GPU 4·6, AMI SDM IS1009a 14 분 — `tmp/e11-check/ext`)
+
+| | cp(우리 정규화) | meeteval(Whisper) | agn | 가설 화자 |
+|---|---:|---:|---:|---|
+| 회의 통째 | 83.28 | 82.32 | 30.30 | "Speaker 1" 1,876 · "Speaker 0" 12 단어 |
+| 480 s 조각 둘 | 77.57 | 77.22 | 28.86 | 조각마다 "Speaker 1" 853·939 · "Speaker 0" 8·80 |
+| (참고) 우리 E11 같은 회의 | 35.19 | – | 26.34 | 4 명 |
+
+  - **받아쓰기는 논문과 맞고(SDM WER 29.81) 화자 귀속이 무너졌다.** 4 명 회의의 말을 거의 모두 한 화자로 냈다. "Speaker 0" 은 첫 비음성("Footsteps…")과 일부 말에만 썼다.
+  - 호출은 공식 `demo/vibevoice_asr_streaming_inference_from_file.py` 와 같다(체크포인트의 청크 2.93 s·lookahead 0.53 s, 온도 0, 청크당 256 토큰, sdpa, bf16). 공식 로더(ffmpeg)도 음량을 정규화하지 않는다.
+  - 디코드는 14 분 회의에 110.5 s(실시간 0.13 배)다. 묶음 전체는 8 GPU 에서 한 시간 남짓으로 어림한다.
+  - 같은 회의 IHM-mix 회의 통째도 cp 77.42·agn 22.89·화자 2 명 놓침으로 같았다.
+  - 확인한 것:
+    - 체크포인트 @60d858b 는 HF 최신이다(가중치는 2026-09-02 한 번). 모델 코드(`modeling_vibevoice_asr.py`)의 마지막 변경(2026-08-27 "Add streaming ASR inference")도 소스 16fb2cb 에 들어 있다.
+    - 입력 음량은 정상이다(IS1009a RMS SDM −31 dBFS·IHM-mix −25.5 dBFS).
+    - 논문: "평가 녹음은 공개 체크포인트가 지원하는 최대 세션 길이에 맞춰 480 초로 제한"하고, 화자 수 같은 부가 정보는 주지 않는다. 회의 통째는 사용 범위 밖이고 480 s 조각이 논문 조건이다.
+  - 회의 하나라 일반화하지 않는다. 묶음 `ext-vibevoice` 의 480 s 조각 단계가 전 회의에서 쏠림이 일반적인지 보여 준다.
 - **사용자 할 일**: T5 `vapkt-models/` 의 두 .nemo 를 서버 `VAPKT-data/vapkt-baselines/` 아래로 올린다(azcopy, 사내망).
   - Parakeet → `vapkt-baselines/multitalker-parakeet-v1/`(2.49 GB, sha256 `afaefe89…`). T5 폴더 이름과 다르다 — 원래 이름은 업로드 전에 서버에서 조회해 NFS 에 "없음"이 남았을 수 있다.
   - `diar_streaming_sortformer_4spk-v2/`(471 MB, sha256 `b371afce…`)
   - 그다음 `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh ext-parakeet)`. VibeVoice 는 바로 낼 수 있다: `… ext-vibevoice`.
+  - 2026-10-30 사용자가 올렸다(서버 크기·sha256 이 HF 와 같다). `ext-parakeet` 은 job 98631(16 작업, 11:06 시작)이다.
+
+## 직접 잰 결과 — Multitalker Parakeet (2026-10-30, job 98631)
+| AMI 회의 통째, 표준 정규화 + meeteval cpWER | 지연 | IHM-mix eval | SDM eval | IHM-mix dev | SDM dev | 보고값(IHM / SDM) |
+|---|---|---:|---:|---:|---:|---|
+| Multitalker Parakeet v1 + Streaming Sortformer v2 | 1.12 s | 17.59 | 34.59 | 14.57 | 23.47 | 카드 21.26 / 37.44 |
+| **Multitalker Parakeet v1 + Nemotron 3 Diarization** | 1.12 s | **15.86** | **20.50** | 13.01 | 17.60 | NVIDIA(같은 조합) 13.38 / 20.33 |
+| 우리 E11(같은 N3 Diarization 활동) | 0.92 s | 30.50 | 43.48 | 29.74 | 36.51 | – |
+| 우리 E9 + 전문가(학습 없음) | 0.92 s | 33.32 | 42.75 | 34.18 | 38.91 | – |
+
+- 산출: `results/ext-ami-mtp-sortv2`·`ext-ami-mtp-n3d`(행 68 개씩 — 참조는 우리 E11 회의 통째 행과 같다). 8 GPU 에서 두 조합 모두 약 15 분이다.
+- **우리 평가 틀이 보고값을 재현한다.** N3 Diarization 조합 SDM 20.50 은 NVIDIA 보고 20.33 과 같다. Sortformer v2 조합은 카드보다 3–4 낮다(참조·정규화 차이로 본다).
+- **같은 화자 분리기(N3 Diarization)를 써도 Parakeet 가 우리보다 IHM-mix 14.6·SDM 23.0 낮다.** 차이는 이제 화자 분리 품질이 아니라 활동을 쓰는 방식과 받아쓰기에서 온다.
+  - Parakeet 는 화자마다 인스턴스를 두고 그 화자 활동을 인코더에 주입해 따로 디코드한다(화자 수 × 0.6B). 우리는 한 스트림 LLM 이 슬롯을 고른다.
+  - 받아쓰기도 뒤진다. Parakeet 의 SDM cpWER(20.50)이 우리 SDM 받아쓰기 오류(Whisper 정규화 agn 26.44)보다 낮다.
+- dev 는 N3 Diarization 이 AMI dev 로 학습해 섞여 있다. 판단은 eval 로 한다.
+- 외부 시스템의 agn(시각순 화자 무시)은 비교에 쓰지 않는다. 단어 시각을 SegLST 문장 구간 안에 고르게 놓은 근사라 겹침 구간 순서가 틀어져 부풀려진다(cp 가 agn 보다 낮은 회의가 나온다). cp·meeteval cpWER 은 시각과 무관하다.
+- 평가 노드의 로컬 env 복사본에 meeteval 이 없어 묶음의 meeteval 단계가 실패했다. 서버 호스트에서 NFS env 로 다시 매겼고, 작업 스크립트는 meeteval 만 NFS env 로 돌게 고쳤다.
 
 ## 받아쓰기 몫(화자 무시)
 | | IHM(-mix) | SDM |
