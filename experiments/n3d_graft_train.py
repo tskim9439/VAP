@@ -17,7 +17,13 @@
 저장·재로드 대조: 학습 끝에 final 을 새 어댑터로 읽어 마지막 배치 손실을 메모리 모델과 대조한다(가중치 차이 0, 손실 차이 ≤ 1e-4 — 어긋나면 DONE 을 쓰지 않는다).
 G1b 스트리밍 상태 학습(2026-10-30 — G1 첫 학생이 창 DER 에서 교사 + 6 이었다, 오프라인만 학습해 스트리밍 캐시가 분포 밖 ĥ 를 담는 것으로 본다):
   --init-graft <graft.pt>(G1 final 에서 — 무음 sil 도 그것을 고정해 쓴다) --stream-chunk N: 교사·학생 모두 청크 N 스트리밍(AOSC)으로 돌려 80 ms 확률 BCE 를 건다
-  (n3d.stream_probs 대 n3d_graft.stream(grad) — gradient 는 캐시·FIFO 에 담긴 앞 청크의 ĥ 로도 흐른다). h_layer MSE 는 오프라인 교사 h 로 그대로."""
+  (n3d.stream_probs 대 n3d_graft.stream(grad) — gradient 는 캐시·FIFO 에 담긴 앞 청크의 ĥ 로도 흐른다). h_layer MSE 는 오프라인 교사 h 로 그대로.
+U3 인코더 공동 학습(2026-10-30, 사용자 "U3 아래 12 층 푸는 걸로 구현해놓자" — G1b 도 회의 통째 혼동 16–19 %, 고정 ASR 인코더 탭에 회의 단위 화자 정체가 모자란다):
+  --unfreeze-layers N: 우리 인코더 아래 N 층(enc.layers[:N])을 함께 학습한다(n3d_graft.partial_unfreeze — 위층·서브샘플링은 고정, eval, bf16 autocast). 학습률 --enc-lr.
+  --guard-weight λ: ASR 지킴 — 새 인코더의 마지막 층 출력(LLM 입력)을 고정 원본 인코더(같은 --init) 출력에 λ·MSE / var 로 묶는다(LLM 을 돌리지 않고 받아쓰기를 지킨다).
+  --init-graft(G1b final)에서 시작한다. 스트리밍 증류는 걸음마다 활성값을 다시 계산한다(--stream-ckpt, U3 면 자동 — 60–90 s 창 메모리).
+  graft.pt 에 enc(인코더 전체 state — 고정 위층도 init 에서 왔으므로 함께)·unfreeze 를 더한다. 평가는 그대로(GraftExpert 가 enc 를 읽는다),
+  ASR 지킴 확인은 cst_stage3_eval --encoder-state <graft.pt>(E11 에 새 인코더를 끼운다)."""
 import argparse, datetime, fnmatch, glob, json, math, os, random, sys, time
 
 import numpy as np
@@ -36,6 +42,9 @@ ap.add_argument("--kd-weight", type=float, default=1.0); ap.add_argument("--hid-
 ap.add_argument("--init-graft", default=None, help="G1b: 시작 어댑터 graft.pt(능형 회귀 대신, 무음 sil 도 그것) — 재개 checkpoint 가 있으면 그것이 우선")
 ap.add_argument("--stream-chunk", type=int, default=0, help="G1b: 0 이면 창 통째(오프라인) 학습, N 이면 교사·학생 모두 청크 N 스트리밍(AOSC)으로 증류 — --init-graft 와 함께")
 ap.add_argument("--ridge-windows", type=int, default=256, help="처음 시작 때 능형 회귀로 입력 Linear 를 둘 창 수(0 = 기본 초기화)"); ap.add_argument("--ridge", type=float, default=10.0)
+ap.add_argument("--unfreeze-layers", type=int, default=0, help="U3: 우리 인코더 아래 N 층을 함께 학습(0 = 고정 — G1·G1b)")
+ap.add_argument("--enc-lr", type=float, default=2e-5, help="U3: 푼 인코더 층 학습률"); ap.add_argument("--guard-weight", type=float, default=1.0, help="U3: ASR 지킴 가중(0 = 끔)")
+ap.add_argument("--stream-ckpt", action="store_true", help="스트리밍 증류 걸음마다 활성값 다시 계산(긴 창 메모리 — U3 면 자동)")
 ap.add_argument("--data", default="/soundai/users/tskim/VAPKT-data/data/phase2"); ap.add_argument("--split", default="/soundai/users/tskim/VAPKT-data/data/phase2/splits/v4.json")
 ap.add_argument("--corpora", default="aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar")
 ap.add_argument("--sim-data", default="", help="합성 대화 폴더(쉼표)"); ap.add_argument("--weights", default="", help="'이름패턴:가중,…'(diar_train.py 와 같다)")
@@ -50,6 +59,8 @@ a = ap.parse_args()
 assert 0 <= a.graft_layer <= 30, "--graft-layer 0–30(N3D 31 층)"
 assert a.kd_weight > 0 or a.hid_weight > 0 or a.ref_weight > 0, "손실 가중이 모두 0 이다"
 assert a.stream_chunk >= 0 and (not a.stream_chunk or a.init_graft), "--stream-chunk(G1b)는 --init-graft(G1 final)와 함께 — 무음 sil 을 거기서 고정해 쓴다"
+assert a.unfreeze_layers >= 0 and (not a.unfreeze_layers or a.init_graft), "--unfreeze-layers(U3)는 --init-graft(G1b final)에서 시작한다"
+CKPT = bool(a.stream_ckpt or a.unfreeze_layers)
 
 
 def log(*x):
@@ -118,7 +129,8 @@ def fingerprint():
     keys = ("init", "n3d", "graft_layer", "taps", "blocks", "kernel", "ffn", "kd_weight", "hid_weight", "ref_weight", "ridge_windows", "ridge", "data", "split", "corpora",
             "sim_data", "weights", "window", "window_draws", "n_spk", "batch", "lr", "warmup", "max_steps", "weight_decay", "noise_bank", "noise_p", "rir_p", "noise_snr",
             "gain_db", "seed")
-    return {**{k: getattr(a, k) for k in keys}, **({k: getattr(a, k) for k in ("init_graft", "stream_chunk")} if a.stream_chunk or a.init_graft else {})}   # 켰을 때만(G1 지문 그대로)
+    return {**{k: getattr(a, k) for k in keys}, **({k: getattr(a, k) for k in ("init_graft", "stream_chunk")} if a.stream_chunk or a.init_graft else {}),   # 켰을 때만(G1 지문 그대로)
+            **({k: getattr(a, k) for k in ("unfreeze_layers", "enc_lr", "guard_weight")} if a.unfreeze_layers else {}), **({"stream_ckpt": True} if a.stream_ckpt else {})}
 
 
 def last_checkpoint(out):
@@ -127,15 +139,17 @@ def last_checkpoint(out):
 
 
 # ── 한 배치의 교사·학생·손실
-def batch_terms(b, enc, taps, n3, adapter, dev, sil0=None):
+def batch_terms(b, enc, taps, n3, adapter, dev, sil0=None, enc0=None):
     """→ (손실, 통계 dict, 무음 프로필 (합 (512,), 프레임 수)). 교사(N3D 오프라인)와 학생(탭 → 어댑터 → layer 층 위·머리)이 같은 오디오를 본다.
-    --stream-chunk(G1b)면 확률 손실은 교사 스트리밍 대 학생 스트리밍(sil0 — 캐시 무음 자리)의 80 ms BCE 다."""
+    --stream-chunk(G1b)면 확률 손실은 교사 스트리밍 대 학생 스트리밍(sil0 — 캐시 무음 자리)의 80 ms BCE 다.
+    U3(--unfreeze-layers): 탭에 gradient 가 흐르고(아래 층), enc0(고정 원본 인코더)가 있으면 마지막 층 출력의 ASR 지킴 손실을 더한다."""
     from vapasr.hf.diar import sort_pit_loss
     from vapasr.hf.n3d import stream_probs
     from vapasr.hf.n3d_graft import pool80, stream, student_offline, teacher
     wav, wl, K = b["wav"].to(dev, non_blocking=True), b["wav_len"].to(dev), b["K"].to(dev)
+    with torch.set_grad_enabled(bool(a.unfreeze_layers) and torch.is_grad_enabled()):
+        f = enc(wav, wl, K, taps=taps)                                                               # (B, 1 + 탭, Kmax, 1024) fp32 — U3 면 아래 층 gradient
     with torch.no_grad():
-        f = enc(wav, wl, K, taps=taps)                                                               # (B, 1 + 탭, Kmax, 1024) fp32
         with torch.autocast("cuda", dtype=torch.bfloat16): h, p10, elen = teacher(n3, wav, wl, a.graft_layer)
     T = min(f.shape[2], h.shape[1]); L = torch.minimum(elen.to(dev).long(), K.long()).clamp(max=T)   # 우리 프레임 K 와 N3D 프레임(80 ms 격자 같음) 중 짧은 쪽
     h = h[:, :T].float(); pt = p10[:, : T * 8].float()
@@ -145,7 +159,7 @@ def batch_terms(b, enc, taps, n3, adapter, dev, sil0=None):
         with torch.no_grad(): t80s = stream_probs(n3, wav, wl, a.stream_chunk, 0)[:, :T].float()
         with torch.autocast("cuda", dtype=torch.bfloat16):
             hh = adapter(f[:, :, :T])
-            s80s = stream(n3, hh.float(), L, a.graft_layer, sil0, chunk=a.stream_chunk, grad=True)
+            s80s = stream(n3, hh.float(), L, a.graft_layer, sil0, chunk=a.stream_chunk, grad=True, ckpt=CKPT)
         hh = hh.float(); s80s = s80s.float(); vs = v80.float()[..., None]
         kd = (F.binary_cross_entropy(s80s.clamp(1e-6, 1 - 1e-6), t80s, reduction="none") * vs).sum() / (vs.sum() * t80s.shape[-1]).clamp(min=1)
         ps = None
@@ -162,6 +176,12 @@ def batch_terms(b, enc, taps, n3, adapter, dev, sil0=None):
     s80g = s80s if a.stream_chunk else pool80(ps, L); t80 = t80s if a.stream_chunk else pool80(pt, L); s80 = s80g.detach()
     st = dict(kd=float(kd), hid=float(hid), agree=float((((s80 > 0.5) == (t80 > 0.5)).all(-1) & v80).sum() / v80.sum().clamp(min=1)),
               t_act=float(((t80 > 0.5).any(-1) & v80).sum() / v80.sum().clamp(min=1)))
+    if enc0 is not None:                                                                             # U3 ASR 지킴: 마지막 층(LLM 입력) = 고정 원본
+        with torch.no_grad(): h0 = enc0(wav, wl, K)[:, :T].float()
+        hn = f[:, 0, :T].float(); m0 = (h0 * vh).sum((0, 1)) / vh.sum().clamp(min=1)
+        v0 = (((h0 - m0) ** 2) * vh).sum() / (vh.sum() * h0.shape[-1]).clamp(min=1)
+        guard = (((hn - h0) ** 2) * vh).sum() / (vh.sum() * h0.shape[-1]).clamp(min=1) / v0.clamp(min=1e-6)
+        loss = loss + a.guard_weight * guard; st["guard"] = float(guard)
     if a.ref_weight > 0:                                                                             # 정답 슬롯 활동(앞 n-spk 채널, Sort·PIT)
         act = b["act"].to(dev)[:, :T]; mk = b["mask"].to(dev)[:, :T] & v80
         lg = torch.logit(s80g[..., : a.n_spk].clamp(1e-5, 1 - 1e-5)); ref, _, _ = sort_pit_loss(lg, act, mk, 0.5)
@@ -202,10 +222,17 @@ def main():
     enc, n_keys = load_encoder(a.init, a.nemotron_dir, "cuda")
     taps = tuple(tap_layers(a.taps, len(enc.enc.layers))); n3, aux = load_n3d(a.n3d, "cuda")
     log(f"인코더 ← {a.init}(키 {n_keys}, 동결 fp32) · 탭 {list(taps)} · N3D ← {a.n3d}(보조 키 {len(aux)} 뺌, SDPA) · 이식 층 {a.graft_layer} · world {world}")
+    enc_ps, enc0 = [], None
+    if a.unfreeze_layers:                                                                            # U3: 아래 층만 학습, 고정 원본은 ASR 지킴 기준
+        from vapasr.hf.n3d_graft import partial_unfreeze
+        enc_ps = partial_unfreeze(enc, a.unfreeze_layers)
+        if a.guard_weight > 0: enc0, _ = load_encoder(a.init, a.nemotron_dir, "cuda")
+        log(f"U3: 인코더 아래 {a.unfreeze_layers}/{len(enc.enc.layers)} 층 학습({sum(p.numel() for p in enc_ps) / 1e6:.1f}M, lr {a.enc_lr:g}) · ASR 지킴 {a.guard_weight:g} · 스트리밍 다시 계산 {CKPT}")
     torch.manual_seed(a.seed)
     adapter = GraftAdapter(1 + len(taps), 1024, 512, a.blocks, a.kernel, a.ffn).to(dev)
     log(f"어댑터 {sum(p.numel() for p in adapter.parameters()) / 1e6:.2f}M · {adapter.cfg}")
-    opt = torch.optim.AdamW(adapter.parameters(), lr=a.lr, weight_decay=a.weight_decay, betas=(0.9, 0.98))
+    opt = torch.optim.AdamW([{"params": list(adapter.parameters()), "lr": a.lr}] + ([{"params": enc_ps, "lr": a.enc_lr}] if enc_ps else []),
+                            lr=a.lr, weight_decay=a.weight_decay, betas=(0.9, 0.98))
     total = a.smoke or a.max_steps
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / max(1, a.warmup)) * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * min(1.0, s / max(1, total))))))
     step, ck = last_checkpoint(a.out_dir) if not a.smoke else (0, None)
@@ -215,11 +242,13 @@ def main():
         assert xg["layer"] == a.graft_layer and list(xg["taps"]) == list(taps) and xg["cfg"] == adapter.cfg, f"--init-graft 의 층·탭·어댑터 설정이 다르다: {a.init_graft}"
     if ck:
         x = torch.load(os.path.join(ck, "graft.pt"), map_location=dev); adapter.load_state_dict(x["state"])
+        if enc_ps: assert x.get("enc") is not None, f"U3 재개인데 인코더 state 가 없다: {ck}"; enc.enc.load_state_dict(x["enc"])
         st = torch.load(os.path.join(ck, "trainer.pt"), map_location=dev, weights_only=False); opt.load_state_dict(st["opt"]); sched.load_state_dict(st["sched"])
         if rank == 0: sil_sum += st["sil_sum"].to(dev); sil_n += st["sil_n"]                          # 무음 프로필은 rank 0 이 합을 들고 간다(저장 때 모은 값)
         log(f"재개 ← {ck}(step {step})")
     elif a.init_graft:
         adapter.load_state_dict(xg["state"]); log(f"어댑터 ← {a.init_graft}(step {xg.get('step')}) · 스트리밍 청크 {a.stream_chunk or '없음(오프라인)'}")
+        if enc_ps and xg.get("enc") is not None: enc.enc.load_state_dict(xg["enc"]); log("인코더 ← --init-graft 의 enc(U3 이어서)")
     elif a.ridge_windows > 0 and rank == 0:                                                          # G0 와 같은 능형 회귀 해에서 시작(블록은 0 — 붙인 직후 = 선형 이식)
         from vapasr.hf.n3d_graft import pool80, teacher
         t0 = time.time(); it = iter(Stream(sources, wts, aug, f"{a.seed}:ridge")); XtX = XtY = Xs = Ys = None; nw = nfr = 0
@@ -241,6 +270,7 @@ def main():
         log(f"능형 회귀 시작점: 창 {nw} · 프레임 {nfr} · 차원 {D} · 무음 프레임 {int(sil_n)} · {time.time() - t0:.0f}s"); del XtX, XtY, C, A, W
     if ddp: dist.barrier()                                                                           # 다른 rank 는 능형 회귀를 기다린다(DDP 가 rank 0 가중치를 뿌린다)
     net = torch.nn.parallel.DistributedDataParallel(adapter, device_ids=[dev.index]) if ddp else adapter
+    encnet = torch.nn.parallel.DistributedDataParallel(enc, device_ids=[dev.index], broadcast_buffers=False) if ddp and enc_ps else enc   # U3: 푼 층만 동기
     dl = torch.utils.data.DataLoader(Stream(sources, wts, aug, f"{a.seed}:{rank}:{step}"), batch_size=a.batch, num_workers=a.num_workers, collate_fn=collate,
                                      pin_memory=True, persistent_workers=a.num_workers > 0, prefetch_factor=4 if a.num_workers else None)
 
@@ -250,7 +280,8 @@ def main():
         if rank != 0: return None
         d = os.path.join(a.out_dir, tag); tmp = d + f".tmp{os.getpid()}"; os.makedirs(tmp, exist_ok=True)
         rec = dict(state=adapter.state_dict(), cfg=adapter.cfg, layer=a.graft_layer, taps=list(taps), sil=(s_ / n_.clamp(min=1)).float().cpu(), sil_frames=float(n_),
-                   init=os.path.abspath(a.init), n3d=os.path.abspath(a.n3d), step=step)
+                   init=os.path.abspath(a.init), n3d=os.path.abspath(a.n3d), step=step,
+                   **({"enc": {k: v.detach().float().cpu() for k, v in enc.enc.state_dict().items()}, "unfreeze": a.unfreeze_layers} if enc_ps else {}))
         torch.save(rec, os.path.join(tmp, "graft.pt"))
         if tag != "final": torch.save(dict(opt=opt.state_dict(), sched=sched.state_dict(), step=step, sil_sum=s_.cpu(), sil_n=float(n_)), os.path.join(tmp, "trainer.pt"))
         else: json.dump(dict(cfg=adapter.cfg, layer=a.graft_layer, taps=list(taps), sil_frames=float(n_), init=rec["init"], n3d=rec["n3d"], step=step, args=fingerprint()),
@@ -265,29 +296,36 @@ def main():
         flag = torch.tensor([1.0 if rank == 0 and os.path.exists(preempt) else 0.0], device=dev)
         if ddp: dist.all_reduce(flag)
         if flag.item() > 0: save(f"checkpoint-{step}"); log("PREEMPT → 저장하고 끝낸다"); break
-        loss, st, (ps_, pn_) = batch_terms(b, enc, taps, n3, net, dev, sil0)
-        opt.zero_grad(set_to_none=True); loss.backward(); gn = torch.nn.utils.clip_grad_norm_(adapter.parameters(), 1.0); opt.step(); sched.step(); step += 1
+        loss, st, (ps_, pn_) = batch_terms(b, encnet, taps, n3, net, dev, sil0, enc0)
+        opt.zero_grad(set_to_none=True); loss.backward(); gn = torch.nn.utils.clip_grad_norm_(list(adapter.parameters()) + enc_ps, 1.0); opt.step(); sched.step(); step += 1
         sil_sum += ps_.double(); sil_n += pn_
         for k, v in dict(loss=float(loss), gn=float(gn), **st).items(): acc[k] = acc.get(k, 0.0) + v
         if step % a.log_every == 0 or step == total:
             n = a.log_every if step % a.log_every == 0 else (step % a.log_every or a.log_every)
-            log(f"step {step}/{total} · " + " · ".join(f"{k} {v / n:.4f}" for k, v in acc.items()) + f" · lr {sched.get_last_lr()[0]:.2e} · {(time.time() - t0) / n:.2f} s/step"); acc = {}; t0 = time.time()
+            log(f"step {step}/{total} · " + " · ".join(f"{k} {v / n:.4f}" for k, v in acc.items()) + f" · lr {sched.get_last_lr()[0]:.2e} · {(time.time() - t0) / n:.2f} s/step"
+                + f" · 최대 메모리 {torch.cuda.max_memory_allocated() / 2 ** 30:.1f} GB"); acc = {}; t0 = time.time()
         if step % a.save_every == 0 and step < total: save(f"checkpoint-{step}")
     d = save("final") if step >= total else None
     if ddp: dist.barrier(); dist.destroy_process_group()                                           # 대조는 그룹을 닫은 뒤 rank 0 만
     if d and b is not None:
-        reload_check(d, b, adapter, enc, taps, n3, dev, sil0)                                       # 어긋나면 멈추고 DONE 을 쓰지 않는다
+        reload_check(d, b, adapter, enc, taps, n3, dev, sil0, enc0)                                 # 어긋나면 멈추고 DONE 을 쓰지 않는다
         open(os.path.join(a.out_dir, "DONE"), "w").write(f"step {step}\n")
 
 
-def reload_check(final_dir, b, adapter, enc, taps, n3, dev, sil0=None):
-    """final/graft.pt 를 새 어댑터로 읽어 마지막 배치의 손실을 메모리 어댑터와 대조한다(가중치 차이 0, 손실 차이 ≤ 1e-4). out/parity.json."""
+def reload_check(final_dir, b, adapter, enc, taps, n3, dev, sil0=None, enc0=None):
+    """final/graft.pt 를 새 어댑터(U3 면 새 인코더도 — init 에서 읽고 enc 를 덮어 같은 학습 경로로)로 읽어 마지막 배치의 손실을 메모리 모델과 대조한다
+    (가중치 차이 0, 손실 차이 ≤ 1e-4). out/parity.json."""
     from vapasr.hf.n3d_graft import GraftAdapter
     x = torch.load(os.path.join(final_dir, "graft.pt"), map_location=dev); m2 = GraftAdapter(**x["cfg"]).to(dev); m2.load_state_dict(x["state"])
-    adapter.eval(); m2.eval()
+    adapter.eval(); m2.eval(); e2 = enc; pairs = list(zip(adapter.state_dict().values(), m2.state_dict().values()))
+    if x.get("enc") is not None:
+        from vapasr.hf.diar import load_encoder
+        from vapasr.hf.n3d_graft import partial_unfreeze
+        e2, _ = load_encoder(x["init"], a.nemotron_dir, "cuda"); e2.enc.load_state_dict(x["enc"]); partial_unfreeze(e2, int(x["unfreeze"]))
+        pairs += list(zip(enc.enc.state_dict().values(), e2.enc.state_dict().values()))
     with torch.no_grad():
-        l1, s1, _ = batch_terms(b, enc, taps, n3, adapter, dev, sil0); l2, s2, _ = batch_terms(b, enc, taps, n3, m2, dev, sil0)
-    diff = max(float((p - q).abs().max()) for p, q in zip(adapter.state_dict().values(), m2.state_dict().values()))
+        l1, s1, _ = batch_terms(b, enc, taps, n3, adapter, dev, sil0, enc0); l2, s2, _ = batch_terms(b, e2, taps, n3, m2, dev, sil0, enc0)
+    diff = max(float((p.float() - q.float()).abs().max()) for p, q in pairs)
     out = dict(final=final_dir, step=x["step"], windows=len(b["K"]), memory=dict(loss=round(float(l1), 6), **s1), reload=dict(loss=round(float(l2), 6), **s2), max_diff=diff,
                layer=x["layer"], sil_frames=x.get("sil_frames"))
     json.dump(out, open(os.path.join(a.out_dir, "parity.json"), "w"), indent=1); log(f"저장·재로드 대조: {out}")

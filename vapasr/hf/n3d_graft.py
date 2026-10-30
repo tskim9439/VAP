@@ -9,7 +9,10 @@
   NeMo forward_streaming_step(동기·고해상도)과 같은 갱신(streaming_update). 캐시의 무음 자리(learnable_sil_emb — 0 층 입력 전 꼴)는 layer 층 입력 꼴의
   sil 로 바꿔 넣는다(학습 데이터에서 교사가 모두 무음이라 본 프레임의 h_layer 평균 — graft.pt). layer 0 · ĥ = 교사 h_0 · sil = embed_norm(learnable_sil_emb)
   이면 교사 스트리밍과 같다(tests/test_n3d_graft.py).
-- GraftExpert: 평가에 붙는 학생(N3DExpert 와 같은 probs·act 꼴) — graft.pt(어댑터·층·탭·sil·init) + N3D(.nemo) + 인코더(graft.pt 의 init, 고정)."""
+- GraftExpert: 평가에 붙는 학생(N3DExpert 와 같은 probs·act 꼴) — graft.pt(어댑터·층·탭·sil·init) + N3D(.nemo) + 인코더(graft.pt 의 init, 고정 —
+  U3 graft.pt 에 enc(인코더 state)가 있으면 그것으로 바꾼다).
+- partial_unfreeze(enc, n)(U3, 2026-10-30 — 사용자 "U3 아래 12 층 푸는 걸로 구현해놓자"): 우리 인코더(NemotronOnline)의 아래 n 층만 학습(gradient·bf16 autocast),
+  나머지는 고정, 모듈은 eval(dropout 없음 — 고정 위층과 ASR 지킴 대조가 흔들리지 않게)."""
 import json, os
 from typing import Optional
 
@@ -17,6 +20,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.utils.checkpoint
 
 from .n3d import FRAME_FACTOR, load_n3d, run_layers, set_streaming
 
@@ -84,11 +88,18 @@ def pool80(p10, length=None):
     return SortformerModules.downsample_preds(p10, FRAME_FACTOR, lengths=None if length is None else length * FRAME_FACTOR)
 
 
-def stream(m, h, length, layer: int, sil, chunk: int = 4, rc: int = 0, fifo: int = 264, cache: int = 264, period: int = 222, grad: bool = False):
+def _chunk_fwd(m, x, xl, layer: int):
+    """스트리밍 한 걸음의 layer 층 위·머리(run_layers 가 SDPA 길이를 층에 적으므로 다시 계산해도 같은 마스크)."""
+    return m.forward_infer(run_layers(m, x, xl, layer), xl)
+
+
+def stream(m, h, length, layer: int, sil, chunk: int = 4, rc: int = 0, fifo: int = 264, cache: int = 264, period: int = 222, grad: bool = False,
+           ckpt: bool = False):
     """ĥ (B, T, 512)(인과), length (B,) 80 ms 프레임 → (B, T, 8) 80 ms 확률(도착 순서). NeMo 동기 스트리밍 고리와 같은 갱신(모듈 설명).
     줄마다 길이가 달라도 단독 실행과 같다(패딩 줄은 길이 뒤만 다르다 — n3d.stream_probs 와 같은 규약).
     grad(G1b — 스트리밍 상태 학습): gradient 가 ĥ 로 흐른다. 캐시·FIFO 는 ĥ 를 그대로 담아(이어 붙이기·gather) 앞 청크의 ĥ 도 뒤 걸음의 손실에서 gradient 를 받는다.
-    캐시 고르기(점수·무음 판정)는 확률을 떼어(detach) 쓴다 — 값은 grad=False 와 같다."""
+    캐시 고르기(점수·무음 판정)는 확률을 떼어(detach) 쓴다 — 값은 grad=False 와 같다.
+    ckpt(U3 — 60–90 s 창): grad 일 때 걸음마다 활성값을 버리고 backward 에서 다시 계산한다(torch.utils.checkpoint) — 값·gradient 는 같고 메모리가 걸음 수에 덜 묶인다."""
     set_streaming(m, chunk, rc, fifo, cache, period)
     sm = m.sortformer_modules; B, T, _ = h.shape; dev = h.device; L = length.to(dev).long()
     state = sm.init_streaming_state(batch_size=B, async_streaming=False, device=dev)
@@ -100,7 +111,7 @@ def stream(m, h, length, layer: int, sil, chunk: int = 4, rc: int = 0, fifo: int
                 s1 = min(T, s0 + int(chunk)); r1 = min(T, s1 + int(rc))
                 ch = h[:, s0:r1].float(); cl = (L - s0).clamp(0, r1 - s0)
                 x = torch.cat([state.spkcache, state.fifo, ch], 1); n0 = state.spkcache.shape[1] + state.fifo.shape[1]; xl = n0 + cl
-                hr = m.forward_infer(run_layers(m, x, xl, layer), xl)
+                hr = torch.utils.checkpoint.checkpoint(_chunk_fwd, m, x, xl, layer, use_reentrant=False) if grad and ckpt else _chunk_fwd(m, x, xl, layer)
                 p = sm.apply_mask_to_preds(sm.downsample_preds(hr, m.upsample_factor) if m.high_resolution else hr, xl).float()
                 state, cp = sm.streaming_update(streaming_state=state, chunk=ch, preds=p.detach() if grad else p, lc=0, rc=r1 - s1)
                 out.append(p[:, n0: n0 + (s1 - s0)] if grad else cp)                                       # 같은 몫(streaming_update 의 chunk_preds — 순열은 eval 이라 없다)
@@ -108,6 +119,19 @@ def stream(m, h, length, layer: int, sil, chunk: int = 4, rc: int = 0, fifo: int
         sm.learnable_sil_emb.data = old
     p = torch.cat(out, 1)[:, :T]
     return p * (torch.arange(T, device=dev)[None] < L[:, None])[..., None]
+
+
+def partial_unfreeze(enc, n: int):
+    """U3: NemotronOnline 의 아래 n 층(enc.enc.layers[:n])만 requires_grad, 나머지(서브샘플링·위층)는 고정. forward 는 trainable 경로(gradient·bf16 autocast)로,
+    모듈은 eval(dropout 없음). → 학습할 파라미터 목록."""
+    layers = enc.enc.layers; assert 0 < int(n) <= len(layers), f"푸는 층 1–{len(layers)}: {n}"
+    for p in enc.enc.parameters(): p.requires_grad_(False)
+    ps = [p for layer in layers[: int(n)] for p in layer.parameters()]
+    for p in ps: p.requires_grad_(True)
+    enc.trainable = True; enc.eval()
+    conv = getattr(getattr(enc.enc, "pre_encode", None), "conv", None)                         # set_trainable 과 같다 — bf16 autocast 경로에서 Triton 서브샘플링 커널을 피한다
+    if conv is not None and getattr(conv, "fuse_triton", False): conv.fuse_triton = False
+    return ps
 
 
 def encoder_taps(enc, wav, wav_len, K, taps, ch: int, core: int = 4800):
@@ -134,8 +158,10 @@ class GraftExpert:
         self.adapter = GraftAdapter(**x["cfg"]); self.adapter.load_state_dict(x["state"]); self.adapter.to(device).eval()
         self.m, _ = load_n3d(n3d_path or x["n3d"], device)
         self.enc, _ = load_encoder(x["init"], nemotron_dir, device)
+        if x.get("enc") is not None: self.enc.enc.load_state_dict(x["enc"]); self.enc.eval()            # U3: 아래 층을 함께 학습한 인코더
         self.ch = int(json.load(open(os.path.join(x["init"], "config.json"))).get("encoder_right_context", 0) or 0) + 1   # 인코더 블록(조각 경계)
-        self.cfg = dict(graft=graft_path, layer=self.layer, chunk=self.chunk, rc=self.rc, threshold=self.threshold, step=x.get("step"))
+        self.cfg = dict(graft=graft_path, layer=self.layer, chunk=self.chunk, rc=self.rc, threshold=self.threshold, step=x.get("step"),
+                        **({"unfreeze": int(x["unfreeze"])} if x.get("enc") is not None else {}))
 
     @torch.no_grad()
     def probs(self, wav, wav_len, K, offline: bool = False) -> torch.Tensor:

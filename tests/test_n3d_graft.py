@@ -87,3 +87,38 @@ def test_stream_grad_matches_values_and_reaches_cached_frames():
     assert torch.allclose(p0, p1.detach(), atol=1e-5)
     T = p1.shape[1]; p1[:, T - 16:].sum().backward()                                                   # 마지막 청크만의 손실
     g = hg.grad[0].abs().sum(-1); assert g[: T - 16].sum() > 0 and g[T - 16:].sum() > 0                      # 앞 프레임(캐시·FIFO)도 gradient 를 받는다
+
+
+def test_partial_unfreeze_only_lower_layers():
+    """U3: 아래 n 층만 학습(나머지·서브샘플링 고정), 모듈은 eval, forward 는 trainable 경로(NemotronOnline.trainable), Triton 서브샘플링은 끈다."""
+    from vapasr.hf.n3d_graft import partial_unfreeze
+
+    class Conv(torch.nn.Module):
+        def __init__(self): super().__init__(); self.w = torch.nn.Parameter(torch.ones(2)); self.fuse_triton = True
+
+    class Inner(torch.nn.Module):
+        def __init__(self):
+            super().__init__(); self.pre_encode = torch.nn.Module(); self.pre_encode.conv = Conv()
+            self.layers = torch.nn.ModuleList([torch.nn.Sequential(torch.nn.Linear(4, 4), torch.nn.Dropout(0.5)) for _ in range(6)])
+
+    class Enc(torch.nn.Module):
+        def __init__(self): super().__init__(); self.enc = Inner(); self.trainable = False
+    e = Enc(); e.train(); ps = partial_unfreeze(e, 4)
+    assert e.trainable and not e.training and not e.enc.layers[0].training and e.enc.pre_encode.conv.fuse_triton is False
+    assert {id(p) for p in ps} == {id(p) for l in e.enc.layers[:4] for p in l.parameters()} and all(p.requires_grad for p in ps)
+    assert not any(p.requires_grad for l in e.enc.layers[4:] for p in l.parameters()) and not e.enc.pre_encode.conv.w.requires_grad
+    with pytest.raises(AssertionError): partial_unfreeze(Enc(), 7)
+
+
+@real
+def test_stream_ckpt_same_values_and_grads():
+    """U3: 걸음마다 활성값을 다시 계산하는 스트리밍(ckpt)이 그냥 grad 스트리밍과 값·gradient 가 같다(run_layers 의 SDPA 길이를 다시 적는다)."""
+    from vapasr.hf.n3d import load_n3d
+    from vapasr.hf.n3d_graft import stream, teacher
+    m, _ = load_n3d(_N3D); x = _signal(9.0, 11); W = torch.zeros(2, len(x)); W[0] = x; W[1, : 16000 * 6] = x[: 16000 * 6]; wl = torch.tensor([len(x), 16000 * 6])
+    h, _, elen = teacher(m, W, wl, 8); sil = h[0].mean(0).detach(); L = elen.long()
+    outs, grads = [], []
+    for ck in (False, True):
+        hg = h.detach().clone().requires_grad_(True); p = stream(m, hg, L, 8, sil, chunk=16, grad=True, ckpt=ck)
+        (p * torch.linspace(0.5, 1.5, p.shape[1])[None, :, None]).sum().backward(); outs.append(p.detach()); grads.append(hg.grad.clone())
+    assert torch.allclose(outs[0], outs[1], atol=1e-6) and torch.allclose(grads[0], grads[1], atol=1e-5), float((grads[0] - grads[1]).abs().max())

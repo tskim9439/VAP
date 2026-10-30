@@ -29,6 +29,8 @@
     그 슬롯 활동이 없을 때 그 라운드 그 슬롯을 버린다(<EOT> 는 그대로). 행에 gated{text, begin}, config 에 act_gate. --verify(배치 대 직렬)도 같은 게이트로 대조한다.
     --follow-n3d(--from-predictions 전용): 원출력 행에 act_runs 가 없으면(2026-10-30 전 E11·--n3d 평가) 원출력 config 의 전문가 설정(n3d)으로 활동을 다시 계산한다(GPU —
     전문가만 읽는다). 창은 원 평가처럼 배치로 돌리므로 --batch-size·--world-size 를 원 평가와 같게 준다(AMI 창은 16·8).
+  --encoder-state <graft.pt>(U3, 2026-10-30): 모델의 인코더를 그 graft.pt 의 enc(화자 분리와 함께 학습한 인코더 — n3d_graft_train --unfreeze-layers)로 바꿔
+    디코드한다 — ASR 지킴 확인(E11 의 cp·agn 이 그대로인가). config 에 encoder_state.
   --en-norm whisper(2026-10-27): 영어 채점을 Whisper EnglishTextNormalizer 로(채움말 제거 등 — vapasr.data.cst_eval.set_en_norm). 외부 AMI 수치와 견줄 때
     --from-predictions 와 함께 새 --out 에 다시 매긴다(raw/sources/experiments/2026-10-27-std-rescore/rescore_std.sh). config 에 en_norm 이 남는다(ours 면 키 없음).
   --spk-guide on,margin[,span] [--spk-guide-hold] [--spk-guide-no-insert]: 화자 헤드 안내 디코딩(batch_decode.SpkGuide — model.spk_head 가 있는 Stage 3 체크포인트).
@@ -243,6 +245,7 @@ def run(a):
     assert len(gate_w) in (0, 2) and len(fwin) == 2 and min(gate_w + fwin) >= 0, "--act-gate·--follow-window 는 BACK,FWD(0 이상 정수 둘)"
     assert not gate_w or not (a.oracle or a.from_predictions), "--act-gate 는 모델 디코드 전용(--oracle·--from-predictions 없이)"
     assert not fn3 or a.from_predictions, "--follow-n3d 는 --from-predictions 와 함께(원출력에 활동이 없을 때 전문가 활동을 다시 계산한다)"
+    assert not getattr(a, "encoder_state", None) or not (a.oracle or a.from_predictions), "--encoder-state 는 모델 디코드 전용"
     sb = None
     if getattr(a, "switch_bias", None):                                                        # V3 C3 상태 인지 교대 bias(교차 언어 창만) — 없으면 예전 디코드 그대로
         from vapasr.hf.batch_decode import SwitchBias
@@ -270,6 +273,10 @@ def run(a):
             model.diar_head.load_state_dict(xo["state"])
             if xo.get("aosc"): model.config.diar_aosc = dict(xo["aosc"])
             print(f"  화자 분리 헤드 ← {a.diar_head_override}(aosc {xo.get('aosc')})", flush=True)
+        if getattr(a, "encoder_state", None):                                                    # U3: 화자 분리와 함께 학습한 인코더로 바꿔 끼운다(ASR 지킴 확인)
+            xs = torch.load(a.encoder_state, map_location="cpu"); assert xs.get("enc") is not None, f"인코더 state(enc)가 없다: {a.encoder_state}"
+            model.encoder.enc.load_state_dict(xs["enc"]); model.encoder.eval()
+            print(f"  인코더 ← {a.encoder_state}(U3 — 아래 {xs.get('unfreeze')} 층 학습, step {xs.get('step')})", flush=True)
         if getattr(a, "n3d", None) or getattr(model, "n3d", None) is not None:                 # E11: 고정 화자 분리 전문가(평가에서 붙이거나 — E9·E10 진단 — 설정을 바꾼다)
             model.add_n3d(a.n3d or None, chunk=a.n3d_chunk, rc=a.n3d_rc, threshold=a.n3d_threshold)
             print(f"  고정 화자 분리 전문가 n3d ← {model.config.n3d_cfg}", flush=True)
@@ -342,6 +349,7 @@ def run(a):
                 **({"en_norm": a.en_norm} if getattr(a, "en_norm", "ours") != "ours" else {}),
                 **({"act_tag_guide": True} if getattr(a, "act_tag_guide", False) else {}), **({"slot_blocks": True} if blocks else {}), **({"mix_off": True} if mix_off else {}),
                 **({"act_gate": list(gate_w)} if gate_w else {}), **({"follow_window": list(fwin)} if fwin != (3, 1) else {}), **({"follow_n3d": True} if fn3 else {}),
+                **({"encoder_state": os.path.abspath(a.encoder_state)} if getattr(a, "encoder_state", None) else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
@@ -569,6 +577,7 @@ def main():
     q.add_argument("--act-gate", default=None, type=ints, help="활동 게이트 디코드 BACK,FWD(예 3,1 — batch_decode.ActGate): 슬롯 첫 출력의 오디오 근처에 그 슬롯 활동이 없으면 그 라운드 그 슬롯을 버린다")
     q.add_argument("--follow-window", default=(3, 1), type=ints, help="활동 추종 진단 창 BACK,FWD(단어 오디오 프레임 기준, 기본 3,1 — cst_eval.follow_stats)")
     q.add_argument("--follow-n3d", action="store_true", help="--from-predictions: 원출력에 act_runs 가 없으면 원 평가 config 의 전문가(n3d)로 활동을 다시 계산(GPU)")
+    q.add_argument("--encoder-state", default=None, help="U3: 인코더를 이 graft.pt 의 enc(화자 분리와 함께 학습)로 바꿔 디코드 — ASR 지킴 확인")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")
     q.add_argument("--declare", type=int, default=None, help="prefix 선언 슬롯 수 하한(기본 max(2, 화자 수); 화자 수를 모르는 추론 흉내 = 4)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 언어가 다른 창만, 기본 끔). "

@@ -7,16 +7,18 @@
 #   교사가 라벨을 주므로 회의·원거리 셋에 가중을 더 준다(아래 W).
 #   산출 /soundai/Model/VAPASR/graft-<run>(checkpoint-N · final/graft.pt · parity.json · DONE). 평가 묶음 q17-graft(창·회의 DER, 스트리밍 청크 4)를 이어서 낸다.
 # 쓰기: bash slurm/submit-n3d-graft.sh [--run q17-graft-l8] [--layer 8] [--init <체크포인트>] [--n3d <.nemo>] [--nodes 1] [--partition apex] [--max-steps 6000]
-#        [--batch 8] [--after-job JOBID] [--extra "n3d_graft_train.py 인자"] [--no-eval] [--dry-run]. 아무것도 지우지 않는다.
+#        [--batch 8] [--after-job JOBID] [--extra "n3d_graft_train.py 인자"] [--no-eval] [--asr-eval] [--dry-run]. 아무것도 지우지 않는다.
+# U3(2026-10-30, 사용자 "U3 아래 12 층 푸는 걸로 구현해놓자"): --extra 에 --unfreeze-layers N --enc-lr --guard-weight 를 준다(n3d_graft_train 설명).
+#   --asr-eval: 학습 뒤 평가 묶음 q17-u3-asr(E11 에 새 인코더를 끼워 AMI 창 δ10 — ASR 지킴 확인)도 이어서 낸다(U3_RUN=--run).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 run=q17-graft-l8; layer=8; init=/soundai/Model/VAPASR/stage3-q17-e9/final; n3d=/soundai/users/tskim/VAPKT-data/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo
-nodes=1; part=apex; steps=6000; batch=8; after=""; dry=0; extra=""; ev=1
+nodes=1; part=apex; steps=6000; batch=8; after=""; dry=0; extra=""; ev=1; asr=0
 while [[ $# -gt 0 ]]; do
   case $1 in
     --run) run=$2; shift 2 ;;  --layer) layer=$2; shift 2 ;;  --init) init=$2; shift 2 ;;  --n3d) n3d=$2; shift 2 ;;  --nodes) nodes=$2; shift 2 ;;
     --partition) part=$2; shift 2 ;;  --max-steps) steps=$2; shift 2 ;;  --batch) batch=$2; shift 2 ;;  --after-job) after=$2; shift 2 ;;  --extra) extra=$2; shift 2 ;;
-    --no-eval) ev=0; shift ;;  --dry-run) dry=1; shift ;;
+    --no-eval) ev=0; shift ;;  --dry-run) dry=1; shift ;;  --asr-eval) asr=1; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -34,7 +36,8 @@ export MAX_RESTART=${MAX_RESTART:-$([[ $part == apex ]] && echo 5 || echo 20)}
 cmd=(sbatch --job-name=SA_GRAFT --partition="$part" --nodes="$nodes" --time=24:00:00 $EXC ${after:+--dependency=afterok:$after}
      "--export=ALL,OUT=$OUT,SCRIPT=experiments/n3d_graft_train.py,MAX_RESTART=$MAX_RESTART,ARGS_EXTRA=${ARGS//,/%2C}" slurm/stage3-train-apex.sbatch)
 echo "[$(date '+%F %T')] G1 이식 어댑터 graft-$run ← 인코더 $init · 이식 층 $layer · $nodes 노드 · $part · $steps step · 코퍼스 $CORP · 합성 $SIMS${after:+ · job $after 성공 뒤}" >&2
-if (( dry )); then printf '%q ' "${cmd[@]}"; echo; echo "1 학습 job 0"; (( ev )) && GRAFT_RUN=$run bash slurm/submit-evals.sh q17-graft --after-job 0 --partition "$part" --dry-run | tail -1; exit 0; fi
+if (( dry )); then printf '%q ' "${cmd[@]}"; echo; echo "1 학습 job 0"; (( ev )) && GRAFT_RUN=$run bash slurm/submit-evals.sh q17-graft --after-job 0 --partition "$part" --dry-run | tail -1
+  (( asr )) && U3_RUN=$run bash slurm/submit-evals.sh q17-u3-asr --after-job 0 --partition "$part" --dry-run | tail -2; exit 0; fi
 [[ -e $OUT/DONE ]] && { echo "이미 끝났다: $OUT/DONE" >&2; exit 1; }
 out=$("${cmd[@]}"); echo "$out" >&2; dep=$(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1)
 [[ -n $dep ]] || { echo "!! job 번호를 못 읽었다" >&2; exit 1; }
@@ -42,3 +45,6 @@ echo "1 학습 job $dep"
 (( ev )) || exit 0
 out=$(GRAFT_RUN=$run bash slurm/submit-evals.sh q17-graft --after-job "$dep" --partition "$part" 2>&1) || { echo "$out" | tail -5 >&2; echo "!! 평가 제출 실패" >&2; exit 1; }
 echo "2 평가 job $(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1)"
+(( asr )) || exit 0
+out=$(U3_RUN=$run bash slurm/submit-evals.sh q17-u3-asr --after-job "$dep" --partition "$part" 2>&1) || { echo "$out" | tail -5 >&2; echo "!! ASR 지킴 평가 제출 실패" >&2; exit 1; }
+echo "3 ASR 지킴 평가 job $(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1)"

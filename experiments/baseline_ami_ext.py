@@ -21,7 +21,9 @@
 조각(--segment-s S, 기본 0 = 회의 통째): 회의를 S 초 이하 조각으로 나눠(조각 끝은 S 초 전 60 초 안의 가장 늦은 무음 지점, 없으면 S 초) 조각마다 따로 디코드하고
   조각마다 채점한다(행 id = <코퍼스>:<회의>@<조각 시작> — 창 평가처럼 조각마다 화자 짝). VibeVoice-Streaming 논문 AMI 수치(480 s 이하 조각)를 다시 잴 때.
 마스크: 가설 단어도 참조와 같은 규칙으로 버린다 — 시각 t 의 단어는 청크 int(t / 80 ms) + δ 가 전사 없는 구간 청크(mask_chunks)이면 뺀다.
-점수: 가설 화자가 7 명 이상이면 헝가리안으로 최적 짝을 찾는다(score_window 의 순열과 같은 최소). 아무것도 지우지 않는다(이어 하기 — 끝난 행은 건너뛴다)."""
+점수: 가설 화자가 7 명 이상이면 헝가리안으로 최적 짝을 찾는다(score_window 의 순열과 같은 최소). 아무것도 지우지 않는다(이어 하기 — 끝난 행은 건너뛴다).
+--audio headset-sum(2026-10-30, 사용자 "논문의 AMI-IHM 이 우리가 쓰는 헤드셋 혼합과 다른 입력일 가능성 … 검토"): 공식 Mix-Headset 대신 대화의 화자별 헤드셋
+  채널(Headset-0..3.wav)을 그대로 더해(넘치면 최대 1 로 줄임) 넣는다 — 혼합을 만드는 방식이 결과를 바꾸는지 본다. 참조·마스크는 그대로(행 ext.audio)."""
 import argparse, json, os, sys, time
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -69,6 +71,18 @@ def score_ext(ref_w, hyp_w, lang):
     ra = [u for w, _ in sorted([x for sl in ref_w for x in sl], key=lambda x: x[1]) for u in units(w, lang)]
     ha = [u for w, _ in sorted([x for sl in hyp_w for x in sl], key=lambda x: x[1]) for u in units(w, lang)]
     return dict(n_ref=sum(map(len, Rs)), n_hyp=sum(map(len, Hs)), slot=same, cp=best, agn=ed(ra, ha), swap=bool(best < same), perm=perm)
+
+
+def headset_sum(d, s0: float, s1: float):
+    """대화의 화자별 채널 wav(ChannelRef.path — `wav#chN` 은 쓰지 않는 AMI 헤드셋 파일)를 [s0, s1) 구간만 더한다 → float32 16 kHz(넘치면 최대 1 로 줄인다)."""
+    import numpy as np, soundfile as sf
+    a, b = int(round(s0 * 16000)), int(round(s1 * 16000)); out = np.zeros(b - a, np.float32)
+    for ch in d.channels.values():
+        assert "#" not in ch.path and not ch.pieces, f"헤드셋 합은 화자별 단일 wav 만: {ch.path}"
+        x, sr = sf.read(ch.path, start=a, stop=b, dtype="float32", always_2d=True); assert sr == 16000, (ch.path, sr)
+        out[: len(x)] += x[:, 0]
+    m = float(np.abs(out).max()) if len(out) else 0.0
+    return out / m if m > 1.0 else out
 
 
 def hyp_by_speaker(hw):
@@ -261,7 +275,7 @@ def run(a):
             if f"{cid}@{round(s0, 3)}" not in done: work.append((c, i, cid, round(s0, 3), round(s1, 3)))
     sysm = VibeVoiceStream(a) if a.system == "vibevoice" else MTParakeet(a)
     conf = dict(sysm.info, checkpoint=os.path.abspath(a.checkpoint), data=os.path.abspath(a.data), corpora=a.corpora, deltas=a.deltas, segment_s=a.segment_s,
-                world_size=a.world_size, limit_windows=a.limit_windows)
+                world_size=a.world_size, limit_windows=a.limit_windows, **({"audio": a.audio} if a.audio != "mono" else {}))
     cp = os.path.join(a.out, f"config-rank{a.rank}.json")
     if os.path.exists(cp): assert json.load(open(cp)) == conf, "재개 설정 불일치 — 새 --out 을 쓴다"
     else: json.dump(conf, open(cp, "w"), indent=1)
@@ -270,7 +284,8 @@ def run(a):
     with open(dest, "a", buffering=1, encoding="utf-8") as fo:
         for b0 in range(0, len(work), step):
             part = work[b0: b0 + step]
-            res = sysm([(f"{cid}@{s0}", np.asarray(sets[c].mono(cid)[int(round(s0 * 16000)): int(round(s1 * 16000))], dtype=np.float32)) for c, i, cid, s0, s1 in part])
+            res = sysm([(f"{cid}@{s0}", headset_sum(sets[c].dlgs[cid], s0, s1) if a.audio == "headset-sum" else
+                         np.asarray(sets[c].mono(cid)[int(round(s0 * 16000)): int(round(s1 * 16000))], dtype=np.float32)) for c, i, cid, s0, s1 in part])
             for c, i, cid, s0, s1 in part:
                 ds = sets[c]; d = ds.dlgs[cid]; hw_raw, info = res[f"{cid}@{s0}"]
                 for delta in a.deltas:
@@ -281,7 +296,7 @@ def run(a):
                     k0, k1 = int(s0 / CHUNK_S), int(round(s1 / CHUNK_S))
                     row = dict(id=f"{cid}@{s0}", corpus=c, lang=d.lang, delta=delta, L=round(s1 - s0, 3), K=k1 - k0, speakers=sp_order, n_spk=len(sp_order),
                                masked_chunks=sum(k0 <= k < k1 for k in mask), forced=0, flush_rounds=0, emitted=[],
-                               ext=dict(sysm.info, n_hyp_spk=len(hyp), dropped_masked=len(hw) - len(keep), **{k: v for k, v in info.items() if k != "raw"}),
+                               ext=dict(sysm.info, n_hyp_spk=len(hyp), dropped_masked=len(hw) - len(keep), audio=a.audio, **{k: v for k, v in info.items() if k != "raw"}),
                                hyp_words=[[sp, w, round(t, 3)] for sp, w, t in hw], raw=info.get("raw"),
                                ref_text=[" ".join(w for w, _ in r) for r in ref_s], hyp_text=[" ".join(w for w, _ in h) for h in hyp], **sc, eot=dict(NO_EOT))
                     fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
@@ -296,6 +311,7 @@ def main():
     q.add_argument("--data", required=True); q.add_argument("--out", required=True); q.add_argument("--corpora", default="ami-ihmmix,ami-sdm")
     q.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[10], help="참조 δ(우리 평가와 같은 마스크) — 가설은 δ 와 무관")
     q.add_argument("--limit-windows", type=int, default=0); q.add_argument("--segment-s", type=float, default=0.0, help="0 = 회의 통째, 480 = VibeVoice-Streaming 논문 조각")
+    q.add_argument("--audio", choices=["mono", "headset-sum"], default="mono", help="mono = 우리 평가 오디오(IHM-mix = 공식 Mix-Headset), headset-sum = 화자별 헤드셋 채널을 그대로 더한 것")
     q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1)
     q.add_argument("--model", default=None, help="vibevoice: VibeVoice-ASR-Streaming 폴더"); q.add_argument("--src", default=None, help="vibevoice: 소스 폴더")
     q.add_argument("--max-new-tokens", type=int, default=256, help="vibevoice: 청크당 토큰 상한(데모 기본)")

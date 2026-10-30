@@ -51,6 +51,8 @@
 #            ext-vibevoice = VibeVoice-ASR-Streaming-7B 480 s 조각(vv7b-seg480 — 논문 조건 재현 점검) → 회의 통째(vv7b-full — 공개 체크포인트의 세션 상한 480 s 밖).
 #            ext-parakeet = Multitalker Parakeet v1 + Streaming Sortformer v2(mtp-sortv2 — 카드 조건 재현 점검) → + Nemotron 3 Diarization(mtp-n3d).
 #              .nemo 두 개(Parakeet·Sortformer v2)를 사용자가 VAPKT-data/vapkt-baselines/ 아래에 올린 뒤 낸다(없으면 작업이 멈춘다).
+#   q17-u3-asr  U3 ASR 지킴 확인(2026-10-30, slurm/submit-n3d-graft.sh --asr-eval 이 학습 뒤에 낸다): E11 final 에 U3 인코더(U3_RUN 기본 q17-graft-u3-l12 의
+#            final/graft.pt enc)를 끼워 AMI 창 δ10 8 몫(ENC_STATE — 산출 이름 -enc<U3_RUN>). E11 원 평가(stage3-eval-ami-d10-q17-e11-final)와 cp·agn 을 견준다. --after-job 필수.
 #   q17-graft  G1 이식 어댑터(2026-10-29, slurm/submit-n3d-graft.sh — GRAFT_RUN 기본 q17-graft-l8): final/graft.pt 의 창·회의 DER(diar_eval run --graft,
 #            스트리밍 청크 4, 우리 참조 — results/diar-graft-<run>-c4-win·-session, 각 8 몫). 교사 기준은 q17-e9-n3d 의 diar-n3d-c4-*. --after-job 필수.
 #   q17-e8  E8 헤드 출력 지연 R(2026-10-27, slurm/submit-q17-e8.sh — 헤드 위치 p = 프레임 p − R, 받아쓰기 지연 δ ≥ R): q17-e6 과 같은 v3 묶음(헤드 예측 활동).
@@ -74,9 +76,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e11|q17-e11b|q17-graft) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e11|q17-e11b|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet) ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e11b | q17-graft | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet" >&2; exit 2 ;; esac
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e11b | q17-graft | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | q17-u3-asr" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
@@ -138,6 +140,8 @@ case $set_ in
     if [ $set_ = ext-parakeet ]; then for f in multitalker-parakeet-v1/multitalker-parakeet-streaming-0.6b-v1.nemo diar_streaming_sortformer_4spk-v2/diar_streaming_sortformer_4spk-v2.nemo; do
       [[ -f $D/vapkt-baselines/$f ]] || { echo "없음(사용자 업로드): $D/vapkt-baselines/$f" >&2; exit 1; }; done; S2=(mtp-sortv2 mtp-n3d); else S2=(vv7b-seg480 vv7b-full); fi   # 논문 조건(480 s 조각)을 먼저
     for s_ in "${S2[@]}"; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $XT $s_ $r/8"); done; done ;;
+  q17-u3-asr) U3=${U3_RUN:-q17-graft-u3-l12}; GP=/soundai/Model/VAPASR/graft-$U3/final/graft.pt
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 ENC_STATE=$GP ENC_TAG=$U3 bash $X ami q17-e11 final $r/8"); done ;;
   q17-e11-gate) G=${GATE:-3,1}; [[ $G =~ ^[0-9]+,[0-9]+$ ]] || { echo "GATE 는 BACK,FWD: $G" >&2; exit 2; }
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 GATE=$G bash $X $t q17-e11 final $r/8"); done; done ;;
   q17-e10-fix) E7A=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt
