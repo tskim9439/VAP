@@ -94,6 +94,28 @@ raw_authors:
 - 같은 크기의 VibeVoice-Streaming 1.5B 보다 13–15 낮다. 7B 에는 3.0·4.5, Parakeet v1 에는 9.2·6.0 뒤진다.
 - 받아쓰기(Whisper 정규화 agn)는 IHM-mix 20.64·SDM 26.44 로 VibeVoice 7B WER(19.83·29.81)과 비슷하다. 남은 차이는 귀속이다(cp − agn 9.9·17.0 대 7.7·9.2).
 
+## 같은 조건으로 직접 재기 (2026-10-30, 준비)
+사용자: "지금 우리가 사용하고 있는 베이스라인 모델들의 성능 수치는 그냥 논문에 레포트된 수치이지?" → 맞다. 위 표의 외부 수치는 모두 남이 보고한 값이다 → "이 둘을 준비해줘".
+- **도구** — `experiments/baseline_ami_ext.py`
+  - 우리 회의 통째 평가(`v3_eval_task.sh amifull`, δ10)와 같은 회의·오디오(mono 혼합 16 kHz)·참조(전사 없는 구간 규칙까지)·채점이다.
+  - 행 꼴이 `cst_stage3_eval` 과 같아 `summarize`·`ami_report.py`·`meeteval_cpwer.py` 를 그대로 쓴다.
+  - 가설 단어도 참조와 같은 규칙으로 마스크한다(시각 t 의 단어는 청크 int(t / 80 ms) + δ 가 전사 없는 구간이면 뺀다).
+- **시스템**(작업 `raw/sources/experiments/2026-10-30-ami-ext/ami_ext_task.sh`, 묶음 `ext-vibevoice`·`ext-parakeet`, 각 8 몫)
+  - VibeVoice-ASR-Streaming-7B(@60d858b, 서버에 있음)
+    - `vv7b-full`: 회의 통째(우리 조건). LLM 문맥이 131k 위치라 50 분 회의도 한 번에 들어간다.
+    - `vv7b-seg480`: 480 s 이하 조각마다 따로(논문 조건 — 보고값 27.48 / 39.01 재현 점검). 조각 끝은 480 s 전 60 s 안의 가장 늦은 무음 지점이다.
+  - Multitalker Parakeet v1(@8749fc7, NVIDIA Open Model License)
+    - NeMo 3.1.0 설치본(6989ae9fc)에 있는 다화자 모델·병렬 스트리밍 도구로 돈다. 공식 예제의 manifest 경로·설정 기본값을 옮겼다(1.12 s, `att_context_size [70,13]`).
+    - `mtp-sortv2`: + Streaming Sortformer v2(@84edd51, CC-BY-4.0) — 카드 조건(보고값 21.26 / 37.44 재현 점검).
+    - `mtp-n3d`: + Nemotron 3 Diarization — 우리 E11 과 같은 화자 분리기(캐시 264·264·222).
+- **확인**
+  - 맥 CPU 배선 점검(AMI ES2002a 38 s 클립): 두 화자 분리기 모두 4 명을 가르고 받아썼다. N3D 쪽이 첫 "Um well"·맞장구 "Mm-hmm" 까지 잡았다.
+  - 순수 함수(조각 경계·7 명 이상 헝가리안 채점·화자 묶기)를 손으로 대조했다.
+- **사용자 할 일**: T5 `vapkt-models/` 의 두 폴더를 서버 `VAPKT-data/vapkt-baselines/` 아래 같은 이름으로 올린다.
+  - `multitalker-parakeet-streaming-0.6b-v1/`(2.49 GB, sha256 `afaefe89…`)
+  - `diar_streaming_sortformer_4spk-v2/`(471 MB, sha256 `b371afce…`)
+  - 그다음 `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh ext-parakeet)`. VibeVoice 는 바로 낼 수 있다: `… ext-vibevoice`.
+
 ## 받아쓰기 몫(화자 무시)
 | | IHM(-mix) | SDM |
 |---|---:|---:|

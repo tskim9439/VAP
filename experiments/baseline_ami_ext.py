@@ -1,0 +1,315 @@
+#!/usr/bin/env python
+"""외부 기준을 우리 AMI 조건으로 직접 잰다(2026-10-30, 사용자 "이 둘을 준비해줘" — wiki output-ami-external-comparison-20261027):
+같은 회의(ami-bench-v1 — 공식 dev 18·eval 16 × IHM-mix·SDM), 같은 오디오(우리 평가가 받는 mono 혼합 16 kHz), 같은 참조(cst_stage3_eval.window_ref δ —
+전사 없는 구간 규칙까지), 같은 채점(cst_eval.score_window 단어마다 · experiments/meeteval_cpwer.py 화자 통째)으로.
+
+  python experiments/baseline_ami_ext.py run --system vibevoice --model <VibeVoice-ASR-Streaming 폴더> --src <VibeVoice 소스> --checkpoint <우리 체크포인트> \\
+      --data <ami-bench-v1> --out <dir> [--segment-s 480] [--rank r --world-size n]
+  python experiments/baseline_ami_ext.py run --system parakeet --asr <multitalker-parakeet .nemo> --diar <.nemo> --diar-kind sortformer|n3d \\
+      --checkpoint … --data … --out <dir> [--att-context 70,13] [--wav-dir <노드 로컬 폴더>]
+그다음 cst_stage3_eval.py summarize · ami_report.py · meeteval_cpwer.py 를 그대로 쓴다 — 행 꼴이 cst_stage3_eval 과 같다(emitted 는 비고 EOT 는 셈 0,
+원출력 단어는 hyp_words [화자, 단어, 회의 기준 시각 s], 시스템 정보는 ext).
+
+시스템
+  vibevoice: VibeVoice-ASR-Streaming(7B·1.5B — experiments/baseline_vibevoice.load_vibevoice·hyp_words, 체크포인트의 청크·lookahead, 탐욕, bf16). 입력은 24 kHz 로
+    올린다(resample_poly 3/2). 단어 시각은 그 단어가 나온 청크 안에 고르게 놓는다(근사 — 마스크에만 쓴다).
+  parakeet: Multitalker Parakeet(NeMo EncDecMultiTalkerRNNTBPEModel — 화자 분리기 활동으로 화자마다 인스턴스, 병렬 스트리밍). NeMo 예제
+    examples/asr/asr_cache_aware_streaming/speech_to_text_multitalker_streaming_infer.py(설치본과 같은 커밋 6989ae9fc, Apache-2.0)의 manifest 경로를 옮겼다 —
+    설정 기본값(MultitalkerTranscriptionConfig)·병렬 화자 전략·bf16 autocast 가 같다. 화자 분리기: sortformer(.nemo restore_from — 카드 평가의 Streaming Sortformer v2)
+    또는 n3d(Nemotron 3 Diarization — vapasr.hf.n3d.load_n3d: NeMo 3.1.0 에 없는 손실 설정을 고쳐 읽고 SDPA, 스트리밍 캐시는 우리 전문가와 같은 264·264·222).
+    회의 오디오는 --wav-dir 에 16 kHz wav 로 써서 manifest 로 넣는다(파일 이름 = 세션 id). 출력 SegLST 문장 구간 안에 단어 시각을 고르게 놓는다.
+조각(--segment-s S, 기본 0 = 회의 통째): 회의를 S 초 이하 조각으로 나눠(조각 끝은 S 초 전 60 초 안의 가장 늦은 무음 지점, 없으면 S 초) 조각마다 따로 디코드하고
+  조각마다 채점한다(행 id = <코퍼스>:<회의>@<조각 시작> — 창 평가처럼 조각마다 화자 짝). VibeVoice-Streaming 논문 AMI 수치(480 s 이하 조각)를 다시 잴 때.
+마스크: 가설 단어도 참조와 같은 규칙으로 버린다 — 시각 t 의 단어는 청크 int(t / 80 ms) + δ 가 전사 없는 구간 청크(mask_chunks)이면 뺀다.
+점수: 가설 화자가 7 명 이상이면 헝가리안으로 최적 짝을 찾는다(score_window 의 순열과 같은 최소). 아무것도 지우지 않는다(이어 하기 — 끝난 행은 건너뛴다)."""
+import argparse, json, os, sys, time
+from dataclasses import dataclass, field
+from typing import List, Optional
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+CHUNK_S = 0.08
+NO_EOT = dict(n_hyp=0, n_pos=0, n_hold=0, n_both=0, hit_pos=0, hit_hold=0, hit_both=0, unmatched=0, lat=[])
+
+
+def ami_items(a, tok):
+    """우리 AMI 회의 통째 평가(v3_eval_task.sh amifull)와 같은 회의 목록·데이터셋."""
+    from cst_stage3_eval import windows_of
+    ns = argparse.Namespace(data=a.data, split=None, corpora=a.corpora, deltas=a.deltas, limit_windows=a.limit_windows, backchannel=(1.0, 3), window="full",
+                            hop=10.0, max_speakers=4, window_draws=0, declare=4, xl_order="lang")
+    return windows_of(ns, tok)
+
+
+def segment_bounds(d, seg_s: float, back_s: float = 60.0) -> List[tuple]:
+    """회의를 seg_s 초 이하 조각으로: 끝은 (시작 + seg_s − back_s, 시작 + seg_s] 안의 가장 늦은 무음 지점(발화 구간 합집합 사이), 없으면 시작 + seg_s."""
+    sp = sorted((u.start, u.end) for u in d.utterances); merged = []
+    for s, e in sp:
+        if merged and s <= merged[-1][1]: merged[-1][1] = max(merged[-1][1], e)
+        else: merged.append([s, e])
+    gaps = [(merged[i][1], merged[i + 1][0]) for i in range(len(merged) - 1)]
+    out, t, T = [], 0.0, float(d.duration_s)
+    while t < T - 1e-6:
+        hi = t + seg_s
+        if hi >= T: out.append((t, T)); break
+        c = [min(b, hi) for a, b in gaps if a <= hi and b > hi - back_s and min(b, hi) > t + 1.0]
+        e = max(c) if c else hi; out.append((t, e)); t = e
+    return out
+
+
+def score_ext(ref_w, hyp_w, lang):
+    """score_window 와 같은 dict — 가설 화자가 7 명 이상이면 순열 대신 헝가리안(같은 최소, 같은 단위)."""
+    from vapasr.data.cst_eval import score_window, units, ed
+    if len(hyp_w) <= 6: return score_window(ref_w, hyp_w, lang)
+    import numpy as np
+    from scipy.optimize import linear_sum_assignment
+    U = lambda ws: [u for w, _ in ws for u in units(w, lang)]
+    n = max(2, len(ref_w), len(hyp_w)); Rs = [U(ref_w[i]) if i < len(ref_w) else [] for i in range(n)]; Hs = [U(hyp_w[i]) if i < len(hyp_w) else [] for i in range(n)]
+    C = np.array([[ed(Rs[r], Hs[h]) for h in range(n)] for r in range(n)]); ri, hi = linear_sum_assignment(C); perm = [0] * n
+    for r, h in zip(ri, hi): perm[int(h)] = int(r)
+    best = int(C[ri, hi].sum()); same = int(sum(C[i, i] for i in range(n)))
+    ra = [u for w, _ in sorted([x for sl in ref_w for x in sl], key=lambda x: x[1]) for u in units(w, lang)]
+    ha = [u for w, _ in sorted([x for sl in hyp_w for x in sl], key=lambda x: x[1]) for u in units(w, lang)]
+    return dict(n_ref=sum(map(len, Rs)), n_hyp=sum(map(len, Hs)), slot=same, cp=best, agn=ed(ra, ha), swap=bool(best < same), perm=perm)
+
+
+def hyp_by_speaker(hw):
+    """[(화자, 단어, 시각)] → 화자별 [(단어, 시각)](처음 나온 순서, 시각순)."""
+    order, by = [], {}
+    for sp, w, t in sorted(hw, key=lambda x: x[2]):
+        if sp not in by: by[sp] = []; order.append(sp)
+        by[sp].append((w, t))
+    return [by[s] for s in order]
+
+
+# ── VibeVoice-ASR-Streaming
+class VibeVoiceStream:
+    def __init__(self, a):
+        from baseline_vibevoice import load_vibevoice
+        self.a = a; self.model, self.proc, self.frame = load_vibevoice(argparse.Namespace(mode="stream", model=a.model, src=a.src, lm_tokenizer=None))
+        self.info = dict(system="vibevoice-stream", model=os.path.abspath(a.model), chunk_s=round(self.frame["chunk"], 4), lookahead_s=round(self.frame["lookahead"], 4))
+
+    def __call__(self, units):
+        """units [(키, wav16)] → {키: ([(화자, 단어, 시각 s)], 원출력)}."""
+        import numpy as np, torch
+        from scipy.signal import resample_poly
+        from baseline_vibevoice import hyp_words, degenerate
+        out = {}
+        for key, x16 in units:
+            w = resample_poly(x16, 3, 2).astype(np.float32); st = time.time()
+            with torch.inference_mode():
+                chunks = [t for _, _, t in self.model.streaming_generate(audio_tensor=torch.from_numpy(w), tokenizer=self.proc.tokenizer, chunk_duration=self.frame["chunk"],
+                                                                       text_audio_delay=self.frame["lookahead"], sample_rate=self.frame["sample_rate"],
+                                                                       max_new_tokens_per_chunk=self.a.max_new_tokens, temperature=0.0)]
+            o = dict(chunks=chunks, chunk_s=self.frame["chunk"], lookahead_s=self.frame["lookahead"])
+            out[key] = (hyp_words(dict(out=o)), dict(raw=o, decode_s=round(time.time() - st, 1), degenerate=degenerate("".join(chunks))))
+        return out
+
+
+# ── Multitalker Parakeet(NeMo)
+@dataclass
+class MultitalkerTranscriptionConfig:
+    """NeMo examples/asr/asr_cache_aware_streaming/speech_to_text_multitalker_streaming_infer.py(커밋 6989ae9fc) 의 설정 — 기본값 그대로 옮겼다(설치본에 없다)."""
+    diar_model: Optional[str] = None
+    diar_pretrained_name: Optional[str] = None
+    max_num_of_spks: Optional[int] = 4
+    parallel_speaker_strategy: bool = True
+    masked_asr: bool = False
+    mask_preencode: bool = False
+    cache_gating: bool = True
+    cache_gating_buffer_size: int = 2
+    single_speaker_mode: bool = False
+    feat_len_sec: float = 0.01
+    session_len_sec: float = -1
+    num_workers: int = 8
+    random_seed: Optional[int] = None
+    log: bool = True
+    precision: str = "bf16"
+    streaming_mode: bool = True
+    spkcache_len: Optional[int] = None
+    spkcache_update_period: int = 144
+    fifo_len: int = 188
+    diar_right_context: int = 0
+    cuda: Optional[int] = None
+    allow_mps: bool = False
+    matmul_precision: str = "highest"
+    asr_model: Optional[str] = None
+    device: str = "cuda"
+    audio_file: Optional[str] = None
+    manifest_file: Optional[str] = None
+    att_context_size: Optional[List[int]] = field(default_factory=lambda: [70, 13])
+    use_amp: bool = True
+    debug_mode: bool = False
+    deploy_mode: bool = False
+    batch_size: int = 32
+    chunk_size: int = -1
+    shift_size: int = -1
+    left_chunks: int = 5
+    online_normalization: bool = False
+    output_path: Optional[str] = None
+    diar_output_rttm_dir: Optional[str] = None
+    diar_collar: float = 0.0
+    diar_ignore_overlap: bool = False
+    pad_and_drop_preencoded: bool = False
+    generate_realtime_scripts: bool = False
+    spk_supervision: str = "diar"
+    binary_diar_preds: bool = True
+    verbose: bool = False
+    word_window: int = 50
+    sent_break_sec: float = 1.0
+    fix_prev_words_count: int = 5
+    update_prev_words_sentence: int = 5
+    left_frame_shift: int = -1
+    right_frame_shift: int = 0
+    min_sigmoid_val: float = 1e-2
+    discarded_frames: int = 8
+    print_time: bool = True
+    print_sample_indices: List[int] = field(default_factory=lambda: [0])
+    colored_text: bool = True
+    real_time_mode: bool = False
+    print_path: Optional[str] = None
+    ignored_initial_frame_steps: int = 5
+    finetune_realtime_ratio: float = 0.01
+
+
+class MTParakeet:
+    def __init__(self, a):
+        import torch
+        from omegaconf import OmegaConf
+        import nemo.collections.asr as nemo_asr
+        from nemo.collections.asr.models.sortformer_diar_models import SortformerEncLabelModel
+        from nemo.collections.asr.parts.submodules.subsampling import FeatureStacking
+        from nemo.collections.asr.parts.utils.multispk_transcribe_utils import configure_diar_streaming, validate_feature_frame_strides
+        self.a = a; os.makedirs(a.wav_dir, exist_ok=True)
+        kw = dict(spkcache_len=264, fifo_len=264, spkcache_update_period=222) if a.diar_kind == "n3d" else {}   # n3d: 우리 전문가(vapasr.hf.n3d.DEFAULTS)와 같은 캐시
+        self.cfg = OmegaConf.structured(MultitalkerTranscriptionConfig(asr_model=a.asr, diar_model=a.diar, att_context_size=list(a.att_context), batch_size=a.batch_size,
+                                                                       device=a.device, log=False, print_time=False, colored_text=False, **kw))
+        torch.set_float32_matmul_precision(self.cfg.matmul_precision)
+        if a.diar_kind == "n3d":
+            from vapasr.hf.n3d import load_n3d
+            diar, _ = load_n3d(a.diar, a.device)
+        else: diar = SortformerEncLabelModel.restore_from(restore_path=a.diar, map_location=torch.device(a.device))
+        self.use_bf16 = str(self.cfg.precision).lower().startswith("bf16") and self.cfg.use_amp and a.device.startswith("cuda") and torch.cuda.is_bf16_supported()
+        self.diar = diar.to(dtype=torch.bfloat16 if self.use_bf16 else torch.float32).eval()
+        asr = nemo_asr.models.ASRModel.restore_from(restore_path=a.asr)
+        asr.encoder.set_default_att_context_size(att_context_size=list(a.att_context))
+        self.asr = asr.to(self.cfg.device).eval()
+        validate_feature_frame_strides(asr_model=self.asr, diar_model=self.diar)
+        sc = self.asr.encoder.streaming_cfg
+        configure_diar_streaming(diar_model=self.diar, cfg=self.cfg, output_subsampling_factor=self.asr.encoder.subsampling_factor, diar_chunk_len=sc.valid_out_len + sc.cache_drop_size)
+        if isinstance(self.diar.encoder.pre_encode, FeatureStacking) and not self.cfg.pad_and_drop_preencoded: self.cfg.pad_and_drop_preencoded = True   # 예제와 같다(N3D)
+        self.info = dict(system="multitalker-parakeet", asr=os.path.abspath(a.asr), diar=os.path.abspath(a.diar), diar_kind=a.diar_kind, att_context=list(a.att_context),
+                         spkcache=self.diar.sortformer_modules.spkcache_len, fifo=self.diar.sortformer_modules.fifo_len, period=self.diar.sortformer_modules.spkcache_update_period,
+                         chunk_len=self.diar.sortformer_modules.chunk_len, bf16=self.use_bf16)
+
+    def _stream(self, buf):
+        """예제 launch_parallel_streaming 과 같다."""
+        import torch
+        from nemo.collections.asr.parts.utils.multispk_transcribe_utils import SpeakerTaggedASR
+        cfg, asr = self.cfg, self.asr
+        it = buf.iter_with_right_context(0 if cfg.spk_supervision == "rttm" else cfg.diar_right_context * self.diar.encoder.subsampling_factor)
+        mt = SpeakerTaggedASR(cfg, asr, self.diar)
+        for step, (ca, cl, dca, dcl) in enumerate(it):
+            drop = 0 if step == 0 and not cfg.pad_and_drop_preencoded else asr.encoder.streaming_cfg.drop_extra_pre_encoded
+            with torch.inference_mode(), torch.amp.autocast(device_type=asr.device.type, dtype=torch.bfloat16, enabled=self.use_bf16):
+                mt.perform_parallel_streaming_stt_spk(step_num=step, chunk_audio=ca, chunk_lengths=cl, diar_chunk_audio=dca, diar_chunk_lengths=dcl,
+                                                      is_buffer_empty=buf.is_buffer_empty(), drop_extra_pre_encoded=drop)
+        return mt
+
+    def __call__(self, units):
+        import soundfile as sf
+        from nemo.collections.asr.parts.utils.multispk_transcribe_utils import get_multi_talker_samples_from_manifest
+        from nemo.collections.asr.parts.utils.streaming_utils import CacheAwareStreamingAudioBuffer
+        out = {}
+        for b0 in range(0, len(units), self.a.batch_size):
+            part = units[b0: b0 + self.a.batch_size]; names = {}; man = os.path.join(self.a.wav_dir, f"manifest-r{self.a.rank}-{b0}.jsonl")
+            with open(man, "w") as fo:
+                for key, x16 in part:
+                    nm = key.replace(":", "__").replace("@", "_at_").replace(".", "p"); p = os.path.join(self.a.wav_dir, nm + ".wav"); names[nm] = key
+                    if not os.path.exists(p): sf.write(p, x16, 16000, subtype="PCM_16")
+                    fo.write(json.dumps(dict(audio_filepath=p, offset=0, duration=round(len(x16) / 16000, 3), text="-")) + "\n")
+            self.cfg.manifest_file = man
+            fps = round(self.asr.cfg.preprocessor.window_stride * self.asr.cfg.encoder.subsampling_factor, 2)
+            samples, _ = get_multi_talker_samples_from_manifest(self.cfg, manifest_file=man, feat_per_sec=fps, max_spks=self.cfg.max_num_of_spks)
+            buf = CacheAwareStreamingAudioBuffer(model=self.asr, online_normalization=self.cfg.online_normalization, pad_and_drop_preencoded=self.cfg.pad_and_drop_preencoded)
+            for s in samples: buf.append_audio_file(s["audio_filepath"], stream_id=-1)
+            st = time.time(); mt = self._stream(buf); segs = mt.generate_seglst_dicts_from_parallel_streaming(samples=samples); el = time.time() - st
+            by = {nm: [] for nm in names}
+            for g in segs: by.setdefault(g["session_id"], []).append(g)
+            for nm, key in names.items():
+                hw = []
+                for g in by.get(nm, []):
+                    ws = str(g["words"]).split(); s, e = float(g["start_time"]), float(g["end_time"]); e = max(e, s)
+                    hw += [(str(g["speaker"]), w, s + (e - s) * (k + 1) / len(ws)) for k, w in enumerate(ws)]
+                out[key] = (hw, dict(raw=by.get(nm, []), decode_s=round(el / len(part), 1)))
+            buf.reset_buffer()
+        return out
+
+
+def run(a):
+    import numpy as np
+    from transformers import AutoTokenizer
+    from cst_stage3_eval import window_ref
+    from vapasr.data.cst_eval import set_en_norm
+    set_en_norm("ours")
+    tok = AutoTokenizer.from_pretrained(a.checkpoint); EOT = tok.convert_tokens_to_ids("<EOT>")
+    sets, items = ami_items(a, tok); items = [x for j, x in enumerate(items) if j % a.world_size == a.rank]
+    os.makedirs(a.out, exist_ok=True); dest = os.path.join(a.out, f"predictions-rank{a.rank}.jsonl")
+    done = {r["id"] for r in map(json.loads, open(dest, encoding="utf-8"))} if os.path.exists(dest) else set()
+    work = []                                                                                    # (코퍼스, 데이터셋 창, 회의 키, 조각 시작, 조각 끝)
+    for c, i in items:
+        ds = sets[c]; cid, t0w, L = ds.items[i]; d = ds.dlgs[cid]
+        for s0, s1 in (segment_bounds(d, a.segment_s) if a.segment_s else [(0.0, float(L))]):
+            if f"{cid}@{round(s0, 3)}" not in done: work.append((c, i, cid, round(s0, 3), round(s1, 3)))
+    sysm = VibeVoiceStream(a) if a.system == "vibevoice" else MTParakeet(a)
+    conf = dict(sysm.info, checkpoint=os.path.abspath(a.checkpoint), data=os.path.abspath(a.data), corpora=a.corpora, deltas=a.deltas, segment_s=a.segment_s,
+                world_size=a.world_size, limit_windows=a.limit_windows)
+    cp = os.path.join(a.out, f"config-rank{a.rank}.json")
+    if os.path.exists(cp): assert json.load(open(cp)) == conf, "재개 설정 불일치 — 새 --out 을 쓴다"
+    else: json.dump(conf, open(cp, "w"), indent=1)
+    print(f"{conf['system']} · 단위 {len(work)}(끝 {len(done)}) · {json.dumps(sysm.info, ensure_ascii=False)}", flush=True)
+    t0 = time.time(); n = 0; step = 1 if a.system == "vibevoice" else max(1, a.batch_size)
+    with open(dest, "a", buffering=1, encoding="utf-8") as fo:
+        for b0 in range(0, len(work), step):
+            part = work[b0: b0 + step]
+            res = sysm([(f"{cid}@{s0}", np.asarray(sets[c].mono(cid)[int(round(s0 * 16000)): int(round(s1 * 16000))], dtype=np.float32)) for c, i, cid, s0, s1 in part])
+            for c, i, cid, s0, s1 in part:
+                ds = sets[c]; d = ds.dlgs[cid]; hw_raw, info = res[f"{cid}@{s0}"]
+                for delta in a.deltas:
+                    ref_w, _, mask, sp_order = window_ref(ds, i, delta, EOT, tok)
+                    ref_s = [[(w, t) for w, t in r if s0 <= t < s1] for r in ref_w] if a.segment_s else ref_w
+                    hw = [(sp, w, t + s0) for sp, w, t in hw_raw]; keep = [x for x in hw if int(x[2] / CHUNK_S) + delta not in mask]
+                    hyp = hyp_by_speaker(keep); sc = score_ext(ref_s, hyp, d.lang)
+                    k0, k1 = int(s0 / CHUNK_S), int(round(s1 / CHUNK_S))
+                    row = dict(id=f"{cid}@{s0}", corpus=c, lang=d.lang, delta=delta, L=round(s1 - s0, 3), K=k1 - k0, speakers=sp_order, n_spk=len(sp_order),
+                               masked_chunks=sum(k0 <= k < k1 for k in mask), forced=0, flush_rounds=0, emitted=[],
+                               ext=dict(sysm.info, n_hyp_spk=len(hyp), dropped_masked=len(hw) - len(keep), **{k: v for k, v in info.items() if k != "raw"}),
+                               hyp_words=[[sp, w, round(t, 3)] for sp, w, t in hw], raw=info.get("raw"),
+                               ref_text=[" ".join(w for w, _ in r) for r in ref_s], hyp_text=[" ".join(w for w, _ in h) for h in hyp], **sc, eot=dict(NO_EOT))
+                    fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
+            print(f"  {min(b0 + step, len(work))}/{len(work)} 단위 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
+    print(f"DONE rank={a.rank} rows={n}", flush=True)
+
+
+def main():
+    ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest="cmd", required=True)
+    q = sub.add_parser("run"); q.add_argument("--system", choices=["vibevoice", "parakeet"], required=True)
+    q.add_argument("--checkpoint", required=True, help="참조 단어를 만들 우리 tokenizer(우리 AMI 평가와 같은 체크포인트)")
+    q.add_argument("--data", required=True); q.add_argument("--out", required=True); q.add_argument("--corpora", default="ami-ihmmix,ami-sdm")
+    q.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[10], help="참조 δ(우리 평가와 같은 마스크) — 가설은 δ 와 무관")
+    q.add_argument("--limit-windows", type=int, default=0); q.add_argument("--segment-s", type=float, default=0.0, help="0 = 회의 통째, 480 = VibeVoice-Streaming 논문 조각")
+    q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1)
+    q.add_argument("--model", default=None, help="vibevoice: VibeVoice-ASR-Streaming 폴더"); q.add_argument("--src", default=None, help="vibevoice: 소스 폴더")
+    q.add_argument("--max-new-tokens", type=int, default=256, help="vibevoice: 청크당 토큰 상한(데모 기본)")
+    q.add_argument("--asr", default=None, help="parakeet: multitalker .nemo"); q.add_argument("--diar", default=None, help="parakeet: 화자 분리기 .nemo")
+    q.add_argument("--diar-kind", choices=["sortformer", "n3d"], default="sortformer"); q.add_argument("--att-context", type=lambda s: [int(x) for x in s.split(",")], default=[70, 13])
+    q.add_argument("--batch-size", type=int, default=8, help="parakeet: 한 번에 스트리밍할 회의·조각 수"); q.add_argument("--wav-dir", default=None, help="parakeet: 회의 wav 를 쓸 노드 로컬 폴더")
+    q.add_argument("--device", default="cuda", help="parakeet: cuda | cpu(맥 배선 점검)")
+    a = ap.parse_args()
+    if a.system == "vibevoice": assert a.model and a.src, "--model·--src(VibeVoice) 가 필요하다"
+    else:
+        assert a.asr and a.diar, "--asr·--diar(.nemo) 가 필요하다"
+        a.wav_dir = a.wav_dir or os.path.join(os.environ.get("TMPDIR", "/tmp"), "ami-ext-wav")
+    {"run": run}[a.cmd](a)
+
+
+if __name__ == "__main__":
+    main()
