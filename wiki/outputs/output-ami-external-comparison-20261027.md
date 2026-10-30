@@ -2,8 +2,8 @@
 type: output
 status: active
 created: 2026-10-27
-updated: 2026-10-29
-summary: AMI cpWER 외부 비교 — 우리 E6 창 SDM 45.4(표준 44.7) 대 VibeVoice-Streaming 1.5B 56.8·7B 39.0, Parakeet 37.4, NVIDIA SSA-v2 20.3, Nemotron 3.5 Transcribe(오프라인) 17.3; 같은 크기면 앞서고 큰 모델·화자 분리에 뒤진다
+updated: 2026-10-30
+summary: AMI cpWER 외부 비교 — E11 회의 통째(표준) IHM 30.5·SDM 43.5 대 VibeVoice-Streaming 1.5B 45.2·56.8, 7B 27.5·39.0, Parakeet 21.3·37.4
 sources:
   - '[[output-diarization-integration-20261025]]'
   - '[[output-vibevoice-stream-comparison-20261020]]'
@@ -76,6 +76,23 @@ raw_authors:
 | Nemotron 3.5 Transcribe(오프라인, 2026-10-29 추가) | 10.29 | 17.34 | 회의 통째 |
 
 - 회의 통째에서 우리 귀속이 무너져(46 pt) 창 단위의 우위가 사라졌다. 받아쓰기(agn IHM 21.1·SDM 27.4)는 그대로다. 원인과 대책은 [[output-diarization-integration-20261025]] 7 절 결과 3 에 있다.
+
+## 회의 통째 — 고정 화자 분리 전문가(E11) 결과 (2026-10-30)
+| AMI eval cpWER(표준 정규화 + meeteval) | IHM(-mix) | SDM | 평가 단위 |
+|---|---:|---:|---|
+| **우리 E11**(E9 → Nemotron 3 Diarization 활동으로 학습, δ10, 0.92 s) | **30.50** | 43.48 | 회의 통째(16 회의) |
+| 우리 E9 + 전문가(학습 없음) | 33.32 | **42.75** | 회의 통째 |
+| 우리 E9 · E7a 헤드 + AOSC | 53.47 | 66.35 | 회의 통째 |
+| VibeVoice-ASR-Streaming 1.5B(2.0 s) | 45.15 | 56.83 | 480 s 이하 조각 |
+| VibeVoice-ASR-Streaming 7B(2.0 s) | 27.48 | 39.01 | 480 s 이하 조각 |
+| Azure Conversation Transcriber(8.2–9.1 s) | 31.90 | 41.40 | – |
+| Multitalker Parakeet v1(1.12 s) | 21.26 | 37.44 | 세션 |
+| NVIDIA SSA-v2 + Nemotron 3 Diarization | 13.38 | 20.33 | 세션 |
+| Nemotron 3.5 Transcribe(오프라인) | 10.29 | 17.34 | 회의 통째 |
+
+- 화자 활동 출처를 고정 전문가(Nemotron 3 Diarization)로 바꾸자 회의 통째 귀속 붕괴가 거의 사라졌다(E9 대비 eval −20–24). 자세한 결과는 [[output-n3d-branch-20261029]] 6 절에 있다.
+- 같은 크기의 VibeVoice-Streaming 1.5B 보다 13–15 낮다. 7B 에는 3.0·4.5, Parakeet v1 에는 9.2·6.0 뒤진다.
+- 받아쓰기(Whisper 정규화 agn)는 IHM-mix 20.64·SDM 26.44 로 VibeVoice 7B WER(19.83·29.81)과 비슷하다. 남은 차이는 귀속이다(cp − agn 9.9·17.0 대 7.7·9.2).
 
 ## 받아쓰기 몫(화자 무시)
 | | IHM(-mix) | SDM |
