@@ -306,6 +306,11 @@ raw_authors:
   - 서버 단일 GPU 스모크(호스트 GPU 5, AMI·ICSI 60–90 s 창, 배치 4, ASR 지킴 1, 4 step — `tmp/e11-check/u3-smoke-b4`)
     - step 7–10 s(첫 step 32 s), 최대 메모리 24.9 GB 다. ASR 지킴 손실은 시작 0.0004(bf16 계산 차이)다.
     - 저장·재로드 대조가 같다(손실 0.881061). graft.pt 는 2.49 GB 다.
+  - 서버 분산 스모크(호스트 GPU 5·6, torchrun 2 rank, 배치 2, ASR 지킴 10, 3 step — `u3-ddp-smoke`): step 8–10 s, 최대 메모리 18.7 GB, 저장·재로드 대조 같음(손실 0.660732, 가중치 차이 0), DONE.
+  - 평가 쪽 스모크(호스트 GPU 1, 단일 GPU 스모크의 graft.pt)
+    - `diar_eval run --graft`: GraftExpert 가 enc 를 읽어 AMI SDM 창 8 개 DER 이 나온다.
+    - `cst_stage3_eval --encoder-state`: E11 에 새 인코더를 끼워 SDM 창 8 개를 디코드한다. 4 step(학습률 1e-7 대)이라 원본과 같다(cp 37.34·agn 27.44 둘 다).
+  - 제출 설정: 배치 4/GPU × 8 GPU, 2,000 step(약 6 h 어림), 인코더 학습률 2e-5·어댑터 5e-5, ASR 지킴 10, 창 60–90 s, 저장 500 step 마다, `--asr-eval`.
 
 ### 6.3 E11(학습 98306·평가 98307)과 회의 통째 결과
 - 학습: E9 final 에서 전문가 활동으로 5,000 step 을 돌았고 02:53 에 끝났다(재로드 대조 같음, 약 2.2 s/step).
