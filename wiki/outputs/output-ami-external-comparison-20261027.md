@@ -24,29 +24,48 @@ raw_authors:
 ## 비교표 (AMI eval cpWER %, 낮을수록 좋다 — 우리 행은 2026-10-30 기준)
 - 이 표를 처음 만든 2026-10-27 에는 E6 이 최신이라 E6 창 수치를 실었다.
 - E11(고정 N3 Diarization 활동, 2026-10-30)부터는 외부 수치와 같은 조건(회의 통째, 표준 정규화 + meeteval)으로 잰 E11 로 견준다. E6 이 나오는 아래 절들은 그때의 기록이다.
+- 스트리밍과 오프라인으로 나누고, 같은 평가 단위끼리 묶어 IHM(-mix) 오름차순으로 정렬했다(2026-10-30, 사용자 "표를 Offline/Streamable 을 구분하고 끼리끼리 뭉쳐서 정렬해서 쉽게 볼 수 있도록 정리해줘"). **굵은 행**이 우리 모델이다. 우리 모델 전체는 [[output-ami-results-summary-20261030]] 에 있다.
 
+### 스트리밍 — 회의 통째·세션
 | 시스템 | 크기 | 지연 | 화자 분리 | IHM(-mix) | SDM | 출처·조건 |
 |---|---|---|---|---:|---:|---|
-| **우리 E11 + 출력 재귀속** | 인코더 0.6B + LLM 1.7B | δ10 평균 0.92 s | 고정 N3 Diarization 활동 + 출력 재귀속(학습 없는 후처리) | **23.07** | **29.62** | 회의 통째, 표준 정규화 + meeteval — [[output-n3d-branch-20261029]] 6.7 절 |
-| 우리 E11 | 같음 | 같음 | 고정 N3 Diarization 활동 | 30.50 | 43.48 | 같음 — 같은 문서 6.3 절 |
-| 우리 E6 final(2026-10-27 기준) | 같음 | 같음 | 인과 헤드(예측) | 37.68 | 45.35 | 창(20–90 s) cpWER, 우리 정규화. 회의 통째(E7a 헤드 + AOSC)는 67.34·73.10 |
-| 우리 E5(정답 활동 입력, 상한) | 같음 | 같음 | 정답 | 23.39 | 29.24 | 창, 우리 정규화 |
-| Multitalker Parakeet v1 + Streaming Sortformer v2(우리 틀로 직접 잼) | 0.6B × 화자 수 + 117M | 1.12 s | Streaming Sortformer v2 | 17.59 | 34.59 | 회의 통째, 표준 — 아래 "직접 잰 결과" |
-| Multitalker Parakeet v1 + N3 Diarization(우리 틀로 직접 잼) | 0.6B × 화자 수 + 100M | 1.12 s | Nemotron 3 Diarization | 15.86 | 20.50 | 같음 |
-| VibeVoice-ASR-Streaming 7B(우리 틀로 직접 잼) | 8.7B | 2.0 s | 종단 | 48.17 | 43.16 | 480 s 이하 조각(논문 조건), 표준 |
+| SSA-v2 + Nemotron 3 Diarization(arXiv 2609.10265 표 1) | 0.6B × 화자 수 + 100M | 스트리밍(표에 지연 미기재) | Nemotron 3 Diarization | 13.38 | 20.33 | 세션. 정답 화자 구간이면 12.41 · 17.44 |
+| Multitalker Parakeet v1 + N3 Diarization(우리 틀로 직접 잼) | 0.6B × 화자 수 + 100M | 1.12 s | Nemotron 3 Diarization | 15.86 | 20.50 | 회의 통째, 표준 — 아래 "직접 잰 결과" |
+| Multitalker Parakeet v1 + Streaming Sortformer v2(우리 틀로 직접 잼) | 0.6B × 화자 수 + 117M | 1.12 s | Streaming Sortformer v2 | 17.59 | 34.59 | 같음 |
 | Multitalker Parakeet v1(카드) | 0.6B × 화자 수 + 117M | 1.12 s | Streaming Sortformer v2 | 21.26 | 37.44 | HF 카드 — split·정규화·세션 여부 미기재 |
-| SSA-v1(arXiv 2609.10265 표 1) | 같음 | 스트리밍(표에 지연 미기재) | Sortformer v2.1 | 22.10 | 39.91 | 정답 화자 구간이면 15.22 · 20.27 |
-| **SSA-v2 + Nemotron 3 Diarization**(같은 표) | 0.6B × 화자 수 + 100M | 스트리밍 | Nemotron 3 Diarization | **13.38** | **20.33** | 정답 화자 구간이면 12.41 · 17.44 |
-| VibeVoice-ASR-Streaming 7B(OpenReview 표 2 = arXiv 2609.02812) | 8.7B | 기대 평균 2.0 s(첫 출력 3.5 s) | 종단(모델이 직접) | 27.48 | 39.01 | 480 s 이하 조각, WER 19.83 · 29.81 |
+| SSA-v1(arXiv 2609.10265 표 1) | 0.6B × 화자 수 + 117M | 스트리밍(표에 지연 미기재) | Sortformer v2.1 | 22.10 | 39.91 | 세션. 정답 화자 구간이면 15.22 · 20.27 |
+| **우리 E11 + 출력 재귀속** | 인코더 0.6B + LLM 1.7B | δ10 평균 0.92 s | 고정 N3 Diarization 활동 + 출력 재귀속(학습 없는 후처리) | **23.07** | **29.62** | 회의 통째, 표준 정규화 + meeteval — [[output-n3d-branch-20261029]] 6.7 절 |
+| **우리 E11** | 인코더 0.6B + LLM 1.7B | δ10 평균 0.92 s | 고정 N3 Diarization 활동 | **30.50** | **43.48** | 같음 — 같은 문서 6.3 절 |
+
+### 스트리밍 — 480 s 이하 조각(VibeVoice-Streaming 논문 조건: 녹음을 겹치지 않는 480 s 이하 조각으로 나눠 잰다)
+| 시스템 | 크기 | 지연 | 화자 분리 | IHM(-mix) | SDM | 출처·조건 |
+|---|---|---|---|---:|---:|---|
+| VibeVoice-ASR-Streaming 7B, 22 프레임(OpenReview 표 2 = arXiv 2609.02812) | 8.7B | 기대 평균 2.0 s(첫 출력 3.5 s) | 종단(모델이 직접) | 27.48 | 39.01 | WER 19.83 · 29.81 |
+| Azure Conversation Transcriber(같은 표 2) | 서비스 | 실측 8.21–9.12 s | 서비스 | 31.90 | 41.40 | WER 24.01 · 33.27 |
 | VibeVoice-ASR-Streaming 7B, 15 프레임(표 5) | 8.7B | 1.53 s | 종단 | 35.40 | 42.49 | WER 20.82 · 31.88 |
-| **VibeVoice-ASR-Streaming 1.5B**(표 5) | LLM Qwen2.5-1.5B | 2.00 s | 종단 | **45.15** | **56.83** | WER 22.85 · 34.43 |
-| VibeVoice-ASR-Streaming 1.5B, 15 프레임(표 5) | 같음 | 1.53 s | 종단 | 46.48 | 59.49 | WER 23.39 · 35.90 |
-| Azure Conversation Transcriber(표 2) | 서비스 | 실측 8.21–9.12 s | 서비스 | 31.90 | 41.40 | WER 24.01 · 33.27 |
-| VibeVoice-ASR 7B 오프라인(arXiv 2601.18184 표 2) | 8.7B | 오프라인(60 분 한 번에) | 종단 | 20.41 | 28.82 | WER 18.81 · 24.65, DER 11.92 · 13.43 |
-| DiCoW-v3.3(2609.10265 표 1) | Whisper 계열 | 오프라인 | 정답 / 예측 | 11.33 / 14.48 | 14.78 / 18.24 | 참고 상한 |
-| **Nemotron 3.5 Transcribe**(N3.5T 보고서 표 14, 2026-10-29 추가) | 34B(활성 4.3B) | 오프라인(40 s 청크 + 좌우 4 s) | 고정 N3 Diarization 가지(한 체크포인트) | **10.29** | **17.34** | 회의 통째, Open ASR 정규화 — [[source-nemotron-3-5-transcribe-tech-report]] |
-| MOSS-Transcribe-Diarize(같은 표) | – | 오프라인 | 종단 | 15.40 | 24.72 | 회의 통째, NVIDIA 평가 |
-| VibeVoice-ASR 7B(같은 표) | 8.7B | 오프라인 | 종단 | 22.13 | 32.12 | 회의 통째, NVIDIA 평가 |
+| VibeVoice-ASR-Streaming 1.5B, 22 프레임(표 5) | LLM Qwen2.5-1.5B | 2.00 s | 종단 | 45.15 | 56.83 | WER 22.85 · 34.43 |
+| VibeVoice-ASR-Streaming 1.5B, 15 프레임(표 5) | LLM Qwen2.5-1.5B | 1.53 s | 종단 | 46.48 | 59.49 | WER 23.39 · 35.90 |
+| VibeVoice-ASR-Streaming 7B, 22 프레임(우리 틀로 직접 잼) | 8.7B | 2.0 s | 종단 | 48.17 | 43.16 | 표준 — 아래 "직접 잰 결과" |
+
+- 우리 모델은 이 조건으로 재지 않았다. 더 어려운 회의 통째로 잰 값은 위 묶음에 있다.
+
+### 스트리밍 — 20–90 s 창(우리 모델만, 2026-10-27 기록)
+| 시스템 | 크기 | 지연 | 화자 분리 | IHM(-mix) | SDM | 출처·조건 |
+|---|---|---|---|---:|---:|---|
+| **우리 E5(정답 활동 입력, 상한)** | 인코더 0.6B + LLM 1.7B | δ10 평균 0.92 s | 정답 | 23.39 | 29.24 | 창, 우리 정규화 |
+| **우리 E6 final** | 인코더 0.6B + LLM 1.7B | δ10 평균 0.92 s | 인과 헤드(예측) | 37.68 | 45.35 | 창, 우리 정규화. 회의 통째(E7a 헤드 + AOSC)는 67.34·73.10 |
+
+- 창은 창마다 화자를 짝지어 회의 통째·세션보다 쉬운 조건이다. 외부 수치와 바로 견주지 않는다.
+
+### 오프라인
+| 시스템 | 크기 | 지연 | 화자 분리 | IHM(-mix) | SDM | 출처·조건 |
+|---|---|---|---|---:|---:|---|
+| Nemotron 3.5 Transcribe(N3.5T 보고서 표 14, 2026-10-29 추가) | 34B(활성 4.3B) | 오프라인(40 s 청크 + 좌우 4 s) | 고정 N3 Diarization 가지(한 체크포인트) | 10.29 | 17.34 | 회의 통째, Open ASR 정규화 — [[source-nemotron-3-5-transcribe-tech-report]] |
+| DiCoW-v3.3(2609.10265 표 1) | Whisper 계열 | 오프라인 | 예측(DiariZen-v2) | 14.48 | 18.24 | 세션. 정답 화자 분리면 11.33 · 14.78 |
+| MOSS-Transcribe-Diarize(N3.5T 보고서 표 14) | – | 오프라인 | 종단 | 15.40 | 24.72 | 회의 통째, NVIDIA 평가 |
+| VibeVoice-ASR 7B(arXiv 2601.18184 표 2) | 8.7B | 오프라인(60 분 한 번에) | 종단 | 20.41 | 28.82 | 자체 평가. WER 18.81 · 24.65, DER 11.92 · 13.43 |
+| VibeVoice-ASR 비스트리밍(Streaming 논문 표 4 — 스트리밍 학습의 시작점) | – | 오프라인 | 종단 | 20.98 | 33.88 | 480 s 이하 조각. WER 19.08 · 26.28 |
+| VibeVoice-ASR 7B(N3.5T 보고서 표 14) | 8.7B | 오프라인 | 종단 | 22.13 | 32.12 | 회의 통째, NVIDIA 평가 |
 
 ### 같은 시스템인데 출처마다 다른 값
 - **VibeVoice-ASR 오프라인 SDM:** 28.82(자체), 42.19(NVIDIA 평가 셋), 32.12(N3.5T 보고서 표 14, 회의 통째), 28.42(arXiv 2609.15218, 2·5 분 조각 평균), 36.09(제3자 재현, GitHub VibeVoice issue #237).
