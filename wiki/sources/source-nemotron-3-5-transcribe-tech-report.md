@@ -33,6 +33,9 @@ raw_authors:
   - 학습 때 화자 분리 가지도 30 s 청크로 돌아서 화자 번호가 청크마다 따로다.
     - 녹음 전체에서 화자 표지를 일관되게 유지하는 일은 LLM 이 맡는다.
   - 추론 때는 40 s 중심 청크에 좌우 4 s 문맥을 붙인다. 화자 분리 가지는 화자 캐시와 FIFO 를 청크 사이에 이어 간다.
+- **명칭(2026-10-30 원문 확인)**: 이 구조를 "a single model" 이라 부르고, 화자 분리기를 "a frozen Nemotron 3 Diarization model" 로 적는다. "all components except the diarization model are trained jointly" 다.
+  - 자기 모델에 end-to-end 라는 말은 쓰지 않는다. 결론에서 "outperforms published cascaded and end-to-end systems" 라고 해 종단 시스템을 다른 부류로 둔다.
+  - 출력 뒤 단계(CTC 어댑터)는 단어 시각만 정렬하고 화자는 바꾸지 않는다.
 - **LLM** 은 Nemotron 3.5 Lightning 30B-A3B 다.
   - Mamba-2 23 층, MoE 23 층, 어텐션 6 층이다. 전문가는 128 개이고 top-6 이다.
   - 모델 전체는 34B, 활성 파라미터는 4.3B 다.
