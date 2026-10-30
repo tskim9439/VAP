@@ -1,0 +1,24 @@
+## [2026-10-30] task | LLM 활동 추종 학습(E12) 구현·제출 — 원인 진단(차례를 통째로 잘못된 슬롯에), 슬롯 섞기·창 중간 바꿔 끼우기·약한 활동 잡음
+
+- Changed:
+  - 코드
+    - `vapasr/data/cst_eval.py`: `follow_stats(detail=)`
+    - `experiments/cst_stage3_eval.py`: `--follow-detail`
+    - `vapasr/data/cst_dialogue.py`: `slot_shuffle`·`EMPTY_SLOT`, `slot_remap`·`remap_point`·`split_episodes`·`slot_act_of`·`remap_perm`, 마스크 나눔, collate `remap_k`·`remap_perm`·`n_remap`
+    - `vapasr/hf/diar.py`: `remap_cols`
+    - `vapasr/hf/modeling_vapasr.py`: forward `remap_k`·`remap_perm`. 헤드 손실 목표와 전문가 정렬은 바꾸기 전 순서로 계산한 뒤 새 슬롯으로 옮긴다.
+    - `experiments/stage3_train.py`: `--slot-shuffle`·`--slot-remap`, IN_KEYS, `diar_align`, 지문, `remap_per_dlg_step`
+  - 스크립트: `slurm/submit-q17-e12.sh`, `slurm/submit-evals.sh`(묶음 `q17-e12*`), `raw/sources/experiments/2026-10-30-ami-ext/follow_detail.sh`·`follow_detail_report.py`
+  - 시험: `tests/test_cst_eval.py`·`test_slot_blocks.py`·`test_slot_input.py`·`test_n3d.py`
+  - 위키: [[output-n3d-branch-20261029]] 6.8 절
+- Reason:
+  - 사용자 "LLM 활동 추종 학습 구현해놓자".
+  - 학습 방식을 고르기 전에 E11 원출력에서 어긴 단어를 나눴다. 회의 통째 어김은 차례 앞뒤로 고르고, 90 % 가 한 사람만 말하는 구간이다. 절반은 직전 화자 슬롯이고 1/3 은 30 s 넘게 말이 없던 슬롯이다.
+  - 그래서 LLM 이 슬롯을 활동이 아니라 자기 화자 추적과 "먼저 말한 순서" 습관으로 고른다고 본다. 학습 때의 흔든 정답 잡음도 N3D 보다 훨씬 크다.
+  - 그 셋을 겨냥해 구현했다.
+  - 시험은 관련 74 개, 전체 831 개가 통과했다(실패 5·수집 오류 2 는 원래 있던 것). 서버 dry-run 으로 학습 인자를 조립했다(apex 2 노드, 2,500 step, 평가 ck1500·ck2000·final).
+  - 사용자가 18:49 에 제출했다: low_p_hpc 2 노드, 학습 98836 · 평가 98837, 저장 250 step, MAX_RESTART 20.
+- Next:
+  - 서버 GPU 스모크(섞기·바꾸기 확률 1, 4 step, 저장·재로드 대조)가 도는 중이다. 문제가 나오면 98836·98837 취소를 알린다.
+  - E12 평가 뒤 E11 과 견준다: 회의 통째 추종 on(E11 90.3 / 86.8 %), 재귀속 없는 cp 대 E11 + 재귀속(23.07 / 29.62), 재귀속이 더 주는 몫.
+- By: tskim
