@@ -162,12 +162,14 @@ def realtime_decode(model, gt: GraphThinker, feats, prefix_ids: List[int], max_f
 
 @torch.inference_mode()
 def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=None, max_flush_rounds: Optional[int] = None, max_per_chunk: int = 0,
-                          max_total_per_chunk: float = 6.0, on_chunk=None, mix_off: bool = False):
+                          max_total_per_chunk: float = 6.0, on_chunk=None, mix_off: bool = False, gate=None):
     """E9 슬롯 블록 디코드(2026-10-28 — cst_dialogue 모듈 설명 E9): batch_decode.decode_blocks_batch 와 같은 출력 규칙을 GraphThinker·LongThinker(run·run_all)로 돈다.
     청크마다 [오디오 k, 태그 0 … D−1] 를 한 forward 로 미리 넣고(run_all — 위치마다 argmax), 태그 s 뒤 예측이 멈춤이 아니면 태그 s 바로 뒤로 되돌아가 그 슬롯 출력을
     한 토큰씩 낸 뒤(뒤 태그 자리는 덮어쓴다 — 쿼리는 자기 위치까지만 본다) 남은 태그를 다시 한 forward 로 넣는다. 모든 슬롯이 멈추는 청크는 forward 한 번이다.
     feats (1,K,Din)·(S,K,Din) 또는 (K,Din), act (K, N) 태그 활동(없으면 model.block_act). on_chunk(k, 오디오 k 위치): LongThinker 문맥 창.
     E10(model.adapter_slotx): 태그마다 그 슬롯 소리 토큰(model.slot_audio_of)을 더한다. mix_off: 섞인 소리 토큰을 adapter_mixnull 로(decode_blocks_batch 와 같다).
+    gate(batch_decode.ActGate, 2026-10-30 진단): 태그 s 뒤 첫 예측이 멈춤이 아니어도 게이트가 막으면 그 라운드 그 슬롯은 말을 내지 않는다(decode_blocks_batch 와 같은 규칙 —
+    뒤 태그는 이미 그 꼴로 미리 넣었다).
     → (emitted [(k, tid)] — 슬롯 출력 앞에 그 슬롯 태그, forced, step_ms [K], flush_rounds, flush_ms, forward 수)."""
     from .batch_decode import block_stops
     cfg = model.config
@@ -191,7 +193,7 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
         pr = dict(enumerate(r[1:])); at = {j: pos + 1 + j for j in range(D)}; pos += 1 + D; n_round = 0   # 태그 j 뒤 예측·태그 j 위치
         for s in range(D):
             tid = pr[s]
-            if tid in stop: continue
+            if tid in stop or (gate is not None and not gate.allows(k, s, tid)): continue          # 게이트가 막은 슬롯도 멈춤과 같다(뒤 태그 자리 그대로)
             pos = at[s] + 1; n = 0; tagged = False                                              # 태그 s 바로 뒤로 되돌아간다
             while True:
                 if tid in stop or n >= cap or st["total"] >= max_total: st["forced"] += int(tid not in stop); break

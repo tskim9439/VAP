@@ -287,15 +287,51 @@ def block_stops(model, D):
     return frozenset(model.slot_ids()) | {model.next_audio, model.empty_audio}
 
 
+class ActGate:
+    """Activity-gated slot-block decoding (diagnostic, 2026-10-30 -- wiki output-n3d-branch-20261029 6.5: does the LLM follow its slot activity input?).
+    In round k the first output of slot s is turned into a stop when that slot has no activity (act (K, N) 0/1 -- the tag activity the decoder uses,
+    model.block_act) near the audio it refers to: a text token covers frame f = k - delta, <BEGIN> the onset frame f = k - begin_lag (training rule,
+    cst_eval.activity_from_events); the window is [f - back, f + fwd]. <EOT> and stops pass, and so does a window outside the activity (before the audio,
+    late flush rounds). Decided on the first output only, so a slot's round is kept or dropped whole -- decode_blocks_batch (gate_tid) and
+    realtime.realtime_block_decode apply the same rule. blocked counts the dropped first outputs {text, begin}."""
+
+    def __init__(self, act, delta: int, begin_id: int, eot_id: int, back: int = 3, fwd: int = 1, begin_lag: int = 4):
+        import numpy as np
+        a = np.asarray(act.detach().float().cpu() if torch.is_tensor(act) else act) > 0.5
+        self.K, self.N = a.shape
+        self.cs = np.concatenate([np.zeros((1, self.N), np.int64), np.cumsum(a, 0)], 0)
+        self.delta, self.begin_id, self.eot_id, self.back, self.fwd, self.begin_lag = int(delta), int(begin_id), int(eot_id), int(back), int(fwd), int(begin_lag)
+        self.blocked = dict(text=0, begin=0)
+
+    def allows(self, k, s, tid) -> bool:
+        if tid == self.eot_id or s >= self.N:
+            return True
+        b = tid == self.begin_id
+        f = int(k) - (self.begin_lag if b else self.delta)
+        lo, hi = max(0, f - self.back), min(self.K, f + self.fwd + 1)
+        if hi <= lo or self.cs[hi, s] > self.cs[lo, s]:
+            return True
+        self.blocked["begin" if b else "text"] += 1
+        return False
+
+
+def gate_tid(state, tid, stop, gate, stop_id):
+    """BlockState prediction after the current input: a slot's first output (state.s >= 0, state.n == 0) that the gate drops becomes stop_id."""
+    if gate is None or state.done or state.s < 0 or state.n or tid in stop or gate.allows(state.k, state.s, tid):
+        return tid
+    return stop_id
+
+
 @torch.inference_mode()
-def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, acts=None, mix_off=False):
+def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, acts=None, mix_off=False, gates=None):
     """E9 slot-block greedy decoding, one input per row per step (BlockState) on a dense KV-cache batch.
     feats: list of (S,K,D) encoder outputs, prefixes: equal-length lists declaring D slots. The audio tokens use model.chunk_embed (with acts
     or the E6 predicted-activity stream, as decode_batch); each tag gets model.tag_embeds (tag row + that slot's recent activity, model.block_act).
     Caps: model.config.runaway_cap per slot per chunk, 6 K + 64 outputs per row, max_flush_rounds (default config).
     E10 (model.adapter_slotx): each tag also gets that slot's audio token (model.slot_audio_of — feats need the head-embedding stream);
-    mix_off replaces the mixed audio token with model.adapter_mixnull (the chunk keeps its activity part)."""
-    assert feats and len(feats) == len(prefixes) and (acts is None or len(acts) == len(feats))
+    mix_off replaces the mixed audio token with model.adapter_mixnull (the chunk keeps its activity part).
+    gates: per-row ActGate or None (activity-gated decoding -- a slot's round is dropped when its activity is off; the gate counts what it dropped)."""
+    assert feats and len(feats) == len(prefixes) and (acts is None or len(acts) == len(feats)) and (gates is None or len(gates) == len(feats))
     assert len({len(p) for p in prefixes}) == 1, "batch one language/delta at a time"
     emb = model.get_input_embeddings()
     dev = emb.weight.device
@@ -320,6 +356,8 @@ def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, act
         tids = logits.argmax(-1).tolist()
         nxt = []
         for i, (s, tid) in enumerate(zip(states, tids)):
+            if gates is not None:
+                tid = gate_tid(s, tid, stop, gates[i], model.next_audio)
             kind, value = s.consume(tid, stop)
             if kind == "audio":
                 nxt.append(ce[i][value])

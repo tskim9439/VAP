@@ -41,6 +41,16 @@
 #   q17-e11 · q17-e11b  E11(slurm/submit-q17-e11.sh — 전문가 활동으로 학습, b = E10 에서): AMI 창 δ10 8 몫 → 회의 통째 δ10 8 몫(config 의 전문가). --after-job 필수.
 #   q17-e10-fix  E10 다시 재기(2026-10-30): q17-e10 과 같은 네 단계를 EV_TAG=onsetfix 산출 이름으로. 첫 평가(97923)는 config 의 <BEGIN>(<ONSET>) 디코드 차단으로
 #            새 턴을 못 열어 무효다(modeling_vapasr __init__·add_slot_blocks 수정 — 읽을 때 푼다). 의존 없음.
+#   q17-follow  활동 추종 진단(2026-10-30, 사용자 "LLM 활동 추종 진단 구현해놓자" — wiki output-n3d-branch-20261029 6.5 절): 끝난 E11 final·E9 + 전문가(q17-e9-n3d)의
+#            AMI 창·회의 통째 δ10 산출을 디코드 없이 다시 채점해 follow(단어가 활동이 켜진 슬롯에 들어갔나·누가 맞았나)·cp_follow(어긋난 단어를 활동 슬롯으로 옮긴 cp)를
+#            남긴다(FOLLOW=1 — 원출력에 활동이 없어 전문가 활동을 다시 계산, GPU 가볍게). 산출 <원 산출>-follow, 각 8 몫. 의존 없음.
+#   q17-e11-gate  활동 게이트 디코드(같은 날): E11 final 을 AMI 창·회의 통째 δ10 으로 GATE(기본 3,1 — 서브셸에서 export 로 바꾼다)를 걸어 다시 디코드한다(각 8 몫).
+#            활동이 꺼진 슬롯의 라운드를 버려 LLM 혼동이 전문가 쪽으로 내려가는지·받아쓰기가 얼마나 줄어드는지 본다. 산출 이름에 -gate<B>-<F>. 의존 없음.
+#   ext-vibevoice · ext-parakeet  외부 기준을 우리 AMI 조건으로 직접(2026-10-30, 사용자 "이 둘을 준비해줘" — experiments/baseline_ami_ext.py,
+#            raw/sources/experiments/2026-10-30-ami-ext/ami_ext_task.sh): 같은 회의·오디오·참조(δ10 회의 통째)·채점(단어마다 + meeteval). 각 8 몫, 의존 없음.
+#            ext-vibevoice = VibeVoice-ASR-Streaming-7B 회의 통째(vv7b-full) → 480 s 조각(vv7b-seg480 — 논문 조건 재현 점검).
+#            ext-parakeet = Multitalker Parakeet v1 + Streaming Sortformer v2(mtp-sortv2 — 카드 조건 재현 점검) → + Nemotron 3 Diarization(mtp-n3d).
+#              .nemo 두 개(Parakeet·Sortformer v2)를 사용자가 VAPKT-data/vapkt-baselines/ 아래에 올린 뒤 낸다(없으면 작업이 멈춘다).
 #   q17-graft  G1 이식 어댑터(2026-10-29, slurm/submit-n3d-graft.sh — GRAFT_RUN 기본 q17-graft-l8): final/graft.pt 의 창·회의 DER(diar_eval run --graft,
 #            스트리밍 청크 4, 우리 참조 — results/diar-graft-<run>-c4-win·-session, 각 8 몫). 교사 기준은 q17-e9-n3d 의 diar-n3d-c4-*. --after-job 필수.
 #   q17-e8  E8 헤드 출력 지연 R(2026-10-27, slurm/submit-q17-e8.sh — 헤드 위치 p = 프레임 p − R, 받아쓰기 지연 δ ≥ R): q17-e6 과 같은 v3 묶음(헤드 예측 활동).
@@ -65,8 +75,8 @@ while [[ $# -gt 0 ]]; do
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e11|q17-e11b|q17-graft) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
-  q17-e9-n3d|q17-e10-fix|q17-e10-n3d) ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e11b | q17-graft | q17-e10-fix" >&2; exit 2 ;; esac
+  q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet) ;;
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e11b | q17-graft | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
@@ -121,6 +131,15 @@ case $set_ in
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DW && \${PY:-python} experiments/diar_eval.py run --graft $G --out $DW --rank $r --world-size 8 >> $DW/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DW > $DW/summary.log 2>&1"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DSS && \${PY:-python} experiments/diar_eval.py run --graft $G --session --out $DSS --rank $r --world-size 8 >> $DSS/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DSS/graft > $DSS/summary.log 2>&1"); done ;;
   q17-e11|q17-e11b) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull $set_ final $r/8"); done ;;
+  q17-follow) N3=${N3D:-$D/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3" >&2; exit 1; }
+    for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 bash $X $t q17-e11 final $r/8"); done; done
+    for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 N3D=$N3 bash $X $t q17-e9 final $r/8"); done; done ;;
+  ext-vibevoice|ext-parakeet) XT=raw/sources/experiments/2026-10-30-ami-ext/ami_ext_task.sh
+    if [ $set_ = ext-parakeet ]; then for f in multitalker-parakeet-streaming-0.6b-v1/multitalker-parakeet-streaming-0.6b-v1.nemo diar_streaming_sortformer_4spk-v2/diar_streaming_sortformer_4spk-v2.nemo; do
+      [[ -f $D/vapkt-baselines/$f ]] || { echo "없음(사용자 업로드): $D/vapkt-baselines/$f" >&2; exit 1; }; done; S2=(mtp-sortv2 mtp-n3d); else S2=(vv7b-full vv7b-seg480); fi
+    for s_ in "${S2[@]}"; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $XT $s_ $r/8"); done; done ;;
+  q17-e11-gate) G=${GATE:-3,1}; [[ $G =~ ^[0-9]+,[0-9]+$ ]] || { echo "GATE 는 BACK,FWD: $G" >&2; exit 2; }
+    for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 GATE=$G bash $X $t q17-e11 final $r/8"); done; done ;;
   q17-e10-fix) E7A=/soundai/Model/VAPASR/diar-q17-diar-e7a/final/diar.pt
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 EV_TAG=onsetfix bash $X ami q17-e10 final $r/8"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 EV_TAG=onsetfix AOSC=1 DIAR=$E7A DIAR_TAG=e7a bash $X amifull q17-e10 final $r/8"); done

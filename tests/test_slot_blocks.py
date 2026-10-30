@@ -264,3 +264,55 @@ def test_declare_range_and_items_collate(tmp_path):
     random.seed(0); items = [ds[j] for j in range(2)]
     for it in items: assert it["tag_chunk"].shape == it["ids"].shape and int(it["tag_chunk"].max()) >= 0 and it["act_in"].shape == (it["K"], 4)
     b = collate_cst(items); assert b["tag_chunk"].shape == b["ids"].shape and (b["tag_chunk"][b["mask"] == 0] == -1).all() and int(b["n_begin"]) >= 1
+
+
+def test_act_gate_rules():
+    """2026-10-30 활동 게이트: 글자는 프레임 k − δ, <BEGIN> 은 k − 4 근처 [−back, +fwd] 에 그 슬롯 활동이 없으면 막는다. <EOT>·활동 밖 창은 통과."""
+    from vapasr.hf.batch_decode import ActGate
+    act = np.zeros((40, 2), np.float32); act[10:15, 0] = 1; act[30:40, 1] = 1
+    g = ActGate(torch.from_numpy(act), delta=8, begin_id=7, eot_id=9, back=3, fwd=1)
+    assert g.allows(8 + 12, 0, 50) and g.allows(8 + 17, 0, 50) and not g.allows(8 + 18, 0, 50)              # 글자: 창 [f − 3, f + 1] 이 10–14 와 겹치나(f = 17 은 14–18, 18 은 15–19)
+    assert g.allows(8 + 9, 0, 50) and not g.allows(8 + 8, 0, 50)                                             # f = 9 는 6–10, f = 8 은 5–9
+    assert not g.allows(20, 1, 50) and g.allows(20, 1, 9)                                                    # <EOT> 는 늘 통과
+    assert g.allows(4 + 29, 1, 7) and not g.allows(4 + 25, 1, 7) and g.allows(4 + 25, 0, 7) is False         # <BEGIN>: f = k − 4(29 는 26–30)
+    assert g.allows(3, 0, 50) and g.allows(8 + 45, 1, 50) and g.allows(5, 3, 50)                             # 오디오 앞·flush 끝(창이 활동 밖)·활동 채널 밖 슬롯
+    assert g.blocked == dict(text=3, begin=2)
+
+
+@pytest.mark.parametrize("seed", [0, 1])
+def test_gated_speculative_decode_equals_token_by_token(seed):
+    """게이트를 건 추측 prefill(realtime_block_decode)이 BlockState 한 토큰씩 고리(decode_blocks_batch 와 같은 gate_tid)와 같고, 막힌 라운드·슬롯에는 말이 없다."""
+    from vapasr.hf.batch_decode import ActGate, gate_tid
+    from vapasr.hf.realtime import realtime_block_decode
+    m, tok, bid = _tiny_blocks(); m.eval(); torch.manual_seed(seed); K, D, dl = 30, 4, 3
+    with torch.no_grad(): m.adapter_tagact.weight.copy_(torch.randn_like(m.adapter_tagact.weight))
+    feats = torch.randn(1, K, 4); act = (torch.rand(K, 4) > 0.6).float(); prefix = [5, 6, 7]; emb = m.get_input_embeddings().weight
+    EOT = m.sp_ids["<EOT>"]; words = [50, 60, 70, bid, EOT]; NA = m.next_audio
+    pick = lambda h: NA if (h % 10) < 4 + seed else words[(h // 10) % len(words)]
+    m.config.runaway_cap = 3; mk = lambda: ActGate(act, dl, bid, EOT, back=1, fwd=0)
+    g1 = mk(); out, forced, ticks, rounds, _, nf = realtime_block_decode(m, _FakeLM(emb, pick), feats, prefix, D, act=act, max_flush_rounds=4, gate=g1)
+    lm2 = _FakeLM(emb, pick); lm2.run_all(emb[torch.tensor(prefix)], 0); pos = len(prefix); ce = m.chunk_embed(feats[None])[0]; g2 = mk()
+    st = BlockState(K, D, m.config.runaway_cap, 4, int(6 * K) + 64, tuple(m.slot_ids(D))); stop = block_stops(m, D); x = ce[0]
+    while True:
+        tid = gate_tid(st, lm2.run(x[None], pos), stop, g2, NA); pos += 1; kind, v = st.consume(tid, stop)
+        if kind == "pad": break
+        x = ce[v] if kind == "audio" else m.tag_embeds(v[0], act, D)[v[1]] if kind == "tag" else emb[v] if kind == "text" else emb[m.empty_audio]
+    assert out == st.emitted and forced == st.forced and rounds == st.flush_rounds and g1.blocked == g2.blocked and sum(g1.blocked.values()) > 0
+    ungated, *_ = realtime_block_decode(m, _FakeLM(emb, pick), feats, prefix, D, act=act, max_flush_rounds=4)
+    assert out != ungated                                                                                    # 게이트가 출력을 바꿨다
+    tags = m.slot_ids(D); first = {}
+    for j, (k, t) in enumerate(out):                                                                         # 라운드·슬롯 첫 출력은 게이트를 통과한 것만
+        if t in tags: first[(k, tags.index(t))] = out[j + 1][1]
+    assert first and all(mk().allows(k, s, t) for (k, s), t in first.items())
+
+
+def test_stage3_eval_refuses_gate_without_decode(tmp_path, monkeypatch):
+    """--act-gate 는 모델 디코드 전용, --follow-n3d 는 --from-predictions 전용 — 모델·tokenizer 를 읽기 전에 거부한다."""
+    import sys
+    sys.path.insert(0, str(_HERE.parent / "experiments")); import cst_stage3_eval as E3
+    ck = tmp_path / "ck"; ck.mkdir(); (ck / "config.json").write_text("{}")
+    base = ["x", "run", "--checkpoint", str(ck), "--data", str(tmp_path), "--out", str(tmp_path / "o")]
+    for extra, msg in ((["--oracle", "--act-gate", "3,1"], "--act-gate"), (["--from-predictions", str(tmp_path), "--act-gate", "3,1"], "--act-gate"),
+                       (["--follow-n3d"], "--follow-n3d"), (["--act-gate", "3"], "BACK,FWD")):
+        monkeypatch.setattr(sys, "argv", base + extra)
+        with pytest.raises(AssertionError, match=msg): E3.main()

@@ -20,6 +20,10 @@
 #   N3D=<.nemo>(2026-10-29, E11): AMI 작업(ami·amifull)의 슬롯 활동을 고정 화자 분리 전문가 Nemotron 3 Diarization 으로(--n3d — 창은 창마다, 회의 통째는 회의 전체
 #     스트리밍 한 번, N3D_CHUNK 기본 4). 슬롯 활동 입력 체크포인트(E6·E9·E10)에 붙이는 학습 없는 진단 — 산출 이름에 -n3d(청크가 4 가 아니면 -n3dc<청크>)가 붙는다.
 #     E11 체크포인트는 config 에 전문가가 있어 N3D 없이도 그것을 쓴다(이름은 그대로).
+#   GATE=BACK,FWD(2026-10-30, 활동 추종 진단 — wiki output-n3d-branch-20261029 6.5 절): AMI 작업(ami·amifull)을 활동 게이트 디코드로(--act-gate — 슬롯 첫 출력의
+#     오디오 근처에 그 슬롯 활동이 없으면 그 라운드 그 슬롯을 버린다). 산출 이름에 -gate<BACK>-<FWD> 가 붙는다.
+#   FOLLOW=1(2026-10-30): 같은 설정의 끝난 AMI 산출(summary.json 있음)을 디코드 없이 다시 채점해 활동 추종 진단(follow·cp_follow)을 남긴다 — 원출력에 활동(act_runs)이
+#     없으면 원 평가 config 의 전문가(n3d)로 다시 계산한다(--from-predictions … --follow-n3d, GPU 가볍게). 산출은 <원 산출>-follow. GATE 와 함께 쓰지 않는다.
 #   EV_TAG=<이름>(2026-10-30): AMI 작업(ami·amifull) 산출 이름에 -<이름> 을 붙인다 — 같은 체크포인트를 고친 코드로 다시 잴 때(예 E10 <BEGIN> 차단 수정 onsetfix).
 #     예전 산출은 지우지 않고 그대로 둔다(이미 끝난 산출이 있으면 작업이 건너뛰므로 새 이름으로).
 #   DELTAS(2026-10-28, 사용자 "AMI IHM 이랑 SDM 두개에 대해 delta 10 으로만 평가해서 비교해서 의사결정을 빠르게 하자"): AMI 작업(ami·amiact·amitgt·amie3·amifull)의 δ
@@ -79,16 +83,19 @@ case $K in
   ami) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
        MO=""; [ "${MIXOFF:-0}" = 1 ] && MO=--mix-off                                                   # E10(2026-10-29): 섞인 소리 토큰 없이
        NO=""; NT=""; [ -n "${N3D:-}" ] && { NO="--n3d $N3D --n3d-chunk ${N3D_CHUNK:-4}"; NT=-n3d; [ "${N3D_CHUNK:-4}" = 4 ] || NT=-n3dc$N3D_CHUNK; }   # E11(2026-10-29): 고정 화자 분리 전문가
-       E=$R/stage3-eval-ami$DS${MO:+-mixoff}$NT${EV_TAG:+-$EV_TAG}-$RUN-$tag; A=$R/stage3-attr-errors-ami$DS${MO:+-mixoff}$NT${EV_TAG:+-$EV_TAG}-$RUN-$tag; AB=$D/ami-bench-v1
+       GO=""; GT=""; [ -n "${GATE:-}" ] && { [[ $GATE =~ ^[0-9]+,[0-9]+$ ]] || { say "GATE 는 BACK,FWD: $GATE"; exit 2; }; GO="--act-gate $GATE"; GT=-gate${GATE/,/-}; }   # 2026-10-30 활동 게이트
+       E=$R/stage3-eval-ami$DS${MO:+-mixoff}$NT$GT${EV_TAG:+-$EV_TAG}-$RUN-$tag; A=$R/stage3-attr-errors-ami$DS${MO:+-mixoff}$NT$GT${EV_TAG:+-$EV_TAG}-$RUN-$tag; AB=$D/ami-bench-v1
+       FO=""; if [ "${FOLLOW:-0}" = 1 ]; then                                                        # 2026-10-30 활동 추종: 끝난 원출력을 다시 채점(디코드 없음)
+         [ -z "$GO" ] && [ -f $E/summary.json ] || { say "FOLLOW: GATE 없이, 끝난 원 산출이 있어야 한다 $E"; exit 2; }; FO="--from-predictions $E --follow-n3d"; NO=""; E=$E-follow; fi
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
        $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL --batch-size 16 \
-         --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 $MO $NO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
+         --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 $MO $NO $GO $FO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
        [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }
        ( flock 9; [ -f $E/summary.json ] && exit 0
          $P experiments/cst_stage3_eval.py summarize --out $E > $E/summary.log 2>&1
-         mkdir -p $A; $P experiments/cst_attr_errors.py --pred $E --data $AB --out $A --deltas $DL --workers 16 > $A/run.log 2>&1
+         [ -n "$FO" ] || { mkdir -p $A; $P experiments/cst_attr_errors.py --pred $E --data $AB --out $A --deltas $DL --workers 16 > $A/run.log 2>&1; }
          $P raw/sources/experiments/2026-10-20-v2-multispeaker/ami_report.py $E > $E/ami-report.txt 2>&1 ) 9> $E/.sum.lock
        say "AMI 합침 → $E/ami-report.txt" ;;
   amiact) r=${SH%/*}; w=${SH#*/}; [[ $r =~ ^[0-9]+$ && $w =~ ^[1-9][0-9]*$ && $r -lt $w ]] || { say "몫은 r/w(0 ≤ r < w)"; exit 2; }
@@ -136,10 +143,13 @@ case $K in
        MO=""; [ "${MIXOFF:-0}" = 1 ] && MO=--mix-off                                                   # E10(2026-10-29): 섞인 소리 토큰 없이
        NO=""; NT=""; [ -n "${N3D:-}" ] && { NO="--n3d $N3D --n3d-chunk ${N3D_CHUNK:-4}"; NT=-n3d; [ "${N3D_CHUNK:-4}" = 4 ] || NT=-n3dc$N3D_CHUNK; }   # E11(2026-10-29): 고정 화자 분리 전문가
        [ -n "$NO" ] && [ -n "$AO$DO$GD" ] && { say "N3D 는 AOSC·DIAR·GUIDE 와 함께 쓰지 않는다"; exit 2; }
-       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}${MO:+-mixoff}$NT${EV_TAG:+-$EV_TAG}$DS-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
+       GO=""; GT=""; [ -n "${GATE:-}" ] && { [[ $GATE =~ ^[0-9]+,[0-9]+$ ]] || { say "GATE 는 BACK,FWD: $GATE"; exit 2; }; GO="--act-gate $GATE"; GT=-gate${GATE/,/-}; }   # 2026-10-30 활동 게이트
+       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}${MO:+-mixoff}$NT$GT${EV_TAG:+-$EV_TAG}$DS-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
+       FO=""; if [ "${FOLLOW:-0}" = 1 ]; then                                                        # 2026-10-30 활동 추종: 끝난 원출력을 다시 채점(디코드 없음)
+         [ -z "$GO" ] && [ -f $E/summary.json ] || { say "FOLLOW: GATE 없이, 끝난 원 산출이 있어야 한다 $E"; exit 2; }; FO="--from-predictions $E --follow-n3d"; NO=""; V=""; E=$E-follow; fi
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
        $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL \
-         --backchannel 1.0,3 --max-speakers 4 --window full --context-s $C --declare 4 $V $AO $DO $GD $MO $NO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
+         --backchannel 1.0,3 --max-speakers 4 --window full --context-s $C --declare 4 $V $AO $DO $GD $MO $NO $GO $FO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
        [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }

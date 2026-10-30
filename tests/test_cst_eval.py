@@ -116,3 +116,45 @@ def test_relabel_by_activity():
     out = relabel_by_activity(hyp, act, delta=4)
     assert [w for w, _ in out[2]] == ["a"] and [w for w, _ in out[0]] == ["b"] and set(w for w, _ in out[1]) == {"c", "d"}   # d(무음) 는 ±12 로 넓혀 30–39 의 1 을 고른다
     assert sum(len(x) for x in out) == 4 and all(x == sorted(x, key=lambda z: z[1]) for x in out)
+
+
+def test_act_runs_roundtrip():
+    """2026-10-30 활동 추종: 행에 싣는 활동 구간(act_runs)과 되돌리기."""
+    import numpy as np
+    from vapasr.data.cst_eval import act_runs, act_from_runs
+    A = np.zeros((30, 3), np.uint8); A[0:4, 0] = 1; A[10:12, 0] = 1; A[29, 0] = 1; A[5:30, 2] = 1
+    r = act_runs(A); assert r == [[[0, 4], [10, 12], [29, 30]], [], [[5, 30]]]
+    assert (act_from_runs(r, 30) == A).all() and act_from_runs([[], []], 5).shape == (5, 2)
+
+
+def test_follow_stats_categories_truth_and_moved():
+    """단어 오디오 프레임 f = 방출 청크 − δ, 창 [f − 3, f + 1]: on·off_other·off_none·단독·겹침, 정답으로 누가 맞았나, 어긋난 단어만 활동 슬롯으로 옮긴다."""
+    import numpy as np
+    from vapasr.data.cst_eval import follow_stats, score_window
+    t = lambda f, d=4: (f + d + 1) * 0.08                                                                         # 오디오 프레임 f 의 단어가 나오는 방출 시각
+    act = np.zeros((60, 2), np.uint8); act[0:20, 0] = 1; act[15:30, 1] = 1; act[40:50, 1] = 1                    # 겹침 15–19, 무음 30–39·50–59
+    ref = np.zeros((60, 2), np.uint8); ref[0:20, 0] = 1; ref[20:30, 1] = 1; ref[40:50, 0] = 1                     # 40–49 는 실제로 화자 0(활동이 틀림)
+    hyp = [[("a", t(5)), ("b", t(25)), ("c", t(45)), ("x", t(35))], [("d", t(17)), ("e", t(8))]]
+    st, moved = follow_stats(hyp, act, 4, ref_act=ref, perm=[0, 1])
+    # a: 단독 on(맞음) · b: 단독 off_other(활동 1 = 정답 1 → 활동만 맞음) · c: off_other(LLM 0 = 정답 0, 활동 1 틀림 → LLM 만 맞음) · x: 무음(정답도 무음 → LLM 틀림)
+    # d: 겹침 on(창 14–18 에 정답 1 없음 → 틀림) · e: 단독 off_other(활동 0, 정답 0 → 활동만 맞음)
+    assert {k: st[k] for k in ("n", "on", "off_other", "off_none", "sg", "sg_off", "ov", "ov_off")} == dict(n=6, on=2, off_other=3, off_none=1, sg=4, sg_off=3, ov=1, ov_off=0)
+    assert {k: st[k] for k in ("on_ok", "none_ok", "oo_l1e1", "oo_l1e0", "oo_l0e1", "oo_l0e0")} == dict(on_ok=1, none_ok=0, oo_l1e1=0, oo_l1e0=1, oo_l0e1=2, oo_l0e0=0)
+    assert [w for w, _ in moved[0]] == ["a", "e", "x"] and [w for w, _ in moved[1]] == ["d", "b", "c"]          # 어긋난 b·c·e 만 옮긴다, 시각순
+    ref_w = [[("a", 0.5), ("e", 0.9), ("d", 1.5), ("c", 3.9)], [("b", 2.2)]]
+    s0, s1 = score_window(ref_w, hyp, "English"), score_window(ref_w, moved, "English")
+    assert (s0["cp"], s1["cp"]) == (5, 4) and s0["agn"] == s1["agn"] == 1                                       # 옮기면 귀속만 바뀌고 받아쓰기(agn)는 그대로
+    m = np.ones(60, bool); m[20:30] = False                                                                      # 마스크 프레임 단어(b)는 세지 않고 슬롯은 그대로
+    st2, moved2 = follow_stats(hyp, act, 4, frame_mask=m)
+    assert st2["skipped"] == 1 and st2["n"] == 5 and "on_ok" not in st2 and "b" in [w for w, _ in moved2[0]]
+
+
+def test_follow_pool_and_line():
+    from vapasr.data.cst_eval import follow_pool, follow_line
+    f = lambda **k: dict(dict.fromkeys(("n", "on", "off_other", "off_none", "sg", "sg_off", "ov", "ov_off", "skipped", "on_ok", "none_ok", "oo_l1e1", "oo_l1e0", "oo_l0e1", "oo_l0e0"), 0), **k)
+    rows = [dict(n_ref=10, cp=3, follow=f(n=8, on=6, off_other=2, sg=7, sg_off=2, ov=1, oo_l1e0=1, oo_l0e1=1, on_ok=5), cp_follow=2, gated=dict(text=3, begin=1)),
+            dict(n_ref=10, cp=1, follow=f(n=2, on=1, off_none=1, sg=1, none_ok=1), cp_follow=1), dict(n_ref=5, cp=0)]
+    p = follow_pool(rows)
+    assert p["words"] == 10 and p["on"] == 70.0 and p["off_other"] == 20.0 and p["off_none"] == 10.0 and p["oo_llm_only"] == 50.0 and p["oo_act_only"] == 50.0
+    assert p["err_cp_follow"] == 15.0 and p["gated_text"] == 3 and p["gated_begin"] == 1 and p["none_ok"] == 100.0
+    assert "따르면 cp 15.00" in follow_line(p) and follow_pool([dict(n_ref=1, cp=0)]) is None

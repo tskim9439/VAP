@@ -6,6 +6,8 @@ Stage 4(experiments/cst_stage4_eval.py): parse_emitted4(전사·번역 네 흐�
   (태그를 빠뜨려도 받아쓰기 평가는 되게). 방출 시각 = 청크 끝 (k+1)·80 ms (ast_eval.word_emission_times 와 같은 규약).
   E9 슬롯 블록(2026-10-28): 디코더가 슬롯 출력 앞에 그 슬롯 태그를 기록하므로 같은 규칙으로 읽는다. <BEGIN>·<EOT> 는 activity_from_events 로 슬롯 활동이 된다
   (LLM 쪽 화자 분리 — vapasr.hf.diar.der_counts 로 DER).
+  활동 추종 진단(follow_stats, 2026-10-30): 단어가 디코드에 준 슬롯 활동(E11 이면 고정 전문가)이 켜진 슬롯에 들어갔나 — 다른 슬롯·무음·겹침, 정답으로 누가 맞았나,
+  어긋난 단어를 활동 슬롯으로 옮기면 cp. 행에는 act_runs(활동 구간)로 싣는다.
 단위(units): 한국어 = 글자(공백 없는 CER, score_ko), 영어 = 단어(score_en), 독일어 = 단어(score_de).
   영어 정규화(set_en_norm, 2026-10-27): ours = score_en(소문자·문장부호·숫자, 채움말 남김 — 기본, 예전 값) | whisper = Whisper EnglishTextNormalizer
   (whisper_normalizer — 채움말 hmm·mm·mhm·mmm·uh·um 제거, 줄임말·영국 철자·숫자·호칭 표준화; 외부 AMI 수치와 견줄 때). 시각을 지키려고 단어마다 정규화한다
@@ -188,6 +190,90 @@ def relabel_by_activity(hyp: Sequence[Sequence[Tuple[str, float]]], act, delta: 
             if A[lo:hi].max() < floor: lo, hi = max(0, k - wide), max(1, min(K, k + wide + 1))
             out[int(A[lo:hi].sum(0).argmax())].append((w, t))
     return [sorted(x, key=lambda z: z[1]) for x in out]
+
+
+def act_runs(act) -> List[List[List[int]]]:
+    """슬롯 활동 (K, N) 0/1 → 슬롯마다 [시작, 끝) 프레임 구간 목록 — 평가 행에 싣는 꼴(act_from_runs 로 되돌린다)."""
+    import numpy as np
+    A = np.asarray(act) > 0; out = []
+    for s in range(A.shape[1]):
+        d = np.diff(np.concatenate([[0], A[:, s].astype(np.int8), [0]]))
+        out.append([[int(a), int(b)] for a, b in zip(np.nonzero(d == 1)[0], np.nonzero(d == -1)[0])])
+    return out
+
+
+def act_from_runs(runs, K: int):
+    """act_runs 의 역 → (K, 슬롯) uint8."""
+    import numpy as np
+    A = np.zeros((K, len(runs)), np.uint8)
+    for s, rr in enumerate(runs):
+        for a, b in rr: A[a:b, s] = 1
+    return A
+
+
+def follow_stats(hyp: Sequence[Sequence[Tuple[str, float]]], act, delta: int, ref_act=None, perm: Optional[Sequence[int]] = None, frame_mask=None,
+                 back: int = 3, fwd: int = 1):
+    """진단(2026-10-30, 사용자 "LLM 활동 추종 진단 구현해놓자" — wiki output-n3d-branch-20261029 6.5 절): LLM 이 슬롯 활동 입력을 얼마나 따르나.
+    hyp: 슬롯별 [(단어, 방출 시각 s)](score_window 의 가설), act (K, N): 디코드가 받은 슬롯 활동 0/1(채널 s = 슬롯 s — E11 이면 고정 전문가, E9 면 헤드).
+    단어의 오디오 프레임 f = 방출 청크 − δ(relabel_by_activity 와 같은 규약), 창 [f − back, f + fwd] 에 그 단어 슬롯이 활성이면 on, 아니고 다른 슬롯이 활성이면
+    off_other(활동은 다른 사람이라 본다), 아무 슬롯도 아니면 off_none(활동은 무음이라 본다). 창 안 활성 슬롯이 하나면 단독(sg), 둘 이상이면 겹침(ov) 단어다.
+    ref_act (K, Nr) 정답 슬롯 활동·perm(score_window — 가설 슬롯 → 참조 슬롯)을 주면 누가 맞았나도 센다: 단어 슬롯의 참조 화자가 창 안에서 말했으면 LLM 맞음,
+    off_other 단어의 활동 슬롯(창 활동 합이 가장 큰 슬롯)의 참조 화자가 말했으면 활동 맞음 — oo_l{0,1}e{0,1}(LLM·활동 맞음). on_ok·none_ok 는 LLM 맞음 수.
+    frame_mask (K,) bool(False = 전사를 못 믿는 구간 — LLM DER 마스크)이면 그 프레임 단어는 세지 않는다(skipped, 슬롯은 그대로).
+    → (셈 dict, moved — off_other 단어만 활동 슬롯으로 옮긴 슬롯별 [(단어, 시각)] 시각순: LLM 이 활동을 따랐다면의 가설, score_window 로 cp 를 잰다)."""
+    import numpy as np
+    A = np.asarray(act) > 0; K, N = A.shape; R = None if ref_act is None else np.asarray(ref_act) > 0
+    M = None if frame_mask is None else np.asarray(frame_mask, dtype=bool)
+    st = dict.fromkeys(("n", "on", "off_other", "off_none", "sg", "sg_off", "ov", "ov_off", "skipped")
+                       + (("on_ok", "none_ok", "oo_l1e1", "oo_l1e0", "oo_l0e1", "oo_l0e0") if R is not None else ()), 0)
+    moved: List[List[Tuple[str, float]]] = [[] for _ in range(max(N, len(hyp)))]
+    ok = lambda x, lo, hi: x < len(perm) and perm[x] < R.shape[1] and bool(R[lo:hi, perm[x]].any())
+    for s, sl in enumerate(hyp):
+        for w, t in sl:
+            f = min(max(int(round(t / CHUNK_S)) - 1 - int(delta), 0), K - 1)
+            if M is not None and not M[f]: st["skipped"] += 1; moved[s].append((w, t)); continue
+            lo, hi = max(0, f - back), min(K, f + fwd + 1); a = A[lo:hi]; on = a.any(0); n_on = int(on.sum()); mine = s < N and bool(on[s]); e = s
+            st["n"] += 1
+            if n_on == 1: st["sg"] += 1; st["sg_off"] += int(not mine)
+            elif n_on > 1: st["ov"] += 1; st["ov_off"] += int(not mine)
+            if mine: st["on"] += 1
+            elif n_on: st["off_other"] += 1; e = int(a.sum(0).argmax())
+            else: st["off_none"] += 1
+            moved[e].append((w, t))
+            if R is None: continue
+            llm = ok(s, lo, hi)
+            if mine: st["on_ok"] += int(llm)
+            elif n_on: st[f"oo_l{int(llm)}e{int(ok(e, lo, hi))}"] += 1
+            else: st["none_ok"] += int(llm)
+    return st, [sorted(x, key=lambda z: z[1]) for x in moved]
+
+
+def follow_pool(rows: Sequence[Dict]) -> Optional[Dict]:
+    """행의 follow(follow_stats 셈)·cp_follow·gated(활동 게이트 디코드가 막은 슬롯 첫 출력) 합 → 비율 dict(%), 그런 행이 없으면 None."""
+    ff = [r["follow"] for r in rows if "follow" in r]
+    if not ff: return None
+    S = {k: sum(x.get(k, 0) for x in ff) for k in ff[0]}; pc = lambda x, d: round(100 * x / max(1, d), 2)
+    out = dict(words=S["n"], on=pc(S["on"], S["n"]), off_other=pc(S["off_other"], S["n"]), off_none=pc(S["off_none"], S["n"]),
+               sg_off=pc(S["sg_off"], S["sg"]), ov_share=pc(S["ov"], S["n"]), ov_off=pc(S["ov_off"], S["ov"]))
+    if "oo_l1e0" in S:
+        oo = S["off_other"]
+        out.update(oo_llm_only=pc(S["oo_l1e0"], oo), oo_act_only=pc(S["oo_l0e1"], oo), oo_both=pc(S["oo_l1e1"], oo), oo_neither=pc(S["oo_l0e0"], oo),
+                   on_ok=pc(S["on_ok"], S["on"]), none_ok=pc(S["none_ok"], S["off_none"]))
+    cf = [r for r in rows if "cp_follow" in r]
+    if cf: out["err_cp_follow"] = round(100 * sum(r["cp_follow"] for r in cf) / max(1, sum(r["n_ref"] for r in cf)), 2)
+    g = [r["gated"] for r in rows if "gated" in r]
+    if g: out.update(gated_text=sum(x["text"] for x in g), gated_begin=sum(x["begin"] for x in g))
+    return out
+
+
+def follow_line(f: Dict) -> str:
+    """follow_pool → 보고 한 줄에 붙이는 꼬리."""
+    s = f" · 활동 추종 on {f['on']:.1f} % · 다른 슬롯 {f['off_other']:.1f} %"
+    if "oo_llm_only" in f: s += f"(LLM 만 맞음 {f['oo_llm_only']:.0f} · 활동만 {f['oo_act_only']:.0f} · 둘 다 {f['oo_both']:.0f} · 둘 다 틀림 {f['oo_neither']:.0f})"
+    s += f" · 무음 {f['off_none']:.1f} % · 겹침 단어 {f['ov_share']:.1f} %(그중 off {f['ov_off']:.1f})"
+    if "err_cp_follow" in f: s += f" · 따르면 cp {f['err_cp_follow']:.2f}"
+    if "gated_text" in f: s += f" · 게이트가 막은 첫 출력 글자 {f['gated_text']} · <BEGIN> {f['gated_begin']}"
+    return s
 
 
 def score_window(ref: Sequence[Sequence[Tuple[str, float]]], hyp: Sequence[Sequence[Tuple[str, float]]], lang: str) -> Dict:
