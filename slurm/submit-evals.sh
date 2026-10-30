@@ -48,7 +48,7 @@
 #            활동이 꺼진 슬롯의 라운드를 버려 LLM 혼동이 전문가 쪽으로 내려가는지·받아쓰기가 얼마나 줄어드는지 본다. 산출 이름에 -gate<B>-<F>. 의존 없음.
 #   ext-vibevoice · ext-parakeet  외부 기준을 우리 AMI 조건으로 직접(2026-10-30, 사용자 "이 둘을 준비해줘" — experiments/baseline_ami_ext.py,
 #            raw/sources/experiments/2026-10-30-ami-ext/ami_ext_task.sh): 같은 회의·오디오·참조(δ10 회의 통째)·채점(단어마다 + meeteval). 각 8 몫, 의존 없음.
-#            ext-vibevoice = VibeVoice-ASR-Streaming-7B 회의 통째(vv7b-full) → 480 s 조각(vv7b-seg480 — 논문 조건 재현 점검).
+#            ext-vibevoice = VibeVoice-ASR-Streaming-7B 480 s 조각(vv7b-seg480 — 논문 조건 재현 점검) → 회의 통째(vv7b-full — 공개 체크포인트의 세션 상한 480 s 밖).
 #            ext-parakeet = Multitalker Parakeet v1 + Streaming Sortformer v2(mtp-sortv2 — 카드 조건 재현 점검) → + Nemotron 3 Diarization(mtp-n3d).
 #              .nemo 두 개(Parakeet·Sortformer v2)를 사용자가 VAPKT-data/vapkt-baselines/ 아래에 올린 뒤 낸다(없으면 작업이 멈춘다).
 #   q17-graft  G1 이식 어댑터(2026-10-29, slurm/submit-n3d-graft.sh — GRAFT_RUN 기본 q17-graft-l8): final/graft.pt 의 창·회의 DER(diar_eval run --graft,
@@ -136,7 +136,7 @@ case $set_ in
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 N3D=$N3 bash $X $t q17-e9 final $r/8"); done; done ;;
   ext-vibevoice|ext-parakeet) XT=raw/sources/experiments/2026-10-30-ami-ext/ami_ext_task.sh
     if [ $set_ = ext-parakeet ]; then for f in multitalker-parakeet-v1/multitalker-parakeet-streaming-0.6b-v1.nemo diar_streaming_sortformer_4spk-v2/diar_streaming_sortformer_4spk-v2.nemo; do
-      [[ -f $D/vapkt-baselines/$f ]] || { echo "없음(사용자 업로드): $D/vapkt-baselines/$f" >&2; exit 1; }; done; S2=(mtp-sortv2 mtp-n3d); else S2=(vv7b-full vv7b-seg480); fi
+      [[ -f $D/vapkt-baselines/$f ]] || { echo "없음(사용자 업로드): $D/vapkt-baselines/$f" >&2; exit 1; }; done; S2=(mtp-sortv2 mtp-n3d); else S2=(vv7b-seg480 vv7b-full); fi   # 논문 조건(480 s 조각)을 먼저
     for s_ in "${S2[@]}"; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $XT $s_ $r/8"); done; done ;;
   q17-e11-gate) G=${GATE:-3,1}; [[ $G =~ ^[0-9]+,[0-9]+$ ]] || { echo "GATE 는 BACK,FWD: $G" >&2; exit 2; }
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 GATE=$G bash $X $t q17-e11 final $r/8"); done; done ;;
