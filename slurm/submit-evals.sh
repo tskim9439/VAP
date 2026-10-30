@@ -37,7 +37,7 @@
 #   q17-e9-n3d  E11 진단(2026-10-29, wiki output-n3d-branch-20261029 — 학습 없음): Nemotron 3 Diarization(고정 전문가, N3D=.nemo — 기본 VAPKT-data/vapkt-baselines/Nemotron-3-Diarization/…)의
 #            AMI 창·회의 DER(diar_eval run --n3d, 우리 참조 — results/diar-n3d-c4-win·-session) + E9 final 의 슬롯 활동을 전문가 활동으로 바꾼 AMI 창 δ10·회의 통째 δ10(8 몫씩).
 #            의존 없음. 순서: 창 DER → 창 cpWER → 회의 DER → 회의 cpWER.
-#   q17-e10-n3d  같은 진단을 E10 final 에(창·회의 통째 × 섞인 소리 켬·끔). --after-job(E10 학습 job) 필수.
+#   q17-e10-n3d  같은 진단을 E10 final 에(창·회의 통째 × 섞인 소리 켬·끔). 의존 없음(2026-10-30 — E10 학습이 끝나 --after-job 을 뺐다).
 #   q17-e11 · q17-e11b  E11(slurm/submit-q17-e11.sh — 전문가 활동으로 학습, b = E10 에서): AMI 창 δ10 8 몫 → 회의 통째 δ10 8 몫(config 의 전문가). --after-job 필수.
 #   q17-e10-fix  E10 다시 재기(2026-10-30): q17-e10 과 같은 네 단계를 EV_TAG=onsetfix 산출 이름으로. 첫 평가(97923)는 config 의 <BEGIN>(<ONSET>) 디코드 차단으로
 #            새 턴을 못 열어 무효다(modeling_vapasr __init__·add_slot_blocks 수정 — 읽을 때 푼다). 의존 없음.
@@ -64,8 +64,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e10-n3d|q17-e11|q17-e11b|q17-graft) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
-  q17-e9-n3d|q17-e10-fix) ;;
+  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e11|q17-e11b|q17-graft) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+  q17-e9-n3d|q17-e10-fix|q17-e10-n3d) ;;
   *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e11b | q17-graft | q17-e10-fix" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
