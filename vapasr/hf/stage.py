@@ -4,7 +4,8 @@ last_complete_checkpoint: 학습 자동 재개(semcommit_train.py·stage3_train.
 import os, re, json, shutil, glob, time, fcntl
 from typing import Optional
 
-STAGE_FILES = ("*.safetensors", "*.safetensors.index.json", "config.json", "generation_config.json", "tokenizer*", "vocab.json", "merges.txt", "special_tokens_map.json", "added_tokens.json", "chat_template*", "*.nemo")
+STAGE_FILES = ("*.safetensors", "*.safetensors.index.json", "config.json", "generation_config.json", "tokenizer*", "vocab.json", "merges.txt", "special_tokens_map.json", "added_tokens.json", "chat_template*", "*.nemo",
+               "n3d_config.yaml")                                                                   # 흡수 N3D 가지의 틀(2026-10-31, VapAsr.absorb_n3d)
 
 def stage_dir(src: str, dst_root: Optional[str] = None, quiet: bool = False) -> str:
     """src 디렉토리의 모델 파일을 dst_root/<src 를 평탄화한 이름>/ 로 복사(크기·mtime 같으면 건너뜀) → 복사본 경로. 실패하면 src.

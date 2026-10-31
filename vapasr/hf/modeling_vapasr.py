@@ -57,8 +57,8 @@ class VapAsrForStreamingASR(PreTrainedModel):
     base_model_prefix = "vapasr"
     supports_gradient_checkpointing = True
     _tied_weights_keys = ["thinker.lm_head.weight"]
-    _keys_to_ignore_on_load_unexpected = [r"^encoder\.", r"^thinker\.audio_tower\."]
-    _keys_to_ignore_on_load_missing = [r"^encoder\."]
+    _keys_to_ignore_on_load_unexpected = [r"^encoder\.", r"^thinker\.audio_tower\.", r"^n3d_net\."]      # n3d_net: 흡수 N3D 가지(from_pretrained 가 따로 읽는다)
+    _keys_to_ignore_on_load_missing = [r"^encoder\.", r"^n3d_net\."]
 
     def __init__(self, config: VapAsrConfig, thinker: Optional[nn.Module] = None):
         super().__init__(config)
@@ -85,6 +85,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
             from .n3d import N3DExpert
             self.n3d = N3DExpert(nc)
         else: self.n3d = None
+        self.n3d_net = None                                                                       # 흡수(absorb_n3d)한 N3D 가지 — 하위 모듈이라 체크포인트에 함께(from_pretrained 가 다시 세운다)
         if thinker is None:
             from qwen_asr.core.transformers_backend.configuration_qwen3_asr import Qwen3ASRThinkerConfig
             from qwen_asr.core.transformers_backend.modeling_qwen3_asr import Qwen3ASRThinkerForConditionalGeneration
@@ -114,7 +115,9 @@ class VapAsrForStreamingASR(PreTrainedModel):
         enc = NemotronOnline(right_context=self.config.encoder_right_context, path=path)
         if state_dict: enc.enc.load_state_dict(state_dict)
         tr = self.config.encoder_trainable if trainable is None else trainable; enc.set_trainable(tr); self.config.encoder_trainable = tr
-        self.encoder = enc.to(next(self.adapter.parameters()).device); return self
+        self.encoder = enc.to(next(self.adapter.parameters()).device)
+        if getattr(self, "n3d_net", None) is not None and self.config.n3d_cfg.get("shared_mel"): self.n3d.pre = self._shared_mel(force=True)   # 흡수 N3D 가 우리 mel 을 쓰면 새 인코더 것으로
+        return self
     def encode(self, wav, wav_len, K, act=None, n3d: bool = True):               # (B,L) → (B,S,Kmax,Din) — S = 1, 탭이 있으면 2(마지막 층, 탭 층)
         """act (B, ≥Kmax) 대상 화자 활동(0–1, E2) — 있으면 adapter_inject 로 인코더 pre-encode 출력에 주입한다(없으면 예전 그대로).
         E6(화자 분리 헤드가 있으면): (B, 2, Kmax, Din) — 스트림 1 = 헤드 예측 슬롯 활동(앞 N 차원, 나머지 0). chunk_embed 가 그 스트림을 슬롯 활동 입력으로 쓴다
@@ -302,10 +305,65 @@ class VapAsrForStreamingASR(PreTrainedModel):
         from .n3d import DEFAULTS, N3DExpert
         old = dict(getattr(self.config, "n3d_cfg", None) or {})
         new = {**DEFAULTS, **old, **{k: v for k, v in cfg.items() if v is not None}, **({"path": os.path.abspath(path)} if path else {})}
-        assert set(new) <= set(DEFAULTS) | {"path"}, f"모르는 n3d 설정: {sorted(set(new) - set(DEFAULTS) - {'path'})}"
+        assert set(new) <= set(DEFAULTS) | {"path", "embedded", "train", "shared_mel"}, f"모르는 n3d 설정: {sorted(set(new) - set(DEFAULTS) - {'path'})}"
+        assert not (old.get("embedded") and new.get("path") != old.get("path")), "흡수한 N3D(n3d_net)는 경로를 바꾸지 않는다 — 가지가 체크포인트 안에 있다"
         self.config.n3d_cfg = new
         if self.n3d is None or self.n3d.cfg.get("path") != new.get("path"): self.n3d = N3DExpert(new)
         else: self.n3d.cfg = {**self.n3d.cfg, **new}
+
+    def absorb_n3d(self, train: Optional[dict] = None, state: Optional[dict] = None, share_mel: Optional[bool] = None) -> None:
+        """N3D 흡수(2026-10-31, 사용자 "N3D 흡수하는 방향도 좋아" — wiki output-diarizer-replacement-20261031 길 3): add_n3d 의 고정 전문가를 모델 안 가지로 옮긴다.
+        - 가중치는 하위 모듈 n3d_net(state_dict 의 n3d_net.*)이라 체크포인트에 함께 저장되고, NeMo 설정은 save_pretrained 가 n3d_config.yaml 로 남긴다 — .nemo 가 필요 없다.
+        - mel(share_mel): None 이면 우리 인코더 전처리기가 N3D 것과 같은 값을 낼 때만 그것을 쓴다(_shared_mel). 설정은 같지만 N3D 체크포인트가 filterbank·window 를
+          bf16 으로 담아 값이 조금 달라(2026-10-31 확인 — 이때는 N3D 자신의 mel 모듈을 가지 안에 둔다) 출력이 고정 전문가와 같다. True 면 우리 것을 쓴다(실험용 — 출력이 조금 바뀐다).
+        - train·state(n3d_graft.n3d_trainable 설정·학습값 — G2·흡수 미세조정 graft.pt 의 n3d_train·n3d_state)를 주면 그 꼴로 감싸고 값을 넣는다.
+        가중치는 고정(requires_grad False — 옵티마이저·DDP 밖)이고 모듈은 늘 eval 이다(N3DExpert.load)."""
+        assert self.n3d is not None, "absorb_n3d 는 add_n3d 다음에"
+        if self.n3d_net is None:
+            from .n3d import load_n3d
+            net, _ = load_n3d(self.n3d.path(), "cpu")
+            if train:
+                from .n3d_graft import load_n3d_trainable, n3d_trainable
+                if state is not None: load_n3d_trainable(net, train, state)
+                else: n3d_trainable(net, train)
+            for p in net.parameters(): p.requires_grad_(False)
+            self.n3d_net = net.eval().to(next(self.adapter.parameters()).device)
+        else: assert not train or self.config.n3d_cfg.get("train") == dict(train), "이미 흡수한 N3D 와 다른 train 설정"
+        pre = self._shared_mel(force=bool(share_mel)) if share_mel is not False else None; self.n3d.m = self.n3d_net; self.n3d.pre = pre
+        self.config.n3d_cfg = {**self.config.n3d_cfg, "embedded": True, "shared_mel": pre is not None, **({"train": dict(train)} if train else {})}
+        self.n3d.cfg = {**self.n3d.cfg, **self.config.n3d_cfg}
+
+    def _shared_mel(self, force: bool = False):
+        """흡수: N3D mel 을 만들 우리 인코더 전처리기 — force 면 있으면 그것, 아니면 같은 신호에서 두 전처리기(eval)의 값이 같을 때만. 아니면 None(N3D 자신의 것)."""
+        pre = getattr(self.encoder, "pre", None) if self.encoder is not None else None
+        if pre is None or self.n3d_net is None: return None
+        if force: return pre
+        own = self.n3d_net.preprocessor; dev = next(self.n3d_net.parameters()).device
+        x = (torch.randn(2, 16000, generator=torch.Generator().manual_seed(0)) * 0.1).to(dev); n = torch.tensor([16000, 11000], device=dev)
+        outs = []
+        for p in (pre, own):
+            was = p.training; p.eval()
+            with torch.no_grad(), torch.autocast(dev.type, enabled=False): outs.append(p(input_signal=x, length=n))
+            p.train(was)
+        (fa, la), (fb, lb) = outs; T = int(la.max())                                              # 유효 길이까지만(N3D 는 pad_to 16 으로 뒤를 채운다 — stream_probs 가 길이로 자른다)
+        ok = torch.equal(la, lb) and fa.shape[:2] == fb.shape[:2] and min(fa.shape[2], fb.shape[2]) >= T
+        return pre if ok and torch.allclose(fa[..., :T], fb[..., :T], atol=1e-5) else None
+
+    def _load_embedded_n3d(self, path: str) -> None:
+        """from_pretrained(흡수 체크포인트): n3d_config.yaml 로 N3D 틀을 세우고(train 이면 같은 꼴로 감싼다) safetensors 의 n3d_net.* 를 엄격히 넣는다."""
+        import glob
+        from omegaconf import OmegaConf
+        from safetensors.torch import load_file
+        from .n3d import build_n3d, use_sdpa
+        c = self.config.n3d_cfg; net, _ = build_n3d(OmegaConf.load(os.path.join(path, "n3d_config.yaml")))
+        if c.get("train"):
+            from .n3d_graft import n3d_trainable
+            n3d_trainable(net, c["train"])
+        sd = {k[len("n3d_net."):]: v for f in sorted(glob.glob(os.path.join(path, "*.safetensors"))) for k, v in load_file(f).items() if k.startswith("n3d_net.")}
+        net.load_state_dict(sd, strict=True); use_sdpa(net)
+        for p in net.parameters(): p.requires_grad_(False)
+        self.n3d_net = net.eval().to(next(self.adapter.parameters()).device)
+        self.n3d.m = self.n3d_net; self.n3d.pre = self._shared_mel(force=True) if c.get("shared_mel") else None   # 저장할 때 정한 mel 그대로
 
     def n3d_act(self, wav, wav_len, K):
         """고정 전문가 활동 (B, max K, N) 0/1 — 학습 중(self.training)이면 학습 청크(train_chunk·train_rc), 아니면 추론 청크(chunk·rc)."""
@@ -629,7 +687,11 @@ class VapAsrForStreamingASR(PreTrainedModel):
         (2026-09-17 D1 사고: E2 의 학습된 인코더를 동결해 쓰면서 encoder_trainable=False 로 저장 → 재로드 시 .nemo 원본 인코더가 붙어 text 손실 0.08→1.5. encoder_saved 로 막는다.)"""
         sd = state_dict if state_dict is not None else self.state_dict()
         if not (self.config.encoder_trainable or getattr(self.config, "encoder_saved", False)): sd = {k: v for k, v in sd.items() if not k.startswith("encoder.")}
-        return super().save_pretrained(save_directory, *args, state_dict=sd, **kw)
+        out = super().save_pretrained(save_directory, *args, state_dict=sd, **kw)
+        if getattr(self, "n3d_net", None) is not None:                                            # 흡수 N3D: 틀(NeMo 설정) — 가중치는 safetensors 의 n3d_net.*
+            from omegaconf import OmegaConf
+            OmegaConf.save(self.n3d_net.cfg, os.path.join(save_directory, "n3d_config.yaml"))
+        return out
 
     @classmethod
     def from_pretrained(cls, path, *args, encoder_path: Optional[str] = None, load_encoder: bool = True, **kw):
@@ -644,6 +706,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
                     for k, v in load_file(f).items():
                         if k.startswith("encoder.enc."): enc_sd[k[len("encoder.enc."):]] = v
             m.attach_encoder(encoder_path, state_dict=enc_sd or None)
+        if (getattr(m.config, "n3d_cfg", None) or {}).get("embedded"): m._load_embedded_n3d(path)   # 흡수 N3D 가지(체크포인트 안)
         return m
 
     @classmethod

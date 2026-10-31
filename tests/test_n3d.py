@@ -146,3 +146,66 @@ def test_real_n3d_sdpa_matches_flex_attention():
         assert torch.equal(n0, n1) and torch.allclose(e0[0], e1[0], atol=1e-4) and torch.allclose(e1[1, : int(n1[1])], e0[1, : int(n0[1])], atol=1e-4)
         h0, hl = m1.encoder.pre_encode(f1, l1); h0 = m1.encoder.embed_norm(h0)
         assert torch.allclose(run_layers(m1, h0, hl.long(), 0)[0], e1[0], atol=1e-4)                               # 0 층부터 = 인코더 전체
+
+
+
+def _asr_mel():
+    """우리 ASR .nemo 와 같은 전처리 설정의 NeMo mel(흡수 시험의 '우리 인코더 전처리기' — filterbank·window 는 fp32 로 새로 만든다)."""
+    from nemo.collections.asr.modules import AudioToMelSpectrogramPreprocessor
+    return AudioToMelSpectrogramPreprocessor(sample_rate=16000, normalize="NA", window_size=0.025, window_stride=0.01, window="hann", features=128, n_fft=512,
+                                             log=True, frame_splicing=1, dither=1e-5, pad_to=0, pad_value=0.0)
+
+
+def _absorb_model(train=None, state=None, pre=None, share_mel=None):
+    ts = _load("test_slot_audio"); m, _ = ts._e10_model(); m.encoder.pre = pre if pre is not None else _asr_mel()
+    m.add_n3d(_N3D, chunk=4, train_chunk=16); m.absorb_n3d(train, state, share_mel); return m
+
+
+def _sig(sec, seed):
+    g = torch.Generator().manual_seed(seed); x = (torch.randn(int(16000 * sec), generator=g) * 0.05).float()
+    t = torch.arange(len(x)) / 16000.0; x[: 16000 * 3] += 0.3 * torch.sin(2 * np.pi * 210 * t[: 16000 * 3]); return x[None], torch.tensor([len(x)]), torch.tensor([len(x) // 1280])
+
+
+@pytest.mark.skipif(not (_N3D and os.path.exists(_N3D) and importlib.util.find_spec("nemo") is not None), reason="VAPASR_N3D_PATH(.nemo)·NeMo 가 있을 때만")
+def test_absorb_n3d_same_activity_weights_in_state_dict_eval_always(tmp_path):
+    """흡수: 가중치가 state_dict(n3d_net.*)에 들어가고 학습 파라미터는 아니며, 모델을 train() 해도 가지는 eval 로 돈다.
+    mel: 우리 전처리기(fp32 filterbank)는 N3D 것(체크포인트의 bf16 filterbank)과 값이 달라 자동이면 공유하지 않고 출력이 고정 전문가와 같다.
+    값이 같은 전처리기면 공유하고도 같다. share_mel=True 면 우리 것을 쓴다. 흡수한 뒤에는 경로를 바꾸지 못한다."""
+    import copy
+    from vapasr.hf.n3d import N3DExpert, load_n3d
+    w, wl, K = _sig(8, 4); ref = N3DExpert({"path": _N3D, "chunk": 4}).probs(w, wl, K)                         # 고정 전문가(N3D 자신의 mel)
+    m = _absorb_model()
+    assert m.config.n3d_cfg["embedded"] and not m.config.n3d_cfg["shared_mel"] and m.n3d.pre is None and m.n3d.m is m.n3d_net
+    assert any(k.startswith("n3d_net.encoder.layers.30.") for k in m.state_dict()) and not any(p.requires_grad for p in m.n3d_net.parameters())
+    m.train(); got = m.n3d.probs(w, wl, K); assert not m.n3d_net.training and torch.equal(got, ref)
+    with pytest.raises(AssertionError): m.add_n3d(str(tmp_path / "other.nemo"))
+    same = copy.deepcopy(load_n3d(_N3D)[0].preprocessor); ms = _absorb_model(pre=same)                            # 값이 같은 전처리기 → 공유
+    assert ms.config.n3d_cfg["shared_mel"] and ms.n3d.pre is ms.encoder.pre
+    ms.train(); got = ms.n3d.probs(w, wl, K); assert ms.encoder.pre.training and torch.allclose(got, ref, atol=1e-6)   # 공유 전처리기는 잠깐 eval(dither 없음) 뒤 되돌린다
+    mf = _absorb_model(share_mel=True); assert mf.config.n3d_cfg["shared_mel"] and mf.n3d.pre is mf.encoder.pre
+    pf = mf.n3d.probs(w, wl, K); assert pf.shape == ref.shape and float(pf.min()) >= 0 and float(pf.max()) <= 1
+
+
+@pytest.mark.skipif(not (_N3D and os.path.exists(_N3D) and importlib.util.find_spec("nemo") is not None), reason="VAPASR_N3D_PATH(.nemo)·NeMo 가 있을 때만")
+def test_absorb_n3d_checkpoint_roundtrip_with_lora(tmp_path):
+    """흡수 체크포인트(n3d_config.yaml + safetensors 의 n3d_net.*)에서 _load_embedded_n3d 가 같은 가지를 세운다 — G2·흡수 미세조정 LoRA(train·state)와
+    mel 공유 표시까지. .nemo 경로가 없어도 된다."""
+    from omegaconf import OmegaConf
+    from safetensors.torch import save_file
+    from vapasr.hf.n3d import N3DExpert, load_n3d
+    from vapasr.hf.n3d_graft import n3d_trainable
+    tr = dict(mode="lora", start=20, r=4, alpha=8.0, head=False); gen = torch.Generator().manual_seed(9)
+    st = {n: torch.randn(p.shape, generator=gen) * 0.02 for n, p in n3d_trainable(load_n3d(_N3D)[0], tr)}
+    w, wl, K = _sig(6, 5)
+    for share in (None, True):
+        m = _absorb_model(tr, st, share_mel=share); assert m.config.n3d_cfg["train"] == tr
+        d = tmp_path / f"ck-{share}"; d.mkdir()
+        save_file({k: v.contiguous() for k, v in m.state_dict().items() if k.startswith("n3d_net.")}, str(d / "model.safetensors"))
+        OmegaConf.save(m.n3d_net.cfg, str(d / "n3d_config.yaml"))
+        ts = _load("test_slot_audio"); m2, _ = ts._e10_model(); m2.encoder.pre = _asr_mel()
+        m2.config.n3d_cfg = {**m.config.n3d_cfg, "path": str(tmp_path / "missing.nemo")}; m2.n3d = N3DExpert(m2.config.n3d_cfg)
+        m2._load_embedded_n3d(str(d))
+        a, b = m.n3d_net.state_dict(), m2.n3d_net.state_dict(); assert a.keys() == b.keys() and all(torch.equal(a[k], b[k]) for k in a)
+        assert (m2.n3d.pre is m2.encoder.pre) == bool(share) and not any(p.requires_grad for p in m2.n3d_net.parameters())
+        p1, p2 = m.n3d.probs(w, wl, K), m2.n3d.probs(w, wl, K); assert torch.allclose(p1, p2, atol=1e-6)
+    assert not torch.allclose(p1, N3DExpert({"path": _N3D, "chunk": 4}).probs(w, wl, K), atol=1e-4)                # LoRA 값이 들어갔다

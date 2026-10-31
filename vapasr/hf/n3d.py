@@ -13,6 +13,8 @@
 - use_sdpa(로드 기본): 주의를 FlexAttention(torch.compile — 길이마다 다시 컴파일) 대신 같은 계산의 SDPA 로, 분산 all_reduce(sync_max_audio_length)는 끈다.
 - N3DExpert: 모델에 붙는 고정 전문가. 가중치는 체크포인트에 넣지 않는다(nn.Module 이 아니라 state_dict·parameters·DDP 밖) — config 의 경로
   (없으면 환경 변수 VAPASR_N3D_PATH)에서 처음 쓸 때 그 장치로 읽는다.
+  흡수(2026-10-31, VapAsr.absorb_n3d — wiki output-diarizer-replacement-20261031 길 3)면 m 은 모델 안 가지(n3d_net — 체크포인트에 함께 저장, build_n3d 로 틀을 만든다),
+  mel 은 우리 인코더 전처리기(pre — 두 .nemo 의 전처리 설정이 같다)로 만든다. 출력은 고정 전문가와 같다.
 """
 import io, math, os, random, tarfile
 from typing import Optional
@@ -72,30 +74,38 @@ def run_layers(m, x, length, start: int = 0):
     return m.sortformer_modules.encoder_proj(x) if m.sortformer_modules.encoder_proj is not None else x
 
 
-def load_n3d(path: str, device: str = "cpu", sdpa: bool = True):
-    """.nemo → (SortformerEncLabelModel(eval, requires_grad False), 뺀 보조 키 목록). 생성자의 random.seed(42) 가 학습 난수를 건드리지 않게 상태를 되돌린다.
-    sdpa(기본): use_sdpa — FlexAttention 다시 컴파일과 분산 all_reduce 를 피한다(끄면 NeMo 그대로 — 대조 시험용)."""
+def build_n3d(cfg=None, path: Optional[str] = None):
+    """N3D 틀(가중치는 무작위 초기화) → (SortformerEncLabelModel, 설정). cfg(손본 NeMo 설정 — 흡수 체크포인트의 n3d_config.yaml)가 없으면 path(.nemo)의 설정을 읽어 손본다
+    (모듈 설명의 손실 대상·보조 손실). 생성자의 random.seed(42) 가 학습 난수를 건드리지 않게 상태를 되돌린다."""
     from omegaconf import open_dict
     from nemo.collections.asr.models import SortformerEncLabelModel
     from nemo.utils import logging as nlog
     lvl = nlog.getEffectiveLevel(); nlog.setLevel(nlog.ERROR)
     st = (random.getstate(), np.random.get_state(), torch.get_rng_state())
     try:
-        cfg = SortformerEncLabelModel.restore_from(path, return_config=True)
-        with open_dict(cfg):
-            if "BCEWithLogitsLoss" in str(cfg.loss.get("_target_", "")): cfg.loss = {"_target_": "nemo.collections.asr.losses.bce_loss.BCELoss", "reduction": "mean"}
-            for k in ("activity_loss", "phantom_loss"): cfg.pop(k, None)
-            for k in ("train_ds", "validation_ds", "test_ds"):
-                if k in cfg and cfg[k] is not None: cfg[k].manifest_filepath = None
+        if cfg is None:
+            cfg = SortformerEncLabelModel.restore_from(path, return_config=True)
+            with open_dict(cfg):
+                if "BCEWithLogitsLoss" in str(cfg.loss.get("_target_", "")): cfg.loss = {"_target_": "nemo.collections.asr.losses.bce_loss.BCELoss", "reduction": "mean"}
+                for k in ("activity_loss", "phantom_loss"): cfg.pop(k, None)
+                for k in ("train_ds", "validation_ds", "test_ds"):
+                    if k in cfg and cfg[k] is not None: cfg[k].manifest_filepath = None
         m = SortformerEncLabelModel(cfg=cfg)
-        with tarfile.open(path) as t:
-            name = next(n for n in t.getnames() if n.endswith("model_weights.ckpt"))
-            sd = torch.load(io.BytesIO(t.extractfile(name).read()), map_location="cpu", weights_only=True)
-        aux = sorted(k for k in sd if k.startswith("sortformer_modules.activity_head."))
-        for k in aux: sd.pop(k)
-        m.load_state_dict(sd, strict=True)
     finally:
         random.setstate(st[0]); np.random.set_state(st[1]); torch.set_rng_state(st[2]); nlog.setLevel(lvl)
+    return m, cfg
+
+
+def load_n3d(path: str, device: str = "cpu", sdpa: bool = True):
+    """.nemo → (SortformerEncLabelModel(eval, requires_grad False), 뺀 보조 키 목록). 틀은 build_n3d(난수 상태를 되돌린다).
+    sdpa(기본): use_sdpa — FlexAttention 다시 컴파일과 분산 all_reduce 를 피한다(끄면 NeMo 그대로 — 대조 시험용)."""
+    m, _ = build_n3d(path=path)
+    with tarfile.open(path) as t:
+        name = next(n for n in t.getnames() if n.endswith("model_weights.ckpt"))
+        sd = torch.load(io.BytesIO(t.extractfile(name).read()), map_location="cpu", weights_only=True)
+    aux = sorted(k for k in sd if k.startswith("sortformer_modules.activity_head."))
+    for k in aux: sd.pop(k)
+    m.load_state_dict(sd, strict=True)
     m.eval()
     for p in m.parameters(): p.requires_grad_(False)
     if sdpa: use_sdpa(m)
@@ -111,13 +121,14 @@ def set_streaming(m, chunk: int, rc: int, fifo: int = 264, cache: int = 264, per
 
 
 @torch.no_grad()
-def stream_probs(m, wav, wav_len, chunk: int = 4, rc: int = 0, fifo: int = 264, cache: int = 264, period: int = 222, dtype: str = "bf16") -> torch.Tensor:
+def stream_probs(m, wav, wav_len, chunk: int = 4, rc: int = 0, fifo: int = 264, cache: int = 264, period: int = 222, dtype: str = "bf16", pre=None) -> torch.Tensor:
     """wav (B, L) 16 kHz, wav_len (B,) 샘플 수 → (B, T, 8) float32 화자 확률(80 ms, 도착 순서). 줄마다 길이 뒤는 0 — 스트리밍이라 줄의 출력은
-    그 줄 길이 안의 오디오(와 청크 경계까지)만 본다. B 줄은 같은 걸음으로 가지만(sync) 캐시·FIFO 갱신은 줄마다 따로다."""
+    그 줄 길이 안의 오디오(와 청크 경계까지)만 본다. B 줄은 같은 걸음으로 가지만(sync) 캐시·FIFO 갱신은 줄마다 따로다.
+    pre(흡수): mel 을 이 전처리기(우리 인코더 것 — 설정이 같다)로 만든다. 없으면 N3D 자신의 것."""
     set_streaming(m, chunk, rc, fifo, cache, period)
     dev = next(m.parameters()).device; sm = m.sortformer_modules; B = wav.shape[0]
     with torch.autocast(dev.type, enabled=False):
-        feats, flen = m.preprocessor(input_signal=wav.to(dev).float(), length=wav_len.to(dev).long())
+        feats, flen = (m.preprocessor if pre is None else pre)(input_signal=wav.to(dev).float(), length=wav_len.to(dev).long())
     feats = feats[:, :, : int(flen.max())]
     state = sm.init_streaming_state(batch_size=B, async_streaming=False, device=dev)
     total = torch.zeros((B, 0, sm.n_spk), device=dev); off = torch.zeros((B,), dtype=torch.long, device=dev)
@@ -135,6 +146,7 @@ class N3DExpert:
 
     def __init__(self, cfg: dict):
         self.cfg = {**DEFAULTS, **dict(cfg)}; self.m = None; self.aux = None
+        self.pre = None                                                                           # 흡수(VapAsr.absorb_n3d): m 은 모델 안 가지 n3d_net, pre 는 우리 인코더 전처리기
 
     def path(self) -> str:
         p = os.environ.get("VAPASR_N3D_PATH") or self.cfg.get("path")
@@ -144,12 +156,17 @@ class N3DExpert:
     def load(self, device):
         if self.m is None: self.m, self.aux = load_n3d(self.path(), "cpu")
         if next(self.m.parameters()).device != torch.device(device): self.m = self.m.to(device)
+        if self.m.training: self.m.eval()                                                          # 흡수 가지는 모델 train() 을 따라 바뀌므로 늘 eval 로(dropout 없음)
         return self.m
 
     def probs(self, wav, wav_len, K, train: bool = False) -> torch.Tensor:
-        m = self.load(wav.device); c = self.cfg
+        m = self.load(wav.device); c = self.cfg; pre = self.pre
         ch, rc = (c["train_chunk"], c["train_rc"]) if train else (c["chunk"], c["rc"])
-        p = stream_probs(m, wav, wav_len, ch, rc, c["fifo"], c["cache"], c["period"], c["dtype"])
+        was = pre is not None and pre.training                                                    # 공유 전처리기도 eval 로(학습 중 dither 없이 — 고정 전문가와 같은 mel)
+        if was: pre.eval()
+        try: p = stream_probs(m, wav, wav_len, ch, rc, c["fifo"], c["cache"], c["period"], c["dtype"], pre=pre)
+        finally:
+            if was: pre.train()
         Km = int(K.max()); p = p[:, :Km] if p.shape[1] >= Km else torch.nn.functional.pad(p, (0, 0, 0, Km - p.shape[1]))
         return p * (torch.arange(Km, device=p.device)[None] < K.to(p.device)[:, None])[..., None]
 
