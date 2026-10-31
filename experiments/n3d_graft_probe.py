@@ -7,7 +7,9 @@ Nemotron 3 Diarization(N3D)은 mel → 특징 쌓기(×8) → Transformer 31 층
      N3D 자신(교사)과의 프레임 일치. 교사 DER 도 같은 창에서 함께 잰다. 선형 이식이라 학습한 어댑터의 하한이다(학습하면 더 낫다).
   N3D 는 창 통째(오프라인 — 창 안 전체 어텐션)로 돌린다. 스트리밍(AOSC) 이식은 어댑터를 학습할 때 맞춘다.
   python experiments/n3d_graft_probe.py --ckpt <VapAsr 체크포인트(E9 final)> --n3d <.nemo> --out <dir> [--data ami-bench-v1] [--corpora ami-sdm] [--fit-windows 300]
-      [--test-windows 300] [--taps diar|all|odd|1,3,…] [--ridge 10] [--graft-layers 0,4,8,12,16,20,24,28]
+      [--test-windows 300] [--taps diar|all|odd|1,3,…] [--pre] [--ridge 10] [--graft-layers 0,4,8,12,16,20,24,28]
+  --pre(2026-10-31, 고정 화자 분리기 대체 모색): 우리 인코더 서브샘플링 출력(0 층 입력 — mel 바로 위)을 X 앞에 붙인다. N3D 는 mel 을 8 개씩 쌓아 바로
+      Transformer 로 가므로, 아래쪽 이식(m 작음)은 탭보다 서브샘플링 출력에서 더 잘 복원될 수 있다.
 산출: <out>/probe.json(층마다 r2·test DER·교사 일치), <out>/probe.log. 아무것도 지우지 않는다."""
 import argparse, json, math, os, sys, time
 
@@ -46,7 +48,8 @@ def main():
     ap.add_argument("--ckpt", required=True); ap.add_argument("--n3d", required=True); ap.add_argument("--out", required=True); ap.add_argument("--nemotron-dir", default=None)
     ap.add_argument("--data", default="/soundai/users/tskim/VAPKT-data/data/ami-bench-v1"); ap.add_argument("--corpora", default="ami-sdm")
     ap.add_argument("--window", default="20,40"); ap.add_argument("--fit-windows", type=int, default=300); ap.add_argument("--test-windows", type=int, default=300)
-    ap.add_argument("--taps", default="diar"); ap.add_argument("--ridge", type=float, default=10.0); ap.add_argument("--graft-layers", default="0,4,8,12,16,20,24,28")
+    ap.add_argument("--taps", default="diar"); ap.add_argument("--pre", action="store_true", help="서브샘플링 출력을 X 앞에 붙인다")
+    ap.add_argument("--ridge", type=float, default=10.0); ap.add_argument("--graft-layers", default="0,4,8,12,16,20,24,28")
     ap.add_argument("--threshold", type=float, default=0.5); ap.add_argument("--batch", type=int, default=4)
     a = ap.parse_args()
     from experiments.cst_stage3_eval import windows_of
@@ -70,7 +73,7 @@ def main():
     sub = lambda c, i: ("dev" if sets[c].items[i][0].split(":", 1)[1] in set(man.get("dev", [])) else "eval")
     rng = np.random.RandomState(0); order = rng.permutation(len(items))
     fit = [items[j] for j in order if sub(*items[j]) == "dev"][: a.fit_windows]; test = [items[j] for j in order if sub(*items[j]) == "eval"][: a.test_windows]
-    say(f"[{time.strftime('%F %T')}] 탭 {taps}(+ 마지막 층) · N3D {L} 층 · 맞춤 dev {len(fit)} 창 · 잼 eval {len(test)} 창 · λ {a.ridge} · 이식 층 {graft}")
+    say(f"[{time.strftime('%F %T')}] 탭 {taps}(+ 마지막 층{' + 서브샘플링 출력' if a.pre else ''}) · N3D {L} 층 · 맞춤 dev {len(fit)} 창 · 잼 eval {len(test)} 창 · λ {a.ridge} · 이식 층 {graft}")
 
     def batches(its):
         for b0 in range(0, len(its), a.batch):
@@ -89,7 +92,13 @@ def main():
             for j, w in enumerate(wavs): W[j, : len(w)] = torch.from_numpy(w)
             wl = torch.tensor([len(w) for w in wavs]); Kt = torch.tensor(Ks)
             with torch.inference_mode():
-                f = enc(W.cuda(), wl.cuda(), Kt.cuda(), taps=taps)                                       # (B, 1 + 탭, Kmax, 1024)
+                got = {}
+                hk = enc.enc.pre_encode.register_forward_hook(lambda m_, i_, o: got.__setitem__("pre", o[0] if isinstance(o, tuple) else o)) if a.pre else None
+                try: f = enc(W.cuda(), wl.cuda(), Kt.cuda(), taps=taps)                                  # (B, 1 + 탭, Kmax, 1024)
+                finally:
+                    if hk is not None: hk.remove()
+                if a.pre:                                                                                 # 서브샘플링 출력 (B, T', 1024) → 스트림 하나 더(같은 프레임 자르기·0 패딩)
+                    pre = got["pre"].float()[:, : f.shape[2]]; f = torch.cat([torch.nn.functional.pad(pre, (0, 0, 0, f.shape[2] - pre.shape[1]))[:, None], f], 1)
                 hs, p, elen = n3d_hidden(m, W.cuda(), wl.cuda())
             T = min(f.shape[2], hs[0].shape[1], p.shape[1])
             X = f[:, :, :T].permute(0, 2, 1, 3).reshape(f.shape[0], T, -1).float()                    # (B, T, (1 + 탭)·1024)
@@ -128,7 +137,7 @@ def main():
                 dc = der_counts((p[b, :K, :4] > a.threshold).float().cpu(), ref, mk); g = der["teacher"]
                 for k in ("ref", "miss", "fa", "conf_best"): g[k] += dc[k]
                 g["agree"] += float(mk.sum()); g["frames"] += float(mk.sum())
-    out = dict(taps=list(taps), ridge=a.ridge, fit_windows=len(fit), test_windows=len(test), dim=D,
+    out = dict(taps=list(taps), pre=bool(a.pre), ridge=a.ridge, fit_windows=len(fit), test_windows=len(test), dim=D,
                r2={j: round(1 - res[j]["sse"] / max(res[j]["sst"], 1e-9), 4) for j in range(L + 1)},
                der={str(j): dict(der=round(100 * (g["miss"] + g["fa"] + g["conf_best"]) / max(1, g["ref"]), 2), miss=round(100 * g["miss"] / max(1, g["ref"]), 2),
                                  fa=round(100 * g["fa"] / max(1, g["ref"]), 2), conf=round(100 * g["conf_best"] / max(1, g["ref"]), 2),
