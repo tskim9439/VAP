@@ -3,7 +3,7 @@ type: output
 status: active
 created: 2026-10-31
 updated: 2026-10-31
-summary: 고정 화자 분리기(N3D) 대체 모색 — 우리 인코더 3–6 층의 긴 거리 화자 정보는 N3D 최상 층과 같고, 학생 혼동은 정보를 쓰는 가지에서 난다. 권장 G2(N3D 위층 함께 학습)
+summary: 고정 화자 분리기(N3D) 대체 — 우리 인코더 3–6 층 화자 정보는 N3D 최상 층과 같고 병목은 가지다. G2(위층 함께 학습)·N3D 흡수 구현
 sources:
   - '[[output-n3d-branch-20261029]]'
   - '[[output-diarization-integration-20261025]]'
@@ -195,3 +195,61 @@ raw_authors:
   - `diar-probs/{n3d/n3d,u3/graft}/probs`
   - `layer-probe/full/{probe.json,report.out,emb/}` — 회의 68 개, report 는 모델 없이 다시 돈다
   - `layer-probe/graft-{low,diarpre}/probe.json`
+
+## 8. 구현 (2026-10-31, 사용자 "진행해봐" · "N3D 흡수하는 방향도 좋아")
+
+### 8.1 G2 — 학생 N3D 위층 함께 학습 (커밋 369f812, 서버 반영)
+- `vapasr/hf/n3d_graft.py`
+  - `LoraLinear`: 고정 Linear 에 저순위 갱신을 더한다. B 를 0 으로 시작해 붙인 직후 출력이 같다.
+  - `n3d_trainable(m, cfg)`: 학생 N3D 사본의 start 층부터 위를 학습 가능하게 한다.
+    - lora 는 층마다 Linear 넷(w_qkv · out_proj · FFN 둘)에 LoRA 를 단다. full 은 그 층 전부다.
+    - head 면 final_norm 과 머리도 연다(캐시 무음 자리 learnable_sil_emb 은 뺀다).
+  - `load_n3d_trainable`: 같은 꼴을 만들고 저장값을 넣는다. 이름이 정확히 맞아야 한다. `GraftExpert` 가 graft.pt 의 n3d_state 를 이것으로 읽는다.
+- `experiments/n3d_graft_train.py`
+  - 인자: `--n3d-train lora|full`, `--n3d-lr`(weight decay 0), `--lora-rank`, `--lora-alpha`, `--n3d-head`.
+  - 교사는 고정 원본이고, 학생 N3D 는 따로 읽은 사본이다.
+  - 학생 N3D 는 DDP 밖이다. backward 뒤 rank 평균(all_reduce 한 번)으로 맞추고, 저장할 때 rank 마다 값이 같은지 검사한다.
+  - graft.pt 에 n3d_train·n3d_state 를 더한다. 재개, `--init-graft` 이어가기, 재로드 대조가 학생 N3D 를 포함한다.
+- 평가 묶음 `q17-graft` 의 회의 통째가 프레임 확률을 남긴다(`--save-probs`). 끝나면 `identity_drift.py` 로 혼동을 바로 나눈다.
+- 시험(맥, 실제 .nemo): 이식 시험 9 개가 통과했다. 새 시험 2 개는 다음을 본다.
+  - LoRA 를 붙인 직후 오프라인·스트리밍 출력이 교사와 같다.
+  - 학습 대상은 8 층부터의 A·B 뿐이고, 첫 gradient 는 B 에만 온다.
+  - state 를 왕복해도 같고, head·full 의 학습 집합이 맞다.
+- 서버 스모크(호스트 GPU, U3 final 에서, AMI·ICSI 60–90 s 창, 배치 2, `raw/sources/experiments/2026-10-31-diar-identity/g2_smoke.sh`)
+  - 단일 GPU 4 step: 학생 N3D LoRA 6.03M, 12–19 s/step, 최대 메모리 20.2 GB. 재로드 대조 max_diff 0(손실 0.574816 같음), DONE.
+  - 2 rank 3 step: 15 s/step, 21.4 GB. rank 일치 검사를 통과했고 재로드 대조 max_diff 0, DONE.
+- 제출(사용자, low_p_hpc 1 노드)
+
+```bash
+(cd /soundai/users/tskim/VAPKT && bash slurm/submit-n3d-graft.sh --run q17-graft-g2-lora --partition low_p_hpc --max-steps 2000 --batch 4 --asr-eval \
+  --extra "--init-graft /soundai/Model/VAPASR/graft-q17-graft-u3-l12/final/graft.pt --stream-chunk 16 --hid-weight 0.1 --ref-weight 0.5 --unfreeze-layers 12 --enc-lr 2e-5 --lr 5e-5 --guard-weight 10 --window 60,90 --warmup 200 --save-every 200 --n3d-train lora --n3d-lr 1e-4 --lora-rank 32 --lora-alpha 32")
+```
+
+  - U3 와 다른 점은 셋이다. 학생 N3D 위층 LoRA(학습률 1e-4)를 열고, 정답 Sort·PIT(0.5)를 더하고, h_8 MSE 를 1.0 → 0.1 로 낮췄다.
+  - 창 60–90 s, 배치 4, 2,000 step, 어댑터 5e-5, 인코더 2e-5, ASR 지킴 10 은 U3 그대로다.
+  - 학습 뒤 평가 둘이 이어서 난다: `q17-graft`(창·회의 DER, 회의 통째 확률)와 `q17-u3-asr`(E11 + 새 인코더 AMI 창 — ASR 지킴).
+  - 판단은 6 절 기준이다.
+
+### 8.2 N3D 흡수 A1 (커밋 88adc86, 맥 구현·시험 — 서버 반영은 뒤로)
+- `VapAsr.absorb_n3d(train=None, state=None, share_mel=None)`
+  - add_n3d 의 고정 전문가를 하위 모듈 `n3d_net` 으로 옮긴다. 가중치(state_dict 의 n3d_net.*)가 체크포인트에 함께 저장된다.
+  - NeMo 설정은 `save_pretrained` 가 `n3d_config.yaml` 로 남긴다. `from_pretrained` 는 .nemo 없이 가지를 다시 세운다.
+  - 가지는 고정이다(requires_grad False — 옵티마이저·DDP 밖). 모델을 train() 해도 늘 eval 로 돈다.
+  - G2·미세조정 LoRA(train·state)도 읽는다.
+- mel 공유는 값이 같을 때만 한다.
+  - 두 .nemo 의 전처리 설정은 같다. 그런데 N3D 체크포인트는 filterbank·window 를 bf16 으로 담고 있어 값이 조금 다르다(log-mel 최대 1.96 차이, 에너지가 낮은 칸).
+  - 그래서 기본은 N3D 자신의 mel 모듈을 가지 안에 둔다. 출력이 E11 고정 전문가와 같다.
+  - `share_mel=True` 는 우리 전처리기를 쓴다(실험용 — 출력이 조금 바뀐다).
+  - N3D 전처리기는 시간 축을 16 프레임 배수로 채우지만(pad_to 16), 유효 길이로 잘라 쓰므로 영향이 없다.
+- 변환: `experiments/n3d_absorb.py --ckpt <E11 final> --out <새 폴더> [--share-mel]`.
+  - 저장한 폴더를 다시 읽어 가중치가 .nemo 와 같은지, 시험 신호의 전문가 확률이 고정 전문가와 같은지 대조한다(absorb.json).
+  - `vapasr/hf/stage.py` 가 `n3d_config.yaml` 도 평가 노드로 복사한다.
+- 시험(맥, 실제 .nemo): N3D 시험 10 개가 통과했다. 새 시험 2 개는 다음을 본다.
+  - 활동이 같고, 가중치는 state_dict 에 들어가되 학습하지 않으며, 늘 eval 이고, 경로를 바꿀 수 없다.
+  - mel 공유가 자동·강제 모두 맞게 동작한다.
+  - 체크포인트를 왕복해도(LoRA 포함, .nemo 없이) 같다.
+  - 맥 전체 시험은 841 통과다. 실패 9 는 환경(rapidfuzz 모듈 없음 등)과 전체 실행 순서 탓이다. 따로 돌리면 통과하거나 이번 변경과 무관한 모듈이다.
+- 서버 반영은 뒤로 미룬다.
+  - `modeling_vapasr.py`·`n3d.py`·`stage.py` 는 장치별 판(98956–98963) 학습·평가가 선점 뒤 재시작할 때 다시 읽는다.
+  - 그 작업들이 끝나면 올리고, E11 → 흡수판 변환과 평가(q17-e11 묶음 그대로 — 결과가 E11 과 같아야 한다)를 한다.
+- 다음(A2, 선택): N3D 를 자기 앞단 그대로 우리 데이터에 LoRA 로 미세조정한다(n3d_graft_train 흡수 모드). 이득이 불확실해 G2 결과를 본 뒤 정한다.
