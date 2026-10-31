@@ -218,6 +218,8 @@ raw_authors:
 - 서버 스모크(호스트 GPU, U3 final 에서, AMI·ICSI 60–90 s 창, 배치 2, `raw/sources/experiments/2026-10-31-diar-identity/g2_smoke.sh`)
   - 단일 GPU 4 step: 학생 N3D LoRA 6.03M, 12–19 s/step, 최대 메모리 20.2 GB. 재로드 대조 max_diff 0(손실 0.574816 같음), DONE.
   - 2 rank 3 step: 15 s/step, 21.4 GB. rank 일치 검사를 통과했고 재로드 대조 max_diff 0, DONE.
+  - 평가 쪽(`g2_eval_smoke.sh`): 스모크 graft.pt 를 `GraftExpert` 가 학생 N3D LoRA 와 함께 읽는다(config 에 n3d_train). SDM 창 8 개와 회의 1 개(IS1009a, 확률 npz 저장)가 끝까지 돌았다.
+  - 서버 시험: 이식 시험 9 개가 통과했다(CPU 33 분).
 - 제출(사용자, low_p_hpc 1 노드)
 
 ```bash
