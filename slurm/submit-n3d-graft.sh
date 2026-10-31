@@ -10,6 +10,8 @@
 #        [--batch 8] [--after-job JOBID] [--extra "n3d_graft_train.py 인자"] [--no-eval] [--asr-eval] [--dry-run]. 아무것도 지우지 않는다.
 # U3(2026-10-30, 사용자 "U3 아래 12 층 푸는 걸로 구현해놓자"): --extra 에 --unfreeze-layers N --enc-lr --guard-weight 를 준다(n3d_graft_train 설명).
 #   --asr-eval: 학습 뒤 평가 묶음 q17-u3-asr(E11 에 새 인코더를 끼워 AMI 창 δ10 — ASR 지킴 확인)도 이어서 낸다(U3_RUN=--run).
+# G2(2026-10-31, 사용자 "진행해봐" — wiki output-diarizer-replacement-20261031 6 절): U3 final 에서 --init-graft 로 시작하고 --extra 에
+#   --n3d-train lora|full --n3d-lr --lora-rank --lora-alpha [--n3d-head] 를 더한다(학생 N3D 위층을 함께 학습 — n3d_graft_train 설명). q17-graft 평가가 n3d_state 를 읽는다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 run=q17-graft-l8; layer=8; init=/soundai/Model/VAPASR/stage3-q17-e9/final; n3d=/soundai/users/tskim/VAPKT-data/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo

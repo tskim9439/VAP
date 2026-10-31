@@ -56,6 +56,7 @@
 #            final/graft.pt enc)를 끼워 AMI 창 δ10 8 몫(ENC_STATE — 산출 이름 -enc<U3_RUN>). E11 원 평가(stage3-eval-ami-d10-q17-e11-final)와 cp·agn 을 견준다. --after-job 필수.
 #   q17-graft  G1 이식 어댑터(2026-10-29, slurm/submit-n3d-graft.sh — GRAFT_RUN 기본 q17-graft-l8): final/graft.pt 의 창·회의 DER(diar_eval run --graft,
 #            스트리밍 청크 4, 우리 참조 — results/diar-graft-<run>-c4-win·-session, 각 8 몫). 교사 기준은 q17-e9-n3d 의 diar-n3d-c4-*. --after-job 필수.
+#            회의 통째는 프레임 확률도 남긴다(2026-10-31 — -session/graft/probs, raw/sources/experiments/2026-10-31-diar-identity/identity_drift.py 로 혼동 나누기).
 #   q17-e8  E8 헤드 출력 지연 R(2026-10-27, slurm/submit-q17-e8.sh — 헤드 위치 p = 프레임 p − R, 받아쓰기 지연 δ ≥ R): q17-e6 과 같은 v3 묶음(헤드 예측 활동).
 #           정답 활동 상한(amiact)은 넣지 않는다 — --act-oracle 이 활동을 R 만큼 밀지 않는다(E6 의 상한과 같은 값이 될 까닭도 없다). --after-job 필수.
 #   q17-e5  E5 한 스트림 + 슬롯 활동 입력(2026-10-26): q17-e5 final 을 AMI 정답 슬롯 활동 입력(amiact, 8 몫)과 활동 없이(ami, 4 몫 — 입력이 없을 때 얼마나 무너지나)로. --after-job 필수.
@@ -132,7 +133,7 @@ case $set_ in
     for t in ami amifull; do for mo in 0 1; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 MIXOFF=$mo N3D=$N3 bash $X $t q17-e10 final $r/8"); done; done; done ;;
   q17-graft) GR=${GRAFT_RUN:-q17-graft-l8}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; DW=$D/results/diar-graft-$GR-c4-win; DSS=$D/results/diar-graft-$GR-c4-session
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DW && \${PY:-python} experiments/diar_eval.py run --graft $G --out $DW --rank $r --world-size 8 >> $DW/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DW > $DW/summary.log 2>&1"); done
-    for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DSS && \${PY:-python} experiments/diar_eval.py run --graft $G --session --out $DSS --rank $r --world-size 8 >> $DSS/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DSS/graft > $DSS/summary.log 2>&1"); done ;;
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DSS && \${PY:-python} experiments/diar_eval.py run --graft $G --session --save-probs --out $DSS --rank $r --world-size 8 >> $DSS/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DSS/graft > $DSS/summary.log 2>&1"); done ;;
   q17-e11|q17-e11b|q17-e12*) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull $set_ final $r/8"); done ;;
   q17-follow) N3=${N3D:-$D/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3" >&2; exit 1; }
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 bash $X $t q17-e11 final $r/8"); done; done

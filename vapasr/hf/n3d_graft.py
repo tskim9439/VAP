@@ -12,8 +12,11 @@
 - GraftExpert: 평가에 붙는 학생(N3DExpert 와 같은 probs·act 꼴) — graft.pt(어댑터·층·탭·sil·init) + N3D(.nemo) + 인코더(graft.pt 의 init, 고정 —
   U3 graft.pt 에 enc(인코더 state)가 있으면 그것으로 바꾼다).
 - partial_unfreeze(enc, n)(U3, 2026-10-30 — 사용자 "U3 아래 12 층 푸는 걸로 구현해놓자"): 우리 인코더(NemotronOnline)의 아래 n 층만 학습(gradient·bf16 autocast),
-  나머지는 고정, 모듈은 eval(dropout 없음 — 고정 위층과 ASR 지킴 대조가 흔들리지 않게)."""
-import json, os
+  나머지는 고정, 모듈은 eval(dropout 없음 — 고정 위층과 ASR 지킴 대조가 흔들리지 않게).
+- n3d_trainable(m, cfg)·load_n3d_trainable(G2, 2026-10-31 — 사용자 "진행해봐", wiki output-diarizer-replacement-20261031 6 절): 학생 N3D(교사와 따로 읽은 사본)의
+  start 층부터 위를 학습한다. lora 는 층마다 LORA_TARGETS Linear 에 LoraLinear(B 0 — 붙인 직후 출력이 같다), full 은 그 층들 전부. head 면 머리도.
+  학습한 값만 이름 → 텐서로 graft.pt 의 n3d_state 에 담고(n3d_train = cfg), GraftExpert 가 같은 꼴을 만들어 읽는다."""
+import json, math, os
 from typing import Optional
 
 import numpy as np
@@ -134,6 +137,55 @@ def partial_unfreeze(enc, n: int):
     return ps
 
 
+LORA_TARGETS = ("attn.w_qkv", "attn.out_proj", "ffn.net.0", "ffn.net.3")                       # N3D 층(NeMo TransformerEncoder 층)의 Linear 넷
+
+
+class LoraLinear(nn.Module):
+    """G2: 고정 Linear + 저순위 갱신 — y = base(x) + (x·Aᵀ)·Bᵀ·(alpha / r). B 가 0 으로 시작해 붙인 직후 출력은 base 와 같다."""
+
+    def __init__(self, base: nn.Linear, r: int, alpha: float):
+        super().__init__()
+        self.base, self.scale = base, float(alpha) / int(r)
+        self.A = nn.Parameter(torch.empty(int(r), base.in_features, device=base.weight.device)); nn.init.kaiming_uniform_(self.A, a=math.sqrt(5))
+        self.B = nn.Parameter(torch.zeros(base.out_features, int(r), device=base.weight.device))
+
+    def forward(self, x):
+        return self.base(x) + F.linear(F.linear(x, self.A), self.B) * self.scale
+
+
+def n3d_trainable(m, cfg: dict):
+    """G2: 학생 N3D 의 cfg['start'] 층부터 위를 학습 가능하게 → [(이름, 파라미터)]. cfg = dict(mode 'lora'|'full', start, r, alpha, head).
+    나머지는 고정이고 모듈은 eval(dropout 없음)이다. 다시 불러도 같은 꼴이다(LoraLinear 를 또 감싸지 않는다). 교사 N3D 에는 부르지 않는다."""
+    mode, start, layers = cfg["mode"], int(cfg["start"]), m.encoder.layers
+    assert mode in ("lora", "full") and 0 <= start < len(layers), f"학생 N3D 학습 설정: {cfg}"
+    for p in m.parameters(): p.requires_grad_(False)
+    on = []
+    for layer in layers[start:]:
+        if mode == "full": on += list(layer.parameters()); continue
+        for t in LORA_TARGETS:
+            par, child = t.rsplit(".", 1); mod = layer.get_submodule(par)
+            lo = mod[int(child)] if child.isdigit() else getattr(mod, child)
+            if not isinstance(lo, LoraLinear):
+                lo = LoraLinear(lo, cfg["r"], cfg["alpha"])
+                if child.isdigit(): mod[int(child)] = lo
+                else: setattr(mod, child, lo)
+            on += [lo.A, lo.B]
+    if cfg.get("head"):                                                                           # 머리: final_norm · sortformer_modules(캐시 무음 자리 learnable_sil_emb 은 뺀다 — stream 이 sil 로 바꿔 쓴다)
+        on += list(m.encoder.final_norm.parameters()) + [p for n, p in m.sortformer_modules.named_parameters() if n != "learnable_sil_emb"]
+    for p in on: p.requires_grad_(True)
+    m.eval()
+    return [(n, p) for n, p in m.named_parameters() if p.requires_grad]
+
+
+def load_n3d_trainable(m, cfg: dict, state: dict):
+    """n3d_trainable 로 같은 꼴을 만들고 graft.pt 의 n3d_state(이름 → 텐서)를 넣는다 — 이름이 정확히 맞아야 한다. → [(이름, 파라미터)]."""
+    named = n3d_trainable(m, cfg); ps = dict(named)
+    assert set(ps) == set(state), f"학생 N3D state 이름 불일치: 빠짐 {sorted(set(ps) - set(state))[:3]} · 남음 {sorted(set(state) - set(ps))[:3]}"
+    with torch.no_grad():
+        for n, p in ps.items(): p.copy_(state[n].to(p))
+    return named
+
+
 def encoder_taps(enc, wav, wav_len, K, taps, ch: int, core: int = 4800):
     """우리 인코더 탭 (B, 1 + 탭, Kmax, D). 긴 한 줄(B = 1, K > core — 회의 통째)은 encode_long 과 같은 겹침 조각(long_session.segment_plan)으로 돌린다 —
     인코더 메모리가 조각 크기다(2026-10-30: q17-graft 회의 DER 이 회의 통째 한 번에 OOM). 조각 = 통째와 같은 값(인코더 블록 ch 배수 경계)."""
@@ -157,11 +209,15 @@ class GraftExpert:
         self.layer, self.taps, self.sil, self.chunk, self.rc, self.threshold = int(x["layer"]), tuple(x["taps"]), x["sil"].float(), int(chunk), int(rc), float(threshold)
         self.adapter = GraftAdapter(**x["cfg"]); self.adapter.load_state_dict(x["state"]); self.adapter.to(device).eval()
         self.m, _ = load_n3d(n3d_path or x["n3d"], device)
+        if x.get("n3d_state") is not None:                                                         # G2: 함께 학습한 학생 N3D 위층
+            load_n3d_trainable(self.m, x["n3d_train"], x["n3d_state"])
+            for p in self.m.parameters(): p.requires_grad_(False)
         self.enc, _ = load_encoder(x["init"], nemotron_dir, device)
         if x.get("enc") is not None: self.enc.enc.load_state_dict(x["enc"]); self.enc.eval()            # U3: 아래 층을 함께 학습한 인코더
         self.ch = int(json.load(open(os.path.join(x["init"], "config.json"))).get("encoder_right_context", 0) or 0) + 1   # 인코더 블록(조각 경계)
         self.cfg = dict(graft=graft_path, layer=self.layer, chunk=self.chunk, rc=self.rc, threshold=self.threshold, step=x.get("step"),
-                        **({"unfreeze": int(x["unfreeze"])} if x.get("enc") is not None else {}))
+                        **({"unfreeze": int(x["unfreeze"])} if x.get("enc") is not None else {}),
+                        **({"n3d_train": dict(x["n3d_train"])} if x.get("n3d_state") is not None else {}))
 
     @torch.no_grad()
     def probs(self, wav, wav_len, K, offline: bool = False) -> torch.Tensor:

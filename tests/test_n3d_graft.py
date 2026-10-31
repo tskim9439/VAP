@@ -122,3 +122,48 @@ def test_stream_ckpt_same_values_and_grads():
         hg = h.detach().clone().requires_grad_(True); p = stream(m, hg, L, 8, sil, chunk=16, grad=True, ckpt=ck)
         (p * torch.linspace(0.5, 1.5, p.shape[1])[None, :, None]).sum().backward(); outs.append(p.detach()); grads.append(hg.grad.clone())
     assert torch.allclose(outs[0], outs[1], atol=1e-6) and torch.allclose(grads[0], grads[1], atol=1e-5), float((grads[0] - grads[1]).abs().max())
+
+
+@real
+def test_g2_lora_starts_equal_and_trains_upper_only():
+    """G2: 학생 N3D 사본에 LoRA(B 0)를 붙인 직후 오프라인·스트리밍 출력이 교사와 같고, 학습 대상은 start 층부터 위의 A·B 뿐이다.
+    스트리밍 grad 에서 B 가 gradient 를 받고(A 는 B 가 0 이라 0), B 를 흔들면 출력이 달라진다. 다시 불러도 같은 텐서다."""
+    from vapasr.hf.n3d import load_n3d
+    from vapasr.hf.n3d_graft import LORA_TARGETS, n3d_trainable, stream, student_offline, teacher
+    m, _ = load_n3d(_N3D); s, _ = load_n3d(_N3D); x = _signal(9.0, 13); w = x[None]; wl = torch.tensor([len(x)])
+    h, _, elen = teacher(m, w, wl, 8); L = elen.long(); sil = h[0].mean(0).detach()
+    cfg = dict(mode="lora", start=8, r=4, alpha=8.0, head=False); named = n3d_trainable(s, cfg)
+    assert len(named) == 2 * len(LORA_TARGETS) * (len(s.encoder.layers) - 8)
+    assert all(int(n.split(".")[2]) >= 8 and n.endswith((".A", ".B")) for n, _ in named) and not any(p.requires_grad for p in m.parameters())
+    with torch.no_grad():
+        assert torch.allclose(student_offline(s, h, L, 8), student_offline(m, h, L, 8), atol=1e-5)
+        assert torch.allclose(stream(s, h, L, 8, sil, chunk=16), stream(m, h, L, 8, sil, chunk=16), atol=1e-5)
+    p = stream(s, h, L, 8, sil, chunk=16, grad=True); (p * torch.linspace(0.5, 1.5, p.shape[1])[None, :, None]).sum().backward()
+    assert sum(float(q.grad.abs().sum()) for n, q in named if n.endswith(".B")) > 0 and all(float(q.grad.abs().sum()) == 0 for n, q in named if n.endswith(".A"))
+    with torch.no_grad():
+        for n, q in named:
+            if n.endswith(".B"): q.normal_(0, 0.02)
+        assert not torch.allclose(student_offline(s, h, L, 8), student_offline(m, h, L, 8), atol=1e-4)
+    assert [id(q) for _, q in n3d_trainable(s, cfg)] == [id(q) for _, q in named] and all(q.requires_grad for _, q in named)
+
+
+@real
+def test_g2_state_roundtrip_head_and_full_sets():
+    """G2: 학습한 값(이름 → 텐서)을 새 사본에 load_n3d_trainable 로 넣으면 출력이 같고, 이름이 다르면 막는다. head 는 final_norm·머리(캐시 무음 자리 빼고),
+    full 은 start 층부터 위의 파라미터 전부다."""
+    from vapasr.hf.n3d import load_n3d
+    from vapasr.hf.n3d_graft import load_n3d_trainable, n3d_trainable, student_offline, teacher
+    s, _ = load_n3d(_N3D); x = _signal(6.0, 17); w = x[None]; wl = torch.tensor([len(x)])
+    h, _, elen = teacher(s, w, wl, 8); L = elen.long()
+    cfg = dict(mode="lora", start=8, r=4, alpha=8.0, head=True); named = n3d_trainable(s, cfg); names = [n for n, _ in named]
+    assert any(n.startswith("sortformer_modules.") for n in names) and "encoder.final_norm.weight" in names and not any("learnable_sil_emb" in n for n in names)
+    g = torch.Generator().manual_seed(3)
+    with torch.no_grad():
+        for _, q in named: q.add_(torch.randn(q.shape, generator=g) * 0.01)
+    state = {n: q.detach().clone() for n, q in named}
+    s2, _ = load_n3d(_N3D); named2 = load_n3d_trainable(s2, cfg, state)
+    assert [n for n, _ in named2] == names
+    with torch.no_grad(): assert torch.allclose(student_offline(s, h, L, 8), student_offline(s2, h, L, 8), atol=1e-6)
+    with pytest.raises(AssertionError): load_n3d_trainable(load_n3d(_N3D)[0], dict(cfg, start=9), state)
+    f, _ = load_n3d(_N3D); fn = n3d_trainable(f, dict(mode="full", start=28, r=4, alpha=8.0, head=False))
+    assert {n for n, _ in fn} == {f"encoder.layers.{j}.{k}" for j in (28, 29, 30) for k, _ in f.encoder.layers[j].named_parameters()}
