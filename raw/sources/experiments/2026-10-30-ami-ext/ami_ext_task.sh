@@ -4,6 +4,9 @@
 #          vv7b-seg480 같은 모델, 480 s 이하 조각마다 따로(논문 AMI 조건 — 보고값 IHM 27.48·SDM 39.01 재현 점검)
 #          mtp-sortv2  Multitalker Parakeet v1 + Streaming Sortformer v2, 회의 통째(카드 조건 — 보고값 21.26·37.44 재현 점검)
 #          mtp-n3d     Multitalker Parakeet v1 + Nemotron 3 Diarization(우리 E11 과 같은 화자 분리기), 회의 통째
+#          mtp-g2      Multitalker Parakeet v1 + G2 학생 화자 확률(2026-11-01 — 화자 분리기를 돌리지 않고 저장 확률을 되돌려 준다: baseline_ami_ext --diar-probs,
+#                      results/diar-graft-<GRAFT_RUN 기본 q17-graft-g2-lora>-c4-session/graft/probs — 스트리밍 청크 4), 회의 통째
+#          mtp-n3d-replay 같은 경로로 N3D 자신의 저장 확률(스트리밍 청크 4 — tmp/e11-check/diar-probs/n3d/n3d/probs)을 되돌려 준다 — mtp-n3d 와 견줘 경로 확인
 #   참조·오디오·마스크는 우리 AMI 회의 통째 평가(v3_eval_task.sh amifull, δ10)와 같다(참조 tokenizer = E11 final). 마지막 몫이 summarize·ami_report·meeteval(whisper·ours)을 한다.
 #   산출 VAPKT-data/results/ext-ami-<시스템>. Parakeet 회의 wav 는 노드 로컬 $TMPDIR(기본 /tmp/sa_tskim)/ami-ext-wav-<시스템> 에 쓴다. 아무것도 지우지 않는다.
 set -u
@@ -21,6 +24,10 @@ case $SYS in
      X=(--system vibevoice --model $V/VibeVoice-ASR-Streaming-7B --src $SRC); [ $SYS = vv7b-seg480 ] && X+=(--segment-s 480) ;;
   mtp-sortv2) X=(--system parakeet --asr $MTP --diar $VB/diar_streaming_sortformer_4spk-v2/diar_streaming_sortformer_4spk-v2.nemo --diar-kind sortformer) ;;
   mtp-n3d) X=(--system parakeet --asr $MTP --diar $VB/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo --diar-kind n3d) ;;
+  mtp-g2) X=(--system parakeet --asr $MTP --diar $VB/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo --diar-kind n3d
+            --diar-probs $R/diar-graft-${GRAFT_RUN:-q17-graft-g2-lora}-c4-session/graft/probs) ;;
+  mtp-n3d-replay) X=(--system parakeet --asr $MTP --diar $VB/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo --diar-kind n3d
+            --diar-probs $D/tmp/e11-check/diar-probs/n3d/n3d/probs) ;;
   *) say "모르는 시스템"; exit 2 ;;
 esac
 [[ $SYS == mtp-* ]] && { for f in $MTP ${X[5]}; do [ -f $f ] || { say "없음(사용자 업로드): $f"; exit 2; }; done; X+=(--wav-dir ${TMPDIR:-/tmp/sa_tskim}/ami-ext-wav-$SYS); }

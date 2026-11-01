@@ -35,6 +35,8 @@
   --follow-detail(2026-10-30, 활동 추종 학습 설계용): 행에 follow_detail(센 단어마다 cst_eval.follow_stats detail 꼴 — 범주·슬롯·말 차례 위치·직전 화자)을 남긴다.
   --encoder-state <graft.pt>(U3, 2026-10-30): 모델의 인코더를 그 graft.pt 의 enc(화자 분리와 함께 학습한 인코더 — n3d_graft_train --unfreeze-layers)로 바꿔
     디코드한다 — ASR 지킴 확인(E11 의 cp·agn 이 그대로인가). config 에 encoder_state.
+  --encoder-rc N(지연 완화, 2026-11-01, 사용자 "둘 다 구현해놓자"): 인코더 우측 문맥(80 ms 프레임 — 모델 설정의 att_context_size 목록 0·3·6·13 = 청크 80·320·560·1120 ms)을
+    평가에서 바꾼다(학습은 3). 회의 통째 조각은 청크(N + 1) 배수로 맞춘다. 화자 분리기 지연은 --n3d-chunk·--n3d-rc 로 따로 늘린다. config 에 encoder_rc.
   --graft-expert <graft.pt>(G3, 2026-11-01, 사용자 "G3 구현해놓자" — wiki output-diarizer-replacement-20261031): 고정 전문가 자리(model.n3d — E11 또는 --n3d)에
     이식 학생(n3d_graft.GraftExpert — 우리 인코더 탭 → 어댑터 → N3D 위층 + G2 LoRA)을 끼워 그 활동으로 디코드한다(창은 창마다, 회의 통째는 회의 전체 한 번 —
     전문가와 같은 경로). 같은 graft.pt 를 --encoder-state 로도 주면 받아쓰기 인코더도 학생 인코더라 인코더가 하나다. 청크·임계는 모델 n3d_cfg. config 에 graft_expert.
@@ -157,7 +159,8 @@ def verify_long(model, wav, prefix, max_flush, D=None, gate=None) -> None:
     from vapasr.hf.long_session import encode_long, long_decode
     dev = next(model.parameters()).device; n = min(len(wav), 300 * 16000); w0 = np.asarray(wav[:n], dtype=np.float32); K0 = int(round(n / 16000 / 0.08))
     whole = model.encode(torch.from_numpy(w0).to(dev)[None], torch.tensor([n], device=dev), torch.tensor([K0], device=dev))[0]
-    seg = encode_long(model, w0, K0, core=1000)
+    ch = int(getattr(model.config, "encoder_right_context", 0) or 0) + 1
+    seg = encode_long(model, w0, K0, core=1000 // ch * ch, ctx=1760 // ch * ch)                # 조각은 청크 배수(우측 문맥 3 이면 1000·1760 그대로)
     d = (whole[:1] - seg[:1]).abs().max().item()                                               # 스트림 0(인코더 특징)만 — 2026-10-28
     act = f" · 예측 활동 스트림 다른 프레임 몫 {float((whole[1] != seg[1]).any(-1).float().mean()):.4f}(인과 헤드는 조각 앞 맥락에 따라 달라진다 — 대조 밖)" \
         if getattr(model, "diar_head", None) is not None and whole.shape[0] > 1 else ""
@@ -254,6 +257,7 @@ def run(a):
     assert not fn3 or a.from_predictions, "--follow-n3d 는 --from-predictions 와 함께(원출력에 활동이 없을 때 전문가 활동을 다시 계산한다)"
     assert not getattr(a, "encoder_state", None) or not (a.oracle or a.from_predictions), "--encoder-state 는 모델 디코드 전용"
     assert not getattr(a, "graft_expert", None) or not (a.oracle or a.from_predictions), "--graft-expert 는 모델 디코드 전용"
+    assert getattr(a, "encoder_rc", None) is None or not (a.oracle or a.from_predictions), "--encoder-rc 는 모델 디코드 전용"
     rlf = bool(getattr(a, "relabel_follow", False))
     assert not (rlf and getattr(a, "relabel_act", None)), "--relabel-follow 와 --relabel-act 는 함께 쓰지 않는다"
     sb = None
@@ -290,6 +294,10 @@ def run(a):
         if getattr(a, "n3d", None) or getattr(model, "n3d", None) is not None:                 # E11: 고정 화자 분리 전문가(평가에서 붙이거나 — E9·E10 진단 — 설정을 바꾼다)
             model.add_n3d(a.n3d or None, chunk=a.n3d_chunk, rc=a.n3d_rc, threshold=a.n3d_threshold)
             print(f"  고정 화자 분리 전문가 n3d ← {model.config.n3d_cfg}", flush=True)
+        if getattr(a, "encoder_rc", None) is not None:                                           # 지연 완화: 인코더 우측 문맥(받아쓰기 특징만 — 학생 GraftExpert 는 제 설정)
+            assert not getattr(a, "graft_expert", None), "--encoder-rc 는 --graft-expert 와 함께 쓰지 않는다(학생 인코더는 제 우측 문맥)"
+            model.encoder.enc.set_default_att_context_size([int(model.config.encoder_left_context), int(a.encoder_rc)]); model.config.encoder_right_context = int(a.encoder_rc)
+            print(f"  인코더 우측 문맥 ← {a.encoder_rc} 프레임(청크 {(a.encoder_rc + 1) * 80} ms, 학습은 3)", flush=True)
         if getattr(a, "graft_expert", None):                                                     # G3: 고정 전문가 자리에 이식 학생 — 활동만 바꾸고 디코드 경로는 그대로
             assert getattr(model, "n3d", None) is not None, "--graft-expert 는 고정 전문가 자리(E11 체크포인트 또는 --n3d)에 끼운다"
             from vapasr.hf.n3d_graft import GraftExpert
@@ -367,6 +375,7 @@ def run(a):
                 **({"act_gate": list(gate_w)} if gate_w else {}), **({"follow_window": list(fwin)} if fwin != (3, 1) else {}), **({"follow_n3d": True} if fn3 else {}),
                 **({"encoder_state": os.path.abspath(a.encoder_state)} if getattr(a, "encoder_state", None) else {}),
                 **({"graft_expert": os.path.abspath(a.graft_expert)} if getattr(a, "graft_expert", None) else {}),
+                **({"encoder_rc": int(a.encoder_rc)} if getattr(a, "encoder_rc", None) is not None else {}),
                 **({"relabel_follow": list(fwin)} if rlf else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
@@ -602,6 +611,7 @@ def main():
     q.add_argument("--follow-n3d", action="store_true", help="--from-predictions: 원출력에 act_runs 가 없으면 원 평가 config 의 전문가(n3d)로 활동을 다시 계산(GPU)")
     q.add_argument("--encoder-state", default=None, help="U3: 인코더를 이 graft.pt 의 enc(화자 분리와 함께 학습)로 바꿔 디코드 — ASR 지킴 확인")
     q.add_argument("--graft-expert", default=None, help="G3: 고정 전문가 자리에 이 graft.pt 의 이식 학생(GraftExpert)을 끼워 그 활동으로 디코드")
+    q.add_argument("--encoder-rc", type=int, default=None, choices=(0, 3, 6, 13), help="지연 완화: 인코더 우측 문맥(80 ms 프레임 — 모델 설정의 att_context_size 목록, 학습은 3)")
     q.add_argument("--relabel-follow", action="store_true", help="출력 쪽 재귀속: 활동을 어긴 가설 단어만 활동 슬롯으로 옮겨 채점(창 --follow-window, 스트리밍 그대로 낼 수 있는 출력)")
     q.add_argument("--follow-detail", action="store_true", help="행에 follow_detail(단어마다 추종 범주·슬롯·말 차례 위치·직전 화자 — cst_eval.follow_stats detail)을 남긴다")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")

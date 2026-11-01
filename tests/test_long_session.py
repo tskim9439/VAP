@@ -69,6 +69,26 @@ def test_encode_long_matches_whole_only_when_aligned():
     with pytest.raises(AssertionError): encode_long(f, wav, K, core=6, ctx=12, tail=4)       # 청크 경계가 아닌 조각 시작은 거부
 
 
+class FakeEncRc(FakeEnc):
+    """FakeEnc 와 같되 청크 = 우측 문맥 + 1(지연 완화 평가 --encoder-rc)."""
+    def __init__(self, rc): self.config = types.SimpleNamespace(encoder_right_context=rc)
+    def encode(self, w, wl, K):
+        ch = self.config.encoder_right_context + 1; n, k = int(wl[0]), int(K[0]); x = w[0, :n].double(); nf = -(-n // HOP)
+        e = torch.nn.functional.pad(x, (0, nf * HOP - n)).view(nf, HOP).sum(1); out = torch.zeros(1, 2, k, 3, dtype=torch.float64)
+        for t in range(min(k, nf)):
+            v = e[max(0, t - 10): min(nf, t // ch * ch + ch)].sum(); out[0, 0, t] = v; out[0, 1, t] = -v
+        return out
+
+
+def test_encode_long_default_segments_follow_right_context():
+    """2026-11-01 지연 완화: 우측 문맥 13(청크 14)이면 기본 조각(4800·1760)을 청크 배수(4788·1750)로 내려 회의 통째와 같은 값을 낸다. 직접 준 값은 그대로 엄격하다."""
+    torch.manual_seed(1); K = 4900; wav = torch.randint(-3, 4, (K * HOP - 500,)).float().numpy(); f = FakeEncRc(13)
+    whole = f.encode(torch.from_numpy(wav)[None], torch.tensor([len(wav)]), torch.tensor([K]))[0]
+    assert torch.equal(encode_long(f, wav, K), whole)                                              # 조각 둘(4788 + 112) — 경계가 청크 배수
+    with pytest.raises(AssertionError): encode_long(f, wav, K, core=4800, ctx=1764)
+    assert torch.equal(encode_long(FakeEncRc(3), wav[: 60 * HOP], 60, core=8, ctx=12, tail=4), FakeEncRc(3).encode(torch.from_numpy(wav[: 60 * HOP])[None], torch.tensor([60 * HOP]), torch.tensor([60]))[0])
+
+
 def test_full_window_one_per_dialogue(tmp_path):
     sf = pytest.importorskip("soundfile")  # noqa: F841 — make_multi 가 wav 를 쓴다
     from test_v2_slots import make_multi

@@ -23,7 +23,11 @@
 마스크: 가설 단어도 참조와 같은 규칙으로 버린다 — 시각 t 의 단어는 청크 int(t / 80 ms) + δ 가 전사 없는 구간 청크(mask_chunks)이면 뺀다.
 점수: 가설 화자가 7 명 이상이면 헝가리안으로 최적 짝을 찾는다(score_window 의 순열과 같은 최소). 아무것도 지우지 않는다(이어 하기 — 끝난 행은 건너뛴다).
 --audio headset-sum(2026-10-30, 사용자 "논문의 AMI-IHM 이 우리가 쓰는 헤드셋 혼합과 다른 입력일 가능성 … 검토"): 공식 Mix-Headset 대신 대화의 화자별 헤드셋
-  채널(Headset-0..3.wav)을 그대로 더해(넘치면 최대 1 로 줄임) 넣는다 — 혼합을 만드는 방식이 결과를 바꾸는지 본다. 참조·마스크는 그대로(행 ext.audio)."""
+  채널(Headset-0..3.wav)을 그대로 더해(넘치면 최대 1 로 줄임) 넣는다 — 혼합을 만드는 방식이 결과를 바꾸는지 본다. 참조·마스크는 그대로(행 ext.audio).
+--diar-probs <폴더>(parakeet, 2026-11-01, 사용자 "둘 다 구현해놓자" — Parakeet + G2): 화자 분리기를 돌리지 않고, 저장한 회의 통째 화자 확률
+  (diar_eval --session --save-probs 의 <코퍼스>:<회의>@full.npz — prob (K, 8), 80 ms)을 NeMo 의 미리 준 활동 경로(diar_model.rttms_mask_mats — 정답 RTTM 용,
+  청크마다 블록 끝까지 꺼내 쓴다)에 배치마다 넣는다. 확률은 스트리밍(인과)으로 뽑은 값이라 그대로 되돌려 주어도 공정하다. --diar 는 틀(설정·프레임 검사)로만 읽는다.
+  같은 경로로 N3D 자신의 저장 확률을 되돌려 주면 직접 돌린 mtp-n3d 와 견줘 경로를 확인할 수 있다. 회의 통째(--segment-s 0)만."""
 import argparse, json, os, sys, time
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -214,7 +218,19 @@ class MTParakeet:
         if isinstance(self.diar.encoder.pre_encode, FeatureStacking) and not self.cfg.pad_and_drop_preencoded: self.cfg.pad_and_drop_preencoded = True   # 예제와 같다(N3D)
         self.info = dict(system="multitalker-parakeet", asr=os.path.abspath(a.asr), diar=os.path.abspath(a.diar), diar_kind=a.diar_kind, att_context=list(a.att_context),
                          spkcache=self.diar.sortformer_modules.spkcache_len, fifo=self.diar.sortformer_modules.fifo_len, period=self.diar.sortformer_modules.spkcache_update_period,
-                         chunk_len=self.diar.sortformer_modules.chunk_len, bf16=self.use_bf16)
+                         chunk_len=self.diar.sortformer_modules.chunk_len, bf16=self.use_bf16, **({"diar_probs": os.path.abspath(a.diar_probs)} if a.diar_probs else {}))
+
+    def _replay(self, part):
+        """--diar-probs: 배치(회의 순서 = manifest 순서)의 저장 확률 → diar.rttms_mask_mats (B, T, 8). 길이가 다른 줄과 끝 블록은 0 으로 채운다."""
+        import numpy as np, torch
+        ps = []
+        for key, x16 in part:
+            p = os.path.join(self.a.diar_probs, key.rsplit("@", 1)[0] + "@full.npz"); assert os.path.exists(p), f"저장 확률이 없다: {p}"
+            ps.append(np.load(p)["prob"].astype(np.float32))
+        T = max(len(p) for p in ps) + 256
+        M = np.zeros((len(ps), T, ps[0].shape[1]), dtype=np.float32)
+        for j, p in enumerate(ps): M[j, : len(p)] = p
+        self.diar.rttms_mask_mats = torch.from_numpy(M).to(self.cfg.device)
 
     def _stream(self, buf):
         """예제 launch_parallel_streaming 과 같다."""
@@ -247,6 +263,7 @@ class MTParakeet:
             samples, _ = get_multi_talker_samples_from_manifest(self.cfg, manifest_file=man, feat_per_sec=fps, max_spks=self.cfg.max_num_of_spks)
             buf = CacheAwareStreamingAudioBuffer(model=self.asr, online_normalization=self.cfg.online_normalization, pad_and_drop_preencoded=self.cfg.pad_and_drop_preencoded)
             for s in samples: buf.append_audio_file(s["audio_filepath"], stream_id=-1)
+            if self.a.diar_probs: self._replay(part)                                                # 화자 분리기 대신 저장 확률(Parakeet + G2)
             st = time.time(); mt = self._stream(buf); segs = mt.generate_seglst_dicts_from_parallel_streaming(samples=samples); el = time.time() - st
             by = {nm: [] for nm in names}
             for g in segs: by.setdefault(g["session_id"], []).append(g)
@@ -322,10 +339,12 @@ def main():
     q.add_argument("--diar-kind", choices=["sortformer", "n3d"], default="sortformer"); q.add_argument("--att-context", type=lambda s: [int(x) for x in s.split(",")], default=[70, 13])
     q.add_argument("--batch-size", type=int, default=8, help="parakeet: 한 번에 스트리밍할 회의·조각 수"); q.add_argument("--wav-dir", default=None, help="parakeet: 회의 wav 를 쓸 노드 로컬 폴더")
     q.add_argument("--device", default="cuda", help="parakeet: cuda | cpu(맥 배선 점검)")
+    q.add_argument("--diar-probs", default=None, help="parakeet: 화자 분리기 대신 저장한 회의 통째 화자 확률 폴더(diar_eval --session --save-probs) — Parakeet + G2")
     a = ap.parse_args()
     if a.system == "vibevoice": assert a.model and a.src, "--model·--src(VibeVoice) 가 필요하다"
     else:
         assert a.asr and a.diar, "--asr·--diar(.nemo) 가 필요하다"
+        assert not a.diar_probs or (os.path.isdir(a.diar_probs) and not a.segment_s), "--diar-probs 는 있는 폴더, 회의 통째(--segment-s 0)만"
         a.wav_dir = a.wav_dir or os.path.join(os.environ.get("TMPDIR", "/tmp"), "ami-ext-wav")
     {"run": run}[a.cmd](a)
 
