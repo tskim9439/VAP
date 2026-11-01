@@ -44,12 +44,13 @@ def segment_plan(wav: np.ndarray, K: int, ch: int, core: int = 4800, ctx: int = 
 
 
 @torch.inference_mode()
-def encode_long(model, wav: np.ndarray, K: int, core: Optional[int] = None, ctx: Optional[int] = None, tail: int = 32, aosc=None) -> torch.Tensor:
+def encode_long(model, wav: np.ndarray, K: int, core: Optional[int] = None, ctx: Optional[int] = None, tail: int = 32, aosc=None, act=None) -> torch.Tensor:
     """wav (N,) float32 16 kHz 세션 전체 → 특징 (S, K, D) — model.encode(wav, N, K)[0] 과 같은 값. 조각 [c0 − ctx, c0 + core + tail) 프레임을 돌려
     [c0, c0 + core) 만 쓴다. core·ctx 는 청크(encoder_right_context + 1 프레임) 배수, tail ≥ 청크. K ≤ core 면 model.encode 한 번과 같은 호출이다.
     aosc(diar.AoscConfig, E7): 화자 분리 헤드 모델 — 스트림 0 은 같고, 스트림 1(예측 슬롯 활동)을 회의 전체 AOSC 스트리밍으로 만든다(model.encode 와 같은 꼴).
     고정 화자 분리 전문가(model.n3d, E11)가 있으면 조각은 n3d=False 로 인코딩하고, 스트림 1 을 회의 전체 오디오로 한 번 돌린 전문가 활동(화자 캐시가 회의 내내
-    이어진다)으로 바꾼다 — aosc 와 함께 쓰지 않는다(헤드 활동을 버리게 된다)."""
+    이어진다)으로 바꾼다 — aosc 와 함께 쓰지 않는다(헤드 활동을 버리게 된다).
+    act(2026-11-01 화자별 세션 — baseline_ami_ext vapasr-spk): 전문가 모델에서 주면 전문가를 돌리지 않고 이 슬롯 활동 (K, N) 0/1 을 스트림 1 로 쓴다."""
     ch = int(getattr(model.config, "encoder_right_context", 0) or 0) + 1
     core = 4800 // ch * ch if core is None else core; ctx = 1760 // ch * ch if ctx is None else ctx   # 기본은 청크 배수로 내림(2026-11-01 지연 완화 --encoder-rc — 우측 문맥 3 이면 4800·1760 그대로)
     dev = next(model.parameters()).device; out = None
@@ -77,8 +78,10 @@ def encode_long(model, wav: np.ndarray, K: int, core: Optional[int] = None, ctx:
         if out is None: out = f.new_zeros(f.shape[0], K, f.shape[2])
         out[:, c0: c0 + n] = f[:, c0 - a: c0 - a + n]; del f
     if n3:                                                                                         # E11: 회의 전체 한 번(스트리밍 — 출력은 그때까지의 오디오만 본다)
-        act = model.n3d_act(torch.from_numpy(np.ascontiguousarray(wav, dtype=np.float32)).to(dev)[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))
+        if act is None: act = model.n3d_act(torch.from_numpy(np.ascontiguousarray(wav, dtype=np.float32)).to(dev)[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))
+        else: act = torch.as_tensor(np.asarray(act), dtype=torch.float32, device=dev)[None, :K]   # 화자별 세션: 바깥에서 준 활동
         out = model.with_act_stream(out[None], act)[0]
+    else: assert act is None, "act 는 고정 화자 분리 전문가(model.n3d) 모델에서만"
     return out
 
 

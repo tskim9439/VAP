@@ -7,6 +7,9 @@
 #          mtp-g2      Multitalker Parakeet v1 + G2 학생 화자 확률(2026-11-01 — 화자 분리기를 돌리지 않고 저장 확률을 되돌려 준다: baseline_ami_ext --diar-probs,
 #                      results/diar-graft-<GRAFT_RUN 기본 q17-graft-g2-lora>-c4-session/graft/probs — 스트리밍 청크 4), 회의 통째
 #          mtp-n3d-replay 같은 경로로 N3D 자신의 저장 확률(스트리밍 청크 4 — tmp/e11-check/diar-probs/n3d/n3d/probs)을 되돌려 준다 — mtp-n3d 와 견줘 경로 확인
+#          vspk-g2     우리 E11(G2 인코더 — graft-<GRAFT_RUN>/final/graft.pt 의 enc) + N3D, 화자마다 세션(2026-11-01 — baseline_ami_ext vapasr-spk:
+#                      화자 s 의 N3D 활동 구간만 남긴 오디오를 회의 통째로 디코드, 단어는 모두 화자 s), 회의 통째
+#          vspk        같은 것을 E11 원 인코더로
 #   참조·오디오·마스크는 우리 AMI 회의 통째 평가(v3_eval_task.sh amifull, δ10)와 같다(참조 tokenizer = E11 final). 마지막 몫이 summarize·ami_report·meeteval(whisper·ours)을 한다.
 #   산출 VAPKT-data/results/ext-ami-<시스템>. Parakeet 회의 wav 는 노드 로컬 $TMPDIR(기본 /tmp/sa_tskim)/ami-ext-wav-<시스템> 에 쓴다. 아무것도 지우지 않는다.
 set -u
@@ -28,6 +31,8 @@ case $SYS in
             --diar-probs $R/diar-graft-${GRAFT_RUN:-q17-graft-g2-lora}-c4-session/graft/probs) ;;
   mtp-n3d-replay) X=(--system parakeet --asr $MTP --diar $VB/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo --diar-kind n3d
             --diar-probs $D/tmp/e11-check/diar-probs/n3d/n3d/probs) ;;
+  vspk-g2) X=(--system vapasr-spk --encoder $MXC_NEMOTRON_DIR --encoder-state /soundai/Model/VAPASR/graft-${GRAFT_RUN:-q17-graft-g2-lora}/final/graft.pt) ;;
+  vspk) X=(--system vapasr-spk --encoder $MXC_NEMOTRON_DIR) ;;
   *) say "모르는 시스템"; exit 2 ;;
 esac
 [[ $SYS == mtp-* ]] && { for f in $MTP ${X[5]}; do [ -f $f ] || { say "없음(사용자 업로드): $f"; exit 2; }; done; X+=(--wav-dir ${TMPDIR:-/tmp/sa_tskim}/ami-ext-wav-$SYS); }

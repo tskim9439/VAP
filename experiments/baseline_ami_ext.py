@@ -27,7 +27,12 @@
 --diar-probs <폴더>(parakeet, 2026-11-01, 사용자 "둘 다 구현해놓자" — Parakeet + G2): 화자 분리기를 돌리지 않고, 저장한 회의 통째 화자 확률
   (diar_eval --session --save-probs 의 <코퍼스>:<회의>@full.npz — prob (K, 8), 80 ms)을 NeMo 의 미리 준 활동 경로(diar_model.rttms_mask_mats — 정답 RTTM 용,
   청크마다 블록 끝까지 꺼내 쓴다)에 배치마다 넣는다. 확률은 스트리밍(인과)으로 뽑은 값이라 그대로 되돌려 주어도 공정하다. --diar 는 틀(설정·프레임 검사)로만 읽는다.
-  같은 경로로 N3D 자신의 저장 확률을 되돌려 주면 직접 돌린 mtp-n3d 와 견줘 경로를 확인할 수 있다. 회의 통째(--segment-s 0)만."""
+  같은 경로로 N3D 자신의 저장 확률을 되돌려 주면 직접 돌린 mtp-n3d 와 견줘 경로를 확인할 수 있다. 회의 통째(--segment-s 0)만.
+vapasr-spk(2026-11-01, 사용자 "G2 + N3D 조합으로 추론하는거, 그런데 화자마다 세션을 부여하고"): 우리 모델(--checkpoint, --encoder-state 면 그 graft.pt 의 enc —
+  G2 인코더)을 Parakeet 처럼 화자마다 따로 돌린다. 학습 없는 Diarization Masked Input(arXiv 2609.10265 의 2 번째 길)이다.
+  회의 오디오로 모델의 고정 전문가(N3D) 활동을 한 번(스트리밍, 인과) 뽑고, 화자 s 마다 그 활동 프레임(± --spk-margin)만 남긴 오디오를 회의 통째로 디코드한다
+  (encode_long·long_block_decode, LLM 문맥 --context-s). 슬롯 활동 입력은 슬롯 A = 화자 s 활동, 나머지 0 이다. 나온 단어는 모두 화자 s 다(--spk-keep slotA 면 슬롯 A 만).
+  단어 시각 = 방출 청크 − δ(오디오 시각 — 마스크 규칙이 우리 평가와 같다). δ 는 --deltas 하나."""
 import argparse, json, os, sys, time
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -277,6 +282,56 @@ class MTParakeet:
         return out
 
 
+class OursSpk:
+    """vapasr-spk: 우리 모델 + 고정 전문가(N3D) 활동, 화자마다 세션(모듈 설명). where(키 → (데이터셋, 창 index))는 run 이 채운다(prefix·선언 슬롯 수)."""
+
+    def __init__(self, a):
+        import torch
+        from vapasr.hf.infer import load_model
+        from vapasr.data.cst_dialogue import SLOTS
+        self.a = a; self.where = {}
+        self.model, self.tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype))
+        m = self.model
+        if a.encoder_state:                                                                         # G2 인코더(화자 분리와 함께 학습 — ASR 지킴으로 받아쓰기는 그대로)
+            xs = torch.load(a.encoder_state, map_location="cpu"); assert xs.get("enc") is not None, f"인코더 state(enc)가 없다: {a.encoder_state}"
+            m.encoder.enc.load_state_dict(xs["enc"]); m.encoder.eval()
+        assert getattr(m, "n3d", None) is not None and getattr(m.config, "slot_blocks", False), "vapasr-spk 는 고정 전문가가 있는 슬롯 블록 체크포인트(E11)"
+        sp = m.config.sp_ids; self.spk = tuple(sp[t] for t in SLOTS[: len(m.config.slot_tokens)]); self.EOT = sp["<EOT>"]; self.BEGIN = sp.get("<ONSET>")
+        self.N = int(m.config.slot_input_slots); self.delta = int(a.deltas[0])
+        self.info = dict(system="vapasr-spk", checkpoint=os.path.abspath(a.checkpoint), encoder_state=os.path.abspath(a.encoder_state) if a.encoder_state else None,
+                         n3d=dict(m.config.n3d_cfg), spk_margin=a.spk_margin, spk_keep=a.spk_keep, context_s=a.context_s, dtype=a.dtype, delta=self.delta)
+
+    def __call__(self, units):
+        import numpy as np, torch
+        from cst_stage3_eval import words_of
+        from vapasr.data.cst_eval import parse_emitted
+        from vapasr.hf.long_session import encode_long, long_block_decode
+        m, a, out = self.model, self.a, {}; dev = next(m.parameters()).device; HOP = 1280
+        for key, wav in units:
+            ds, i = self.where[key]; K = int(round(len(wav) / HOP)); st = time.time(); hw = []; ses = []
+            langs = ds.slots(i)[1][:4]; prefix = ds.cst_prefix(langs, self.delta); D = len(langs)
+            with torch.inference_mode():
+                A = m.n3d_act(torch.from_numpy(wav).to(dev)[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))[0].float().cpu().numpy()   # (K, N) 원 오디오
+            for s in range(A.shape[1]):
+                on = A[:, s] > 0.5
+                if not on.any(): continue
+                fm = np.convolve(on.astype(np.int32), np.ones(2 * a.spk_margin + 1, np.int32), mode="same") > 0      # 활동 프레임 ± margin
+                sm = np.repeat(fm, HOP)[: len(wav)]; ws = wav * np.pad(sm, (0, len(wav) - len(sm))).astype(np.float32)
+                act = np.zeros((K, self.N), np.float32); act[:, 0] = on                              # 슬롯 A = 화자 s, 나머지 0
+                with torch.inference_mode():
+                    feats = encode_long(m, ws, K, act=act)
+                    em, fc, rd, used, nf, tk = long_block_decode(m, feats, prefix, D, context_s=a.context_s)
+                hs, _ = parse_emitted(em, self.spk, self.EOT, begin_id=self.BEGIN); nw = 0
+                for j, toks in enumerate(hs):
+                    if a.spk_keep == "slotA" and j: continue
+                    for w, te in words_of(self.tok, toks):
+                        hw.append((f"spk{s}", w, round(te - (self.delta + 1) * 0.08 + 0.04, 3))); nw += 1                # 오디오 시각 = 방출 청크 − δ
+                ses.append(dict(spk=s, frames=int(on.sum()), masked_frames=int(fm.sum()), words=nw, tokens=len(em), forced=fc))
+            out[key] = (hw, dict(sessions=ses, decode_s=round(time.time() - st, 1)))
+            print(f"  {key}: 세션 {len(ses)} · 단어 {len(hw)} · {time.time() - st:.0f}s", flush=True)
+        return out
+
+
 def run(a):
     import numpy as np
     from transformers import AutoTokenizer
@@ -292,14 +347,15 @@ def run(a):
         ds = sets[c]; cid, t0w, L = ds.items[i]; d = ds.dlgs[cid]
         for s0, s1 in (segment_bounds(d, a.segment_s) if a.segment_s else [(0.0, float(L))]):
             if f"{cid}@{round(s0, 3)}" not in done: work.append((c, i, cid, round(s0, 3), round(s1, 3)))
-    sysm = VibeVoiceStream(a) if a.system == "vibevoice" else MTParakeet(a)
+    sysm = VibeVoiceStream(a) if a.system == "vibevoice" else MTParakeet(a) if a.system == "parakeet" else OursSpk(a)
+    if a.system == "vapasr-spk": sysm.where = {f"{cid}@{s0}": (sets[c], i) for c, i, cid, s0, s1 in work}
     conf = dict(sysm.info, checkpoint=os.path.abspath(a.checkpoint), data=os.path.abspath(a.data), corpora=a.corpora, deltas=a.deltas, segment_s=a.segment_s,
                 world_size=a.world_size, limit_windows=a.limit_windows, **({"audio": a.audio} if a.audio != "mono" else {}))
     cp = os.path.join(a.out, f"config-rank{a.rank}.json")
     if os.path.exists(cp): assert json.load(open(cp)) == conf, "재개 설정 불일치 — 새 --out 을 쓴다"
     else: json.dump(conf, open(cp, "w"), indent=1)
     print(f"{conf['system']} · 단위 {len(work)}(끝 {len(done)}) · {json.dumps(sysm.info, ensure_ascii=False)}", flush=True)
-    t0 = time.time(); n = 0; step = 1 if a.system == "vibevoice" else max(1, a.batch_size)
+    t0 = time.time(); n = 0; step = max(1, a.batch_size) if a.system == "parakeet" else 1                      # vapasr-spk: 회의마다 행을 바로 쓴다(선점 대비)
     with open(dest, "a", buffering=1, encoding="utf-8") as fo:
         for b0 in range(0, len(work), step):
             part = work[b0: b0 + step]
@@ -325,7 +381,7 @@ def run(a):
 
 def main():
     ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest="cmd", required=True)
-    q = sub.add_parser("run"); q.add_argument("--system", choices=["vibevoice", "parakeet"], required=True)
+    q = sub.add_parser("run"); q.add_argument("--system", choices=["vibevoice", "parakeet", "vapasr-spk"], required=True)
     q.add_argument("--checkpoint", required=True, help="참조 단어를 만들 우리 tokenizer(우리 AMI 평가와 같은 체크포인트)")
     q.add_argument("--data", required=True); q.add_argument("--out", required=True); q.add_argument("--corpora", default="ami-ihmmix,ami-sdm")
     q.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[10], help="참조 δ(우리 평가와 같은 마스크) — 가설은 δ 와 무관")
@@ -340,8 +396,13 @@ def main():
     q.add_argument("--batch-size", type=int, default=8, help="parakeet: 한 번에 스트리밍할 회의·조각 수"); q.add_argument("--wav-dir", default=None, help="parakeet: 회의 wav 를 쓸 노드 로컬 폴더")
     q.add_argument("--device", default="cuda", help="parakeet: cuda | cpu(맥 배선 점검)")
     q.add_argument("--diar-probs", default=None, help="parakeet: 화자 분리기 대신 저장한 회의 통째 화자 확률 폴더(diar_eval --session --save-probs) — Parakeet + G2")
+    q.add_argument("--encoder", default=None, help="vapasr-spk: Nemotron 인코더 폴더"); q.add_argument("--encoder-state", default=None, help="vapasr-spk: 이 graft.pt 의 enc(G2 인코더)로")
+    q.add_argument("--spk-margin", type=int, default=2, help="vapasr-spk: 화자 활동 프레임 앞뒤로 남길 프레임(80 ms)")
+    q.add_argument("--spk-keep", choices=["all", "slotA"], default="all", help="vapasr-spk: 세션 출력 중 화자에게 줄 슬롯(all = 모든 슬롯)")
+    q.add_argument("--context-s", type=float, default=30.0, help="vapasr-spk: LLM 문맥 창(초 — 우리 회의 통째 평가와 같은 30)"); q.add_argument("--dtype", default="float32")
     a = ap.parse_args()
     if a.system == "vibevoice": assert a.model and a.src, "--model·--src(VibeVoice) 가 필요하다"
+    elif a.system == "vapasr-spk": assert a.encoder and len(a.deltas) == 1 and not a.segment_s, "vapasr-spk: --encoder, δ 하나, 회의 통째"
     else:
         assert a.asr and a.diar, "--asr·--diar(.nemo) 가 필요하다"
         assert not a.diar_probs or (os.path.isdir(a.diar_probs) and not a.segment_s), "--diar-probs 는 있는 폴더, 회의 통째(--segment-s 0)만"
