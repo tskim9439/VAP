@@ -35,6 +35,9 @@
   --follow-detail(2026-10-30, 활동 추종 학습 설계용): 행에 follow_detail(센 단어마다 cst_eval.follow_stats detail 꼴 — 범주·슬롯·말 차례 위치·직전 화자)을 남긴다.
   --encoder-state <graft.pt>(U3, 2026-10-30): 모델의 인코더를 그 graft.pt 의 enc(화자 분리와 함께 학습한 인코더 — n3d_graft_train --unfreeze-layers)로 바꿔
     디코드한다 — ASR 지킴 확인(E11 의 cp·agn 이 그대로인가). config 에 encoder_state.
+  --graft-expert <graft.pt>(G3, 2026-11-01, 사용자 "G3 구현해놓자" — wiki output-diarizer-replacement-20261031): 고정 전문가 자리(model.n3d — E11 또는 --n3d)에
+    이식 학생(n3d_graft.GraftExpert — 우리 인코더 탭 → 어댑터 → N3D 위층 + G2 LoRA)을 끼워 그 활동으로 디코드한다(창은 창마다, 회의 통째는 회의 전체 한 번 —
+    전문가와 같은 경로). 같은 graft.pt 를 --encoder-state 로도 주면 받아쓰기 인코더도 학생 인코더라 인코더가 하나다. 청크·임계는 모델 n3d_cfg. config 에 graft_expert.
   --en-norm whisper(2026-10-27): 영어 채점을 Whisper EnglishTextNormalizer 로(채움말 제거 등 — vapasr.data.cst_eval.set_en_norm). 외부 AMI 수치와 견줄 때
     --from-predictions 와 함께 새 --out 에 다시 매긴다(raw/sources/experiments/2026-10-27-std-rescore/rescore_std.sh). config 에 en_norm 이 남는다(ours 면 키 없음).
   --spk-guide on,margin[,span] [--spk-guide-hold] [--spk-guide-no-insert]: 화자 헤드 안내 디코딩(batch_decode.SpkGuide — model.spk_head 가 있는 Stage 3 체크포인트).
@@ -250,6 +253,7 @@ def run(a):
     assert not gate_w or not (a.oracle or a.from_predictions), "--act-gate 는 모델 디코드 전용(--oracle·--from-predictions 없이)"
     assert not fn3 or a.from_predictions, "--follow-n3d 는 --from-predictions 와 함께(원출력에 활동이 없을 때 전문가 활동을 다시 계산한다)"
     assert not getattr(a, "encoder_state", None) or not (a.oracle or a.from_predictions), "--encoder-state 는 모델 디코드 전용"
+    assert not getattr(a, "graft_expert", None) or not (a.oracle or a.from_predictions), "--graft-expert 는 모델 디코드 전용"
     rlf = bool(getattr(a, "relabel_follow", False))
     assert not (rlf and getattr(a, "relabel_act", None)), "--relabel-follow 와 --relabel-act 는 함께 쓰지 않는다"
     sb = None
@@ -286,6 +290,12 @@ def run(a):
         if getattr(a, "n3d", None) or getattr(model, "n3d", None) is not None:                 # E11: 고정 화자 분리 전문가(평가에서 붙이거나 — E9·E10 진단 — 설정을 바꾼다)
             model.add_n3d(a.n3d or None, chunk=a.n3d_chunk, rc=a.n3d_rc, threshold=a.n3d_threshold)
             print(f"  고정 화자 분리 전문가 n3d ← {model.config.n3d_cfg}", flush=True)
+        if getattr(a, "graft_expert", None):                                                     # G3: 고정 전문가 자리에 이식 학생 — 활동만 바꾸고 디코드 경로는 그대로
+            assert getattr(model, "n3d", None) is not None, "--graft-expert 는 고정 전문가 자리(E11 체크포인트 또는 --n3d)에 끼운다"
+            from vapasr.hf.n3d_graft import GraftExpert
+            c = model.config.n3d_cfg
+            model.n3d = GraftExpert(a.graft_expert, nemotron_dir=a.encoder, chunk=int(c["chunk"]), rc=int(c["rc"]), threshold=float(c["threshold"]))
+            print(f"  화자 활동 ← 이식 학생 {model.n3d.cfg}(G3 — 고정 전문가 대신)", flush=True)
         wi = word_init_mask(tok, logits_size(model)) if sb else None
     a.xl_order = (cfg.get("xl_slot_order") if model is None else getattr(model.config, "xl_slot_order", None)) or "lang"   # V3 R4: 교차 언어 슬롯 순서(창·prefix)
     from vapasr.data.cst_dialogue import SLOTS
@@ -356,6 +366,7 @@ def run(a):
                 **({"act_tag_guide": True} if getattr(a, "act_tag_guide", False) else {}), **({"slot_blocks": True} if blocks else {}), **({"mix_off": True} if mix_off else {}),
                 **({"act_gate": list(gate_w)} if gate_w else {}), **({"follow_window": list(fwin)} if fwin != (3, 1) else {}), **({"follow_n3d": True} if fn3 else {}),
                 **({"encoder_state": os.path.abspath(a.encoder_state)} if getattr(a, "encoder_state", None) else {}),
+                **({"graft_expert": os.path.abspath(a.graft_expert)} if getattr(a, "graft_expert", None) else {}),
                 **({"relabel_follow": list(fwin)} if rlf else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
@@ -590,6 +601,7 @@ def main():
     q.add_argument("--follow-window", default=(3, 1), type=ints, help="활동 추종 진단 창 BACK,FWD(단어 오디오 프레임 기준, 기본 3,1 — cst_eval.follow_stats)")
     q.add_argument("--follow-n3d", action="store_true", help="--from-predictions: 원출력에 act_runs 가 없으면 원 평가 config 의 전문가(n3d)로 활동을 다시 계산(GPU)")
     q.add_argument("--encoder-state", default=None, help="U3: 인코더를 이 graft.pt 의 enc(화자 분리와 함께 학습)로 바꿔 디코드 — ASR 지킴 확인")
+    q.add_argument("--graft-expert", default=None, help="G3: 고정 전문가 자리에 이 graft.pt 의 이식 학생(GraftExpert)을 끼워 그 활동으로 디코드")
     q.add_argument("--relabel-follow", action="store_true", help="출력 쪽 재귀속: 활동을 어긴 가설 단어만 활동 슬롯으로 옮겨 채점(창 --follow-window, 스트리밍 그대로 낼 수 있는 출력)")
     q.add_argument("--follow-detail", action="store_true", help="행에 follow_detail(단어마다 추종 범주·슬롯·말 차례 위치·직전 화자 — cst_eval.follow_stats detail)을 남긴다")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")

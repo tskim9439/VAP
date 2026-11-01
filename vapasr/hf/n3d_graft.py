@@ -10,7 +10,7 @@
   sil 로 바꿔 넣는다(학습 데이터에서 교사가 모두 무음이라 본 프레임의 h_layer 평균 — graft.pt). layer 0 · ĥ = 교사 h_0 · sil = embed_norm(learnable_sil_emb)
   이면 교사 스트리밍과 같다(tests/test_n3d_graft.py).
 - GraftExpert: 평가에 붙는 학생(N3DExpert 와 같은 probs·act 꼴) — graft.pt(어댑터·층·탭·sil·init) + N3D(.nemo) + 인코더(graft.pt 의 init, 고정 —
-  U3 graft.pt 에 enc(인코더 state)가 있으면 그것으로 바꾼다).
+  U3 graft.pt 에 enc(인코더 state)가 있으면 그것으로 바꾼다). G3(2026-11-01): cst_stage3_eval --graft-expert 가 E11 의 고정 전문가 자리(model.n3d)에 끼운다.
 - partial_unfreeze(enc, n)(U3, 2026-10-30 — 사용자 "U3 아래 12 층 푸는 걸로 구현해놓자"): 우리 인코더(NemotronOnline)의 아래 n 층만 학습(gradient·bf16 autocast),
   나머지는 고정, 모듈은 eval(dropout 없음 — 고정 위층과 ASR 지킴 대조가 흔들리지 않게).
 - n3d_trainable(m, cfg)·load_n3d_trainable(G2, 2026-10-31 — 사용자 "진행해봐", wiki output-diarizer-replacement-20261031 6 절): 학생 N3D(교사와 따로 읽은 사본)의
@@ -220,8 +220,10 @@ class GraftExpert:
                         **({"n3d_train": dict(x["n3d_train"])} if x.get("n3d_state") is not None else {}))
 
     @torch.no_grad()
-    def probs(self, wav, wav_len, K, offline: bool = False) -> torch.Tensor:
-        """→ (B, max K, 8) 80 ms 확률 — 기본 스트리밍(청크 chunk), offline 이면 창 통째(창 길이만 — 회의 통째는 스트리밍으로)."""
+    def probs(self, wav, wav_len, K, offline: bool = False, train: bool = False) -> torch.Tensor:
+        """→ (B, max K, 8) 80 ms 확률 — 기본 스트리밍(청크 chunk), offline 이면 창 통째(창 길이만 — 회의 통째는 스트리밍으로).
+        train: N3DExpert 와 같은 호출 꼴(G3 — 모델의 고정 전문가 자리, model.n3d_act)을 받으려고 둔다. 평가 전용이라 train 이면 멈춘다."""
+        assert not train, "GraftExpert 는 평가 전용(G3) — 학습 forward 에 끼우지 않는다"
         assert not offline or int(K.max()) <= 4800, "offline 은 창(≤ 4800 프레임)만 — 회의 통째는 스트리밍으로"
         f = encoder_taps(self.enc, wav, wav_len, K, self.taps, self.ch)
         with torch.autocast(wav.device.type, dtype=torch.bfloat16, enabled=wav.device.type == "cuda"):
@@ -231,5 +233,5 @@ class GraftExpert:
         p = p.float()[:, :Km]
         return p * (torch.arange(Km, device=p.device)[None] < L[:, None])[..., None]
 
-    def act(self, wav, wav_len, K, n: int, offline: bool = False) -> torch.Tensor:
-        return (self.probs(wav, wav_len, K, offline)[..., :n] > self.threshold).float()
+    def act(self, wav, wav_len, K, n: int, offline: bool = False, train: bool = False) -> torch.Tensor:
+        return (self.probs(wav, wav_len, K, offline, train)[..., :n] > self.threshold).float()

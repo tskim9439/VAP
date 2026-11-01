@@ -298,3 +298,22 @@ raw_authors:
     - 원거리 셋 가중을 올리고 더 길게(4,000 step) 학습한다.
     - 위층을 LoRA 대신 낮은 학습률 전체 학습으로 바꾸고 머리도 연다.
     - 회의 길이 창(3–5 분)으로 학습해 긴 거리 몫을 직접 줄인다.
+
+## 10. G3 — 고정 전문가 자리에 G2 학생 (구현 2026-11-01, 사용자 "G3 구현해놓자")
+- 무엇: E11 final 을 그대로 두고 화자 활동의 출처만 N3D 에서 G2 학생으로 바꿔 디코드한다(학습 없음).
+  - 받아쓰기 인코더도 같은 graft.pt 의 enc(G2 인코더)로 바꾼다. 활동과 받아쓰기가 같은 인코더 가중치를 쓴다(인코더 하나).
+  - 지금 구현은 평가에서 학생이 탭을 따로 계산한다(같은 가중치의 두 번째 forward). 하나의 forward 로 묶는 것은 결과를 본 뒤 흡수와 함께 한다.
+- 코드
+  - `cst_stage3_eval --graft-expert <graft.pt>`: 고정 전문가 자리(model.n3d)에 `GraftExpert` 를 끼운다. 창은 창마다, 회의 통째는 회의 전체 한 번으로, 전문가와 같은 경로다. 청크·임계는 모델의 n3d_cfg 이고, config 에 graft_expert 가 남는다.
+  - `GraftExpert.act/probs` 가 `train` 인자를 받는다. 전문가와 같은 호출 꼴이며, train 이면 멈춘다(평가 전용).
+  - `v3_eval_task.sh`: `GRAFT_EXPERT=<graft.pt>`(ami·amifull) — 산출 이름에 `-gx<GX_TAG>`.
+  - `submit-evals.sh q17-g3`(GRAFT_RUN 기본 q17-graft-g2-lora): AMI 창 δ10 8 몫과 회의 통째 δ10 8 몫이다. 의존은 없다.
+    - 산출: `results/stage3-eval-ami-d10-encq17-graft-g2-lora-gxq17-graft-g2-lora-q17-e11-final`, `results/stage3-eval-amifull-c30-encq17-graft-g2-lora-gxq17-graft-g2-lora-d10-q17-e11-final`.
+  - 평가 뒤(서버 호스트): `raw/sources/experiments/2026-10-31-diar-identity/auto_g3.sh` 가 표준 재채점·출력 재귀속·활동 추종 세부를 돌리고, `g3_report.py` 로 E11·G2 인코더 + N3D·G3 를 한 표로 낸다.
+- 서버 스모크(호스트 GPU 7, `g3_smoke.sh` — E11 final + G2 학생·G2 인코더, AMI SDM)
+  - 창 8 개: 끝까지 디코드했다(cp 31.99·agn 27.44, 활동 추종 on 95.3 %). 행에 활동(act_runs), config 에 graft_expert 가 남는다.
+  - 회의 1 개(IS1009a, 14 분, `--verify`): 앞 300 s 인코딩 차이 1.75e-06, 학생 활동이 다른 프레임 0 %, 앞 60 s 디코드 토큰 125 개가 같다.
+- 제출(사용자): `(cd /soundai/users/tskim/VAPKT && bash slurm/submit-evals.sh q17-g3 --partition low_p_hpc)` — 평가 뒤 `auto_g3.sh` 를 건다.
+- 판단 기준
+  - 회의 통째 표준 cp(재귀속 전·후)를 E11 과 견준다.
+  - IHM-mix 는 G2 의 회의 혼동이 교사와 비슷하므로(1.16 대 0.91 %) cp 차이가 작아야 한다. SDM 은 혼동 6.08 % 만큼 귀속 손해가 예상된다.

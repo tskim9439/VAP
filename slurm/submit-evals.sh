@@ -57,6 +57,9 @@
 #   q17-graft  G1 이식 어댑터(2026-10-29, slurm/submit-n3d-graft.sh — GRAFT_RUN 기본 q17-graft-l8): final/graft.pt 의 창·회의 DER(diar_eval run --graft,
 #            스트리밍 청크 4, 우리 참조 — results/diar-graft-<run>-c4-win·-session, 각 8 몫). 교사 기준은 q17-e9-n3d 의 diar-n3d-c4-*. --after-job 필수.
 #            회의 통째는 프레임 확률도 남긴다(2026-10-31 — -session/graft/probs, raw/sources/experiments/2026-10-31-diar-identity/identity_drift.py 로 혼동 나누기).
+#   q17-g3  G3(2026-11-01, 사용자 "G3 구현해놓자" — wiki output-diarizer-replacement-20261031): E11 final 의 고정 전문가 자리에 이식 학생(GRAFT_RUN 기본
+#            q17-graft-g2-lora 의 final/graft.pt — cst_stage3_eval --graft-expert)을 끼우고, 받아쓰기 인코더도 같은 graft.pt 의 enc 로(인코더 하나) AMI 창 δ10 8 몫과
+#            회의 통째 δ10 8 몫을 잰다. 산출 이름 -enc<GRAFT_RUN>-gx<GRAFT_RUN>. 의존 없음(--after-job 도 된다).
 #   q17-e8  E8 헤드 출력 지연 R(2026-10-27, slurm/submit-q17-e8.sh — 헤드 위치 p = 프레임 p − R, 받아쓰기 지연 δ ≥ R): q17-e6 과 같은 v3 묶음(헤드 예측 활동).
 #           정답 활동 상한(amiact)은 넣지 않는다 — --act-oracle 이 활동을 R 만큼 밀지 않는다(E6 의 상한과 같은 값이 될 까닭도 없다). --after-job 필수.
 #   q17-e5  E5 한 스트림 + 슬롯 활동 입력(2026-10-26): q17-e5 final 을 AMI 정답 슬롯 활동 입력(amiact, 8 몫)과 활동 없이(ami, 4 몫 — 입력이 없을 때 얼마나 무너지나)로. --after-job 필수.
@@ -79,8 +82,8 @@ while [[ $# -gt 0 ]]; do
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e11|q17-e11b|q17-e12*|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
-  q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet) ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e11b | q17-graft | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | q17-u3-asr" >&2; exit 2 ;; esac
+  q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|q17-g3) ;;
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | q17-u3-asr" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
@@ -134,6 +137,8 @@ case $set_ in
   q17-graft) GR=${GRAFT_RUN:-q17-graft-l8}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; DW=$D/results/diar-graft-$GR-c4-win; DSS=$D/results/diar-graft-$GR-c4-session
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DW && \${PY:-python} experiments/diar_eval.py run --graft $G --out $DW --rank $r --world-size 8 >> $DW/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DW > $DW/summary.log 2>&1"); done
     for r in 0 1 2 3 4 5 6 7; do L+=("$r|mkdir -p $DSS && \${PY:-python} experiments/diar_eval.py run --graft $G --session --save-probs --out $DSS --rank $r --world-size 8 >> $DSS/run-rank$r.log 2>&1; \${PY:-python} experiments/diar_eval.py summarize --out $DSS/graft > $DSS/summary.log 2>&1"); done ;;
+  q17-g3) GR=${GRAFT_RUN:-q17-graft-g2-lora}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; [[ -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }
+    for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 ENC_STATE=$G ENC_TAG=$GR GRAFT_EXPERT=$G GX_TAG=$GR bash $X $t q17-e11 final $r/8"); done; done ;;
   q17-e11|q17-e11b|q17-e12*) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull $set_ final $r/8"); done ;;
   q17-follow) N3=${N3D:-$D/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3" >&2; exit 1; }
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 bash $X $t q17-e11 final $r/8"); done; done
