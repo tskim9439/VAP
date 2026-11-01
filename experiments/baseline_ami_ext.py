@@ -32,7 +32,8 @@ vapasr-spk(2026-11-01, 사용자 "G2 + N3D 조합으로 추론하는거, 그런�
   G2 인코더)을 Parakeet 처럼 화자마다 따로 돌린다. 학습 없는 Diarization Masked Input(arXiv 2609.10265 의 2 번째 길)이다.
   회의 오디오로 모델의 고정 전문가(N3D) 활동을 한 번(스트리밍, 인과) 뽑고, 화자 s 마다 그 활동 프레임(± --spk-margin)만 남긴 오디오를 회의 통째로 디코드한다
   (encode_long·long_block_decode, LLM 문맥 --context-s). 슬롯 활동 입력은 슬롯 A = 화자 s 활동, 나머지 0 이다. 나온 단어는 모두 화자 s 다(--spk-keep slotA 면 슬롯 A 만).
-  단어 시각 = 방출 청크 − δ(오디오 시각 — 마스크 규칙이 우리 평가와 같다). δ 는 --deltas 하나."""
+  단어 시각 = 방출 청크 − δ(오디오 시각 — 마스크 규칙이 우리 평가와 같다). δ 는 --deltas 하나.
+  끝난 화자 세션은 <out>/sessions-rank{r}.jsonl 에 바로 남겨, 선점 뒤 다시 돌면 회의 중간(세션 단위)부터 이어 한다(2026-11-02)."""
 import argparse, json, os, sys, time
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -282,8 +283,30 @@ class MTParakeet:
         return out
 
 
+def done_sessions(path):
+    """vapasr-spk 이어 하기: sessions-rank{r}.jsonl → {회의 키: {화자: 기록}}. 선점으로 끊긴 줄은 건너뛴다."""
+    out = {}
+    if os.path.exists(path):
+        for l in open(path, encoding="utf-8", errors="replace"):
+            try: r = json.loads(l)
+            except ValueError: continue
+            out.setdefault(r["key"], {})[int(r["spk"])] = r
+    return out
+
+
+def append_jsonl(path, obj):
+    """한 줄 덧붙이기 — 앞 줄이 쓰는 중 선점으로 끊겼으면 줄을 바꾼 뒤 쓴다(끊긴 줄만 버려지게)."""
+    with open(path, "a+b") as fo:
+        if fo.seek(0, os.SEEK_END):
+            fo.seek(-1, os.SEEK_END)
+            if fo.read(1) != b"\n": fo.write(b"\n")
+        fo.write((json.dumps(obj, ensure_ascii=False) + "\n").encode("utf-8"))
+
+
 class OursSpk:
-    """vapasr-spk: 우리 모델 + 고정 전문가(N3D) 활동, 화자마다 세션(모듈 설명). where(키 → (데이터셋, 창 index))는 run 이 채운다(prefix·선언 슬롯 수)."""
+    """vapasr-spk: 우리 모델 + 고정 전문가(N3D) 활동, 화자마다 세션(모듈 설명). where(키 → (데이터셋, 창 index))는 run 이 채운다(prefix·선언 슬롯 수).
+    끝난 세션은 sessions-rank{r}.jsonl 에 바로 남긴다(2026-11-02 — 회의 하나가 4 세션 × 회의 통째라 1 시간을 넘어 low_p_hpc 선점 사이에 못 끝났다, job 99349).
+    다시 돌면 그 회의의 끝난 세션은 디코드하지 않고 기록을 쓴다."""
 
     def __init__(self, a):
         import torch
@@ -300,6 +323,7 @@ class OursSpk:
         self.N = int(m.config.slot_input_slots); self.delta = int(a.deltas[0])
         self.info = dict(system="vapasr-spk", checkpoint=os.path.abspath(a.checkpoint), encoder_state=os.path.abspath(a.encoder_state) if a.encoder_state else None,
                          n3d=dict(m.config.n3d_cfg), spk_margin=a.spk_margin, spk_keep=a.spk_keep, context_s=a.context_s, dtype=a.dtype, delta=self.delta)
+        self.side = os.path.join(a.out, f"sessions-rank{a.rank}.jsonl"); self.done = done_sessions(self.side)
 
     def __call__(self, units):
         import numpy as np, torch
@@ -308,26 +332,30 @@ class OursSpk:
         from vapasr.hf.long_session import encode_long, long_block_decode
         m, a, out = self.model, self.a, {}; dev = next(m.parameters()).device; HOP = 1280
         for key, wav in units:
-            ds, i = self.where[key]; K = int(round(len(wav) / HOP)); st = time.time(); hw = []; ses = []
+            ds, i = self.where[key]; K = int(round(len(wav) / HOP)); st = time.time(); hw = []; ses = []; prev = self.done.get(key, {})
             langs = ds.slots(i)[1][:4]; prefix = ds.cst_prefix(langs, self.delta); D = len(langs)
             with torch.inference_mode():
                 A = m.n3d_act(torch.from_numpy(wav).to(dev)[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))[0].float().cpu().numpy()   # (K, N) 원 오디오
             for s in range(A.shape[1]):
                 on = A[:, s] > 0.5
                 if not on.any(): continue
+                if s in prev:                                                                        # 앞 실행(선점 전)에 끝난 세션
+                    hw += [tuple(x) for x in prev[s]["words"]]; ses.append(dict(prev[s]["session"], resumed=True)); continue
+                t1 = time.time()
                 fm = np.convolve(on.astype(np.int32), np.ones(2 * a.spk_margin + 1, np.int32), mode="same") > 0      # 활동 프레임 ± margin
                 sm = np.repeat(fm, HOP)[: len(wav)]; ws = wav * np.pad(sm, (0, len(wav) - len(sm))).astype(np.float32)
                 act = np.zeros((K, self.N), np.float32); act[:, 0] = on                              # 슬롯 A = 화자 s, 나머지 0
                 with torch.inference_mode():
                     feats = encode_long(m, ws, K, act=act)
                     em, fc, rd, used, nf, tk = long_block_decode(m, feats, prefix, D, context_s=a.context_s)
-                hs, _ = parse_emitted(em, self.spk, self.EOT, begin_id=self.BEGIN); nw = 0
+                hs, _ = parse_emitted(em, self.spk, self.EOT, begin_id=self.BEGIN); sw = []
                 for j, toks in enumerate(hs):
                     if a.spk_keep == "slotA" and j: continue
-                    for w, te in words_of(self.tok, toks):
-                        hw.append((f"spk{s}", w, round(te - (self.delta + 1) * 0.08 + 0.04, 3))); nw += 1                # 오디오 시각 = 방출 청크 − δ
-                ses.append(dict(spk=s, frames=int(on.sum()), masked_frames=int(fm.sum()), words=nw, tokens=len(em), forced=fc))
-            out[key] = (hw, dict(sessions=ses, decode_s=round(time.time() - st, 1)))
+                    sw += [(f"spk{s}", w, round(te - (self.delta + 1) * 0.08 + 0.04, 3)) for w, te in words_of(self.tok, toks)]   # 오디오 시각 = 방출 청크 − δ
+                se = dict(spk=s, frames=int(on.sum()), masked_frames=int(fm.sum()), words=len(sw), tokens=len(em), forced=fc); hw += sw; ses.append(se)
+                append_jsonl(self.side, dict(key=key, spk=s, words=sw, session=se))
+                print(f"    {key} 화자 {s}: 단어 {len(sw)} · {time.time() - t1:.0f}s", flush=True)
+            out[key] = (hw, dict(sessions=ses, decode_s=round(time.time() - st, 1), resumed=sum(x.get("resumed", False) for x in ses)))
             print(f"  {key}: 세션 {len(ses)} · 단어 {len(hw)} · {time.time() - st:.0f}s", flush=True)
         return out
 
