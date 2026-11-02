@@ -57,7 +57,7 @@ ap.add_argument("--n3d-lr", type=float, default=1e-4, help="G2: 학생 N3D 학�
 ap.add_argument("--lora-alpha", type=float, default=32.0); ap.add_argument("--n3d-head", action="store_true", help="G2: 머리(final_norm·sortformer_modules)도 학습")
 ap.add_argument("--data", default="/soundai/users/tskim/VAPKT-data/data/phase2"); ap.add_argument("--split", default="/soundai/users/tskim/VAPKT-data/data/phase2/splits/v4.json")
 ap.add_argument("--corpora", default="aihub71631,aihub134-1,aihub134-2,otoSpeech,kec,ztc,nsc,ami,icsi,notsofar")
-ap.add_argument("--sim-data", default="", help="합성 대화 폴더(쉼표)"); ap.add_argument("--weights", default="", help="'이름패턴:가중,…'(diar_train.py 와 같다)")
+ap.add_argument("--sim-data", default="", help="합성 대화 폴더(쉼표, 'none' = 합성 없이)"); ap.add_argument("--weights", default="", help="'이름패턴:가중,…'(diar_train.py 와 같다)")
 ap.add_argument("--window", default="20,40"); ap.add_argument("--window-draws", type=int, default=2); ap.add_argument("--n-spk", type=int, default=4)
 ap.add_argument("--batch", type=int, default=8, help="GPU 당 창 수"); ap.add_argument("--lr", type=float, default=3e-4); ap.add_argument("--warmup", type=int, default=500)
 ap.add_argument("--max-steps", type=int, default=6000); ap.add_argument("--weight-decay", type=float, default=0.01); ap.add_argument("--save-every", type=int, default=1000)
@@ -97,7 +97,7 @@ def build_sources(tok):
     for c in [x for x in a.corpora.split(",") if x]:
         held = set(split["corpora"].get(c, {}).get("heldout", []))
         out.append(Source(c, os.path.join(a.data, f"{c}.refined.dialogues.jsonl"), os.path.join(a.data, "mono"), tok, held))
-    for d in [x for x in a.sim_data.split(",") if x]:
+    for d in [x for x in a.sim_data.split(",") if x and x != "none"]:                              # 'none'(2026-11-02 G2b) = 합성 없이(제출 스크립트 기본 합성을 덮는다)
         for p in sorted(glob.glob(os.path.join(d, "*.refined.dialogues.jsonl"))):
             out.append(Source(f"{os.path.basename(d.rstrip('/'))}/{os.path.basename(p).split('.')[0]}", p, os.path.join(d, "mono"), tok, None))
     W = dict((k, float(v)) for k, v in (x.rsplit(":", 1) for x in a.weights.split(",") if x))
