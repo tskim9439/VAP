@@ -443,5 +443,15 @@ raw_authors:
   - 회의 셋만(AMI·ICSI·NOTSOFAR·CHiME-6 근·원거리), 4–6 분 창, 원거리 가중 2 배(원거리 몫 약 50 %).
   - 스트리밍 청크 4·16 을 걸음마다 번갈아 쓴다(`n3d_graft_train --stream-chunk 4,16`, 커밋 d7244b6).
   - 손실·학습 대상은 G2 와 같다.
-- 스모크(`g2b_diag.sh` ②, 호스트 GPU 5, 배치 1, 청크 16): 걸음 36–59 s, 최대 메모리 40.5 GB, 저장·재로드 대조 통과. 청크 4·16 번갈아(`g2b_smoke2.sh`)는 재는 중이다.
+- 스모크(호스트 GPU 5, 5 분 창, 배치 1 — 공용 GPU 라 노드 전용보다 느릴 수 있다)
+  - 청크 16(`g2b_diag.sh` ②): 걸음 36–59 s, 최대 메모리 40.5 GB, 저장·재로드 대조 통과.
+  - 청크 4·16 번갈아(`g2b_smoke2.sh`): 청크 4 걸음 142 s(첫 걸음 249 s), 청크 16 48 s, 40.5 GB, 재로드 대조 통과. 번갈아 평균 약 95 s.
+- G2b 제출(사용자, 커밋 d7244b6·`--sim-data none`): 2 노드 × 8 GPU × 배치 1 = 걸음당 5 분 창 16 개, 1,000 step(오디오 노출 약 1,330 h — G2 와 같다), 약 26 시간.
+
+```bash
+(cd /soundai/users/tskim/VAPKT && bash slurm/submit-n3d-graft.sh --run q17-graft-g2b --partition apex --nodes 2 --max-steps 1000 --batch 1 --asr-eval \
+  --extra "--init-graft /soundai/Model/VAPASR/graft-q17-graft-g2-lora/final/graft.pt --stream-chunk 4,16 --hid-weight 0.1 --ref-weight 0.5 --unfreeze-layers 12 --enc-lr 2e-5 --lr 5e-5 --guard-weight 10 --window 240,360 --warmup 100 --save-every 50 --n3d-train lora --n3d-lr 1e-4 --lora-rank 32 --lora-alpha 32 --corpora ami,icsi,notsofar,chime6tr,ami-far,icsi-far,notsofar-far,chime6tr-far --sim-data none --weights ami:2,icsi:1,notsofar:0.5,chime6tr:1,ami-far:4,icsi-far:2,notsofar-far:1,chime6tr-far:2")
+```
+
+  - 학습 뒤 q17-graft(창·회의 DER, 청크 4)와 q17-u3-asr(ASR 지킴)가 이어서 난다. 판단: SDM 회의 DER 이 교사 + 1.5(eval 25.7) 안, IHM-mix 는 G2(21.82)보다 나빠지지 않을 것.
 
