@@ -98,4 +98,5 @@ raw_authors:
   - Linux 에서 `tests/test_moved_paths.py` 4 개가 통과했다(정규형이 실제로 갈리는 파일 시스템).
   - replay manifest 의 ahbc 431,447 줄이 가리키는 압축 14 개 중 13 개를 새 폴더에서 찾았다. 압축마다 항목 하나를 학습 로더 경로(`assemble_stream`)로 읽었고 모두 정상이다.
   - `TS_한-영(미국)_한국어음성_교양.zip` 은 새 폴더에도 `031_trash` 에도 없다. 이 압축의 14,273 줄(3.3 %)은 계속 이웃 항목으로 바뀐다. 파일이 생기면 그때부터 저절로 찾는다.
+  - E13 이 쓰는 나머지 데이터 13 곳은 031 경로가 없다(서버 grep `*.jsonl·*.json·*.list`, 16:17 끝). phase2 대화, speechlm-all19·cv4-en·yodas-de replay, ast-mono 번역 타깃 둘, 합성 대화 넷, stage4 대화 번역 셋이다. 번역 replay 와 대화 데이터는 영향이 없었다.
 - E13 반영: 돌고 있는 99484 는 이미 옛 코드를 import 했다. 선점 뒤 다시 시작할 때부터 ahbc 가 다시 섞인다(학습 도중에 replay 구성이 바뀐다).

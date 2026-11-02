@@ -455,4 +455,8 @@ raw_authors:
 
   - 학습 뒤 q17-graft(창·회의 DER, 청크 4)와 q17-u3-asr(ASR 지킴)가 이어서 난다. 판단: SDM 회의 DER 이 교사 + 1.5(eval 25.7) 안, IHM-mix 는 G2(21.82)보다 나빠지지 않을 것.
   - 사용자 제출(2026-11-02 14:08, hpc 2 노드): 학습 job 99503, DER 평가 job 99504, ASR 지킴 평가 job 99505.
+  - 첫 시작(16:02, hpc-[40,49])은 16:11 에 실패해 자동 requeue 됐다(0/20).
+    - 인자는 계획대로 들어갔다: 회의 셋만, `--sim-data none`, 청크 4·16, 배치 1, 창 240–360 s, G2 final 에서 이어 학습.
+    - 원인은 노드다. hpc-49 에서 torch 가 GPU 7 개만 봐, 그 노드 rank 8–15 가 모두 `device=7, num_gpus=7` INTERNAL ASSERT 로 죽었다.
+    - 같은 노드에 다시 잡히지 않게 제외 목록에 hpc-49 를 더할 것(사용자 `scontrol update`).
 
