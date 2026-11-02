@@ -162,7 +162,7 @@ def realtime_decode(model, gt: GraphThinker, feats, prefix_ids: List[int], max_f
 
 @torch.inference_mode()
 def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=None, max_flush_rounds: Optional[int] = None, max_per_chunk: int = 0,
-                          max_total_per_chunk: float = 6.0, on_chunk=None, mix_off: bool = False, gate=None):
+                          max_total_per_chunk: float = 6.0, on_chunk=None, mix_off: bool = False, gate=None, trans: bool = False):
     """E9 슬롯 블록 디코드(2026-10-28 — cst_dialogue 모듈 설명 E9): batch_decode.decode_blocks_batch 와 같은 출력 규칙을 GraphThinker·LongThinker(run·run_all)로 돈다.
     청크마다 [오디오 k, 태그 0 … D−1] 를 한 forward 로 미리 넣고(run_all — 위치마다 argmax), 태그 s 뒤 예측이 멈춤이 아니면 태그 s 바로 뒤로 되돌아가 그 슬롯 출력을
     한 토큰씩 낸 뒤(뒤 태그 자리는 덮어쓴다 — 쿼리는 자기 위치까지만 본다) 남은 태그를 다시 한 forward 로 넣는다. 모든 슬롯이 멈추는 청크는 forward 한 번이다.
@@ -170,17 +170,21 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
     E10(model.adapter_slotx): 태그마다 그 슬롯 소리 토큰(model.slot_audio_of)을 더한다. mix_off: 섞인 소리 토큰을 adapter_mixnull 로(decode_blocks_batch 와 같다).
     gate(batch_decode.ActGate, 2026-10-30 진단): 태그 s 뒤 첫 예측이 멈춤이 아니어도 게이트가 막으면 그 라운드 그 슬롯은 말을 내지 않는다(decode_blocks_batch 와 같은 규칙 —
     뒤 태그는 이미 그 꼴로 미리 넣었다).
-    → (emitted [(k, tid)] — 슬롯 출력 앞에 그 슬롯 태그, forced, step_ms [K], flush_rounds, flush_ms, forward 수)."""
-    from .batch_decode import block_stops
+    E13(2026-11-02): config.slot_gate 모델은 라운드마다 활동 창·열린 발화(<ONSET> 뒤 <EOT> 전) 슬롯 태그만 넣고(batch_decode.BlockState 와 같은 규칙), trans 면
+    그 칸마다 [<TRANS>] 번역 칸이 뒤따른다 — 칸(태그·<TRANS>)들을 태그처럼 한 forward 로 미리 넣고 같은 방식으로 되돌아간다.
+    → (emitted [(k, tid)] — 슬롯 출력 앞에 그 슬롯 태그(번역 칸이면 태그·<TRANS>), forced, step_ms [K], flush_rounds, flush_ms, forward 수)."""
+    from .batch_decode import block_gate, block_stops
     cfg = model.config
     max_flush_rounds = cfg.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
     if feats.dim() == 2: feats = feats[None]
     emb = gt.embed
     ce = model.chunk_embed(feats[None], mix_mask=torch.ones(1, dtype=torch.bool, device=emb.device) if mix_off else None)[0].to(emb.dtype)   # (K, D) — decode_blocks_batch 와 같다
     A = model.block_act(feats, act); X = model.slot_audio_of(feats, A) if getattr(model, "adapter_slotx", None) is not None else None
-    K = ce.shape[0]; max_total = int(max_total_per_chunk * K) + 64
+    K = ce.shape[0]; max_total = int(max_total_per_chunk * (2 if trans else 1) * K) + 64
     cap = min(max_per_chunk, cfg.runaway_cap) if max_per_chunk else cfg.runaway_cap
-    tags, stop, e_empty = model.slot_ids(D), block_stops(model, D), emb[model.empty_audio]
+    tags, stop, e_empty = model.slot_ids(D), block_stops(model, D, trans), emb[model.empty_audio]
+    gl, ga = block_gate(model, A); TR = int(model.sp_ids["<TRANS>"]) if trans else -1
+    BG, EOT = int(model.sp_ids.get("<ONSET>", -1)), int(model.sp_ids["<EOT>"]); utt = [False] * D   # E13 열린 발화
     sync = torch.cuda.synchronize if emb.is_cuda else (lambda: None)
     gt.run(emb[torch.as_tensor(prefix_ids, device=emb.device)], 0); pos = len(prefix_ids)    # prefix: 마지막 logits 는 쓰지 않는다
     out, ticks, st = [], [], dict(forced=0, total=0, forwards=1)
@@ -188,22 +192,29 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
     def block_round(k, head):
         """라운드 k(머리 = 오디오 k 또는 <EMPTY_AUDIO>) → 이 라운드에 낸 출력 수."""
         nonlocal pos
+        if gl:
+            lo, hi = max(0, k - gl + 1), min(ga.shape[0], k + 1)
+            sl = [s for s in range(D) if utt[s] or (s < ga.shape[1] and hi > lo and bool(ga[lo:hi, s].any()))]
+        else: sl = range(D)
+        items = [(s, x) for s in sl for x in ((0, 1) if trans else (0,))]
         te = model.tag_embeds(k, A, D, X).to(emb.dtype)
-        r = gt.run_all(torch.cat([head[None], te]), pos); st["forwards"] += 1
-        pr = dict(enumerate(r[1:])); at = {j: pos + 1 + j for j in range(D)}; pos += 1 + D; n_round = 0   # 태그 j 뒤 예측·태그 j 위치
-        for s in range(D):
-            tid = pr[s]
-            if tid in stop or (gate is not None and not gate.allows(k, s, tid)): continue          # 게이트가 막은 슬롯도 멈춤과 같다(뒤 태그 자리 그대로)
-            pos = at[s] + 1; n = 0; tagged = False                                              # 태그 s 바로 뒤로 되돌아간다
+        ie = torch.stack([te[s] if x == 0 else emb[TR] for s, x in items]) if items else te[:0]
+        r = gt.run_all(torch.cat([head[None], ie]), pos); st["forwards"] += 1
+        n_it = len(items); pr = dict(enumerate(r[1:])); at = {j: pos + 1 + j for j in range(n_it)}; pos += 1 + n_it; n_round = 0   # 칸 j 뒤 예측·칸 j 위치
+        for j, (s, x) in enumerate(items):
+            tid = pr[j]
+            if tid in stop or (gate is not None and not gate.allows(k, s, tid)): continue          # 게이트가 막은 슬롯도 멈춤과 같다(뒤 칸 자리 그대로)
+            pos = at[j] + 1; n = 0; tagged = False                                              # 칸 j 바로 뒤로 되돌아간다
             while True:
                 if tid in stop or n >= cap or st["total"] >= max_total: st["forced"] += int(tid not in stop); break
-                if not tagged: out.append((k, tags[s])); tagged = True
+                if not tagged: out.extend([(k, tags[s])] + ([(k, TR)] if x else [])); tagged = True
                 out.append((k, int(tid))); n += 1; n_round += 1; st["total"] += 1
+                if gl and tid in (BG, EOT): utt[s] = tid == BG
                 tid = gt.run(emb[tid][None], pos); pos += 1; st["forwards"] += 1
-            if s + 1 < D:                                                                      # 남은 태그를 다시 미리 넣는다
-                r = gt.run_all(te[s + 1:], pos); st["forwards"] += 1
-                for j in range(s + 1, D): pr[j], at[j] = r[j - s - 1], pos + j - s - 1
-                pos += D - s - 1
+            if j + 1 < n_it:                                                                   # 남은 칸을 다시 미리 넣는다
+                r = gt.run_all(ie[j + 1:], pos); st["forwards"] += 1
+                for jj in range(j + 1, n_it): pr[jj], at[jj] = r[jj - j - 1], pos + jj - j - 1
+                pos += n_it - j - 1
         return n_round
     for k in range(K):
         if on_chunk is not None: on_chunk(k, pos)

@@ -32,7 +32,10 @@
   --enc-tap-layer L(V2-a, wiki output-v2-speaker-memory-plan-20261020): 인코더 L 층 출력을 두 번째 connector(adapter_tap, 마지막 Linear 0 초기화 → 붙인 직후 = V1)로
   LLM 입력에 더한다(model.add_enc_tap). init 에 이미 탭이 있으면 같은 층이어야 한다. 지문 키 enc_tap(끄면 키 없음).
   --slot-blocks(E9, 2026-10-28): 대화·합성 창을 슬롯 블록 형식으로(cst_dialogue 모듈 설명 E9 — 청크마다 선언 슬롯 태그를 모두 입력, <BEGIN>·전사·<EOT> 출력,
-  멈춤 = 다음 입력 위치 label <NEXT_AUDIO>), model.add_slot_blocks(<ONSET> 행·adapter_tagact). 받아쓰기만. 지문 키 slot_blocks(끄면 키 없음).
+  멈춤 = 다음 입력 위치 label <NEXT_AUDIO>), model.add_slot_blocks(<ONSET> 행·adapter_tagact). 지문 키 slot_blocks(끄면 키 없음).
+  E13(2026-11-02 사용자 "번역을 다시 넣어서 학습할 수 있도록 … 이 고정 슬롯도 해제해보자"): --slot-blocks 도 번역(--dlg-trans·--sim-trans-frac)을 받는다 — 슬롯 칸마다
+  [태그] 전사 뒤 [<TRANS>] 번역(cst_dialogue 모듈 설명 E13). --slot-gate N: 라운드마다 정답 활동이 최근 N 청크 안에 있는 슬롯만 태그(model.config.slot_gate — 디코드는
+  예측 활동 창 ∪ 열린 발화), --gate-fa: 헛 구간. 지문 키 slot_gate(끄면 키 없음).
   --slot-audio(E10, 2026-10-29): 슬롯 추출기(model.add_slot_audio)가 슬롯별 소리 토큰을 태그 자리에 더하고, --mix-drop 확률로 섞인 소리 토큰을 지운다. 지문 키 slot_audio.
   --n3d PATH(E11, 2026-10-29): 고정 화자 분리 전문가 Nemotron 3 Diarization(model.add_n3d)의 활동이 슬롯 활동 입력이 된다(학습 청크 --n3d-train-chunk, 추론 --n3d-chunk).
     가중치는 체크포인트 밖(config 에 경로). 지문 키 n3d.
@@ -109,8 +112,8 @@ g.add_argument("--global-slots", type=float, default=0.0, help="E7(2026-10-27): 
                "회의 내내 같은 슬롯 — 창 안 첫 화자가 A 가 아닐 수 있다). 헤드(--diar-head)가 있으면 헤드 손실은 창 도착 순서, 예측 입력은 정답 자리로 맞춘다(diar_align). 지문 키 global_slots")
 g.add_argument("--slot-blocks", action="store_true", help="E9(2026-10-28, wiki output-diarization-integration-20261025 9 절): 대화·합성 창을 슬롯 블록 형식으로 — 청크마다 오디오 뒤 "
                "선언 슬롯 태그를 모두 입력으로 넣고 각 태그 뒤에 그 슬롯 출력(<BEGIN>·전사·<EOT>), 멈춤은 다음 입력 위치 label <NEXT_AUDIO>(cst_dialogue 모듈 설명 E9). "
-               "<BEGIN> = <ONSET>(episode 시작 + 4 청크), 태그 임베딩에 그 슬롯 최근 활동(adapter_tagact). 받아쓰기만(번역·정체 회복·교대/머무름 가중·EOT-문맥 dropout·"
-               "no_eot·대상 화자·act_shift 없이), --slot-input 과 함께. 지문 키 slot_blocks")
+               "<BEGIN> = <ONSET>(episode 시작 + 4 청크), 태그 임베딩에 그 슬롯 최근 활동(adapter_tagact). 정체 회복·교대/머무름 가중·EOT-문맥 dropout·"
+               "no_eot·대상 화자·act_shift 없이(번역은 E13 — 슬롯 칸마다 <TRANS> 번역 칸), --slot-input 과 함께. 지문 키 slot_blocks")
 g.add_argument("--slot-audio", action="store_true", help="E10(2026-10-29, wiki output-diarization-integration-20261025 10 절): 슬롯 추출기(vapasr/hf/slot_audio — 인코더 마지막 층 + "
                "화자 단서 임베딩 + 슬롯 활동 → 슬롯별 소리 토큰을 태그 자리에, 출력 0 초기화). --slot-blocks·--diar-head 와 함께. 지문 키 slot_audio")
 g.add_argument("--slot-audio-dim", type=int, default=512); g.add_argument("--slot-audio-blocks", type=int, default=4); g.add_argument("--slot-audio-kernel", type=int, default=15)
@@ -131,6 +134,10 @@ g.add_argument("--slot-remap", type=float, default=0.0, help="2026-10-30 활동 
                "이벤트열·활동 타깃·흔든 입력은 나눠 따르고, 헤드 손실·전문가 정렬은 바꾸기 전 순서로(remap_k·remap_perm). --slot-input·--slot-blocks 와 함께. 지문 키 slot_remap")
 g.add_argument("--begin-weight", type=float, default=2.0, help="--slot-blocks: <BEGIN> label 위치 가중(pos_weight)")
 g.add_argument("--tag-act-lags", type=int, default=12, help="--slot-blocks: 태그 임베딩에 더할 슬롯 활동 청크 수(a_s(k) … a_s(k − n + 1))")
+g.add_argument("--slot-gate", type=int, default=0, help="E13(2026-11-02 사용자 \"<SPK_A~D> 까지 활성화할 필요는 없을거 같아. 이 고정 슬롯도 해제해보자\"): 라운드마다 "
+               "정답 활동(전사 없는 발화 포함)이 최근 N 청크 안에 있는 슬롯과 그 라운드 출력이 있는 슬롯의 태그만 넣는다(cst_dialogue.gate_rounds — 0 = 끔, "
+               "1 ≤ N ≤ --tag-act-lags, 보통 같게). 디코드는 예측 활동 창 ∪ 열린 발화(<ONSET> 뒤 <EOT> 전 — model.config.slot_gate). --slot-blocks 와 함께. 지문 키 slot_gate")
+g.add_argument("--gate-fa", type=float, default=0.0, help="--slot-gate: 학습 창의 슬롯마다 이 확률로 말 없는 0.3–3.2 s 구간 하나를 더 연다(예측 활동의 헛 검출 — 태그 뒤 멈춤을 배운다)")
 g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -215,6 +222,7 @@ VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_spea
            **({"declare_range": True} if a.declare_range else {}),                               # 2026-10-28: 끄면 키 없음
            **({"slot_shuffle": a.slot_shuffle} if a.slot_shuffle > 0 else {}),                   # 2026-10-30 활동 추종 학습: 끄면 키 없음
            **({"slot_remap": a.slot_remap} if a.slot_remap > 0 else {}),                         # 2026-10-30 활동 추종 학습: 끄면 키 없음
+           **({"slot_gate": a.slot_gate, "gate_fa": a.gate_fa} if a.slot_gate else {}),          # 2026-11-02 E13 활동 게이트: 끄면 키 없음
            **({"xl_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))   # 모든 대화 셋 공통(V2, V3 R4)
 bc = None if a.backchannel == "off" else tuple(float(x) for x in a.backchannel.split(","))
 if bc is not None and len(bc) != 2: sys.exit(f"--backchannel max_s,max_tokens | off — {a.backchannel}")
@@ -243,14 +251,16 @@ if not 0.0 <= a.global_slots <= 1.0 or (a.global_slots > 0 and a.target_spk): sy
 if not 0.0 <= a.slot_shuffle <= 1.0 or (a.slot_shuffle > 0 and (a.target_spk or not a.slot_input)): sys.exit("--slot-shuffle ∈ [0, 1], --slot-input 과 함께, --target-spk(E2)와 함께 쓰지 않는다")
 if not 0.0 <= a.slot_remap <= 1.0 or (a.slot_remap > 0 and (a.target_spk or a.act_shift or not (a.slot_input and a.slot_blocks))):
     sys.exit("--slot-remap ∈ [0, 1], --slot-input·--slot-blocks 와 함께, --target-spk(E2)·--act-shift(E8)와 함께 쓰지 않는다")
-if a.slot_blocks:                                                                               # E9: 받아쓰기만 — 슬롯 블록 빌더가 다루지 않는 형식·가중은 켜지 않는다
-    bad = [n for n, on in (("--dlg-trans", bool(a.dlg_trans)), ("--recover-p", a.recover_p > 0), ("--change/hold-tag-weight", a.change_tag_weight > 0 or a.hold_tag_weight > 0),
+if a.slot_blocks:                                                                               # E9: 슬롯 블록 빌더가 다루지 않는 형식·가중은 켜지 않는다(번역은 E13 이 다룬다)
+    bad = [n for n, on in (("--recover-p", a.recover_p > 0), ("--change/hold-tag-weight", a.change_tag_weight > 0 or a.hold_tag_weight > 0),
                            ("--same-lang-*-weight", bool(a.same_lang_change_weight or a.same_lang_hold_weight)), ("--eot-drop-synth", a.eot_drop_synth > 0), ("--no-eot", a.no_eot),
                            ("--target-spk", a.target_spk), ("--act-shift", a.act_shift > 0)) if on]
-    if bad: sys.exit(f"--slot-blocks(E9)는 {', '.join(bad)} 와 함께 쓰지 않는다(받아쓰기 슬롯 블록만)")
+    if bad: sys.exit(f"--slot-blocks(E9)는 {', '.join(bad)} 와 함께 쓰지 않는다")
     if not a.slot_input: sys.exit("--slot-blocks 는 --slot-input 과 함께(태그 임베딩에 슬롯 활동을 더한다)")
-    if any(set_kind(k) == "xl" for k, w in weights.items() if w > 0) and a.sim_trans_frac > 0: sys.exit("--slot-blocks: 교차 언어 합성 셋은 --sim-trans-frac 0 으로(받아쓰기만)")
     if min(delays) < 4 or a.begin_weight < 0 or a.tag_act_lags < 1: sys.exit(f"--slot-blocks: 가장 짧은 δ ≥ 4(<BEGIN> 지연) · --begin-weight ≥ 0 · --tag-act-lags ≥ 1 — {delays} {a.begin_weight} {a.tag_act_lags}")
+if (a.slot_gate or a.gate_fa) and not a.slot_blocks: sys.exit("--slot-gate·--gate-fa(E13)는 --slot-blocks 와 함께")
+if a.slot_gate and not 1 <= a.slot_gate <= a.tag_act_lags: sys.exit(f"--slot-gate 는 1 … --tag-act-lags({a.tag_act_lags}) — {a.slot_gate}")
+if not 0.0 <= a.gate_fa <= 1.0 or (a.gate_fa and not a.slot_gate): sys.exit(f"--gate-fa ∈ [0, 1], --slot-gate 와 함께 — {a.gate_fa}")
 if a.slot_audio and not (a.slot_blocks and a.diar_head): sys.exit("--slot-audio(E10)는 --slot-blocks 와 --diar-head 와 함께")
 if a.n3d and not (a.slot_input and os.path.exists(a.n3d) and a.n3d_train_chunk >= 1 and a.n3d_chunk >= 1 and 0.0 < a.n3d_threshold < 1.0):
     sys.exit(f"--n3d 는 --slot-input 과 함께, .nemo 가 있어야 하고 청크 ≥ 1·임계 (0, 1) — {a.n3d} {a.n3d_train_chunk} {a.n3d_chunk} {a.n3d_threshold}")
@@ -337,6 +347,9 @@ if not a.dry_run:
     if a.target_spk: model.add_spk_inject(a.inject_hidden)                                      # E2 대상 화자 활동 주입(adapter_inject 도 adapter lr)
     if a.slot_input: model.add_slot_input(max(2, a.max_speakers))                               # E5 슬롯 활동 입력(adapter_slot 도 adapter lr)
     if a.slot_blocks: model.add_slot_blocks(tok, a.tag_act_lags)                                # E9 <BEGIN>(<ONSET>) 행·차단 해제 + adapter_tagact(adapter lr)
+    g0 = int(getattr(cfg, "slot_gate", 0) or 0)                                                 # E13 활동 게이트 — 디코더가 읽는다(init 이 게이트 모델이면 같은 값이어야 한다)
+    if g0 and g0 != a.slot_gate: sys.exit(f"init 이 활동 게이트 {g0} 모델이다 — --slot-gate {g0} 로 이어 학습한다(지금 {a.slot_gate})")
+    if a.slot_gate: cfg.slot_gate = int(a.slot_gate)
     if a.diar_head:                                                                             # E6 인과 화자 분리 헤드(이름이 adapter 가 아니라 thinker lr)
         xb = torch.load(a.diar_head, map_location="cpu"); assert xb["cfg"].get("lookahead") is not None, f"인과 헤드(lookahead)가 아니다: {a.diar_head}"
         model.add_diar_head(xb["cfg"], xb["taps"], state=xb["state"], weight=a.diar_weight, threshold=a.act_threshold, ramp=ramp)
@@ -513,6 +526,8 @@ for key, ds in train_sets.items():                                              
             from vapasr.data.cst_dialogue import window_speakers
             bad += [(ds.items[i], d, "target", t, P[:3]) for i in idx for d in ds.delays for t in window_speakers(ds.eps[ds.items[i][0]], ds.items[i][1], ds.items[i][2])
                     for P in [ds.problems_of(ds.cst_sequence(i, d, target=t))] if P]
+        if getattr(ds, "gate_fa", 0) > 0:                                                      # E13 학습 rng 경로(헛 구간·번역 모드 추첨 — __getitem__ 과 같은 꼴)
+            bad += [(ds.items[i], d, "rng", P[:3]) for i in idx for d in ds.delays for P in [ds.problems_of(ds.cst_sequence(i, d, rng=random.Random(a.seed * 104729 + i * 31 + d)))] if P]
         if getattr(ds, "eot_drop_synth", 0) > 0:                                               # EOT-문맥 dropout 경로(V3-p1 C5 — 받아쓰기·번역 모드)
             bad += [(ds.items[i], d, "drop", tg, P[:3]) for i in idx for d in ds.delays for tg in [None] + (ds.tgt_options(i) if ds.trans_on else [])
                     for P in [ds.problems_of(ds.cst_sequence(i, d, tgt=tg, drop_eot=True))] if P]
@@ -552,6 +567,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"declare_range": True} if a.declare_range else {}),                               # 2026-10-28: 끄면 키 없음
           **({"slot_shuffle": a.slot_shuffle} if a.slot_shuffle > 0 else {}),                   # 2026-10-30 활동 추종 학습: 끄면 키 없음
           **({"slot_remap": a.slot_remap} if a.slot_remap > 0 else {}),                         # 2026-10-30 활동 추종 학습: 끄면 키 없음
+          **({"slot_gate": dict(lags=a.slot_gate, fa=a.gate_fa)} if a.slot_gate else {}),       # 2026-11-02 E13 활동 게이트: 끄면 키 없음
           **({"shrink_speakers": True} if a.shrink_speakers and not a.window_draws else {}),    # 2026-10-28 E9b: 격자 창 줄이기(끄면 키 없음)
           **({"slot_audio": dict(d=a.slot_audio_dim, blocks=a.slot_audio_blocks, kernel=a.slot_audio_kernel, mix_drop=a.mix_drop)} if a.slot_audio else {}),   # 2026-10-29 E10
           **({"n3d": dict(path=os.path.abspath(a.n3d), train_chunk=a.n3d_train_chunk, chunk=a.n3d_chunk, threshold=a.n3d_threshold)} if a.n3d else {}))   # 2026-10-29 E11

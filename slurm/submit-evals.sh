@@ -40,6 +40,7 @@
 #   q17-e10-n3d  같은 진단을 E10 final 에(창·회의 통째 × 섞인 소리 켬·끔). 의존 없음(2026-10-30 — E10 학습이 끝나 --after-job 을 뺐다).
 #   q17-e11 · q17-e11b  E11(slurm/submit-q17-e11.sh — 전문가 활동으로 학습, b = E10 에서): AMI 창 δ10 8 몫 → 회의 통째 δ10 8 몫(config 의 전문가). --after-job 필수.
 #   q17-e12*  E12 활동 추종 학습(2026-10-30, slurm/submit-q17-e12.sh — 슬롯 섞기·바꿔 끼우기·약한 활동 잡음): q17-e11 과 같은 묶음(행에 활동 추종 셈). --after-job 필수.
+#   q17-e13*  E13 활동 게이트 + 슬롯 블록 번역(2026-11-02, slurm/submit-q17-e13.sh): q17-e11 과 같은 받아쓰기 묶음(디코드가 config.slot_gate 로 게이트를 건다). --after-job 필수.
 #   q17-e10-fix  E10 다시 재기(2026-10-30): q17-e10 과 같은 네 단계를 EV_TAG=onsetfix 산출 이름으로. 첫 평가(97923)는 config 의 <BEGIN>(<ONSET>) 디코드 차단으로
 #            새 턴을 못 열어 무효다(modeling_vapasr __init__·add_slot_blocks 수정 — 읽을 때 푼다). 의존 없음.
 #   q17-follow  활동 추종 진단(2026-10-30, 사용자 "LLM 활동 추종 진단 구현해놓자" — wiki output-n3d-branch-20261029 6.5 절): 끝난 E11 final·E9 + 전문가(q17-e9-n3d)의
@@ -89,9 +90,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e11|q17-e11b|q17-e12*|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|ext-parakeet-g2|q17-g3|q17-e11-relax|q17-spk) ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr" >&2; exit 2 ;; esac
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
@@ -153,7 +154,7 @@ case $set_ in
     for v in "${RF[@]}"; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 $(rv $v) bash $X amifull q17-e11 final $r/8"); done; done ;;
   q17-g3) GR=${GRAFT_RUN:-q17-graft-g2-lora}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; [[ -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 ENC_STATE=$G ENC_TAG=$GR GRAFT_EXPERT=$G GX_TAG=$GR bash $X $t q17-e11 final $r/8"); done; done ;;
-  q17-e11|q17-e11b|q17-e12*) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull $set_ final $r/8"); done ;;
+  q17-e11|q17-e11b|q17-e12*|q17-e13*) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull $set_ final $r/8"); done ;;
   q17-follow) N3=${N3D:-$D/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3" >&2; exit 1; }
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 bash $X $t q17-e11 final $r/8"); done; done
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 N3D=$N3 bash $X $t q17-e9 final $r/8"); done; done ;;

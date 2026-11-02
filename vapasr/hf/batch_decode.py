@@ -231,60 +231,106 @@ class BlockState:
     After a tag or an output, a stop (<NEXT_AUDIO>, a slot tag or <EMPTY_AUDIO>), the slot's per-chunk cap or the total cap moves
     on to the next tag (after the last slot: the next audio, or an <EMPTY_AUDIO> flush round once the audio is over). A flush round
     with no output, or max_flush rounds, ends the row. emitted gets (k, slot tag) before a slot's first output in a chunk, then
-    (k, token) -- the same shape as DecodeState.emitted, so cst_eval.parse_emitted reads it unchanged."""
+    (k, token) -- the same shape as DecodeState.emitted, so cst_eval.parse_emitted reads it unchanged.
+    E13 (2026-11-02, cst_dialogue module doc E13; defaults keep E9): gate_lags > 0 opens slot s in round k only when act (Ka, N) bool has
+    activity in [k - gate_lags + 1, k] or the slot is inside an utterance it opened (<ONSET> emitted, <EOT> not yet) -- the training gate
+    (gate_rounds) plus the decoder's own open utterances. A round with no open slot is the audio alone. trans_id >= 0 (translation mode):
+    each open slot's tag is followed by a <TRANS> input whose outputs are that slot's translation; emitted gets (k, slot tag), (k, <TRANS>)
+    before them (cst_eval.parse_emitted4 reads it)."""
     K: int
     D: int
     cap: int
     max_flush: int
     max_total: int
     tags: tuple
+    gate_lags: int = 0
+    act: object = None
+    trans_id: int = -1
+    begin_id: int = -1
+    eot_id: int = -1
     k: int = 0
     s: int = -1
     n: int = 0
+    j: int = -1
+    kind: int = 0
     n_round: int = 0
     n_total: int = 0
     done: bool = False
     forced: int = 0
     flush_rounds: int = 0
+    n_tags: int = 0
+    items: list = field(default_factory=list)
+    open_: list = field(default_factory=list)
     emitted: list = field(default_factory=list)
 
+    def open_slots(self):
+        """Slots whose tag goes into round k (all D without a gate)."""
+        if self.gate_lags <= 0:
+            return list(range(self.D))
+        if not self.open_:
+            self.open_ = [False] * self.D
+        a = self.act
+        lo, hi = max(0, self.k - self.gate_lags + 1), min(a.shape[0], self.k + 1)
+        return [s for s in range(self.D) if self.open_[s] or (s < a.shape[1] and hi > lo and bool(a[lo:hi, s].any()))]
+
+    def _enter(self):
+        self.s, self.kind = self.items[self.j]
+        self.n = 0
+        self.n_tags += int(self.kind == 0)
+        return ("trans", (self.k, self.s)) if self.kind else ("tag", (self.k, self.s))
+
+    def _next_round(self):
+        if self.k >= self.K:
+            self.flush_rounds += 1
+            if self.n_round == 0 or self.flush_rounds >= self.max_flush:
+                self.done = True
+                return "pad", 0
+        elif self.k == self.K - 1 and self.max_flush == 0:
+            self.done = True
+            return "pad", 0
+        self.k += 1
+        self.s = -1
+        self.n_round = 0
+        return ("audio", self.k) if self.k < self.K else ("empty", 0)
+
     def consume(self, tid, stop):
-        """Prediction tid after the current input -> (next input kind, value): ('tag', (k, s)) | ('text', tid) | ('audio', k) | ('empty', 0) | ('pad', 0)."""
+        """Prediction tid after the current input -> (next input kind, value): ('tag', (k, s)) | ('trans', (k, s)) | ('text', tid) | ('audio', k) | ('empty', 0) | ('pad', 0)."""
         if self.done:
             return "pad", 0
         if self.s < 0:
-            self.s, self.n = 0, 0
-            return "tag", (self.k, 0)
+            self.items = [(s, x) for s in self.open_slots() for x in ((0, 1) if self.trans_id >= 0 else (0,))]
+            self.j = 0
+            return self._enter() if self.items else self._next_round()
         if tid in stop or self.n >= self.cap or self.n_total >= self.max_total:
             self.forced += int(tid not in stop)
-            if self.s + 1 < self.D:
-                self.s += 1
-                self.n = 0
-                return "tag", (self.k, self.s)
-            if self.k >= self.K:
-                self.flush_rounds += 1
-                if self.n_round == 0 or self.flush_rounds >= self.max_flush:
-                    self.done = True
-                    return "pad", 0
-            elif self.k == self.K - 1 and self.max_flush == 0:
-                self.done = True
-                return "pad", 0
-            self.k += 1
-            self.s = -1
-            self.n_round = 0
-            return ("audio", self.k) if self.k < self.K else ("empty", 0)
+            self.j += 1
+            return self._enter() if self.j < len(self.items) else self._next_round()
         if self.n == 0:
             self.emitted.append((self.k, self.tags[self.s]))
+            if self.kind:
+                self.emitted.append((self.k, self.trans_id))
         self.emitted.append((self.k, int(tid)))
+        if self.gate_lags > 0 and tid in (self.begin_id, self.eot_id):
+            self.open_[self.s] = tid == self.begin_id
         self.n += 1
         self.n_round += 1
         self.n_total += 1
         return "text", int(tid)
 
 
-def block_stops(model, D):
-    """E9 stop set: <NEXT_AUDIO>, <EMPTY_AUDIO> and every slot tag (tags are inputs, never outputs)."""
-    return frozenset(model.slot_ids()) | {model.next_audio, model.empty_audio}
+def block_stops(model, D, trans: bool = False):
+    """E9 stop set: <NEXT_AUDIO>, <EMPTY_AUDIO> and every slot tag (tags are inputs, never outputs); E13 translation mode adds <TRANS> (also an input)."""
+    return frozenset(model.slot_ids()) | {model.next_audio, model.empty_audio} | ({int(model.sp_ids["<TRANS>"])} if trans else set())
+
+
+def block_gate(model, A):
+    """E13 decoder gate from the tag activity A (K, N) (model.block_act): (gate_lags, act bool numpy) -- (0, None) when the model has no gate (config.slot_gate)."""
+    import numpy as np
+    gl = int(getattr(model.config, "slot_gate", 0) or 0)
+    if gl <= 0:
+        return 0, None
+    assert A is not None, "gated slot-block decoding (config.slot_gate) needs the tag activity (act or the predicted-activity stream)"
+    return gl, np.asarray(A.detach().float().cpu() if torch.is_tensor(A) else A) > 0.5
 
 
 class ActGate:
@@ -323,14 +369,16 @@ def gate_tid(state, tid, stop, gate, stop_id):
 
 
 @torch.inference_mode()
-def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, acts=None, mix_off=False, gates=None):
+def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, acts=None, mix_off=False, gates=None, trans=False):
     """E9 slot-block greedy decoding, one input per row per step (BlockState) on a dense KV-cache batch.
     feats: list of (S,K,D) encoder outputs, prefixes: equal-length lists declaring D slots. The audio tokens use model.chunk_embed (with acts
     or the E6 predicted-activity stream, as decode_batch); each tag gets model.tag_embeds (tag row + that slot's recent activity, model.block_act).
     Caps: model.config.runaway_cap per slot per chunk, 6 K + 64 outputs per row, max_flush_rounds (default config).
     E10 (model.adapter_slotx): each tag also gets that slot's audio token (model.slot_audio_of — feats need the head-embedding stream);
     mix_off replaces the mixed audio token with model.adapter_mixnull (the chunk keeps its activity part).
-    gates: per-row ActGate or None (activity-gated decoding -- a slot's round is dropped when its activity is off; the gate counts what it dropped)."""
+    gates: per-row ActGate or None (activity-gated decoding -- a slot's round is dropped when its activity is off; the gate counts what it dropped).
+    E13: a model with config.slot_gate opens only the slots its tag activity (or an open utterance) allows (BlockState gate_lags, block_gate);
+    trans=True (translation-mode prefix) adds each open slot's <TRANS> input and its translation outputs."""
     assert feats and len(feats) == len(prefixes) and (acts is None or len(acts) == len(feats)) and (gates is None or len(gates) == len(feats))
     assert len({len(p) for p in prefixes}) == 1, "batch one language/delta at a time"
     emb = model.get_input_embeddings()
@@ -342,8 +390,14 @@ def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, act
     X = [model.slot_audio_of(f, a) if getattr(model, "adapter_slotx", None) is not None else None for f, a in zip(feats, A)]
     flush = model.config.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
     tags = tuple(model.slot_ids(D))
-    stop = block_stops(model, D)
-    states = [BlockState(len(c), D, model.config.runaway_cap, flush, int(6 * len(c)) + 64, tags) for c in ce]
+    stop = block_stops(model, D, trans)
+    TR = int(model.sp_ids["<TRANS>"]) if trans else -1
+    BG, EOT = int(model.sp_ids.get("<ONSET>", -1)), int(model.sp_ids["<EOT>"])
+    states = []
+    for c, a in zip(ce, A):
+        gl, ga = block_gate(model, a)
+        states.append(BlockState(len(c), D, model.config.runaway_cap, flush, int((12 if trans else 6) * len(c)) + 64, tags, gate_lags=gl, act=ga,
+                                 trans_id=TR, begin_id=BG, eot_id=EOT))
     assert all(s.K > 0 for s in states)
     cache = DynamicCache()
     model.thinker.model(inputs_embeds=emb(torch.tensor(prefixes, device=dev)), past_key_values=cache, use_cache=True)
@@ -366,6 +420,8 @@ def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, act
                 if k not in tag_cache[i]:
                     tag_cache[i] = {k: model.tag_embeds(k, A[i], D, X[i]).to(emb.weight.dtype)}
                 nxt.append(tag_cache[i][k][j])
+            elif kind == "trans":
+                nxt.append(emb.weight[TR])
             elif kind == "text":
                 nxt.append(emb.weight[value])
             else:

@@ -12,7 +12,9 @@
 #   [--afterok JOBID(그 job 이 성공한 뒤 — 예 E6 은 E1c)] [--train-extra "stage3_train.py 인자"(F1 레시피에 덧붙임 — E5 --slot-input, E6 + --diar-head …)]
 #   [--eval-set 묶음(기본 q17-f1 — E5 q17-e5, E6 q17-e6; submit-evals.sh)] [--init DIR(2026-10-28, 기본 5 단계 ck3000 — E7b 는 E6 final 에서)]
 #   [--transcribe-only(2026-10-28 E9 — 받아쓰기만: 대화·교차 언어 합성 번역 타깃·번역 행 앞 공백·교대/머무름 가중·EOT-문맥 dropout 을 빼고 --sim-trans-frac 0,
-#    replay 도 --ast-frac 0. 데이터·가중치·나머지 레시피는 같다)] [--window lo,hi(2026-10-28 E9b — 학습 창 길이 범위, 기본은 submit-stage3-train 의 20,40)].
+#    replay 도 --ast-frac 0. 데이터·가중치·나머지 레시피는 같다)] [--window lo,hi(2026-10-28 E9b — 학습 창 길이 범위, 기본은 submit-stage3-train 의 20,40)]
+#   [--blocks-trans(2026-11-02 E13 — 슬롯 블록 번역: 대화 번역 타깃(--dlg-ast-frac 0.5)·교차 언어 합성(--sim-trans-frac 0.8)·번역 행 앞 공백·replay 번역(--ast-frac 기본 0.8)은
+#    켜고, 슬롯 블록이 받지 않는 교대/머무름 가중·EOT-문맥 dropout 은 뺀다 — --slot-blocks 와 함께, --transcribe-only 와 함께 쓰지 않는다)].
 #   새 셋이 하나라도 없으면 멈춘다(--allow-missing 이면 빼고 낸다). 아무것도 지우지 않는다.
 #   low_p_hpc(2026-10-26 사용자 "low_p_hpc 로 제출할 수 있도록 해줘"): 선점 유예(≈70 s)가 1.7B 저장(≈3.5 분)보다 짧아 선점 때 저장은 끊긴다 —
 #   재개는 마지막 완성 checkpoint(last_complete_checkpoint)에서. 그래서 apex 가 아니면 --save-every 기본 250(apex 500, 평가 avg3 = ck1500·ck2000·final 그대로),
@@ -20,16 +22,18 @@
 #   평가: 학습 뒤 submit-evals.sh q17-f1(같은 파티션 — q17-mt4-v3 와 같은 묶음: final·ck1500·ck2000·avg3, AMI 4 몫).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-dry=""; allow=0; part=apex; nodes=2; steps=5000; run=q17-f1; exclude=hpc-50,hpc-51,hpc-101,hpc-102; ev=1; save=""; after=""; afterok=""; textra=""; evset=q17-f1; init=""; tonly=0; window=""
+dry=""; allow=0; part=apex; nodes=2; steps=5000; run=q17-f1; exclude=hpc-50,hpc-51,hpc-101,hpc-102; ev=1; save=""; after=""; afterok=""; textra=""; evset=q17-f1; init=""; tonly=0; window=""; btr=0
 while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run) dry=--dry-run; shift ;;  --allow-missing) allow=1; shift ;;  --partition) part=$2; shift 2 ;;  --nodes) nodes=$2; shift 2 ;;
     --max-steps) steps=$2; shift 2 ;;  --run) run=$2; shift 2 ;;  --exclude) exclude=$2; shift 2 ;;  --no-eval) ev=0; shift ;;  --save-every) save=$2; shift 2 ;;  --after) after=$2; shift 2 ;;  --afterok) afterok=$2; shift 2 ;;  --init) init=$2; shift 2 ;;  --train-extra) textra=$2; shift 2 ;;  --eval-set) evset=$2; shift 2 ;;
-    --transcribe-only) tonly=1; shift ;;  --window) window=$2; shift 2 ;;
+    --transcribe-only) tonly=1; shift ;;  --window) window=$2; shift 2 ;;  --blocks-trans) btr=1; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
 [[ $exclude == none ]] && exclude=""
+(( tonly && btr )) && { echo "--transcribe-only 와 --blocks-trans 는 함께 쓰지 않는다" >&2; exit 2; }
+(( btr )) && [[ " $textra " != *" --slot-blocks "* ]] && { echo "--blocks-trans 는 --train-extra 에 --slot-blocks 가 있을 때만(슬롯 블록 번역)" >&2; exit 2; }
 [[ -z $after || $after =~ ^[0-9]+([,:][0-9]+)*$ ]] || { echo "--after 는 job id(여럿은 쉼표 — 모두 끝난 뒤): $after" >&2; exit 2; }
 [[ -z $window || $window =~ ^[0-9.]+,[0-9.]+$ ]] || { echo "--window lo,hi: $window" >&2; exit 2; }
 [[ -z $afterok || $afterok =~ ^[0-9]+$ ]] || { echo "--afterok 는 job id: $afterok" >&2; exit 2; }
@@ -56,6 +60,9 @@ EXC=(); [[ -n $exclude ]] && EXC=(--exclude "$exclude"); [[ -n $after ]] && EXC+
 [[ -n $afterok ]] && EXC+=(--afterok "$afterok")                                                # 성공 뒤(afterok)
 if (( tonly )); then                                                                            # E9: 받아쓰기만(번역·C1·C5 없음 — replay 번역도 끔)
   TR=(--sim-trans-frac 0); XTR=" --ast-frac 0"
+elif (( btr )); then                                                                            # E13: 슬롯 블록 번역 — 번역 타깃은 그대로, C1·C5(슬롯 블록이 받지 않는다)만 뺀다
+  TR=(--dlg-trans $D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16,$D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16 --dlg-trans-input $D/stage4-dlg-units-revive-v1/targets-fix-gen-v3-bf16
+      --dlg-ast-frac 0.5 --sim-trans-frac 0.8 --trans-lead-space); XTR=""
 else
   TR=(--dlg-trans $D/stage4-dlg-units-v1/targets-fix-gen-v3-bf16,$D/stage4-dlg-units-meet-v1/targets-fix-gen-v3-bf16 --dlg-trans-input $D/stage4-dlg-units-revive-v1/targets-fix-gen-v3-bf16
       --dlg-ast-frac 0.5 --sim-trans-frac 0.8 --trans-lead-space --change-tag-weight 3 --hold-tag-weight 1.5 --eot-drop-synth 1.0 --eot-drop-sets xl --decision-weight-sets xl); XTR=""
@@ -64,7 +71,7 @@ ARGS=(--run $run --init $init --partition $part --nodes $nodes --backchannel 1.0
       --sim-data $SIMS --weights $W --set-phone sim_en-de-tel:0
       --lr 4e-5 --max-steps $steps --save-every $save --split v4 --dlg-corpora $CORP --max-speakers 4 --declare-all-p 0.5 ${window:+--window $window}
       --extra "--far-aug 0.3 --far-sets dlg_ko,dlg_en,dlg_de,dlg_mt,dlg_mtko$GMAP$XTR${textra:+ $textra}")
-echo "[$(date '+%F %T')] F1 $run($part $nodes 노드, $steps step, 저장 $save step 마다, 평가 ck$CKA·ck$CKB·final, MAX_RESTART $MAX_RESTART${after:+, job ${after//[,:]/·} 끝난 뒤}${afterok:+, job $afterok 성공 뒤}${textra:+, 덧붙임 $textra}$( (( tonly )) && echo ", 받아쓰기만")${window:+, 창 $window s}, 평가 $evset) · 대화 $CORP · 합성 $SIMS" >&2
+echo "[$(date '+%F %T')] F1 $run($part $nodes 노드, $steps step, 저장 $save step 마다, 평가 ck$CKA·ck$CKB·final, MAX_RESTART $MAX_RESTART${after:+, job ${after//[,:]/·} 끝난 뒤}${afterok:+, job $afterok 성공 뒤}${textra:+, 덧붙임 $textra}$( (( tonly )) && echo ", 받아쓰기만")$( (( btr )) && echo ", 슬롯 블록 번역")${window:+, 창 $window s}, 평가 $evset) · 대화 $CORP · 합성 $SIMS" >&2
 out=$(bash slurm/submit-stage3-train.sh "${ARGS[@]}" ${EXC[@]+"${EXC[@]}"} $dry 2>&1) || { echo "$out" | tail -5 >&2; echo "!! 학습 제출 실패" >&2; exit 1; }
 echo "$out" | grep -E "^sbatch|Submitted|만들 예정|init 없음|거부" >&2 || true
 dep=$(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1 || true); [[ -n $dep ]] || { [[ -n $dry ]] && dep=0; } || true

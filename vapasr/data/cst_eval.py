@@ -70,29 +70,33 @@ def activity_from_events(events: Sequence[Tuple[str, int, int]], K: int, n: int,
     return act
 
 
-def emitted_from_blocks(ids: Sequence[int], is_input: Sequence[bool], tag_chunk: Sequence[int], slot_at: Sequence[int], spk_ids: Sequence[int]) -> List[Tuple[int, int]]:
-    """E9 학습 시퀀스(정답, cst_dialogue.build_block_sequence) → batch_decode.decode_blocks_batch 와 같은 [(k, tid)](슬롯 출력 앞에 그 슬롯 태그 — 오라클 평가)."""
-    out: List[Tuple[int, int]] = []; cur = None; tagged = False
+def emitted_from_blocks(ids: Sequence[int], is_input: Sequence[bool], tag_chunk: Sequence[int], slot_at: Sequence[int], spk_ids: Sequence[int],
+                        trans_id: Optional[int] = None) -> List[Tuple[int, int]]:
+    """E9 학습 시퀀스(정답, cst_dialogue.build_block_sequence) → batch_decode.decode_blocks_batch 와 같은 [(k, tid)](슬롯 출력 앞에 그 슬롯 태그 — 오라클 평가).
+    trans_id(E13 번역 모드): <TRANS> 입력 뒤 출력은 그 슬롯 번역 — 앞에 (k, 슬롯 태그), (k, <TRANS>)(BlockState 와 같다, parse_emitted4 가 읽는다)."""
+    out: List[Tuple[int, int]] = []; cur = None; tagged = False; kind = 0
     for p, (t, inp) in enumerate(zip(ids, is_input)):
         if inp:
-            if tag_chunk[p] >= 0: cur, tagged = (int(tag_chunk[p]), int(slot_at[p])), False
+            if tag_chunk[p] >= 0: cur, tagged, kind = (int(tag_chunk[p]), int(slot_at[p])), False, 0
+            elif trans_id is not None and int(t) == trans_id and slot_at[p] >= 0: tagged, kind = False, 1
             continue
-        if not tagged: out.append((cur[0], int(spk_ids[cur[1]]))); tagged = True
+        if not tagged: out += [(cur[0], int(spk_ids[cur[1]]))] + ([(cur[0], int(trans_id))] if kind else []); tagged = True
         out.append((cur[0], int(t)))
     return out
 
 
-def parse_emitted4(emitted: Sequence, spk_ids: Sequence[int], trans_id: int, eot_id: int, drop_chunks=(), drop_tr_chunks=()):
+def parse_emitted4(emitted: Sequence, spk_ids: Sequence[int], trans_id: int, eot_id: int, drop_chunks=(), drop_tr_chunks=(), begin_id: Optional[int] = None):
     """Stage 4 네 흐름 출력 해석 → (슬롯별 전사 [(시각 s, tid)], 슬롯별 번역 [(시각 s, tid)], [(슬롯, 시각 s)] <EOT>).
     <SPK_x> 는 슬롯 x 전사 구간을, <TRANS> 는 지금 슬롯의 번역 구간을 연다(cst_dialogue.read_back4 와 같은 규칙). 첫 태그 앞은 슬롯 A 전사로 본다.
-    drop_chunks: 버릴 청크(전사 없는 음성 — 전사·번역·<EOT> 모두), drop_tr_chunks: 번역만 버릴 청크(참조 번역이 없는 행)."""
+    drop_chunks: 버릴 청크(전사 없는 음성 — 전사·번역·<EOT> 모두), drop_tr_chunks: 번역만 버릴 청크(참조 번역이 없는 행).
+    begin_id(E13 슬롯 블록 번역 — batch_decode.BlockState 출력): 그 토큰(<BEGIN>)은 글자가 아니다."""
     src: List[List[Tuple[float, int]]] = [[] for _ in spk_ids]; tr: List[List[Tuple[float, int]]] = [[] for _ in spk_ids]; eots: List[Tuple[int, float]] = []
     cur, kind = 0, 0; drop, dtr = set(drop_chunks), set(drop_tr_chunks); spk = list(spk_ids)
     for k, t in emitted:
         t = int(t)
         if t in spk: cur, kind = spk.index(t), 0; continue
         if t == trans_id: kind = 1; continue
-        if k in drop: continue
+        if k in drop or t == begin_id: continue
         tt = (int(k) + 1) * CHUNK_S
         if t == eot_id: eots.append((cur, tt))
         elif kind == 0: src[cur].append((tt, t))

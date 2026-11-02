@@ -18,6 +18,8 @@
     지연 = 같은 비용 정렬로 일치한 단어의 (가설 − 학습 타깃) 방출 시각 중앙값(cst_eval.lag_matched), 빈 번역 비율.
     같은 언어 창은 가설 슬롯을 받아쓰기 cp 순열로 참조 슬롯에 맞춘다.
 --oracle: 모델 없이 정답 시퀀스를 채점한다(번역 BLEU·chrF 100, 지연 0, 귀속 오류 0 이어야 한다).
+슬롯 블록 모델(config.slot_blocks — E13 번역, 2026-11-02): batch_decode.decode_blocks_batch(trans=True — 슬롯 칸마다 <TRANS> 번역 칸, config.slot_gate 면 활동 게이트)로
+  디코드하고 parse_emitted4(begin_id = <ONSET>)로 읽는다. 오라클은 block_sequence(tgt) 의 정답 출력(emitted_from_blocks). 참조·채점은 그대로다.
 출력: predictions-rank{r}.jsonl(창·δ·목표마다 원출력과 점수), summary.json."""
 import argparse, collections, hashlib, json, os, statistics, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -112,6 +114,9 @@ def run(a):
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
         wi = word_init_mask(tok, logits_size(model)) if sb else None
     a.xl_order = (cfg.get("xl_slot_order") if model is None else getattr(model.config, "xl_slot_order", None)) or "lang"   # V3 R4: 교차 언어 슬롯 순서(창·prefix·채점)
+    blocks = bool(cfg.get("slot_blocks") if model is None else getattr(model.config, "slot_blocks", False))   # E13: 슬롯 블록 번역 디코드
+    assert not (blocks and sb), "--switch-bias 는 태그를 LLM 이 내는 형식(V3) 전용이다 — 슬롯 블록 모델과 함께 쓰지 않는다"
+    BG = int(sp["<ONSET>"]) if blocks else None
     from vapasr.data.cst_dialogue import SLOTS
     n_slots = max(2, int(getattr(a, "max_speakers", None) or 2))
     if model is not None and len(model.config.slot_tokens) < n_slots:                      # V1(2 슬롯) 기준선: 모델 슬롯 수로 디코드·채점
@@ -128,7 +133,7 @@ def run(a):
                 split_sha256=hashlib.sha256(open(a.split, "rb").read()).hexdigest() if a.split else None, trans_sha256=tr_fp, corpora=a.corpora, deltas=a.deltas,
                 limit_windows=a.limit_windows, tgts=a.tgts, dtype=a.dtype, world_size=a.world_size, oracle=bool(a.oracle), from_predictions=a.from_predictions,
                 **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **({"trans_lead_space": True} if a.trans_lead_space else {}), **win_conf(a),
-                **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}))
+                **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}), **({"blocks": True} if blocks else {}))
     cp = os.path.join(out, f"config-rank{a.rank}.json")
     if os.path.exists(cp): assert json.load(open(cp)) == conf, "재개 설정 불일치 — 새 --out 을 쓴다"
     else: json.dump(conf, open(cp, "w"), indent=1)
@@ -156,6 +161,11 @@ def run(a):
                             keys = [(f"{m[1]}@{m[2]}", delta, opt) for m in meta]
                             if not all(k in prev for k in keys): print(f"  !! 원출력 없음 δ{delta} {opt} — 건너뜀", flush=True); continue
                             states = [SimpleNamespace(emitted=[tuple(e) for e in prev[k]["emitted"]], forced=prev[k]["forced"], flush_rounds=prev[k]["flush_rounds"]) for k in keys]
+                        elif a.oracle and blocks:                                                     # E13 오라클: 슬롯 블록 정답 출력(번역 칸 포함)
+                            from vapasr.data.cst_eval import emitted_from_blocks
+                            qb = [ds.block_sequence(m[0], delta, tgt=opt) for m in meta]
+                            states = [SimpleNamespace(emitted=emitted_from_blocks(x["ids"], x["is_input"], x["tag_chunk"], x["slot_at"], spk, trans_id=TRANS), forced=0, flush_rounds=0)
+                                      for x in qb]
                         elif a.oracle:
                             states = [SimpleNamespace(emitted=emitted_from_sequence(q["ids"], q["is_input"], q["chunk_of"], sp["<NEXT_AUDIO>"], sp["<EMPTY_AUDIO>"]), forced=0,
                                                       flush_rounds=0) for q in qs]
@@ -164,13 +174,19 @@ def run(a):
                             modes = ["xl" if len(set(q["langs"][:n_slots])) > 1 else "same" for q in qs] if sb else None   # 교차 언어 = 선언 언어가 다른 창
                             for pre in dict.fromkeys(tuple(p) for p in prefixes):                      # 선언 슬롯 수가 다른 창은 prefix 별로 나눠 돈다
                                 js = [j for j, p in enumerate(prefixes) if tuple(p) == pre]
-                                for j, st_ in zip(js, decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush,
-                                                                   **(dict(switch_bias=sb, row_modes=[modes[j] for j in js], word_init=wi) if sb else {}))): states[j] = st_
+                                if blocks:                                                             # E13: 슬롯 칸마다 <TRANS> 번역 칸(선언 슬롯 수 = prefix 의 언어 수)
+                                    from vapasr.hf.batch_decode import decode_blocks_batch
+                                    run_ = decode_blocks_batch(model, [feats[j] for j in js], [list(pre)] * len(js), len(qs[js[0]]["langs"][:n_slots]),
+                                                               max_flush_rounds=a.max_flush, trans=True)
+                                else:
+                                    run_ = decode_batch(model, [feats[j] for j in js], [list(pre)] * len(js), max_flush_rounds=a.max_flush,
+                                                        **(dict(switch_bias=sb, row_modes=[modes[j] for j in js], word_init=wi) if sb else {}))
+                                for j, st_ in zip(js, run_): states[j] = st_
                         for (i, cid, t0w, L, K), q, s in zip(meta, qs, states):
                             if (f"{cid}@{t0w}", delta, opt) in done: continue
                             d = ds.dlgs[cid]; mask = ds.mask_chunks(d, t0w, L, K, delta)
                             ref_w, ref_tr, ref_eot = window_ref4(ds, q, mask, tok)
-                            hs, ht, he = parse_emitted4(s.emitted, spk, TRANS, EOT, drop_chunks=mask, drop_tr_chunks=q["miss_chunks"])
+                            hs, ht, he = parse_emitted4(s.emitted, spk, TRANS, EOT, drop_chunks=mask, drop_tr_chunks=q["miss_chunks"], begin_id=BG)
                             sc = score4(ds, q, ref_w, ref_tr, ref_eot, hs, ht, he, delta, words, xl_perm=getattr(a, "xl_order", "lang") == "arrival")
                             row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, langs=q["langs"], tgt_opt=opt, tgts=list(q["tgt"]), delta=delta, L=L, K=K, speakers=q["speakers"],
                                        n_spk=sum(1 for st in q["streams"][: len(q["streams"]) // 2] if st), masked_chunks=len(mask), miss_chunks=len(q["miss_chunks"]), forced=s.forced,

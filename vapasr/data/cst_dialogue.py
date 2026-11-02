@@ -48,6 +48,9 @@ E9 슬롯 블록 형식(slot_blocks, 기본 끔 — 2026-10-28 사용자 "1 블�
   (<BEGIN>·전사 토큰·<EOT>)을 낸다. 태그는 정해진 입력이라 label 이 없고, 슬롯의 멈춤은 다음 입력 위치의 label <NEXT_AUDIO>(next_weight)로 가르친다 — 위치를 더하지 않는다.
   <BEGIN>(토큰 <ONSET>) = episode 시작 + begin_lag(4) 청크, <EOT> = episode 끝 + δ 청크 — 발화 구간 표지라 전사 없는 발화·맞장구·합성 대화에도 내고(soft label 없음),
   전사 없는 음성은 그 화자 슬롯의 전사·멈춤 label 만 가린다(block_sequence·build_block_sequence). 태그 임베딩에는 모델이 그 슬롯의 최근 활동을 더한다(tag_chunk).
+E13(2026-11-02 사용자 "번역을 다시 넣어서 학습할 수 있도록 코드를 작성해줘 … <SPK_A~D> 까지 활성화할 필요는 없을거 같아. 이 고정 슬롯도 해제해보자"):
+  활동 게이트(slot_gate) — 라운드마다 최근 활동이 있는(또는 그 라운드 출력이 있는) 슬롯의 태그만 넣는다(gate_rounds). 태그가 여전히 입력이라 LLM 이 화자를 고르지 않는다.
+  번역 모드 — 슬롯 칸마다 [태그] 전사 출력 … [<TRANS>] 번역 출력 …(block_streams trans_of — Stage 4 와 같은 번역 타깃·목표 언어). 끄면 E9 시퀀스·난수 그대로다.
 """
 import json
 import math
@@ -422,28 +425,58 @@ def remap_perm(old: Sequence[str], new: Sequence[str], n: int) -> List[int]:
     return p
 
 
-def block_streams(eps: List[Episode], speakers: Sequence[str], t0: float, L: float, eot_id: int, begin_id: int, delay: int, begin_lag: int = 4):
+def block_streams(eps: List[Episode], speakers: Sequence[str], t0: float, L: float, eot_id: int, begin_id: int, delay: int, begin_lag: int = 4, trans_of=None,
+                  n_out: Optional[int] = None):
     """E9: episode → 슬롯별 이벤트열(창 기준 시각). 원소 = (tid, t) 전사 토큰 | (begin_id, start, k_min) | (eot_id, end, k_min) 명시 청크 이벤트
     (build_interleaved_events — 같은 슬롯의 앞 원소가 다 나간 뒤 k_min 이상인 첫 청크).
     <BEGIN>(토큰 <ONSET>) = 창 안에서 시작한 episode 의 첫 원소, k_min = ⌊start/0.08⌋ + begin_lag(δ 와 무관 — δ ≥ begin_lag 이면 첫 단어보다 늦지 않다).
     <EOT> = 창 안에서 끝난 episode 의 마지막 원소, k_min = ⌊end/0.08⌋ + δ. 둘 다 발화 구간 표지라 전사 없는 episode·맞장구·합성 대화에도 낸다(soft label 없음).
     k_min 은 build_interleaved_events 의 글자 버킷과 같은 식 int(t/0.08)(chunk_of 의 +1e-9 없이)이다 — 창 시작을 뺀 시각이 경계 바로 아래(2.999…)면 둘이 한 청크
     어긋나 δ = begin_lag 에서 <BEGIN> 이 첫 글자보다 늦게 나갔다(2026-10-28 서버 dry-run, δ4 순서 위반 21 창).
-    → (streams, 통계 dict(begin, begin_before — 창 앞에서 시작, eot, eot_truncated — 창 끝을 넘음))."""
-    t1 = t0 + L; streams: List[list] = [[] for _ in speakers]; slot = {s: i for i, s in enumerate(speakers)}; st = dict(begin=0, begin_before=0, eot=0, eot_truncated=0)
+    → (streams, 통계 dict(begin, begin_before — 창 앞에서 시작, eot, eot_truncated — 창 끝을 넘음)).
+    trans_of(E13 번역 모드, 2026-11-02 — 주면): 흐름 2N 개(0..N−1 전사, N..2N−1 그 번역). trans_of(ep) 는 window_streams4 와 같다(토큰 [(tid, 대화 시각, 입력만)],
+    번역 없는 행 구간 [(a, b, 사유)], 마지막 행에 번역이 있나). 번역 시각은 episode 구간으로 자른다 — 번역이 끝 + δ 청크 안에 나가 <EOT> 보다 늦지 않다.
+    <EOT> 는 마지막 행에 번역이 있으면 번역 흐름, 없으면 전사 흐름(같은 k_min). → (streams, 통계, 정보 dict(tr_input — 입력만 번역 원소, miss — 번역 없는 행
+    [(화자, a, b)] 대화 시각, miss_eot — 마지막 행에 번역이 없는 episode 의 <EOT> 원소)).
+    n_out: 흐름 자리 수(번역 흐름은 n_out + 슬롯 — 선언 슬롯 수 D 를 주면 build_block_sequence 의 번역 자리 D..2D−1 과 맞는다, 기본 화자 수)."""
+    t1 = t0 + L; N = len(speakers) if n_out is None else int(n_out); tr = trans_of is not None; slot = {s: i for i, s in enumerate(speakers)}
+    assert len(speakers) <= N, f"화자 {len(speakers)} 명 > 흐름 자리 {N}"
+    streams: List[list] = [[] for _ in range(2 * N if tr else len(speakers))]; st = dict(begin=0, begin_before=0, eot=0, eot_truncated=0)
+    tr_input, miss, miss_eot = set(), [], set()
+    if tr: st.update(tr_tokens=0, tr_input=0)
     for ep in eps:
         if ep.end <= t0 or ep.start >= t1 or ep.speaker not in slot: continue
         s = slot[ep.speaker]
         if ep.start >= t0: a = ep.start - t0; streams[s].append((int(begin_id), a, int(a / CHUNK_S) + begin_lag)); st["begin"] += 1
         else: st["begin_before"] += 1
         streams[s] += [(int(tid), float(t) - t0) for tid, t in ep.tokens if t0 <= t <= t1]
+        n_tr, last_ok = 0, True
+        if tr:
+            toks, gaps, last_ok = trans_of(ep)
+            for tid, t, inp in sorted(toks, key=lambda x: x[1]):
+                t = min(max(float(t), ep.start), ep.end)
+                if not t0 <= t <= t1: continue
+                if inp: tr_input.add((N + s, len(streams[N + s]))); st["tr_input"] += 1
+                streams[N + s].append((int(tid), t - t0)); n_tr += 1; st["tr_tokens"] += 1
+            for a, b, why in gaps:
+                if b > t0 and a < t1: miss.append((ep.speaker, a, b)); st[f"miss_{why}"] = st.get(f"miss_{why}", 0) + 1
         if ep.end > t1 + 1e-9: st["eot_truncated"] += 1; continue
-        e = ep.end - t0; streams[s].append((int(eot_id), e, int(e / CHUNK_S) + delay)); st["eot"] += 1
-    return streams, st
+        e = ep.end - t0; w = N + s if n_tr and last_ok else s; streams[w].append((int(eot_id), e, int(e / CHUNK_S) + delay)); st["eot"] += 1
+        if not last_ok: miss_eot.add((w, len(streams[w]) - 1))
+    return (streams, st, dict(tr_input=tr_input, miss=miss, miss_eot=miss_eot)) if tr else (streams, st)
+
+
+def gate_rounds(act, lags: int, n_rounds: int) -> List[set]:
+    """E13 활동 게이트(2026-11-02): 슬롯마다 태그를 넣을 라운드 k(0 … n_rounds − 1) — 활동 창 [k − lags + 1, k](모델 태그 활동 벡터 adapter_tagact 와 같은 칸,
+    K 이상 프레임은 없다)에 활동이 하나라도 있으면. act (K, N) 0/1."""
+    a = np.asarray(act, dtype=bool); K, N = a.shape; cs = np.concatenate([np.zeros((1, N), np.int64), np.cumsum(a, 0)], 0)
+    k = np.arange(int(n_rounds)); lo, hi = np.maximum(0, k - int(lags) + 1), np.minimum(K, k + 1); ok = hi > lo
+    return [set(int(x) for x in k[ok & (cs[np.where(ok, hi, 0), s] > cs[np.where(ok, lo, 0), s])]) for s in range(N)]
 
 
 def build_block_sequence(streams: List[list], K: int, D: int, prefix: List[int], audio_pad: int, sp: Specials, delay: int, begin_id: int, eot_id: int,
-                         slot_mask: Optional[Sequence[set]] = None, lex_mask=(), lex_chunks: Optional[Sequence[set]] = None, begin_weight: float = 0.0) -> dict:
+                         slot_mask: Optional[Sequence[set]] = None, lex_mask=(), lex_chunks: Optional[Sequence[set]] = None, begin_weight: float = 0.0,
+                         gate: Optional[Sequence[set]] = None, trans_id: Optional[int] = None, tr_input=(), tr_hide: Optional[Sequence[set]] = None, eot_hide=()) -> dict:
     """E9 슬롯 블록 시퀀스(오디오와 무관한 순수 함수). streams = block_streams(선언 슬롯 D 개보다 적으면 빈 슬롯).
     청크 k < K: [오디오 k] [<SPK_A>] A 출력 … [<SPK_B>] B 출력 … (선언 슬롯 D 개 — 태그는 입력이고 label 이 없다).
       출력 = <BEGIN>·전사 토큰·<EOT>(청크·슬롯 안 순서는 이벤트열 순서). 슬롯 s 의 멈춤(이번 청크에 더 낼 것 없음) = 다음 입력 위치(다음 태그 · 다음 청크 오디오 ·
@@ -453,84 +486,121 @@ def build_block_sequence(streams: List[list], K: int, D: int, prefix: List[int],
     slot_mask[s]: 슬롯 s 의 전사 없는 음성이 덮는 청크(K 이상 = 오디오 뒤 첫 라운드) — 그 (슬롯, 청크)의 전사 토큰·멈춤 label 은 −100, <BEGIN>·<EOT> 는 학습한다.
     lex_mask: 전사 label 만 −100 인 원소 (슬롯, index), lex_chunks[s]: 멈춤 label 을 −100 으로 둘 청크(되살린 발화 — K = 오디오 뒤 첫 라운드).
     begin_weight: <BEGIN> label 위치 pos_weight(0 = 기본 가중).
+    gate(E13 활동 게이트, 2026-11-02 사용자 "<SPK_A~D> 까지 활성화할 필요는 없을거 같아. 이 고정 슬롯도 해제해보자" — 기본 None = E9 처럼 늘 모든 슬롯):
+      슬롯마다 태그를 넣을 라운드 집합(k — 오디오 청크·flush 라운드 번호, gate_rounds). 그 라운드에 그 슬롯 출력이 있으면 집합 밖이어도 넣는다(정답을 잃지 않게).
+      넣지 않은 슬롯은 위치도 멈춤 label 도 없고, 태그가 하나도 없는 라운드는 [오디오 k] 하나다(다음 입력의 멈춤 label 은 −100).
+    trans_id(E13 번역 모드 — 기본 None): 흐름 2D 개(0..D−1 전사, D..2D−1 그 번역 — block_streams(trans_of)). 넣는 슬롯마다
+      [태그 s] 전사 출력 … [<TRANS>] 번역 출력 … — <TRANS> 도 정해진 입력이다(label 없음, tag_chunk −1, slot_at s). 번역 칸의 멈춤도 다음 입력 위치 label <NEXT_AUDIO>.
+      tr_input: 입력만 번역 원소(흐름, index — 되살린 행의 번역) label −100(그 원소가 든 라운드의 번역 칸 멈춤도), tr_hide[s]: 번역 칸 label 을 모두 가릴 라운드
+      (참조 번역이 없는 행 — revived_chunks 꼴), eot_hide: label 을 가릴 <EOT> 원소(마지막 행에 번역이 없는 episode). 전사 없는 음성(slot_mask)은 번역 칸도 가린다.
     → dict(ids, is_input, chunk_of, labels, pos_weight, labels_alt, soft_w, soft_pos, eot_pos, begin_pos, src_at, chunk_at, slot_at, tag_chunk, chunks, srcs, st,
-           n_rounds, n_flush, n_eot, n_begin, n_soft, flip, lex, D, K)."""
-    assert len(streams) <= D, f"이벤트열 {len(streams)} 개 > 선언 슬롯 {D}"
-    streams = [list(s) for s in streams] + [[] for _ in range(D - len(streams))]
+           n_rounds, n_flush, n_eot, n_begin, n_soft, flip, lex, D, K[, gate, n_tags, n_gated][, trans, n_trans_out])."""
+    tr = trans_id is not None; S = 2 * D if tr else D
+    assert len(streams) <= S, f"이벤트열 {len(streams)} 개 > {'선언 슬롯 × 2(번역)' if tr else '선언 슬롯'} {S}"
+    streams = [list(s) for s in streams] + [[] for _ in range(S - len(streams))]
     chunks, st, srcs = build_interleaved_events(streams, (K - 0.5) * CHUNK_S, sp, chunk_s=CHUNK_S, delay_frames=delay, max_per_chunk=0, add_spk_tags=False, with_src=True)
     blocks: Dict[int, List[list]] = {}
     for (k, emits), src in zip(chunks, srcs):
-        b = blocks.setdefault(min(k, K), [[] for _ in range(D)])
+        b = blocks.setdefault(min(k, K), [[] for _ in range(S)])
         for e, q in zip(emits, src):
             if q is not None: b[q[0]].append((int(e), q))
     flush = any(blocks.get(K, ()))
-    rounds = [(k, blocks.get(k) or [[] for _ in range(D)]) for k in range(K)] + ([(K, blocks[K])] if flush else []) + [(K + int(flush), [[] for _ in range(D)])]
+    rounds = [(k, blocks.get(k) or [[] for _ in range(S)]) for k in range(K)] + ([(K, blocks[K])] if flush else []) + [(K + int(flush), [[] for _ in range(S)])]
     sm = [set(x) for x in (slot_mask or ())] + [set() for _ in range(D - len(slot_mask or ()))]
     lc = [set(x) for x in (lex_chunks or ())] + [set() for _ in range(D - len(lex_chunks or ()))]
     lex = set(lex_mask)
     hide = lambda s, k: (k in sm[s]) if k < K else (k == K and any(c >= K for c in sm[s]))    # 오디오 뒤 첫 라운드만 flush 로 가린다(빈 라운드는 늘 학습)
+    gs = None if gate is None else [set(x) for x in gate] + [set() for _ in range(D - len(gate))]
+    tri, eh = set(tr_input), set(eot_hide)
+    th = [set(x) for x in (tr_hide or ())] + [set() for _ in range(D - len(tr_hide or ()))]
+    if tr:                                                                                       # 입력만 번역이 든 라운드는 그 번역 칸 멈춤도 가린다
+        for k, blk in rounds:
+            for s in range(D):
+                if any((q[0], q[1]) in tri for _, q in blk[D + s]): th[s].add(k)
+    hide_tr = lambda s, k: hide(s, k) or k in th[s]
     ids = list(prefix); N0 = len(ids); inp = [True] * N0; cof = [-1] * N0; lab = [-100] * N0; pw = [0.0] * N0
     src_at: List = [None] * N0; chunk_at = [-1] * N0; slot_at = [-1] * N0; tagk = [-1] * N0; eot_pos: List[int] = []; begin_pos: List[int] = []; pend = None
 
     def put(t, is_in, c=-1, q=None, k=-1, s=-1, tk=-1, y=-100, w=0.0):
         ids.append(int(t)); inp.append(is_in); cof.append(c); src_at.append(q); chunk_at.append(k); slot_at.append(s); tagk.append(tk); lab.append(y); pw.append(w)
 
-    def stop():                                                                                  # 앞 슬롯의 멈춤 → 지금 입력 위치의 label
+    def stop():                                                                                  # 앞 칸(슬롯 전사 또는 번역)의 멈춤 → 지금 입력 위치의 label
         nonlocal pend
         if pend is None: return -100
-        s, k = pend; pend = None
-        return -100 if hide(s, k) or k in lc[s] else sp.next_audio
-    n_flush = 0
+        s, k, kind = pend; pend = None
+        return -100 if (hide_tr(s, k) if kind else hide(s, k) or k in lc[s]) else sp.next_audio
+
+    def outputs(s, k, part):
+        nonlocal n_flush
+        for t, q in part:
+            ev = len(streams[q[0]][q[1]]) > 2; key = (q[0], q[1])
+            if ev: y = -100 if key in eh else t
+            elif q[0] >= D: y = -100 if hide_tr(s, k) or key in tri else t
+            else: y = -100 if hide(s, k) or key in lex else t
+            put(t, False, q=q, k=min(k, K), s=s, y=y, w=begin_weight if ev and t == begin_id else 0.0)
+            if ev and t == eot_id: eot_pos.append(len(ids) - 1)
+            if ev and t == begin_id: begin_pos.append(len(ids) - 1)
+            n_flush += int(k >= K)
+    n_flush = n_tags = n_gated = 0
     for k, blk in rounds:
         put(audio_pad if k < K else sp.empty_audio, True, c=k if k < K else -1, y=stop())
         for s in range(D):
-            put(sp.spk[s], True, k=k, s=s, tk=k, y=stop())
-            for t, q in blk[s]:
-                ev = len(streams[q[0]][q[1]]) > 2
-                y = t if ev or not (hide(s, k) or (q[0], q[1]) in lex) else -100
-                put(t, False, q=q, k=min(k, K), s=s, y=y, w=begin_weight if ev and t == begin_id else 0.0)
-                if ev and t == eot_id: eot_pos.append(len(ids) - 1)
-                if ev and t == begin_id: begin_pos.append(len(ids) - 1)
-                n_flush += int(k >= K)
-            pend = (s, k)
+            if gs is not None and k not in gs[s] and not blk[s] and not (tr and blk[D + s]): n_gated += 1; continue
+            put(sp.spk[s], True, k=k, s=s, tk=k, y=stop()); n_tags += 1
+            outputs(s, k, blk[s]); pend = (s, k, 0)
+            if tr: put(trans_id, True, k=k, s=s, y=stop()); outputs(s, k, blk[D + s]); pend = (s, k, 1)
     put(sp.empty_audio, True, y=stop())                                                         # 마지막 멈춤 label 을 싣는 입력
     N = len(ids)
     return dict(ids=ids, is_input=inp, chunk_of=cof, labels=lab, pos_weight=pw, labels_alt=[-100] * N, soft_w=[1.0] * N, soft_pos=[], eot_pos=eot_pos, begin_pos=begin_pos,
                 src_at=src_at, chunk_at=chunk_at, slot_at=slot_at, tag_chunk=tagk, chunks=chunks, srcs=srcs, st=st, n_rounds=len(rounds) - K, n_flush=n_flush,
-                n_eot=len(eot_pos), n_begin=len(begin_pos), n_soft=0, flip=None, lex=lex, D=D, K=K)
+                n_eot=len(eot_pos), n_begin=len(begin_pos), n_soft=0, flip=None, lex=lex, D=D, K=K,
+                **(dict(gate=[sorted(x) for x in gs], n_tags=n_tags, n_gated=n_gated) if gs is not None else {}),
+                **(dict(trans=True, n_trans_out=sum(1 for p in range(N) if not inp[p] and src_at[p] is not None and src_at[p][0] >= D)) if tr else {}))
 
 
-def block_problems(s: dict, sp: Specials, begin_id: int, eot_id: int) -> List[str]:
+def block_problems(s: dict, sp: Specials, begin_id: int, eot_id: int, trans_id: Optional[int] = None) -> List[str]:
     """E9 시퀀스 검사: 슬롯별 다시 읽기 = 이벤트열(원소마다 한 번, 순서대로), 입력 위치 = [오디오 k, 태그 0…D−1] × K + [<EMPTY_AUDIO>, 태그 0…D−1] × 라운드 + <EMPTY_AUDIO>,
     출력은 태그 뒤에만이고 특수 토큰은 <BEGIN>·<EOT> 만, 멈춤 label(<NEXT_AUDIO>)은 두 번째 이후 태그·두 번째 이후 라운드 머리·마지막 입력에만(나머지 입력은 −100),
-    <BEGIN>·<EOT> label 은 늘 살아 있고 되살린 전사 label 은 −100."""
+    <BEGIN>·<EOT> label 은 늘 살아 있고 되살린 전사 label 은 −100.
+    E13(s["gate"]·s["trans"], trans_id): 라운드마다 태그는 게이트 집합 ∪ 그 라운드 출력이 있는 슬롯만(그 순서), 번역 모드는 태그마다 뒤에 <TRANS>, 번역 흐름도 다시 읽기,
+    멈춤 label 은 칸을 여는 입력(태그·<TRANS>) 바로 다음 입력에만, 가린 <EOT>(eot_hide) 밖 사건 label 은 살아 있고 입력만 번역 label 은 −100."""
     P: List[str] = []; ids, inp, lab, tk, sa, cof = s["ids"], s["is_input"], s["labels"], s["tag_chunk"], s["slot_at"], s["chunk_of"]; D, K = s["D"], s["K"]
-    streams = [list(x) for x in s["streams"]] + [[] for _ in range(D - len(s["streams"]))]
+    tr = bool(s.get("trans")); S = 2 * D if tr else D; gate = s.get("gate")
+    if tr and trans_id is None: return ["trans:no_id"]
+    streams = [list(x) for x in s["streams"]] + [[] for _ in range(S - len(s["streams"]))]
+    is_tr = lambda p: tr and inp[p] and tk[p] < 0 and sa[p] >= 0 and ids[p] == trans_id         # 번역 칸을 여는 <TRANS> 입력
     p0 = next(p for p, c in enumerate(cof) if c >= 0)                                           # 첫 오디오 = prefix 끝
-    got: List[List[int]] = [[] for _ in range(D)]; cur = None
+    got: List[List[int]] = [[] for _ in range(S)]; cur = None
     for p in range(p0, len(ids)):
         if inp[p]:
             if tk[p] >= 0: cur = sa[p]
+            elif is_tr(p): cur = D + sa[p] if cur == sa[p] else -1
             elif cof[p] >= 0 or ids[p] == sp.empty_audio: cur = None
             continue
-        if cur is None: P.append("untagged"); continue
-        if ids[p] in sp.spk or ids[p] in (sp.next_audio, sp.empty_audio): P.append("output:special")
+        if cur is None or cur < 0: P.append("untagged"); continue
+        if ids[p] in sp.spk or ids[p] in (sp.next_audio, sp.empty_audio) or (tr and ids[p] == trans_id): P.append("output:special")
         got[cur].append(int(ids[p]))
-    for k in range(D):
-        if got[k] != [int(x[0]) for x in streams[k]]: P.append(f"order:{SLOTS[k]}")
+    for k in range(S):
+        if got[k] != [int(x[0]) for x in streams[k]]: P.append(f"order:{SLOTS[k % D]}{'+tr' if k >= D else ''}")
     ins = [p for p in range(p0, len(ids)) if inp[p]]
-    kinds = [("A", cof[p]) if cof[p] >= 0 else ("T", sa[p]) if tk[p] >= 0 else ("E", -1) if ids[p] == sp.empty_audio else ("?", p) for p in ins]
-    want = [x for k in range(K) for x in [("A", k)] + [("T", j) for j in range(D)]] + [x for _ in range(s["n_rounds"]) for x in [("E", -1)] + [("T", j) for j in range(D)]] + [("E", -1)]
+    kinds = [("A", cof[p]) if cof[p] >= 0 else ("T", sa[p]) if tk[p] >= 0 else ("R", sa[p]) if is_tr(p) else ("E", -1) if ids[p] == sp.empty_audio else ("?", p) for p in ins]
+    outs = {(chunk_at, sl) for chunk_at, sl, i_ in zip(s["chunk_at"], sa, inp) if not i_ and sl >= 0}
+    heads = [("A", k) for k in range(K)] + [("E", -1)] * s["n_rounds"]
+    rk = list(range(K)) + [K + j for j in range(s["n_rounds"])]                                 # 라운드 번호(flush = K, 빈 라운드 = 그다음)
+    open_ = lambda k, j: gate is None or k in set(gate[j]) or (k <= K and (k, j) in outs)       # 출력 청크는 min(라운드, K) — 빈 라운드(K 넘음)에는 출력이 없다
+    want = [x for h, k in zip(heads, rk) for x in [h] + [y for j in range(D) if open_(k, j) for y in ([("T", j), ("R", j)] if tr else [("T", j)])]] + [("E", -1)]
     if kinds != want: P.append("layout")
     if any(lab[p] != -100 for p in range(p0)): P.append("prefix_label")
-    for j, p in enumerate(ins):                                                                  # 멈춤 자리 = 라운드 머리 뒤 첫 태그가 아닌 태그 · 첫 오디오가 아닌 머리
-        ok = (tk[p] >= 0 and tk[ins[j - 1]] >= 0) if tk[p] >= 0 else j > 0
+    for j, p in enumerate(ins):                                                                  # 멈춤 자리 = 칸을 여는 입력(태그·<TRANS>) 바로 다음 입력
+        ok = j > 0 and (tk[ins[j - 1]] >= 0 or is_tr(ins[j - 1]))
         if (lab[p] not in (-100, sp.next_audio)) if ok else lab[p] != -100: P.append("stop_label"); break
+    eh, tri = set(s.get("eot_hide") or ()), set(s.get("tr_input") or ())
     for p, q in enumerate(s["src_at"]):
         if q is None: continue
-        x = streams[q[0]][q[1]]
-        if len(x) > 2 and (lab[p] != ids[p] or ids[p] not in (begin_id, eot_id)): P.append("event:label")
-        if len(x) == 2 and (q[0], q[1]) in (s.get("lex") or ()) and lab[p] != -100: P.append("revive:unmasked")
+        x = streams[q[0]][q[1]]; key = (q[0], q[1])
+        if len(x) > 2 and (ids[p] not in (begin_id, eot_id) or lab[p] != (-100 if key in eh else ids[p])): P.append("event:label")
+        if len(x) == 2 and key in (s.get("lex") or ()) and lab[p] != -100: P.append("revive:unmasked")
+        if len(x) == 2 and key in tri and lab[p] != -100: P.append("input_only:unmasked")
     return sorted(set(P))
 
 
@@ -719,8 +789,14 @@ class CstDialogueDataset(DialogueWindowDataset):
       한 슬롯(<SPK_A>, 그 화자 언어)으로 쓰고, 그 화자의 80 ms 활동을 target_act (K,) 로 낸다(모델이 인코더에 주입). 다른 화자 말은 정답에 없다. 번역 모드는 쓰지 않는다.
       끄면 시퀀스·난수는 예전 그대로다.
     slot_blocks(E9, 2026-10-28 — 모듈 설명 E9): 받아쓰기 창을 슬롯 블록 형식(block_sequence)으로 낸다 — 항목에 tag_chunk(태그 위치의 청크, 그 밖 −1).
-      begin_lag: <BEGIN> 지연(청크, 가장 짧은 δ 이하), begin_weight: <BEGIN> label 가중. 번역·정체 회복·교대/머무름 가중·EOT-문맥 dropout·no_eot·대상 화자와 함께 쓰지 않는다.
-      끄면 시퀀스·난수는 예전 그대로다. 평가는 끈 데이터셋에서 block_sequence 를 직접 부른다(참조는 cst_sequence 그대로)."""
+      begin_lag: <BEGIN> 지연(청크, 가장 짧은 δ 이하), begin_weight: <BEGIN> label 가중. 정체 회복·교대/머무름 가중·EOT-문맥 dropout·no_eot·대상 화자와 함께 쓰지 않는다.
+      끄면 시퀀스·난수는 예전 그대로다. 평가는 끈 데이터셋에서 block_sequence 를 직접 부른다(참조는 cst_sequence 그대로).
+      번역(E13, 2026-11-02 사용자 "번역을 다시 넣어서 학습할 수 있도록"): trans 가 있고 학습 rng 면 ast_frac 확률로 번역 모드 — 슬롯마다 [태그] 전사 칸 뒤 [<TRANS>] 번역 칸
+      (build_block_sequence trans_id, 목표 언어는 cst_sequence 와 같은 tgt_options). 슬롯 활동이 바뀌는 slot_remap 은 번역 창에서 쓰지 않는다.
+    slot_gate(E13 활동 게이트, 기본 0 = 끔 — 사용자 "<SPK_A~D> 까지 활성화할 필요는 없을거 같아. 이 고정 슬롯도 해제해보자"): 라운드 k 에 슬롯 s 의 태그를 넣는 것은
+      정답 활동(slot_act_of — 전사 없는 발화 포함)이 창 [k − slot_gate + 1, k](모델 태그 활동 벡터 칸 수와 맞춘다)에 있을 때와 그 라운드 출력이 있을 때뿐이다(gate_rounds).
+      추론은 예측 활동 창 ∪ <ONSET> 뒤 <EOT> 를 아직 안 낸 슬롯이다(batch_decode.BlockState). gate_fa(학습 rng): 슬롯마다 그 확률로 말 없는 0.3–3.2 s 구간 하나를 더 연다
+      (예측 활동의 헛 검출 — 태그 뒤 멈춤을 배운다)."""
 
     def __init__(self, dialogues: List[str], tok, delays=(4,), exclude: Optional[set] = None, windows: Optional[List[Tuple[str, float, float]]] = None,
                  max_speakers: int = 2, decision_weight: float = 0.0, backchannel: Optional[Tuple[float, int]] = None, eot_mode: str = "soft",
@@ -729,7 +805,8 @@ class CstDialogueDataset(DialogueWindowDataset):
                  tgt_of: Optional[Dict[str, Sequence[str]]] = None, trans_lead_space: bool = False, wav_aug=None, declare_all_p: float = 0.0,
                  declare: Optional[int] = None, shrink_speakers: bool = False, change_weight: float = 0.0, hold_weight: float = 0.0, eot_drop_synth: float = 0.0, xl_order: str = "lang",
                  no_eot: bool = False, target_spk: bool = False, far_aug=None, act_input=None, global_slots: float = 0.0, slot_blocks: bool = False,
-                 begin_lag: int = 4, begin_weight: float = 0.0, declare_range: bool = False, slot_shuffle: float = 0.0, slot_remap: float = 0.0, **kw):
+                 begin_lag: int = 4, begin_weight: float = 0.0, declare_range: bool = False, slot_shuffle: float = 0.0, slot_remap: float = 0.0,
+                 slot_gate: int = 0, gate_fa: float = 0.0, **kw):
         if eot_mode not in ("soft", "hard"): raise ValueError(f"eot_mode: soft | hard — {eot_mode}")
         if xl_order not in ("lang", "arrival"): raise ValueError(f"xl_order lang|arrival — {xl_order}")
         self.xl_order = xl_order                                                                # V3 R4: 'arrival' 이면 교차 언어 창도 먼저 말한 순서 슬롯(slots·cst_prefix)
@@ -783,11 +860,14 @@ class CstDialogueDataset(DialogueWindowDataset):
         self.has_xl = any(self.xl_langs(d) for d in self.dlgs.values())
         self.slot_blocks, self.begin_lag, self.begin_weight = bool(slot_blocks), int(begin_lag), float(begin_weight)   # E9(기본 끔)
         self.begin_id = int(self.sp_ids[BEGIN_TOKEN])                                               # <BEGIN> = 동결 registry 의 <ONSET>(add_phase2_specials)
-        if self.slot_blocks:
-            bad = [n for n, on in (("번역", self.trans_on), ("정체 회복", self.recover is not None), ("교대·머무름 가중", self.change_weight > 0 or self.hold_weight > 0),
+        if self.slot_blocks:                                                                     # 번역(E13 — 슬롯마다 <TRANS> 칸)은 함께 쓴다
+            bad = [n for n, on in (("정체 회복", self.recover is not None), ("교대·머무름 가중", self.change_weight > 0 or self.hold_weight > 0),
                                    ("EOT-문맥 dropout", self.eot_drop_synth > 0), ("no_eot", self.no_eot), ("대상 화자", self.target_spk)) if on]
             if bad: raise ValueError(f"slot_blocks(E9)는 {', '.join(bad)} 와 함께 쓰지 않는다")
             if not 1 <= self.begin_lag <= min(self.delays): raise ValueError(f"begin_lag {self.begin_lag} 는 1 이상, 가장 짧은 δ{min(self.delays)} 이하(<BEGIN> 이 첫 단어보다 늦지 않게)")
+        self.slot_gate, self.gate_fa = int(slot_gate), float(gate_fa)                             # E13 활동 게이트(2026-11-02, 기본 끔 — 끄면 시퀀스·난수 그대로)
+        if self.slot_gate < 0 or not 0.0 <= self.gate_fa <= 1.0 or ((self.slot_gate or self.gate_fa) and not self.slot_blocks) or (self.gate_fa and not self.slot_gate):
+            raise ValueError(f"slot_gate ≥ 0(슬롯 블록과 함께) · gate_fa ∈ [0, 1](slot_gate 와 함께) — {slot_gate} {gate_fa}")
         self.backchannel = tuple(backchannel) if backchannel else None
         self.eps: Dict[str, List[Episode]] = {c: dialogue_episodes(d, self.backchannel) for c, d in self.dlgs.items()}
         keep, n_drop, n_shrunk, lo = [], 0, 0, float(getattr(self, "window_s", (0.0,))[0])
@@ -924,8 +1004,11 @@ class CstDialogueDataset(DialogueWindowDataset):
         drop_eot(C5): None 이면 eot_drop_synth > 0 이고 rng 가 있고 meta.mask_eot 대화일 때만 rng 로 뽑는다(그 밖에는 난수를 뽑지 않는다), True/False 면 그대로(점검·dTF).
         slot_blocks(E9)면 block_sequence(번역·대상 화자 없음)."""
         if self.slot_blocks:
-            assert not tgt and target is None and not drop_eot and recover is None, "E9 슬롯 블록은 받아쓰기만"
-            return self.block_sequence(i, delay, rng)
+            assert target is None and not drop_eot and recover is None, "E9 슬롯 블록: 대상 화자·EOT-문맥 dropout·정체 회복 없음"
+            if tgt is None and rng is not None and self.trans_on and rng.random() < self.ast_frac:   # E13 번역 모드(끄면 난수를 더 뽑지 않는다)
+                cid = self.items[i][0]; opts = self.tgt_options(i) if self.has_trans(cid) else []
+                if opts: tgt = rng.choice(opts)
+            return self.block_sequence(i, delay, rng, tgt=tgt)
         cid, t0, L = self.items[i]; d = self.dlgs[cid]
         if tgt is None and target is None and rng is not None and self.trans_on and rng.random() < self.ast_frac:   # 대상 화자 모드(E2)는 번역 없음
             opts = self.tgt_options(i) if self.has_trans(cid) else []                            # 번역 타깃 행이 하나도 없는 대화는 전사 모드(2026-10-26)
@@ -949,24 +1032,44 @@ class CstDialogueDataset(DialogueWindowDataset):
         return dict(s, K=K, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, langs=langs, streams=streams, win=wst, tgt=None, n_tr=0,
                     **({"target": True} if target is not None else {}))                         # E2 대상 화자 시퀀스(한 슬롯 선언)
 
-    def block_sequence(self, i: int, delay: int, rng=None) -> dict:
+    def block_sequence(self, i: int, delay: int, rng=None, tgt: Optional[str] = None) -> dict:
         """E9 슬롯 블록 시퀀스(block_streams → build_block_sequence). 슬롯·선언 슬롯 수는 slots(i, rng)(cst_sequence 와 같은 난수). 전사 없는 음성은 그 화자 슬롯만 가린다
         (slot_mask_chunks), 되살린 발화는 그 슬롯의 전사·멈춤 label 만 −100. slot_blocks 를 켜지 않은 데이터셋(평가 — 오라클 디코드)도 부를 수 있다.
-        slot_remap(학습 rng): remap_point 가 고른 무음 틈 뒤 episode 는 새 순서 슬롯으로 — 이벤트열·마스크가 나눠 따르고, 결과에 remap = (바꾸는 시각, 새 순서)."""
-        cid, t0, L = self.items[i]; d = self.dlgs[cid]; spk, langs = self.slots(i, rng); K = int(round(L / CHUNK_S))
+        slot_remap(학습 rng): remap_point 가 고른 무음 틈 뒤 episode 는 새 순서 슬롯으로 — 이벤트열·마스크가 나눠 따르고, 결과에 remap = (바꾸는 시각, 새 순서).
+        tgt(E13 번역 모드 — 목표 언어, 교차 언어는 'xl'): 흐름 2D 개(block_streams trans_of)와 슬롯마다 <TRANS> 칸, prefix 에 translate 줄(cst4_sequence 와 같은 목표).
+          번역 없는 행의 방출 청크(miss)는 그 슬롯 번역 칸을, 마지막 행에 번역이 없는 episode 의 <EOT> 는 label 을 가린다. 번역 창은 slot_remap 을 쓰지 않는다.
+        slot_gate(E13): 정답 활동(slot_act_of)으로 gate_rounds, gate_fa(학습 rng)로 헛 구간을 더한다 — build_block_sequence gate."""
+        cid, t0, L = self.items[i]; d = self.dlgs[cid]; spk, langs = self.slots(i, rng); K = int(round(L / CHUNK_S)); D = len(langs)
         if delay < self.begin_lag: raise ValueError(f"δ{delay} < <BEGIN> 지연 {self.begin_lag}")
         rv = [x for x in self.revived.get(cid, {}).values() if x[2] > t0 and x[1] < t0 + L]
-        rm = None if rv else self.remap_point(cid, t0, L, spk, rng)                                  # 되살린 발화가 있는 창은 바꾸지 않는다
-        if rm is None: streams, wst = block_streams(self.eps[cid], spk, t0, L, self.eot_id, self.begin_id, delay, self.begin_lag)
+        rm = None if rv or tgt else self.remap_point(cid, t0, L, spk, rng)                          # 되살린 발화가 있는 창·번역 창은 바꾸지 않는다
+        tg = info = None
+        if tgt:
+            if self.trans_id is None: raise ValueError("번역 타깃(trans)이 없다")
+            xl = len(set(langs)) > 1; tg = [langs[1], langs[0]] if xl else [tgt] * D
+            streams, wst, info = block_streams(self.eps[cid], spk, t0, L, self.eot_id, self.begin_id, delay, self.begin_lag,
+                                               trans_of=self.trans_of(cid, dict(zip(spk, tg)) if xl else tgt, t0), n_out=D)   # 번역 흐름 = D + 슬롯
+        elif rm is None: streams, wst = block_streams(self.eps[cid], spk, t0, L, self.eot_id, self.begin_id, delay, self.begin_lag)
         else:
             ea, eb = split_episodes(self.eps[cid], rm[0])
             (sa, wa), (sb, wb) = (block_streams(e_, sp_, t0, L, self.eot_id, self.begin_id, delay, self.begin_lag) for e_, sp_ in ((ea, spk), (eb, rm[1])))
             streams = [x + y for x, y in zip(sa, sb)]; wst = {k: wa[k] + wb[k] for k in wa}
-        s = build_block_sequence(streams, K, len(langs), self.cst_prefix(langs, delay), self.audio_pad, self.csp, delay, self.begin_id, self.eot_id,
+        gate = None
+        if self.slot_gate > 0:
+            act = np.asarray(self.slot_act_of(dict(cid=cid, speakers=spk, t0=t0, L=L, K=K, **({"remap": rm} if rm else {})), D), dtype=bool).reshape(K, D)
+            gate = gate_rounds(act, self.slot_gate, K + 2)                                            # 라운드 0 … K + 1(flush·빈 라운드)
+            if rng is not None and self.gate_fa > 0:                                                  # 헛 검출 흉내: 슬롯마다 말 없는 구간 하나(끄면 난수를 더 뽑지 않는다)
+                for s in range(D):
+                    if rng.random() < self.gate_fa:
+                        n = rng.randint(4, 40); a = rng.randrange(max(1, K)); gate[s].update(range(a, min(K, a + n)))
+        tr_hide = [revived_chunks(info["miss"], [w], t0, K, delay) for w in spk] if tgt else None
+        s = build_block_sequence(streams, K, D, self.cst_prefix(langs, delay, tg), self.audio_pad, self.csp, delay, self.begin_id, self.eot_id,
                                  slot_mask=self.slot_mask_chunks(d, spk, t0, L, K, delay, remap=rm), lex_mask=revived_elements(streams, spk, rv, t0) if rv else (),
-                                 lex_chunks=[revived_chunks(rv, [w], t0, K, delay) for w in spk] if rv else None, begin_weight=self.begin_weight)
-        return dict(s, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, langs=langs, streams=streams, win=wst, tgt=None, n_tr=0, blocks=True,
-                    **({"remap": rm} if rm else {}))
+                                 lex_chunks=[revived_chunks(rv, [w], t0, K, delay) for w in spk] if rv else None, begin_weight=self.begin_weight, gate=gate,
+                                 trans_id=self.trans_id if tgt else None, tr_input=info["tr_input"] if tgt else (), tr_hide=tr_hide, eot_hide=info["miss_eot"] if tgt else ())
+        return dict(s, cid=cid, t0=t0, L=L, lang=d.lang, corpus=d.corpus, speakers=spk, langs=langs, streams=streams, win=wst, tgt=tuple(tg) if tg else None,
+                    n_tr=sum(1 for ev in streams[D:] for x in ev if len(x) == 2) if tgt else 0, blocks=True, **({"remap": rm} if rm else {}),
+                    **(dict(tr_input=info["tr_input"], eot_hide=info["miss_eot"], miss_chunks=set().union(*tr_hide) if tr_hide else set()) if tgt else {}))
 
     def remap_point(self, cid: str, t0: float, L: float, spk: Sequence[str], rng) -> Optional[Tuple[float, List[str]]]:
         """slot_remap(2026-10-30, 사용자 "LLM 활동 추종 학습 구현해놓자", 학습 rng 만): 그 확률로 창 안 깨끗한 틈(어느 episode 도 걸치지 않는 0.4 s 이상 무음, 가운데가
@@ -1045,9 +1148,10 @@ class CstDialogueDataset(DialogueWindowDataset):
         """cst_sequence 결과 하나의 검사(target_problems 본체 — dry-run 은 이미 만든 시퀀스를 넘긴다).
         뒤집은 시퀀스(flip): 슬롯별 다시 읽기는 뒤집은 문맥 슬롯 기준, 구간 출력 label 이 모두 −100, 회복 지점 label 이 정답
         (inrun = 그 화자 태그, boundary = 태그 없이 그 원소)인지 본다."""
+        if s.get("blocks"):                                                                     # E9 슬롯 블록(E13 번역 모드 포함)
+            return block_problems(s, self.csp, self.begin_id, self.eot_id, trans_id=self.trans_id if s.get("tgt") else None) + \
+                (["declare:fewer_slots_than_speakers"] if len(s["langs"]) < len(s["speakers"]) else [])
         if s.get("tgt"): return self.problems_of4(s)
-        if s.get("blocks"):                                                                     # E9 슬롯 블록
-            return block_problems(s, self.csp, self.begin_id, self.eot_id) + (["declare:fewer_slots_than_speakers"] if len(s["langs"]) < len(s["speakers"]) else [])
         P = []
         got, bad = read_back(s["ids"], s["is_input"], self.csp, self.eot_id)
         P += sorted(set(bad)); f = s.get("flip"); lex = s.get("lex") or ()
@@ -1124,20 +1228,34 @@ class CstDialogueDataset(DialogueWindowDataset):
         if s["n_eot"] + s["win"].get("eot_dropped", 0) != s["win"]["eot"]: P.append("eot_count")
         return P + self.decision_problems(s)
 
+    def _tr_add(self) -> np.ndarray:
+        """창마다 번역 모드로 늘어날 토큰 추정: 겹치는 행마다 번역 토큰 n(목표 언어 중 최대) + 태그 2 + n/4(cst4 형식 — 전사·번역이 번갈면 태그가 는다,
+        2026-10-19 시험 dry-run 에서 +2 만으로는 1 % 과소 추정 11 창). E13 슬롯 블록은 태그 몫이 <TRANS> 칸으로 따로 더해지지만 같은 값을 넉넉히 쓴다."""
+        per = {}
+        for cid in {c for c, _, _ in self.items}:
+            n_of = lambda x, w, b: max((len(v[0]) for v in (self.trans_input if x["kind"] == "r" else self.trans).get(f"{self._tcid(cid)}|{w}|{b}", {}).values()), default=0)
+            r = [(x["a"], x["e"], 2 + n + n // 4) for (w, b), x in self._rows(cid).items() for n in (n_of(x, w, b),)]
+            per[cid] = (np.array([x[0] for x in r]), np.array([x[1] for x in r]), np.array([x[2] for x in r]))
+        return np.array([int(per[c][2][(per[c][1] > t0) & (per[c][0] < t0 + L)].sum()) if len(per[c][0]) else 0 for c, t0, L in self.items], dtype=np.int64)
+
     def est_lens(self) -> np.ndarray:
         est = super().est_lens() + 16 + 8 * (self.n_slots - 2)                                   # 두 슬롯 prefix 가 Phase 2 prefix 보다 길다(슬롯 하나에 언어·번역 줄 약 4 토큰씩)
         if self.slot_blocks:                                                                     # E9: 청크마다 오디오 + 태그(선언 슬롯 — 많게 n_slots) − <NEXT_AUDIO>, 끝 라운드 둘·멈춤 입력
             K = np.array([int(round(L / CHUNK_S)) for _, _, L in self.items], dtype=np.int64)
-            return est + (self.n_slots - 1) * K + 2 * (self.n_slots + 1) + 1
+            if not self.slot_gate and not self.trans_on: return est + (self.n_slots - 1) * K + 2 * (self.n_slots + 1) + 1
+            if getattr(self, "_est13", None) is not None and len(self._est13) == len(self.items): return self._est13
+            if self.slot_gate:                                                                   # E13 게이트: 태그 = 화자 episode(창 안) + 활동 창 꼬리, 넉넉히(같은 화자 구간끼리 겹쳐도 더한다)
+                ep = {c: (np.array([e.start for e in self.eps[c]]), np.array([e.end for e in self.eps[c]])) for c in {c for c, _, _ in self.items}}
+                tags = np.array([int(min(self.n_slots * (k + 2), ((np.minimum(ep[c][1], t0 + L) - np.maximum(ep[c][0], t0))[(ep[c][0] < t0 + L) & (ep[c][1] > t0)] / CHUNK_S
+                                                                    + self.slot_gate + 1).sum() + 40 * self.gate_fa * self.n_slots))
+                                 for (c, t0, L), k in zip(self.items, K)], dtype=np.int64)
+            else: tags = self.n_slots * K
+            tr = (self._tr_add() + tags + 12) if self.trans_on else 0                            # 번역 모드: 번역 토큰·<TRANS> 칸(태그마다)·translate 줄
+            self._est13 = est - K + tags + 2 * (self.n_slots + 1) + 1 + tr
+            return self._est13
         if not self.trans_on: return est
         if getattr(self, "_est4", None) is not None and len(self._est4) == len(self.items): return self._est4
-        per = {}                                                                                 # 번역 모드로 뽑힐 수 있으니 창마다 번역 토큰 n(행의 목표 언어 중 최대) + 태그 2 + n/4 를 더한다
-        for cid in {c for c, _, _ in self.items}:                                                # (전사·번역이 번갈면 태그가 는다 — 2026-10-19 시험 dry-run 에서 +2 만으로는 1 % 과소 추정 11 창)
-            n_of = lambda x, w, b: max((len(v[0]) for v in (self.trans_input if x["kind"] == "r" else self.trans).get(f"{self._tcid(cid)}|{w}|{b}", {}).values()), default=0)
-            r = [(x["a"], x["e"], 2 + n + n // 4) for (w, b), x in self._rows(cid).items() for n in (n_of(x, w, b),)]
-            per[cid] = (np.array([x[0] for x in r]), np.array([x[1] for x in r]), np.array([x[2] for x in r]))
-        add = np.array([int(per[c][2][(per[c][1] > t0) & (per[c][0] < t0 + L)].sum()) if len(per[c][0]) else 0 for c, t0, L in self.items], dtype=np.int64)
-        self._est4 = est + add + 12                                                              # translate 줄
+        self._est4 = est + self._tr_add() + 12                                                   # translate 줄
         return self._est4
 
     def stems(self, cid: str):
@@ -1158,7 +1276,7 @@ class CstDialogueDataset(DialogueWindowDataset):
         drop = (random.random() < self.eot_drop_synth) if self.eot_drop_synth > 0 and self.dlgs[cid].meta.get("mask_eot") else None   # C5 동전은 따로 — 형식 난수(slots·recover·tgt)는 예전 조건 그대로
         tsp = random.choice(window_speakers(self.eps[cid], self.items[i][1], self.items[i][2])) if self.target_spk else None   # E2 대상 화자(끄면 난수를 뽑지 않는다)
         s = self.cst_sequence(i, delay, rng=random if (self.recover or (self.trans_on and tsp is None) or self.has_xl or self.global_slots > 0 or self.declare_range
-                                                       or self.slot_shuffle > 0 or self.slot_remap > 0) else None,
+                                                       or self.slot_shuffle > 0 or self.slot_remap > 0 or self.gate_fa > 0) else None,
                               **({"drop_eot": drop} if drop is not None else {}), **({"target": tsp} if tsp is not None else {}))
         wav = np.asarray(crop_audio(self.mono(s["cid"]), s["t0"], s["t0"] + s["L"]), dtype=np.float32)
         if self.far_aug is not None and random.random() < self.far_aug.p:                          # 원거리 증강(끄면 난수를 더 뽑지 않는다)
