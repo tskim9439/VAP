@@ -24,6 +24,7 @@ raw_authors:
 - 정규화: **표준** = Whisper 정규화 + meeteval cpWER(외부 수치와 같은 도구). **우리** = 우리 채점(채움말 남김). 우리 모델은 표준이 우리보다 0.9–1.8 낮다.
 - 지연: 우리 δ10 평균 0.92 s, Multitalker Parakeet 1.12 s, VibeVoice-Streaming 2.0 s(15 프레임 1.53 s).
 - 공유용 웹 페이지(2026-10-31, 사용자 "공유용 웹 페이지로 만들어줘", 비공개 — 공유는 페이지의 Share 메뉴): https://claude.ai/artifact/SrZjdmP1UrWB3REHkfjX9T
+- 모델 구조(E11·G3, 그림): [[output-e11-g3-architecture-20261102]].
 
 ## 1. 스트리밍(Streaming)
 ### 1.1 회의 통째·세션 cpWER (eval, 괄호 dev)
