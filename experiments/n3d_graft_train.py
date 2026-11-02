@@ -46,7 +46,8 @@ ap.add_argument("--taps", default="odd", help="인코더 탭 층('odd'·'all'·'
 ap.add_argument("--blocks", type=int, default=3); ap.add_argument("--kernel", type=int, default=5); ap.add_argument("--ffn", type=int, default=2048)
 ap.add_argument("--kd-weight", type=float, default=1.0); ap.add_argument("--hid-weight", type=float, default=0.1); ap.add_argument("--ref-weight", type=float, default=0.0)
 ap.add_argument("--init-graft", default=None, help="G1b: 시작 어댑터 graft.pt(능형 회귀 대신, 무음 sil 도 그것) — 재개 checkpoint 가 있으면 그것이 우선")
-ap.add_argument("--stream-chunk", type=int, default=0, help="G1b: 0 이면 창 통째(오프라인) 학습, N 이면 교사·학생 모두 청크 N 스트리밍(AOSC)으로 증류 — --init-graft 와 함께")
+ap.add_argument("--stream-chunk", default="0", help="G1b: 0 이면 창 통째(오프라인) 학습, N 이면 교사·학생 모두 청크 N 스트리밍(AOSC)으로 증류 — --init-graft 와 함께. "
+               "'N1,N2,…'(2026-11-02 — G2 학생을 학습 청크 16 으로 돌리면 AMI SDM 회의 DER 이 32.65 → 27.71: 추론 청크 4 와 다르면 회의 중 표류가 커진다)면 step 마다 차례로 돌아가며(rank 모두 같은 청크)")
 ap.add_argument("--ridge-windows", type=int, default=256, help="처음 시작 때 능형 회귀로 입력 Linear 를 둘 창 수(0 = 기본 초기화)"); ap.add_argument("--ridge", type=float, default=10.0)
 ap.add_argument("--unfreeze-layers", type=int, default=0, help="U3: 우리 인코더 아래 N 층을 함께 학습(0 = 고정 — G1·G1b)")
 ap.add_argument("--enc-lr", type=float, default=2e-5, help="U3: 푼 인코더 층 학습률"); ap.add_argument("--guard-weight", type=float, default=1.0, help="U3: ASR 지킴 가중(0 = 끔)")
@@ -67,7 +68,10 @@ ap.add_argument("--dry-run", action="store_true", help="데이터만 만들고 �
 a = ap.parse_args()
 assert 0 <= a.graft_layer <= 30, "--graft-layer 0–30(N3D 31 층)"
 assert a.kd_weight > 0 or a.hid_weight > 0 or a.ref_weight > 0, "손실 가중이 모두 0 이다"
-assert a.stream_chunk >= 0 and (not a.stream_chunk or a.init_graft), "--stream-chunk(G1b)는 --init-graft(G1 final)와 함께 — 무음 sil 을 거기서 고정해 쓴다"
+CHUNKS = tuple(int(x) for x in str(a.stream_chunk).split(","))                              # 2026-11-02: 여럿이면 step 마다 돌아가며
+a.stream_chunk = CHUNKS[0] if len(CHUNKS) == 1 else ",".join(map(str, CHUNKS))               # 지문: 하나면 예전처럼 정수
+assert all(c >= 0 for c in CHUNKS) and (len(CHUNKS) == 1 or all(c > 0 for c in CHUNKS)), f"--stream-chunk 는 0 또는 양의 청크(여럿이면 모두 양수): {a.stream_chunk}"
+assert not CHUNKS[0] or a.init_graft, "--stream-chunk(G1b)는 --init-graft(G1 final)와 함께 — 무음 sil 을 거기서 고정해 쓴다"
 assert a.unfreeze_layers >= 0 and (not a.unfreeze_layers or a.init_graft), "--unfreeze-layers(U3)는 --init-graft(G1b final)에서 시작한다"
 assert a.n3d_train == "none" or (a.lora_rank > 0 and a.n3d_lr > 0), "--n3d-train(G2)은 --lora-rank·--n3d-lr > 0"
 CKPT = bool(a.stream_ckpt or a.unfreeze_layers)
@@ -166,11 +170,13 @@ def last_checkpoint(out):
 
 
 # ── 한 배치의 교사·학생·손실
-def batch_terms(b, enc, taps, n3, adapter, dev, sil0=None, enc0=None, n3s=None):
+def batch_terms(b, enc, taps, n3, adapter, dev, sil0=None, enc0=None, n3s=None, chunk=None):
     """→ (손실, 통계 dict, 무음 프로필 (합 (512,), 프레임 수)). 교사(N3D 오프라인)와 학생(탭 → 어댑터 → layer 층 위·머리)이 같은 오디오를 본다.
     --stream-chunk(G1b)면 확률 손실은 교사 스트리밍 대 학생 스트리밍(sil0 — 캐시 무음 자리)의 80 ms BCE 다.
     U3(--unfreeze-layers): 탭에 gradient 가 흐르고(아래 층), enc0(고정 원본 인코더)가 있으면 마지막 층 출력의 ASR 지킴 손실을 더한다.
-    G2: n3s(학생 N3D 사본 — 위층 학습)가 있으면 학생 쪽 layer 층 위·머리는 그것으로 돈다(교사 n3 은 그대로)."""
+    G2: n3s(학생 N3D 사본 — 위층 학습)가 있으면 학생 쪽 layer 층 위·머리는 그것으로 돈다(교사 n3 은 그대로).
+    chunk: 이 배치의 스트리밍 청크(기본 --stream-chunk 의 첫 값 — 여럿이면 학습 고리가 step 마다 고른다)."""
+    ch = int(chunk or CHUNKS[0])
     ns = n3 if n3s is None else n3s
     from vapasr.hf.diar import sort_pit_loss
     from vapasr.hf.n3d import stream_probs
@@ -184,11 +190,11 @@ def batch_terms(b, enc, taps, n3, adapter, dev, sil0=None, enc0=None, n3s=None):
     h = h[:, :T].float(); pt = p10[:, : T * 8].float()
     v10 = (torch.arange(T * 8, device=dev)[None] < (L * 8)[:, None]).float()[..., None]               # 10 ms 유효
     v80 = (torch.arange(T, device=dev)[None] < L[:, None])                                           # 80 ms 유효
-    if a.stream_chunk:                                                                               # G1b: 교사·학생 모두 스트리밍(AOSC) — 80 ms 확률
-        with torch.no_grad(): t80s = stream_probs(n3, wav, wl, a.stream_chunk, 0)[:, :T].float()
+    if ch:                                                                                           # G1b: 교사·학생 모두 스트리밍(AOSC) — 80 ms 확률
+        with torch.no_grad(): t80s = stream_probs(n3, wav, wl, ch, 0)[:, :T].float()
         with torch.autocast("cuda", dtype=torch.bfloat16):
             hh = adapter(f[:, :, :T])
-            s80s = stream(ns, hh.float(), L, a.graft_layer, sil0, chunk=a.stream_chunk, grad=True, ckpt=CKPT)
+            s80s = stream(ns, hh.float(), L, a.graft_layer, sil0, chunk=ch, grad=True, ckpt=CKPT)
         hh = hh.float(); s80s = s80s.float(); vs = v80.float()[..., None]
         kd = (F.binary_cross_entropy(s80s.clamp(1e-6, 1 - 1e-6), t80s, reduction="none") * vs).sum() / (vs.sum() * t80s.shape[-1]).clamp(min=1)
         ps = None
@@ -202,7 +208,7 @@ def batch_terms(b, enc, taps, n3, adapter, dev, sil0=None, enc0=None, n3s=None):
     var = (((h - mu) ** 2) * vh).sum() / (vh.sum() * h.shape[-1]).clamp(min=1)
     hid = (((hh - h) ** 2) * vh).sum() / (vh.sum() * h.shape[-1]).clamp(min=1) / var.clamp(min=1e-6)
     loss = a.kd_weight * kd + a.hid_weight * hid
-    s80g = s80s if a.stream_chunk else pool80(ps, L); t80 = t80s if a.stream_chunk else pool80(pt, L); s80 = s80g.detach()
+    s80g = s80s if ch else pool80(ps, L); t80 = t80s if ch else pool80(pt, L); s80 = s80g.detach()
     st = dict(kd=float(kd), hid=float(hid), agree=float((((s80 > 0.5) == (t80 > 0.5)).all(-1) & v80).sum() / v80.sum().clamp(min=1)),
               t_act=float(((t80 > 0.5).any(-1) & v80).sum() / v80.sum().clamp(min=1)))
     if enc0 is not None:                                                                             # U3 ASR 지킴: 마지막 층(LLM 입력) = 고정 원본
@@ -341,7 +347,7 @@ def main():
         flag = torch.tensor([1.0 if rank == 0 and os.path.exists(preempt) else 0.0], device=dev)
         if ddp: dist.all_reduce(flag)
         if flag.item() > 0: save(f"checkpoint-{step}"); log("PREEMPT → 저장하고 끝낸다"); break
-        loss, st, (ps_, pn_) = batch_terms(b, encnet, taps, n3, net, dev, sil0, enc0, n3s)
+        loss, st, (ps_, pn_) = batch_terms(b, encnet, taps, n3, net, dev, sil0, enc0, n3s, chunk=CHUNKS[step % len(CHUNKS)])
         opt.zero_grad(set_to_none=True); loss.backward()
         if ddp and n3_ps: grad_mean(n3_ps, world)                                                      # G2: 학생 N3D 는 DDP 밖 — rank 평균
         gn = torch.nn.utils.clip_grad_norm_(list(adapter.parameters()) + enc_ps + n3_ps, 1.0); opt.step(); sched.step(); step += 1
