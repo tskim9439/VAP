@@ -233,7 +233,8 @@ class BlockState:
     with no output, or max_flush rounds, ends the row. emitted gets (k, slot tag) before a slot's first output in a chunk, then
     (k, token) -- the same shape as DecodeState.emitted, so cst_eval.parse_emitted reads it unchanged.
     E13 (2026-11-02, cst_dialogue module doc E13; defaults keep E9): gate_lags > 0 opens slot s in round k only when act (Ka, N) bool has
-    activity in [k - gate_lags + 1, k] or the slot is inside an utterance it opened (<ONSET> emitted, <EOT> not yet) -- the training gate
+    activity in [k - gate_lags + 1, k] or the slot has an utterance it opened (more <ONSET> than <EOT> emitted -- counted, since in translation mode an
+    utterance's <EOT> follows its translation and may come after the next utterance's <ONSET>) -- the training gate
     (gate_rounds) plus the decoder's own open utterances. A round with no open slot is the audio alone. trans_id >= 0 (translation mode):
     each open slot's tag is followed by a <TRANS> input whose outputs are that slot's translation; emitted gets (k, slot tag), (k, <TRANS>)
     before them (cst_eval.parse_emitted4 reads it)."""
@@ -268,10 +269,10 @@ class BlockState:
         if self.gate_lags <= 0:
             return list(range(self.D))
         if not self.open_:
-            self.open_ = [False] * self.D
+            self.open_ = [0] * self.D
         a = self.act
         lo, hi = max(0, self.k - self.gate_lags + 1), min(a.shape[0], self.k + 1)
-        return [s for s in range(self.D) if self.open_[s] or (s < a.shape[1] and hi > lo and bool(a[lo:hi, s].any()))]
+        return [s for s in range(self.D) if self.open_[s] > 0 or (s < a.shape[1] and hi > lo and bool(a[lo:hi, s].any()))]
 
     def _enter(self):
         self.s, self.kind = self.items[self.j]
@@ -311,7 +312,7 @@ class BlockState:
                 self.emitted.append((self.k, self.trans_id))
         self.emitted.append((self.k, int(tid)))
         if self.gate_lags > 0 and tid in (self.begin_id, self.eot_id):
-            self.open_[self.s] = tid == self.begin_id
+            self.open_[self.s] = self.open_[self.s] + 1 if tid == self.begin_id else max(0, self.open_[self.s] - 1)
         self.n += 1
         self.n_round += 1
         self.n_total += 1
