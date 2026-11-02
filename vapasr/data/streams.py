@@ -23,6 +23,7 @@ def load_utt_audio(path: str, offset_s: Optional[float] = None, dur_s: Optional[
     if "#ch" in path: path, c = path.rsplit("#ch", 1); ch = int(c)
     if "::" in path:
         from .archive import load_audio_from_archive; return _cut(load_audio_from_archive(path), offset_s, dur_s, SR)
+    from .archive import resolve_path; path = resolve_path(path)          # 공용 DB 가 옮긴 폴더의 옛 경로(압축은 read_member 가 찾는다)
     if path.endswith(".pcm"): return _cut(read_pcm(path)[0], offset_s, dur_s, SR)
     import soundfile as sf
     if offset_s is not None:
