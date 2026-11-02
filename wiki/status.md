@@ -2,7 +2,7 @@
 type: status
 status: active
 created: 2026-09-03
-updated: 2026-10-26
+updated: 2026-11-02
 summary: 2026-10-27 F1 학습 완료·평가 중, E5·E6(E1c 95932·E5 95933·E6 95935) 제출. 화자 분리 상한: SDM eval cp 53.6→E2 28.6·E3 34.5
 ---
 
@@ -373,6 +373,7 @@ summary: 2026-10-27 F1 학습 완료·평가 중, E5·E6(E1c 95932·E5 95933·E6
 | B mono decoder tick p99 105–145 ms | 80 ms 실시간 deadline 미충족 | [[output-stage1-mono-pilot]] |
 | B full FT도 RNN-T 대비 오류 2.2–3.8배 | 데이터 규모와 단일시점 정렬 목표의 일반화 한계를 분리해야 함 | [[source-stage1-mono-run-ab]] |
 | KO `viol80=4.85%`, 지연 p99 797 ms | 과소 방출 해소와 맞바꾼 조기 방출 꼬리 | [[source-stage1-mono-run-ab]] |
+| AI Hub 031 공용 폴더 이름 변경(`031.broadcasting_koen`, 2026-11-01)·다시 내려받기 미완(`TS_한-영(미국)_한국어음성_교양.zip` 없음) | 로더가 옛 경로를 찾아 읽는다(a87d4af). 없는 압축 1 개는 replay ahbc 의 3.3 % | [[output-e13-gate-trans-20261102]] |
 
 ## 스키마 이슈 (유지보수 PR 필요)
 
