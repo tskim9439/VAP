@@ -191,7 +191,7 @@ def run(a):
                             hs, ht, he = parse_emitted4(s.emitted, spk_p, TRANS, EOT, drop_chunks=mask, drop_tr_chunks=q["miss_chunks"], begin_id=BG)
                             xs = None
                             if XI >= 0:                                                                 # E14: X 칸 전사 토큰 → 전문가 확률(임계 아래 포함)이 가장 큰 슬롯
-                                xt, hs, ht = hs[-1], hs[: len(spk)], ht[: len(spk)]
+                                xt, hs, ht = hs[-1], hs[: len(spk)], ht[: len(spk)]; he = [(s_, t) for s_, t in he if s_ < len(spk)]   # X 칸 <EOT> 는 버린다
                                 if xt:
                                     pk = prev.get((f"{cid}@{t0w}", delta, opt), {}) if a.from_predictions else {}
                                     if len(pk.get("x_slots") or ()) == len(xt): xs = pk["x_slots"]

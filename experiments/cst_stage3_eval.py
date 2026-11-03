@@ -523,6 +523,7 @@ def run(a):
                         ev = [] if blocks else None
                         hs, he = parse_emitted(s.emitted, spk_p, EOT, drop_chunks=mask, begin_id=BEGIN, events=ev)
                         xw = words(hs[-1]) if XI >= 0 else []; hs = hs[: len(spk)]                      # E14: X 칸 단어(아래에서 전문가 활동으로 슬롯에 붙인다)
+                        n_xe = sum(1 for s_, _ in he if s_ >= len(spk)); he = [(s_, t) for s_, t in he if s_ < len(spk)]   # X 칸 <EOT>(학습에 없다 — 모델 실수)는 버리고 센다
                         hw = hw0 = [words(h) for h in hs]
                         llm_der = None
                         if blocks:                                                                      # E9 LLM 쪽 화자 분리(<BEGIN>·<EOT> 구간) — diar_eval 과 같은 프레임 마스크
@@ -563,7 +564,7 @@ def run(a):
                                    **({"positions": s.positions, "enc_s": enc_s, "dec_s": s.dec_s} if hasattr(s, "positions") else {}),
                                    **({"retag": s.retag} if hasattr(s, "retag") else {}), **({"llm_der": llm_der} if llm_der is not None else {}), **(s.blk if hasattr(s, "blk") else {}),
                                    **({"gated": s.gated} if hasattr(s, "gated") else {}), **fx_row, **({"relabeled": nrl} if nrl is not None else {}),
-                                   **({"n_x": len(xw), "x_slots": xs} if xw else {}),
+                                   **({"n_x": len(xw), "x_slots": xs} if xw else {}), **({"n_x_eot": n_xe} if XI >= 0 and n_xe else {}),
                                    ref_text=[" ".join(w for w, _ in r) for r in ref_w], hyp_text=[" ".join(w for w, _ in h) for h in addx(hw)], **sc)
                         fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
                 print(f"  {c}: {min(b0 + bs, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
