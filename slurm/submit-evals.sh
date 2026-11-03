@@ -201,7 +201,7 @@ case $set_ in
   q17-e2-tgt) for r in 0 1 2 3 4 5 6 7; do L+=("$r|bash $X amitgt q17-e2-tgt final $r/8"); done ;;
   q17-e3) for r in 0 1 2 3 4 5 6 7; do L+=("$r|E3_THR=${E3_THR:-0.45} bash $X amie3 q17-e2-tgt final $r/8"); done ;;
 esac
-T=$D/tmp/evals-$set_-$(date +%Y%m%d-%H%M%S).txt
+T=$D/tmp/evals-$set_-$(date +%Y%m%d-%H%M%S)-$$.txt                                       # 같은 초에 잇따라 내도 겹치지 않게 PID(2026-11-03 — q17-e13-gate 둘째 판이 "이미 있다"로 멈췄다)
 cmd="sbatch --job-name=$jname ${part:+--partition=$part }${dep:+--dependency=afterok:$dep }--time=24:00:00 --export=ALL,TASKS=$T slurm/v3-eval-node.sbatch"
 if (( dry )); then printf '%s\n' "${L[@]}"; echo "$cmd"; echo "Submitted batch job 0"; exit 0; fi
 [[ -e $T ]] && { echo "이미 있다: $T" >&2; exit 1; }
