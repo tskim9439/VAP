@@ -237,7 +237,10 @@ class BlockState:
     utterance's <EOT> follows its translation and may come after the next utterance's <ONSET>) -- the training gate
     (gate_rounds) plus the decoder's own open utterances. A round with no open slot is the audio alone. trans_id >= 0 (translation mode):
     each open slot's tag is followed by a <TRANS> input whose outputs are that slot's translation; emitted gets (k, slot tag), (k, <TRANS>)
-    before them (cst_eval.parse_emitted4 reads it)."""
+    before them (cst_eval.parse_emitted4 reads it).
+    E14 (2026-11-03, cst_dialogue module doc x_slot): x_id >= 0 adds the X box after the slot boxes of every round (input <SPK_5>, kind 2); its
+    outputs are the speech of closed slots; emitted gets (k, x_id) before them (parse_emitted with the slot tags + (x_id,) reads it as slot D).
+    X outputs never change the open-utterance counts."""
     K: int
     D: int
     cap: int
@@ -247,6 +250,7 @@ class BlockState:
     gate_lags: int = 0
     act: object = None
     trans_id: int = -1
+    x_id: int = -1
     begin_id: int = -1
     eot_id: int = -1
     k: int = 0
@@ -278,7 +282,7 @@ class BlockState:
         self.s, self.kind = self.items[self.j]
         self.n = 0
         self.n_tags += int(self.kind == 0)
-        return ("trans", (self.k, self.s)) if self.kind else ("tag", (self.k, self.s))
+        return ("xtag", (self.k, self.s)) if self.kind == 2 else ("trans", (self.k, self.s)) if self.kind else ("tag", (self.k, self.s))
 
     def _next_round(self):
         if self.k >= self.K:
@@ -299,7 +303,7 @@ class BlockState:
         if self.done:
             return "pad", 0
         if self.s < 0:
-            self.items = [(s, x) for s in self.open_slots() for x in ((0, 1) if self.trans_id >= 0 else (0,))]
+            self.items = [(s, x) for s in self.open_slots() for x in ((0, 1) if self.trans_id >= 0 else (0,))] + ([(self.D, 2)] if self.x_id >= 0 else [])
             self.j = 0
             return self._enter() if self.items else self._next_round()
         if tid in stop or self.n >= self.cap or self.n_total >= self.max_total:
@@ -307,11 +311,11 @@ class BlockState:
             self.j += 1
             return self._enter() if self.j < len(self.items) else self._next_round()
         if self.n == 0:
-            self.emitted.append((self.k, self.tags[self.s]))
-            if self.kind:
+            self.emitted.append((self.k, self.x_id if self.kind == 2 else self.tags[self.s]))
+            if self.kind == 1:
                 self.emitted.append((self.k, self.trans_id))
         self.emitted.append((self.k, int(tid)))
-        if self.gate_lags > 0 and tid in (self.begin_id, self.eot_id):
+        if self.gate_lags > 0 and self.kind != 2 and tid in (self.begin_id, self.eot_id):
             self.open_[self.s] = self.open_[self.s] + 1 if tid == self.begin_id else max(0, self.open_[self.s] - 1)
         self.n += 1
         self.n_round += 1
@@ -320,8 +324,10 @@ class BlockState:
 
 
 def block_stops(model, D, trans: bool = False):
-    """E9 stop set: <NEXT_AUDIO>, <EMPTY_AUDIO> and every slot tag (tags are inputs, never outputs); E13 translation mode adds <TRANS> (also an input)."""
-    return frozenset(model.slot_ids()) | {model.next_audio, model.empty_audio} | ({int(model.sp_ids["<TRANS>"])} if trans else set())
+    """E9 stop set: <NEXT_AUDIO>, <EMPTY_AUDIO> and every slot tag (tags are inputs, never outputs); E13 translation mode adds <TRANS> (also an input),
+    E14 the X tag (model.x_id, also an input)."""
+    x = int(getattr(model, "x_id", -1))
+    return frozenset(model.slot_ids()) | {model.next_audio, model.empty_audio} | ({int(model.sp_ids["<TRANS>"])} if trans else set()) | ({x} if x >= 0 else set())
 
 
 def block_gate(model, A):
@@ -396,12 +402,12 @@ def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, act
     tags = tuple(model.slot_ids(D))
     stop = block_stops(model, D, trans)
     TR = int(model.sp_ids["<TRANS>"]) if trans else -1
-    BG, EOT = int(model.sp_ids.get("<ONSET>", -1)), int(model.sp_ids["<EOT>"])
+    BG, EOT = int(model.sp_ids.get("<ONSET>", -1)), int(model.sp_ids["<EOT>"]); XI = int(getattr(model, "x_id", -1))   # E14 X 칸(없으면 −1)
     states = []
     for j, (c, a) in enumerate(zip(ce, A)):
         gl, ga = block_gate(model, a if gate_acts is None else gate_acts[j])
         states.append(BlockState(len(c), D, model.config.runaway_cap, flush, int((12 if trans else 6) * len(c)) + 64, tags, gate_lags=gl, act=ga,
-                                 trans_id=TR, begin_id=BG, eot_id=EOT))
+                                 trans_id=TR, x_id=XI, begin_id=BG, eot_id=EOT))
     assert all(s.K > 0 for s in states)
     cache = DynamicCache()
     model.thinker.model(inputs_embeds=emb(torch.tensor(prefixes, device=dev)), past_key_values=cache, use_cache=True)
@@ -426,6 +432,8 @@ def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, act
                 nxt.append(tag_cache[i][k][j])
             elif kind == "trans":
                 nxt.append(emb.weight[TR])
+            elif kind == "xtag":
+                nxt.append(emb.weight[XI])
             elif kind == "text":
                 nxt.append(emb.weight[value])
             else:

@@ -185,6 +185,7 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
     tags, stop, e_empty = model.slot_ids(D), block_stops(model, D, trans), emb[model.empty_audio]
     gl, ga = block_gate(model, A if gate_act is None else gate_act); TR = int(model.sp_ids["<TRANS>"]) if trans else -1   # gate_act: 게이트만 다른 활동(진단 — 태그 활동은 그대로)
     BG, EOT = int(model.sp_ids.get("<ONSET>", -1)), int(model.sp_ids["<EOT>"]); utt = [0] * D       # E13 열린 발화 수(<ONSET> − <EOT> — BlockState 와 같다)
+    XI = int(getattr(model, "x_id", -1))                                                          # E14 X 칸(라운드마다 슬롯 칸 뒤 — BlockState 와 같다)
     sync = torch.cuda.synchronize if emb.is_cuda else (lambda: None)
     gt.run(emb[torch.as_tensor(prefix_ids, device=emb.device)], 0); pos = len(prefix_ids)    # prefix: 마지막 logits 는 쓰지 않는다
     out, ticks, st = [], [], dict(forced=0, total=0, forwards=1)
@@ -196,20 +197,20 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
             lo, hi = max(0, k - gl + 1), min(ga.shape[0], k + 1)
             sl = [s for s in range(D) if utt[s] > 0 or (s < ga.shape[1] and hi > lo and bool(ga[lo:hi, s].any()))]
         else: sl = range(D)
-        items = [(s, x) for s in sl for x in ((0, 1) if trans else (0,))]
+        items = [(s, x) for s in sl for x in ((0, 1) if trans else (0,))] + ([(D, 2)] if XI >= 0 else [])
         te = model.tag_embeds(k, A, D, X).to(emb.dtype)
-        ie = torch.stack([te[s] if x == 0 else emb[TR] for s, x in items]) if items else te[:0]
+        ie = torch.stack([te[s] if x == 0 else emb[TR] if x == 1 else emb[XI] for s, x in items]) if items else te[:0]
         r = gt.run_all(torch.cat([head[None], ie]), pos); st["forwards"] += 1
         n_it = len(items); pr = dict(enumerate(r[1:])); at = {j: pos + 1 + j for j in range(n_it)}; pos += 1 + n_it; n_round = 0   # 칸 j 뒤 예측·칸 j 위치
         for j, (s, x) in enumerate(items):
             tid = pr[j]
-            if tid in stop or (gate is not None and not gate.allows(k, s, tid)): continue          # 게이트가 막은 슬롯도 멈춤과 같다(뒤 칸 자리 그대로)
+            if tid in stop or (gate is not None and s < D and not gate.allows(k, s, tid)): continue   # 게이트가 막은 슬롯도 멈춤과 같다(뒤 칸 자리 그대로)
             pos = at[j] + 1; n = 0; tagged = False                                              # 칸 j 바로 뒤로 되돌아간다
             while True:
                 if tid in stop or n >= cap or st["total"] >= max_total: st["forced"] += int(tid not in stop); break
-                if not tagged: out.extend([(k, tags[s])] + ([(k, TR)] if x else [])); tagged = True
+                if not tagged: out.extend([(k, XI if x == 2 else tags[s])] + ([(k, TR)] if x == 1 else [])); tagged = True
                 out.append((k, int(tid))); n += 1; n_round += 1; st["total"] += 1
-                if gl and tid in (BG, EOT): utt[s] = utt[s] + 1 if tid == BG else max(0, utt[s] - 1)
+                if gl and x != 2 and tid in (BG, EOT): utt[s] = utt[s] + 1 if tid == BG else max(0, utt[s] - 1)
                 tid = gt.run(emb[tid][None], pos); pos += 1; st["forwards"] += 1
             if j + 1 < n_it:                                                                   # 남은 칸을 다시 미리 넣는다
                 r = gt.run_all(ie[j + 1:], pos); st["forwards"] += 1

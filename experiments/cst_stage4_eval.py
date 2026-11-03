@@ -123,6 +123,8 @@ def run(a):
         print(f"  모델 슬롯 {model.config.slot_tokens} < 창 화자 상한 {n_slots} — 모델 슬롯 수로 디코드·채점", flush=True); n_slots = len(model.config.slot_tokens)
     n_parse = len(model.config.slot_tokens) if model is not None else n_slots              # 출력 해석은 모델 슬롯 전부(V2 4) — 선언하지 않은 슬롯으로 낸 말은 삽입으로 센다
     spk = tuple(sp[t] for t in SLOTS[:n_parse]); EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>"))
+    XI = int(getattr(model, "x_id", -1)) if model is not None else (int(sp["<SPK_5>"]) if cfg.get("x_slot") else -1)   # E14 X 칸(2026-11-03): 해석은 슬롯 태그 + X
+    spk_p = spk + ((XI,) if XI >= 0 else ())
     if not a.oracle and (EOT in blocked or TRANS in blocked): print(f"!! decode 차단: <EOT> {EOT in blocked} · <TRANS> {TRANS in blocked}", flush=True)
     TR, tr_st, tr_fp = load_ast_targets([p for x in a.trans for p in x.split(",") if p]); print(f"  번역 타깃 {dict(tr_st)}", flush=True)
     sets, items = windows_of(a, tok, TR)
@@ -164,8 +166,8 @@ def run(a):
                         elif a.oracle and blocks:                                                     # E13 오라클: 슬롯 블록 정답 출력(번역 칸 포함)
                             from vapasr.data.cst_eval import emitted_from_blocks
                             qb = [ds.block_sequence(m[0], delta, tgt=opt) for m in meta]
-                            states = [SimpleNamespace(emitted=emitted_from_blocks(x["ids"], x["is_input"], x["tag_chunk"], x["slot_at"], spk, trans_id=TRANS), forced=0, flush_rounds=0)
-                                      for x in qb]
+                            states = [SimpleNamespace(emitted=emitted_from_blocks(x["ids"], x["is_input"], x["tag_chunk"], x["slot_at"], spk_p, trans_id=TRANS,
+                                                                                  x_id=XI if XI >= 0 else None, chunk_at=x["chunk_at"]), forced=0, flush_rounds=0) for x in qb]
                         elif a.oracle:
                             states = [SimpleNamespace(emitted=emitted_from_sequence(q["ids"], q["is_input"], q["chunk_of"], sp["<NEXT_AUDIO>"], sp["<EMPTY_AUDIO>"]), forced=0,
                                                       flush_rounds=0) for q in qs]
@@ -186,11 +188,23 @@ def run(a):
                             if (f"{cid}@{t0w}", delta, opt) in done: continue
                             d = ds.dlgs[cid]; mask = ds.mask_chunks(d, t0w, L, K, delta)
                             ref_w, ref_tr, ref_eot = window_ref4(ds, q, mask, tok)
-                            hs, ht, he = parse_emitted4(s.emitted, spk, TRANS, EOT, drop_chunks=mask, drop_tr_chunks=q["miss_chunks"], begin_id=BG)
+                            hs, ht, he = parse_emitted4(s.emitted, spk_p, TRANS, EOT, drop_chunks=mask, drop_tr_chunks=q["miss_chunks"], begin_id=BG)
+                            xs = None
+                            if XI >= 0:                                                                 # E14: X 칸 전사 토큰 → 전문가 확률(임계 아래 포함)이 가장 큰 슬롯
+                                xt, hs, ht = hs[-1], hs[: len(spk)], ht[: len(spk)]
+                                if xt:
+                                    pk = prev.get((f"{cid}@{t0w}", delta, opt), {}) if a.from_predictions else {}
+                                    if len(pk.get("x_slots") or ()) == len(xt): xs = pk["x_slots"]
+                                    else:
+                                        from vapasr.data.cst_eval import attribute_x
+                                        Aj = model.block_act(feats[meta.index((i, cid, t0w, L, K))]) if model is not None else None
+                                        xs = attribute_x([("", t) for t, _ in xt], Aj.float().cpu().numpy() if Aj is not None else np.zeros((K, len(spk)), np.float32), delta)
+                                    for (t, tid), s_ in zip(xt, xs): hs[s_].append((t, tid))
+                                    hs = [sorted(h) for h in hs]
                             sc = score4(ds, q, ref_w, ref_tr, ref_eot, hs, ht, he, delta, words, xl_perm=getattr(a, "xl_order", "lang") == "arrival")
                             row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, langs=q["langs"], tgt_opt=opt, tgts=list(q["tgt"]), delta=delta, L=L, K=K, speakers=q["speakers"],
                                        n_spk=sum(1 for st in q["streams"][: len(q["streams"]) // 2] if st), masked_chunks=len(mask), miss_chunks=len(q["miss_chunks"]), forced=s.forced,
-                                       flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted],
+                                       flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted], **({"n_x": len(xs), "x_slots": xs} if xs else {}),
                                        **({"sb_flips": s.sb_flips, "sb_points": s.sb_points} if hasattr(s, "sb_flips") else {}), ref_text=[" ".join(w for w, _ in r) for r in ref_w],
                                        hyp_text=[" ".join(w for w, _ in words(h)) for h in hs], **sc)
                             fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1

@@ -71,13 +71,15 @@ def activity_from_events(events: Sequence[Tuple[str, int, int]], K: int, n: int,
 
 
 def emitted_from_blocks(ids: Sequence[int], is_input: Sequence[bool], tag_chunk: Sequence[int], slot_at: Sequence[int], spk_ids: Sequence[int],
-                        trans_id: Optional[int] = None) -> List[Tuple[int, int]]:
+                        trans_id: Optional[int] = None, x_id: Optional[int] = None, chunk_at: Optional[Sequence[int]] = None) -> List[Tuple[int, int]]:
     """E9 학습 시퀀스(정답, cst_dialogue.build_block_sequence) → batch_decode.decode_blocks_batch 와 같은 [(k, tid)](슬롯 출력 앞에 그 슬롯 태그 — 오라클 평가).
-    trans_id(E13 번역 모드): <TRANS> 입력 뒤 출력은 그 슬롯 번역 — 앞에 (k, 슬롯 태그), (k, <TRANS>)(BlockState 와 같다, parse_emitted4 가 읽는다)."""
+    trans_id(E13 번역 모드): <TRANS> 입력 뒤 출력은 그 슬롯 번역 — 앞에 (k, 슬롯 태그), (k, <TRANS>)(BlockState 와 같다, parse_emitted4 가 읽는다).
+    x_id(E14 X 칸 — chunk_at 과 함께, spk_ids 끝에 X 태그를 붙여 준다): X 입력 뒤 출력 앞에 (k, X 태그)."""
     out: List[Tuple[int, int]] = []; cur = None; tagged = False; kind = 0
     for p, (t, inp) in enumerate(zip(ids, is_input)):
         if inp:
             if tag_chunk[p] >= 0: cur, tagged, kind = (int(tag_chunk[p]), int(slot_at[p])), False, 0
+            elif x_id is not None and int(t) == x_id: cur, tagged, kind = (int(chunk_at[p]), len(spk_ids) - 1), False, 0
             elif trans_id is not None and int(t) == trans_id and slot_at[p] >= 0: tagged, kind = False, 1
             continue
         if not tagged: out += [(cur[0], int(spk_ids[cur[1]]))] + ([(cur[0], int(trans_id))] if kind else []); tagged = True
@@ -271,6 +273,30 @@ def follow_stats(hyp: Sequence[Sequence[Tuple[str, float]]], act, delta: int, re
                 else: d0, ps, gap = -1, 0, -1
                 detail.append([c, f, s, e, n_on, since, d0, ps, int(llm), int(act_ok), gap])
     return st, [sorted(x, key=lambda z: z[1]) for x in moved]
+
+
+def attribute_x(xw: Sequence[Tuple[str, float]], act, delta: int, back: int = 3, fwd: int = 1, eps: float = 0.05) -> List[int]:
+    """E14 X 칸 단어 → 슬롯(2026-11-03): 단어 오디오 프레임 f = 방출 청크 − 1 − δ(follow_stats 와 같은 규약), 창 [f − back, f + fwd] 의 슬롯 활동 평균(전문가 확률 —
+    임계 아래 포함)이 가장 큰 슬롯. 모두 eps 아래면 f 앞에서 마지막으로 활성(> 0.5)이던 슬롯, 그것도 없으면 0. act (K, N). → xw 순서의 슬롯 번호."""
+    import numpy as np
+    A = np.asarray(act, dtype=np.float32); K = A.shape[0]; on = A > 0.5; last = np.full(K, -1); cur = -1
+    for k in range(K):
+        last[k] = cur
+        if on[k].any(): cur = int(np.argmax(np.where(on[k], A[k], -1.0)))
+    out = []
+    for _, t in xw:
+        f = min(max(int(round(t / CHUNK_S)) - 1 - int(delta), 0), K - 1); m = A[max(0, f - back): min(K, f + fwd + 1)].mean(0)
+        out.append(int(m.argmax()) if float(m.max()) >= eps else (int(last[f]) if last[f] >= 0 else 0))
+    return out
+
+
+def merge_x(hw: Sequence[Sequence[Tuple[str, float]]], xw: Sequence[Tuple[str, float]], slots: Sequence[int]) -> List[List[Tuple[str, float]]]:
+    """슬롯별 가설 단어 hw 에 X 칸 단어를 붙인 슬롯(attribute_x)으로 더해 시각순으로."""
+    out = [list(h) for h in hw]
+    for (w, t), s in zip(xw, slots):
+        while s >= len(out): out.append([])
+        out[s].append((w, t))
+    return [sorted(h, key=lambda z: z[1]) for h in out]
 
 
 def follow_pool(rows: Sequence[Dict]) -> Optional[Dict]:

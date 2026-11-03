@@ -18,6 +18,7 @@ from .varlen_attention import is_varlen, packed_kwargs
 
 SLOT_TOKENS = ("<SPK_A>", "<SPK_B>", "<SPK_3>", "<SPK_4>")      # 화자 슬롯 A·B·C·D(V2: C·D = Phase 2 예약 토큰) — enable_slots
 BEGIN_TOKEN = "<ONSET>"                                         # E9 발화 시작 표지 <BEGIN>(동결 registry 151721) — add_slot_blocks
+X_TOKEN = "<SPK_5>"                                             # E14 비귀속 칸 태그(2026-11-03) — 4 슬롯 모델이 쓰지 않는 예약 토큰, add_x_slot
 TAG_STRIDE = 1 << 20                                            # E9 packing 의 tag_chunk = 표본 · TAG_STRIDE + 청크(cst_dialogue.TAG_STRIDE 와 같다)
 
 class Adapter(nn.Module):                                   # uslm/model.Adapter 와 동일 구조(키 이름 net.* 유지 → 기존 ckpt 호환)
@@ -198,6 +199,23 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.config.slot_blocks, self.config.begin_token, self.config.tag_act_lags = True, BEGIN_TOKEN, int(lags)
         return bid
 
+    def add_x_slot(self, tok) -> int:
+        """E14 비귀속 칸을 켠다(2026-11-03 — cst_dialogue 모듈 설명 x_slot): X 태그 = 예약 토큰 <SPK_5>(새 어휘 없음). 처음 켤 때 그 입력 임베딩 행을 슬롯 태그 넷의
+        평균으로 둔다(태그 꼴 입력에서 시작). 출력 차단은 그대로다(X 태그는 입력만). 활동 게이트 슬롯 블록(E13) 위에만. 반복 호출은 아무것도 바꾸지 않는다. → X 태그 id."""
+        xid = int(tok.convert_tokens_to_ids(X_TOKEN)); assert xid == int(self.sp_ids.get(X_TOKEN, xid)), f"{X_TOKEN} id {xid} ≠ config {self.sp_ids.get(X_TOKEN)}"
+        assert getattr(self.config, "slot_blocks", False) and int(getattr(self.config, "slot_gate", 0) or 0) > 0, "E14 비귀속 칸은 활동 게이트 슬롯 블록(config.slot_gate) 위에"
+        if getattr(self.config, "x_slot", False): return xid
+        W = self.get_input_embeddings().weight; assert xid < W.shape[0], "임베딩 여유 행 없음"
+        with torch.no_grad(): W[xid] = W[torch.tensor(self.slot_ids(), device=W.device)].mean(0)
+        self.config.sp_ids[X_TOKEN] = xid; self.sp_ids = dict(self.config.sp_ids)
+        self.config.sem_reserved = [t for t in (self.config.sem_reserved or []) if t != X_TOKEN]; self.config.x_slot = True
+        return xid
+
+    @property
+    def x_id(self) -> int:
+        """E14 X 태그 id(config.x_slot), 없으면 −1."""
+        return int(self.sp_ids[X_TOKEN]) if getattr(self.config, "x_slot", False) else -1
+
     def slot_ids(self, n: Optional[int] = None) -> List[int]:
         """슬롯 태그 id(A, B, C, D 순) — config.slot_tokens(enable_slots) 또는 A·B."""
         names = list(getattr(self.config, "slot_tokens", None) or SLOT_TOKENS[:2]); return [int(self.sp_ids[t]) for t in names[: (n or len(names))]]
@@ -367,11 +385,14 @@ class VapAsrForStreamingASR(PreTrainedModel):
 
     def n3d_act(self, wav, wav_len, K):
         """고정 전문가 활동 (B, max K, N) 0/1 — 학습 중(self.training)이면 학습 청크(train_chunk·train_rc), 아니면 추론 청크(chunk·rc).
-        keep_n3d_probs(2026-11-03 E13 게이트 진단 — 평가 전용): 같은 활동을 내면서 확률 (B, max K, 8)을 last_n3d_probs 에 남긴다(게이트만 낮은 임계로 열 때)."""
-        if getattr(self, "keep_n3d_probs", False) and not self.training:
-            p = self.n3d.probs(wav, wav_len, K); self.last_n3d_probs = p.detach()
+        keep_n3d_probs(2026-11-03 E13 게이트 진단 — 평가 전용): 같은 활동을 내면서 확률 (B, max K, 8)을 last_n3d_probs 에 남긴다(게이트만 낮은 임계로 열 때).
+        config.n3d_soft(E14, 2026-11-03): 0/1 대신 확률 그대로(학습·추론 모두 — 게이트는 디코더가 > 0.5 로 연다)."""
+        soft = bool(getattr(self.config, "n3d_soft", False)); keep = getattr(self, "keep_n3d_probs", False) and not self.training
+        if soft or keep:
+            p = self.n3d.probs(wav, wav_len, K, train=True) if self.training else self.n3d.probs(wav, wav_len, K)
+            if keep: self.last_n3d_probs = p.detach()
             th = float(self.n3d.cfg["threshold"]) if hasattr(self.n3d, "cfg") else float(self.n3d.threshold)   # N3DExpert · GraftExpert(G3) 의 act 와 같은 임계
-            return (p[..., : int(self.config.slot_input_slots)] > th).float()
+            n = int(self.config.slot_input_slots); return p[..., :n] if soft else (p[..., :n] > th).float()
         return self.n3d.act(wav, wav_len, K, int(self.config.slot_input_slots), train=self.training)
 
     @staticmethod
@@ -407,7 +428,7 @@ class VapAsrForStreamingASR(PreTrainedModel):
 
     def forward(self, ids=None, is_audio=None, chunk_of=None, labels=None, mask=None, wav=None, wav_len=None, K=None, feats=None, next_weight: Optional[float] = None, return_dict: bool = True,
                 labels_alt=None, soft_w=None, activity=None, activity_mask=None, act_weight: Optional[float] = None, pos_weight=None, position_ids=None, sem_mask=None,
-                sem_only_mask=None, dec_kind=None, target_act=None, act_in=None, tag_chunk=None, remap_k=None, remap_perm=None, **_):
+                sem_only_mask=None, dec_kind=None, target_act=None, act_in=None, tag_chunk=None, remap_k=None, remap_perm=None, act_miss=None, **_):
         """wav(+wav_len, K) 또는 feats 중 하나. labels 는 -100 이 손실 제외. next_weight 기본 config.next_weight.
         Phase 2(config.lanes>0): labels_alt/soft_w 가 있으면 EOT 후보 위치의 label 을 (labels: w, labels_alt: 1−w) 두 점 분포로 학습(정본 §5.2),
         activity (B,K,R)·activity_mask (B,K) 가 있으면 audio 위치 hidden 으로 lane 활동 BCE 를 더한다(정본 §6). EOT 위치 가중 config.eot_weight.
@@ -470,6 +491,9 @@ class VapAsrForStreamingASR(PreTrainedModel):
                         ref = remap_cols(ref, remap_k, remap_perm, inverse=True)
                     pa = align_slots(pred, shift_frames(ref, R).to(pred.device))
                     if remap_k is not None: pa = remap_cols(pa, remap_k, remap_perm)
+                if act_miss is not None:                                                            # E14: 흉내 낸 놓침 프레임은 전문가 활동 입력에서도 지운다(추론의 N3D 놓침처럼)
+                    mi = act_miss.to(pa.device).float()
+                    mi = F.pad(mi, (0, max(0, pa.shape[-1] - mi.shape[-1]), 0, max(0, pa.shape[1] - mi.shape[1])))[:, : pa.shape[1], : pa.shape[-1]]; pa = pa * (1 - mi)
                 act_in = torch.where((torch.rand(pred.shape[0], device=pred.device) < rho)[:, None, None], pa, ai)
             else: act_in = pred
         elif wav is not None: feats = self.encode(wav, wav_len, K, act=target_act)          # target_act (B, Kmax): E2 대상 화자 활동(없으면 예전 그대로)

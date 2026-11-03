@@ -138,6 +138,13 @@ g.add_argument("--slot-gate", type=int, default=0, help="E13(2026-11-02 사용�
                "정답 활동(전사 없는 발화 포함)이 최근 N 청크 안에 있는 슬롯과 그 라운드 출력이 있는 슬롯의 태그만 넣는다(cst_dialogue.gate_rounds — 0 = 끔, "
                "1 ≤ N ≤ --tag-act-lags, 보통 같게). 디코드는 예측 활동 창 ∪ 열린 발화(<ONSET> 뒤 <EOT> 전 — model.config.slot_gate). --slot-blocks 와 함께. 지문 키 slot_gate")
 g.add_argument("--gate-fa", type=float, default=0.0, help="--slot-gate: 학습 창의 슬롯마다 이 확률로 말 없는 0.3–3.2 s 구간 하나를 더 연다(예측 활동의 헛 검출 — 태그 뒤 멈춤을 배운다)")
+g.add_argument("--x-slot", action="store_true", help="E14(2026-11-03 사용자 \"N3D 가 놓친 말을 받아쓰도록 게이트를 고칠 방법\" → 비귀속 칸 + 확률 활동): 라운드마다 슬롯 칸 뒤 X 칸"
+               "(<SPK_5>). 학습 게이트는 정답 활동에서 N3D 놓침을 흉내 내고(--miss-*), 닫힌 슬롯의 글자는 X 칸이 낸다(cst_dialogue x_slot — 칸 열림은 디코더와 같다). "
+               "--slot-gate 와 함께. 지문 키 x_slot")
+g.add_argument("--miss-drop", type=float, default=0.0, help="--x-slot: 1 s 이상 말을 학습 게이트에서 통째로 뺄 확률(전문가 활동 입력도 같은 자리를 지운다)")
+g.add_argument("--miss-short", type=float, default=0.0, help="--x-slot: 1 s 보다 짧은 말을 통째로 뺄 확률")
+g.add_argument("--miss-late", type=float, default=0.0, help="--x-slot: 남은 말의 앞 0.3–2 s(말 길이 절반까지)를 뺄 확률")
+g.add_argument("--n3d-soft", action="store_true", help="E14: 고정 전문가 활동을 0/1 대신 확률 그대로(학습·추론 — model.config.n3d_soft, 게이트는 > 0.5). --n3d 와 함께. 지문 키 n3d_soft")
 g.add_argument("--set-phone", default="", help="셋별 창 단위 전화 대역 확률 'KEY:P[,KEY:P]'(대화·합성 셋만, 그 셋만 --phone-aug 를 덮는다 — P = 0 이면 끔, 예 sim_en-de-tel:0)")
 g = ap.add_argument_group("replay(Stage 2 단일 화자)")
 g.add_argument("--replay-words", action="append", default=[], help="EN·KO words.jsonl(반복·쉼표·@목록) — 행의 lang 으로 rep_en/rep_ko 에 나뉜다")
@@ -223,6 +230,7 @@ VKW = dict(max_speakers=a.max_speakers, window_draws=a.window_draws, shrink_spea
            **({"slot_shuffle": a.slot_shuffle} if a.slot_shuffle > 0 else {}),                   # 2026-10-30 활동 추종 학습: 끄면 키 없음
            **({"slot_remap": a.slot_remap} if a.slot_remap > 0 else {}),                         # 2026-10-30 활동 추종 학습: 끄면 키 없음
            **({"slot_gate": a.slot_gate, "gate_fa": a.gate_fa} if a.slot_gate else {}),          # 2026-11-02 E13 활동 게이트: 끄면 키 없음
+           **({"x_slot": True, "miss_drop": a.miss_drop, "miss_short": a.miss_short, "miss_late": a.miss_late} if a.x_slot else {}),   # 2026-11-03 E14: 끄면 키 없음
            **({"xl_order": a.xl_slot_order} if a.xl_slot_order != "lang" else {}))   # 모든 대화 셋 공통(V2, V3 R4)
 bc = None if a.backchannel == "off" else tuple(float(x) for x in a.backchannel.split(","))
 if bc is not None and len(bc) != 2: sys.exit(f"--backchannel max_s,max_tokens | off — {a.backchannel}")
@@ -261,6 +269,10 @@ if a.slot_blocks:                                                               
 if (a.slot_gate or a.gate_fa) and not a.slot_blocks: sys.exit("--slot-gate·--gate-fa(E13)는 --slot-blocks 와 함께")
 if a.slot_gate and not 1 <= a.slot_gate <= a.tag_act_lags: sys.exit(f"--slot-gate 는 1 … --tag-act-lags({a.tag_act_lags}) — {a.slot_gate}")
 if not 0.0 <= a.gate_fa <= 1.0 or (a.gate_fa and not a.slot_gate): sys.exit(f"--gate-fa ∈ [0, 1], --slot-gate 와 함께 — {a.gate_fa}")
+if a.x_slot and not a.slot_gate: sys.exit("--x-slot(E14)은 --slot-gate 와 함께")
+if any(not 0.0 <= p <= 1.0 for p in (a.miss_drop, a.miss_short, a.miss_late)) or ((a.miss_drop or a.miss_short or a.miss_late) and not a.x_slot):
+    sys.exit(f"--miss-* ∈ [0, 1], --x-slot 과 함께 — {a.miss_drop} {a.miss_short} {a.miss_late}")
+if a.n3d_soft and not a.n3d: sys.exit("--n3d-soft 는 --n3d 와 함께")
 if a.slot_audio and not (a.slot_blocks and a.diar_head): sys.exit("--slot-audio(E10)는 --slot-blocks 와 --diar-head 와 함께")
 if a.n3d and not (a.slot_input and os.path.exists(a.n3d) and a.n3d_train_chunk >= 1 and a.n3d_chunk >= 1 and 0.0 < a.n3d_threshold < 1.0):
     sys.exit(f"--n3d 는 --slot-input 과 함께, .nemo 가 있어야 하고 청크 ≥ 1·임계 (0, 1) — {a.n3d} {a.n3d_train_chunk} {a.n3d_chunk} {a.n3d_threshold}")
@@ -350,6 +362,10 @@ if not a.dry_run:
     g0 = int(getattr(cfg, "slot_gate", 0) or 0)                                                 # E13 활동 게이트 — 디코더가 읽는다(init 이 게이트 모델이면 같은 값이어야 한다)
     if g0 and g0 != a.slot_gate: sys.exit(f"init 이 활동 게이트 {g0} 모델이다 — --slot-gate {g0} 로 이어 학습한다(지금 {a.slot_gate})")
     if a.slot_gate: cfg.slot_gate = int(a.slot_gate)
+    if getattr(cfg, "x_slot", False) and not a.x_slot: sys.exit("init 이 X 칸 모델이다(config.x_slot) — --x-slot 으로 이어 학습한다")
+    if a.x_slot: model.add_x_slot(tok)                                                          # E14 X 칸(<SPK_5> 행 = 슬롯 태그 평균 — 처음 켤 때만)
+    if getattr(cfg, "n3d_soft", False) and not a.n3d_soft: sys.exit("init 이 전문가 확률 활동 모델이다(config.n3d_soft) — --n3d-soft 로 이어 학습한다")
+    if a.n3d_soft: cfg.n3d_soft = True
     if a.diar_head:                                                                             # E6 인과 화자 분리 헤드(이름이 adapter 가 아니라 thinker lr)
         xb = torch.load(a.diar_head, map_location="cpu"); assert xb["cfg"].get("lookahead") is not None, f"인과 헤드(lookahead)가 아니다: {a.diar_head}"
         model.add_diar_head(xb["cfg"], xb["taps"], state=xb["state"], weight=a.diar_weight, threshold=a.act_threshold, ramp=ramp)
@@ -526,7 +542,7 @@ for key, ds in train_sets.items():                                              
             from vapasr.data.cst_dialogue import window_speakers
             bad += [(ds.items[i], d, "target", t, P[:3]) for i in idx for d in ds.delays for t in window_speakers(ds.eps[ds.items[i][0]], ds.items[i][1], ds.items[i][2])
                     for P in [ds.problems_of(ds.cst_sequence(i, d, target=t))] if P]
-        if getattr(ds, "gate_fa", 0) > 0:                                                      # E13 학습 rng 경로(헛 구간·번역 모드 추첨 — __getitem__ 과 같은 꼴)
+        if getattr(ds, "gate_fa", 0) > 0 or getattr(ds, "x_slot", False):                      # E13 학습 rng 경로(헛 구간·번역 모드 추첨·E14 놓침 흉내 — __getitem__ 과 같은 꼴)
             bad += [(ds.items[i], d, "rng", P[:3]) for i in idx for d in ds.delays for P in [ds.problems_of(ds.cst_sequence(i, d, rng=random.Random(a.seed * 104729 + i * 31 + d)))] if P]
         if getattr(ds, "eot_drop_synth", 0) > 0:                                               # EOT-문맥 dropout 경로(V3-p1 C5 — 받아쓰기·번역 모드)
             bad += [(ds.items[i], d, "drop", tg, P[:3]) for i in idx for d in ds.delays for tg in [None] + (ds.tgt_options(i) if ds.trans_on else [])
@@ -568,6 +584,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"slot_shuffle": a.slot_shuffle} if a.slot_shuffle > 0 else {}),                   # 2026-10-30 활동 추종 학습: 끄면 키 없음
           **({"slot_remap": a.slot_remap} if a.slot_remap > 0 else {}),                         # 2026-10-30 활동 추종 학습: 끄면 키 없음
           **({"slot_gate": dict(lags=a.slot_gate, fa=a.gate_fa)} if a.slot_gate else {}),       # 2026-11-02 E13 활동 게이트: 끄면 키 없음
+          **({"x_slot": dict(drop=a.miss_drop, short=a.miss_short, late=a.miss_late)} if a.x_slot else {}), **({"n3d_soft": True} if a.n3d_soft else {}),   # 2026-11-03 E14
           **({"shrink_speakers": True} if a.shrink_speakers and not a.window_draws else {}),    # 2026-10-28 E9b: 격자 창 줄이기(끄면 키 없음)
           **({"slot_audio": dict(d=a.slot_audio_dim, blocks=a.slot_audio_blocks, kernel=a.slot_audio_kernel, mix_drop=a.mix_drop)} if a.slot_audio else {}),   # 2026-10-29 E10
           **({"n3d": dict(path=os.path.abspath(a.n3d), train_chunk=a.n3d_train_chunk, chunk=a.n3d_chunk, threshold=a.n3d_threshold)} if a.n3d else {}))   # 2026-10-29 E11

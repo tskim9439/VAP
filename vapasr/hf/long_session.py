@@ -233,7 +233,7 @@ def long_block_decode(model, feats, prefix_ids, D: int, act=None, max_flush_roun
     gate_act (K, N)(2026-11-03 게이트 진단): 게이트만 이 활동으로 연다(예 전문가 확률 > 낮은 임계 — 태그 활동은 그대로).
     → (emitted, forced, flush_rounds, 넣은 위치 수, forward 수, 청크 ms 목록)."""
     from .realtime import realtime_block_decode
-    K = int(feats.shape[-2]); C = int(round(context_s / FRAME_S)) if context_s else 0; M = 2 * D if trans else D
+    K = int(feats.shape[-2]); C = int(round(context_s / FRAME_S)) if context_s else 0; M = (2 * D if trans else D) + int(getattr(model, "x_id", -1) >= 0)   # E14 X 칸 몫
     lt = LongThinker(model.thinker, model.config.blocked_ids, max_len=len(prefix_ids) + ((M + 4) * C + 2048 if C else int((M + 2.6 * (2 if trans else 1)) * K) + 1024),
                      blk=blk, context=C)
     out, forced, ticks, rounds, _, nf = realtime_block_decode(model, lt, feats, list(prefix_ids), D, act=act, max_flush_rounds=max_flush_rounds,

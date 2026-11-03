@@ -248,7 +248,7 @@ def target_oracle_loop(a, model, tok, sets, items, dest, done, spk, EOT, n_slots
 def run(a):
     import numpy as np, torch
     from vapasr.data.cst_eval import parse_emitted, score_window, match_eot, eot_tol, emitted_from_sequence, set_en_norm, emitted_from_blocks, activity_from_events, \
-        follow_stats, act_runs, act_from_runs
+        follow_stats, act_runs, act_from_runs, attribute_x, merge_x
     torch.backends.cuda.matmul.allow_tf32 = False; torch.backends.cudnn.allow_tf32 = False
     set_en_norm(getattr(a, "en_norm", "ours"))                                                # 영어 채점 정규화(ours 기본 · whisper 외부 비교용)
     gate_w = tuple(getattr(a, "act_gate", None) or ()); fwin = tuple(getattr(a, "follow_window", None) or (3, 1)); fn3 = bool(getattr(a, "follow_n3d", False))   # 활동 추종 진단(2026-10-30)
@@ -323,6 +323,8 @@ def run(a):
         print(f"  모델 슬롯 {model.config.slot_tokens} < 창 화자 상한 {n_slots} — 모델 슬롯 수로 디코드·채점(참조는 창 화자 전부)", flush=True); n_slots = len(model.config.slot_tokens)
     n_parse = len(model.config.slot_tokens) if model is not None else n_slots              # 출력 해석은 모델 슬롯 전부(V2 4) — 2 인 창에서 C·D 로 낸 말은 삽입으로 센다(텍스트로 읽지 않는다)
     spk = tuple(sp[t] for t in SLOTS[:n_parse]); EOT = sp["<EOT>"]
+    XI = int(sp["<SPK_5>"]) if (cfg.get("x_slot") if model is None else getattr(model.config, "x_slot", False)) else -1   # E14 X 칸(2026-11-03): 해석은 슬롯 태그 + X
+    spk_p = spk + ((XI,) if XI >= 0 else ())
     blocks = bool(cfg.get("slot_blocks") if model is None else getattr(model.config, "slot_blocks", False)) or bool(getattr(a, "blocks", False))   # E9 슬롯 블록(2026-10-28)
     assert not getattr(a, "blocks", False) or a.oracle, "--blocks 는 --oracle 과 함께(학습 전 E9 형식 점검)"
     BEGIN = sp.get("<ONSET>") if blocks else None
@@ -438,7 +440,7 @@ def run(a):
                     A = model.n3d_act(torch.nn.utils.rnn.pad_sequence(n3w, batch_first=True), torch.tensor([len(x) for x in n3w], device=dev), Kb)
                     feats = [model.with_act_stream(f[None], A[j: j + 1, : int(Kb[j])])[0] for j, f in enumerate(feats)]
                     if gt_ is not None: GA = [(model.last_n3d_probs[j, : int(Kb[j]), : A.shape[-1]] > gt_).cpu().numpy() for j in range(len(feats))]
-                A_np = [None] * len(meta); FA = [None] * len(meta)                                      # 활동 추종: 디코드가 받은 슬롯 활동(K, N) · --follow-n3d 로 다시 계산한 활동
+                A_np = [None] * len(meta); FA = [None] * len(meta); AS = [None] * len(meta)             # 활동 추종: 디코드가 받은 슬롯 활동(K, N) · --follow-n3d 로 다시 계산한 활동 · E14 X 귀속용 확률
                 if fx is not None and fxw and not all((f"{m[1]}@{m[2]}", dl) in done for m in meta for dl in a.deltas):
                     Kb = torch.tensor([m[4] for m in meta], device=fdev)                                # 원 평가와 같은 꼴(창: 배치, 회의 통째: 회의 전체 한 번)
                     Ab = fx.act(torch.nn.utils.rnn.pad_sequence([torch.from_numpy(w) for w in fxw], batch_first=True).to(fdev), torch.tensor([len(w) for w in fxw], device=fdev), Kb, fx_n)
@@ -457,7 +459,8 @@ def run(a):
                         states = []
                         for m in meta:
                             if blocks:                                                                          # E9: 슬롯 블록 정답 시퀀스
-                                q = ds.block_sequence(m[0], delta); em = emitted_from_blocks(q["ids"], q["is_input"], q["tag_chunk"], q["slot_at"], spk)
+                                q = ds.block_sequence(m[0], delta); em = emitted_from_blocks(q["ids"], q["is_input"], q["tag_chunk"], q["slot_at"], spk_p,
+                                                                                             x_id=XI if XI >= 0 else None, chunk_at=q["chunk_at"])
                             else:
                                 q = ds.cst_sequence(m[0], delta); em = emitted_from_sequence(q["ids"], q["is_input"], q["chunk_of"], sp["<NEXT_AUDIO>"], sp["<EMPTY_AUDIO>"])
                             states.append(SimpleNamespace(emitted=em, forced=0, flush_rounds=0))
@@ -471,7 +474,7 @@ def run(a):
                                 Na = int(model.adapter_slot.in_features); rs = {}; rt = make_retag(feats[j][1, :, :Na], spk[:Na], delta, stats=rs)
                             td = time.time(); bx = {}
                             if blocks:                                                                          # E9: 추측 prefill 긴 디코드
-                                Aj = model.block_act(feats[j]); A_np[j] = None if Aj is None else (Aj.float() > 0.5).cpu().numpy()
+                                Aj = model.block_act(feats[j]); A_np[j] = None if Aj is None else (Aj.float() > 0.5).cpu().numpy(); AS[j] = None if Aj is None else Aj.float().cpu().numpy()
                                 assert not mk_gate or Aj is not None, "--act-gate: 이 모델은 슬롯 활동이 없다(model.block_act)"
                                 g = mk_gate(Aj, delta) if mk_gate else None
                                 em, fc, rd, used, nf, tk = long_block_decode(model, feats[j], prefixes[j], len(ds.slots(m[0])[1][:n_slots]), max_flush_rounds=a.max_flush, context_s=a.context_s,
@@ -488,7 +491,7 @@ def run(a):
                                          hold=a.spk_guide_hold, insert=not a.spk_guide_no_insert, word_start=word_start) if a.spk_guide else None
                         states = [None] * len(meta)
                         A_dec = [model.block_act(feats[j], acts[j] if acts is not None else None) for j in range(len(meta))] if blocks else None   # 태그 활동(디코드가 받는 것)
-                        if blocks: A_np = [None if x is None else (x.float() > 0.5).cpu().numpy() for x in A_dec]
+                        if blocks: A_np = [None if x is None else (x.float() > 0.5).cpu().numpy() for x in A_dec]; AS = [None if x is None else x.float().cpu().numpy() for x in A_dec]
                         assert not mk_gate or all(x is not None for x in A_dec), "--act-gate: 이 모델은 슬롯 활동이 없다(model.block_act)"
                         modes = ["xl" if len(set(ds.slots(m[0])[1][:n_slots])) > 1 else "same" for m in meta] if sb else None   # 교차 언어 = 선언 언어가 다른 창
                         for pre in dict.fromkeys(tuple(p) for p in prefixes):                          # decode_batch 는 한 배치에 prefix 하나 — 선언 슬롯 수가 다른 창은 나눠 돈다
@@ -518,7 +521,8 @@ def run(a):
                         if (f"{cid}@{t0w}", delta) in done: continue
                         ref_w, ref_eot, mask, sp_order = window_ref(ds, i, delta, EOT, tok)
                         ev = [] if blocks else None
-                        hs, he = parse_emitted(s.emitted, spk, EOT, drop_chunks=mask, begin_id=BEGIN, events=ev)
+                        hs, he = parse_emitted(s.emitted, spk_p, EOT, drop_chunks=mask, begin_id=BEGIN, events=ev)
+                        xw = words(hs[-1]) if XI >= 0 else []; hs = hs[: len(spk)]                      # E14: X 칸 단어(아래에서 전문가 활동으로 슬롯에 붙인다)
                         hw = hw0 = [words(h) for h in hs]
                         llm_der = None
                         if blocks:                                                                      # E9 LLM 쪽 화자 분리(<BEGIN>·<EOT> 구간) — diar_eval 과 같은 프레임 마스크
@@ -540,14 +544,18 @@ def run(a):
                             z = np.load(os.path.join(a.relabel_act, f"{cid}@full.npz")); A_ = z["ref" if a.relabel_oracle else "prob"].astype(np.float32)
                             assert A_.shape[0] == K, f"활동 프레임 {A_.shape[0]} ≠ 회의 프레임 {K}: {cid}"
                             hw = relabel_by_activity(hw, A_, delta)
-                        sc = score_window(ref_w, hw, d.lang)
+                        xs = None
+                        if xw:                                                                          # E14: X 단어 → 전문가 확률(임계 아래 포함)이 가장 큰 슬롯(원출력에 남긴 것이 있으면 그것)
+                            xs = pr_["x_slots"] if len(pr_.get("x_slots") or ()) == len(xw) else attribute_x(xw, AS[j] if AS[j] is not None else fa, delta)
+                        addx = (lambda h: merge_x(h, xw, xs)) if xw else (lambda h: h)
+                        sc = score_window(ref_w, addx(hw), d.lang)
                         sc["eot"] = match_eot(ref_eot, he, sc["perm"], eot_tol(delta))
                         fx_row = {}
                         if blocks and fa is not None:                                                   # 활동 추종(LLM 원래 슬롯 — relabel 전)
-                            perm0 = sc["perm"] if hw is hw0 else score_window(ref_w, hw0, d.lang)["perm"]
+                            perm0 = sc["perm"] if hw is hw0 and not xw else score_window(ref_w, hw0, d.lang)["perm"]   # 추종은 LLM 이 슬롯 칸에 쓴 단어만(X 빼고)
                             fdl = [] if getattr(a, "follow_detail", False) else None
                             fst, moved = follow_stats(hw0, fa, delta, ref_act=ra.numpy(), perm=perm0, frame_mask=fm.numpy(), back=fwin[0], fwd=fwin[1], detail=fdl)
-                            fx_row = dict(follow=fst, cp_follow=score_window(ref_w, moved, d.lang)["cp"], act_runs=act_runs(fa), **({"follow_detail": fdl} if fdl is not None else {}))
+                            fx_row = dict(follow=fst, cp_follow=score_window(ref_w, addx(moved), d.lang)["cp"], act_runs=act_runs(fa), **({"follow_detail": fdl} if fdl is not None else {}))
                         row = dict(id=f"{cid}@{t0w}", corpus=c, lang=d.lang, delta=delta, L=L, K=K, speakers=sp_order, n_spk=len(sp_order), masked_chunks=len(mask),
                                    forced=s.forced, flush_rounds=s.flush_rounds, emitted=[list(e) for e in s.emitted],
                                    **({"guide_insert": s.guide_insert, "guide_hold": s.guide_hold} if hasattr(s, "guide_insert") else {}),
@@ -555,7 +563,8 @@ def run(a):
                                    **({"positions": s.positions, "enc_s": enc_s, "dec_s": s.dec_s} if hasattr(s, "positions") else {}),
                                    **({"retag": s.retag} if hasattr(s, "retag") else {}), **({"llm_der": llm_der} if llm_der is not None else {}), **(s.blk if hasattr(s, "blk") else {}),
                                    **({"gated": s.gated} if hasattr(s, "gated") else {}), **fx_row, **({"relabeled": nrl} if nrl is not None else {}),
-                                   ref_text=[" ".join(w for w, _ in r) for r in ref_w], hyp_text=[" ".join(w for w, _ in h) for h in hw], **sc)
+                                   **({"n_x": len(xw), "x_slots": xs} if xw else {}),
+                                   ref_text=[" ".join(w for w, _ in r) for r in ref_w], hyp_text=[" ".join(w for w, _ in h) for h in addx(hw)], **sc)
                         fo.write(json.dumps(row, ensure_ascii=False) + "\n"); n += 1
                 print(f"  {c}: {min(b0 + bs, len(todo))}/{len(todo)} 창 · {n} 행 · {time.time() - t0:.0f}s", flush=True)
     print(f"DONE rank={a.rank} rows={n}", flush=True)
