@@ -258,6 +258,10 @@ def run(a):
     assert not getattr(a, "encoder_state", None) or not (a.oracle or a.from_predictions), "--encoder-state 는 모델 디코드 전용"
     assert not getattr(a, "graft_expert", None) or not (a.oracle or a.from_predictions), "--graft-expert 는 모델 디코드 전용"
     assert getattr(a, "encoder_rc", None) is None or not (a.oracle or a.from_predictions), "--encoder-rc 는 모델 디코드 전용"
+    gl_, gt_ = getattr(a, "gate_lags", None), getattr(a, "gate_thresh", None)                    # E13 게이트 진단(2026-11-03): 학습 없이 추론 게이트만 바꾼다
+    assert (gl_ is None and gt_ is None) or not (a.oracle or a.from_predictions), "--gate-lags·--gate-thresh 는 모델 디코드 전용"
+    assert gl_ is None or gl_ >= 0, f"--gate-lags 는 0 이상: {gl_}"
+    assert gt_ is None or 0.0 < gt_ < 1.0, f"--gate-thresh 는 (0, 1): {gt_}"
     rlf = bool(getattr(a, "relabel_follow", False))
     assert not (rlf and getattr(a, "relabel_act", None)), "--relabel-follow 와 --relabel-act 는 함께 쓰지 않는다"
     sb = None
@@ -304,6 +308,13 @@ def run(a):
             c = model.config.n3d_cfg
             model.n3d = GraftExpert(a.graft_expert, nemotron_dir=a.encoder, chunk=int(c["chunk"]), rc=int(c["rc"]), threshold=float(c["threshold"]))
             print(f"  화자 활동 ← 이식 학생 {model.n3d.cfg}(G3 — 고정 전문가 대신)", flush=True)
+        if gl_ is not None or gt_ is not None:                                                    # E13 게이트 진단: 게이트 창 · 게이트만 낮은 임계(태그 활동은 그대로)
+            assert int(getattr(model.config, "slot_gate", 0) or 0) > 0, "--gate-lags·--gate-thresh 는 활동 게이트 모델(config.slot_gate — E13)"
+            assert gt_ is None or getattr(model, "n3d", None) is not None, "--gate-thresh 는 전문가 활동 모델(E11·E13 · --graft-expert)"
+            if gl_ is not None: model.config.slot_gate = int(gl_)
+            if gt_ is not None: model.keep_n3d_probs = True                                        # n3d_act 가 같은 활동을 내며 확률을 last_n3d_probs 에 남긴다
+            print(f"  E13 게이트 ← {'끔(선언 슬롯 전부)' if not model.config.slot_gate else f'창 {model.config.slot_gate} 청크'}(학습 12)"
+                  f"{'' if gt_ is None else f' · 전문가 확률 > {gt_} 로 연다(태그 활동은 그대로)'}", flush=True)
         wi = word_init_mask(tok, logits_size(model)) if sb else None
     a.xl_order = (cfg.get("xl_slot_order") if model is None else getattr(model.config, "xl_slot_order", None)) or "lang"   # V3 R4: 교차 언어 슬롯 순서(창·prefix)
     from vapasr.data.cst_dialogue import SLOTS
@@ -376,6 +387,7 @@ def run(a):
                 **({"encoder_state": os.path.abspath(a.encoder_state)} if getattr(a, "encoder_state", None) else {}),
                 **({"graft_expert": os.path.abspath(a.graft_expert)} if getattr(a, "graft_expert", None) else {}),
                 **({"encoder_rc": int(a.encoder_rc)} if getattr(a, "encoder_rc", None) is not None else {}),
+                **({"gate_lags": int(gl_)} if gl_ is not None else {}), **({"gate_thresh": float(gt_)} if gt_ is not None else {}),
                 **({"relabel_follow": list(fwin)} if rlf else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
@@ -403,7 +415,7 @@ def run(a):
         for c in dict.fromkeys(x[0] for x in items):
             ds = sets[c]; todo = [i for cc, i in items if cc == c]
             for b0 in range(0, len(todo), bs):
-                batch = todo[b0:b0 + bs]; feats = []; meta = []; enc_s = None; n3w = []; fxw = []
+                batch = todo[b0:b0 + bs]; feats = []; meta = []; enc_s = None; n3w = []; fxw = []; GA = []   # GA: --gate-thresh 게이트 활동(feats 와 같은 자리)
                 for i in batch:
                     cid, t0w, L = ds.items[i]; d = ds.dlgs[cid]; K = int(round(L / 0.08)); meta.append((i, cid, t0w, L, K, d))
                     if a.oracle or a.from_predictions:
@@ -415,7 +427,9 @@ def run(a):
                         if a.verify and "full" not in checked:
                             verify_long(model, wav, ds.cst_prefix(ds.slots(i)[1][:n_slots], a.deltas[0]), a.max_flush, D=len(ds.slots(i)[1][:n_slots]) if blocks else None,
                                         gate=(lambda A_: mk_gate(A_, a.deltas[0])) if mk_gate else None); checked.add("full")
-                        te = time.time(); feats.append(encode_long(model, wav, K, aosc=acfg)); enc_s = round(time.time() - te, 1); continue
+                        te = time.time(); feats.append(encode_long(model, wav, K, aosc=acfg)); enc_s = round(time.time() - te, 1)
+                        if gt_ is not None: GA.append((model.last_n3d_probs[0, :K, : int(model.config.slot_input_slots)] > gt_).cpu().numpy())   # encode_long 이 회의 전체로 한 번 돈 전문가
+                        continue
                     w = torch.from_numpy(wav).to(dev)
                     if n3: n3w.append(w)                                                                # E11: 전문가는 아래에서 배치 창을 한 번에
                     feats.append(model.encode(w[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev), **({"n3d": False} if n3 else {}))[0])
@@ -423,6 +437,7 @@ def run(a):
                     Kb = torch.tensor([m[4] for m in meta], device=dev)
                     A = model.n3d_act(torch.nn.utils.rnn.pad_sequence(n3w, batch_first=True), torch.tensor([len(x) for x in n3w], device=dev), Kb)
                     feats = [model.with_act_stream(f[None], A[j: j + 1, : int(Kb[j])])[0] for j, f in enumerate(feats)]
+                    if gt_ is not None: GA = [(model.last_n3d_probs[j, : int(Kb[j]), : A.shape[-1]] > gt_).cpu().numpy() for j in range(len(feats))]
                 A_np = [None] * len(meta); FA = [None] * len(meta)                                      # 활동 추종: 디코드가 받은 슬롯 활동(K, N) · --follow-n3d 로 다시 계산한 활동
                 if fx is not None and fxw and not all((f"{m[1]}@{m[2]}", dl) in done for m in meta for dl in a.deltas):
                     Kb = torch.tensor([m[4] for m in meta], device=fdev)                                # 원 평가와 같은 꼴(창: 배치, 회의 통째: 회의 전체 한 번)
@@ -460,7 +475,7 @@ def run(a):
                                 assert not mk_gate or Aj is not None, "--act-gate: 이 모델은 슬롯 활동이 없다(model.block_act)"
                                 g = mk_gate(Aj, delta) if mk_gate else None
                                 em, fc, rd, used, nf, tk = long_block_decode(model, feats[j], prefixes[j], len(ds.slots(m[0])[1][:n_slots]), max_flush_rounds=a.max_flush, context_s=a.context_s,
-                                                                             mix_off=mix_off, gate=g)
+                                                                             mix_off=mix_off, gate=g, gate_act=GA[j] if GA else None)
                                 bx = dict(forwards=nf, chunk_ms=round(float(np.mean(tk)), 2), chunk_ms_p90=round(float(np.percentile(tk, 90)), 2), **({"gated": dict(g.blocked)} if g else {}))
                             else: em, fc, rd, used = long_decode(model, feats[j], prefixes[j], max_flush_rounds=a.max_flush, context_s=a.context_s, retag=rt)
                             states.append(SimpleNamespace(emitted=em, forced=fc, flush_rounds=rd, positions=used, dec_s=round(time.time() - td, 1), **({"retag": rs} if rs is not None else {}),
@@ -481,7 +496,8 @@ def run(a):
                             if blocks:                                                                      # E9: 슬롯 블록 배치 디코드(선언 슬롯 수 = prefix 의 언어 수)
                                 Dj = len(ds.slots(meta[js[0]][0])[1][:n_slots]); gs = [mk_gate(A_dec[j], delta) for j in js] if mk_gate else None
                                 for q_, (j, st_) in enumerate(zip(js, decode_blocks_batch(model, [feats[j] for j in js], [list(pre)] * len(js), Dj, max_flush_rounds=a.max_flush,
-                                                                          acts=[acts[j] for j in js] if acts is not None else None, mix_off=mix_off, gates=gs))):
+                                                                          acts=[acts[j] for j in js] if acts is not None else None, mix_off=mix_off, gates=gs,
+                                                                          gate_acts=[GA[j] for j in js] if GA else None))):
                                     states[j] = st_
                                     if gs: st_.gated = dict(gs[q_].blocked)
                                 continue
@@ -612,6 +628,8 @@ def main():
     q.add_argument("--encoder-state", default=None, help="U3: 인코더를 이 graft.pt 의 enc(화자 분리와 함께 학습)로 바꿔 디코드 — ASR 지킴 확인")
     q.add_argument("--graft-expert", default=None, help="G3: 고정 전문가 자리에 이 graft.pt 의 이식 학생(GraftExpert)을 끼워 그 활동으로 디코드")
     q.add_argument("--encoder-rc", type=int, default=None, choices=(0, 3, 6, 13), help="지연 완화: 인코더 우측 문맥(80 ms 프레임 — 모델 설정의 att_context_size 목록, 학습은 3)")
+    q.add_argument("--gate-lags", type=int, default=None, help="E13 게이트 진단(2026-11-03): 추론 활동 게이트 창(청크 — config.slot_gate 를 덮는다, 학습 12). 0 = 게이트 끔(선언 슬롯 전부)")
+    q.add_argument("--gate-thresh", type=float, default=None, help="E13 게이트 진단: 게이트만 전문가 확률 > 이 값으로 연다(태그·오디오 활동은 전문가 임계 0.5 그대로)")
     q.add_argument("--relabel-follow", action="store_true", help="출력 쪽 재귀속: 활동을 어긴 가설 단어만 활동 슬롯으로 옮겨 채점(창 --follow-window, 스트리밍 그대로 낼 수 있는 출력)")
     q.add_argument("--follow-detail", action="store_true", help="행에 follow_detail(단어마다 추종 범주·슬롯·말 차례 위치·직전 화자 — cst_eval.follow_stats detail)을 남긴다")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")

@@ -370,7 +370,7 @@ def gate_tid(state, tid, stop, gate, stop_id):
 
 
 @torch.inference_mode()
-def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, acts=None, mix_off=False, gates=None, trans=False):
+def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, acts=None, mix_off=False, gates=None, trans=False, gate_acts=None):
     """E9 slot-block greedy decoding, one input per row per step (BlockState) on a dense KV-cache batch.
     feats: list of (S,K,D) encoder outputs, prefixes: equal-length lists declaring D slots. The audio tokens use model.chunk_embed (with acts
     or the E6 predicted-activity stream, as decode_batch); each tag gets model.tag_embeds (tag row + that slot's recent activity, model.block_act).
@@ -379,8 +379,11 @@ def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, act
     mix_off replaces the mixed audio token with model.adapter_mixnull (the chunk keeps its activity part).
     gates: per-row ActGate or None (activity-gated decoding -- a slot's round is dropped when its activity is off; the gate counts what it dropped).
     E13: a model with config.slot_gate opens only the slots its tag activity (or an open utterance) allows (BlockState gate_lags, block_gate);
-    trans=True (translation-mode prefix) adds each open slot's <TRANS> input and its translation outputs."""
+    trans=True (translation-mode prefix) adds each open slot's <TRANS> input and its translation outputs.
+    gate_acts (2026-11-03 gate diagnostics): per-row (K, N) activity the E13 gate opens on instead of the tag activity (e.g. expert probability > a lower
+    threshold) -- the tag activity itself is unchanged."""
     assert feats and len(feats) == len(prefixes) and (acts is None or len(acts) == len(feats)) and (gates is None or len(gates) == len(feats))
+    assert gate_acts is None or len(gate_acts) == len(feats)
     assert len({len(p) for p in prefixes}) == 1, "batch one language/delta at a time"
     emb = model.get_input_embeddings()
     dev = emb.weight.device
@@ -395,8 +398,8 @@ def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, act
     TR = int(model.sp_ids["<TRANS>"]) if trans else -1
     BG, EOT = int(model.sp_ids.get("<ONSET>", -1)), int(model.sp_ids["<EOT>"])
     states = []
-    for c, a in zip(ce, A):
-        gl, ga = block_gate(model, a)
+    for j, (c, a) in enumerate(zip(ce, A)):
+        gl, ga = block_gate(model, a if gate_acts is None else gate_acts[j])
         states.append(BlockState(len(c), D, model.config.runaway_cap, flush, int((12 if trans else 6) * len(c)) + 64, tags, gate_lags=gl, act=ga,
                                  trans_id=TR, begin_id=BG, eot_id=EOT))
     assert all(s.K > 0 for s in states)

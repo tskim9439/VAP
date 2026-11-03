@@ -162,7 +162,7 @@ def realtime_decode(model, gt: GraphThinker, feats, prefix_ids: List[int], max_f
 
 @torch.inference_mode()
 def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=None, max_flush_rounds: Optional[int] = None, max_per_chunk: int = 0,
-                          max_total_per_chunk: float = 6.0, on_chunk=None, mix_off: bool = False, gate=None, trans: bool = False):
+                          max_total_per_chunk: float = 6.0, on_chunk=None, mix_off: bool = False, gate=None, trans: bool = False, gate_act=None):
     """E9 슬롯 블록 디코드(2026-10-28 — cst_dialogue 모듈 설명 E9): batch_decode.decode_blocks_batch 와 같은 출력 규칙을 GraphThinker·LongThinker(run·run_all)로 돈다.
     청크마다 [오디오 k, 태그 0 … D−1] 를 한 forward 로 미리 넣고(run_all — 위치마다 argmax), 태그 s 뒤 예측이 멈춤이 아니면 태그 s 바로 뒤로 되돌아가 그 슬롯 출력을
     한 토큰씩 낸 뒤(뒤 태그 자리는 덮어쓴다 — 쿼리는 자기 위치까지만 본다) 남은 태그를 다시 한 forward 로 넣는다. 모든 슬롯이 멈추는 청크는 forward 한 번이다.
@@ -183,7 +183,7 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
     K = ce.shape[0]; max_total = int(max_total_per_chunk * (2 if trans else 1) * K) + 64
     cap = min(max_per_chunk, cfg.runaway_cap) if max_per_chunk else cfg.runaway_cap
     tags, stop, e_empty = model.slot_ids(D), block_stops(model, D, trans), emb[model.empty_audio]
-    gl, ga = block_gate(model, A); TR = int(model.sp_ids["<TRANS>"]) if trans else -1
+    gl, ga = block_gate(model, A if gate_act is None else gate_act); TR = int(model.sp_ids["<TRANS>"]) if trans else -1   # gate_act: 게이트만 다른 활동(진단 — 태그 활동은 그대로)
     BG, EOT = int(model.sp_ids.get("<ONSET>", -1)), int(model.sp_ids["<EOT>"]); utt = [0] * D       # E13 열린 발화 수(<ONSET> − <EOT> — BlockState 와 같다)
     sync = torch.cuda.synchronize if emb.is_cuda else (lambda: None)
     gt.run(emb[torch.as_tensor(prefix_ids, device=emb.device)], 0); pos = len(prefix_ids)    # prefix: 마지막 logits 는 쓰지 않는다

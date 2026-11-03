@@ -29,6 +29,8 @@
 #   GRAFT_EXPERT=<graft.pt>(2026-11-01, G3): AMI 작업(ami·amifull)의 슬롯 활동을 고정 전문가 대신 그 graft.pt 의 이식 학생으로(--graft-expert — 창은 창마다,
 #     회의 통째는 회의 전체 한 번). ENC_STATE 를 같은 graft.pt 로 주면 받아쓰기 인코더도 학생 것이다. 산출 이름에 -gx<GX_TAG>(기본 g2) 가 붙는다.
 #   ENC_RC=<0|3|6|13>(2026-11-01, 지연 완화): AMI 작업(ami·amifull)에서 인코더 우측 문맥을 바꿔 잰다(--encoder-rc, 학습은 3). 산출 이름에 -rc<N>.
+#   GATE_LAGS=<N> · GATE_THRESH=<0.x>(2026-11-03, E13 게이트 진단): AMI 작업(ami·amifull)에서 활동 게이트 모델(E13)의 추론 게이트만 바꾼다 — 창 N 청크(0 = 끔,
+#     --gate-lags) · 게이트만 전문가 확률 > 0.x 로 연다(--gate-thresh, 태그 활동은 0.5 그대로). 산출 이름에 -gl<N> · -gt<0.x 에서 점을 뺀 것>(예 -gt03).
 #   N3D_RC=<프레임>(2026-11-01): N3D 와 함께 화자 분리기 오른쪽 문맥(--n3d-rc). 산출 이름의 -n3d… 뒤에 r<N> 이 붙는다.
 #   EV_TAG=<이름>(2026-10-30): AMI 작업(ami·amifull) 산출 이름에 -<이름> 을 붙인다 — 같은 체크포인트를 고친 코드로 다시 잴 때(예 E10 <BEGIN> 차단 수정 onsetfix).
 #     예전 산출은 지우지 않고 그대로 둔다(이미 끝난 산출이 있으면 작업이 건너뛰므로 새 이름으로).
@@ -93,12 +95,14 @@ case $K in
        EO=""; ET=""; [ -n "${ENC_STATE:-}" ] && { [ -f "$ENC_STATE" ] || { say "ENC_STATE 없음: $ENC_STATE"; exit 2; }; EO="--encoder-state $ENC_STATE"; ET=-enc${ENC_TAG:-u3}; }   # U3 인코더
        XO=""; XT=""; [ -n "${GRAFT_EXPERT:-}" ] && { [ -f "$GRAFT_EXPERT" ] || { say "GRAFT_EXPERT 없음: $GRAFT_EXPERT"; exit 2; }; XO="--graft-expert $GRAFT_EXPERT"; XT=-gx${GX_TAG:-g2}; }   # G3 이식 학생 활동
        RO=""; RT=""; [ -n "${ENC_RC:-}" ] && { RO="--encoder-rc $ENC_RC"; RT=-rc$ENC_RC; }   # 지연 완화: 인코더 우측 문맥
-       E=$R/stage3-eval-ami$DS${MO:+-mixoff}$NT$GT$ET$XT$RT${EV_TAG:+-$EV_TAG}-$RUN-$tag; A=$R/stage3-attr-errors-ami$DS${MO:+-mixoff}$NT$GT$ET$XT$RT${EV_TAG:+-$EV_TAG}-$RUN-$tag; AB=$D/ami-bench-v1
+       GLO=""; GLT=""; [ -n "${GATE_LAGS:-}" ] && { [[ $GATE_LAGS =~ ^[0-9]+$ ]] || { say "GATE_LAGS 는 0 이상 정수: $GATE_LAGS"; exit 2; }; GLO="--gate-lags $GATE_LAGS"; GLT=-gl$GATE_LAGS; }   # 2026-11-03 E13 게이트 창(0 = 끔)
+       [ -n "${GATE_THRESH:-}" ] && { [[ $GATE_THRESH =~ ^0\.[0-9]+$ ]] || { say "GATE_THRESH 는 0.x: $GATE_THRESH"; exit 2; }; GLO="$GLO --gate-thresh $GATE_THRESH"; GLT=$GLT-gt${GATE_THRESH/./}; }   # 게이트만 낮은 임계
+       E=$R/stage3-eval-ami$DS${MO:+-mixoff}$NT$GT$ET$XT$RT$GLT${EV_TAG:+-$EV_TAG}-$RUN-$tag; A=$R/stage3-attr-errors-ami$DS${MO:+-mixoff}$NT$GT$ET$XT$RT$GLT${EV_TAG:+-$EV_TAG}-$RUN-$tag; AB=$D/ami-bench-v1
        FO=""; if [ "${FOLLOW:-0}" = 1 ]; then                                                        # 2026-10-30 활동 추종: 끝난 원출력을 다시 채점(디코드 없음)
-         [ -z "$GO$EO$XO$RO" ] && [ -f $E/summary.json ] || { say "FOLLOW: GATE·ENC_STATE·GRAFT_EXPERT·ENC_RC 없이, 끝난 원 산출이 있어야 한다 $E"; exit 2; }; FO="--from-predictions $E --follow-n3d"; NO=""; E=$E-follow; fi
+         [ -z "$GO$EO$XO$RO$GLO" ] && [ -f $E/summary.json ] || { say "FOLLOW: GATE·ENC_STATE·GRAFT_EXPERT·ENC_RC·GATE_LAGS·GATE_THRESH 없이, 끝난 원 산출이 있어야 한다 $E"; exit 2; }; FO="--from-predictions $E --follow-n3d"; NO=""; E=$E-follow; fi
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
        $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL --batch-size 16 \
-         --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 $MO $NO $GO $EO $XO $RO $FO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
+         --backchannel 1.0,3 --max-speakers 4 --window 20,90 --window-draws 1 --declare 4 $MO $NO $GO $EO $XO $RO $GLO $FO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
        [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }
@@ -156,12 +160,14 @@ case $K in
        EO=""; ET=""; [ -n "${ENC_STATE:-}" ] && { [ -f "$ENC_STATE" ] || { say "ENC_STATE 없음: $ENC_STATE"; exit 2; }; EO="--encoder-state $ENC_STATE"; ET=-enc${ENC_TAG:-u3}; }   # U3 인코더
        XO=""; XT=""; [ -n "${GRAFT_EXPERT:-}" ] && { [ -f "$GRAFT_EXPERT" ] || { say "GRAFT_EXPERT 없음: $GRAFT_EXPERT"; exit 2; }; XO="--graft-expert $GRAFT_EXPERT"; XT=-gx${GX_TAG:-g2}; }   # G3 이식 학생 활동
        RO=""; RT=""; [ -n "${ENC_RC:-}" ] && { RO="--encoder-rc $ENC_RC"; RT=-rc$ENC_RC; }   # 지연 완화: 인코더 우측 문맥
-       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}${MO:+-mixoff}$NT$GT$ET$XT$RT${EV_TAG:+-$EV_TAG}$DS-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
+       GLO=""; GLT=""; [ -n "${GATE_LAGS:-}" ] && { [[ $GATE_LAGS =~ ^[0-9]+$ ]] || { say "GATE_LAGS 는 0 이상 정수: $GATE_LAGS"; exit 2; }; GLO="--gate-lags $GATE_LAGS"; GLT=-gl$GATE_LAGS; }   # 2026-11-03 E13 게이트 창(0 = 끔)
+       [ -n "${GATE_THRESH:-}" ] && { [[ $GATE_THRESH =~ ^0\.[0-9]+$ ]] || { say "GATE_THRESH 는 0.x: $GATE_THRESH"; exit 2; }; GLO="$GLO --gate-thresh $GATE_THRESH"; GLT=$GLT-gt${GATE_THRESH/./}; }   # 게이트만 낮은 임계
+       C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}${MO:+-mixoff}$NT$GT$ET$XT$RT$GLT${EV_TAG:+-$EV_TAG}$DS-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
        FO=""; if [ "${FOLLOW:-0}" = 1 ]; then                                                        # 2026-10-30 활동 추종: 끝난 원출력을 다시 채점(디코드 없음)
-         [ -z "$GO$EO$XO$RO" ] && [ -f $E/summary.json ] || { say "FOLLOW: GATE·ENC_STATE·GRAFT_EXPERT·ENC_RC 없이, 끝난 원 산출이 있어야 한다 $E"; exit 2; }; FO="--from-predictions $E --follow-n3d"; NO=""; V=""; E=$E-follow; fi
+         [ -z "$GO$EO$XO$RO$GLO" ] && [ -f $E/summary.json ] || { say "FOLLOW: GATE·ENC_STATE·GRAFT_EXPERT·ENC_RC·GATE_LAGS·GATE_THRESH 없이, 끝난 원 산출이 있어야 한다 $E"; exit 2; }; FO="--from-predictions $E --follow-n3d"; NO=""; V=""; E=$E-follow; fi
        [ -f $E/summary.json ] && { say "이미 끝"; exit 0; }; mkdir -p $E; [ -f $E/.rank$r-of-$w.done ] && { say "몫 $r/$w 이미 끝"; exit 0; }
        $P experiments/cst_stage3_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $AB --corpora ami-ihmmix,ami-sdm --limit-windows 0 --deltas $DL \
-         --backchannel 1.0,3 --max-speakers 4 --window full --context-s $C --declare 4 $V $AO $DO $GD $MO $NO $GO $EO $XO $RO $FO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
+         --backchannel 1.0,3 --max-speakers 4 --window full --context-s $C --declare 4 $V $AO $DO $GD $MO $NO $GO $EO $XO $RO $GLO $FO --rank $r --world-size $w --out $E >> $E/run-rank$r.log 2>&1
        grep -q "^DONE rank=$r " $E/run-rank$r.log || { say "몫 $r/$w 실패 — $E/run-rank$r.log"; exit 1; }
        touch $E/.rank$r-of-$w.done; n=$(ls $E/.rank*-of-$w.done 2>/dev/null | wc -l)
        [ $n -lt $w ] && { say "몫 $r/$w 끝(끝난 몫 $n/$w — 합치기는 마지막 몫이)"; exit 0; }

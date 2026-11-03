@@ -366,7 +366,12 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.n3d.m = self.n3d_net; self.n3d.pre = self._shared_mel(force=True) if c.get("shared_mel") else None   # 저장할 때 정한 mel 그대로
 
     def n3d_act(self, wav, wav_len, K):
-        """고정 전문가 활동 (B, max K, N) 0/1 — 학습 중(self.training)이면 학습 청크(train_chunk·train_rc), 아니면 추론 청크(chunk·rc)."""
+        """고정 전문가 활동 (B, max K, N) 0/1 — 학습 중(self.training)이면 학습 청크(train_chunk·train_rc), 아니면 추론 청크(chunk·rc).
+        keep_n3d_probs(2026-11-03 E13 게이트 진단 — 평가 전용): 같은 활동을 내면서 확률 (B, max K, 8)을 last_n3d_probs 에 남긴다(게이트만 낮은 임계로 열 때)."""
+        if getattr(self, "keep_n3d_probs", False) and not self.training:
+            p = self.n3d.probs(wav, wav_len, K); self.last_n3d_probs = p.detach()
+            th = float(self.n3d.cfg["threshold"]) if hasattr(self.n3d, "cfg") else float(self.n3d.threshold)   # N3DExpert · GraftExpert(G3) 의 act 와 같은 임계
+            return (p[..., : int(self.config.slot_input_slots)] > th).float()
         return self.n3d.act(wav, wav_len, K, int(self.config.slot_input_slots), train=self.training)
 
     @staticmethod
