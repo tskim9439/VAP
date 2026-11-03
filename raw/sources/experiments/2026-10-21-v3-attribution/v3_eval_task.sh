@@ -60,7 +60,7 @@ dev() {                                                                         
   $P experiments/cst_stage4_taxi.py score --sessions $DEV/$1/sessions.jsonl --out $o --turn-metrics > $o/summary.log 2>&1; }
 say "시작"; mkdir -p $O
 case $K in
-  dlg) [ -f $O/dlg/summary.json ] && { say "이미 끝"; exit 0; }
+  dlg) [ -f $O/dlg/summary.json ] && grep -q "^DONE rank=" $O/dlg.log 2>/dev/null && { say "이미 끝"; exit 0; }   # 2026-11-03: 중간에 멈춘 run 의 요약만 있으면 이어 한다
        $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json --trans $S1 --deltas 4,10 --limit-windows 100 \
          --trans-lead-space --batch-size 32 --backchannel 1.0,3 --out $O/dlg >> $O/dlg.log 2>&1
        $P experiments/cst_stage4_eval.py summarize --out $O/dlg > $O/dlg-summary.log 2>&1 ;;

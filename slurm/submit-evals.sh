@@ -39,12 +39,14 @@
 #            의존 없음. 순서: 창 DER → 창 cpWER → 회의 DER → 회의 cpWER.
 #   q17-e10-n3d  같은 진단을 E10 final 에(창·회의 통째 × 섞인 소리 켬·끔). 의존 없음(2026-10-30 — E10 학습이 끝나 --after-job 을 뺐다).
 #   q17-e11 · q17-e11b  E11(slurm/submit-q17-e11.sh — 전문가 활동으로 학습, b = E10 에서): AMI 창 δ10 8 몫 → 회의 통째 δ10 8 몫(config 의 전문가). --after-job 필수.
+#            (q17-e11·e11b·e12*·e13*·e14* 은 학습이 끝났으면 — stage3-<묶음>/DONE — --after-job 없이 낸다. 2026-11-03 E14 재제출: 끝난 지 오래된 학습 job 은 의존이 거부될 수 있다)
+#            WITH_TRANS=1 이면 대화 번역 평가(v3_eval_task.sh dlg — q17-e13-trans 와 같은 작업)를 같은 노드 GPU 2 에 붙인다(재제출 때 남은 몫과 번역을 한 노드로).
 #   q17-e12*  E12 활동 추종 학습(2026-10-30, slurm/submit-q17-e12.sh — 슬롯 섞기·바꿔 끼우기·약한 활동 잡음): q17-e11 과 같은 묶음(행에 활동 추종 셈). --after-job 필수.
 #   q17-e13*  E13 활동 게이트 + 슬롯 블록 번역(2026-11-02, slurm/submit-q17-e13.sh): q17-e11 과 같은 받아쓰기 묶음(디코드가 config.slot_gate 로 게이트를 건다). --after-job 필수.
 #   q17-e13-trans  E13 번역 평가(2026-11-02): held-out 대화 창 번역(v3_eval_task.sh dlg — cst_stage4_eval 슬롯 블록 번역 디코드, δ4·10, 코퍼스마다 100 창)을
 #            E13 final 과 비교용 E11 final(E9 부터 받아쓰기만 학습)로. 학습이 돌고 있으면 --after-job 학습 job.
 #   q17-e14*  E14 비귀속 칸 + 확률 활동(2026-11-03, slurm/submit-q17-e14.sh): q17-e13 과 같은 받아쓰기 묶음(디코드가 config.slot_gate·x_slot 으로 게이트·X 칸을 건다,
-#            X 칸 단어는 전문가 확률로 슬롯에 붙여 채점). --after-job 필수.
+#            X 칸 단어는 전문가 확률로 슬롯에 붙여 채점). 학습 중이면 --after-job.
 #   q17-e14-trans  E14 번역 평가(2026-11-03): q17-e13-trans 와 같은 held-out 대화 창 번역을 E14 final 과 비교용 E13 final 로. 학습이 돌고 있으면 --after-job.
 #   q17-e13-gate  E13 추론 게이트 진단(2026-11-03, 사용자 "N3D 가 놓친 말을 받아쓰도록 게이트를 고칠 방법을 찾아줘"): 학습 없이 게이트만 바꿔 E13 final 을 다시 잰다.
 #            GATE_FULL(기본 gt0.3)·GATE_WIN(기본 없음) — 판 쉼표 목록, 판 = glN(창 N 청크, gl0 = 끔)·gt0.x(게이트만 전문가 확률 > 0.x)을 + 로 묶는다(예 gl25+gt0.3).
@@ -101,8 +103,9 @@ while [[ $# -gt 0 ]]; do
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
-case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e14-trans) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
+case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e13-trans|q17-e14-trans) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
+  q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*) [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; } ;;
+  noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|ext-parakeet-g2|q17-g3|q17-e11-relax|q17-spk|q17-e13-trans|q17-e13-gate) ;;
   *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
@@ -176,7 +179,8 @@ case $set_ in
     for v in ${GW[@]+"${GW[@]}"} ${GF[@]+"${GF[@]}"}; do [[ $(gv "$v") != *"!!"* ]] || { echo "GATE_WIN·GATE_FULL 판은 glN·gt0.x(+ 로 묶음, 예 gl25+gt0.3): $v" >&2; exit 2; }; done
     for v in ${GW[@]+"${GW[@]}"}; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 $(gv "$v") bash $X ami q17-e13 final $r/8"); done; done
     for v in ${GF[@]+"${GF[@]}"}; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 $(gv "$v") bash $X amifull q17-e13 final $r/8"); done; done ;;
-  q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull $set_ final $r/8"); done ;;
+  q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*) ami8d10 $set_; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X amifull $set_ final $r/8"); done
+    if [[ ${WITH_TRANS:-0} == 1 ]]; then L+=("2|bash $X dlg $set_ final"); fi ;;
   q17-follow) N3=${N3D:-$D/vapkt-baselines/Nemotron-3-Diarization/Nemotron-3-Diarization.nemo}; [[ -f $N3 ]] || { echo "Nemotron 3 Diarization 이 없다: $N3" >&2; exit 1; }
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 bash $X $t q17-e11 final $r/8"); done; done
     for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 FOLLOW=1 N3D=$N3 bash $X $t q17-e9 final $r/8"); done; done ;;
