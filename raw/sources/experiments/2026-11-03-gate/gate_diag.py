@@ -64,7 +64,7 @@ def main():
     sys.path[:0] = [REPO, os.path.join(REPO, "experiments")]
     import cst_stage3_eval as E
     from transformers import AutoTokenizer
-    from vapasr.data.cst_eval import parse_emitted, act_from_runs
+    from vapasr.data.cst_eval import parse_emitted, act_from_runs, merge_x
     from vapasr.data.cst_dialogue import SLOTS
     man = json.load(open("/soundai/users/tskim/VAPKT-data/data/ami-bench-v1/manifest.json"))
     SUB = {**{m: "dev" for m in man["dev"]}, **{m: "eval" for m in man["eval"]}}
@@ -73,6 +73,8 @@ def main():
         for l in open(f, encoding="utf-8"): r = json.loads(l); rows[(r["id"], r["delta"])] = r
     ck = cfg["checkpoint"]; tok = AutoTokenizer.from_pretrained(ck); sp = json.load(open(os.path.join(ck, "config.json")))["sp_ids"]
     spk = tuple(sp[t] for t in SLOTS[:4]); EOT = sp["<EOT>"]; BEGIN = sp.get("<ONSET>")
+    XI = int(sp["<SPK_5>"]) if json.load(open(os.path.join(ck, "config.json"))).get("x_slot") else -1    # E14 X 칸: 단어는 원출력 x_slots 로 슬롯에 붙인다
+    spk_p = spk + ((XI,) if XI >= 0 else ())
     a = argparse.Namespace(split=None, corpora=cfg["corpora"], data="/soundai/users/tskim/VAPKT-data/data/ami-bench-v1", deltas=cfg["deltas"],
                            backchannel=tuple(cfg["backchannel"]), max_speakers=cfg.get("max_speakers"), declare=cfg.get("declare"),
                            window=cfg["window"] if cfg["window"] == "full" else tuple(cfg["window"]), hop=cfg.get("hop", 10.0),
@@ -86,8 +88,10 @@ def main():
             if r is None or "act_runs" not in r: continue
             K = int(round(L / CHUNK)); g = (c, SUB[cid.split(":", 1)[1]]); C = agg[g]
             ref_w, _, mask, sp_order = E.window_ref(ds, i, delta, EOT, tok)
-            ev = []; hs, _ = parse_emitted(r["emitted"], spk, EOT, drop_chunks=mask, begin_id=BEGIN, events=ev)
+            ev = []; hs, _ = parse_emitted(r["emitted"], spk_p, EOT, drop_chunks=mask, begin_id=BEGIN, events=ev)
+            xw = E.words_of(tok, hs[-1]) if XI >= 0 else []; hs = hs[: len(spk)]
             hw = [E.words_of(tok, h) for h in hs]
+            if xw: hw = merge_x(hw, xw, r.get("x_slots") or [0] * len(xw)); C["n_x"] += len(xw)
             A = np.asarray(act_from_runs(r["act_runs"], K), bool); N = A.shape[1]
             win = windows_open(A, 12); gate = win | open_utt(ev, K, N)
             inv = {p: h for h, p in enumerate(r["perm"])}
@@ -109,7 +113,7 @@ def main():
     print(f"== {x.pred} — 행 {n_rows} · 소리 프레임 ±{x.tol} s · 창 {Ws}")
     for g, v in out.items():
         n = v["n_ref"]; m = v["n_matched_spk"]
-        print(f"  {g}: 참조 단어 {n}(짝 화자 {m}) · 가설 {v['n_hyp']} · 받아씀(아무 슬롯) {pc(v['any'], n):.1f} % · 짝 슬롯 {pc(v['own'], n):.1f} %")
+        print(f"  {g}: 참조 단어 {n}(짝 화자 {m}) · 가설 {v['n_hyp']}{' (X 칸 ' + str(v['n_x']) + ')' if v.get('n_x') else ''} · 받아씀(아무 슬롯) {pc(v['any'], n):.1f} % · 짝 슬롯 {pc(v['own'], n):.1f} %")
         for name in ("gate", "win"):
             parts = []
             for k in ("own", "other", "none", "unmatched"):
