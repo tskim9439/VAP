@@ -66,7 +66,8 @@
 #            회의 통째는 프레임 확률도 남긴다(2026-10-31 — -session/graft/probs, raw/sources/experiments/2026-10-31-diar-identity/identity_drift.py 로 혼동 나누기).
 #   q17-g3  G3(2026-11-01, 사용자 "G3 구현해놓자" — wiki output-diarizer-replacement-20261031): E11 final 의 고정 전문가 자리에 이식 학생(GRAFT_RUN 기본
 #            q17-graft-g2-lora 의 final/graft.pt — cst_stage3_eval --graft-expert)을 끼우고, 받아쓰기 인코더도 같은 graft.pt 의 enc 로(인코더 하나) AMI 창 δ10 8 몫과
-#            회의 통째 δ10 8 몫을 잰다. 산출 이름 -enc<GRAFT_RUN>-gx<GRAFT_RUN>. 의존 없음(--after-job 도 된다).
+#            회의 통째 δ10 8 몫을 잰다. 산출 이름 -enc<GRAFT_RUN>-gx<GRAFT_RUN>. 의존 없음(--after-job 도 된다 — 학생 학습 중이면 --after-job 으로 미리 낸다).
+#            G3_RUNS(2026-11-03, 기본 q17-e11): LLM 쪽 run 쉼표 목록 — q17-e13 이면 E13(활동 게이트 + 번역)에 학생을 끼운다. run 마다 16 작업.
 #   ext-parakeet-g2  Parakeet + G2(2026-11-01, 사용자 "둘 다 구현해놓자"): Multitalker Parakeet 에 화자 분리기 대신 저장한 회의 통째 확률을 되돌려 준다
 #            (ami_ext_task.sh mtp-n3d-replay — N3D 자신의 확률로 경로 확인, mtp-g2 — G2 학생 확률). 각 8 몫, 산출 results/ext-ami-mtp-{n3d-replay,g2}. 의존 없음.
 #   q17-e11-relax  지연 완화(2026-11-01, 사용자 "둘 다 구현해놓자"): E11 final 을 화자 분리·받아쓰기 지연을 늘려 잰다(학습 없음). 판 diar10 = N3D 청크 124(9.9 s),
@@ -158,8 +159,10 @@ case $set_ in
     for v in "${RV[@]}" "${RF[@]}"; do [[ $(rv $v) != "!!" ]] || { echo "RELAX·RELAX_FULL 판은 diar10·enc13·both: $v" >&2; exit 2; }; done
     for v in "${RV[@]}"; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 $(rv $v) bash $X ami q17-e11 final $r/8"); done; done
     for v in "${RF[@]}"; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 $(rv $v) bash $X amifull q17-e11 final $r/8"); done; done ;;
-  q17-g3) GR=${GRAFT_RUN:-q17-graft-g2-lora}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; [[ -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }
-    for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 ENC_STATE=$G ENC_TAG=$GR GRAFT_EXPERT=$G GX_TAG=$GR bash $X $t q17-e11 final $r/8"); done; done ;;
+  q17-g3) GR=${GRAFT_RUN:-q17-graft-g2-lora}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt
+    [[ -f $G || -n $dep ]] || { echo "이식 학생이 없다: $G(학습 중이면 --after-job 학습 job — 파일은 작업이 시작할 때 v3_eval_task.sh 가 본다)" >&2; exit 1; }
+    IFS=, read -ra GRN <<< "${G3_RUNS:-q17-e11}"                                                      # 2026-11-03: LLM 쪽 run(예 q17-e11,q17-e13 — E13 + 학생)
+    for run in "${GRN[@]}"; do for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 ENC_STATE=$G ENC_TAG=$GR GRAFT_EXPERT=$G GX_TAG=$GR bash $X $t $run final $r/8"); done; done; done ;;
   q17-e13-trans) L+=("0|bash $X dlg q17-e13 final" "1|bash $X dlg q17-e11 final") ;;
   q17-e13-gate) gv() { local x o="" P_; IFS=+ read -ra P_ <<< "$1"; for x in "${P_[@]}"; do case $x in gl[0-9]*) o="$o GATE_LAGS=${x#gl}" ;; gt0.[0-9]*) o="$o GATE_THRESH=${x#gt}" ;; *) echo "!!"; return ;; esac; done; echo "${o# }"; }
     IFS=, read -ra GW <<< "${GATE_WIN:-}"; IFS=, read -ra GF <<< "${GATE_FULL:-gt0.3}"
