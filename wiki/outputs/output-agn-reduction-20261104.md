@@ -59,3 +59,16 @@ raw_authors:
    - 걸리는 점: E2(pre-encode 주입 + 화자별 디코드)는 받아쓰기를 못 올렸다. 차이는 주입 위치(층 중간·위층 학습), 슬롯 블록 한 스트림, 겹침 많은 데이터다. E15a 다음에 겹침 놓침이 그대로면 간다.
 3. **짧은 말·게이트 놓침**: X 칸(E14)을 모델이 귀속하게(X 칸에서 화자 슬롯도 낸다). 참조의 2–3 % 몫이다.
 - 선택 진단(시스템 제안 아님): AMI 개별 헤드셋 채널을 따로 디코드해 "겹침이 완전히 갈렸을 때" 놓침 상한을 잰다. E15b 의 기대 이득을 미리 가늠한다.
+
+## 4. E15a 구현과 제출 (2026-11-04, 사용자 "E15a 부터 구현 진행해줘")
+- 구현(커밋 ecdcb97)
+  - `NemotronOnline.set_trainable(flag, layers=(lo, hi))`: 그 층만 gradient·train, 서브샘플링·다른 층은 고정·eval(dropout·BatchNorm 통계 고정). 모델 train()/eval() 을 거쳐도 그대로다. `config.encoder_train_layers` 로 저장·재로드한다.
+  - `stage3_train --encoder-state <graft.pt>`(시작 인코더를 G2b enc 로 — 재개는 체크포인트 인코더가 덮는다)·`--train-encoder-layers LO:HI`(지문 키 encoder). 인코더 전체를 체크포인트에 저장한다(encoder_saved).
+  - `submit-q17-f1.sh --weights-set`(레시피 셋 가중만 바꾼다), `slurm/submit-q17-e15a.sh`, 평가 묶음 `q17-e15*`(종단간 — 활동 G2b 학생, 인코더는 모델 것, AMI 창·회의 통째 16 몫 + 대화 번역).
+  - 시험 `tests/test_encoder_partial.py`(층 범위·모드·BatchNorm 통계), 관련 25 개 통과.
+- 처음 안의 δ 4–14 는 뺐다. 활동 게이트 창·태그 활동 입력이 12 청크라 δ > 10 이면 말 시작 단어의 소리 프레임이 게이트 창 밖이 된다. `<DELAY_d>` 도 10 까지다. 하려면 태그 활동 칸을 늘리는 구조 변경이 필요하다(E15c 후보).
+- 스모크(`raw/sources/experiments/2026-11-04-agn/e15a_smoke.sh`, 호스트 GPU 0, 제출 인자 그대로 2 step)
+  - 시작 인코더: E13 인코더와 다른 층은 0–11 뿐이다(G2b 가 푼 아래 12 층). 위 12 층은 같다.
+  - 학습 2,068.6M 중 인코더 12–23 층 302.3M. att_context [56, 3] 고정. 셋마다 64 창 × δ4–10 시퀀스 불일치 0. 두 step loss 0.285·0.367, GPU 54 GB.
+  - 저장·재로드: PARITY OK(누락·추가·값 차이 0, 인코더 키 638, 손실 0.2573 대 0.2572). 저장 인코더를 graft 와 대조하면 서브샘플링·0–11 층은 같고 바뀐 텐서는 12–23 층에만 있다(ENC-CHECK OK).
+- 제출(사용자, 11-04 23:19, hpc 2 노드, 5,000 step, 저장 250 step 마다): 학습 job 100152, 평가 job 100153(학습 성공 뒤). 자동 보고 `auto_e15a.sh`(호스트) → `VAPKT-data/tmp/e15a-check/e15a-report.txt`.
