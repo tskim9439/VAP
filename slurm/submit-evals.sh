@@ -48,6 +48,8 @@
 #   q17-e14*  E14 비귀속 칸 + 확률 활동(2026-11-03, slurm/submit-q17-e14.sh): q17-e13 과 같은 받아쓰기 묶음(디코드가 config.slot_gate·x_slot 으로 게이트·X 칸을 건다,
 #            X 칸 단어는 전문가 확률로 슬롯에 붙여 채점). 학습 중이면 --after-job.
 #   q17-e14-trans  E14 번역 평가(2026-11-03): q17-e13-trans 와 같은 held-out 대화 창 번역을 E14 final 과 비교용 E13 final 로. 학습이 돌고 있으면 --after-job.
+#   q17-e15*  E15a 인코더 위층 공동 학습(2026-11-04, slurm/submit-q17-e15a.sh — wiki output-agn-reduction-20261104): 종단간 평가 — 활동을 G2b 학생으로(GRAFT_EXPERT,
+#            인코더는 모델 것 그대로 — ENC_STATE 없음) AMI 창 δ10 8 몫·회의 통째 δ10 8 몫, 대화 번역(dlg)을 GPU 2 에. 학습 중이면 --after-job. GRAFT_RUN(기본 q17-graft-g2b).
 #   q17-e13-gate  E13 추론 게이트 진단(2026-11-03, 사용자 "N3D 가 놓친 말을 받아쓰도록 게이트를 고칠 방법을 찾아줘"): 학습 없이 게이트만 바꿔 E13 final 을 다시 잰다.
 #            GATE_FULL(기본 gt0.3)·GATE_WIN(기본 없음) — 판 쉼표 목록, 판 = glN(창 N 청크, gl0 = 끔)·gt0.x(게이트만 전문가 확률 > 0.x)을 + 로 묶는다(예 gl25+gt0.3).
 #            GATE_FULL 판마다 회의 통째 δ10 8 몫, GATE_WIN 판마다 창 δ10 8 몫(v3_eval_task.sh GATE_LAGS·GATE_THRESH — 산출 이름 -gl<N>·-gt<x>). 노드 하나에 한 판씩 내면 판끼리 나란히 돈다.
@@ -104,10 +106,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e13-trans|q17-e14-trans) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*) [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; } ;;
+  q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*|q17-e15*) [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; } ;;
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|ext-parakeet-g2|q17-g3|q17-e11-relax|q17-spk|q17-e13-trans|q17-e13-gate) ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans" >&2; exit 2 ;; esac
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans | q17-e15*" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $lbl =~ ^[A-Za-z0-9._-]*$ ]] || { echo "--label 은 영문·숫자·._- 만: $lbl" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
@@ -173,7 +175,10 @@ case $set_ in
     IFS=, read -ra GRN <<< "${G3_RUNS:-q17-e11}"                                                      # 2026-11-03: LLM 쪽 run(예 q17-e11,q17-e13 — E13 + 학생)
     for run in "${GRN[@]}"; do for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 ENC_STATE=$G ENC_TAG=$GR GRAFT_EXPERT=$G GX_TAG=$GR bash $X $t $run final $r/8"); done; done; done ;;
   q17-e13-trans) L+=("0|bash $X dlg q17-e13 final" "1|bash $X dlg q17-e11 final") ;;
-  q17-e14-trans) L+=("0|bash $X dlg q17-e14 final") ;;                                       # 비교용 E13 final 은 q17-e13-trans 로 이미 쟀다(results/stage4-eval-q17-e13-final)
+  q17-e14-trans) L+=("0|bash $X dlg q17-e14 final") ;;
+  q17-e15*) GR=${GRAFT_RUN:-q17-graft-g2b}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; [[ -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }   # 2026-11-04 E15a: 종단간
+    for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 GRAFT_EXPERT=$G GX_TAG=$GR bash $X $t $set_ final $r/8"); done; done
+    L+=("2|bash $X dlg $set_ final") ;;                                       # 비교용 E13 final 은 q17-e13-trans 로 이미 쟀다(results/stage4-eval-q17-e13-final)
   q17-e13-gate) gv() { local x o="" P_; IFS=+ read -ra P_ <<< "$1"; for x in "${P_[@]}"; do case $x in gl[0-9]*) o="$o GATE_LAGS=${x#gl}" ;; gt0.[0-9]*) o="$o GATE_THRESH=${x#gt}" ;; *) echo "!!"; return ;; esac; done; echo "${o# }"; }
     IFS=, read -ra GW <<< "${GATE_WIN:-}"; IFS=, read -ra GF <<< "${GATE_FULL:-gt0.3}"
     for v in ${GW[@]+"${GW[@]}"} ${GF[@]+"${GF[@]}"}; do [[ $(gv "$v") != *"!!"* ]] || { echo "GATE_WIN·GATE_FULL 판은 glN·gt0.x(+ 로 묶음, 예 gl25+gt0.3): $v" >&2; exit 2; }; done

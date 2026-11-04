@@ -109,10 +109,16 @@ class NemotronOnline(nn.Module):
             def _update_max_seq_length_local(seq_length: int, device=None):
                 if seq_length > enc.max_audio_length: enc.set_max_audio_length(seq_length)
             enc.update_max_seq_length = _update_max_seq_length_local
-    def set_trainable(self, flag: bool):
-        self.trainable = flag
-        for p in self.enc.parameters(): p.requires_grad_(flag)
-        self.enc.train(flag)
+    def set_trainable(self, flag: bool, layers: Optional[Sequence[int]] = None):
+        """layers=(lo, hi)(E15a, 2026-11-04): enc.layers[lo:hi] 만 학습(gradient)하고 서브샘플링·다른 층은 고정한다. 고정 부분은 eval 로 둔다(dropout·BatchNorm 통계 고정 —
+        n3d_graft.partial_unfreeze 와 같은 규약). forward 는 학습 경로(bf16 autocast)다."""
+        self.trainable = flag; self.train_layers = (int(layers[0]), int(layers[1])) if (flag and layers) else None
+        if self.train_layers:
+            lo, hi = self.train_layers; assert 0 <= lo < hi <= len(self.enc.layers), f"학습 층 {self.train_layers} — 층은 0–{len(self.enc.layers)}"
+        for p in self.enc.parameters(): p.requires_grad_(flag and self.train_layers is None)
+        if self.train_layers:
+            for p in self.enc.layers[lo:hi].parameters(): p.requires_grad_(True)
+        self._enc_mode(flag)
         # NeMo 의 fused Triton 서브샘플링(dw_striding) 커널은 backward 에서 autotune 벤치마크를 돌리다 메모리가 빠듯하면 "Triton Error [CUDA]: out of memory" 로 죽는다(2026-09-09 실측).
         # 인코더를 학습할 때는 순수 PyTorch 경로로 돌린다(fuse_triton=False). 동결·추론은 그대로.
         conv = getattr(getattr(self.enc, "pre_encode", None), "conv", None)
@@ -124,8 +130,11 @@ class NemotronOnline(nn.Module):
         self.spec_aug = SpecAugment.from_spec(spec)
         if self.spec_aug is not None: self.spec_aug.train(self.training)
         return self.spec_aug
-    def train(self, mode: bool = True):                    # 동결 중에는 dropout 등이 켜지지 않도록 eval 유지
-        super().train(mode); self.enc.train(mode and self.trainable); return self
+    def _enc_mode(self, mode: bool):
+        self.enc.train(mode and self.trainable and self.train_layers is None)
+        if mode and self.trainable and self.train_layers: self.enc.layers[self.train_layers[0]: self.train_layers[1]].train(True)
+    def train(self, mode: bool = True):                    # 동결 중에는 dropout 등이 켜지지 않도록 eval 유지(일부 층만 학습하면 그 층만 train)
+        super().train(mode); self._enc_mode(mode); return self
     def forward(self, wav: torch.Tensor, wav_len: torch.Tensor, K: torch.Tensor, taps: Sequence[int] = (), inject=None) -> torch.Tensor:
         """wav (B, L) float32, wav_len (B,) 샘플 수, K (B,) 목표 프레임 수 → (B, max K, D) float32. 인코더는 fp32 로 돈다(autocast 밖).
         taps(층 번호, 0 부터)를 주면 → (B, 1 + len(taps), max K, D): 0 번 = 마지막 층(위와 같은 값), 1.. = 그 층(enc.layers[j]) 출력, 같은 프레임 자르기·0 패딩(V2-a 두 스트림 입력).

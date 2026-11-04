@@ -175,6 +175,10 @@ g.add_argument("--epochs", type=float, default=1.0); g.add_argument("--max-steps
 enc_g = ap.add_mutually_exclusive_group()
 enc_g.add_argument("--freeze-encoder", dest="freeze_encoder", action="store_true"); enc_g.add_argument("--train-encoder", dest="freeze_encoder", action="store_false")
 ap.set_defaults(freeze_encoder=False)
+ap.add_argument("--train-encoder-layers", default=None, help="E15a(2026-11-04, 사용자 \"E15a 부터 구현 진행해줘\"): 인코더 층 LO:HI(0 부터, HI 제외 — 예 12:24 = 위 12 층)만 "
+               "LLM 손실로 학습하고 서브샘플링·다른 층은 고정·eval(NemotronOnline.set_trainable layers). --freeze-encoder 와 함께 쓰지 않는다. 지문 키 encoder")
+ap.add_argument("--encoder-state", default=None, help="E15a: 시작 인코더를 이 graft.pt 의 enc(G2b — 아래 12 층을 화자 분리와 함께 학습)로 바꾼다. 체크포인트에 인코더 전체를 "
+               "저장한다(encoder_saved). 재개(checkpoint-N)는 체크포인트의 인코더가 덮는다. 지문 키 encoder")
 ap.add_argument("--encoder-right-context", type=int, default=None); ap.add_argument("--encoder-context-sampling", choices=["multi", "fixed"], default="fixed")
 ap.add_argument("--spec-augment", default="off")
 gc_g = ap.add_mutually_exclusive_group()
@@ -270,6 +274,11 @@ if (a.slot_gate or a.gate_fa) and not a.slot_blocks: sys.exit("--slot-gate·--ga
 if a.slot_gate and not 1 <= a.slot_gate <= a.tag_act_lags: sys.exit(f"--slot-gate 는 1 … --tag-act-lags({a.tag_act_lags}) — {a.slot_gate}")
 if not 0.0 <= a.gate_fa <= 1.0 or (a.gate_fa and not a.slot_gate): sys.exit(f"--gate-fa ∈ [0, 1], --slot-gate 와 함께 — {a.gate_fa}")
 if a.x_slot and not a.slot_gate: sys.exit("--x-slot(E14)은 --slot-gate 와 함께")
+if a.train_encoder_layers is not None:                                                        # E15a: 인코더 일부 층만 학습
+    if not re.fullmatch(r"\d+:\d+", a.train_encoder_layers) or int(a.train_encoder_layers.split(":")[0]) >= int(a.train_encoder_layers.split(":")[1]):
+        sys.exit(f"--train-encoder-layers LO:HI(LO < HI) — {a.train_encoder_layers}")
+    if a.freeze_encoder: sys.exit("--train-encoder-layers 는 --freeze-encoder 와 함께 쓰지 않는다")
+if a.encoder_state and not os.path.isfile(a.encoder_state): sys.exit(f"--encoder-state 가 없다: {a.encoder_state}")
 if any(not 0.0 <= p <= 1.0 for p in (a.miss_drop, a.miss_short, a.miss_late)) or ((a.miss_drop or a.miss_short or a.miss_late) and not a.x_slot):
     sys.exit(f"--miss-* ∈ [0, 1], --x-slot 과 함께 — {a.miss_drop} {a.miss_short} {a.miss_late}")
 if a.n3d_soft and not a.n3d: sys.exit("--n3d-soft 는 --n3d 와 함께")
@@ -388,12 +397,21 @@ if model is not None:
     assert reg == {k: sp_ids[k] for k in SEM_SPECIALS + [TURN_TOKEN]}, f"config.sem_registry 가 <SEM_END>·<EOT> 가 아니다: {reg}"
     assert EOT not in cfg.blocked_ids and sp_ids["<SPK_A>"] not in cfg.blocked_ids and sp_ids["<SPK_B>"] not in cfg.blocked_ids, "<EOT>/<SPK_A>/<SPK_B> 가 decode 차단 목록에 있다"
     init_had_encoder = bool(cfg.encoder_trainable or getattr(cfg, "encoder_saved", False))
+    if a.encoder_state:                                                                         # E15a: G2b 인코더로 시작(재개면 trainer 가 체크포인트 인코더로 덮는다)
+        xs = torch.load(a.encoder_state, map_location="cpu"); assert xs.get("enc") is not None, f"인코더 state(enc)가 없다: {a.encoder_state}"
+        cur = model.encoder.enc.state_dict()
+        diff = sorted({int(k.split(".")[1]) for k, v in xs["enc"].items() if k.startswith("layers.") and k in cur and not torch.equal(cur[k].float().cpu(), v.float())})
+        model.encoder.enc.load_state_dict(xs["enc"]); cfg.encoder_saved = True
+        log(f"인코더 ← {a.encoder_state}(아래 {xs.get('unfreeze')} 층 학습, step {xs.get('step')}) · init 인코더와 다른 층 {diff}")
     if a.freeze_encoder:
         model.encoder.set_trainable(False)
         for p_ in model.encoder.parameters(): p_.requires_grad_(False)
-        cfg.encoder_trainable = False; cfg.encoder_saved = True
+        cfg.encoder_trainable = False; cfg.encoder_saved = True; cfg.encoder_train_layers = None
+    elif a.train_encoder_layers:                                                                # E15a: 그 층만 학습, 고정 층도 init·graft 에서 왔으므로 함께 저장
+        lo, hi = (int(x) for x in a.train_encoder_layers.split(":"))
+        cfg.encoder_train_layers = [lo, hi]; model.encoder.set_trainable(True, layers=(lo, hi)); cfg.encoder_trainable = True; cfg.encoder_saved = True
     else:
-        model.encoder.set_trainable(True); cfg.encoder_trainable = True
+        cfg.encoder_train_layers = None; model.encoder.set_trainable(True); cfg.encoder_trainable = True
     if a.encoder_right_context is not None and a.encoder_right_context != cfg.encoder_right_context:
         ctx = [int(cfg.encoder_left_context), int(a.encoder_right_context)]; allowed = [list(map(int, c)) for c in (getattr(model.encoder.enc, "att_context_size_all", None) or [])]
         assert not allowed or ctx in allowed, f"--encoder-right-context {a.encoder_right_context}: 학습한 att_context 가 아니다 {allowed}"
@@ -408,7 +426,9 @@ if model is not None:
     if a.grad_ckpt: model.thinker.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False}); model.thinker.config.use_cache = False
     speed = apply_speedups(model, a, log, liger=a.liger); a.liger = bool(speed["liger"]); cfg.use_liger = a.liger
     n_tr = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    log(f"model ← {a.init} ({time.time() - t0:.0f}s) · 학습 {n_tr / 1e6:.1f}M · 인코더 {'동결' if a.freeze_encoder else '학습'}(init 인코더 저장됨={init_had_encoder}) · "
+    n_enc = sum(p.numel() for p in model.encoder.parameters() if p.requires_grad)
+    log(f"model ← {a.init} ({time.time() - t0:.0f}s) · 학습 {n_tr / 1e6:.1f}M · 인코더 {'동결' if a.freeze_encoder else '학습'}"
+        f"{f' 층 {a.train_encoder_layers}' if a.train_encoder_layers else ''}({n_enc / 1e6:.1f}M, init 인코더 저장됨={init_had_encoder}) · "
         f"<EOT>={EOT} {'정답·문맥 없음(--no-eot)' if a.no_eot else f'켬(turn_weight {cfg.turn_weight})'} · grad ckpt {a.grad_ckpt} · liger {a.liger} · 화자 슬롯 헤드 {f'켬(가중 {cfg.spk_weight})' if model.spk_head is not None else '끔'} · "
         f"인코더 탭 {f'L{cfg.enc_tap_layer:02d}(은닉 {cfg.enc_tap_hidden})' if model.adapter_tap is not None else '끔'}")
 
@@ -585,6 +605,8 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
           **({"slot_remap": a.slot_remap} if a.slot_remap > 0 else {}),                         # 2026-10-30 활동 추종 학습: 끄면 키 없음
           **({"slot_gate": dict(lags=a.slot_gate, fa=a.gate_fa)} if a.slot_gate else {}),       # 2026-11-02 E13 활동 게이트: 끄면 키 없음
           **({"x_slot": dict(drop=a.miss_drop, short=a.miss_short, late=a.miss_late)} if a.x_slot else {}), **({"n3d_soft": True} if a.n3d_soft else {}),   # 2026-11-03 E14
+          **({"encoder": dict(train_layers=a.train_encoder_layers, state=os.path.abspath(a.encoder_state) if a.encoder_state else None)}
+             if (a.train_encoder_layers or a.encoder_state) else {}),                            # 2026-11-04 E15a: 끄면 키 없음
           **({"shrink_speakers": True} if a.shrink_speakers and not a.window_draws else {}),    # 2026-10-28 E9b: 격자 창 줄이기(끄면 키 없음)
           **({"slot_audio": dict(d=a.slot_audio_dim, blocks=a.slot_audio_blocks, kernel=a.slot_audio_kernel, mix_drop=a.mix_drop)} if a.slot_audio else {}),   # 2026-10-29 E10
           **({"n3d": dict(path=os.path.abspath(a.n3d), train_chunk=a.n3d_train_chunk, chunk=a.n3d_chunk, threshold=a.n3d_threshold)} if a.n3d else {}))   # 2026-10-29 E11

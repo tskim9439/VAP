@@ -115,7 +115,8 @@ class VapAsrForStreamingASR(PreTrainedModel):
         from ..features.online import NemotronOnline
         enc = NemotronOnline(right_context=self.config.encoder_right_context, path=path)
         if state_dict: enc.enc.load_state_dict(state_dict)
-        tr = self.config.encoder_trainable if trainable is None else trainable; enc.set_trainable(tr); self.config.encoder_trainable = tr
+        tr = self.config.encoder_trainable if trainable is None else trainable; self.config.encoder_trainable = tr
+        enc.set_trainable(tr, layers=getattr(self.config, "encoder_train_layers", None))           # E15a: 학습하는 층 범위(없으면 전체)
         self.encoder = enc.to(next(self.adapter.parameters()).device)
         if getattr(self, "n3d_net", None) is not None and self.config.n3d_cfg.get("shared_mel"): self.n3d.pre = self._shared_mel(force=True)   # 흡수 N3D 가 우리 mel 을 쓰면 새 인코더 것으로
         return self
