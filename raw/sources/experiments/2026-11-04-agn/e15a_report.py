@@ -1,13 +1,13 @@
 # E15a(인코더 위층 공동 학습 + 겹침 많은 셋 가중, 2026-11-04 — wiki output-agn-reduction-20261104)의 AMI 결과를 E13 과 한 표로 + 대화 번역(dlg-summary δ10)을 E13 과.
 #   종단간(활동 = G2b 학생) 비교가 중심이다: E13 + G2b 대 E15a + G2b. 표준 재채점·재귀속·원 채점·agn 분해(agn_diag json)를 읽기만 한다. 없는 칸은 –.
-#   python3 e15a_report.py [RUN(기본 q17-e15a)] [GRAFT_RUN(기본 q17-graft-g2b)]   (vapasr 를 import 하지 않는다)
-import json, os, re, sys
+#   python3 e15a_report.py [RUN[,RUN…](기본 q17-e15a — 2026-11-05 절제 q17-e15a-enc 와 함께 쉼표로)] [GRAFT_RUN(기본 q17-graft-g2b)]   (vapasr 를 import 하지 않는다)
+import glob, json, os, re, sys
 R = "/soundai/users/tskim/VAPKT-data/results"; T = "/soundai/users/tskim/VAPKT-data/tmp"
-RUN = sys.argv[1] if len(sys.argv) > 1 else "q17-e15a"; GR = sys.argv[2] if len(sys.argv) > 2 else "q17-graft-g2b"
+RUNS = (sys.argv[1] if len(sys.argv) > 1 else "q17-e15a").split(","); GR = sys.argv[2] if len(sys.argv) > 2 else "q17-graft-g2b"
 C = ("ami-ihmmix", "ami-sdm")
 ROWS = [("E13 · N3D", "stage3-eval-amifull-c30-d10-q17-e13-final", "stage3-eval-ami-d10-q17-e13-final"),
-        ("E13 + G2b(종단간)", f"stage3-eval-amifull-c30-enc{GR}-gx{GR}-d10-q17-e13-final", f"stage3-eval-ami-d10-enc{GR}-gx{GR}-q17-e13-final"),
-        (f"E15a + G2b(종단간, {RUN})", f"stage3-eval-amifull-c30-gx{GR}-d10-{RUN}-final", f"stage3-eval-ami-d10-gx{GR}-{RUN}-final")]
+        ("E13 + G2b(종단간)", f"stage3-eval-amifull-c30-enc{GR}-gx{GR}-d10-q17-e13-final", f"stage3-eval-ami-d10-enc{GR}-gx{GR}-q17-e13-final")] + \
+       [(f"{run} + G2b(종단간)", f"stage3-eval-amifull-c30-gx{GR}-d10-{run}-final", f"stage3-eval-ami-d10-gx{GR}-{run}-final") for run in RUNS]
 
 
 def meeteval(path):
@@ -34,11 +34,10 @@ def report(path):
     return out
 
 
-def agn_parts(path):
-    """agn_diag --json → {폴더 이름: {(코퍼스, 분할): (혼자 놓침, 둘 놓침, 셋+ 놓침)}}."""
-    if not os.path.exists(path): return {}
+def agn_parts(paths):
+    """agn_diag --json 들 → {폴더 이름: {(코퍼스, 분할): (혼자 놓침, 둘 놓침, 셋+ 놓침)}}."""
     out = {}
-    for pred, v in json.load(open(path)).items():
+    for pred, v in (kv for path in paths for kv in json.load(open(path)).items()):
         x = {}
         for k, a in v["agg"].items():
             c, s = k.split("/"); rate = lambda o: 100.0 * (a.get(f"ov:{o}:n", 0) - a.get(f"ov:{o}:ok", 0)) / max(1, a.get(f"ov:{o}:n", 0))
@@ -53,7 +52,7 @@ def cell(d, key=None, sub="eval", fmt="{:.2f}"):
     return " / ".join("–" if x is None else fmt.format(x) for x in v)
 
 
-AG = agn_parts(f"{T}/agn/agn-e15a.json")
+AG = agn_parts(sorted(glob.glob(f"{T}/agn/agn-*.json")))
 H = ("판", "회의 통째 표준 cp", "+ 재귀속", "회의 Whisper agn", "놓침 혼자·둘·셋+ %(IHM-mix)", "어김 %", "LLM DER 놓침·헛·혼동(IHM-mix)", "창 표준 cp", "창 agn(우리)")
 for sub in ("eval", "dev"):
     print(f"AMI {sub}, IHM-mix / SDM — δ10(표준 = Whisper + meeteval). 놓침 = agn_diag(같은 글자 ±0.6 s, 겹침 = 그 시각 말하는 참조 화자 수)")
@@ -66,7 +65,7 @@ for sub in ("eval", "dev"):
         print("| " + " | ".join((name, cell(st, sub=sub), cell(rl, sub=sub), cell(wn, "agn", sub), ovs, cell(rp, "off", sub, "{:.1f}"), dd, cell(ws, sub=sub), cell(wr, "agn", sub))) + " |")
     print()
 print("대화 번역(held-out 창 100 개, δ10, N3D 활동) — BLEU · 받아쓰기 CER/WER")
-for run in ("q17-e13", RUN):
+for run in ["q17-e13"] + RUNS:
     p = f"{R}/stage4-eval-{run}-final/dlg-summary.log"
     if not os.path.exists(p): print(f"  {run}: –"); continue
     for l in open(p, encoding="utf-8"):
