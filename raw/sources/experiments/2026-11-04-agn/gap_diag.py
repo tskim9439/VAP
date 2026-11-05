@@ -13,6 +13,7 @@
   orc : meeteval tcORC-WER(collar 5 s)의 배정(참조 발화 → 가설 화자, 화자 무시)을 받아, 가설 화자마다 배정된 참조 발화 단어를 시각순으로 이어 편집 거리 정렬.
         참조 발화 = 그 화자의 AMI 발화 구간으로 묶은 참조 단어, 가설 구간 = 같은 화자에서 2 s 넘게 끊기지 않는 단어 묶음(qlt_tc 와 같다).
   놓침 = 대치 + 삭제(참조 단어 몫). cp 놓침 − orc 놓침 ≈ 화자 귀속 탓(맞게 받아썼지만 다른 화자 칸에 쓴 것), orc 놓침 = 받아쓰기 탓.
+--relabel B,F(ours): 행 act_runs(디코드가 받은 활동)로 출력 재귀속(cst_stage3_eval --relabel-follow 와 같은 follow_stats)을 얹어 잰다.
 """
 import argparse, bisect, collections, glob, json, os, sys
 
@@ -46,6 +47,7 @@ def main():
     ap.add_argument("--data", required=True); ap.add_argument("--tok", required=True); ap.add_argument("--sys", action="append", required=True)
     ap.add_argument("--subset", default="eval"); ap.add_argument("--corpora", default="ami-ihmmix,ami-sdm"); ap.add_argument("--delta", type=int, default=10)
     ap.add_argument("--collar", type=float, default=5.0); ap.add_argument("--json", default=None)
+    ap.add_argument("--relabel", type=lambda x: tuple(int(v) for v in x.split(",")), default=None, help="ours: 출력 재귀속 창 B,F(예 3,1 — 행 act_runs 활동)")
     a = ap.parse_args()
     import numpy as np
     from scipy.optimize import linear_sum_assignment
@@ -54,7 +56,7 @@ def main():
     from meeteval.wer.api import tcorcwer
     import cst_stage3_eval as E
     from cst_stage3_eval import windows_of, words_of
-    from vapasr.data.cst_eval import parse_emitted, ed
+    from vapasr.data.cst_eval import parse_emitted, ed, follow_stats, act_from_runs
     from agn_diag import build_ref, keep
     tok = AutoTokenizer.from_pretrained(a.tok); EOT = tok.convert_tokens_to_ids("<EOT>")
     cfg = json.load(open(os.path.join(a.tok, "config.json")))
@@ -84,7 +86,13 @@ def main():
             cid = r["id"].split("@")[0]; c = r["corpus"]; R, mask = refs[cid]
             if kind == "ours":
                 slots, _ = parse_emitted(r["emitted"], spk_ids, EOT, drop_chunks=mask, begin_id=BEGIN)
-                H = {f"h{k}": [(w, te - a.delta * CHUNK - 0.04) for w, te in words_of(tok, toks)] for k, toks in enumerate(slots)}
+                ws_ = [words_of(tok, toks) for toks in slots]
+                if a.relabel:                                                                   # 출력 재귀속(cst_stage3_eval --relabel-follow 와 같은 follow_stats — 활동을 어긴 단어만 활동 슬롯으로)
+                    c_, i_ = where[cid]; ds_ = sets[c_]; K_ = int(r["K"]); fm_ = np.ones(K_, bool)
+                    for s_, e_ in ds_._bad_spans(ds_.dlgs[cid]):
+                        if e_ > 0 and s_ < r["L"]: fm_[max(0, int(s_ / CHUNK)): min(K_, int(np.ceil(e_ / CHUNK)))] = False
+                    _, ws_ = follow_stats(ws_, act_from_runs(r["act_runs"], K_), a.delta, frame_mask=fm_, back=a.relabel[0], fwd=a.relabel[1])
+                H = {f"h{k}": [(w, te - a.delta * CHUNK - 0.04) for w, te in ws] for k, ws in enumerate(ws_)}
             else:
                 H = collections.defaultdict(list)
                 for sp, w, t in r["hyp_words"]:
