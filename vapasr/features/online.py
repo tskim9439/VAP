@@ -135,10 +135,13 @@ class NemotronOnline(nn.Module):
         if mode and self.trainable and self.train_layers: self.enc.layers[self.train_layers[0]: self.train_layers[1]].train(True)
     def train(self, mode: bool = True):                    # 동결 중에는 dropout 등이 켜지지 않도록 eval 유지(일부 층만 학습하면 그 층만 train)
         super().train(mode); self._enc_mode(mode); return self
-    def forward(self, wav: torch.Tensor, wav_len: torch.Tensor, K: torch.Tensor, taps: Sequence[int] = (), inject=None) -> torch.Tensor:
+    def forward(self, wav: torch.Tensor, wav_len: torch.Tensor, K: torch.Tensor, taps: Sequence[int] = (), inject=None, slots=None) -> torch.Tensor:
         """wav (B, L) float32, wav_len (B,) 샘플 수, K (B,) 목표 프레임 수 → (B, max K, D) float32. 인코더는 fp32 로 돈다(autocast 밖).
         taps(층 번호, 0 부터)를 주면 → (B, 1 + len(taps), max K, D): 0 번 = 마지막 층(위와 같은 값), 1.. = 그 층(enc.layers[j]) 출력, 같은 프레임 자르기·0 패딩(V2-a 두 스트림 입력).
-        inject = (fn, y)(E2, 2026-10-25 — SSA arXiv:2506.22646): pre-encode 출력 X (B, T', D)(80 ms)에 fn(X ⊙ y) 를 더한다. y (B, ≥T') 는 대상 화자 활동(0–1), 모자라면 0 으로 채운다."""
+        inject = (fn, y)(E2, 2026-10-25 — SSA arXiv:2506.22646): pre-encode 출력 X (B, T', D)(80 ms)에 fn(X ⊙ y) 를 더한다. y (B, ≥T') 는 대상 화자 활동(0–1), 모자라면 0 으로 채운다.
+        slots = (L, fn, act)(E15b, 2026-11-06 — vapasr/hf/slot_enc): 층 L.. 을 (섞인 1 + 슬롯 N) 벌로 갈라 돌린다(fn = SlotInject, act (B, ≥T', N) 슬롯 활동) →
+        (B, 1 + N, max K, D): 0 번 = 섞인 소리(주입 없음 — slots 없을 때와 같은 값), 1.. = 슬롯 s 조건. fn 에 학습할 가중이 있으면(학습 중) 인코더를 동결해도
+        grad 가 위층을 지나 fn 까지 간다(아래층은 grad 를 받는 텐서가 없어 그래프를 남기지 않는다). taps·inject 와 함께 쓰지 않는다."""
         with torch.autocast("cuda", enabled=False):
             with torch.no_grad(): f, fl = self.pre(input_signal=wav.float(), length=wav_len)
             if self.spec_aug is not None: f = self.spec_aug(f, fl)                              # 모듈이 training 일 때만(추론·평가는 그대로)
@@ -152,10 +155,19 @@ class NemotronOnline(nn.Module):
                 return (x, *o[1:]) if isinstance(o, tuple) else x
             hooks.append(self.enc.pre_encode.register_forward_hook(_inj))
         # 동결 인코더는 fp32(C2 이후 특징과 완전 동일). 학습할 때는 bf16 autocast — fp32 는 활성화 메모리가 2 배라 KO 배치 48 이 H200 에서 OOM(2026-09-09 실측: bs24 87 GB)
+        sb = None
+        if slots is not None:
+            assert not taps and inject is None, "slots(E15b)는 taps·inject 와 함께 쓰지 않는다"
+            from ..hf.slot_enc import slot_branch
+            sb = slot_branch(self.enc.layers, slots[0], slots[1], slots[2])
+        sg = slots is not None and torch.is_grad_enabled() and any(p.requires_grad for p in slots[1].parameters())   # E15b: 동결 인코더라도 fn 까지 grad
         try:
-            with torch.autocast("cuda", enabled=bool(self.trainable), dtype=torch.bfloat16):
-                ctx = torch.no_grad() if not self.trainable else torch.enable_grad()
-                with ctx: h, hl = self.enc(audio_signal=f, length=fl)              # (B, D, T')
+            with torch.autocast("cuda", enabled=bool(self.trainable), dtype=torch.bfloat16):      # E15b 동결 인코더도 fp32 그대로(평가와 같은 수치 — grad 만 켠다)
+                ctx = torch.no_grad() if not (self.trainable or sg) else torch.enable_grad()
+                with ctx:
+                    if sb is None: h, hl = self.enc(audio_signal=f, length=fl)          # (B, D, T')
+                    else:
+                        with sb as st: h, hl = self.enc(audio_signal=f, length=fl)       # (B·R, D, T') — 벌 r 은 행 b·R + r
         finally:
             for hk in hooks: hk.remove()
         Km = int(K.max())
@@ -164,6 +176,9 @@ class NemotronOnline(nn.Module):
             for i in range(x.shape[0]):
                 k, t = int(K[i]), int(hl[i]); n = min(k, t); out[i, :n] = x[i, :n]
             return out
+        if sb is not None:                                                                    # E15b: (B·R, D, T') → (B, R, max K, D)
+            R = int(st["R"]); B = h.shape[0] // R; hr = h.view(B, R, h.shape[1], h.shape[2])
+            return torch.stack([fit(hr[:, r].transpose(1, 2)) for r in range(R)], 1)
         out = fit(h.transpose(1, 2))
         if not taps: return out
         assert all(got[j].shape[:2] == (h.shape[0], h.shape[2]) for j in taps), f"탭 층 출력 shape {[tuple(got[j].shape) for j in taps]} ≠ (B, T')=({h.shape[0]}, {h.shape[2]})"

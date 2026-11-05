@@ -54,6 +54,7 @@
 #            GPU 마다 N 개를 동시에 돈다(v3-eval-node.sbatch 슬롯 'g.s|'), 번역은 GPU 2 의 제 슬롯에서 처음부터. SUBSET=eval|dev 면 AMI 창·회의 통째를 그 공식 분할만
 #            (산출 이름 -sub<분할> — 판단용 빠른 평가). 예: SLOTS=4 SUBSET=eval bash slurm/submit-evals.sh q17-e15a-enc --partition hpc
 #            슬롯이면 번역은 dlg_shard_task.sh 8 몫을 GPU 마다 슬롯 0 끝에 둔다(산출 dlg8).
+#            ACT=n3d|g2b(2026-11-06): AMI 활동 — g2b = G2b 학생(GRAFT_EXPERT, 종단간), n3d = 모델 config 의 고정 N3D. q17-e15b*(E15b 슬롯 조건 인코더)는 기본 n3d, 나머지는 g2b.
 #   q17-dretag  디코드 때 재귀속(2026-11-05, 사용자 "① 디코드 때 재귀속 구현 진행해줘" — v3_eval_task.sh DRETAG, cst_stage3_eval --retag): E13 final 을 학습 없이
 #            회의 통째 δ10 로 다시 디코드한다 — 판 둘: E13 · N3D(config 전문가)와 E13 + G2b(ENC_STATE·GRAFT_EXPERT = GRAFT_RUN, 기본 q17-graft-g2b — 종단간).
 #            DRETAG_WIN(기본 3,1 — 사후 재귀속과 같은 창), SLOTS(판마다 GPU 당 동시 몫, 기본 2 — GPU 마다 판 둘 × SLOTS), SUBSET(기본 eval — 빈 값이면 dev·eval 둘 다).
@@ -185,9 +186,11 @@ case $set_ in
     for run in "${GRN[@]}"; do for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 ENC_STATE=$G ENC_TAG=$GR GRAFT_EXPERT=$G GX_TAG=$GR bash $X $t $run final $r/8"); done; done; done ;;
   q17-e13-trans) L+=("0|bash $X dlg q17-e13 final" "1|bash $X dlg q17-e11 final") ;;
   q17-e14-trans) L+=("0|bash $X dlg q17-e14 final") ;;
-  q17-e15*) GR=${GRAFT_RUN:-q17-graft-g2b}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; [[ -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }   # 2026-11-04 E15a: 종단간
+  q17-e15*) GR=${GRAFT_RUN:-q17-graft-g2b}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt   # 2026-11-04 E15a: 종단간
+    AC=${ACT:-$([[ $set_ == q17-e15b* ]] && echo n3d || echo g2b)}; [[ $AC =~ ^(n3d|g2b)$ ]] || { echo "ACT 는 n3d·g2b: $AC" >&2; exit 2; }   # 2026-11-06 E15b: 활동 = config 의 N3D(기본)
+    [[ $AC == n3d || -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }
     S=${SLOTS:-1}; [[ $S =~ ^[1-8]$ ]] || { echo "SLOTS 는 1–8: $S" >&2; exit 2; }; [[ -z ${SUBSET:-} || $SUBSET =~ ^(dev|eval)$ ]] || { echo "SUBSET 은 dev·eval: $SUBSET" >&2; exit 2; }
-    pre="DELTAS=10 GRAFT_EXPERT=$G GX_TAG=$GR${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1 OMP_NUM_THREADS=4 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"; s0=".0"; }   # 슬롯이면 CPU 스레드를 나눠 쓰고 메모리 조각을 줄인다
+    pre="DELTAS=10$([[ $AC == g2b ]] && echo " GRAFT_EXPERT=$G GX_TAG=$GR")${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1 OMP_NUM_THREADS=4 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"; s0=".0"; }   # 슬롯이면 CPU 스레드를 나눠 쓰고 메모리 조각을 줄인다
     for r in 0 1 2 3 4 5 6 7; do L+=("$r$s0|$pre bash $X ami $set_ final $r/8"); done          # 창은 슬롯 0 에서 먼저(그 뒤 같은 슬롯의 회의 통째)
     for ((r = 0; r < W; r++)); do q=$((r % 8)); (( S > 1 )) && q=$q.$((r / 8)); L+=("$q|$pre$bal bash $X amifull $set_ final $r/$W"); done
     if (( S > 1 )); then for g in 0 1 2 3 4 5 6 7; do L+=("$g.0|bash $DX $set_ final $g/8"); done   # 슬롯이면 번역은 8 몫으로 슬롯 0 끝에(2026-11-05 100350: GPU 2 의 제 슬롯에서 회의 4 개와 같이 돌다 메모리 부족)

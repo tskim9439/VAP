@@ -16,6 +16,7 @@
 #   [--blocks-trans(2026-11-02 E13 — 슬롯 블록 번역: 대화 번역 타깃(--dlg-ast-frac 0.5)·교차 언어 합성(--sim-trans-frac 0.8)·번역 행 앞 공백·replay 번역(--ast-frac 기본 0.8)은
 #    켜고, 슬롯 블록이 받지 않는 교대/머무름 가중·EOT-문맥 dropout 은 뺀다 — --slot-blocks 와 함께, --transcribe-only 와 함께 쓰지 않는다)].
 #   [--weights-set 셋:가중,…(2026-11-04 E15a — 레시피 가중치 일부를 바꾼다. 레시피에 있는 셋만, 예 dlg_mt:2,dlg_far:2)].
+#   [--add-sim DIR=셋:가중(2026-11-06 E15b — 레시피에 합성 셋을 더한다, 여럿은 반복. DIR/<셋>.refined.dialogues.jsonl 이 있어야 한다, 예 …/sim-dialogue-v6-ovl=sim_en-ovl:0.6)].
 #   새 셋이 하나라도 없으면 멈춘다(--allow-missing 이면 빼고 낸다). 아무것도 지우지 않는다.
 #   low_p_hpc(2026-10-26 사용자 "low_p_hpc 로 제출할 수 있도록 해줘"): 선점 유예(≈70 s)가 1.7B 저장(≈3.5 분)보다 짧아 선점 때 저장은 끊긴다 —
 #   재개는 마지막 완성 checkpoint(last_complete_checkpoint)에서. 그래서 apex 가 아니면 --save-every 기본 250(apex 500, 평가 avg3 = ck1500·ck2000·final 그대로),
@@ -23,12 +24,12 @@
 #   평가: 학습 뒤 submit-evals.sh q17-f1(같은 파티션 — q17-mt4-v3 와 같은 묶음: final·ck1500·ck2000·avg3, AMI 4 몫).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-dry=""; allow=0; part=apex; nodes=2; steps=5000; run=q17-f1; exclude=hpc-50,hpc-51,hpc-101,hpc-102; ev=1; save=""; after=""; afterok=""; textra=""; evset=q17-f1; init=""; tonly=0; window=""; btr=0; wset=""
+dry=""; allow=0; part=apex; nodes=2; steps=5000; run=q17-f1; exclude=hpc-50,hpc-51,hpc-101,hpc-102; ev=1; save=""; after=""; afterok=""; textra=""; evset=q17-f1; init=""; tonly=0; window=""; btr=0; wset=""; addsim=()
 while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run) dry=--dry-run; shift ;;  --allow-missing) allow=1; shift ;;  --partition) part=$2; shift 2 ;;  --nodes) nodes=$2; shift 2 ;;
     --max-steps) steps=$2; shift 2 ;;  --run) run=$2; shift 2 ;;  --exclude) exclude=$2; shift 2 ;;  --no-eval) ev=0; shift ;;  --save-every) save=$2; shift 2 ;;  --after) after=$2; shift 2 ;;  --afterok) afterok=$2; shift 2 ;;  --init) init=$2; shift 2 ;;  --train-extra) textra=$2; shift 2 ;;  --eval-set) evset=$2; shift 2 ;;
-    --transcribe-only) tonly=1; shift ;;  --window) window=$2; shift 2 ;;  --blocks-trans) btr=1; shift ;;  --weights-set) wset=$2; shift 2 ;;
+    --transcribe-only) tonly=1; shift ;;  --window) window=$2; shift 2 ;;  --blocks-trans) btr=1; shift ;;  --weights-set) wset=$2; shift 2 ;;  --add-sim) addsim+=("$2"); shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
@@ -58,6 +59,11 @@ if (( ${#miss[@]} )); then echo "!! 아직 없는 셋: ${miss[*]}" >&2; (( allow
 FARW=""; [[ $CORP == *-far* ]] && FARW=",dlg_far:1.0"; MTKO=""; [[ ,$CORP, == *,nia23mt,* ]] && MTKO=",dlg_mtko:0.5"   # --allow-missing: 코퍼스가 없는 그룹은 가중치에서 뺀다
 SW=""; GMAP=""; [[ ,$CORP, == *,swbd,* ]] && { SW=",dlg_sw:0.7"; GMAP=" --dlg-group-map swbd:dlg_sw"; }                  # Switchboard 는 따로(otoSpeech 를 묽히지 않게)
 W=dlg_ko:2,dlg_en:0.7,dlg_de:0.7,dlg_mt:1.0$FARW$MTKO$SW,sim_ko:0.5,sim_en:0.8,sim_de:0.8,sim_en-de:0.5,sim_en-de-tel:1.0,sim_en-ko:1.0$MEET,rep_ko:1.2,rep_en:1.2,rep_de:1.2
+for x in ${addsim[@]+"${addsim[@]}"}; do                                                         # E15b: 합성 셋 더하기(DIR=셋:가중)
+  [[ $x =~ ^(/[^=]+)=(sim_[a-z]+(-[a-z0-9]+)?):([0-9.]+)$ ]] || { echo "--add-sim DIR=sim_<l>[-접미사]:가중: $x" >&2; exit 2; }
+  d=${BASH_REMATCH[1]}; k=${BASH_REMATCH[2]}; [[ -f $d/$k.refined.dialogues.jsonl ]] || { echo "--add-sim: 없음 $d/$k.refined.dialogues.jsonl" >&2; exit 1; }
+  [[ ,$W, == *,$k:* ]] && { echo "--add-sim: 이미 레시피에 있는 셋 $k(가중은 --weights-set 으로)" >&2; exit 2; }
+  [[ ,$SIMS, == *,$d,* ]] || SIMS+=",$d"; W+=",$k:${BASH_REMATCH[4]}"; done
 if [[ -n $wset ]]; then IFS=, read -ra WS <<< "$wset"                                     # E15a: 레시피의 셋 가중치만 바꾼다(없는 셋이면 멈춘다)
   for kv in "${WS[@]}"; do k=${kv%%:*}; [[ ,$W, == *,$k:* ]] || { echo "--weights-set: 레시피에 없는 셋 $k(있는 것: $W)" >&2; exit 2; }
     W=$(echo ",$W," | sed -E "s/,$k:[0-9.]+,/,$kv,/; s/^,//; s/,\$//"); done; fi
@@ -76,7 +82,7 @@ ARGS=(--run $run --init $init --partition $part --nodes $nodes --backchannel 1.0
       --sim-data $SIMS --weights $W --set-phone sim_en-de-tel:0
       --lr 4e-5 --max-steps $steps --save-every $save --split v4 --dlg-corpora $CORP --max-speakers 4 --declare-all-p 0.5 ${window:+--window $window}
       --extra "--far-aug 0.3 --far-sets dlg_ko,dlg_en,dlg_de,dlg_mt,dlg_mtko$GMAP$XTR${textra:+ $textra}")
-echo "[$(date '+%F %T')] F1 $run($part $nodes 노드, $steps step, 저장 $save step 마다, 평가 ck$CKA·ck$CKB·final, MAX_RESTART $MAX_RESTART${after:+, job ${after//[,:]/·} 끝난 뒤}${afterok:+, job $afterok 성공 뒤}${textra:+, 덧붙임 $textra}${wset:+, 가중 바꿈 $wset}$( (( tonly )) && echo ", 받아쓰기만")$( (( btr )) && echo ", 슬롯 블록 번역")${window:+, 창 $window s}, 평가 $evset) · 대화 $CORP · 합성 $SIMS" >&2
+echo "[$(date '+%F %T')] F1 $run($part $nodes 노드, $steps step, 저장 $save step 마다, 평가 ck$CKA·ck$CKB·final, MAX_RESTART $MAX_RESTART${after:+, job ${after//[,:]/·} 끝난 뒤}${afterok:+, job $afterok 성공 뒤}${textra:+, 덧붙임 $textra}${wset:+, 가중 바꿈 $wset}${addsim[0]:+, 합성 더함 ${addsim[*]}}$( (( tonly )) && echo ", 받아쓰기만")$( (( btr )) && echo ", 슬롯 블록 번역")${window:+, 창 $window s}, 평가 $evset) · 대화 $CORP · 합성 $SIMS" >&2
 out=$(bash slurm/submit-stage3-train.sh "${ARGS[@]}" ${EXC[@]+"${EXC[@]}"} $dry 2>&1) || { echo "$out" | tail -5 >&2; echo "!! 학습 제출 실패" >&2; exit 1; }
 echo "$out" | grep -E "^sbatch|Submitted|만들 예정|init 없음|거부" >&2 || true
 dep=$(echo "$out" | grep -o "Submitted batch job [0-9]*" | awk '{print $4}' | tail -1 || true); [[ -n $dep ]] || { [[ -n $dry ]] && dep=0; } || true

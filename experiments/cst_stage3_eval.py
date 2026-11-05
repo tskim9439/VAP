@@ -434,7 +434,7 @@ def run(a):
     if tor:
         n = target_oracle_loop(a, model, tok, sets, items, dest, done, spk, EOT, n_slots, dev)
         print(f"DONE rank={a.rank} rows={n}", flush=True); return
-    n3 = model is not None and getattr(model, "n3d", None) is not None                       # E11: 창 평가는 고정 전문가를 배치로(창마다 새로)
+    n3 = model is not None and getattr(model, "n3d", None) is not None and getattr(model, "adapter_slotinj", None) is None   # E11: 창 평가는 고정 전문가를 배치로(창마다 새로) — E15b 는 model.encode 가 창마다 전문가 활동으로 슬롯 조건 인코딩
     with open(dest, "a", buffering=1) as fo, torch.inference_mode():
         for c in dict.fromkeys(x[0] for x in items):
             ds = sets[c]; todo = [i for cc, i in items if cc == c]

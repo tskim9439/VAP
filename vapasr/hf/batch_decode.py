@@ -425,7 +425,7 @@ def decode_blocks_batch(model, feats, prefixes, D, *, max_flush_rounds=None, act
     assert not mix_off or getattr(model, "adapter_mixnull", None) is not None, "mix_off needs an E10 model (adapter_mixnull)"
     ce = [(model.chunk_embed(f[None], mix_mask=mm) if acts is None else model.chunk_embed(f[None], acts[j][None], mix_mask=mm))[0].to(emb.weight.dtype) for j, f in enumerate(feats)]
     A = [model.block_act(f, acts[j] if acts is not None else None) for j, f in enumerate(feats)]
-    X = [model.slot_audio_of(f, a) if getattr(model, "adapter_slotx", None) is not None else None for f, a in zip(feats, A)]
+    X = [model.slot_audio_of(f, a) if (getattr(model, "adapter_slotx", None) is not None or getattr(model, "adapter_slotenc", None) is not None) else None for f, a in zip(feats, A)]   # E10·E15b
     flush = model.config.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
     tags = tuple(model.slot_ids(D))
     stop = block_stops(model, D, trans)

@@ -50,7 +50,9 @@ def encode_long(model, wav: np.ndarray, K: int, core: Optional[int] = None, ctx:
     aosc(diar.AoscConfig, E7): 화자 분리 헤드 모델 — 스트림 0 은 같고, 스트림 1(예측 슬롯 활동)을 회의 전체 AOSC 스트리밍으로 만든다(model.encode 와 같은 꼴).
     고정 화자 분리 전문가(model.n3d, E11)가 있으면 조각은 n3d=False 로 인코딩하고, 스트림 1 을 회의 전체 오디오로 한 번 돌린 전문가 활동(화자 캐시가 회의 내내
     이어진다)으로 바꾼다 — aosc 와 함께 쓰지 않는다(헤드 활동을 버리게 된다).
-    act(2026-11-01 화자별 세션 — baseline_ami_ext vapasr-spk): 전문가 모델에서 주면 전문가를 돌리지 않고 이 슬롯 활동 (K, N) 0/1 을 스트림 1 로 쓴다."""
+    act(2026-11-01 화자별 세션 — baseline_ami_ext vapasr-spk): 전문가 모델에서 주면 전문가를 돌리지 않고 이 슬롯 활동 (K, N) 0/1 을 스트림 1 로 쓴다.
+    E15b(model.adapter_slotinj, 2026-11-06): 전문가 활동을 회의 전체로 먼저 한 번 구하고(act 를 주면 그것), 조각마다 그 몫으로 인코더 위층을 슬롯마다 갈라 돌린다
+    → (2 + N, K, D)(0 섞인 소리 · 1 활동 · 2.. 슬롯 조건 — model.encode 와 같은 꼴)."""
     ch = int(getattr(model.config, "encoder_right_context", 0) or 0) + 1
     core = 4800 // ch * ch if core is None else core; ctx = 1760 // ch * ch if ctx is None else ctx   # 기본은 청크 배수로 내림(2026-11-01 지연 완화 --encoder-rc — 우측 문맥 3 이면 4800·1760 그대로)
     dev = next(model.parameters()).device; out = None
@@ -72,11 +74,18 @@ def encode_long(model, wav: np.ndarray, K: int, core: Optional[int] = None, ctx:
         streams = [out, F.pad(act, (0, out.shape[-1] - act.shape[-1]))[None]]
         if sx is not None: S_ = torch.cat(sembs); streams.append(F.pad(S_.to(out.dtype), (0, out.shape[-1] - S_.shape[-1]))[None])   # E10: 화자 단서 임베딩 스트림
         return torch.cat(streams, 0)
+    se = n3 and getattr(model, "adapter_slotinj", None) is not None                               # E15b: 활동을 먼저(회의 전체), 조각은 그 몫으로 슬롯 조건 인코딩
+    if se:
+        if act is None: act = model.n3d_act(torch.from_numpy(np.ascontiguousarray(wav, dtype=np.float32)).to(dev)[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))
+        else: act = torch.as_tensor(np.asarray(act), dtype=torch.float32, device=dev)[None, :K]
+        act = F.pad(act.float(), (0, 0, 0, max(0, K - act.shape[1])))[:, :K]
     for seg, Ks, a, c0, n in segment_plan(wav, K, ch, core, ctx, tail):
         w = torch.from_numpy(np.ascontiguousarray(seg, dtype=np.float32)).to(dev)
-        f = model.encode(w[None], torch.tensor([len(seg)], device=dev), torch.tensor([Ks], device=dev), **({"n3d": False} if n3 else {}))[0]   # (S, b − a, D)
+        kw = {"n3d": False, "slot_act": act[:, a: a + Ks]} if se else ({"n3d": False} if n3 else {})
+        f = model.encode(w[None], torch.tensor([len(seg)], device=dev), torch.tensor([Ks], device=dev), **kw)[0]   # (S, b − a, D)
         if out is None: out = f.new_zeros(f.shape[0], K, f.shape[2])
         out[:, c0: c0 + n] = f[:, c0 - a: c0 - a + n]; del f
+    if se: return out                                                                              # E15b: 스트림 1 은 이미 회의 전체 활동
     if n3:                                                                                         # E11: 회의 전체 한 번(스트리밍 — 출력은 그때까지의 오디오만 본다)
         if act is None: act = model.n3d_act(torch.from_numpy(np.ascontiguousarray(wav, dtype=np.float32)).to(dev)[None], torch.tensor([len(wav)], device=dev), torch.tensor([K], device=dev))
         else: act = torch.as_tensor(np.asarray(act), dtype=torch.float32, device=dev)[None, :K]   # 화자별 세션: 바깥에서 준 활동

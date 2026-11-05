@@ -183,7 +183,7 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
     if feats.dim() == 2: feats = feats[None]
     emb = gt.embed
     ce = model.chunk_embed(feats[None], mix_mask=torch.ones(1, dtype=torch.bool, device=emb.device) if mix_off else None)[0].to(emb.dtype)   # (K, D) — decode_blocks_batch 와 같다
-    A = model.block_act(feats, act); X = model.slot_audio_of(feats, A) if getattr(model, "adapter_slotx", None) is not None else None
+    A = model.block_act(feats, act); X = model.slot_audio_of(feats, A) if (getattr(model, "adapter_slotx", None) is not None or getattr(model, "adapter_slotenc", None) is not None) else None   # E10·E15b 슬롯 소리 토큰
     K = ce.shape[0]; max_total = int(max_total_per_chunk * (2 if trans else 1) * K) + 64
     cap = min(max_per_chunk, cfg.runaway_cap) if max_per_chunk else cfg.runaway_cap
     tags, stop, e_empty = model.slot_ids(D), block_stops(model, D, trans), emb[model.empty_audio]

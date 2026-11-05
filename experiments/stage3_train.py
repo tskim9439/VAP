@@ -175,6 +175,10 @@ g.add_argument("--epochs", type=float, default=1.0); g.add_argument("--max-steps
 enc_g = ap.add_mutually_exclusive_group()
 enc_g.add_argument("--freeze-encoder", dest="freeze_encoder", action="store_true"); enc_g.add_argument("--train-encoder", dest="freeze_encoder", action="store_false")
 ap.set_defaults(freeze_encoder=False)
+ap.add_argument("--slot-enc-layer", type=int, default=None, help="E15b(2026-11-06, 사용자 \"2번부터 진행해.\" — vapasr/hf/slot_enc): 인코더 층 L.. 을 (섞인 1 + 슬롯 N) 벌로 갈라 "
+               "돌리고 슬롯 벌에 그 슬롯 활동(태그 활동 입력과 같은 — N3D·흔든 정답)을 주입, 슬롯 벌 출력 → adapter_slotenc → 그 슬롯 태그 자리(0 초기화 — 붙인 직후 init 과 같다). "
+               "--slot-blocks·--n3d(또는 init 의 전문가)와 함께. 위층도 학습하려면 --train-encoder-layers L:24. 지문 키 slot_enc")
+ap.add_argument("--slot-enc-hidden", type=int, default=1024, help="E15b SlotInject 은닉 차원")
 ap.add_argument("--train-encoder-layers", default=None, help="E15a(2026-11-04, 사용자 \"E15a 부터 구현 진행해줘\"): 인코더 층 LO:HI(0 부터, HI 제외 — 예 12:24 = 위 12 층)만 "
                "LLM 손실로 학습하고 서브샘플링·다른 층은 고정·eval(NemotronOnline.set_trainable layers). --freeze-encoder 와 함께 쓰지 않는다. 지문 키 encoder")
 ap.add_argument("--encoder-state", default=None, help="E15a: 시작 인코더를 이 graft.pt 의 enc(G2b — 아래 12 층을 화자 분리와 함께 학습)로 바꾼다. 체크포인트에 인코더 전체를 "
@@ -279,6 +283,8 @@ if a.train_encoder_layers is not None:                                          
         sys.exit(f"--train-encoder-layers LO:HI(LO < HI) — {a.train_encoder_layers}")
     if a.freeze_encoder: sys.exit("--train-encoder-layers 는 --freeze-encoder 와 함께 쓰지 않는다")
 if a.encoder_state and not os.path.isfile(a.encoder_state): sys.exit(f"--encoder-state 가 없다: {a.encoder_state}")
+if a.slot_enc_layer is not None and (a.slot_enc_layer < 0 or a.slot_enc_hidden <= 0 or not a.slot_blocks or a.slot_audio):
+    sys.exit("--slot-enc-layer(E15b)는 0 이상 층·--slot-enc-hidden > 0, --slot-blocks 와 함께, --slot-audio(E10)와는 따로")
 if any(not 0.0 <= p <= 1.0 for p in (a.miss_drop, a.miss_short, a.miss_late)) or ((a.miss_drop or a.miss_short or a.miss_late) and not a.x_slot):
     sys.exit(f"--miss-* ∈ [0, 1], --x-slot 과 함께 — {a.miss_drop} {a.miss_short} {a.miss_late}")
 if a.n3d_soft and not a.n3d: sys.exit("--n3d-soft 는 --n3d 와 함께")
@@ -384,6 +390,10 @@ if not a.dry_run:
         if model.spk_head is not None and a.spk_act_weight <= 0: model.config.spk_weight = 0.0   # 활동 타깃이 오므로 LLM 쪽 보조 헤드는 끈다(가중 0)
         if a.slot_audio: model.add_slot_audio(d=a.slot_audio_dim, blocks=a.slot_audio_blocks, kernel=a.slot_audio_kernel, mix_drop=a.mix_drop)   # E10(헤드 뒤 — 헤드 embed 로 시작)
     if a.n3d: model.add_n3d(a.n3d, chunk=a.n3d_chunk, rc=0, train_chunk=a.n3d_train_chunk, train_rc=0, threshold=a.n3d_threshold)   # E11 고정 화자 분리 전문가(체크포인트 밖)
+    if getattr(cfg, "slot_enc_cfg", None) and a.slot_enc_layer is None: sys.exit(f"init 이 슬롯 조건 인코더 모델이다(config.slot_enc_cfg {cfg.slot_enc_cfg}) — --slot-enc-layer 로 이어 학습한다")
+    if a.slot_enc_layer is not None:                                                             # E15b(전문가 활동으로 — 헤드 경로는 쓰지 않는다)
+        if model.n3d is None: sys.exit("--slot-enc-layer(E15b)는 고정 화자 분리 전문가(--n3d 또는 init 의 n3d_cfg)와 함께")
+        model.add_slot_enc(a.slot_enc_layer, a.slot_enc_hidden)
     if a.slot_shuffle > 0 or a.slot_remap > 0: model.config.diar_align = True                    # 2026-10-30: 섞은·바꾼 슬롯 순서 — 헤드 손실은 창 도착 순서, 예측 입력은 정답 자리로(헤드가 체크포인트에서 와도)
     cfg.turn_weight = a.turn_weight; cfg.next_weight, cfg.next_weight_ko, cfg.delays = a.next_weight, a.next_weight_ko, list(delays)
     bad = {k: (v, tok.convert_tokens_to_ids(k)) for k, v in {**old_sp, **cfg.sp_ids}.items() if tok.convert_tokens_to_ids(k) != v}
@@ -429,6 +439,7 @@ if model is not None:
     n_enc = sum(p.numel() for p in model.encoder.parameters() if p.requires_grad)
     log(f"model ← {a.init} ({time.time() - t0:.0f}s) · 학습 {n_tr / 1e6:.1f}M · 인코더 {'동결' if a.freeze_encoder else '학습'}"
         f"{f' 층 {a.train_encoder_layers}' if a.train_encoder_layers else ''}({n_enc / 1e6:.1f}M, init 인코더 저장됨={init_had_encoder}) · "
+        f"{f'슬롯 조건 인코더 층 {a.slot_enc_layer}.. 은닉 {a.slot_enc_hidden} · ' if a.slot_enc_layer is not None else ''}"
         f"<EOT>={EOT} {'정답·문맥 없음(--no-eot)' if a.no_eot else f'켬(turn_weight {cfg.turn_weight})'} · grad ckpt {a.grad_ckpt} · liger {a.liger} · 화자 슬롯 헤드 {f'켬(가중 {cfg.spk_weight})' if model.spk_head is not None else '끔'} · "
         f"인코더 탭 {f'L{cfg.enc_tap_layer:02d}(은닉 {cfg.enc_tap_hidden})' if model.adapter_tap is not None else '끔'}")
 
@@ -609,6 +620,7 @@ fp = dict(format="cst-v1", corpora=corpora, split_sha256=hashlib.sha256(open(a.s
              if (a.train_encoder_layers or a.encoder_state) else {}),                            # 2026-11-04 E15a: 끄면 키 없음
           **({"shrink_speakers": True} if a.shrink_speakers and not a.window_draws else {}),    # 2026-10-28 E9b: 격자 창 줄이기(끄면 키 없음)
           **({"slot_audio": dict(d=a.slot_audio_dim, blocks=a.slot_audio_blocks, kernel=a.slot_audio_kernel, mix_drop=a.mix_drop)} if a.slot_audio else {}),   # 2026-10-29 E10
+          **({"slot_enc": dict(layer=a.slot_enc_layer, hidden=a.slot_enc_hidden)} if a.slot_enc_layer is not None else {}),   # 2026-11-06 E15b: 끄면 키 없음
           **({"n3d": dict(path=os.path.abspath(a.n3d), train_chunk=a.n3d_train_chunk, chunk=a.n3d_chunk, threshold=a.n3d_threshold)} if a.n3d else {}))   # 2026-10-29 E11
 if a.dry_run:
     names = {v: k for k, v in sp_ids.items()}

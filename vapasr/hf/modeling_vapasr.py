@@ -76,6 +76,11 @@ class VapAsrForStreamingASR(PreTrainedModel):
             from .slot_audio import SlotAudio
             self.adapter_slotx = SlotAudio(**sa); self.adapter_mixnull = nn.Parameter(torch.zeros(config.adapter_d_out))   # 섞인 소리 토큰을 지울 때 넣는 빈 오디오 임베딩
         else: self.adapter_slotx = None; self.adapter_mixnull = None
+        se = getattr(config, "slot_enc_cfg", None)                                               # E15b 슬롯 조건 인코더(vapasr/hf/slot_enc — 이름이 adapter 로 시작 → adapter lr 그룹)
+        if se:
+            from .slot_enc import SlotInject
+            self.adapter_slotinj = SlotInject(config.adapter_d_in, int(se["hidden"])); self.adapter_slotenc = Adapter(config.adapter_d_in, config.adapter_d_out, config.adapter_hidden)
+        else: self.adapter_slotinj = None; self.adapter_slotenc = None
         dh = getattr(config, "diar_head_cfg", None)                                              # E6 인과 화자 분리 헤드(인코더 탭 위, 같은 그래프 — 이름이 adapter 가 아니라 thinker lr 그룹)
         if dh:
             from .diar import DiarBranch
@@ -120,14 +125,22 @@ class VapAsrForStreamingASR(PreTrainedModel):
         self.encoder = enc.to(next(self.adapter.parameters()).device)
         if getattr(self, "n3d_net", None) is not None and self.config.n3d_cfg.get("shared_mel"): self.n3d.pre = self._shared_mel(force=True)   # 흡수 N3D 가 우리 mel 을 쓰면 새 인코더 것으로
         return self
-    def encode(self, wav, wav_len, K, act=None, n3d: bool = True):               # (B,L) → (B,S,Kmax,Din) — S = 1, 탭이 있으면 2(마지막 층, 탭 층)
+    def encode(self, wav, wav_len, K, act=None, n3d: bool = True, slot_act=None):  # (B,L) → (B,S,Kmax,Din) — S = 1, 탭이 있으면 2(마지막 층, 탭 층)
         """act (B, ≥Kmax) 대상 화자 활동(0–1, E2) — 있으면 adapter_inject 로 인코더 pre-encode 출력에 주입한다(없으면 예전 그대로).
         E6(화자 분리 헤드가 있으면): (B, 2, Kmax, Din) — 스트림 1 = 헤드 예측 슬롯 활동(앞 N 차원, 나머지 0). chunk_embed 가 그 스트림을 슬롯 활동 입력으로 쓴다
         → 디코드 경로(decode_batch·stream_decode·realtime·회의 통째)가 그대로 헤드 예측을 쓴다.
         E10(슬롯 추출기가 있으면): (B, 3, Kmax, Din) — 스트림 2 = 추출기의 화자 단서 임베딩(adapter_slotx.embed, 앞 d_emb 차원) — slot_audio_of 가 쓴다.
         E11(고정 화자 분리 전문가 n3d 가 있고 n3d=True 면): 스트림 1 을 전문가 활동(이 오디오로 스트리밍, 앞 N 채널 0/1)으로 바꾼다(헤드가 없으면 스트림 1 을 더한다).
+        E15b(slot_enc_cfg, 2026-11-06): slot_act (B, K', N)(없고 n3d 면 전문가 활동)로 인코더 층 L.. 을 슬롯마다 갈라 돌린다 → (B, 2 + N, Kmax, Din):
+        0 = 섞인 소리(원래 인코더 출력), 1 = 그 활동, 2 + s = 슬롯 s 조건 출력(slot_audio_of·학습 slot_x 가 adapter_slotenc 로 태그 자리에 더한다). 헤드(E6)는 쓰지 않는다.
         회의 통째(long_session.encode_long)는 조각마다 n3d=False 로 부르고 회의 전체로 한 번 바꾼다(화자 캐시가 회의 내내 이어지게)."""
         assert self.encoder is not None, "encoder 없음 — attach_encoder() 먼저"
+        if self.adapter_slotinj is not None:                                                     # E15b: 슬롯 활동으로 인코더 위층을 슬롯마다 갈라 돌린다
+            if slot_act is None and self.n3d is not None and act is None and n3d: slot_act = self.n3d_act(wav, wav_len, K)
+            if slot_act is not None:
+                f = self.encoder(wav, wav_len, K, slots=(int(self.config.slot_enc_cfg["layer"]), self.adapter_slotinj, slot_act.to(wav.device).float()))   # (B, 1 + N, Km, D)
+                Km = f.shape[2]; a = F.pad(slot_act.to(f.dtype), (0, f.shape[-1] - slot_act.shape[-1], 0, max(0, Km - slot_act.shape[1])))[:, :Km][:, None]
+                return torch.cat([f[:, :1], a, f[:, 1:]], 1)                                   # (B, 2 + N, Km, D): 0 섞인 소리 · 1 활동 · 2.. 슬롯 조건
         if self.n3d is not None and act is None and n3d:
             f = self.encode(wav, wav_len, K, n3d=False); a = self.n3d_act(wav, wav_len, K).to(f.dtype)
             return self.with_act_stream(f, a)
@@ -260,8 +273,36 @@ class VapAsrForStreamingASR(PreTrainedModel):
             self.adapter_slotx.proj_t.load_state_dict(self.diar_head.proj.state_dict())
         self.config.slot_audio_cfg = cfg
 
+    def add_slot_enc(self, layer: int, hidden: int = 1024) -> None:
+        """E15b 슬롯 조건 인코더를 켠다(2026-11-06 — vapasr/hf/slot_enc): 인코더 층 layer.. 을 (섞인 1 + 슬롯 N) 벌로 갈라 돌리고 슬롯 벌에 그 슬롯 활동을 주입한다
+        (adapter_slotinj = SlotInject, 마지막 Linear 0 초기화). 슬롯 벌 출력 → adapter_slotenc(주 adapter 를 복사해 시작, 마지막 Linear 0 초기화) → 그 슬롯 태그 자리.
+        붙인 직후 출력은 그대로다(E13 과 같다). 슬롯 블록(E9 태그)이 있어야 하고 E10 추출기·두 스트림·E2 주입과는 함께 쓰지 않는다. 이미 있으면 같은 설정인지만 본다."""
+        assert getattr(self.config, "slot_blocks", False) and self.adapter_tagact is not None, "E15b 는 슬롯 블록(E9 태그 활동)이 있는 모델에"
+        assert self.adapter_slotx is None and int(getattr(self.config, "enc_tap_layer", -1)) < 0 and self.adapter_inject is None, "E15b 는 E10 추출기·두 스트림(enc_tap)·E2 주입과 함께 쓰지 않는다"
+        n = int(getattr(self.config, "slot_input_slots", 0) or 0); assert n > 0, "슬롯 활동 입력(slot_input_slots)이 있어야 한다"
+        if self.encoder is not None: nl = len(self.encoder.enc.layers); assert 0 <= int(layer) < nl, f"갈라 돌릴 층 {layer}: 0–{nl - 1}"
+        cfg = dict(layer=int(layer), hidden=int(hidden), n=n)
+        if self.adapter_slotinj is not None:
+            assert dict(self.config.slot_enc_cfg) == cfg, f"이미 다른 슬롯 조건 인코더 {self.config.slot_enc_cfg} — {cfg}"; return
+        from .slot_enc import SlotInject
+        dev = next(self.adapter.parameters()).device
+        self.adapter_slotinj = SlotInject(self.config.adapter_d_in, int(hidden)).to(dev)
+        self.adapter_slotenc = Adapter(self.config.adapter_d_in, self.config.adapter_d_out, self.config.adapter_hidden).to(dev)
+        self.adapter_slotenc.load_state_dict(self.adapter.state_dict())
+        with torch.no_grad(): self.adapter_slotenc.net[-1].weight.zero_(); self.adapter_slotenc.net[-1].bias.zero_()
+        self.config.slot_enc_cfg = cfg
+
+    def slot_enc_tokens(self, feats):
+        """E15b: feats (..., S ≥ 2 + N, K, Din) → 슬롯 소리 토큰 (..., K, N, D)(adapter_slotenc) 또는 None(E15b 아니거나 슬롯 스트림이 없다)."""
+        if self.adapter_slotenc is None: return None
+        n = int(self.config.slot_enc_cfg["n"])
+        if feats.shape[-3] < 2 + n: return None
+        return self.adapter_slotenc(feats[..., 2:2 + n, :, :].float()).transpose(-3, -2)
+
     def slot_audio_of(self, feats, act, seg: int = 4096):
-        """E10 디코드: feats (S ≥ 3, K, D)(model.encode·encode_long — 스트림 0 내용·2 헤드 임베딩), act (K, N) → 슬롯 소리 토큰 (K, N, D) 또는 None(E10 아님)."""
+        """E10 디코드: feats (S ≥ 3, K, D)(model.encode·encode_long — 스트림 0 내용·2 헤드 임베딩), act (K, N) → 슬롯 소리 토큰 (K, N, D) 또는 None(E10 아님).
+        E15b(slot_enc_cfg): feats (2 + N, K, D) 의 슬롯 조건 스트림 → (K, N, D)(slot_enc_tokens — act 는 쓰지 않는다, 이미 인코딩에 들어갔다)."""
+        if self.adapter_slotenc is not None: return self.slot_enc_tokens(feats)
         if self.adapter_slotx is None or act is None: return None
         assert feats.dim() == 3 and feats.shape[0] >= 3, f"E10 특징은 (3, K, D)(내용·활동·헤드 임베딩) — {tuple(feats.shape)}"
         de = int(self.config.slot_audio_cfg["d_emb"])
@@ -452,15 +493,16 @@ class VapAsrForStreamingASR(PreTrainedModel):
         n3 = self.n3d is not None and wav is not None
         if wav is not None and (self.diar_head is not None or n3):                                 # E6: 인코더 한 번 → ASR 특징 + 화자 분리 logits(E11: 활동은 고정 전문가)
             assert target_act is None, "E6 는 대상 화자 모드(target_act)와 함께 쓰지 않는다"
-            if self.diar_head is not None:
+            if self.diar_head is not None and self.adapter_slotinj is None:                           # E15b 는 헤드를 쓰지 않는다(활동은 전문가)
                 if self.adapter_slotx is not None: feats, dlog, demb = self.encode_diar(wav, wav_len, K, with_emb=True)   # E10: 헤드 임베딩도(슬롯 추출기 입력)
                 else: feats, dlog = self.encode_diar(wav, wav_len, K); demb = None
                 pred = self.predict_act(dlog)
             else:
                 assert self.adapter_slotx is None, "E10 슬롯 추출기는 화자 분리 헤드(탭 임베딩)와 함께"
-                feats, dlog = self.encode(wav, wav_len, K, n3d=False), None; pred = None
+                assert self.adapter_slotinj is None or n3, "E15b 학습은 고정 전문가(N3D) 활동으로(헤드 경로는 쓰지 않는다)"
+                feats = None if self.adapter_slotinj is not None else self.encode(wav, wav_len, K, n3d=False); dlog = None; pred = None   # E15b: 활동 입력을 정한 뒤 인코딩
             hpred = pred                                                                            # 헤드 통계(diar_st)는 헤드 예측으로
-            if n3: pred = self.n3d_act(wav, wav_len, K).to(feats.device)                             # E11: 슬롯 활동 입력 = 고정 전문가 활동(헤드 손실은 그대로)
+            if n3: pred = self.n3d_act(wav, wav_len, K).to(wav.device)                               # E11: 슬롯 활동 입력 = 고정 전문가 활동(헤드 손실은 그대로)
             from .diar import shift_frames
             R = int(getattr(self.config, "act_shift", 0) or 0)                                     # E8: 헤드 위치 p = 프레임 p − R 의 활동(정답·흔든 정답 입력을 R 만큼 민다)
             if activity is not None and dlog is not None:                                          # 손실은 packing 으로 펴기 전에(활동 (B, Kmax, S))
@@ -497,8 +539,10 @@ class VapAsrForStreamingASR(PreTrainedModel):
                     mi = F.pad(mi, (0, max(0, pa.shape[-1] - mi.shape[-1]), 0, max(0, pa.shape[1] - mi.shape[1])))[:, : pa.shape[1], : pa.shape[-1]]; pa = pa * (1 - mi)
                 act_in = torch.where((torch.rand(pred.shape[0], device=pred.device) < rho)[:, None, None], pa, ai)
             else: act_in = pred
-        elif wav is not None: feats = self.encode(wav, wav_len, K, act=target_act)          # target_act (B, Kmax): E2 대상 화자 활동(없으면 예전 그대로)
+            if feats is None: feats = self.encode(wav, wav_len, K, n3d=False, slot_act=act_in)       # E15b: 태그 활동 입력과 같은 활동으로 슬롯 조건 인코딩
+        elif wav is not None: feats = self.encode(wav, wav_len, K, act=target_act, **({"slot_act": act_in} if self.adapter_slotinj is not None and act_in is not None else {}))   # target_act (B, Kmax): E2 대상 화자 활동(없으면 예전 그대로)
         slot_x = mix_mask = None
+        if self.adapter_slotenc is not None and tag_chunk is not None and feats is not None: slot_x = self.slot_enc_tokens(feats)   # E15b: (B, K, N, D) 슬롯 소리 토큰
         if self.adapter_slotx is not None and tag_chunk is not None and demb is not None and act_in is not None:   # E10: 슬롯 소리 토큰(같은 활동 입력으로)
             slot_x = self.adapter_slotx(feats[:, 0], demb, act_in)
             p_ = float(getattr(self.config, "slot_mix_drop", 0.0) or 0.0)
@@ -556,6 +600,8 @@ class VapAsrForStreamingASR(PreTrainedModel):
         elif self.diar_head is not None and self.training: loss = loss + 0.0 * sum(p.sum() for p in self.diar_head.parameters())   # 활동 라벨 없는 행(replay): DDP 가 기다리지 않게
         if self.adapter_slot is not None and act_in is None and self.training: loss = loss + 0.0 * self.adapter_slot.weight.sum()   # E5 활동 입력 없는 행(replay): 같은 이유(E6 은 헤드 예측이 늘 들어간다)
         if self.adapter_tagact is not None and not self._tagact_used and self.training: loss = loss + 0.0 * self.adapter_tagact.weight.sum()   # E9 태그 없는 행(replay): 같은 이유
+        if self.adapter_slotenc is not None and self.training and not self._slotx_used:        # E15b: 슬롯 토큰을 쓰지 않은 배치(replay)도 그래프에 묶는다(DDP)
+            loss = loss + 0.0 * sum(p.sum() for p in list(self.adapter_slotenc.parameters()) + list(self.adapter_slotinj.parameters()))
         if self.adapter_slotx is not None and self.training:                                    # E10: 쓰지 않은 행(replay)·지우지 않은 배치도 그래프에 묶는다(DDP)
             if not self._slotx_used: loss = loss + 0.0 * sum(p.sum() for p in self.adapter_slotx.parameters())
             loss = loss + 0.0 * self.adapter_mixnull.sum()
@@ -788,5 +834,6 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if self.adapter_slot is not None: enc["adapter_slot"] = self.adapter_slot.state_dict()
         if self.adapter_tagact is not None: enc["adapter_tagact"] = self.adapter_tagact.state_dict()
         if self.adapter_slotx is not None: enc["adapter_slotx"] = self.adapter_slotx.state_dict(); enc["adapter_mixnull"] = self.adapter_mixnull.detach().cpu()
+        if self.adapter_slotinj is not None: enc["adapter_slotinj"] = self.adapter_slotinj.state_dict(); enc["adapter_slotenc"] = self.adapter_slotenc.state_dict()
         if self.diar_head is not None: enc["diar_head"] = self.diar_head.state_dict()
         return dict(adapter=self.adapter.state_dict(), thinker={k: v.detach().to(torch.bfloat16).cpu() for k, v in self.thinker.state_dict().items()}, sp_ids=self.sp_ids, mono=True, full_ft=True, **enc)
