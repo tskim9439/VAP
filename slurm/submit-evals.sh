@@ -181,7 +181,7 @@ case $set_ in
   q17-e14-trans) L+=("0|bash $X dlg q17-e14 final") ;;
   q17-e15*) GR=${GRAFT_RUN:-q17-graft-g2b}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; [[ -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }   # 2026-11-04 E15a: 종단간
     S=${SLOTS:-1}; [[ $S =~ ^[1-8]$ ]] || { echo "SLOTS 는 1–8: $S" >&2; exit 2; }; [[ -z ${SUBSET:-} || $SUBSET =~ ^(dev|eval)$ ]] || { echo "SUBSET 은 dev·eval: $SUBSET" >&2; exit 2; }
-    pre="DELTAS=10 GRAFT_EXPERT=$G GX_TAG=$GR${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1"; s0=".0"; }
+    pre="DELTAS=10 GRAFT_EXPERT=$G GX_TAG=$GR${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1 OMP_NUM_THREADS=4"; s0=".0"; }   # 슬롯이면 CPU 스레드를 나눠 쓴다(64 코어에 작업 33 개)
     for r in 0 1 2 3 4 5 6 7; do L+=("$r$s0|$pre bash $X ami $set_ final $r/8"); done          # 창은 슬롯 0 에서 먼저(그 뒤 같은 슬롯의 회의 통째)
     for ((r = 0; r < W; r++)); do q=$((r % 8)); (( S > 1 )) && q=$q.$((r / 8)); L+=("$q|$pre$bal bash $X amifull $set_ final $r/$W"); done
     if (( S > 1 )); then L+=("2.$S|bash $X dlg $set_ final"); else L+=("2|bash $X dlg $set_ final"); fi ;;   # 슬롯이면 번역은 제 슬롯에서 처음부터                                       # 비교용 E13 final 은 q17-e13-trans 로 이미 쟀다(results/stage4-eval-q17-e13-final)
