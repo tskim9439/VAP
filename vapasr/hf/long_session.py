@@ -224,18 +224,20 @@ def long_decode(model, feats, prefix_ids, max_flush_rounds=None, blk: int = 4096
 
 
 def long_block_decode(model, feats, prefix_ids, D: int, act=None, max_flush_rounds=None, blk: int = 4096, context_s: float = 0.0, mix_off: bool = False, gate=None,
-                      trans: bool = False, gate_act=None):
+                      trans: bool = False, gate_act=None, retag=None):
     """E9 회의 통째 디코드(2026-10-28): realtime.realtime_block_decode 에 LongThinker(추측 prefill·되돌리기 — 출력 규칙은 batch_decode.decode_blocks_batch 와 같다).
     feats (S, K, D)(encode_long — aosc 면 스트림 1 = 회의 단위 예측 활동이 태그·오디오 활동이 된다), D = 선언 슬롯 수.
     KV 는 prefix + (D + 2.6)·K + 1024 위치로 시작한다(청크마다 오디오 + 태그 D 개 + 말). context_s > 0 = 문맥 창(LongThinker).
     gate: batch_decode.ActGate(활동 게이트 디코드 진단, 2026-10-30) — 활동이 꺼진 슬롯의 라운드를 버린다(막은 수는 gate.blocked).
     E13(2026-11-02): config.slot_gate 모델의 활동 게이트는 realtime_block_decode 가 건다. trans(번역 모드 prefix): 칸마다 <TRANS> 번역 칸 — KV 는 칸 2D 개 몫으로.
     gate_act (K, N)(2026-11-03 게이트 진단): 게이트만 이 활동으로 연다(예 전문가 확률 > 낮은 임계 — 태그 활동은 그대로).
+    retag: batch_decode.BlockRetag(2026-11-05 디코드 때 재귀속 — realtime_block_decode 가 활동을 어긴 칸을 옮기고 라운드를 고쳐 다시 넣는다, 셈은 retag.stats).
     → (emitted, forced, flush_rounds, 넣은 위치 수, forward 수, 청크 ms 목록)."""
     from .realtime import realtime_block_decode
     K = int(feats.shape[-2]); C = int(round(context_s / FRAME_S)) if context_s else 0; M = (2 * D if trans else D) + int(getattr(model, "x_id", -1) >= 0)   # E14 X 칸 몫
     lt = LongThinker(model.thinker, model.config.blocked_ids, max_len=len(prefix_ids) + ((M + 4) * C + 2048 if C else int((M + 2.6 * (2 if trans else 1)) * K) + 1024),
                      blk=blk, context=C)
     out, forced, ticks, rounds, _, nf = realtime_block_decode(model, lt, feats, list(prefix_ids), D, act=act, max_flush_rounds=max_flush_rounds,
-                                                              on_chunk=lt.on_chunk if C else None, mix_off=mix_off, gate=gate, trans=trans, gate_act=gate_act)
+                                                              on_chunk=lt.on_chunk if C else None, mix_off=mix_off, gate=gate, trans=trans, gate_act=gate_act,
+                                                              retag=retag)
     return out, forced, rounds, lt.used, nf, ticks

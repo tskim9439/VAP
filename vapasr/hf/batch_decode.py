@@ -368,6 +368,34 @@ class ActGate:
         return False
 
 
+class BlockRetag:
+    """Decode-time output relabel (2026-11-05, user "① 디코드 때 재귀속 구현 진행해줘" -- wiki output-agn-reduction-20261104 7): the rule of the
+    post-hoc relabel (cst_eval.follow_stats, cst_stage3_eval --relabel-follow) applied inside the meeting decoder. After round k, a slot box whose
+    outputs contain text is checked at the audio frame f = k - delta (clipped to [0, K-1]) over [f - back, f + fwd] of the decoder's tag activity
+    (act (K, N), > 0.5): if its own slot is off there and another slot is on, the box's outputs except <EOT> (text and <ONSET>) move to the slot with
+    the largest activity sum in the window (follow_stats' choice). realtime_block_decode then rewrites that round in the training layout (tags in
+    ascending order, the moved outputs after the target slot's own) and re-feeds it at the same positions, so later rounds see the corrected context.
+    Targets beyond the declared slots are ignored. stats: boxes (boxes with text), moved (boxes moved), tokens (outputs moved), rounds (rounds rewritten)."""
+
+    def __init__(self, act, delta: int, back: int = 3, fwd: int = 1):
+        import numpy as np
+        a = np.asarray(act.detach().float().cpu() if torch.is_tensor(act) else act) > 0.5
+        self.K, self.N = a.shape
+        self.cs = np.concatenate([np.zeros((1, self.N), np.int64), np.cumsum(a, 0)], 0)
+        self.delta, self.back, self.fwd = int(delta), int(back), int(fwd)
+        self.stats = dict(boxes=0, moved=0, tokens=0, rounds=0)
+
+    def target(self, k: int, s: int, D: int) -> int:
+        """Slot the text of slot s's round-k box belongs to (s itself when s is on, nothing is on, or the choice is not a declared slot)."""
+        f = min(max(int(k) - self.delta, 0), self.K - 1)
+        lo, hi = max(0, f - self.back), min(self.K, f + self.fwd + 1)
+        w = self.cs[hi] - self.cs[lo]
+        if (s < self.N and w[s] > 0) or w.max() <= 0:
+            return s
+        t = int(w.argmax())
+        return t if t < D else s
+
+
 def gate_tid(state, tid, stop, gate, stop_id):
     """BlockState prediction after the current input: a slot's first output (state.s >= 0, state.n == 0) that the gate drops becomes stop_id."""
     if gate is None or state.done or state.s < 0 or state.n or tid in stop or gate.allows(state.k, state.s, tid):

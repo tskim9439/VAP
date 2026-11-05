@@ -162,7 +162,7 @@ def realtime_decode(model, gt: GraphThinker, feats, prefix_ids: List[int], max_f
 
 @torch.inference_mode()
 def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=None, max_flush_rounds: Optional[int] = None, max_per_chunk: int = 0,
-                          max_total_per_chunk: float = 6.0, on_chunk=None, mix_off: bool = False, gate=None, trans: bool = False, gate_act=None):
+                          max_total_per_chunk: float = 6.0, on_chunk=None, mix_off: bool = False, gate=None, trans: bool = False, gate_act=None, retag=None):
     """E9 슬롯 블록 디코드(2026-10-28 — cst_dialogue 모듈 설명 E9): batch_decode.decode_blocks_batch 와 같은 출력 규칙을 GraphThinker·LongThinker(run·run_all)로 돈다.
     청크마다 [오디오 k, 태그 0 … D−1] 를 한 forward 로 미리 넣고(run_all — 위치마다 argmax), 태그 s 뒤 예측이 멈춤이 아니면 태그 s 바로 뒤로 되돌아가 그 슬롯 출력을
     한 토큰씩 낸 뒤(뒤 태그 자리는 덮어쓴다 — 쿼리는 자기 위치까지만 본다) 남은 태그를 다시 한 forward 로 넣는다. 모든 슬롯이 멈추는 청크는 forward 한 번이다.
@@ -172,8 +172,12 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
     뒤 태그는 이미 그 꼴로 미리 넣었다).
     E13(2026-11-02): config.slot_gate 모델은 라운드마다 활동 창·열린 발화(<ONSET> 뒤 <EOT> 전) 슬롯 태그만 넣고(batch_decode.BlockState 와 같은 규칙), trans 면
     그 칸마다 [<TRANS>] 번역 칸이 뒤따른다 — 칸(태그·<TRANS>)들을 태그처럼 한 forward 로 미리 넣고 같은 방식으로 되돌아간다.
+    retag(batch_decode.BlockRetag, 2026-11-05 디코드 때 재귀속): 라운드 k 를 다 낸 뒤 글자가 든 슬롯 칸마다 retag.target 이 다른 슬롯이면 그 칸 출력(<EOT> 빼고)을 그 슬롯
+    칸 뒤로 옮기고, 라운드를 학습 꼴(태그 오름차순 — 원래 연 슬롯 ∪ 옮겨 간 슬롯, 칸마다 출력)로 다시 만들어 머리 바로 뒤 위치부터 한 forward 로 다시 넣는다
+    (다음 라운드는 고친 문맥을 본다). emitted·열린 발화 수(<ONSET> 이 옮겨 가면 함께)도 고친다. 번역 칸·X 칸과는 아직 함께 쓰지 않는다.
     → (emitted [(k, tid)] — 슬롯 출력 앞에 그 슬롯 태그(번역 칸이면 태그·<TRANS>), forced, step_ms [K], flush_rounds, flush_ms, forward 수)."""
     from .batch_decode import block_gate, block_stops
+    assert retag is None or (not trans and int(getattr(model, "x_id", -1)) < 0), "디코드 때 재귀속(retag)은 번역 칸·X 칸 없이(받아쓰기 슬롯 칸만)"
     cfg = model.config
     max_flush_rounds = cfg.max_flush_rounds if max_flush_rounds is None else max_flush_rounds
     if feats.dim() == 2: feats = feats[None]
@@ -201,6 +205,7 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
         te = model.tag_embeds(k, A, D, X).to(emb.dtype)
         ie = torch.stack([te[s] if x == 0 else emb[TR] if x == 1 else emb[XI] for s, x in items]) if items else te[:0]
         r = gt.run_all(torch.cat([head[None], ie]), pos); st["forwards"] += 1
+        p0, o0, box = pos + 1, len(out), {}                                                     # 재귀속: 머리 뒤 첫 위치 · 이 라운드 emitted 시작 · 칸 j 출력
         n_it = len(items); pr = dict(enumerate(r[1:])); at = {j: pos + 1 + j for j in range(n_it)}; pos += 1 + n_it; n_round = 0   # 칸 j 뒤 예측·칸 j 위치
         for j, (s, x) in enumerate(items):
             tid = pr[j]
@@ -209,13 +214,30 @@ def realtime_block_decode(model, gt, feats, prefix_ids: List[int], D: int, act=N
             while True:
                 if tid in stop or n >= cap or st["total"] >= max_total: st["forced"] += int(tid not in stop); break
                 if not tagged: out.extend([(k, XI if x == 2 else tags[s])] + ([(k, TR)] if x == 1 else [])); tagged = True
-                out.append((k, int(tid))); n += 1; n_round += 1; st["total"] += 1
+                out.append((k, int(tid))); box.setdefault(j, []).append(int(tid)); n += 1; n_round += 1; st["total"] += 1
                 if gl and x != 2 and tid in (BG, EOT): utt[s] = utt[s] + 1 if tid == BG else max(0, utt[s] - 1)
                 tid = gt.run(emb[tid][None], pos); pos += 1; st["forwards"] += 1
             if j + 1 < n_it:                                                                   # 남은 칸을 다시 미리 넣는다
                 r = gt.run_all(ie[j + 1:], pos); st["forwards"] += 1
                 for jj in range(j + 1, n_it): pr[jj], at[jj] = r[jj - j - 1], pos + jj - j - 1
                 pos += n_it - j - 1
+        if retag is not None and box:                                                          # 디코드 때 재귀속: 활동을 어긴 칸을 옮기고 라운드를 고쳐 다시 넣는다
+            own, moved = {s: list(box.get(j, [])) for j, (s, _) in enumerate(items)}, []
+            for j, (s, _) in enumerate(items):
+                toks = box.get(j, [])
+                if not any(t_ not in (BG, EOT) for t_ in toks): continue
+                retag.stats["boxes"] += 1; t = retag.target(k, s, D)
+                if t == s: continue
+                own[s] = [t_ for t_ in toks if t_ == EOT]; mv = [t_ for t_ in toks if t_ != EOT]; moved.append((s, t, mv))
+                retag.stats["moved"] += 1; retag.stats["tokens"] += len(mv)
+            if moved:
+                for s, t, mv in moved:
+                    own.setdefault(t, []); own[t] += mv; nb = mv.count(BG)
+                    if gl and nb: utt[s] = max(0, utt[s] - nb); utt[t] += nb
+                order = sorted(own)
+                out[o0:] = [y for s in order if own[s] for y in [(k, tags[s])] + [(k, t_) for t_ in own[s]]]
+                seq = torch.stack([v for s in order for v in [te[s]] + [emb[t_] for t_ in own[s]]])
+                gt.run_all(seq, p0); pos = p0 + seq.shape[0]; st["forwards"] += 1; retag.stats["rounds"] += 1
         return n_round
     for k in range(K):
         if on_chunk is not None: on_chunk(k, pos)

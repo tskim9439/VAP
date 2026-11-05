@@ -32,6 +32,10 @@
   --relabel-follow(2026-10-30, 사용자 "출력 쪽 재귀속을 먼저 실험하고 그 다음에 학습으로 고치는 것이 시도하는 게 나을거 같아"): 가설 단어 중 그 단어 슬롯의
     활동이 꺼지고 다른 슬롯이 켜진 단어(follow_stats 의 off_other — 창 --follow-window)만 활동 슬롯으로 옮겨 채점한다. 단어 오디오 프레임 + FWD 까지의 활동만 쓰고
     LLM 문맥은 바꾸지 않으므로 스트리밍 디코드에서 그대로 낼 수 있는 출력이다(원출력 재채점 = 온라인 결과). 행 follow 는 옮기기 전 셈, relabeled = 옮긴 단어 수.
+  --retag B,F(2026-11-05, 사용자 "① 디코드 때 재귀속 구현 진행해줘" — wiki output-agn-reduction-20261104 7 절): 회의 통째(--window full) 슬롯 블록 디코드에서
+    --relabel-follow 와 같은 규칙(창 [f − B, f + F], f = 라운드 − δ)을 디코드 안에서 건다 — 라운드를 낸 뒤 활동을 어긴 칸을 활동 슬롯으로 옮기고 그 라운드를 학습 꼴로
+    고쳐 다시 넣는다(batch_decode.BlockRetag · realtime_block_decode(retag)). 다음 라운드부터 LLM 이 고친 문맥을 본다(사후 재귀속과 다른 점). 번역 칸·X 칸과는 함께 쓰지 않는다.
+    행 dretag{boxes, moved, tokens, rounds}, config 에 retag. 행 follow·cp_follow 는 고친 출력의 셈이다.
   --follow-detail(2026-10-30, 활동 추종 학습 설계용): 행에 follow_detail(센 단어마다 cst_eval.follow_stats detail 꼴 — 범주·슬롯·말 차례 위치·직전 화자)을 남긴다.
   --encoder-state <graft.pt>(U3, 2026-10-30): 모델의 인코더를 그 graft.pt 의 enc(화자 분리와 함께 학습한 인코더 — n3d_graft_train --unfreeze-layers)로 바꿔
     디코드한다 — ASR 지킴 확인(E11 의 cp·agn 이 그대로인가). config 에 encoder_state.
@@ -278,6 +282,9 @@ def run(a):
     assert gt_ is None or 0.0 < gt_ < 1.0, f"--gate-thresh 는 (0, 1): {gt_}"
     rlf = bool(getattr(a, "relabel_follow", False))
     assert not (rlf and getattr(a, "relabel_act", None)), "--relabel-follow 와 --relabel-act 는 함께 쓰지 않는다"
+    rtw = tuple(getattr(a, "retag", None) or ())                                                 # 디코드 때 재귀속(2026-11-05)
+    assert not rtw or (len(rtw) == 2 and min(rtw) >= 0 and is_full(a) and not (a.oracle or a.from_predictions or gate_w)), \
+        "--retag 는 BACK,FWD(0 이상 둘), 회의 통째(--window full) 모델 디코드 전용(--oracle·--from-predictions·--act-gate 없이)"
     sb = None
     if getattr(a, "switch_bias", None):                                                        # V3 C3 상태 인지 교대 bias(교차 언어 창만) — 없으면 예전 디코드 그대로
         from vapasr.hf.batch_decode import SwitchBias
@@ -347,7 +354,7 @@ def run(a):
     if blocks:
         assert not (sb or a.spk_guide or getattr(a, "target_oracle", False) or getattr(a, "act_tag_guide", False)), \
             "E9 슬롯 블록은 --switch-bias·--spk-guide·--target-oracle·--act-tag-guide 와 함께 쓰지 않는다(태그는 정해진 입력)"
-        from vapasr.hf.batch_decode import decode_blocks_batch, ActGate
+        from vapasr.hf.batch_decode import decode_blocks_batch, ActGate, BlockRetag
         from vapasr.hf.diar import der_counts
         from vapasr.data.cst_dialogue import slot_activity as _slot_act
     assert not (gate_w or fn3) or blocks, "--act-gate·--follow-n3d 는 E9 슬롯 블록(태그 활동이 있는) 체크포인트·원출력"
@@ -405,7 +412,7 @@ def run(a):
                 **({"graft_expert": os.path.abspath(a.graft_expert)} if getattr(a, "graft_expert", None) else {}),
                 **({"encoder_rc": int(a.encoder_rc)} if getattr(a, "encoder_rc", None) is not None else {}),
                 **({"gate_lags": int(gl_)} if gl_ is not None else {}), **({"gate_thresh": float(gt_)} if gt_ is not None else {}),
-                **({"relabel_follow": list(fwin)} if rlf else {}),
+                **({"relabel_follow": list(fwin)} if rlf else {}), **({"retag": list(rtw)} if rtw else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
@@ -492,9 +499,12 @@ def run(a):
                                 Aj = model.block_act(feats[j]); A_np[j] = None if Aj is None else (Aj.float() > 0.5).cpu().numpy(); AS[j] = None if Aj is None else Aj.float().cpu().numpy()
                                 assert not mk_gate or Aj is not None, "--act-gate: 이 모델은 슬롯 활동이 없다(model.block_act)"
                                 g = mk_gate(Aj, delta) if mk_gate else None
+                                assert not rtw or Aj is not None, "--retag: 이 모델은 슬롯 활동이 없다(model.block_act)"
+                                rg = BlockRetag(Aj, delta, *rtw) if rtw else None                               # 디코드 때 재귀속(2026-11-05)
                                 em, fc, rd, used, nf, tk = long_block_decode(model, feats[j], prefixes[j], len(ds.slots(m[0])[1][:n_slots]), max_flush_rounds=a.max_flush, context_s=a.context_s,
-                                                                             mix_off=mix_off, gate=g, gate_act=GA[j] if GA else None)
-                                bx = dict(forwards=nf, chunk_ms=round(float(np.mean(tk)), 2), chunk_ms_p90=round(float(np.percentile(tk, 90)), 2), **({"gated": dict(g.blocked)} if g else {}))
+                                                                             mix_off=mix_off, gate=g, gate_act=GA[j] if GA else None, retag=rg)
+                                bx = dict(forwards=nf, chunk_ms=round(float(np.mean(tk)), 2), chunk_ms_p90=round(float(np.percentile(tk, 90)), 2), **({"gated": dict(g.blocked)} if g else {}),
+                                          **({"dretag": dict(rg.stats)} if rg else {}))
                             else: em, fc, rd, used = long_decode(model, feats[j], prefixes[j], max_flush_rounds=a.max_flush, context_s=a.context_s, retag=rt)
                             states.append(SimpleNamespace(emitted=em, forced=fc, flush_rounds=rd, positions=used, dec_s=round(time.time() - td, 1), **({"retag": rs} if rs is not None else {}),
                                                           **({"blk": bx} if bx else {})))
@@ -618,7 +628,7 @@ def main():
     q.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[4, 6, 10]); q.add_argument("--limit-windows", type=int, default=400)
     q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1); q.add_argument("--batch-size", type=int, default=32)
     q.add_argument("--subset", choices=("dev", "eval"), default=None, help="AMI(--data 의 manifest.json): 공식 분할 하나의 회의만 — 판단용 빠른 평가(2026-11-05)")
-    q.add_argument("--balance", action="store_true", help="몫을 창 길이 합이 고르게 나눈다(긴 것부터 가장 가벼운 몫에 — 회의 통째 몫 여럿, 2026-11-05). 끄면 j % world_size")
+    q.add_argument("--balance", action="store_true", help="몫을 창 길이 합이 고르게 나눈다(긴 것부터 가장 가벼운 몫에 — 회의 통째 몫 여럿, 2026-11-05). 끄면 j %% world_size")
     q.add_argument("--max-flush", type=int, default=None); q.add_argument("--dtype", default="float32"); q.add_argument("--encoder", default=None); q.add_argument("--verify", action="store_true")
     q.add_argument("--oracle", action="store_true", help="모델 없이 정답 시퀀스를 채점(지표 sanity)")
     q.add_argument("--mix-off", action="store_true", help="E10 슬롯 추출기 체크포인트: 섞인 소리 토큰을 빈 임베딩으로(슬롯 소리 토큰만으로 받아쓰기)")
@@ -657,6 +667,7 @@ def main():
     q.add_argument("--encoder-rc", type=int, default=None, choices=(0, 3, 6, 13), help="지연 완화: 인코더 우측 문맥(80 ms 프레임 — 모델 설정의 att_context_size 목록, 학습은 3)")
     q.add_argument("--gate-lags", type=int, default=None, help="E13 게이트 진단(2026-11-03): 추론 활동 게이트 창(청크 — config.slot_gate 를 덮는다, 학습 12). 0 = 게이트 끔(선언 슬롯 전부)")
     q.add_argument("--gate-thresh", type=float, default=None, help="E13 게이트 진단: 게이트만 전문가 확률 > 이 값으로 연다(태그·오디오 활동은 전문가 임계 0.5 그대로)")
+    q.add_argument("--retag", default=None, type=ints, help="디코드 때 재귀속 BACK,FWD(예 3,1 — batch_decode.BlockRetag, 회의 통째 슬롯 블록 디코드): 라운드마다 활동을 어긴 칸을 옮기고 라운드를 고쳐 다시 넣는다")
     q.add_argument("--relabel-follow", action="store_true", help="출력 쪽 재귀속: 활동을 어긴 가설 단어만 활동 슬롯으로 옮겨 채점(창 --follow-window, 스트리밍 그대로 낼 수 있는 출력)")
     q.add_argument("--follow-detail", action="store_true", help="행에 follow_detail(단어마다 추종 범주·슬롯·말 차례 위치·직전 화자 — cst_eval.follow_stats detail)을 남긴다")
     q.add_argument("--target-act-threshold", type=float, default=0.5); q.add_argument("--target-act-min-frames", type=int, default=3, help="예측 슬롯을 쓰는 최소 활성 프레임(80 ms)")
