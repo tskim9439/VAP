@@ -39,3 +39,5 @@ sources:
 - 그쪽이 앞서는 점: 60 언어·말소리 출력·영상 입력, 대규모 학습.
 - 원고 영향: [[output-nemotron35-transcribe-comparison-20261029]] 의 "어느 것도 이 과제를 하지 않는다"(화자 귀속 동시 번역)는 더는 맞지 않다. 기여를 두 언어 대화 양방향·짧은 지연·겹침 회의 귀속으로 좁혀야 한다 → [[output-paper-draft-speaker-slots-icml2027-20261103]]
 - 할 수 있는 것: API 로 TAXI(실제 독–영 통화)·우리 대화 셋을 같은 채점으로 재 외부 기준으로 넣는다(외부 서비스에 오디오를 보내는 일이라 데이터 반출 정책 확인이 먼저다).
+- 진행(2026-11-05): 맥 로컬 전용 평가 경로를 만들었다(`raw/sources/experiments/2026-11-05-qwen-livetranslate/` — mxc 에 올리지 않는다). AMI eval(표준 cpWER·tcORC-WER·DER·지연)·TAXI(BLEU·chrF·StreamLAAL·받아쓰기)를 우리와 같은 채점으로 잰다. TAXI 전송은 사용자 판단(추론 전용·비공개). API 키 대기 → [[2026-11-05-task-qwen-livetranslate-local-eval]]
+  - API 사실(관찰 2026-11-05, https://docs.qwencloud.com/developer-guides/speech/realtime-translation): 16 kHz PCM, 목표 언어 세션당 하나, `speech_started` 에 `speaker_id`·`audio_start_ms`, 원문 완료에 감지 `language`, 단어 시각 없음, 입력 오디오 초당 7 토큰.
