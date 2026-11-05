@@ -43,6 +43,7 @@ worker() {
     echo "[$(date '+%F %T')] GPU $q 끝 $n (exit $rc)"
   done < <(awk -v q="$q" 'index($0, q "|") == 1 { print substr($0, length(q) + 2) }' "$TASKS")
 }
-for q in $(grep -oE '^[0-7](\.[0-9]+)?\|' "$TASKS" | tr -d '|' | awk '!seen[$0]++'); do worker $q & sleep 20; done   # 20 s 간격(NFS 부하 분산)
+QS=$(grep -oE '^[0-7](\.[0-9]+)?\|' "$TASKS" | tr -d '|' | awk '!seen[$0]++'); GAP=20; [ $(echo "$QS" | wc -w) -gt 8 ] && GAP=5   # 슬롯이 많으면 5 s(100350: 20 s × 41 = 13 분 늦게 시작)
+for q in $QS; do worker $q & sleep $GAP; done                                                   # 간격(NFS 부하 분산)
 wait
 echo "[$(date '+%F %T')] V3_EVAL_NODE_DONE"

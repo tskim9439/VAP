@@ -22,6 +22,6 @@ for KN in "ami stage3-eval-ami-d10-gx$GR$ST-$RUN-final" "amifull stage3-eval-ami
   python3 $X/2026-11-04-agn/e15a_report.py $RR $GR > $OUT 2>&1
 done
 O=$R/stage4-eval-$RUN-final
-until grep -q "^DONE rank=" $O/dlg.log 2>/dev/null && [ $O/dlg-summary.log -nt $O/dlg.log ]; do sleep 300; done; sleep 120   # 요약 쓰기가 끝나게
+until { grep -q "^DONE rank=" $O/dlg.log 2>/dev/null && [ $O/dlg-summary.log -nt $O/dlg.log ]; } || [ -f $O/dlg8/summary.json ]; do sleep 300; done; sleep 120   # 요약 쓰기가 끝나게(몫 8 번역은 dlg8 — 2026-11-05)
 python3 $X/2026-11-04-agn/e15a_report.py $RR $GR > $OUT 2>&1
 say "ALL_DONE"

@@ -53,6 +53,8 @@
 #            2026-11-05(사용자 "평가는 왜 5시간이나 걸리는 거지?" → "3번과 4번을 진행해줘"): SLOTS=N(1–8)이면 회의 통째를 8·N 몫으로 나눠(BAL=1 — 회의 길이로 고르게)
 #            GPU 마다 N 개를 동시에 돈다(v3-eval-node.sbatch 슬롯 'g.s|'), 번역은 GPU 2 의 제 슬롯에서 처음부터. SUBSET=eval|dev 면 AMI 창·회의 통째를 그 공식 분할만
 #            (산출 이름 -sub<분할> — 판단용 빠른 평가). 예: SLOTS=4 SUBSET=eval bash slurm/submit-evals.sh q17-e15a-enc --partition hpc
+#            슬롯이면 번역은 dlg_shard_task.sh 8 몫을 GPU 마다 슬롯 0 끝에 둔다(산출 dlg8).
+#   trans8   대화 번역만 GPU 8 개에 8 몫으로(2026-11-05, dlg_shard_task.sh — 산출 results/stage4-eval-<run>-final/dlg8, dlg-summary.log). RUNS=run[,run…].
 #   q17-e13-gate  E13 추론 게이트 진단(2026-11-03, 사용자 "N3D 가 놓친 말을 받아쓰도록 게이트를 고칠 방법을 찾아줘"): 학습 없이 게이트만 바꿔 E13 final 을 다시 잰다.
 #            GATE_FULL(기본 gt0.3)·GATE_WIN(기본 없음) — 판 쉼표 목록, 판 = glN(창 N 청크, gl0 = 끔)·gt0.x(게이트만 전문가 확률 > 0.x)을 + 로 묶는다(예 gl25+gt0.3).
 #            GATE_FULL 판마다 회의 통째 δ10 8 몫, GATE_WIN 판마다 창 δ10 8 몫(v3_eval_task.sh GATE_LAGS·GATE_THRESH — 산출 이름 -gl<N>·-gt<x>). 노드 하나에 한 판씩 내면 판끼리 나란히 돈다.
@@ -108,15 +110,15 @@ while [[ $# -gt 0 ]]; do
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
-case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e13-trans|q17-e14-trans) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
+case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e13-trans|q17-e14-trans|trans8) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
   q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*|q17-e15*) [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; } ;;
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|ext-parakeet-g2|q17-g3|q17-e11-relax|q17-spk|q17-e13-trans|q17-e13-gate) ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans | q17-e15*" >&2; exit 2 ;; esac
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans | q17-e15* | trans8" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $lbl =~ ^[A-Za-z0-9._-]*$ ]] || { echo "--label 은 영문·숫자·._- 만: $lbl" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
-D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh
+D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh; DX=raw/sources/experiments/2026-11-05-eval-speed/dlg_shard_task.sh
 L=()
 ami4() { local g0=$1 run=$2 root=$3 r; for r in 0 1 2 3; do L+=("$((g0 + r))|${root:+MODEL_ROOT=$root }bash $X ami $run final $r/4"); done; }   # GPU g0..g0+3 에 4 몫
 ami8d10() { local run=$1 r; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X ami $run final $r/8"); done; }                # δ10 만, GPU 0–7 에 8 몫(2026-10-28)
@@ -181,10 +183,14 @@ case $set_ in
   q17-e14-trans) L+=("0|bash $X dlg q17-e14 final") ;;
   q17-e15*) GR=${GRAFT_RUN:-q17-graft-g2b}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; [[ -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }   # 2026-11-04 E15a: 종단간
     S=${SLOTS:-1}; [[ $S =~ ^[1-8]$ ]] || { echo "SLOTS 는 1–8: $S" >&2; exit 2; }; [[ -z ${SUBSET:-} || $SUBSET =~ ^(dev|eval)$ ]] || { echo "SUBSET 은 dev·eval: $SUBSET" >&2; exit 2; }
-    pre="DELTAS=10 GRAFT_EXPERT=$G GX_TAG=$GR${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1 OMP_NUM_THREADS=4"; s0=".0"; }   # 슬롯이면 CPU 스레드를 나눠 쓴다(64 코어에 작업 33 개)
+    pre="DELTAS=10 GRAFT_EXPERT=$G GX_TAG=$GR${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1 OMP_NUM_THREADS=4 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"; s0=".0"; }   # 슬롯이면 CPU 스레드를 나눠 쓰고 메모리 조각을 줄인다
     for r in 0 1 2 3 4 5 6 7; do L+=("$r$s0|$pre bash $X ami $set_ final $r/8"); done          # 창은 슬롯 0 에서 먼저(그 뒤 같은 슬롯의 회의 통째)
     for ((r = 0; r < W; r++)); do q=$((r % 8)); (( S > 1 )) && q=$q.$((r / 8)); L+=("$q|$pre$bal bash $X amifull $set_ final $r/$W"); done
-    if (( S > 1 )); then L+=("2.$S|bash $X dlg $set_ final"); else L+=("2|bash $X dlg $set_ final"); fi ;;   # 슬롯이면 번역은 제 슬롯에서 처음부터                                       # 비교용 E13 final 은 q17-e13-trans 로 이미 쟀다(results/stage4-eval-q17-e13-final)
+    if (( S > 1 )); then for g in 0 1 2 3 4 5 6 7; do L+=("$g.0|bash $DX $set_ final $g/8"); done   # 슬롯이면 번역은 8 몫으로 슬롯 0 끝에(2026-11-05 100350: GPU 2 의 제 슬롯에서 회의 4 개와 같이 돌다 메모리 부족)
+    else L+=("2|bash $X dlg $set_ final"); fi ;;
+  trans8) [[ -n ${RUNS:-} ]] || { echo "trans8 은 RUNS=run[,run…](대화 번역을 GPU 8 개에 8 몫으로)" >&2; exit 2; }
+    IFS=, read -ra TR8 <<< "$RUNS"; for run in "${TR8[@]}"; do [[ -f /soundai/Model/VAPASR/stage3-$run/DONE || -n $dep ]] || { echo "학습이 안 끝났다: stage3-$run(--after-job)" >&2; exit 2; }
+      for g in 0 1 2 3 4 5 6 7; do L+=("$g|bash $DX $run final $g/8"); done; done ;;                                       # 비교용 E13 final 은 q17-e13-trans 로 이미 쟀다(results/stage4-eval-q17-e13-final)
   q17-e13-gate) gv() { local x o="" P_; IFS=+ read -ra P_ <<< "$1"; for x in "${P_[@]}"; do case $x in gl[0-9]*) o="$o GATE_LAGS=${x#gl}" ;; gt0.[0-9]*) o="$o GATE_THRESH=${x#gt}" ;; *) echo "!!"; return ;; esac; done; echo "${o# }"; }
     IFS=, read -ra GW <<< "${GATE_WIN:-}"; IFS=, read -ra GF <<< "${GATE_FULL:-gt0.3}"
     for v in ${GW[@]+"${GW[@]}"} ${GF[@]+"${GF[@]}"}; do [[ $(gv "$v") != *"!!"* ]] || { echo "GATE_WIN·GATE_FULL 판은 glN·gt0.x(+ 로 묶음, 예 gl25+gt0.3): $v" >&2; exit 2; }; done
