@@ -50,6 +50,9 @@
 #   q17-e14-trans  E14 번역 평가(2026-11-03): q17-e13-trans 와 같은 held-out 대화 창 번역을 E14 final 과 비교용 E13 final 로. 학습이 돌고 있으면 --after-job.
 #   q17-e15*  E15a 인코더 위층 공동 학습(2026-11-04, slurm/submit-q17-e15a.sh — wiki output-agn-reduction-20261104): 종단간 평가 — 활동을 G2b 학생으로(GRAFT_EXPERT,
 #            인코더는 모델 것 그대로 — ENC_STATE 없음) AMI 창 δ10 8 몫·회의 통째 δ10 8 몫, 대화 번역(dlg)을 GPU 2 에. 학습 중이면 --after-job. GRAFT_RUN(기본 q17-graft-g2b).
+#            2026-11-05(사용자 "평가는 왜 5시간이나 걸리는 거지?" → "3번과 4번을 진행해줘"): SLOTS=N(1–8)이면 회의 통째를 8·N 몫으로 나눠(BAL=1 — 회의 길이로 고르게)
+#            GPU 마다 N 개를 동시에 돈다(v3-eval-node.sbatch 슬롯 'g.s|'), 번역은 GPU 2 의 제 슬롯에서 처음부터. SUBSET=eval|dev 면 AMI 창·회의 통째를 그 공식 분할만
+#            (산출 이름 -sub<분할> — 판단용 빠른 평가). 예: SLOTS=4 SUBSET=eval bash slurm/submit-evals.sh q17-e15a-enc --partition hpc
 #   q17-e13-gate  E13 추론 게이트 진단(2026-11-03, 사용자 "N3D 가 놓친 말을 받아쓰도록 게이트를 고칠 방법을 찾아줘"): 학습 없이 게이트만 바꿔 E13 final 을 다시 잰다.
 #            GATE_FULL(기본 gt0.3)·GATE_WIN(기본 없음) — 판 쉼표 목록, 판 = glN(창 N 청크, gl0 = 끔)·gt0.x(게이트만 전문가 확률 > 0.x)을 + 로 묶는다(예 gl25+gt0.3).
 #            GATE_FULL 판마다 회의 통째 δ10 8 몫, GATE_WIN 판마다 창 δ10 8 몫(v3_eval_task.sh GATE_LAGS·GATE_THRESH — 산출 이름 -gl<N>·-gt<x>). 노드 하나에 한 판씩 내면 판끼리 나란히 돈다.
@@ -177,8 +180,11 @@ case $set_ in
   q17-e13-trans) L+=("0|bash $X dlg q17-e13 final" "1|bash $X dlg q17-e11 final") ;;
   q17-e14-trans) L+=("0|bash $X dlg q17-e14 final") ;;
   q17-e15*) GR=${GRAFT_RUN:-q17-graft-g2b}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; [[ -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }   # 2026-11-04 E15a: 종단간
-    for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 GRAFT_EXPERT=$G GX_TAG=$GR bash $X $t $set_ final $r/8"); done; done
-    L+=("2|bash $X dlg $set_ final") ;;                                       # 비교용 E13 final 은 q17-e13-trans 로 이미 쟀다(results/stage4-eval-q17-e13-final)
+    S=${SLOTS:-1}; [[ $S =~ ^[1-8]$ ]] || { echo "SLOTS 는 1–8: $S" >&2; exit 2; }; [[ -z ${SUBSET:-} || $SUBSET =~ ^(dev|eval)$ ]] || { echo "SUBSET 은 dev·eval: $SUBSET" >&2; exit 2; }
+    pre="DELTAS=10 GRAFT_EXPERT=$G GX_TAG=$GR${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1"; s0=".0"; }
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r$s0|$pre bash $X ami $set_ final $r/8"); done          # 창은 슬롯 0 에서 먼저(그 뒤 같은 슬롯의 회의 통째)
+    for ((r = 0; r < W; r++)); do q=$((r % 8)); (( S > 1 )) && q=$q.$((r / 8)); L+=("$q|$pre$bal bash $X amifull $set_ final $r/$W"); done
+    if (( S > 1 )); then L+=("2.$S|bash $X dlg $set_ final"); else L+=("2|bash $X dlg $set_ final"); fi ;;   # 슬롯이면 번역은 제 슬롯에서 처음부터                                       # 비교용 E13 final 은 q17-e13-trans 로 이미 쟀다(results/stage4-eval-q17-e13-final)
   q17-e13-gate) gv() { local x o="" P_; IFS=+ read -ra P_ <<< "$1"; for x in "${P_[@]}"; do case $x in gl[0-9]*) o="$o GATE_LAGS=${x#gl}" ;; gt0.[0-9]*) o="$o GATE_THRESH=${x#gt}" ;; *) echo "!!"; return ;; esac; done; echo "${o# }"; }
     IFS=, read -ra GW <<< "${GATE_WIN:-}"; IFS=, read -ra GF <<< "${GATE_FULL:-gt0.3}"
     for v in ${GW[@]+"${GW[@]}"} ${GF[@]+"${GF[@]}"}; do [[ $(gv "$v") != *"!!"* ]] || { echo "GATE_WIN·GATE_FULL 판은 glN·gt0.x(+ 로 묶음, 예 gl25+gt0.3): $v" >&2; exit 2; }; done

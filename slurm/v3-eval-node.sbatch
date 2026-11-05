@@ -4,6 +4,8 @@
 #   제출(사용자): sbatch --export=ALL,TASKS=<목록 파일> slurm/v3-eval-node.sbatch
 #   작업마다 CUDA_VISIBLE_DEVICES=GPU_IDX=<GPU>, PY = 노드 로컬 env python. 각 작업은 끝났거나 시작된 산출이 있으면 건너뛰고 아무것도 지우지 않는다.
 #   진행: logs/train/SA_V3_EVAL-<job>.out(작업 시작·끝·종료 코드).
+#   슬롯(2026-11-05, 사용자 "평가는 왜 5시간이나 걸리는 거지?" → 회의 통째를 한 GPU 에서 여럿 동시에): 줄 머리 '<GPU>.<슬롯>|' 이면 같은 GPU 에서
+#   슬롯마다 따로 차례로 돈다(슬롯끼리는 동시에). '<GPU>|' 는 예전 그대로 슬롯 하나다. 로그의 'GPU g.s' 가 그 슬롯이다.
 #   --requeue(2026-10-23): low_p_hpc 처럼 선점되는 파티션에서 다시 큐에 든다 — 작업은 완료 표시로 건너뛰거나 이어 한다(v3_eval_task.sh, avg_checkpoints.py).
 #SBATCH --job-name=SA_V3_EVAL
 #SBATCH --partition=apex
@@ -21,7 +23,7 @@
 set -uo pipefail
 : "${TASKS:?작업 목록 파일 TASKS}"
 [ -f "$TASKS" ] || { echo "목록 없음: $TASKS"; exit 1; }
-echo "[$(date '+%F %T')] V3 평가 노드 job $SLURM_JOB_ID node=$(hostname) 작업 $(grep -c '^[0-7]|' "$TASKS") 개 ← $TASKS"
+echo "[$(date '+%F %T')] V3 평가 노드 job $SLURM_JOB_ID node=$(hostname) 작업 $(grep -cE '^[0-7](\.[0-9]+)?\|' "$TASKS") 개 ← $TASKS"
 cd /soundai/users/tskim/VAPKT; set -a; source .env; set +a
 source "$MXC_CONDA_DIR/etc/profile.d/conda.sh"; conda activate vapasr
 export VAPASR_LOCAL_ENV=${LOCAL_ENV-/tmp/sa_tskim/vapasr-env}                              # NFS 위 conda import 지연 회피(stage3-train-apex.sbatch 와 같다)
@@ -34,13 +36,13 @@ if [ -n "$VAPASR_LOCAL_ENV" ]; then
 fi
 export VAPASR_STAGE_DIR=/tmp/sa_tskim/vapasr-stage
 worker() {
-  local g=$1 cmd n=0 rc
+  local q=$1 g=${1%%.*} cmd n=0 rc                                                               # q = 줄 머리(GPU 또는 GPU.슬롯), g = GPU
   while IFS= read -r cmd; do
-    n=$((n + 1)); echo "[$(date '+%F %T')] GPU $g ← $n: $cmd"
+    n=$((n + 1)); echo "[$(date '+%F %T')] GPU $q ← $n: $cmd"
     CUDA_VISIBLE_DEVICES=$g GPU_IDX=$g bash -c "$cmd"; rc=$?                                   # 2026-10-28: $(date) 가 먼저 돌아 $? 가 늘 0 이었다
-    echo "[$(date '+%F %T')] GPU $g 끝 $n (exit $rc)"
-  done < <(grep "^$g|" "$TASKS" | cut -d'|' -f2-)
+    echo "[$(date '+%F %T')] GPU $q 끝 $n (exit $rc)"
+  done < <(awk -v q="$q" 'index($0, q "|") == 1 { print substr($0, length(q) + 2) }' "$TASKS")
 }
-for g in 0 1 2 3 4 5 6 7; do worker $g & sleep 20; done                                         # 20 s 간격(NFS 부하 분산)
+for q in $(grep -oE '^[0-7](\.[0-9]+)?\|' "$TASKS" | tr -d '|' | awk '!seen[$0]++'); do worker $q & sleep 20; done   # 20 s 간격(NFS 부하 분산)
 wait
 echo "[$(date '+%F %T')] V3_EVAL_NODE_DONE"

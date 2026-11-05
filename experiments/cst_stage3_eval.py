@@ -115,6 +115,9 @@ def windows_of(a, tok):
                                 backchannel=a.backchannel, **kw, **({"xl_order": a.xl_order} if getattr(a, "xl_order", "lang") != "lang" else {}))   # V3 R4
         if is_full(a) and ds.stats.get("cst_dropped_speakers"): print(f"  !! {c}: 화자 상한 {ds.n_slots} 을 넘는 대화 {ds.stats['cst_dropped_speakers']} 개 — 뺀다", flush=True)
         idx = [i for i, it in enumerate(ds.items) if held is None or it[0] in held]
+        if getattr(a, "subset", None):                                                          # 2026-11-05 판단용 빠른 평가: AMI 공식 분할 하나만(manifest dev·eval)
+            keep = set(json.load(open(os.path.join(a.data, "manifest.json"), encoding="utf-8"))[a.subset])
+            idx = [i for i in idx if ds.items[i][0].split(":", 1)[-1] in keep]
         idx.sort(key=lambda i: (ds.items[i][2], ds.items[i][0], ds.items[i][1]))
         if a.limit_windows and len(idx) > a.limit_windows: idx = [idx[j] for j in np.linspace(0, len(idx) - 1, a.limit_windows, dtype=int)]
         sets[c] = ds; out += [(c, i) for i in idx]; print(f"  {c}: {'held-out 대화 ' + str(len(held)) if held is not None else '전부'} · 창 {len(idx)}", flush=True)
@@ -129,6 +132,17 @@ def words_of(tok, toks):
     bs = token_bytes(tok, [t for _, t in toks]); raw = b"".join(bs); cum, c = [], 0
     for b in bs: c += len(b); cum.append(c)
     return [(m.group().decode("utf-8", "replace"), toks[min(bisect.bisect_left(cum, m.end()), len(toks) - 1)][0]) for m in re.finditer(rb"\S+", raw)]
+
+
+def shard(items, sets, rank: int, world_size: int, balance: bool = False):
+    """몫 r/w 의 창. balance 면 창 길이(초)가 긴 것부터 지금까지 합이 가장 작은 몫에 넣는다(같으면 번호가 작은 몫 — 늘 같은 배정).
+    끄면 예전 그대로 j % w(창은 windows_of 의 길이 순)."""
+    if not balance: return [x for j, x in enumerate(items) if j % world_size == rank]
+    load = [0.0] * world_size; mine = []
+    for j in sorted(range(len(items)), key=lambda j: (-float(sets[items[j][0]].items[items[j][1]][2]), j)):
+        r = min(range(world_size), key=lambda q: (load[q], q)); load[r] += float(sets[items[j][0]].items[items[j][1]][2])
+        if r == rank: mine.append(j)
+    return [items[j] for j in sorted(mine)]
 
 
 def window_ref(ds, i, delta, eot_id, tok):
@@ -372,11 +386,12 @@ def run(a):
         assert not (sb or a.spk_guide), "--window full 은 긴 직렬 디코드(long_decode)라 --switch-bias·--spk-guide 와 함께 쓰지 않는다"
         if model is not None: from vapasr.hf.long_session import encode_long, long_decode, long_block_decode
     sets, items = windows_of(a, tok)
-    items = [x for j, x in enumerate(items) if j % a.world_size == a.rank]
+    items = shard(items, sets, a.rank, a.world_size, getattr(a, "balance", False))
     out = os.path.join(a.out); os.makedirs(out, exist_ok=True)
     conf = dict(checkpoint=os.path.abspath(a.checkpoint), config_sha256=hashlib.sha256(open(os.path.join(a.checkpoint, "config.json"), "rb").read()).hexdigest(),
                 split_sha256=hashlib.sha256(open(a.split, "rb").read()).hexdigest() if a.split else None, corpora=a.corpora, deltas=a.deltas, limit_windows=a.limit_windows, dtype=a.dtype,
                 world_size=a.world_size, eot_blocked=EOT in blocked, oracle=bool(a.oracle), from_predictions=a.from_predictions,
+                **({"subset": a.subset} if getattr(a, "subset", None) else {}), **({"balance": True} if getattr(a, "balance", False) else {}),   # 2026-11-05: 끄면 키 없음
                 **({"backchannel": list(a.backchannel)} if a.backchannel else {}), **win_conf(a),
                 **({"spk_guide": list(a.spk_guide), "spk_guide_hold": bool(a.spk_guide_hold), **({"spk_guide_no_insert": True} if a.spk_guide_no_insert else {})} if a.spk_guide else {}),
                 **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": a.xl_order} if a.xl_order != "lang" else {}), **({"target_oracle": True} if tor else {}),
@@ -602,6 +617,8 @@ def main():
     q.add_argument("--out", required=True); q.add_argument("--corpora", default="aihub134-2,aihub134-1,aihub71631,otoSpeech,kec,ztc,nsc")
     q.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[4, 6, 10]); q.add_argument("--limit-windows", type=int, default=400)
     q.add_argument("--rank", type=int, default=0); q.add_argument("--world-size", type=int, default=1); q.add_argument("--batch-size", type=int, default=32)
+    q.add_argument("--subset", choices=("dev", "eval"), default=None, help="AMI(--data 의 manifest.json): 공식 분할 하나의 회의만 — 판단용 빠른 평가(2026-11-05)")
+    q.add_argument("--balance", action="store_true", help="몫을 창 길이 합이 고르게 나눈다(긴 것부터 가장 가벼운 몫에 — 회의 통째 몫 여럿, 2026-11-05). 끄면 j % world_size")
     q.add_argument("--max-flush", type=int, default=None); q.add_argument("--dtype", default="float32"); q.add_argument("--encoder", default=None); q.add_argument("--verify", action="store_true")
     q.add_argument("--oracle", action="store_true", help="모델 없이 정답 시퀀스를 채점(지표 sanity)")
     q.add_argument("--mix-off", action="store_true", help="E10 슬롯 추출기 체크포인트: 섞인 소리 토큰을 빈 임베딩으로(슬롯 소리 토큰만으로 받아쓰기)")
