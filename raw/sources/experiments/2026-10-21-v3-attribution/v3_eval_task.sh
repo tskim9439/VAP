@@ -61,9 +61,12 @@ dev() {                                                                         
 say "시작"; mkdir -p $O
 case $K in
   dlg) [ -f $O/dlg/summary.json ] && grep -q "^DONE rank=" $O/dlg.log 2>/dev/null && { say "이미 끝"; exit 0; }   # 2026-11-03: 중간에 멈춘 run 의 요약만 있으면 이어 한다
+       n0=$(cat $O/dlg.log 2>/dev/null | wc -l)
        $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $P2 --split $P2/splits/v2.json --trans $S1 --deltas 4,10 --limit-windows 100 \
          --trans-lead-space --batch-size 32 --backchannel 1.0,3 --out $O/dlg >> $O/dlg.log 2>&1
-       $P experiments/cst_stage4_eval.py summarize --out $O/dlg > $O/dlg-summary.log 2>&1 ;;
+       # 2026-11-05: 실패한 run(메모리 부족 등)은 요약을 쓰지 않는다 — 100350 에서 다시 잡힐 때마다 죽은 run 의 빈 요약이 몫 8 번역(dlg_shard_task)의 dlg-summary.log 를 덮었다
+       tail -n +$((n0 + 1)) $O/dlg.log | grep -q "^DONE rank=" || { say "번역 실패 — dlg-summary.log 는 그대로 둔다($O/dlg.log)"; exit 1; }
+       $P experiments/cst_stage4_eval.py summarize --out $O/dlg > $O/dlg-summary.log.tmp 2>&1 && mv $O/dlg-summary.log.tmp $O/dlg-summary.log ;;
   xl) [ -f $O/xl/summary.json ] && { say "이미 끝"; exit 0; }
       $P experiments/cst_stage4_eval.py run --checkpoint $CK --encoder $MXC_NEMOTRON_DIR --data $XE --trans $XE/targets-sim_en-de --corpora sim_en-de --deltas 4,10 --limit-windows 200 \
         --trans-lead-space --batch-size 32 --out $O/xl >> $O/xl.log 2>&1
