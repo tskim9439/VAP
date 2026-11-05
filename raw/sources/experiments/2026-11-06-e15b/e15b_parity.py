@@ -33,7 +33,7 @@ def main():
         with torch.inference_mode():
             t0 = time.time(); f = encode_long(model, wav, K); te = time.time() - t0
             t0 = time.time(); em, fc, rd, used, nf, tk = long_block_decode(model, f, prefix, D, context_s=30.0); td = time.time() - t0
-        X = model.slot_audio_of(f, model.block_act(f))
+            X = model.slot_audio_of(f, model.block_act(f))                                       # inference_mode 안에서(밖이면 학습 가능 가중과 섞여 autograd 오류)
         print(f"{tag}: 특징 {tuple(f.shape)} · 슬롯 토큰 {None if X is None else (tuple(X.shape), round(float(X.abs().mean()), 6))} · 토큰 {len(em)} · 인코딩 {te:.1f} s · 디코드 {td:.1f} s"
               f"(청크 {float(np.mean(tk)):.1f} ms) · GPU 최대 {torch.cuda.max_memory_allocated() / 2**30:.1f} GB", flush=True)
         return f, em
