@@ -175,3 +175,5 @@ raw_authors:
   - 재료는 큰 단일 화자 셋(swbd·cv·vp·ls) 쪽으로 옮겨 AMI·ICSI 발화 재사용을 줄였다(split v4 학습 분할만).
 - 학습(`slurm/submit-q17-e15b.sh`): E13 final 에서 E13 레시피(셋 가중 E13 그대로 — E15a 절제의 교훈) + `--slot-enc-layer 16 --train-encoder-layers 16:24` + `--add-sim …=sim_en-ovl:0.6`, 5,000 step. 평가 묶음 `q17-e15b`(활동 N3D — `ACT=n3d` 기본, SLOTS·SUBSET 으로 빠른 평가).
 - 시험: `tests/test_slot_enc.py` 7 개(가짜 NeMo Conformer 로 갈라 돌리기 = 벌마다 따로 돌린 것, 0 초기화 = 원래 출력, 동결 인코더여도 주입까지 grad, 슬롯 토큰·config 재생성·추측 prefill 디코드 = 한 토큰씩, encode_long 조각 = 통째, 학습 forward 의 활동 순서·DDP 묶음), 전체 875 통과(무관한 기존 실패 5 — 로컬 rapidfuzz 없음 등).
+- 스모크(2026-11-06, mxc 호스트 GPU, `e15b_smoke.sh`): ① 시작 대칭 — E13 final 에 0 초기화로 붙여 ES2004b SDM 120 s 를 디코드하면 토큰 618/618 같음(섞인 소리 스트림 최대 차 5e-7, 청크 39.3 → 40.1 ms, GPU 10.5 → 12.0 GB). ② 2 step 학습(학습 1,977M, 인코더 16–24 층 201.5M) 손실 0.20, 저장·재로드 PARITY OK. ③ 그 체크포인트 디코드 DECODE_OK(슬롯 토큰 (1500, 4, 2048)).
+- 제출(사용자, 11-06 09:35, hpc 2 노드 — apex 는 "User's group not permitted" 로 거부): 학습 job 100569 → 평가 job 100570(AMI eval·N3D·슬롯 4 + 대화 번역). 자동 보고 `auto_e15b.sh` → `VAPKT-data/tmp/e15b-check/report-q17-e15b.txt`·`gap-q17-e15b.txt`.
