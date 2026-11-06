@@ -40,6 +40,8 @@ AMI eval에서 N3D 활동을 공통으로 준 E13(출력 재귀속 포함)과 Mu
 
 학습 데이터에서도 겹침을 직접 제어할 수 있다. DiaScriber는 턴 경계를 이동해 두 화자가 겹치는 길이와 비율을 바꾸고, 추가 발화를 섞어 세 화자 이상을 구성했다. VAPKT에서는 [[output-agn-reduction-20261104]]에 기록한 `sim_en-ovl`을 출발점으로, 겹침 지속 시간과 화자 간 음량 차이를 별도 축으로 나눠 작은 목소리·맞장구·끼어들기를 평가할 수 있다. 전체 지표가 비슷해도 겹침 조건별 성능이 크게 달라질 수 있다. [DiaScriber, §2.2](https://arxiv.org/html/2608.22796v1) · [MS-Bench, §4.2](https://arxiv.org/html/2610.25824v1)
 
+Shuffle CTC의 그래프 구성, SD-CTC 비교와 강제 정렬은 [[output-shuffle-ctc-paper-review-20261106]]에 정리했다.
+
 ## E15b에서 확인할 순서
 
 1. **기본 E15b 효과를 분리한다.** N3D와 디코드 지연을 고정하고, E13·E15b·Parakeet을 같은 AMI eval 정규화로 비교한다. E15b에서 겹침 증강을 함께 바꾸므로, 구조의 효과를 분리하려면 E13에도 같은 겹침 데이터를 주는 대조가 필요하다. 2026-11-06 위키 기록에는 E15b 스모크와 제출까지 있다. [[output-agn-reduction-20261104]]
