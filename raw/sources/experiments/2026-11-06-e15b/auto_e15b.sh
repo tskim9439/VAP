@@ -9,7 +9,8 @@ D=/soundai/users/tskim/VAPKT-data; T=$D/tmp/e15b-check; R=$D/results; X=raw/sour
 export PYTHONPATH=/soundai/users/tskim/VAPKT PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=4 TOKENIZERS_PARALLELISM=false CUDA_VISIBLE_DEVICES=
 L=$T/auto-e15b.log; say() { echo "[$(date '+%F %T')] $*" >> $L; }
 RR=q17-e15a-enc:eval,$RUN:$SUB:n3d; OUT=$T/report-$RUN.txt; CK=/soundai/Model/VAPASR/stage3-$RUN/final
-for KN in "ami stage3-eval-ami-d10$ST-$RUN-final" "amifull stage3-eval-amifull-c30$ST-d10-$RUN-final"; do
+KS=("amifull stage3-eval-amifull-c30$ST-d10-$RUN-final"); [[ ${WINDOWS:-0} == 1 ]] && KS=("ami stage3-eval-ami-d10$ST-$RUN-final" "${KS[@]}")   # 2026-11-06 창 평가 제외(WINDOWS=1 이면 넣는다)
+for KN in "${KS[@]}"; do
   set -- $KN; K=$1; N=$2
   until [ -f $R/$N/summary.json ]; do sleep 300; done; say "시작 $N"
   bash $X/2026-10-27-std-rescore/rescore_std.sh $K $N 30 > $T/rescore-$N.log 2>&1

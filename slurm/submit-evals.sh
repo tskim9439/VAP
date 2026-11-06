@@ -105,6 +105,8 @@
 #   --label NAME   같은 묶음을 판마다 여러 번 낼 때 작업 목록 이름표(evals-<묶음>-<이름표>-<시각>.txt). --job-name 은 예전 호출 호환으로 이름표로만 받는다.
 #   --after-job JOBID  의존 job 을 바꾼다(재제출 등).   --dry-run  목록·sbatch 명령만 출력(파일·제출 없음).   --partition P  평가 노드 파티션(기본 sbatch 의 apex — 예 low_p_hpc).
 #   --cks A,B  체크포인트 평가·avg3 에 쓸 checkpoint-A·checkpoint-B(기본 1500,2000 — 2,500 step run 의 60·80 %; 2026-10-26 F1 5,000 step 은 3000,4000).
+#   WINDOWS=1(2026-11-06, 사용자 "앞으로는 그럼 창 평가는 제외하자"): AMI 창(20–90 s) 평가는 기본으로 빼고 회의 통째만 낸다(창은 매번 빈 상태에서 시작해 첫 몇 초·경계 손해가
+#            커서 IHM-mix 가 늘 1–3 pt 나쁘고, 외부 기준은 모두 회의 통째다). q17-e11–e15* 묶음에서 창을 다시 넣으려면 WINDOWS=1.
 #   --nodes N(2026-11-06, 사용자 "평가 잡을 노드를 더 사용해서 빠르게 수행되도록 하고 싶어"): 작업을 N 노드 × 8 GPU 에 차례로 나눠(i 번째 작업 → GPU i mod 8N,
 #            슬롯 i div 8N — GPU 하나에 NODE_SLOTS(기본 4) 개 넘게는 동시에 돌리지 않고 그 슬롯에 잇는다) 1 노드 job 을 N 개 낸다(같은 의존·이름).
 #            몫 완료 표시·합치기는 공유 결과 폴더에서 하므로 어느 노드가 끝내도 같다. 원 목록의 GPU·슬롯 머리는 버리고 순서·명령은 그대로 쓴다.
@@ -136,7 +138,7 @@ case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh; DX=raw/sources/experiments/2026-11-05-eval-speed/dlg_shard_task.sh
 L=()
 ami4() { local g0=$1 run=$2 root=$3 r; for r in 0 1 2 3; do L+=("$((g0 + r))|${root:+MODEL_ROOT=$root }bash $X ami $run final $r/4"); done; }   # GPU g0..g0+3 에 4 몫
-ami8d10() { local run=$1 r; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X ami $run final $r/8"); done; }                # δ10 만, GPU 0–7 에 8 몫(2026-10-28)
+ami8d10() { local run=$1 r; [[ ${WINDOWS:-0} == 1 ]] || return 0; for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 bash $X ami $run final $r/8"); done; }   # δ10 만, GPU 0–7 에 8 몫(2026-10-28) — 2026-11-06 부터 WINDOWS=1 일 때만
 v3set() {   # V3 run $1: ck1500·ck2000·final·avg3 × 9 작업 + final·avg3 AMI 4 몫씩 — 평균은 GPU 7 의 첫 작업, 평균 평가는 그 DONE 을 기다린다
   local RUN=$1 AVG=$1-avg3 M=/soundai/Model/VAPASR/stage3-$1 i=0 t k; local -a K=(dlg xl taxi40 stage3 regress xltel xleval taxi90 onset)
   L+=("7|\${PY:-python} experiments/avg_checkpoints.py --out $MR/stage3-$AVG/final --done $M/checkpoint-$CKA $M/checkpoint-$CKB $M/final > $D/tmp/avg-$RUN.log 2>&1")
@@ -202,7 +204,7 @@ case $set_ in
     S=${SLOTS:-1}; [[ $S =~ ^[1-8]$ ]] || { echo "SLOTS 는 1–8: $S" >&2; exit 2; }; [[ -z ${SUBSET:-} || $SUBSET =~ ^(dev|eval)$ ]] || { echo "SUBSET 은 dev·eval: $SUBSET" >&2; exit 2; }
     gx=""; [[ $AC == g2b ]] && gx=" GRAFT_EXPERT=$G GX_TAG=$GR"                                  # 대입 안 $(… && …) 는 거짓이면 set -e 로 멈춘다(2026-11-05 와 같은 함정)
     pre="DELTAS=10$gx${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1 OMP_NUM_THREADS=4 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"; s0=".0"; }   # 슬롯이면 CPU 스레드를 나눠 쓰고 메모리 조각을 줄인다
-    for r in 0 1 2 3 4 5 6 7; do L+=("$r$s0|$pre bash $X ami $set_ $TG $r/8"); done          # 창은 슬롯 0 에서 먼저(그 뒤 같은 슬롯의 회의 통째)
+    if [[ ${WINDOWS:-0} == 1 ]]; then for r in 0 1 2 3 4 5 6 7; do L+=("$r$s0|$pre bash $X ami $set_ $TG $r/8"); done; fi          # 창은 슬롯 0 에서 먼저(그 뒤 같은 슬롯의 회의 통째)
     for ((r = 0; r < W; r++)); do q=$((r % 8)); (( S > 1 )) && q=$q.$((r / 8)); L+=("$q|$pre$bal bash $X amifull $set_ $TG $r/$W"); done
     if (( S > 1 )); then for g in 0 1 2 3 4 5 6 7; do L+=("$g.0|bash $DX $set_ $TG $g/8"); done   # 슬롯이면 번역은 8 몫으로 슬롯 0 끝에(2026-11-05 100350: GPU 2 의 제 슬롯에서 회의 4 개와 같이 돌다 메모리 부족)
     else L+=("2|bash $X dlg $set_ $TG"); fi ;;
