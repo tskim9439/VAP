@@ -104,14 +104,18 @@
 #   --label NAME   같은 묶음을 판마다 여러 번 낼 때 작업 목록 이름표(evals-<묶음>-<이름표>-<시각>.txt). --job-name 은 예전 호출 호환으로 이름표로만 받는다.
 #   --after-job JOBID  의존 job 을 바꾼다(재제출 등).   --dry-run  목록·sbatch 명령만 출력(파일·제출 없음).   --partition P  평가 노드 파티션(기본 sbatch 의 apex — 예 low_p_hpc).
 #   --cks A,B  체크포인트 평가·avg3 에 쓸 checkpoint-A·checkpoint-B(기본 1500,2000 — 2,500 step run 의 60·80 %; 2026-10-26 F1 5,000 step 은 3000,4000).
+#   --nodes N(2026-11-06, 사용자 "평가 잡을 노드를 더 사용해서 빠르게 수행되도록 하고 싶어"): 작업을 N 노드 × 8 GPU 에 차례로 나눠(i 번째 작업 → GPU i mod 8N,
+#            슬롯 i div 8N — GPU 하나에 NODE_SLOTS(기본 4) 개 넘게는 동시에 돌리지 않고 그 슬롯에 잇는다) 1 노드 job 을 N 개 낸다(같은 의존·이름).
+#            몫 완료 표시·합치기는 공유 결과 폴더에서 하므로 어느 노드가 끝내도 같다. 원 목록의 GPU·슬롯 머리는 버리고 순서·명령은 그대로 쓴다.
 # 시간 한도는 24 h 로 낸다(sbatch 기본 12 h 를 명령줄로 덮는다). 목록은 VAPKT-data/tmp/evals-<묶음>-<시각>.txt(새 파일).
 # 각 작업은 끝났거나 시작된 산출이 있으면 건너뛰거나 이어 하고(AMI 몫은 이어 한다) 아무것도 지우지 않는다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-set_=${1:-}; [[ $# -gt 0 ]] && shift; dep=""; dry=0; part=""; cks=1500,2000; jname=SA_EVAL_FullDuplex; lbl=""
+set_=${1:-}; [[ $# -gt 0 ]] && shift; dep=""; dry=0; part=""; cks=1500,2000; jname=SA_EVAL_FullDuplex; lbl=""; nodes=1
 while [[ $# -gt 0 ]]; do
   case $1 in
     --after-job) dep=$2; shift 2 ;;  --dry-run) dry=1; shift ;;  --partition) part=$2; shift 2 ;;  --cks) cks=$2; shift 2 ;;
+    --nodes) nodes=$2; [[ $nodes =~ ^[1-8]$ ]] || { echo "--nodes 는 1–8: $nodes" >&2; exit 2; }; shift 2 ;;
     --label) lbl=$2; shift 2 ;;
     --job-name) lbl=$2; echo "job 이름은 SA_EVAL_FullDuplex 로 고정한다 — '$2' 는 작업 목록 이름표로만 쓴다(--label)" >&2; shift 2 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
@@ -255,6 +259,21 @@ case $set_ in
 esac
 T=$D/tmp/evals-$set_${lbl:+-$lbl}-$(date +%Y%m%d-%H%M%S)-$$.txt                                       # 같은 초에 잇따라 내도 겹치지 않게 PID(2026-11-03 — q17-e13-gate 둘째 판이 "이미 있다"로 멈췄다)
 cmd="sbatch --job-name=$jname ${part:+--partition=$part }${dep:+--dependency=afterok:$dep }--time=24:00:00 --export=ALL,TASKS=$T slurm/v3-eval-node.sbatch"
+if (( nodes > 1 )); then                                                                         # --nodes N: 노드마다 목록 하나, job 하나
+  G=$((8 * nodes)); NS=${NODE_SLOTS:-4}; [[ $NS =~ ^[1-8]$ ]] || { echo "NODE_SLOTS 는 1–8: $NS" >&2; exit 2; }
+  NL=(); for ((k = 0; k < nodes; k++)); do NL[k]=""; done
+  for i in "${!L[@]}"; do p=$((i % G)); k=$((p / 8)); NL[k]+="$((p % 8)).$(((i / G) % NS))|${L[i]#*|}"$'\n'; done
+  for ((k = 0; k < nodes; k++)); do
+    [[ -n ${NL[k]} ]] || continue
+    Tk=${T%.txt}-n$k.txt; ck="sbatch --job-name=$jname ${part:+--partition=$part }${dep:+--dependency=afterok:$dep }--time=24:00:00 --export=ALL,TASKS=$Tk slurm/v3-eval-node.sbatch"
+    if (( dry )); then echo "## 노드 $k/$nodes → $Tk"; printf '%s' "${NL[k]}"; echo "$ck"; echo "Submitted batch job 0"; continue; fi
+    [[ -e $Tk ]] && { echo "이미 있다: $Tk" >&2; exit 1; }
+    { echo "# 평가 묶음 $set_${lbl:+ [$lbl]} 노드 $k/$nodes(slurm/submit-evals.sh --nodes, $(date '+%F %T'))${dep:+ — job $dep 성공 뒤}"; printf '%s' "${NL[k]}"; } > "$Tk"
+    echo "목록 $Tk ($(grep -cE '^[0-7]\.[0-9]+\|' "$Tk") 작업)" >&2
+    $ck
+  done
+  exit 0
+fi
 if (( dry )); then printf '%s\n' "${L[@]}"; echo "$cmd"; echo "Submitted batch job 0"; exit 0; fi
 [[ -e $T ]] && { echo "이미 있다: $T" >&2; exit 1; }
 { echo "# 평가 묶음 $set_${lbl:+ [$lbl]}(slurm/submit-evals.sh, $(date '+%F %T'))${dep:+ — job $dep 성공 뒤}"; printf '%s\n' "${L[@]}"; } > "$T"
