@@ -14,6 +14,8 @@
         참조 발화 = 그 화자의 AMI 발화 구간으로 묶은 참조 단어, 가설 구간 = 같은 화자에서 2 s 넘게 끊기지 않는 단어 묶음(qlt_tc 와 같다).
   놓침 = 대치 + 삭제(참조 단어 몫). cp 놓침 − orc 놓침 ≈ 화자 귀속 탓(맞게 받아썼지만 다른 화자 칸에 쓴 것), orc 놓침 = 받아쓰기 탓.
 --relabel B,F(ours): 행 act_runs(디코드가 받은 활동)로 출력 재귀속(cst_stage3_eval --relabel-follow 와 같은 follow_stats)을 얹어 잰다.
+--norm whisper(2026-11-06, 오류 예산 분석 — 표준 cpWER 와 같은 잣대): 참조는 AMI 발화마다, 가설은 화자의 2 s 묶음마다 문장을 Whisper EnglishTextNormalizer 로
+  정규화한 뒤(여러 단어 숫자·철자·채움말 — meeteval_cpwer --norm whisper 와 같은 정규화기) 단어로 다시 나눈다. 새 단어의 시각·겹침은 묶음 안 같은 비율 위치의 원 단어 것을 쓴다.
 """
 import argparse, bisect, collections, glob, json, os, sys
 
@@ -42,13 +44,45 @@ def runs(words, gap=2.0):
     return out
 
 
+def renorm(groups, normf):
+    """[[원 항목…]](묶음마다, 시각순) → 묶음 문장을 normf 로 정규화해 다시 나눈 [(새 단어, 원 항목)] — 원 항목은 같은 비율 위치의 것."""
+    out = []
+    for g in groups:
+        if not g: continue
+        nw = normf(" ".join(w for w, _ in g)).split()
+        for k, w in enumerate(nw): out.append((w, g[0][1] if len(g) == 1 else g[round(k * (len(g) - 1) / max(1, len(nw) - 1))][1]))
+    return out
+
+
+def wnorm_hyp(items, normf, gap=2.0):
+    """가설 [(단어, 시각)] → 2 s 묶음마다 문장 정규화한 [(단어, 시각)]."""
+    groups = []
+    for w, t in sorted(items, key=lambda x: x[1]):
+        if groups and t - groups[-1][-1][1] <= gap: groups[-1].append((w, t))
+        else: groups.append([(w, t)])
+    return [(w, t) for w, t in renorm(groups, normf)]
+
+
+def wnorm_ref(R, normf):
+    """참조 단어(dict, utt 키) → AMI 발화마다 문장 정규화한 단어 dict(시각·화자·겹침 등은 같은 비율 위치의 원 단어 것)."""
+    by = collections.defaultdict(list)
+    for q in R: by[q["utt"]].append(q)
+    groups = [[(q["w"], q) for q in sorted(v, key=lambda q: q["t"])] for v in by.values()]
+    return [dict(q, w=w) for w, q in renorm(groups, normf)]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", required=True); ap.add_argument("--tok", required=True); ap.add_argument("--sys", action="append", required=True)
     ap.add_argument("--subset", default="eval"); ap.add_argument("--corpora", default="ami-ihmmix,ami-sdm"); ap.add_argument("--delta", type=int, default=10)
     ap.add_argument("--collar", type=float, default=5.0); ap.add_argument("--json", default=None)
     ap.add_argument("--relabel", type=lambda x: tuple(int(v) for v in x.split(",")), default=None, help="ours: 출력 재귀속 창 B,F(예 3,1 — 행 act_runs 활동)")
+    ap.add_argument("--norm", choices=["ours", "whisper"], default="ours", help="whisper = 표준 cpWER 와 같은 Whisper 정규화(문장 단위)")
     a = ap.parse_args()
+    WN = None
+    if a.norm == "whisper":
+        from whisper_normalizer.english import EnglishTextNormalizer
+        WN = EnglishTextNormalizer()
     import numpy as np
     from scipy.optimize import linear_sum_assignment
     from transformers import AutoTokenizer
@@ -74,6 +108,7 @@ def main():
             ut = utt.get(q["s"]) or [(q["t"], q["t"])]; st = [x[0] for x in ut]; j = max(0, bisect.bisect_right(st, q["t"] + 0.2) - 1)
             if q["t"] > ut[j][1] + 0.3 and j + 1 < len(ut) and abs(ut[j + 1][0] - q["t"]) < q["t"] - ut[j][1]: j += 1
             q["utt"] = (q["s"], j, ut[j][0], ut[j][1])
+        if WN is not None: R = [dict(q, w=keep(q["w"])) for q in wnorm_ref(R, WN) if keep(q["w"])]
         refs[cid] = (R, mask)
     out = {}
     for spec in a.sys:
@@ -97,6 +132,7 @@ def main():
                 H = collections.defaultdict(list)
                 for sp, w, t in r["hyp_words"]:
                     if int(t / CHUNK) + a.delta not in mask: H[sp].append((w, t))
+            if WN is not None: H = {k: wnorm_hyp(v, WN) for k, v in H.items()}
             H = {k: [(keep(w), t) for w, t in v if keep(w)] for k, v in H.items()}; H = {k: v for k, v in H.items() if v}
             hk = sorted(H); n_s = max(R, key=lambda q: q["s"])["s"] + 1 if R else 0
             Rs = [[q for q in sorted(R, key=lambda q: q["t"]) if q["s"] == s] for s in range(n_s)]
