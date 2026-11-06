@@ -54,6 +54,7 @@
 #            GPU 마다 N 개를 동시에 돈다(v3-eval-node.sbatch 슬롯 'g.s|'), 번역은 GPU 2 의 제 슬롯에서 처음부터. SUBSET=eval|dev 면 AMI 창·회의 통째를 그 공식 분할만
 #            (산출 이름 -sub<분할> — 판단용 빠른 평가). 예: SLOTS=4 SUBSET=eval bash slurm/submit-evals.sh q17-e15a-enc --partition hpc
 #            슬롯이면 번역은 dlg_shard_task.sh 8 몫을 GPU 마다 슬롯 0 끝에 둔다(산출 dlg8).
+#            TARGET=checkpoint-N(2026-11-06, 사용자 "E15b 현재까지 … 가장 최근에 저장된 체크포인트로 먼저 평가"): final 대신 그 체크포인트(산출 이름 -ck<N>, 저장 끝난 것만).
 #            ACT=n3d|g2b(2026-11-06): AMI 활동 — g2b = G2b 학생(GRAFT_EXPERT, 종단간), n3d = 모델 config 의 고정 N3D. q17-e15b*(E15b 슬롯 조건 인코더)는 기본 n3d, 나머지는 g2b.
 #   q17-dretag  디코드 때 재귀속(2026-11-05, 사용자 "① 디코드 때 재귀속 구현 진행해줘" — v3_eval_task.sh DRETAG, cst_stage3_eval --retag): E13 final 을 학습 없이
 #            회의 통째 δ10 로 다시 디코드한다 — 판 둘: E13 · N3D(config 전문가)와 E13 + G2b(ENC_STATE·GRAFT_EXPERT = GRAFT_RUN, 기본 q17-graft-g2b — 종단간).
@@ -122,7 +123,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e13-trans|q17-e14-trans|trans8|q17-dretag|taxi-blk) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*|q17-e15*) [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; } ;;
+  q17-e15*) TG=${TARGET:-final}; [[ $TG == final || $TG =~ ^checkpoint-[0-9]+$ ]] || { echo "TARGET 은 final·checkpoint-N: $TG" >&2; exit 2; }   # 2026-11-06 E15b 중간 체크포인트 먼저
+    if [[ $TG == final ]]; then [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; }
+    else [[ -f /soundai/Model/VAPASR/stage3-$set_/$TG/trainer_state.json ]] || { echo "저장이 안 끝났다: stage3-$set_/$TG/trainer_state.json" >&2; exit 2; }; fi ;;
+  q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*) [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; } ;;
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|ext-parakeet-g2|q17-g3|q17-e11-relax|q17-spk|q17-e13-trans|q17-e13-gate) ;;
   *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans | q17-e15* | trans8 | q17-dretag | taxi-blk" >&2; exit 2 ;; esac
@@ -198,10 +202,10 @@ case $set_ in
     S=${SLOTS:-1}; [[ $S =~ ^[1-8]$ ]] || { echo "SLOTS 는 1–8: $S" >&2; exit 2; }; [[ -z ${SUBSET:-} || $SUBSET =~ ^(dev|eval)$ ]] || { echo "SUBSET 은 dev·eval: $SUBSET" >&2; exit 2; }
     gx=""; [[ $AC == g2b ]] && gx=" GRAFT_EXPERT=$G GX_TAG=$GR"                                  # 대입 안 $(… && …) 는 거짓이면 set -e 로 멈춘다(2026-11-05 와 같은 함정)
     pre="DELTAS=10$gx${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1 OMP_NUM_THREADS=4 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"; s0=".0"; }   # 슬롯이면 CPU 스레드를 나눠 쓰고 메모리 조각을 줄인다
-    for r in 0 1 2 3 4 5 6 7; do L+=("$r$s0|$pre bash $X ami $set_ final $r/8"); done          # 창은 슬롯 0 에서 먼저(그 뒤 같은 슬롯의 회의 통째)
-    for ((r = 0; r < W; r++)); do q=$((r % 8)); (( S > 1 )) && q=$q.$((r / 8)); L+=("$q|$pre$bal bash $X amifull $set_ final $r/$W"); done
-    if (( S > 1 )); then for g in 0 1 2 3 4 5 6 7; do L+=("$g.0|bash $DX $set_ final $g/8"); done   # 슬롯이면 번역은 8 몫으로 슬롯 0 끝에(2026-11-05 100350: GPU 2 의 제 슬롯에서 회의 4 개와 같이 돌다 메모리 부족)
-    else L+=("2|bash $X dlg $set_ final"); fi ;;
+    for r in 0 1 2 3 4 5 6 7; do L+=("$r$s0|$pre bash $X ami $set_ $TG $r/8"); done          # 창은 슬롯 0 에서 먼저(그 뒤 같은 슬롯의 회의 통째)
+    for ((r = 0; r < W; r++)); do q=$((r % 8)); (( S > 1 )) && q=$q.$((r / 8)); L+=("$q|$pre$bal bash $X amifull $set_ $TG $r/$W"); done
+    if (( S > 1 )); then for g in 0 1 2 3 4 5 6 7; do L+=("$g.0|bash $DX $set_ $TG $g/8"); done   # 슬롯이면 번역은 8 몫으로 슬롯 0 끝에(2026-11-05 100350: GPU 2 의 제 슬롯에서 회의 4 개와 같이 돌다 메모리 부족)
+    else L+=("2|bash $X dlg $set_ $TG"); fi ;;
   q17-dretag) GR=${GRAFT_RUN:-q17-graft-g2b}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt; [[ -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }   # 2026-11-05 디코드 때 재귀속
     DRW=${DRETAG_WIN:-3,1}; [[ $DRW =~ ^[0-9]+,[0-9]+$ ]] || { echo "DRETAG_WIN 은 BACK,FWD: $DRW" >&2; exit 2; }
     S=${SLOTS:-2}; [[ $S =~ ^[1-4]$ ]] || { echo "SLOTS 는 1–4(판 둘 × SLOTS 가 GPU 하나에): $S" >&2; exit 2; }; SB_=${SUBSET-eval}; [[ -z $SB_ || $SB_ =~ ^(dev|eval)$ ]] || { echo "SUBSET 은 dev·eval·빈 값: $SB_" >&2; exit 2; }
