@@ -190,7 +190,8 @@ case $set_ in
     AC=${ACT:-$([[ $set_ == q17-e15b* ]] && echo n3d || echo g2b)}; [[ $AC =~ ^(n3d|g2b)$ ]] || { echo "ACT 는 n3d·g2b: $AC" >&2; exit 2; }   # 2026-11-06 E15b: 활동 = config 의 N3D(기본)
     [[ $AC == n3d || -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }
     S=${SLOTS:-1}; [[ $S =~ ^[1-8]$ ]] || { echo "SLOTS 는 1–8: $S" >&2; exit 2; }; [[ -z ${SUBSET:-} || $SUBSET =~ ^(dev|eval)$ ]] || { echo "SUBSET 은 dev·eval: $SUBSET" >&2; exit 2; }
-    pre="DELTAS=10$([[ $AC == g2b ]] && echo " GRAFT_EXPERT=$G GX_TAG=$GR")${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1 OMP_NUM_THREADS=4 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"; s0=".0"; }   # 슬롯이면 CPU 스레드를 나눠 쓰고 메모리 조각을 줄인다
+    gx=""; [[ $AC == g2b ]] && gx=" GRAFT_EXPERT=$G GX_TAG=$GR"                                  # 대입 안 $(… && …) 는 거짓이면 set -e 로 멈춘다(2026-11-05 와 같은 함정)
+    pre="DELTAS=10$gx${SUBSET:+ SUBSET=$SUBSET}"; W=$((8 * S)); bal=""; s0=""; (( S > 1 )) && { bal=" BAL=1 OMP_NUM_THREADS=4 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"; s0=".0"; }   # 슬롯이면 CPU 스레드를 나눠 쓰고 메모리 조각을 줄인다
     for r in 0 1 2 3 4 5 6 7; do L+=("$r$s0|$pre bash $X ami $set_ final $r/8"); done          # 창은 슬롯 0 에서 먼저(그 뒤 같은 슬롯의 회의 통째)
     for ((r = 0; r < W; r++)); do q=$((r % 8)); (( S > 1 )) && q=$q.$((r / 8)); L+=("$q|$pre$bal bash $X amifull $set_ final $r/$W"); done
     if (( S > 1 )); then for g in 0 1 2 3 4 5 6 7; do L+=("$g.0|bash $DX $set_ final $g/8"); done   # 슬롯이면 번역은 8 몫으로 슬롯 0 끝에(2026-11-05 100350: GPU 2 의 제 슬롯에서 회의 4 개와 같이 돌다 메모리 부족)
