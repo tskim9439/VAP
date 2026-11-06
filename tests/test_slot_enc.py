@@ -187,3 +187,18 @@ def test_forward_e15b_conditions_on_activity_input_and_ties_ddp():
     calls.clear(); m.zero_grad()
     out = m(ids=ids, is_audio=is_audio, chunk_of=chunk_of, labels=labels, wav=torch.randn(B, K * HOP), wav_len=torch.tensor([K * HOP]), K=torch.tensor([K]))   # 태그 활동 없는 행
     out.loss.backward(); assert m.adapter_slotinj.w1.weight.grad is not None and m.adapter_slotenc.net[0].weight.grad is not None   # DDP 묶음
+
+
+def test_slot_enc_off_zero_tokens():
+    """2026-11-06 진단 --slot-enc-off: 슬롯 소리 토큰이 같은 모양의 0 이 된다(켜면 adapter_slotenc 출력)."""
+    from types import SimpleNamespace
+    import torch
+    from vapasr.hf.modeling_vapasr import Adapter, VapAsrForStreamingASR as VapasrModel
+    ad = Adapter(8, 6, 16)
+    me = SimpleNamespace(adapter_slotenc=ad, config=SimpleNamespace(slot_enc_cfg={"n": 4}))
+    f = torch.randn(2, 6, 5, 8)                                                                   # (B, 2 + N, K, Din)
+    on = VapasrModel.slot_enc_tokens(me, f)
+    me.slot_enc_off = True
+    off = VapasrModel.slot_enc_tokens(me, f)
+    assert on.shape == off.shape == (2, 5, 4, 6) and off.dtype == torch.float32
+    assert float(off.abs().max()) == 0.0 and float(on.abs().max()) > 0

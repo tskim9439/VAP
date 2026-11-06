@@ -297,6 +297,8 @@ class VapAsrForStreamingASR(PreTrainedModel):
         if self.adapter_slotenc is None: return None
         n = int(self.config.slot_enc_cfg["n"])
         if feats.shape[-3] < 2 + n: return None
+        if getattr(self, "slot_enc_off", False):                                                # 2026-11-06 진단: 슬롯 토큰을 0 으로(섞인 소리·인코더는 그대로) — 슬롯 경로를 썼는지
+            return feats.new_zeros(*feats.shape[:-3], feats.shape[-2], n, self.adapter_slotenc.net[-1].out_features, dtype=torch.float32)
         return self.adapter_slotenc(feats[..., 2:2 + n, :, :].float()).transpose(-3, -2)
 
     def slot_audio_of(self, feats, act, seg: int = 4096):

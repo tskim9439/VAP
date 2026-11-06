@@ -4,7 +4,7 @@
 # 설정은 호스트 대기열(evalq)과 같다: δ $DELTAS + final, batch $BATCH, 꼬리 무음 1 s, --verify, fp32.
 # 선점으로 다시 시작하면 run 이 rank 별 예측 파일에서 이어 간다. 끝나면 out 마다 summarize(미완료면 summary.log 에 남김).
 # 제출: slurm/submit-eval-q06-s3-ast.sh (입력은 sbatch --export 로만).
-#SBATCH --job-name=SA_EVAL_Fullduplex
+#SBATCH --job-name=SA_EVAL_FullDuplex
 #SBATCH --partition=hpc
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
@@ -23,8 +23,9 @@ PY=${PY:-/soundai/users/tskim/VAPKT-data/conda/envs/vapasr/bin/python}
 CK=${CK:?CK(체크포인트)를 --export 로 주세요}
 TASKS=${TASKS:?TASKS(작업 목록 파일)를 --export 로 주세요}
 DELTAS=${DELTAS:-4 6 8 10}
+FINAL=${FINAL:-1}                                                                # 2026-11-06: 0 이면 final(오프라인) 모드를 돌리지 않는다
 BATCH=${BATCH:-64}
-export DELTAS BATCH CK TASKS PY
+export DELTAS BATCH CK TASKS PY FINAL
 cd "$PROJECT"
 echo "[$(date '+%F %T')] job $SLURM_JOB_ID restart=${SLURM_RESTART_COUNT:-0} CK=$CK tasks=$(wc -l < "$TASKS") δ=[$DELTAS]"
 test -f "$CK/config.json"
@@ -42,7 +43,7 @@ srun --ntasks="$SLURM_NTASKS" --ntasks-per-node=8 --cpus-per-task="$SLURM_CPUS_P
       echo "[$(date +%T)] task $SLURM_PROCID → $out rank $rank/$world"
       "$PY" experiments/eval_single_turn_asr.py run --manifest "$man" --checkpoint "$CK" \
         --encoder /soundai/Model/nemotron-3.5-asr-streaming-0.6b --out "$out" --deltas $DELTAS --tail-s 1.0 --max-flush 8 \
-        --batch-size "$BATCH" --rank "$rank" --world-size "$world" --limit 0 --verify --final >> "$out/rank$rank.log" 2>&1 || rc=1
+        --batch-size "$BATCH" --rank "$rank" --world-size "$world" --limit 0 --verify $( [ "$FINAL" = 1 ] && echo --final ) >> "$out/rank$rank.log" 2>&1 || rc=1
     fi
     i=$((i + 1))
   done < "$TASKS"

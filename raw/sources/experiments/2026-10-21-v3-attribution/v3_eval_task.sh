@@ -17,6 +17,7 @@
 #     DIAR=<diar.pt>(DIAR_TAG=이름)이면 헤드를 그것으로 바꿔 끼운다(--diar-head-override — diar_train --aosc final). 산출 이름에 -aosc·-<DIAR_TAG> 가 붙는다.
 #     GUIDE=1(2026-10-28): 화자 태그를 활동으로 이끈다(--act-tag-guide — long_session.make_retag). 산출 이름에 -guide 가 붙는다.
 #   MIXOFF=1(2026-10-29, E10 슬롯 추출기 체크포인트): AMI 작업(ami·amifull)을 섞인 소리 토큰 없이(--mix-off) — 산출 이름에 -mixoff 가 붙는다.
+#   SLOTOFF=1(2026-11-06, E15b 진단 — 사용자 "1번 진단부터 진행하자"): 회의 통째(amifull)를 슬롯 소리 토큰 0 으로(--slot-enc-off, 산출 이름 -slotoff).
 #   N3D=<.nemo>(2026-10-29, E11): AMI 작업(ami·amifull)의 슬롯 활동을 고정 화자 분리 전문가 Nemotron 3 Diarization 으로(--n3d — 창은 창마다, 회의 통째는 회의 전체
 #     스트리밍 한 번, N3D_CHUNK 기본 4). 슬롯 활동 입력 체크포인트(E6·E9·E10)에 붙이는 학습 없는 진단 — 산출 이름에 -n3d(청크가 4 가 아니면 -n3dc<청크>)가 붙는다.
 #     E11 체크포인트는 config 에 전문가가 있어 N3D 없이도 그것을 쓴다(이름은 그대로).
@@ -171,6 +172,7 @@ case $K in
        SB=""; ST=""; [ -n "${SUBSET:-}" ] && { [[ $SUBSET =~ ^(dev|eval)$ ]] || { say "SUBSET 은 dev·eval: $SUBSET"; exit 2; }; SB="--subset $SUBSET"; ST=-sub$SUBSET; }   # 2026-11-05 판단용 빠른 평가
        BO=""; [ "${BAL:-0}" = 1 ] && BO=--balance                                                 # 2026-11-05 몫을 회의 길이로 고르게(새 산출 폴더에서만 — 재개 지문이 다르다)
        DRO=""; DRT=""; [ -n "${DRETAG:-}" ] && { [[ $DRETAG =~ ^[0-9]+,[0-9]+$ ]] || { say "DRETAG 는 BACK,FWD: $DRETAG"; exit 2; }; DRO="--retag $DRETAG"; DRT=-dr${DRETAG/,/-}; }   # 2026-11-05 디코드 때 재귀속
+       [ "${SLOTOFF:-0}" = 1 ] && { DRO="$DRO --slot-enc-off"; DRT=$DRT-slotoff; }                 # 2026-11-06 E15b 진단: 슬롯 소리 토큰 0
        C=${CTX:-30}; E=$R/stage3-eval-amifull-c$C${AO:+-aosc}$DT${GD:+-guide}${MO:+-mixoff}$NT$GT$ET$XT$RT$GLT$DRT${EV_TAG:+-$EV_TAG}$ST$DS-$RUN-$tag; AB=$D/ami-bench-v1; V=""; [ $r = 0 ] && [ -z "$AO" ] && V=--verify
        FO=""; if [ "${FOLLOW:-0}" = 1 ]; then                                                        # 2026-10-30 활동 추종: 끝난 원출력을 다시 채점(디코드 없음)
          [ -z "$GO$EO$XO$RO$GLO$DRO" ] && [ -f $E/summary.json ] || { say "FOLLOW: GATE·ENC_STATE·GRAFT_EXPERT·ENC_RC·GATE_LAGS·GATE_THRESH·DRETAG 없이, 끝난 원 산출이 있어야 한다 $E"; exit 2; }; FO="--from-predictions $E --follow-n3d"; NO=""; V=""; E=$E-follow; fi

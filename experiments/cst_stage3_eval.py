@@ -305,6 +305,9 @@ def run(a):
         from vapasr.hf.infer import load_model
         from vapasr.hf.batch_decode import decode_batch, SpkGuide, word_init_mask, logits_size
         model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids; blocked = model.config.blocked_ids
+        if getattr(a, "slot_enc_off", False):                                                   # 2026-11-06 E15b 진단: 슬롯 소리 토큰 0(섞인 소리·인코더 그대로)
+            assert getattr(model, "adapter_slotenc", None) is not None, "--slot-enc-off 는 E15b(슬롯 조건 인코더) 체크포인트 전용"
+            model.slot_enc_off = True
         if getattr(a, "diar_head_override", None):                                              # E7: AOSC 로 학습한 헤드로 바꿔 끼운다(같은 cfg·탭 — diar_train --aosc final)
             xo = torch.load(a.diar_head_override, map_location="cpu"); assert model.diar_head is not None and dict(xo["cfg"]) == dict(model.config.diar_head_cfg) \
                 and list(xo["taps"]) == list(model.config.diar_taps), f"헤드 cfg·탭이 다르다: {a.diar_head_override}"
@@ -412,7 +415,7 @@ def run(a):
                 **({"graft_expert": os.path.abspath(a.graft_expert)} if getattr(a, "graft_expert", None) else {}),
                 **({"encoder_rc": int(a.encoder_rc)} if getattr(a, "encoder_rc", None) is not None else {}),
                 **({"gate_lags": int(gl_)} if gl_ is not None else {}), **({"gate_thresh": float(gt_)} if gt_ is not None else {}),
-                **({"relabel_follow": list(fwin)} if rlf else {}), **({"retag": list(rtw)} if rtw else {}),
+                **({"relabel_follow": list(fwin)} if rlf else {}), **({"retag": list(rtw)} if rtw else {}), **({"slot_enc_off": True} if getattr(a, "slot_enc_off", False) else {}),
                 **({"relabel_act": os.path.abspath(a.relabel_act), "relabel_oracle": bool(a.relabel_oracle)} if getattr(a, "relabel_act", None) else {}),
                 **({"target_act": os.path.abspath(a.target_act), "target_act_threshold": a.target_act_threshold, "target_act_min_frames": a.target_act_min_frames}
                    if getattr(a, "target_act", None) else {}))
@@ -667,6 +670,7 @@ def main():
     q.add_argument("--encoder-rc", type=int, default=None, choices=(0, 3, 6, 13), help="지연 완화: 인코더 우측 문맥(80 ms 프레임 — 모델 설정의 att_context_size 목록, 학습은 3)")
     q.add_argument("--gate-lags", type=int, default=None, help="E13 게이트 진단(2026-11-03): 추론 활동 게이트 창(청크 — config.slot_gate 를 덮는다, 학습 12). 0 = 게이트 끔(선언 슬롯 전부)")
     q.add_argument("--gate-thresh", type=float, default=None, help="E13 게이트 진단: 게이트만 전문가 확률 > 이 값으로 연다(태그·오디오 활동은 전문가 임계 0.5 그대로)")
+    q.add_argument("--slot-enc-off", action="store_true", help="E15b 진단(2026-11-06): 슬롯 소리 토큰을 0 으로(섞인 소리 토큰·인코더는 그대로) — 슬롯 경로를 썼는지")
     q.add_argument("--retag", default=None, type=ints, help="디코드 때 재귀속 BACK,FWD(예 3,1 — batch_decode.BlockRetag, 회의 통째 슬롯 블록 디코드): 라운드마다 활동을 어긴 칸을 옮기고 라운드를 고쳐 다시 넣는다")
     q.add_argument("--relabel-follow", action="store_true", help="출력 쪽 재귀속: 활동을 어긴 가설 단어만 활동 슬롯으로 옮겨 채점(창 --follow-window, 스트리밍 그대로 낼 수 있는 출력)")
     q.add_argument("--follow-detail", action="store_true", help="행에 follow_detail(단어마다 추종 범주·슬롯·말 차례 위치·직전 화자 — cst_eval.follow_stats detail)을 남긴다")

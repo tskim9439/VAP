@@ -199,9 +199,28 @@ def prepare_covost(root, out, workers):
 def prepare(a):
     import soundfile as sf
     from vapasr.data.kspon import read_trn, resolve_path
-    if not (a.voxpopuli_aa_root or a.libri_root or a.kspon_root or a.yodas_de_dev_list or a.fleurs_root or a.covost_root):
-        raise SystemExit("prepare: --voxpopuli-aa-root / --kspon-root / --libri-root / --yodas-de-dev-list / --fleurs-root / --covost-root 중 하나 이상 필요")
+    if not (a.voxpopuli_aa_root or a.libri_root or a.kspon_root or a.yodas_de_dev_list or a.fleurs_root or a.covost_root or a.esb_ami_list):
+        raise SystemExit("prepare: --voxpopuli-aa-root / --kspon-root / --libri-root / --yodas-de-dev-list / --fleurs-root / --covost-root / --esb-ami-list 중 하나 이상 필요")
     rows, missing, coverage = [], [], {}
+    if a.esb_ami_list:                                           # 2026-11-06: ESB AMI test(OpenASR 리더보드 AMI — IHM 개별 헤드셋 12,643 발화), 혼자 말 받아쓰기 진단
+        root = Path(a.esb_ami_root)
+        cand = []
+        for x in read_jsonl(a.esb_ami_list):
+            rel = x["WavPath"].split("/tasks/", 1)[1]           # Datalist 의 /tasks/<task>/data/... → <root>/tasks/...
+            pth = root / "tasks" / rel
+            cand.append(dict(id=f"esb-ami/{pth.stem}", dataset="esb-ami-test", lang="English", path=str(pth), raw_reference=x["Transcript"]))
+        def inspect_ami(r):
+            if not Path(r["path"]).is_file():
+                return r, False
+            info = sf.info(r["path"])
+            if info.channels != 1 or info.samplerate != 16000:
+                raise ValueError(f"Unexpected ESB AMI format: {r['path']} {info}")
+            return dict(r, sample_rate=info.samplerate, num_samples=info.frames, audio_s=info.duration,
+                        audio_format="wav", reference=r["raw_reference"]), True
+        with ThreadPoolExecutor(a.workers) as pool:
+            for r, ok in pool.map(inspect_ami, cand):
+                (rows if ok else missing).append(r)
+        coverage["esb-ami-test"] = dict(source_labels=len(cand), expected_standard_count=12643)
     if a.fleurs_root:                                            # 음성번역 4 방향(2026-10-10)
         r, c = prepare_fleurs(a.fleurs_root, a.out)
         rows += r; coverage.update(c)
@@ -560,6 +579,8 @@ def main():
     q.add_argument("--voxpopuli-aa-revision", default=VOXPOPULI_AA_REVISION, help="coverage.json 에 기록할 HF 리비전")
     q.add_argument("--kspon-root", default=None, help="한국어: KsponSpeech eval_clean/eval_other")
     q.add_argument("--libri-root", default=None, help="legacy 영어 비교: LibriSpeech test-clean/test-other")
+    q.add_argument("--esb-ami-list", default=None, help="영어 회의 단일 화자: ESB AMI test Datalist(jsonl — WavPath·Transcript, 예 /soundai/DB/Benchmark/Datalist/runnable/asr_en_ami.jsonl)")
+    q.add_argument("--esb-ami-root", default="/soundai/DB/Benchmark", help="Datalist 의 /tasks/... 경로를 이 아래 tasks/ 로 푼다")
     q.add_argument("--yodas-de-dev-list", default=None, help="독일어: YODAS-Granary dev 의 asr-tn-de-v1 words 목록(lists/de-words-dev-tn1.list)")
     q.add_argument("--fleurs-root", default=None, help="음성번역: google/fleurs 사본(data/<lang>/{test,dev,train}.tsv, audio/test.tar.gz) — en-de·en-ko·de-en·ko-en")
     q.add_argument("--covost-root", default=None, help="음성번역: fixie-ai/covost2 사본(<cfg>/test-*.parquet) — en-de·de-en")
