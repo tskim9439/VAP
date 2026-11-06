@@ -59,6 +59,8 @@
 #            회의 통째 δ10 로 다시 디코드한다 — 판 둘: E13 · N3D(config 전문가)와 E13 + G2b(ENC_STATE·GRAFT_EXPERT = GRAFT_RUN, 기본 q17-graft-g2b — 종단간).
 #            DRETAG_WIN(기본 3,1 — 사후 재귀속과 같은 창), SLOTS(판마다 GPU 당 동시 몫, 기본 2 — GPU 마다 판 둘 × SLOTS), SUBSET(기본 eval — 빈 값이면 dev·eval 둘 다).
 #            산출 이름 -dr<B>-<F>. 비교: 같은 원출력의 사후 재귀속(-relabel3-1-wn)·재귀속 없는 원 평가.
+#   taxi-blk  TAXI 를 슬롯 블록 모델로(2026-11-06 — raw/sources/experiments/2026-11-06-taxi-blocks/taxi_blk_task.sh, cst_stage4_taxi.py 슬롯 블록 번역 디코드):
+#            RUNS=run[,run…](기본 q17-e13) × VARIANTS(기본 n3d-first,n3d-hash,g2b-first,g2b-hash — 활동·슬롯 언어 선언) 를 GPU 마다 하나씩(넘치면 슬롯). 산출 results/taxi-blk-<run>-final-<판>.
 #   trans8   대화 번역만 GPU 8 개에 8 몫으로(2026-11-05, dlg_shard_task.sh — 산출 results/stage4-eval-<run>-final/dlg8, dlg-summary.log). RUNS=run[,run…].
 #   q17-e13-gate  E13 추론 게이트 진단(2026-11-03, 사용자 "N3D 가 놓친 말을 받아쓰도록 게이트를 고칠 방법을 찾아줘"): 학습 없이 게이트만 바꿔 E13 final 을 다시 잰다.
 #            GATE_FULL(기본 gt0.3)·GATE_WIN(기본 없음) — 판 쉼표 목록, 판 = glN(창 N 청크, gl0 = 끔)·gt0.x(게이트만 전문가 확률 > 0.x)을 + 로 묶는다(예 gl25+gt0.3).
@@ -115,11 +117,11 @@ while [[ $# -gt 0 ]]; do
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
-case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e13-trans|q17-e14-trans|trans8|q17-dretag) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
+case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e13-trans|q17-e14-trans|trans8|q17-dretag|taxi-blk) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
   q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*|q17-e15*) [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; } ;;
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|ext-parakeet-g2|q17-g3|q17-e11-relax|q17-spk|q17-e13-trans|q17-e13-gate) ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans | q17-e15* | trans8 | q17-dretag" >&2; exit 2 ;; esac
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans | q17-e15* | trans8 | q17-dretag | taxi-blk" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
 [[ $lbl =~ ^[A-Za-z0-9._-]*$ ]] || { echo "--label 은 영문·숫자·._- 만: $lbl" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
@@ -203,6 +205,10 @@ case $set_ in
     for v in "" " ENC_STATE=$G ENC_TAG=$GR GRAFT_EXPERT=$G GX_TAG=$GR"; do
       for ((r = 0; r < W; r++)); do L+=("$((r % 8)).$((c * S + r / 8))|DELTAS=10 DRETAG=$DRW${SB_:+ SUBSET=$SB_}$v$bal OMP_NUM_THREADS=4 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True bash $X amifull q17-e13 final $r/$W"); done
       c=$((c + 1)); done ;;
+  taxi-blk) TX=raw/sources/experiments/2026-11-06-taxi-blocks/taxi_blk_task.sh; IFS=, read -ra TR_ <<< "${RUNS:-q17-e13}"; IFS=, read -ra TV_ <<< "${VARIANTS:-n3d-first,n3d-hash,g2b-first,g2b-hash}"
+    g=0; for run in "${TR_[@]}"; do [[ -f /soundai/Model/VAPASR/stage3-$run/DONE || -n $dep ]] || { echo "학습이 안 끝났다: stage3-$run(--after-job)" >&2; exit 2; }
+      for v in "${TV_[@]}"; do [[ $v =~ ^(n3d|g2b)-(first|hash)$ ]] || { echo "VARIANTS 판은 n3d|g2b-first|hash: $v" >&2; exit 2; }
+        L+=("$((g % 8)).$((g / 8))|bash $TX $run final $v"); g=$((g + 1)); done; done ;;
   trans8) [[ -n ${RUNS:-} ]] || { echo "trans8 은 RUNS=run[,run…](대화 번역을 GPU 8 개에 8 몫으로)" >&2; exit 2; }
     IFS=, read -ra TR8 <<< "$RUNS"; for run in "${TR8[@]}"; do [[ -f /soundai/Model/VAPASR/stage3-$run/DONE || -n $dep ]] || { echo "학습이 안 끝났다: stage3-$run(--after-job)" >&2; exit 2; }
       for g in 0 1 2 3 4 5 6 7; do L+=("$g|bash $DX $run final $g/8"); done; done ;;                                       # 비교용 E13 final 은 q17-e13-trans 로 이미 쟀다(results/stage4-eval-q17-e13-final)

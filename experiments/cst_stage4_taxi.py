@@ -14,7 +14,13 @@
   받아쓰기는 asr-d{δ}.jsonl(세션·슬롯 언어·단어·시각). --asr-only: translate 줄 없이(받아쓰기만 — 번역 형식과 받아쓰기를 가른다).
 채점(score): cstbench.evaluate(세션·출력 언어마다 참조 번역에 단어 정렬로 재분절 → BLEU·chrF·StreamLAAL·end_offset·빈 턴) → report-d{δ}.json,
   받아쓰기 WER(세션·언어마다 이어 붙인 참조 전사 대 그 언어 슬롯 전사, cstbench.normalize) → asr-report-d{δ}.json.
-TAXI 전사·번역은 재배포 금지라 hyp·asr 파일은 mxc 에만 두고 저장소에는 report 만 가져온다."""
+TAXI 전사·번역은 재배포 금지라 hyp·asr 파일은 mxc 에만 두고 저장소에는 report 만 가져온다.
+슬롯 블록 모델(config.slot_blocks — E13·E15b, 2026-11-06 사용자 "응 진행해" — TAXI 를 최신 모델로): batch_decode.decode_blocks_batch(trans=True — 슬롯 칸마다 <TRANS>
+  번역 칸, config.slot_gate 면 활동 게이트)로 디코드하고 parse_emitted4(begin_id = <ONSET>)로 읽는다(cst_stage4_eval 과 같다). 슬롯과 화자의 짝은 태그 활동(전문가 —
+  먼저 말한 사람이 채널 0)이 정하므로 교차 언어 창의 슬롯 언어 선언을 --slot-lang 으로 고른다:
+    first(기본) = 창 안 첫 참조 턴의 언어를 슬롯 0 에(rule_slots — 같은 언어 대화의 학습 규칙 '먼저 말한 사람이 A' 와 같은 짝, "누가 먼저 말할지 안다" 조건),
+    hash = 학습의 교차 언어 규칙(slots_of — 언어 이름순 + 세션 해시로 반을 뒤집음; 활동 채널과 엇갈릴 수 있다).
+  --graft-expert <graft.pt>(+ --encoder-state): 활동을 이식 학생(G2b)으로 — 종단간(cst_stage3_eval 과 같은 끼우기). config.json 에 blocks·slot_lang·graft."""
 import argparse, json, os, re, sys, time, zlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cst-bench", "src"))
@@ -98,6 +104,21 @@ def run(a):
     model, tok = load_model(a.checkpoint, encoder_path=a.encoder, dtype=getattr(torch, a.dtype)); sp = model.config.sp_ids
     wi = word_init_mask(tok, logits_size(model)) if sb else None; sbc = {d: (Counter(), Counter()) for d in a.deltas}
     xo = getattr(model.config, "xl_slot_order", None) or "lang"; smap = Counter()                 # V3 R4: 'arrival' 이면 prefix 는 두 언어만, 슬롯 언어는 map_slots
+    blocks = bool(getattr(model.config, "slot_blocks", False)); BG = int(sp["<ONSET>"]) if blocks else None   # 2026-11-06 슬롯 블록 번역 디코드(E13·E15b)
+    assert not (blocks and (sb or xo == "arrival" or a.asr_only)), "슬롯 블록 모델은 --switch-bias·arrival·--asr-only 없이(번역 칸 디코드)"
+    assert not ((a.graft_expert or a.encoder_state) and not blocks), "--graft-expert·--encoder-state 는 슬롯 블록 전문가 모델(E13 등)"
+    if a.encoder_state:
+        xs = torch.load(a.encoder_state, map_location="cpu"); assert xs.get("enc") is not None, f"인코더 state(enc)가 없다: {a.encoder_state}"
+        model.encoder.enc.load_state_dict(xs["enc"]); model.encoder.eval(); print(f"  인코더 ← {a.encoder_state}", flush=True)
+    if a.graft_expert:
+        assert getattr(model, "n3d", None) is not None, "--graft-expert 는 고정 전문가 자리(E11 계열 체크포인트)에 끼운다"
+        from vapasr.hf.n3d_graft import GraftExpert
+        c = model.config.n3d_cfg
+        model.n3d = GraftExpert(a.graft_expert, nemotron_dir=a.encoder, chunk=int(c["chunk"]), rc=int(c["rc"]), threshold=float(c["threshold"]))
+        print(f"  화자 활동 ← 이식 학생 {model.n3d.cfg}", flush=True)
+    def slot_langs(r, w0, w1):                                                                      # 슬롯 블록: 창마다 슬롯 언어(교차 언어면 --slot-lang)
+        _, lg = slots_of(r)
+        return rule_slots(r, w0, w1, sorted(set(lg))) if blocks and a.slot_lang == "first" and len(set(lg)) > 1 else lg
     from vapasr.data.cst_dialogue import SLOTS
     spk = tuple(sp[t] for t in SLOTS[: len(getattr(model.config, "slot_tokens", None) or SLOTS[:2])])                        # V2(4 슬롯)도 출력은 모든 슬롯 태그로 해석 — C·D 로 낸 말은 채점(A·B 언어 슬롯)에서 빠진다(삭제)
     EOT = sp["<EOT>"]; TRANS = int(tok.convert_tokens_to_ids("<TRANS>")); dev = next(model.parameters()).device
@@ -106,7 +127,9 @@ def run(a):
     jobs = [(r, w) for r in recs for w in windows_of(r, a.max_window)]
     os.makedirs(a.out, exist_ok=True); t0 = time.time()
     json.dump(dict(checkpoint=os.path.abspath(a.checkpoint), sessions=os.path.abspath(a.sessions), deltas=a.deltas, max_window=a.max_window, windows=len(jobs), asr_only=a.asr_only,
-                   **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": xo} if xo != "lang" else {}), slots={r["session_id"]: slots_of(r) for r in recs}),
+                   **({"switch_bias": sb.policy()} if sb else {}), **({"xl_slot_order": xo} if xo != "lang" else {}), slots={r["session_id"]: slots_of(r) for r in recs},
+                   **({"blocks": True, "slot_lang": a.slot_lang} if blocks else {}), **({"graft_expert": os.path.abspath(a.graft_expert)} if a.graft_expert else {}),
+                   **({"encoder_state": os.path.abspath(a.encoder_state)} if a.encoder_state else {})),
               open(os.path.join(a.out, "config.json"), "w"), indent=1, ensure_ascii=False)
     fh = {d: open(os.path.join(a.out, f"hyp-d{d}.jsonl"), "w", encoding="utf-8") for d in a.deltas}
     fa = {d: open(os.path.join(a.out, f"asr-d{d}.jsonl"), "w", encoding="utf-8") for d in a.deltas}
@@ -123,15 +146,23 @@ def run(a):
                 feats.append(model.encode(w[None], torch.tensor([len(seg)], device=dev), torch.tensor([K], device=dev))[0])
             for d in a.deltas:
                 prefixes = []
-                for r, _ in batch:
-                    _, langs = slots_of(r); tg = None if a.asr_only else [langs[1], langs[0]]
+                for r, (w0_, w1_) in batch:
+                    langs = slot_langs(r, w0_, w1_); tg = None if a.asr_only else [langs[1], langs[0]]
                     head = cst_head_text_xl(langs, tg is not None) if xo == "arrival" and len(set(langs)) > 1 else cst_head_text(langs, tg)
                     prefixes.append(pre + tok(head, add_special_tokens=False)["input_ids"] + [int(tok.convert_tokens_to_ids(f"<DELAY_{d}>"))])
                 modes = ["xl" if len(set(slots_of(r)[1])) > 1 else "same" for r, _ in batch] if sb else None   # 교차 언어 = 선언한 두 언어가 다름
-                states = decode_batch(model, feats, prefixes, max_flush_rounds=a.max_flush, **(dict(switch_bias=sb, row_modes=modes, word_init=wi) if sb else {}))
+                if blocks:                                                                             # 슬롯 블록: prefix 가 같은 창끼리(선언 슬롯 2 개, 슬롯 칸마다 번역 칸)
+                    from vapasr.hf.batch_decode import decode_blocks_batch
+                    states = [None] * len(batch)
+                    for pre_ in dict.fromkeys(tuple(x) for x in prefixes):
+                        js = [j for j, x in enumerate(prefixes) if tuple(x) == pre_]
+                        for j, st_ in zip(js, decode_blocks_batch(model, [feats[j] for j in js], [list(pre_)] * len(js), 2, max_flush_rounds=a.max_flush, trans=True)): states[j] = st_
+                else:
+                    states = decode_batch(model, feats, prefixes, max_flush_rounds=a.max_flush, **(dict(switch_bias=sb, row_modes=modes, word_init=wi) if sb else {}))
                 for s in states if sb else (): sbc[d][0].update(s.sb_flips); sbc[d][1].update(s.sb_points)
                 for (r, (w0, w1)), s in zip(batch, states):
-                    _, langs = slots_of(r); src, tr, _ = parse_emitted4(s.emitted, spk, TRANS, EOT)
+                    langs = slot_langs(r, w0, w1); src, tr, _ = parse_emitted4(s.emitted, spk, TRANS, EOT, begin_id=BG)
+                    if blocks: smap[(d, "/".join(langs))] += 1
                     if xo == "arrival" and len(set(langs)) > 1:                                       # 슬롯 언어를 창마다 짝짓는다(채점 전용 — 출력은 그대로)
                         rule = rule_slots(r, w0, w1, sorted(set(langs)))                               # rule = 짝이 학습 규칙(첫 화자 = 슬롯 0)과 같은 창, swap = 뒤집힌 창
                         langs = map_slots(r, w0, w1, [words_of(tok, src[k]) for k in range(2)], sorted(set(langs))); smap[(d, "/".join(langs))] += 1; smap[(d, "rule" if langs == rule else "swap")] += 1
@@ -193,6 +224,9 @@ def main():
     q.add_argument("--out", required=True); q.add_argument("--deltas", type=lambda s: [int(x) for x in s.split(",")], default=[4, 10])
     q.add_argument("--max-window", type=float, default=40.0); q.add_argument("--batch-size", type=int, default=16); q.add_argument("--max-flush", type=int, default=None)
     q.add_argument("--dtype", default="float32"); q.add_argument("--asr-only", action="store_true", help="translate 줄 없는 받아쓰기 전용 prefix(Stage 3 형식, 언어만 슬롯별)")
+    q.add_argument("--slot-lang", choices=["first", "hash"], default="first", help="슬롯 블록 모델의 교차 언어 슬롯 언어 선언(모듈 설명)")
+    q.add_argument("--graft-expert", default=None, help="슬롯 블록·전문가 모델: 활동을 이 graft.pt 의 이식 학생으로(G2b — 종단간)")
+    q.add_argument("--encoder-state", default=None, help="받아쓰기 인코더를 이 graft.pt 의 enc 로(G2b 인코더)")
     q.add_argument("--switch-bias", default=None, help="V3 C3 상태 인지 교대 bias 'eot=B,res=B,wi=B'(batch_decode.SwitchBias — 선언 두 언어가 다른 창만, 기본 끔). "
                                                        "config.json 에 정책, switch-bias.json 에 δ별 바꾼 태그·결정 지점 수. 값은 dev 에서만 고른다")
     q = sub.add_parser("score"); q.add_argument("--sessions", required=True); q.add_argument("--out", required=True); q.add_argument("--turn-metrics", action="store_true", help="asr-d*.jsonl 마다 턴 결정 지표(cst_attr_turns) → turn-metrics-d*.json(기본 끔)")
