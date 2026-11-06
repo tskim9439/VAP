@@ -7,8 +7,9 @@ RUNS = (sys.argv[1] if len(sys.argv) > 1 else "q17-e15a").split(","); GR = sys.a
 C = ("ami-ihmmix", "ami-sdm")
 ROWS = [("E13 · N3D", "stage3-eval-amifull-c30-d10-q17-e13-final", "stage3-eval-ami-d10-q17-e13-final"),
         ("E13 + G2b(종단간)", f"stage3-eval-amifull-c30-enc{GR}-gx{GR}-d10-q17-e13-final", f"stage3-eval-ami-d10-enc{GR}-gx{GR}-q17-e13-final")] + \
-       [(f"{run} + G2b(종단간{', ' + sub + ' 분할만' if sub else ''})", f"stage3-eval-amifull-c30-gx{GR}{'-sub' + sub if sub else ''}-d10-{run}-final",
-         f"stage3-eval-ami-d10-gx{GR}{'-sub' + sub if sub else ''}-{run}-final") for run, _, sub in (x.partition(":") for x in RUNS)]   # RUN:eval = 빠른 평가(-sub<분할>)
+       [(f"{run} + G2b(종단간{', ' + sub + ' 분할만' if sub else ''})" if act != "n3d" else f"{run} · N3D{'(' + sub + ' 분할만)' if sub else ''}",
+         f"stage3-eval-amifull-c30{'' if act == 'n3d' else '-gx' + GR}{'-sub' + sub if sub else ''}-d10-{run}-final",
+         f"stage3-eval-ami-d10{'' if act == 'n3d' else '-gx' + GR}{'-sub' + sub if sub else ''}-{run}-final") for run, sub, act in ((x.split(":") + ["", ""])[:3] for x in RUNS)]   # RUN:eval = 빠른 평가(-sub<분할>), RUN:eval:n3d = 활동 N3D(2026-11-06 E15b — 산출 이름에 -gx 없음)
 
 
 def meeteval(path):
