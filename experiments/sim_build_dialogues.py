@@ -43,7 +43,7 @@ import argparse, collections, hashlib, json, math, os, random, re, sys, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SHORT = {"Korean": "ko", "English": "en", "German": "de"}
 TEL_DEFAULTS = dict(fto_clip=(-2.0, 3.0), intra_pause=(0.1, 0.5), phone_per_speaker=0.0, phone_same_frac=0.0, name_suffix=None, level_offset_db="")
-D6_DEFAULTS = dict(p_interrupt=0.0, interrupt_fto="-2.0,-0.3", far_per_speaker=0.0, far_real_p=0.3)   # D6 옵션 기본(2026-10-26) — 이 값이면 stats args 에 넣지 않는다(예전과 같은 기록)   # C2 옵션 기본(fto·intra = SimConfig 기본) — 이 값이면 빌드·stats 가 예전과 같다
+D6_DEFAULTS = dict(p_interrupt=0.0, interrupt_fto="-2.0,-0.3", far_per_speaker=0.0, far_real_p=0.3, p_full_overlap=0.0, full_start="0.0,0.5")   # D6 옵션 기본(2026-10-26) — 이 값이면 stats args 에 넣지 않는다(예전과 같은 기록)   # C2 옵션 기본(fto·intra = SimConfig 기본) — 이 값이면 빌드·stats 가 예전과 같다
 G = {}
 
 
@@ -224,7 +224,8 @@ def make_session(i):
         try:
             d = synth_session(us, G["stats"], rng, rng.uniform(*a.dur), span, f"sim_{xx}_{i:06d}", f"sim_{xx}", G["lang_name"],
                               cfg=SimConfig(p_hold=a.p_hold, bc_scale=a.bc_scale, p_back=a.p_back, fto=a.fto_clip, intra_pause=a.intra_pause,
-                                            **({"p_interrupt": a.p_interrupt, "interrupt_fto": tuple(float(v) for v in a.interrupt_fto.split(","))} if a.p_interrupt > 0 else {})),
+                                            **({"p_interrupt": a.p_interrupt, "interrupt_fto": tuple(float(v) for v in a.interrupt_fto.split(","))} if a.p_interrupt > 0 else {}),
+                                            **({"p_full": a.p_full_overlap, "full_start": tuple(float(v) for v in a.full_start.split(","))} if a.p_full_overlap > 0 else {})),
                               meta=dict(pool=pool, keys=list(ks), attempt=attempt, **({"spk_lang": {"a": a.lang, "b": a.lang2}} if a.lang2 else {})), expand=expand)
             if d.meta["turns"] < 4 or d.duration_s < 25.0: errs.append("too_short"); continue
             if len(us) > 2 and min(collections.Counter(u.speaker for u in d.utterances).get(x, 0) for x in d.speakers) < 2: errs.append("speaker_too_few"); continue   # 3 명 이상: 모두 발화 2 개 이상
@@ -286,6 +287,8 @@ def main():
     ap.add_argument("--speakers", default="2:1", help="세션 화자 수 분포 'n:가중,…'(V2 예 2:0.2,3:0.4,4:0.4 — 같은 언어만; 기본 2 인 = 예전과 같은 난수열)")
     ap.add_argument("--p-back", type=float, default=0.2, help="3 명 이상: 교대 때 앞앞 턴 화자에게 되돌아갈 확률(sim_dialogue.SimConfig)")
     ap.add_argument("--p-interrupt", type=float, default=0.0, help="교대 때 끼어들기 확률(SimConfig.p_interrupt — 기본 끔)"); ap.add_argument("--interrupt-fto", default="-2.0,-0.3")
+    ap.add_argument("--p-full-overlap", type=float, default=0.0, help="교대 때 완전 겹침 확률(SimConfig.p_full, 2026-11-08 — 앞 턴 시작 + U(--full-start) 에 시작, 기본 끔)")
+    ap.add_argument("--full-start", default="0.0,0.5", help="완전 겹침 때 앞 턴 시작으로부터의 시작 간격 'lo,hi' s")
     ap.add_argument("--far-per-speaker", type=float, default=0.0, help="세션마다 화자별 RIR(한 방) 확률 — --noise-bank 필요, 기본 끔")
     ap.add_argument("--far-real-p", type=float, default=0.3, help="--far-per-speaker 에서 실제 RIR 풀을 고를 확률")
     ap.add_argument("--workers", type=int, default=16); ap.add_argument("--seed", type=int, default=0)

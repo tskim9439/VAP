@@ -183,3 +183,16 @@ def test_interrupt_raises_overlap_and_off_is_unchanged():
     base, off = mk(SimConfig()), mk(SimConfig(p_interrupt=0.0, interrupt_fto=(-1.5, -0.5)))
     assert base.to_json() == off.to_json() and overlap_stats(base)["overlap_s"] == 0
     hi = overlap_stats(mk(SimConfig(p_interrupt=1.0, interrupt_fto=(-1.5, -0.5)))); assert hi["overlap_s"] > 5.0 and hi["self_overlap"] == 0
+
+
+def test_full_overlap_starts_with_previous_turn_and_off_is_unchanged():
+    """완전 겹침(SimConfig.p_full, 2026-11-08): 0 이면 예전과 같은 세션, 1 이면 교대 턴이 앞 턴 시작 + U(full_start) 에 시작해 겹침이 크게 는다. 자기 겹침은 없다."""
+    st = TimingStats(fto=[0.2, 0.4, 0.8], hold=[0.5], p_hold=0.0, turn=[3.0, 5.0], bc_rate=0.0, bc_pos=[0.5], n_dialogues=1)
+    span = lambda u: (0.0, u.dur)
+    mk = lambda cfg: synth_session([fake_units("A", 30), fake_units("B", 30)], st, random.Random(5), 80.0, span, "s", "sim_en", "English", cfg=cfg)
+    base, off = mk(SimConfig()), mk(SimConfig(p_full=0.0, full_start=(0.0, 0.2)))
+    assert base.to_json() == off.to_json()
+    full = mk(SimConfig(p_full=1.0, full_start=(0.0, 0.2))); o = overlap_stats(full)
+    assert o["self_overlap"] == 0 and o["overlap_s"] > overlap_stats(base)["overlap_s"] + 10.0 and full.meta["full"] >= 3
+    starts = sorted(u.start for u in full.utterances)
+    assert any(b_ - a_ <= 0.2 + 1e-6 for a_, b_ in zip(starts, starts[1:]))                           # 거의 함께 시작한 두 발화가 있다

@@ -259,6 +259,8 @@ class SimConfig:
     p_back: float = 0.2                            # 3 명 이상: 교대할 때 바로 전 상대(앞앞 턴 화자)에게 되돌아갈 확률(나머지는 다른 화자 중 균등) — 둘씩 주고받는 경향.
     p_interrupt: float = 0.0                       # 끼어들기(2026-10-26 데이터 확장 D6): 교대 때 이 확률로 교대 간격을 interrupt_fto 균등에서 뽑는다(음수 = 앞 턴과 겹침). 0 이면 난수를 더 뽑지 않는다
     interrupt_fto: Tuple[float, float] = (-2.0, -0.3)
+    p_full: float = 0.0                            # 완전 겹침(2026-11-08, 사용자 "완전 겹치는 케이스도 추가하고"): 교대 때 이 확률로 앞 턴 시작 + U(full_start) 에 시작한다
+    full_start: Tuple[float, float] = (0.0, 0.5)   # — 두 화자가 거의 함께 시작해 짧은 쪽 턴이 통째로 겹친다(min_start_after_other 를 건너뛴다). 0 이면 난수를 더 뽑지 않는다
                                                    # 0.4 면 90 s 4 인 세션의 28 % 에서 한 화자가 발화 1 개 이하(2026-10-20 모의), 0.2 는 16 %
 
 
@@ -299,8 +301,11 @@ def synth_session(units: Sequence[Sequence[Unit]], stats: TimingStats, rng: rand
         s = rng.randrange(N) if prev is None else (prev if rng.random() < p_hold else other(prev, prev2))
         if prev is None: start = cfg.lead_s
         elif s != prev:
-            f = rng.uniform(*cfg.interrupt_fto) if cfg.p_interrupt > 0 and rng.random() < cfg.p_interrupt else stats.pick(rng, stats.fto, *cfg.fto)
-            start = max(p_end + f, p_start + cfg.min_start_after_other)
+            if cfg.p_full > 0 and rng.random() < cfg.p_full:                             # 완전 겹침: 앞 턴과 거의 함께 시작
+                start = p_start + rng.uniform(*cfg.full_start); n["full"] = n.get("full", 0) + 1
+            else:
+                f = rng.uniform(*cfg.interrupt_fto) if cfg.p_interrupt > 0 and rng.random() < cfg.p_interrupt else stats.pick(rng, stats.fto, *cfg.fto)
+                start = max(p_end + f, p_start + cfg.min_start_after_other)
         else: start = last_end[s] + stats.pick(rng, stats.hold, *cfg.hold)
         start = max(start, last_end[s] + GAP_S)
         if start >= target_s: break
