@@ -18,8 +18,9 @@ declare -A V=(
   [A]="--speakers 2:0.4,3:0.4,4:0.2 --p-interrupt 0.8 --interrupt-fto=-8,-1 --bc-scale 1.0 --p-hold 0.2 --p-full-overlap 0.15"
   [B]="--speakers 2:0.4,3:0.4,4:0.2 --p-interrupt 0.8 --interrupt-fto=-8,-1 --bc-scale 1.0 --p-hold 0.2 --p-full-overlap 0.3"
   [C]="--speakers 2:0.4,3:0.4,4:0.2 --p-interrupt 0.9 --interrupt-fto=-10,-2 --bc-scale 1.0 --p-hold 0.2 --p-full-overlap 0.3"
+  [D]="--speakers 2:0.4,3:0.4,4:0.2 --p-interrupt 0.8 --interrupt-fto=-8,-1 --bc-scale 1.0 --p-hold 0.2 --p-full-overlap 0.3 --split-s 8"   # 2026-11-08 사용자 "판 B 로 split-s 8 도 같이 시험해줘" — 긴 발화를 덜 쪼개 겹침 구간을 길게
 )
-for k in A B C; do
+for k in A B C D; do
   [ -e $T/$k ] && { echo "[$(date "+%F %T")] $k 이미 있다 — 건너뜀"; continue; }
   echo "[$(date "+%F %T")] 판 $k: ${V[$k]}"
   $P experiments/sim_build_dialogues.py $BASE --out $T/$k ${V[$k]} > $T/$k.log 2>&1; echo "[$(date "+%F %T")] SIM_EXIT $k $?"
@@ -55,7 +56,7 @@ def report(name, path, filt=None, limit=None):
           f" · 겹침 구간 중앙값 {q[0]:4.2f} s · 90 % {q[1]:4.2f} s · 90 % 이상 겹친 발화(1 s+) {100 * full / max(1, n1):4.1f} %", flush=True)
 report("AMI 공식 dev·eval(sdm)", f"{D}/ami-bench-v1/ami-sdm.refined.dialogues.jsonl", lambda d: d.conv_id.split(":")[-1] in keep)
 for p in glob.glob("/soundai/users/tskim/VAPKT-data/tmp/sim-v6-trial/C/sim_en-ovl.refined.dialogues.jsonl"): report("v6 판 C(sim_en-ovl 설정)", p)
-for k in "ABC":
+for k in "ABCD":
     for p in glob.glob(f"{T}/{k}/sim_en-ovl2.refined.dialogues.jsonl"): report(f"v7 판 {k}", p)
 EOF
 echo "[$(date "+%F %T")] TRIAL_DONE"
