@@ -6,24 +6,34 @@
 #     probe-oracle   같은 것 + 정답 활동(화자 분리 오류를 뺀 상한)
 #     probe-n3d-rc13 같은 것을 1.12 s 청크로(Parakeet 과 같은 앞보기)
 #   쓰기(스케줄러 셸): bash slurm/submit-ssa-probe.sh [--partition P(기본 hpc)] [--steps N(기본 6000)] [--run 이름(기본 p1)] [--dry-run] [--eval-only]
+#                     [--p2](2026-11-09 사용자 "겹침 비중과 학습량을 크게 올린 2 차 학습으로 바로 가자": run p2, P1 final 에서 30,000 step, 합성 겹침 75 %,
+#                      다른 대화 창 간섭원 덧섞기 0.6(SIR −6~+3 dB), 창 8–16 s, lr 인코더 1e-4·커널 1e-3, 1,000 step 마다 저장, 평가에서 Parakeet 판은 뺀다 — P1 의 것을 쓴다)
 #   산출: 학습 /soundai/Model/VAPASR/ssa-probe-<이름>/(step-N.pt·final.pt), 평가 VAPKT-data/results/ssa-probe-<이름>-<판>. 아무것도 지우지 않는다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-part=hpc; steps=6000; run=p1; dry=0; evo=0
+part=hpc; steps=6000; run=p1; dry=0; evo=0; p2=0
 while [[ $# -gt 0 ]]; do
   case $1 in
     --partition) part=$2; shift 2 ;;  --steps) steps=$2; shift 2 ;;  --run) run=$2; shift 2 ;;  --dry-run) dry=1; shift ;;  --eval-only) evo=1; shift ;;
+    --p2) p2=1; run=p2; steps=30000; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
 OUT=/soundai/Model/VAPASR/ssa-probe-$run; CK=$OUT/final.pt
 MTP=/soundai/users/tskim/VAPKT-data/vapkt-baselines/multitalker-parakeet-v1/multitalker-parakeet-streaming-0.6b-v1.nemo
 EV="$run-parakeet-n3d|--model|parakeet:$MTP|--act|n3d|--rc|13;$run-probe-n3d|--model|probe:$CK|--act|n3d|--rc|3;$run-probe-oracle|--model|probe:$CK|--act|oracle|--rc|3;$run-probe-n3d-rc13|--model|probe:$CK|--act|n3d|--rc|13"
-tr_cmd="sbatch --partition=$part --export=ALL,MODE=train,OUT=$OUT,ARGS=--steps%20$steps slurm/ssa-probe.sbatch"
+TA="--steps $steps"
+if (( p2 )); then
+  P1=/soundai/Model/VAPASR/ssa-probe-p1/final.pt; [[ -f $P1 ]] || { echo "P1 final 없음: $P1" >&2; exit 1; }
+  TA="--steps $steps --sets p2 --cross-p 0.6 --sir=-6,3 --win 8,16 --lr 1e-4 --lr-kernel 1e-3 --warmup 1000 --save-every 1000 --workers 7 --init $P1"   # 작업자 7 × 8 rank = 56 < 64 CPU(스모크: 간섭원 읽기로 데이터 대기 1.8 s/step)
+  EV="$run-probe-n3d|--model|probe:$CK|--act|n3d|--rc|3;$run-probe-oracle|--model|probe:$CK|--act|oracle|--rc|3;$run-probe-n3d-rc13|--model|probe:$CK|--act|n3d|--rc|13"
+fi
+TAE=${TA//,/%2C}
+tr_cmd="sbatch --partition=$part --export=ALL,MODE=train,OUT=$OUT,ARGS=$TAE slurm/ssa-probe.sbatch"
 if (( dry )); then echo "$tr_cmd"; echo "평가: $EV"; exit 0; fi
 dep=""
 if (( ! evo )); then
-  mkdir -p "$OUT"; o=$(sbatch --partition=$part --export="ALL,MODE=train,OUT=$OUT,ARGS=--steps $steps" slurm/ssa-probe.sbatch); echo "$o"
+  mkdir -p "$OUT"; o=$(sbatch --partition=$part --export="ALL,MODE=train,OUT=$OUT,ARGS=$TAE" slurm/ssa-probe.sbatch); echo "$o"
   dep=$(echo "$o" | grep -oE "[0-9]+$"); echo "학습 job $dep → $OUT"
 fi
 o=$(sbatch --job-name=SA_EVAL_FullDuplex --partition=$part ${dep:+--dependency=afterok:$dep} --export="ALL,MODE=eval,EVALS=$EV" slurm/ssa-probe.sbatch); echo "$o"

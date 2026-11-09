@@ -34,6 +34,15 @@ DEFAULT_SETS = [                                                                
 ]
 
 
+P2_SETS = [                                                                                     # P2(2026-11-09): 합성 겹침 셋 75 %
+    f"v7={D}/sim-dialogue-v7-ovl2/sim_en-ovl2.refined.dialogues.jsonl:{D}/sim-dialogue-v7-ovl2/mono:0.50",
+    f"v6={D}/sim-dialogue-v6-ovl/sim_en-ovl.refined.dialogues.jsonl:{D}/sim-dialogue-v6-ovl/mono:0.15",
+    f"v4meet={D}/sim-dialogue-v4-meet/sim_en-meet.refined.dialogues.jsonl:{D}/sim-dialogue-v4-meet/mono:0.10",
+    *[f"{c}={D}/phase2/{c}.refined.dialogues.jsonl:{D}/phase2/mono:{w}" for c, w in
+      (("ami", 0.04), ("icsi", 0.03), ("notsofar", 0.03), ("ami-far", 0.04), ("icsi-far", 0.03), ("notsofar-far", 0.03), ("swbd", 0.05))],
+]
+
+
 # ── 화자 커널 ─────────────────────────────────────────────────────────────────
 def fit_mask(m, T, default):
     """NeMo SpeakerKernelMixin.solve_length_mismatch 와 같다: (B, T') → (B, T) — 짧으면 왼쪽을 default 로 채우고, 길면 왼쪽을 잘라 낸다."""
@@ -146,9 +155,10 @@ class Asr:
 # ── 학습 데이터 ───────────────────────────────────────────────────────────────
 class Windows:
     """셋별 가중으로 창을 뽑아 (wav, 대상 활동, 배경 활동, 대상 글자) 를 낸다."""
-    def __init__(self, specs, qtok, win=(10.0, 30.0), seed=0, rank=0):
+    def __init__(self, specs, qtok, win=(10.0, 30.0), seed=0, rank=0, cross_p=0.0, sir=(-6.0, 3.0)):
         from vapasr.data.dialogue import Dialogue
         self.qtok = qtok; self.win = win; self.seed_base = seed * 1000 + rank; self.rng = random.Random(self.seed_base)
+        self.cross_p, self.sir = cross_p, sir                                                  # P2(2026-11-09): 다른 대화 창을 간섭원으로 덧섞을 확률·대상 대비 간섭원 음량(dB)
         split = json.load(open(f"{D}/phase2/splits/v4.json", encoding="utf-8"))
         man = json.load(open(f"{D}/ami-bench-v1/manifest.json")); amis = set(man["dev"]) | set(man["eval"])
         self.sets = []
@@ -164,6 +174,29 @@ class Windows:
             if ds: self.sets.append((name, ds, mono, float(w)))
             print(f"  셋 {name}: 대화 {len(ds)} · 가중 {w}", flush=True)
         self.W = [w for _, _, _, w in self.sets]
+
+    def interferer(self, n, K):
+        """다른 대화(가중으로 고른 셋)의 같은 길이 mono 창과 그 창의 모든 화자 활동(K 프레임) → (y, act) 또는 None. 대상 창과 통째로 겹친다(LibriSpeechMix 식)."""
+        import numpy as np
+        from vapasr.data.dialogue_dataset import build_mono_cache
+        L = n / 16000
+        for _ in range(10):
+            _, ds, mono, _ = self.rng.choices(self.sets, weights=self.W)[0]
+            d = self.rng.choice(ds)
+            if d.duration_s < L + 0.5: continue
+            t0 = self.rng.uniform(0.0, d.duration_s - L); t1 = t0 + L
+            if self.bad(d, t0, t1): continue
+            act = np.zeros(K, np.float32)
+            for u in d.utterances:
+                if u.end <= t0 or u.start >= t1: continue
+                act[max(0, int((max(u.start, t0) - t0) / FR)): min(K, int(math.ceil((min(u.end, t1) - t0) / FR)))] = 1.0
+            if act.sum() * FR < 1.0: continue
+            try: x = np.load(build_mono_cache(d, mono), mmap_mode="r")
+            except Exception: continue
+            y = np.asarray(x[int(t0 * 16000): int(t0 * 16000) + n], dtype=np.float32)
+            if len(y) < n: y = np.pad(y, (0, n - len(y)))
+            return y, act
+        return None
 
     def bad(self, d, t0, t1):
         miss = set(d.meta.get("missing", []))
@@ -197,6 +230,13 @@ class Windows:
                 print(f"  ! 오디오 {d.conv_id}: {type(e).__name__} {e}", flush=True); continue
             wav = np.asarray(x[int(t0 * 16000): int(t1 * 16000)], dtype=np.float32)
             if len(wav) < 16000: continue
+            if self.cross_p > 0 and self.rng.random() < self.cross_p:
+                it = self.interferer(len(wav), K)
+                if it is not None:
+                    y, act = it; r0 = float(np.sqrt(np.mean(wav ** 2)) + 1e-6); r1 = float(np.sqrt(np.mean(y ** 2)) + 1e-6)
+                    wav = wav + y * (r0 / r1) * 10 ** (self.rng.uniform(*self.sir) / 20)
+                    pk = float(np.max(np.abs(wav))); wav = wav / pk * 0.98 if pk > 0.98 else wav
+                    mb = np.maximum(mb, act)
             return dict(wav=wav, mt=mt, mb=mb, text=text, name=name)
         raise RuntimeError("창을 50 번 못 뽑았다")
 
@@ -243,8 +283,11 @@ def cmd_train(a):
     log = lambda *x: print(f"[{time.strftime('%F %T')}] r{rank}", *x, flush=True) if rank == 0 else None
     os.makedirs(a.out, exist_ok=True)
     qtok = AutoTokenizer.from_pretrained(TOK)
-    W = Windows(a.set or DEFAULT_SETS, qtok, win=tuple(float(x) for x in a.win.split(",")), seed=a.seed, rank=rank)
+    W = Windows(a.set or (P2_SETS if a.sets == "p2" else DEFAULT_SETS), qtok, win=tuple(float(x) for x in a.win.split(",")), seed=a.seed, rank=rank,
+                cross_p=a.cross_p, sir=tuple(float(x) for x in a.sir.split(",")))
     asr = Asr("train", rc=a.rc, device=dev); m, k = asr.m, asr.k; m.train(); k.train()
+    if a.init and not glob.glob(os.path.join(a.out, "step-*.pt")):                             # P2: 앞 판(P1 final)에서 시작(이어 갈 저장이 없을 때만)
+        st = torch.load(a.init, map_location="cpu"); m.load_state_dict(st["model"]); k.load_state_dict(st["kernels"]); log(f"시작 ← {a.init}(step {st.get('step')})")
     start = 0; last = sorted(glob.glob(os.path.join(a.out, "step-*.pt")), key=lambda p: int(p.rsplit("-", 1)[1][:-3]))
     opt_state = None
     if last:
@@ -259,7 +302,7 @@ def cmd_train(a):
         for g, p in zip(opt.param_groups, peak): g["lr"] = p * f
     wrap = torch.nn.ModuleDict(dict(m=m, k=k))
     model = torch.nn.parallel.DistributedDataParallel(wrap, device_ids=[lr_]) if ddp else wrap
-    log(f"학습 {sum(p.numel() for p in base) / 1e6:.0f}M + 커널 {sum(p.numel() for p in ker) / 1e6:.1f}M · rc {a.rc} · 창 {a.win} s · GPU 당 {a.sec_per_gpu} s · {a.steps} step")
+    log(f"학습 {sum(p.numel() for p in base) / 1e6:.0f}M + 커널 {sum(p.numel() for p in ker) / 1e6:.1f}M · rc {a.rc} · 창 {a.win} s · GPU 당 {a.sec_per_gpu} s · {a.steps} step · 간섭원 덧섞기 {a.cross_p}(SIR {a.sir} dB)")
     t0 = time.time(); acc = 0.0; n = 0; src = win_loader(W, a.workers); tw = 0.0
     for step in range(start, a.steps):
         items, sec = [], 0.0; t_ = time.time()
@@ -342,6 +385,10 @@ def main():
     t.add_argument("--lr-kernel", type=float, default=5e-4); t.add_argument("--warmup", type=int, default=500); t.add_argument("--save-every", type=int, default=500)
     t.add_argument("--set", action="append", default=None, help="이름=dialogues.jsonl:mono 캐시:가중(반복; 주지 않으면 기본 셋)"); t.add_argument("--seed", type=int, default=0)
     t.add_argument("--workers", type=int, default=6, help="창 뽑기 DataLoader 작업자(0 = 학습 프로세스에서)")
+    t.add_argument("--sets", choices=["p1", "p2"], default="p1", help="--set 이 없을 때의 기본 셋 묶음(p2 = 합성 겹침 75 %)")
+    t.add_argument("--init", default=None, help="시작 가중(앞 판 final.pt 등 — 이어 갈 step 저장이 없을 때만)")
+    t.add_argument("--cross-p", type=float, default=0.0, help="P2: 다른 대화 창을 간섭원으로 덧섞을 확률(LibriSpeechMix 식 통째 겹침)")
+    t.add_argument("--sir", default="-6,3", help="P2: 대상 창 대비 간섭원 음량 dB 범위 lo,hi")
     e = sub.add_parser("eval")
     e.add_argument("--model", required=True, help="nemotron | probe:<ckpt.pt> | parakeet:<.nemo>"); e.add_argument("--act", choices=["n3d", "oracle"], default="n3d")
     e.add_argument("--out", required=True); e.add_argument("--rc", type=int, default=3); e.add_argument("--seg", type=float, default=30.0); e.add_argument("--ctx", type=float, default=4.0)

@@ -41,7 +41,7 @@ class Dlg:
 
 def test_window_sample_targets_one_speaker_text_and_masks(monkeypatch, tmp_path):
     d = Dlg([U("a", 1.0, 9.0, [[1, 2.0], [2, 5.0]]), U("b", 4.0, 12.0, [[3, 6.0], [4, 11.0]])])
-    w = P.Windows.__new__(P.Windows); w.qtok = FakeTok(); w.win = (12.0, 12.0); w.rng = random.Random(1)
+    w = P.Windows.__new__(P.Windows); w.qtok = FakeTok(); w.win = (12.0, 12.0); w.rng = random.Random(1); w.cross_p = 0.0
     np.save(tmp_path / "m.npy", np.zeros(16000 * 40, np.float16))
     w.sets = [("s", [d], str(tmp_path), 1.0)]; w.W = [1.0]
     import vapasr.data.dialogue_dataset as DD
@@ -57,3 +57,18 @@ def test_bad_span_window_is_skipped():
     d = Dlg([U("a", 1.0, 9.0, [[1, 2.0]]), U("b", 4.0, 12.0, [], flags=None)])
     w = P.Windows.__new__(P.Windows)
     assert w.bad(d, 0.0, 10.0) and not w.bad(d, 13.0, 20.0)
+
+
+def test_cross_interferer_adds_overlap_and_background_activity(monkeypatch, tmp_path):
+    """P2 간섭원 덧섞기: cross_p 1 이면 다른 창이 더해지고(소리가 바뀐다) 그 창의 화자 활동이 배경 활동에 들어간다. 대상 글자는 그대로 한 화자."""
+    d = Dlg([U("a", 0.0, 39.0, [[1, 2.0], [2, 5.0], [3, 15.0], [4, 25.0]])], dur=40.0)       # 화자 하나 — 배경 활동은 간섭원에서만 생긴다
+    rng = np.random.default_rng(0); np.save(tmp_path / "a.npy", (0.1 * rng.standard_normal(16000 * 40)).astype(np.float16))
+    import vapasr.data.dialogue_dataset as DD
+    monkeypatch.setattr(DD, "build_mono_cache", lambda d_, mono, mix_kw=None: str(tmp_path / "a.npy"))
+    w = P.Windows.__new__(P.Windows); w.qtok = FakeTok(); w.win = (10.0, 10.0); w.rng = random.Random(2); w.cross_p = 1.0; w.sir = (0.0, 0.0)
+    w.sets = [("s", [d], str(tmp_path), 1.0)]; w.W = [1.0]
+    it = w.sample()
+    assert set(it["text"].split()) <= {"w1", "w2", "w3", "w4"} and it["mt"].sum() > 0
+    assert it["mb"].sum() > 0                                                                     # 간섭원 활동
+    w.cross_p = 0.0; w.rng = random.Random(2); it0 = w.sample()
+    assert it0["mb"].sum() == 0 and not np.allclose(it0["wav"][: len(it["wav"])], it["wav"][: len(it0["wav"])])

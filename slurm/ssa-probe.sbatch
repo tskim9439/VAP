@@ -31,7 +31,8 @@ echo "[$(date '+%F %T')] ssa-probe $MODE job $SLURM_JOB_ID node=$(hostname) rest
 if [ "$MODE" = train ]; then
   : "${OUT:?OUT}"
   [ -f "$OUT/DONE" ] && { echo "이미 끝: $OUT"; exit 0; }
-  torchrun --standalone --nproc_per_node 8 experiments/ssa_probe.py train --out "$OUT" ${ARGS:-}; rc=$?
+  A_=${ARGS:-}; A_=${A_//%2C/,}                                                            # --export 는 쉼표로 변수를 가른다 → 제출 때 %2C, 여기서 되돌린다
+  torchrun --standalone --nproc_per_node 8 experiments/ssa_probe.py train --out "$OUT" $A_; rc=$?
   echo "[$(date '+%F %T')] TRAIN_EXIT $rc"; exit $rc
 fi
 : "${EVALS:?EVALS}"; RES=${RES:-/soundai/users/tskim/VAPKT-data/results}
