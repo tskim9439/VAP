@@ -98,10 +98,11 @@ class Asr:
         if self.pid is None: return self.m.forward(input_signal=wav, input_signal_length=lens)
         return self.m.forward(input_signal=wav, input_signal_length=lens, prompt_indices=torch.full((wav.shape[0],), self.pid, dtype=torch.long, device=wav.device))
 
-    def rnnt_loss(self, wav, lens, toks, tlens, sb=2):
+    def rnnt_loss(self, wav, lens, toks, tlens, sb=1):
         """RN-T 손실(참조 토큰 합으로 나눈 평균 — NeMo mean_volume 과 같은 척도). 인코더만 bf16 autocast.
         NeMo 의 warprnnt_numba 는 이 환경(numba 0.67)에서 컴파일이 깨져 torchaudio.functional.rnnt_loss 를 쓴다(2026-11-09 스모크).
-        joint 출력(B·T·U·13088)이 커서 표본 sb 개씩 나누고 torch.utils.checkpoint 로 역전파 때 다시 계산한다."""
+        joint 출력(B·T·U·13088)이 커서 표본 sb 개씩 나누고 torch.utils.checkpoint 로 역전파 때 다시 계산한다.
+        2026-11-09 job 101860: sb 2 에서 joint 원소가 2^31 을 넘어 torchaudio 커널이 illegal memory access 로 죽었다 → 표본 하나씩, 그래도 넘는 표본은 건너뛴다."""
         import torch
         import torchaudio.functional as AF
         from torch.utils.checkpoint import checkpoint
@@ -113,11 +114,14 @@ class Asr:
         blank = int(self.m.decoder.blank_idx)
         def part(e, g, t, el, tl_):
             return AF.rnnt_loss(self.m.joint.joint(e, g).float(), t.int().contiguous(), el.int(), tl_.int(), blank=blank, reduction="sum", fused_log_softmax=True)
-        tot = enc.new_zeros(())
+        tot = enc.new_zeros(()); V = int(self.m.joint.num_classes_with_blank); used = tlens.new_zeros(())
         for i in range(0, enc.shape[0], sb):
-            Tm = int(enc_len[i:i + sb].max()); Um = int(tlens[i:i + sb].max())
+            Tm = int(enc_len[i:i + sb].max()); Um = int(tlens[i:i + sb].max()); n_ = min(sb, enc.shape[0] - i)
+            if n_ * Tm * (Um + 1) * V >= 2**31 - 1:                                              # int32 색인 한계(아주 긴 정답) — 건너뛴다
+                print(f"  ! RN-T 표본 건너뜀: T {Tm} · U {Um}", flush=True); continue
             tot = tot + checkpoint(part, enc[i:i + sb, :Tm], dec[i:i + sb, :Um + 1], toks[i:i + sb, :Um], enc_len[i:i + sb], tlens[i:i + sb], use_reentrant=False)
-        return tot / tlens.sum().clamp(min=1)
+            used = used + tlens[i:i + sb].sum()
+        return tot / used.clamp(min=1)
 
     def decode_words(self, wav, lens):
         """→ 표본마다 [(단어, 시작 s)] (RN-T 단어 타임스탬프, 프레임 × 80 ms)."""
