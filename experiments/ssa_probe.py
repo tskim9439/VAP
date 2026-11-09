@@ -223,6 +223,12 @@ def collate(items, tokenizer, dev):
     return wav.to(dev), lens.to(dev), mt.to(dev), mb.to(dev), toks.to(dev), tl.to(dev)
 
 
+def half(sd):
+    """저장용: 부동소수 텐서는 bf16 으로(이어 가기·평가에서 load_state_dict 가 fp32 로 되돌린다)."""
+    import torch
+    return {k_: (v.to(torch.bfloat16) if torch.is_floating_point(v) else v) for k_, v in sd.items()}
+
+
 def cmd_train(a):
     import torch, torch.distributed as dist
     from transformers import AutoTokenizer
@@ -268,10 +274,10 @@ def cmd_train(a):
             log(f"step {step + 1} loss {acc / n:.3f} · lr {opt.param_groups[1]['lr']:.2e}/{opt.param_groups[0]['lr']:.2e} · 창 {len(items)} · {(time.time() - t0) / n:.2f} s/step(데이터 대기 {tw / n:.2f}) · GPU {torch.cuda.max_memory_allocated() / 2**30:.0f} GB"); acc = 0.0; n = 0; t0 = time.time(); tw = 0.0
         if rank == 0 and ((step + 1) % a.save_every == 0 or step + 1 == a.steps):
             p = os.path.join(a.out, f"step-{step + 1}.pt"); tmp = p + ".tmp"
-            torch.save(dict(model=m.state_dict(), kernels=k.state_dict(), step=step + 1, opt=opt.state_dict(), args=vars(a), rc=a.rc), tmp); os.replace(tmp, p)
+            torch.save(dict(model=half(m.state_dict()), kernels=k.state_dict(), step=step + 1, args=vars(a), rc=a.rc), tmp); os.replace(tmp, p)   # 서버에서 지우지 않으니 쌓인다 → bf16·옵티마이저 없이(약 1.3 GB)
             log(f"저장 {p}")
     if rank == 0:
-        torch.save(dict(model=m.state_dict(), kernels=k.state_dict(), step=a.steps, args=vars(a), rc=a.rc), os.path.join(a.out, "final.pt"))
+        torch.save(dict(model=half(m.state_dict()), kernels=k.state_dict(), step=a.steps, args=vars(a), rc=a.rc), os.path.join(a.out, "final.pt"))
         open(os.path.join(a.out, "DONE"), "w").write(time.strftime("%F %T") + "\n"); log("DONE")
     if ddp: dist.barrier(); dist.destroy_process_group()
 
@@ -329,7 +335,7 @@ def main():
     t = sub.add_parser("train")
     t.add_argument("--out", required=True); t.add_argument("--steps", type=int, default=6000); t.add_argument("--rc", type=int, default=3)
     t.add_argument("--win", default="10,30"); t.add_argument("--sec-per-gpu", type=float, default=360.0); t.add_argument("--lr", type=float, default=3e-5)
-    t.add_argument("--lr-kernel", type=float, default=5e-4); t.add_argument("--warmup", type=int, default=500); t.add_argument("--save-every", type=int, default=1000)
+    t.add_argument("--lr-kernel", type=float, default=5e-4); t.add_argument("--warmup", type=int, default=500); t.add_argument("--save-every", type=int, default=500)
     t.add_argument("--set", action="append", default=None, help="이름=dialogues.jsonl:mono 캐시:가중(반복; 주지 않으면 기본 셋)"); t.add_argument("--seed", type=int, default=0)
     t.add_argument("--workers", type=int, default=6, help="창 뽑기 DataLoader 작업자(0 = 학습 프로세스에서)")
     e = sub.add_parser("eval")
