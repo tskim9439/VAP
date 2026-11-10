@@ -78,6 +78,7 @@ def main():
     ap.add_argument("--collar", type=float, default=5.0); ap.add_argument("--json", default=None)
     ap.add_argument("--relabel", type=lambda x: tuple(int(v) for v in x.split(",")), default=None, help="ours: 출력 재귀속 창 B,F(예 3,1 — 행 act_runs 활동)")
     ap.add_argument("--norm", choices=["ours", "whisper"], default="ours", help="whisper = 표준 cpWER 와 같은 Whisper 정규화(문장 단위)")
+    ap.add_argument("--dump", default=None, help="참조 단어마다 한 줄(jsonl: sys·corpus·cid·s·utt·t·ov·cp·orc·w) — 삭제 이어짐 진단(2026-11-10 del_runs.py)용, 새 파일에만 쓴다")
     a = ap.parse_args()
     WN = None
     if a.norm == "whisper":
@@ -111,6 +112,8 @@ def main():
         if WN is not None: R = [dict(q, w=keep(q["w"])) for q in wnorm_ref(R, WN) if keep(q["w"])]
         refs[cid] = (R, mask)
     out = {}
+    if a.dump and os.path.exists(a.dump): sys.exit(f"이미 있다: {a.dump}")
+    dump = open(a.dump, "w", encoding="utf-8") if a.dump else None
     for spec in a.sys:
         name, _, rest = spec.partition("="); kind, _, path = rest.partition(":")
         rows = [json.loads(l) for f in sorted(glob.glob(os.path.join(path, "predictions-rank*.jsonl"))) for l in open(f, encoding="utf-8")]
@@ -163,6 +166,8 @@ def main():
                 for q, x in zip(qs, st): q["orc"] = x
             ins_orc += sum(len(H[k]) for k in hk if k not in used)
             g = agg[c]; g["ins_cp"] += ins_cp; g["ins_orc"] += ins_orc; g["meeteval_orc_err"] += res.errors; g["meeteval_orc_len"] += res.length
+            if dump:
+                for q in R: dump.write(json.dumps(dict(sys=name, corpus=c, cid=cid, s=q["s"], utt=q["utt"][1], t=round(float(q["t"]), 3), ov=int(q["ov"]), cp=q["cp"], orc=q["orc"], w=q["w"]), ensure_ascii=False) + "\n")
             for q in R:
                 ov = "1" if q["ov"] <= 1 else "2" if q["ov"] == 2 else "3+"
                 for key in (ov, "all"):
@@ -185,6 +190,7 @@ def main():
                 print(f"    겹침 {key:3s} 몫 {x['share']:5.1f} % · 놓침 cp {x['cp_miss']:6.2f} = 받아쓰기(orc) {x['orc_miss']:6.2f}(삭제 {x['orc_del']:.2f} 대치 {x['orc_sub']:.2f}) + 귀속 {x['attr']:5.2f}", flush=True)
         out[name] = res_s
     if a.json: json.dump(out, open(a.json, "w"), indent=1, ensure_ascii=False)
+    if dump: dump.close()
     # 격차 분해: 첫 시스템 − 둘째 시스템, 참조 단어 몫 가중(놓침 차이 × 몫 = 전체 놓침 차이에 대한 기여)
     names = list(out)
     if len(names) >= 2:
