@@ -196,3 +196,19 @@ def test_full_overlap_starts_with_previous_turn_and_off_is_unchanged():
     assert o["self_overlap"] == 0 and o["overlap_s"] > overlap_stats(base)["overlap_s"] + 10.0 and full.meta["full"] >= 3
     starts = sorted(u.start for u in full.utterances)
     assert any(b_ - a_ <= 0.2 + 1e-6 for a_, b_ in zip(starts, starts[1:]))                           # 거의 함께 시작한 두 발화가 있다
+
+
+def test_overlay_two_dialogues_into_four_speakers():
+    """sim_overlay_dialogues(2026-11-10): 2 인 + 2 인 → 4 인, B 의 화자·시각·채널 조각이 밀리고 이름이 c·d 로 바뀐다. Dialogue 로 다시 읽힌다."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "experiments"))
+    from sim_overlay_dialogues import overlay
+    mk = lambda cid: dict(conv_id=cid, corpus="sim_en-ovl2", lang="English", split="train", duration_s=10.0, speakers=["a", "b"], observed_until_s=None, meta={},
+                          utterances=[dict(speaker="a", start=1.0, end=2.0, text="", raw="x", tokens=[[5, 1.5]], utt_id="a:1", word_timing=None, flags=None),
+                                      dict(speaker="b", start=3.0, end=4.0, text="", raw="y", tokens=[[6, 3.5]], utt_id="b:1", word_timing=None, flags=None)],
+                          channels={"a": dict(path="", pieces=[["/p/a.flac", 1.0, 0.0, 1.0]]), "b": dict(path="", pieces=[["/p/b.flac", 3.0, 0.0, 1.0]])})
+    d = overlay(mk("A"), mk("B"), 2.0, "sim_en-ovl3", 7)
+    assert d["speakers"] == ["a", "b", "c", "d"] and d["duration_s"] == 12.0 and d["meta"]["overlay"] == ["A", "B"]
+    c = [u for u in d["utterances"] if u["speaker"] == "c"][0]
+    assert c["start"] == 3.0 and c["tokens"] == [[5, 3.5]] and d["channels"]["c"]["pieces"][0][1] == 3.0
+    D = Dialogue.from_json(json.dumps(d)); assert len(D.utterances) == 4 and set(D.channels) == {"a", "b", "c", "d"}
