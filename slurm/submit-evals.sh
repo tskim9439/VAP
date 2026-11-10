@@ -57,7 +57,8 @@
 #            (산출 이름 -sub<분할> — 판단용 빠른 평가). 예: SLOTS=4 SUBSET=eval bash slurm/submit-evals.sh q17-e15a-enc --partition hpc
 #            슬롯이면 번역은 dlg_shard_task.sh 8 몫을 GPU 마다 슬롯 0 끝에 둔다(산출 dlg8).
 #            SLOTOFF=1(2026-11-06 E15b 진단): 회의 통째를 슬롯 소리 토큰 0 으로(산출 -slotoff), 번역은 내지 않는다.
-#            TARGET=checkpoint-N(2026-11-06, 사용자 "E15b 현재까지 … 가장 최근에 저장된 체크포인트로 먼저 평가"): final 대신 그 체크포인트(산출 이름 -ck<N>, 저장 끝난 것만).
+#            TARGET=checkpoint-N(2026-11-06, 사용자 "E15b 현재까지 … 가장 최근에 저장된 체크포인트로 먼저 평가"): final 대신 그 체크포인트(산출 이름 -ck<N>, 저장 끝난 것만 —
+#            --after-job 을 주면 학습 job 뒤에 미리 건다, 2026-11-10 E17 과적합 확인용).
 #            ACT=n3d|g2b(2026-11-06): AMI 활동 — g2b = G2b 학생(GRAFT_EXPERT, 종단간), n3d = 모델 config 의 고정 N3D. q17-e15b*(E15b 슬롯 조건 인코더)는 기본 n3d, 나머지는 g2b.
 #   q17-dretag  디코드 때 재귀속(2026-11-05, 사용자 "① 디코드 때 재귀속 구현 진행해줘" — v3_eval_task.sh DRETAG, cst_stage3_eval --retag): E13 final 을 학습 없이
 #            회의 통째 δ10 로 다시 디코드한다 — 판 둘: E13 · N3D(config 전문가)와 E13 + G2b(ENC_STATE·GRAFT_EXPERT = GRAFT_RUN, 기본 q17-graft-g2b — 종단간).
@@ -130,7 +131,7 @@ done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e13-trans|q17-e14-trans|trans8|q17-dretag|taxi-blk) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
   q17-e15*|q17-e16*|q17-e17*) TG=${TARGET:-final}; [[ $TG == final || $TG =~ ^checkpoint-[0-9]+$ ]] || { echo "TARGET 은 final·checkpoint-N: $TG" >&2; exit 2; }   # 2026-11-06 E15b 중간 체크포인트 먼저
     if [[ $TG == final ]]; then [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; }
-    else [[ -f /soundai/Model/VAPASR/stage3-$set_/$TG/trainer_state.json ]] || { echo "저장이 안 끝났다: stage3-$set_/$TG/trainer_state.json" >&2; exit 2; }; fi ;;
+    else [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/$TG/trainer_state.json ]] || { echo "저장이 안 끝났다: stage3-$set_/$TG/trainer_state.json — 학습 뒤에 걸려면 --after-job(학습 job)" >&2; exit 2; }; fi ;;   # 2026-11-10 E17: 중간 체크포인트도 학습 job 뒤에 미리 건다(checkpoint 는 지우지 않는다)
   q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*) [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; } ;;
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|ext-parakeet-g2|q17-g3|q17-e11-relax|q17-spk|q17-e13-trans|q17-e13-gate) ;;
