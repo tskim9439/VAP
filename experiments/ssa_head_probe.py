@@ -16,7 +16,9 @@ P1(experiments/ssa_probe.py)과 다른 점
     P1·P2 는 사실상 GPU 1 장 분량). 여기서는 손실 계산을 DDP 모듈의 forward 로 하고, 저장 때 rank 사이 가중이 같은지 확인한다.
   · 돌고 있는 P2(ssa_probe.py·ssa-probe.sbatch)를 건드리지 않으려고 새 파일로 둔다. 창 뽑기·평가·RN-T 손실은 ssa_probe 것을 그대로 쓴다.
 
-  train  torchrun … experiments/ssa_head_probe.py train --out DIR [--steps 6000] [--head-layers 4] [--head-ctx 64,2] [--lr-head 3e-4] [--lr 3e-5] [--freeze-dec]
+  train  torchrun … experiments/ssa_head_probe.py train --out DIR [--steps 6000] [--head-layers 4] [--head-ctx 64,2] [--lr-head 1e-4] [--lr 3e-5] [--freeze-dec]
+         [--head-attn qknorm|dot] [--warmup 1000] [--wd-head 0.01] — 첫 판 h1(내적 주의, lr 3e-4, warmup 300)은 step 560 쯤 발산했다(주의 가중 2 배) → 코사인 주의·낮은 학습률
+         25 step 평균 손실이 최저보다 크게 높은 채 100 step 이면 멈춘다(exit 3 — 뒤에 건 평가는 돌지 않는다).
          [--enc-from <우리 모델 폴더>|none(원 Nemotron 3.5)]
          [--sets p1|p2] [--cross-p 0] [--win 10,30] [--sec-per-gpu 360] — 저장 DIR/step-N.pt(헤드·디코더·joint, bf16)·opt-last.pt(덮어씀)·final.pt·DONE
   eval   python experiments/ssa_head_probe.py eval --model head:<ckpt.pt> --act n3d|oracle --out DIR [--rank r --world-size w] — ssa_probe eval 과 같은 ext 행
@@ -45,7 +47,8 @@ def our_encoder_state(model_dir):
 Z_SCALE = 0.045                                                                                 # 인코더 출력 Z 의 표준편차(2026-11-11 AMI 창 실측 0.044–0.045) — 헤드는 Z / 이 값(크기 1 근처)에서 일한다
 
 
-def build_head(d=1024, layers=4, heads=8, ff=2048, left=64, right=2, p=0.1, kp=0.5, scale=Z_SCALE):
+def build_head(d=1024, layers=4, heads=8, ff=2048, left=64, right=2, p=0.1, kp=0.5, scale=Z_SCALE, attn="dot"):
+    """attn: dot = 내적 주의(첫 판 h1 — step 560 쯤 qkv 가중이 2 배로 커지며 발산했다, 2026-11-11), qknorm = 질의·키를 단위 길이로 맞춘 코사인 주의 × 온도(기본 — 가중이 커져도 주의 값이 묶인다)."""
     import torch, torch.nn as nn, torch.nn.functional as F
 
     class Layer(nn.Module):
@@ -54,13 +57,17 @@ def build_head(d=1024, layers=4, heads=8, ff=2048, left=64, right=2, p=0.1, kp=0
             self.n1 = nn.LayerNorm(d); self.qkv = nn.Linear(d, 3 * d); self.o = nn.Linear(d, d); self.n2 = nn.LayerNorm(d)
             self.ff = nn.Sequential(nn.Linear(d, ff), nn.GELU(), nn.Dropout(p), nn.Linear(ff, d)); self.dp = nn.Dropout(p)
             self.rel = nn.Parameter(torch.zeros(heads, left + right + 1))                        # 상대 위치(j − i ∈ [−left, right]) bias
+            if attn == "qknorm": self.tau = nn.Parameter(torch.tensor(10.0))                    # 코사인 주의 온도(1–30 으로 묶는다)
             for m_ in (self.o, self.ff[-1]): nn.init.zeros_(m_.weight); nn.init.zeros_(m_.bias)  # 시작 = 항등
 
         def forward(self, x, band, idx, pad):                                                   # x (B, T, d) · band (T, T) 0/−inf · idx (T, T) · pad (B, T) True = 채움
             B, T, _ = x.shape
             q, k, v = self.qkv(self.n1(x)).view(B, T, 3, heads, d // heads).permute(2, 0, 3, 1, 4)
             m = (band + self.rel[:, idx])[None].expand(B, -1, -1, -1).masked_fill(pad[:, None, None, :], NEG).to(q.dtype)
-            a = F.scaled_dot_product_attention(q, k, v, attn_mask=m, dropout_p=p if self.training else 0.0)
+            if attn == "qknorm":
+                w = self.tau.clamp(1.0, 30.0) * (F.normalize(q, dim=-1) @ F.normalize(k, dim=-1).transpose(-1, -2)) + m
+                a = F.dropout(w.softmax(-1), p, self.training) @ v
+            else: a = F.scaled_dot_product_attention(q, k, v, attn_mask=m, dropout_p=p if self.training else 0.0)
             x = x + self.dp(self.o(a.transpose(1, 2).reshape(B, T, d)))
             return x + self.dp(self.ff(self.n2(x)))
 
@@ -71,7 +78,7 @@ def build_head(d=1024, layers=4, heads=8, ff=2048, left=64, right=2, p=0.1, kp=0
             self.kt, self.kb = mk(), mk()
             for k_ in (self.kt, self.kb): nn.init.zeros_(k_[-1].weight); nn.init.zeros_(k_[-1].bias)
             self.layers = nn.ModuleList(Layer() for _ in range(layers)); self.left, self.right = left, right
-            self.cfg = dict(d=d, layers=layers, heads=heads, ff=ff, left=left, right=right, p=p, kp=kp, scale=scale)
+            self.cfg = dict(d=d, layers=layers, heads=heads, ff=ff, left=left, right=right, p=p, kp=kp, scale=scale, attn=attn)
 
         def forward(self, z, lens, mt, mb):                                                     # z (B, T, d) 인코더 출력 · lens (B,) · mt·mb (B, K) 활동
             B, T, _ = z.shape
@@ -119,10 +126,11 @@ class HeadAsr(P.Asr):
     def encode(self, wav, lens):
         import torch
         z, enc_len = self.features(wav, lens)
-        h = self.head(z, enc_len, self.mt, self.mb)
-        if getattr(self.m, "concat", False):                                                     # NeMo forward 와 같은 언어 프롬프트 융합(en-US)을 헤드 **뒤**에
-            pr = torch.zeros(h.shape[0], h.shape[1], int(self.m.num_prompts), dtype=h.dtype, device=h.device); pr[:, :, self.pid] = 1.0
-            h = self.m.prompt_kernel(torch.cat([h, pr], dim=-1)).to(h.dtype)
+        with torch.autocast("cuda", enabled=False):                                              # 헤드·융합은 fp32(작다 — bf16 로 얻는 것이 없고 주의 값이 거칠어진다)
+            h = self.head(z, enc_len, self.mt, self.mb)
+            if getattr(self.m, "concat", False):                                                 # NeMo forward 와 같은 언어 프롬프트 융합(en-US)을 헤드 **뒤**에
+                pr = torch.zeros(h.shape[0], h.shape[1], int(self.m.num_prompts), dtype=h.dtype, device=h.device); pr[:, :, self.pid] = 1.0
+                h = self.m.prompt_kernel(torch.cat([h, pr], dim=-1)).to(h.dtype)
         return h.transpose(1, 2), enc_len
 
 
@@ -166,7 +174,7 @@ def cmd_train(a):
     start = int(last[-1].rsplit("-", 1)[1][:-3]) if last else 0
     W = P.Windows(a.set or (P.P2_SETS if a.sets == "p2" else P.DEFAULT_SETS), qtok, win=tuple(float(x) for x in a.win.split(",")), seed=a.seed + start, rank=rank,
                   cross_p=a.cross_p, sir=tuple(float(x) for x in a.sir.split(",")))                 # 씨앗에 이어 가는 step 을 넣는다 — 재시작마다 같은 창을 다시 뽑지 않게
-    asr = HeadAsr(None, rc=a.rc, device=dev, enc_from=a.enc_from, layers=a.head_layers, heads=a.head_heads, ff=a.head_ff, left=L_, right=R_)
+    asr = HeadAsr(None, rc=a.rc, device=dev, enc_from=a.enc_from, layers=a.head_layers, heads=a.head_heads, ff=a.head_ff, left=L_, right=R_, attn=a.head_attn)
     m, h = asr.m, asr.head; m.eval()                                                             # 인코더·전처리 고정(SpecAugment·dropout 없음)
     for p in m.parameters(): p.requires_grad_(False)
     dec_ps = []
@@ -184,8 +192,8 @@ def cmd_train(a):
             o = torch.load(op, map_location="cpu"); opt_state = o["opt"] if o.get("step") == start else None
         log(f"이어 감 ← {last[-1]}(step {start}, 옵티마이저 {'이어 감' if opt_state else '새로'})")
     torch.manual_seed(a.seed * 1000 + rank + start)
-    groups = [dict(params=list(h.parameters()), lr=a.lr_head)] + ([dict(params=dec_ps, lr=a.lr)] if dec_ps else [])
-    opt = torch.optim.AdamW(groups, weight_decay=1e-3); peak = [g["lr"] for g in groups]
+    groups = [dict(params=list(h.parameters()), lr=a.lr_head, weight_decay=a.wd_head)] + ([dict(params=dec_ps, lr=a.lr, weight_decay=1e-3)] if dec_ps else [])
+    opt = torch.optim.AdamW(groups); peak = [g["lr"] for g in groups]
     if opt_state: opt.load_state_dict(opt_state)
     def set_lr(s):
         f = min(1.0, (s + 1) / a.warmup) * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * min(1.0, s / a.steps))))
@@ -198,7 +206,7 @@ def cmd_train(a):
     log(f"헤드 {sum(p.numel() for p in h.parameters()) / 1e6:.1f}M(층 {a.head_layers} · 창 −{L_}/+{R_} 프레임) + 프롬프트 융합·디코더·joint {sum(p.numel() for p in dec_ps) / 1e6:.1f}M 학습"
         f" · 인코더 고정 rc {a.rc} ← {asr.enc_from or '원 Nemotron 3.5'}"
         f" · 창 {a.win} s · GPU 당 {a.sec_per_gpu} s × {world} · {a.steps} step · 간섭원 덧섞기 {a.cross_p}(SIR {a.sir} dB)")
-    t0 = time.time(); acc = 0.0; n = 0; src = P.win_loader(W, a.workers); tw = 0.0
+    t0 = time.time(); acc = 0.0; n = 0; src = P.win_loader(W, a.workers); tw = 0.0; gacc = 0.0; best = float("inf"); bad = 0
     for step in range(start, a.steps):
         items, sec = [], 0.0; t_ = time.time()
         while sec < a.sec_per_gpu:
@@ -207,10 +215,17 @@ def cmd_train(a):
         wav, lens, mt, mb, toks, tl = P.collate(items, m.tokenizer, dev)
         set_lr(step); loss = model(wav, lens, mt, mb, toks, tl)                                  # DDP forward → 기울기 동기
         opt.zero_grad(set_to_none=True); loss.backward()
-        torch.nn.utils.clip_grad_norm_(train_ps, 1.0); opt.step()
+        gacc += float(torch.nn.utils.clip_grad_norm_(train_ps, a.clip)); opt.step()
         acc += float(loss); n += 1
         if (step + 1) % 25 == 0:
-            log(f"step {step + 1} loss {acc / n:.3f} · lr {opt.param_groups[0]['lr']:.2e} · 창 {len(items)} · {(time.time() - t0) / n:.2f} s/step(데이터 대기 {tw / n:.2f}) · GPU {torch.cuda.max_memory_allocated() / 2**30:.0f} GB"); acc = 0.0; n = 0; t0 = time.time(); tw = 0.0
+            mean = torch.tensor([acc / n], device=dev)                                           # 모든 rank 의 평균 손실(발산 판단을 rank 마다 같게)
+            if ddp: dist.all_reduce(mean); mean /= world
+            mean = float(mean)
+            log(f"step {step + 1} loss {mean:.3f} · 기울기 크기 {gacc / n:.2f} · lr {opt.param_groups[0]['lr']:.2e} · 창 {len(items)} · {(time.time() - t0) / n:.2f} s/step(데이터 대기 {tw / n:.2f}) · GPU {torch.cuda.max_memory_allocated() / 2**30:.0f} GB")
+            bad = bad + 1 if (step + 1 > a.warmup and (mean != mean or mean > max(1.6 * best, best + 0.8))) else 0
+            best = min(best, mean); acc = 0.0; n = 0; t0 = time.time(); tw = 0.0; gacc = 0.0
+            if bad >= 4:                                                                         # h1(2026-11-11)처럼 무너지면 남은 시간을 쓰지 않고 멈춘다(평가도 걸리지 않는다)
+                log(f"!! 발산: 손실 {mean:.3f} 이 최저 {best:.3f} 보다 크게 높은 채 100 step — 멈춘다"); sys.exit(3)
         if (step + 1) % a.save_every == 0 or step + 1 == a.steps:
             if ddp:
                 ok, hi, lo = same_across_ranks(train_ps, dist)
@@ -241,9 +256,10 @@ def main():
     t.add_argument("--out", required=True); t.add_argument("--steps", type=int, default=6000); t.add_argument("--rc", type=int, default=3)
     t.add_argument("--head-layers", type=int, default=4); t.add_argument("--head-ctx", default="64,2", help="헤드 층마다 자기 주의 창: 왼쪽,오른쪽 프레임(80 ms) — 4 층 × 오른쪽 2 = 앞보기 0.64 s")
     t.add_argument("--head-heads", type=int, default=8); t.add_argument("--head-ff", type=int, default=2048)
-    t.add_argument("--lr-head", type=float, default=3e-4); t.add_argument("--lr", type=float, default=3e-5, help="프롬프트 융합·디코더·joint 학습률"); t.add_argument("--freeze-dec", action="store_true")
+    t.add_argument("--lr-head", type=float, default=1e-4); t.add_argument("--lr", type=float, default=3e-5, help="프롬프트 융합·디코더·joint 학습률"); t.add_argument("--freeze-dec", action="store_true")
+    t.add_argument("--head-attn", choices=["qknorm", "dot"], default="qknorm"); t.add_argument("--wd-head", type=float, default=0.01); t.add_argument("--clip", type=float, default=1.0)
     t.add_argument("--enc-from", default=ENC_FROM, help="인코더 가중을 가져올 우리 모델 폴더(encoder.enc.*), none = 원 Nemotron 3.5")
-    t.add_argument("--win", default="10,30"); t.add_argument("--sec-per-gpu", type=float, default=360.0); t.add_argument("--warmup", type=int, default=300)
+    t.add_argument("--win", default="10,30"); t.add_argument("--sec-per-gpu", type=float, default=360.0); t.add_argument("--warmup", type=int, default=1000)
     t.add_argument("--save-every", type=int, default=500); t.add_argument("--seed", type=int, default=0); t.add_argument("--workers", type=int, default=6)
     t.add_argument("--set", action="append", default=None, help="이름=dialogues.jsonl:mono 캐시:가중(반복; 주지 않으면 --sets 묶음)")
     t.add_argument("--sets", choices=["p1", "p2"], default="p1"); t.add_argument("--cross-p", type=float, default=0.0); t.add_argument("--sir", default="-6,3")

@@ -5,8 +5,11 @@ sys.path[:0] = [os.path.join(os.path.dirname(__file__), "..", "experiments")]
 import ssa_head_probe as H
 
 
+ATTN = "qknorm"
+
+
 def mk(layers=2, left=4, right=1):
-    torch.manual_seed(0); return H.build_head(d=16, layers=layers, heads=4, ff=32, left=left, right=right, p=0.0, kp=0.0).eval()
+    torch.manual_seed(0); return H.build_head(d=16, layers=layers, heads=4, ff=32, left=left, right=right, p=0.0, kp=0.0, attn=ATTN).eval()
 
 
 def randomize(h):
@@ -55,3 +58,19 @@ def test_same_across_ranks_detects_difference():
     p = [torch.nn.Parameter(torch.ones(3))]; c = torch.tensor([3.0, -3.0], dtype=torch.double)
     assert H.same_across_ranks(p, Dist(c))[0]
     assert not H.same_across_ranks(p, Dist(torch.tensor([4.0, -4.0], dtype=torch.double)))[0]
+
+
+def test_dot_attention_path_still_works_for_old_checkpoints():
+    global ATTN
+    ATTN = "dot"
+    try:
+        test_head_starts_as_identity(); test_lookahead_is_limited_to_layers_times_right(); test_padding_does_not_change_valid_frames()
+    finally: ATTN = "qknorm"
+
+
+def test_qknorm_attention_is_bounded_when_weights_grow():
+    h = mk(); randomize(h); z = torch.randn(1, 9, 16); lens = torch.tensor([9]); a = h(z, lens, torch.ones(1, 9), torch.zeros(1, 9))
+    with torch.no_grad():
+        for l in h.layers: l.qkv.weight[: 2 * 16] *= 50.0                                      # 질의·키 가중을 50 배로 — 코사인 주의라 출력이 터지지 않는다
+    b = h(z, lens, torch.ones(1, 9), torch.zeros(1, 9))
+    assert torch.isfinite(b).all() and float((b - a).abs().max()) < 10 * float(a.abs().max())
