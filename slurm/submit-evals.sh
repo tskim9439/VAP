@@ -108,6 +108,7 @@
 #           --after-job 은 E2 학습이 아직 돌 때만 준다(끝났으면 빼고 낸다 — 작업이 DONE 을 확인하고 돈다. 끝난 지 오래된 job 은 스케줄러 기록에서 빠져 의존이 거부될 수 있다).
 #   job 이름은 SA_EVAL_FullDuplex 로 고정한다(2026-10-27 사용자 "Job 이름은 SA_EVAL_FullDuplex 로 설정해주고", 2026-11-03 다시 — 로그는 logs/train/SA_EVAL_FullDuplex-<job>.out).
 #   --label NAME   같은 묶음을 판마다 여러 번 낼 때 작업 목록 이름표(evals-<묶음>-<이름표>-<시각>.txt). --job-name 은 예전 호출 호환으로 이름표로만 받는다.
+#   --after-any A[:B…](2026-11-11, 사용자 "평가도 동시에 돌리지 말고 최대 2노드만"): 그 job 들이 끝난 뒤(성패 무관, afterany) — 평가 묶음을 차례로 잇는 데 쓴다.
 #   --after-job JOBID  의존 job 을 바꾼다(재제출 등).   --dry-run  목록·sbatch 명령만 출력(파일·제출 없음).   --partition P  평가 노드 파티션(기본 sbatch 의 apex — 예 low_p_hpc).
 #   --cks A,B  체크포인트 평가·avg3 에 쓸 checkpoint-A·checkpoint-B(기본 1500,2000 — 2,500 step run 의 60·80 %; 2026-10-26 F1 5,000 step 은 3000,4000).
 #   WINDOWS=1(2026-11-06, 사용자 "앞으로는 그럼 창 평가는 제외하자"): AMI 창(20–90 s) 평가는 기본으로 빼고 회의 통째만 낸다(창은 매번 빈 상태에서 시작해 첫 몇 초·경계 손해가
@@ -119,10 +120,10 @@
 # 각 작업은 끝났거나 시작된 산출이 있으면 건너뛰거나 이어 하고(AMI 몫은 이어 한다) 아무것도 지우지 않는다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-set_=${1:-}; [[ $# -gt 0 ]] && shift; dep=""; dry=0; part=""; cks=1500,2000; jname=SA_EVAL_FullDuplex; lbl=""; nodes=1
+set_=${1:-}; [[ $# -gt 0 ]] && shift; dep=""; dry=0; part=""; cks=1500,2000; jname=SA_EVAL_FullDuplex; lbl=""; nodes=1; dtype=afterok
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --after-job) dep=$2; shift 2 ;;  --dry-run) dry=1; shift ;;  --partition) part=$2; shift 2 ;;  --cks) cks=$2; shift 2 ;;
+    --after-job) dep=$2; shift 2 ;;  --after-any) dep=$2; dtype=afterany; shift 2 ;;  --dry-run) dry=1; shift ;;  --partition) part=$2; shift 2 ;;  --cks) cks=$2; shift 2 ;;
     --nodes) nodes=$2; [[ $nodes =~ ^[1-8]$ ]] || { echo "--nodes 는 1–8: $nodes" >&2; exit 2; }; shift 2 ;;
     --label) lbl=$2; shift 2 ;;
     --job-name) lbl=$2; echo "job 이름은 SA_EVAL_FullDuplex 로 고정한다 — '$2' 는 작업 목록 이름표로만 쓴다(--label)" >&2; shift 2 ;;
@@ -137,7 +138,7 @@ case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|ext-parakeet-g2|q17-g3|q17-e11-relax|q17-spk|q17-e13-trans|q17-e13-gate) ;;
   *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans | q17-e15* | q17-e16* | q17-e17* | q17-e18* | trans8 | q17-dretag | taxi-blk" >&2; exit 2 ;; esac
-[[ -z $dep || $dep =~ ^[0-9]+$ ]] || { echo "--after-job 은 job id" >&2; exit 2; }
+[[ -z $dep || $dep =~ ^[0-9]+(:[0-9]+)*$ ]] || { echo "--after-job·--after-any 는 job id(여럿은 ':' 로)" >&2; exit 2; }
 [[ $lbl =~ ^[A-Za-z0-9._-]*$ ]] || { echo "--label 은 영문·숫자·._- 만: $lbl" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
 D=/soundai/users/tskim/VAPKT-data; MR=$D/models; X=raw/sources/experiments/2026-10-21-v3-attribution/v3_eval_task.sh; DX=raw/sources/experiments/2026-11-05-eval-speed/dlg_shard_task.sh
@@ -270,14 +271,14 @@ case $set_ in
   q17-e3) for r in 0 1 2 3 4 5 6 7; do L+=("$r|E3_THR=${E3_THR:-0.45} bash $X amie3 q17-e2-tgt final $r/8"); done ;;
 esac
 T=$D/tmp/evals-$set_${lbl:+-$lbl}-$(date +%Y%m%d-%H%M%S)-$$.txt                                       # 같은 초에 잇따라 내도 겹치지 않게 PID(2026-11-03 — q17-e13-gate 둘째 판이 "이미 있다"로 멈췄다)
-cmd="sbatch --job-name=$jname ${part:+--partition=$part }${dep:+--dependency=afterok:$dep }--time=24:00:00 --export=ALL,TASKS=$T slurm/v3-eval-node.sbatch"
+cmd="sbatch --job-name=$jname ${part:+--partition=$part }${dep:+--dependency=$dtype:$dep }--time=24:00:00 --export=ALL,TASKS=$T slurm/v3-eval-node.sbatch"
 if (( nodes > 1 )); then                                                                         # --nodes N: 노드마다 목록 하나, job 하나
   G=$((8 * nodes)); NS=${NODE_SLOTS:-4}; [[ $NS =~ ^[1-8]$ ]] || { echo "NODE_SLOTS 는 1–8: $NS" >&2; exit 2; }
   NL=(); for ((k = 0; k < nodes; k++)); do NL[k]=""; done
   for i in "${!L[@]}"; do p=$((i % G)); k=$((p / 8)); NL[k]+="$((p % 8)).$(((i / G) % NS))|${L[i]#*|}"$'\n'; done
   for ((k = 0; k < nodes; k++)); do
     [[ -n ${NL[k]} ]] || continue
-    Tk=${T%.txt}-n$k.txt; ck="sbatch --job-name=$jname ${part:+--partition=$part }${dep:+--dependency=afterok:$dep }--time=24:00:00 --export=ALL,TASKS=$Tk slurm/v3-eval-node.sbatch"
+    Tk=${T%.txt}-n$k.txt; ck="sbatch --job-name=$jname ${part:+--partition=$part }${dep:+--dependency=$dtype:$dep }--time=24:00:00 --export=ALL,TASKS=$Tk slurm/v3-eval-node.sbatch"
     if (( dry )); then echo "## 노드 $k/$nodes → $Tk"; printf '%s' "${NL[k]}"; echo "$ck"; echo "Submitted batch job 0"; continue; fi
     [[ -e $Tk ]] && { echo "이미 있다: $Tk" >&2; exit 1; }
     { echo "# 평가 묶음 $set_${lbl:+ [$lbl]} 노드 $k/$nodes(slurm/submit-evals.sh --nodes, $(date '+%F %T'))${dep:+ — job $dep 성공 뒤}"; printf '%s' "${NL[k]}"; } > "$Tk"
