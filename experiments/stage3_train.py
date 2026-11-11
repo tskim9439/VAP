@@ -172,6 +172,8 @@ g.add_argument("--delays", default="4,5,6,7,8,9,10"); g.add_argument("--next-wei
 g.add_argument("--lr", type=float, default=6e-5); g.add_argument("--lr-adapter", type=float, default=1e-3); g.add_argument("--lr-encoder", type=float, default=1e-5)
 g.add_argument("--warmup", type=int, default=500); g.add_argument("--wd", type=float, default=0.01)
 g.add_argument("--epochs", type=float, default=1.0); g.add_argument("--max-steps", type=int, default=0)
+g.add_argument("--grad-accum", type=int, default=1, help="기울기 누적(2026-11-11 E18 — 인코더 전체를 풀면 무거운 배치가 GPU 139 GB 를 넘는다): 배치 N 개를 모아 한 번 갱신. "
+               "--batch-max-tokens 를 1/N 로 줄이면 step 당 데이터 양·step 수·학습률 일정이 그대로다(--max-steps 는 갱신 횟수)")
 enc_g = ap.add_mutually_exclusive_group()
 enc_g.add_argument("--freeze-encoder", dest="freeze_encoder", action="store_true"); enc_g.add_argument("--train-encoder", dest="freeze_encoder", action="store_false")
 ap.set_defaults(freeze_encoder=False)
@@ -685,7 +687,7 @@ class Stage3Trainer(VapAsrTrainer):
             self._kind = {}
         return super().log(logs, start_time)
 
-targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradient_accumulation_steps=1, num_train_epochs=a.epochs, max_steps=a.max_steps if a.max_steps > 0 else -1,
+targs = TrainingArguments(output_dir=out, per_device_train_batch_size=1, gradient_accumulation_steps=max(1, a.grad_accum), num_train_epochs=a.epochs, max_steps=a.max_steps if a.max_steps > 0 else -1,
                           learning_rate=a.lr, weight_decay=a.wd, warmup_steps=a.warmup, lr_scheduler_type="cosine", max_grad_norm=1.0, **{"bf16": True, **training_args_kwargs(a)},
                           logging_strategy="steps", logging_steps=a.log_every, logging_first_step=True, eval_strategy="no", save_strategy="steps", save_steps=a.save_every,
                           save_total_limit=a.save_total_limit, save_safetensors=True, seed=a.seed, data_seed=a.seed, report_to=[x for x in a.report_to.split(",") if x and x != "none"],
@@ -702,6 +704,8 @@ preempt_cb = PreemptCallback(out, gloo_pg)
 trainer = Stage3Trainer(model=model, args=targs, train_sets=train_sets, dev_sets={}, tokenizer=tok, bs_en=6, bs_ko=16, lr_adapter=a.lr_adapter, lr_encoder=a.lr_encoder,
                         max_per_chunk=0, num_workers=a.num_workers, language_schedule="balanced", gloo_pg=gloo_pg,
                         pack_max_tokens=a.pack_max_tokens, pack_max_bs=a.pack_max_bs, batch_max_tokens=a.batch_max_tokens, callbacks=[preempt_cb], processing_class=tok)
+if a.grad_accum > 1:                                                                          # 누적 손실을 N 으로 나누게 한다(모델 forward 가 **kwargs 를 받아도 합이 아니라 평균)
+    trainer.model_accepts_loss_kwargs = False; log(f"기울기 누적 {a.grad_accum} · 배치 토큰 상한 {a.batch_max_tokens or a.pack_max_tokens}")
 tdl = trainer.get_train_dataloader(); plan = tdl.describe()
 empty = sorted(k for k, sp_ in tdl.samplers.items() if weights.get(k, 0) > 0 and len(sp_) == 0)     # rank 당 batch 0 이면 RoundRobinLoader._cycle 이 내지 않고 돈다(멈춤)
 if empty: sys.exit(f"rank 당 batch 가 0 인 셋: {empty} — 셋이 너무 작거나(world {world}) 창 draw 하나가 비었다(--window-draws·--max-windows 확인)")

@@ -88,7 +88,12 @@ class VapAsrTrainer(Trainer):
         self._parts["n_labels"] = self._parts.get("n_labels", 0) + int(out.n_labels); self._n_parts += 1
         return (out.loss, out) if return_outputs else out.loss
     def log(self, logs: dict, start_time=None):
-        if self.args.process_index != 0: self._parts = {}; self._n_parts = 0; return       # PrinterCallback 은 노드별 local rank 0 이 찍어 다중 노드에서 줄이 중복된다 → rank 0 만
+        gb = torch.cuda.max_memory_allocated() / 2 ** 30 if torch.cuda.is_available() else 0.0   # 지난 로그 뒤 이 rank 의 GPU 메모리 최대(2026-11-11 E18 메모리 부족 — 무거운 배치를 로그로 본다)
+        if torch.cuda.is_available(): torch.cuda.reset_peak_memory_stats()
+        if self.args.process_index != 0:
+            if gb > 115: print(f"  ! rank {self.args.process_index} GPU 메모리 최대 {gb:.0f} GB(step {self.state.global_step})", flush=True)
+            self._parts = {}; self._n_parts = 0; return                                        # PrinterCallback 은 노드별 local rank 0 이 찍어 다중 노드에서 줄이 중복된다 → rank 0 만
+        if "loss" in logs: logs["gpu_gb"] = round(gb, 1)
         if self._n_parts and "loss" in logs:
             for k in ("loss_next", "loss_text", "top1_text"): logs[k] = round(self._parts[k] / self._n_parts, 4)
             for k in SEM_LOG_KEYS:
