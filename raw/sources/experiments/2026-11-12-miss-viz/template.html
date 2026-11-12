@@ -1,0 +1,260 @@
+<title>AMI 놓친 말 사례</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 배치: 위에서 아래로 읽는 연구 노트 — 요약 표(상황별 놓침) 다음에 샘플 카드. 샘플 카드는 화자별 시간축이 주인공이고 나머지는 조용하게 둔다. */
+:root {
+  --bg: #f4f5f7; --surface: #fcfcfb; --ink: #14181c; --ink-2: #4a525b; --ink-3: #79828c; --line: #dde1e6; --wash: #e9ecf0;
+  --del: #2a78d6; --sub: #eb6834; --attr: #1baf7a; --bar: #2a78d6; --bar-2: #86b6ef; --focus: #1c5cab;
+  --font: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #141516; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86; --line: #33342f; --wash: #262724;
+    --del: #3987e5; --sub: #d95926; --attr: #199e70; --bar: #3987e5; --bar-2: #1c5cab; --focus: #86b6ef; color-scheme: dark }
+}
+:root[data-theme="dark"] { --bg: #141516; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86; --line: #33342f; --wash: #262724;
+  --del: #3987e5; --sub: #d95926; --attr: #199e70; --bar: #3987e5; --bar-2: #1c5cab; --focus: #86b6ef; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 56px }
+main { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px }
+h1 { font-size: 28px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance }
+h2 { font-size: 19px; font-weight: 600; margin: 0; text-wrap: balance }
+p { margin: 0; max-width: 68ch }
+.lede { color: var(--ink-2) }
+.eyebrow { font-family: var(--mono); font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em }
+header { display: flex; flex-direction: column; gap: 10px }
+section { display: flex; flex-direction: column; gap: 14px }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface) }
+.seg button, .chips button { font: inherit; font-size: 13px; color: var(--ink-2); background: transparent; border: 0; padding: 6px 12px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface) }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chips button { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); padding: 5px 11px }
+.chips button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink) }
+button:focus-visible, .w:focus-visible, .tl:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px }
+.row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center }
+.note { font-size: 13px; color: var(--ink-3) }
+/* 요약 표 */
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px }
+table { border-collapse: collapse; width: 100%; min-width: 940px; font-size: 13.5px }
+th, td { padding: 9px 12px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--line); word-break: keep-all }
+td.r { white-space: nowrap }
+td:first-child { min-width: 180px }
+tr:last-child td { border-bottom: 0 }
+th { font-weight: 500; color: var(--ink-3); font-size: 12px; white-space: nowrap }
+td.r, th.r { text-align: right }
+.meter { position: relative; height: 14px; min-width: 170px; background: var(--wash); border-radius: 0 4px 4px 0 }
+.meter i { position: absolute; top: 0; bottom: 0; display: block }
+.meter .d { background: var(--bar); border-radius: 0 }
+.meter .s { background: var(--bar-2); border-radius: 0 4px 4px 0 }
+.meter .p { width: 2px; top: -4px; bottom: -4px; background: var(--ink); }
+.key { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2) }
+.key b { display: inline-block; width: 12px; height: 10px; border-radius: 2px }
+.key .tick { width: 2px; height: 14px; background: var(--ink); border-radius: 0 }
+.top { color: var(--ink-2); font-family: var(--mono); font-size: 12px }
+.read { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; max-width: 76ch; color: var(--ink-2) }
+.read b { color: var(--ink); font-weight: 600 }
+.totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px }
+.totals div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: var(--ink-2) }
+.totals strong { display: block; font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--ink) }
+/* 샘플 */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.card h3 { margin: 0; font-size: 15px; font-weight: 600 }
+.meta { font-family: var(--mono); font-size: 12px; color: var(--ink-3) }
+audio { width: 100%; max-width: 460px; height: 34px }
+.tl { overflow-x: auto; border-top: 1px solid var(--line); padding-top: 4px; cursor: crosshair }
+.tl-in { position: relative }
+.axis { position: relative; height: 18px; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3) }
+.axis span { position: absolute; top: 2px; transform: translateX(-50%) }
+.grid { position: absolute; top: 18px; bottom: 0; width: 1px; background: var(--line) }
+.ovl { position: absolute; top: 18px; bottom: 0; background: var(--wash) }
+.lane { position: relative; border-top: 1px solid var(--line) }
+.lane .name { position: sticky; left: 0; display: inline-block; font-size: 11.5px; color: var(--ink-2); background: var(--surface); padding: 2px 6px 0 0; z-index: 3 }
+.bar-utt { position: absolute; top: 22px; height: 5px; background: var(--ink-3); border-radius: 3px; opacity: .55 }
+.bar-n3d { position: absolute; top: 30px; height: 3px; background: var(--ink); border-radius: 2px }
+.w { position: absolute; font-size: 12px; line-height: 18px; height: 20px; padding: 1px 5px; border-radius: 4px; white-space: nowrap; color: var(--ink-3); z-index: 2 }
+.w.del { color: var(--ink); background: color-mix(in srgb, var(--del) 30%, transparent); text-decoration: line-through; text-decoration-color: var(--del); text-decoration-thickness: 2px }
+.w.sub { color: var(--ink); background: color-mix(in srgb, var(--sub) 30%, transparent) }
+.w.attr { color: var(--ink); background: color-mix(in srgb, var(--attr) 30%, transparent) }
+.w.both { background: transparent; box-shadow: inset 0 0 0 1.5px var(--c) }
+.w.del.both { --c: var(--del) } .w.sub.both { --c: var(--sub) }
+.w.ins { color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--ink-3); border-radius: 4px; font-style: italic }
+.w small { font-family: var(--mono); font-size: 10.5px; color: var(--ink-2); font-style: normal }
+.head { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); z-index: 4; pointer-events: none; display: none }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 12.5px; color: var(--ink-2) }
+.legend .w { position: static; display: inline-block }
+.legend .lb { display: inline-block; width: 26px; vertical-align: middle; border-radius: 3px }
+#tip { position: fixed; z-index: 20; max-width: 280px; background: var(--ink); color: var(--surface); font-size: 12.5px; line-height: 1.5; padding: 8px 10px; border-radius: 8px; pointer-events: none }
+#tip b { font-weight: 600 } #tip span { opacity: .78 }
+.samples { display: flex; flex-direction: column; gap: 16px }
+footer { font-size: 12.5px; color: var(--ink-3); display: flex; flex-direction: column; gap: 4px }
+@media (max-width: 560px) { h1 { font-size: 23px } body { font-size: 14.5px } }
+</style>
+
+<main>
+  <header>
+    <span class="eyebrow">VAPASR · E13 · N3D + 출력 재귀속 · AMI eval 16 회의</span>
+    <h1>AMI 회의에서 우리 모델이 놓친 말</h1>
+    <p class="lede">정답 단어마다 우리 모델이 받아썼는지를 화자 귀속과 따로 채점했습니다. 같은 단어를 Multitalker Parakeet + N3D 가 받아썼는지도 함께 봅니다. 위 표는 어떤 상황에서 놓치는지, 아래 샘플은 실제 구간이 어떻게 생겼는지 보여 줍니다.</p>
+  </header>
+
+  <section aria-labelledby="h-where">
+    <h2 id="h-where">어떤 상황에서 놓치나</h2>
+    <div class="row">
+      <div class="seg" role="group" aria-label="녹음 조건" id="cond"></div>
+      <span class="key"><b style="background:var(--bar)"></b>우리 삭제</span>
+      <span class="key"><b style="background:var(--bar-2)"></b>우리 대치</span>
+      <span class="key"><b class="tick"></b>Parakeet + N3D 놓침률</span>
+    </div>
+    <div class="tablewrap"><table id="sum"><thead><tr>
+      <th>상황</th><th class="r">참조 단어 몫</th><th>놓침률 (0–80 %)</th><th class="r">우리</th><th class="r">Parakeet</th><th class="r">격차 기여</th><th class="r">우리만 놓친 몫</th><th>자주 놓친 단어</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div class="totals" id="totals"></div>
+    <ul class="read">
+      <li><b>가장 큰 몫은 겹친 긴 발화의 한가운데입니다.</b> 두 사람이 문장을 이어 말하며 겹칠 때 우리는 44–50 % 를 놓치고 Parakeet 은 20–27 % 를 놓칩니다. 격차의 절반 가까이(+3.2 / +2.9 pt)가 여기서 나옵니다.</li>
+      <li><b>겹친 짧은 맞장구와 겹친 발화의 첫머리</b>는 놓침률은 비슷하게 높지만 단어 수가 적어 각각 +0.7–0.9 pt 입니다.</li>
+      <li><b>혼자 말하는 긴 발화</b>는 놓침률 차이가 2–4 %p 로 작아도 단어가 절반을 넘어 +1.0 / +2.2 pt 를 보탭니다. 대부분 대치입니다.</li>
+      <li><b>N3D 가 화자를 켜지 않은 단어</b>는 두 시스템 모두 많이 놓치고, 격차에는 보태지 않습니다.</li>
+    </ul>
+    <p class="note">상황은 참조 단어 전체를 겹치지 않게 나눈 것입니다. 격차 기여는 그 상황이 전체 받아쓰기 놓침률 차이에 보태는 양(참조 단어 100 개당)입니다. "우리만 놓친 몫"은 우리가 놓친 단어 가운데 Parakeet 은 맞힌 비율입니다.</p>
+  </section>
+
+  <section aria-labelledby="h-samples">
+    <h2 id="h-samples">샘플 구간</h2>
+    <p class="lede">상황마다 조건에 맞는 구간에서 무작위로 뽑은 12 초 구간입니다. 재생하면 세로선이 따라가고, 시간축을 누르면 그 자리부터 들을 수 있습니다. 단어에 포인터를 올리면 상세가 나옵니다.</p>
+    <div class="legend" aria-label="범례">
+      <span><span class="w">맞음</span></span>
+      <span><span class="w del">삭제</span> 우리만 놓침</span>
+      <span><span class="w sub">정답 <small>▸ 쓴 말</small></span> 대치</span>
+      <span><span class="w del both">삭제</span> <span class="w sub both">대치</span> Parakeet 도 놓침</span>
+      <span><span class="w attr">단어 <small>↗B</small></span> 다른 화자 칸에 씀</span>
+      <span><span class="w ins">+삽입</span> 없는 말을 씀</span>
+      <span><span class="lb" style="height:5px;background:var(--ink-3);opacity:.55"></span> 말한 구간(정답)</span>
+      <span><span class="lb" style="height:3px;background:var(--ink)"></span> N3D 가 켠 구간</span>
+      <span><span class="lb" style="height:12px;background:var(--wash)"></span> 겹친 구간</span>
+    </div>
+    <div class="row"><div class="seg" role="group" aria-label="녹음 조건" id="cond2"></div><div class="chips" role="group" aria-label="상황 고르기" id="kinds"></div></div>
+    <div class="samples" id="samples"></div>
+  </section>
+
+  <footer>
+    <span>채점: 표준 cpWER 와 같은 Whisper 정규화, 참조 발화를 가설 화자에 배정한 뒤(화자 무시) 편집 거리 정렬. 단어 시각은 단어가 끝난 시각입니다. 우리 출력의 시각은 방출 시각에서 지연을 뺀 어림값입니다.</span>
+    <span>단어는 정규화한 꼴로 보입니다(소문자, 축약 풀기, "oh" 는 "0" 으로 바뀜). 겹침은 그 시각에 말하는 참조 화자가 2 명 이상인 경우, N3D 켜짐은 단어 끝 −0.32 ~ +0.16 초 안에 그 화자 슬롯이 켜진 경우입니다.</span>
+    <span>오디오와 전사: AMI Meeting Corpus (CC BY 4.0). 샘플은 씨앗을 고정한 무작위 추출이라 가장 나쁜 사례만 고른 것이 아닙니다.</span>
+  </footer>
+</main>
+<div id="tip" hidden></div>
+
+<script>
+const DATA = /*DATA*/null;
+const KIND = Object.fromEntries(DATA.ctx.map(c => [c.key, c.name])); KIND.attr = "화자 귀속 오류"; KIND.ins = "삽입";
+const CORP = { "ami-ihmmix": "IHM-mix", "ami-sdm": "SDM" }, SPK = "ABCDEFGH";
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const pct = v => v.toFixed(1) + " %";
+let cond = "ami-ihmmix", kind = "all";
+try { cond = localStorage.getItem("missviz-cond") || cond; } catch (e) {}
+
+// ── 요약 표
+function renderSummary() {
+  const s = DATA.summary[cond], tb = document.querySelector("#sum tbody"); tb.replaceChildren();
+  for (const r of s.rows) {
+    const tr = el("tr"), our = r.our_del + r.our_sub, pk = r.pk_del + r.pk_sub;
+    tr.append(el("td", null, r.name), el("td", "r num", pct(r.share)));
+    const m = el("div", "meter"); m.setAttribute("role", "img"); m.setAttribute("aria-label", `우리 놓침 ${pct(our)}(삭제 ${pct(r.our_del)}, 대치 ${pct(r.our_sub)}), Parakeet ${pct(pk)}`);
+    const d = el("i", "d"), sb = el("i", "s"), p = el("i", "p"), sc = v => Math.min(100, v / 80 * 100);
+    d.style.cssText = `left:0;width:calc(${sc(r.our_del)}% - 1px)`; sb.style.cssText = `left:calc(${sc(r.our_del)}% + 1px);width:calc(${sc(r.our_sub)}% - 1px)`; p.style.left = `calc(${sc(pk)}% - 1px)`;
+    m.append(d, sb, p); const td = el("td"); td.append(m); tr.append(td);
+    tr.append(el("td", "r num", pct(our)), el("td", "r num", pct(pk)), el("td", "r num", (r.gap >= 0 ? "+" : "") + r.gap.toFixed(2) + " pt"), el("td", "r num", pct(r.only_ours)));
+    tr.append(el("td", "top", r.top.slice(0, 5).map(t => `${t[0]} ${t[1]}`).join(" · ")));
+    tb.append(tr);
+  }
+  const t = document.getElementById("totals"); t.replaceChildren();
+  const tile = (label, a, b) => { const d = el("div"); d.append(el("strong", null, a), document.createTextNode(label + " · Parakeet " + b)); return d; };
+  const nt = el("div"); nt.append(el("strong", null, s.N.toLocaleString("ko-KR")), document.createTextNode("참조 단어(두 시스템 공통)"));
+  t.append(tile("받아쓰기 놓침(참조 단어 대비)", pct(s.our_miss), pct(s.pk_miss)), tile("맞게 쓰고 다른 화자 칸에", pct(s.our_attr), pct(s.pk_attr)), tile("없는 말 삽입", pct(s.our_ins), pct(s.pk_ins)), nt);
+}
+function renderCond() {
+  for (const id of ["cond", "cond2"]) {
+    const g = document.getElementById(id); g.replaceChildren();
+    for (const c of Object.keys(CORP)) { const b = el("button", null, CORP[c]); b.type = "button"; b.setAttribute("aria-pressed", String(c === cond));
+      b.onclick = () => { cond = c; try { localStorage.setItem("missviz-cond", c); } catch (e) {} renderCond(); renderSummary(); renderSamples(); }; g.append(b); }
+  }
+}
+
+// ── 샘플
+const PX = 96, GUT = 30, ROW = 23, meas = document.createElement("canvas").getContext("2d");
+function chipText(w) { return w.st === "sub" && w.hw ? [w.w, " ▸ " + w.hw] : w.st === "attr" && w.to != null ? [w.w, " ↗" + SPK[w.to]] : [w.w, ""]; }
+function fmt(t) { t = Math.round(t); const m = Math.floor(t / 60), s = t % 60; return m + ":" + (s < 10 ? "0" : "") + s; }
+function tipFor(w, sp) {
+  const st = { ok: "받아씀", del: "삭제(쓰지 않음)", sub: "대치(다른 말을 씀)", attr: "맞게 썼지만 다른 화자 칸", ins: "삽입(정답에 없는 말)" }[w.st];
+  const lines = [[w.st === "ins" ? "우리 출력" : "정답", w.w], ["결과", st]];
+  if (w.st === "sub" && w.hw) lines.push(["우리 출력", w.hw]);
+  if (w.st === "attr" && w.to != null) lines.push(["쓴 칸", "화자 " + SPK[w.to]]);
+  if (w.st !== "ins") { lines.push(["Parakeet", w.pk === "ok" ? "받아씀" : w.pk === "del" ? "삭제" : "대치"], ["그 시각 화자 수", String(w.ov)], ["N3D", w.on ? "이 화자를 켬" : "이 화자를 켜지 않음"], ["상황", KIND[w.ctx] || ""]); }
+  return lines;
+}
+const tip = document.getElementById("tip");
+function showTip(e, lines) {
+  tip.replaceChildren(); for (const [k, v] of lines) { const d = el("div"); d.append(el("span", null, k + "  "), el("b", null, v)); tip.append(d); }
+  tip.hidden = false; const r = e.currentTarget.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  tip.style.left = Math.max(8, Math.min(window.innerWidth - tw - 8, r.left + r.width / 2 - tw / 2)) + "px"; tip.style.top = (r.top - th - 8 < 8 ? r.bottom + 8 : r.top - th - 8) + "px";
+}
+function lane(sp, s, W) {
+  const L = el("div", "lane"); L.append(el("span", "name", "화자 " + SPK[sp.s]));
+  for (const [a, b] of sp.utts) { const u = el("div", "bar-utt"); u.style.left = GUT + a * PX + "px"; u.style.width = Math.max(2, (b - a) * PX) + "px"; L.append(u); }
+  for (const [a, b] of sp.n3d) { const u = el("div", "bar-n3d"); u.style.left = GUT + a * PX + "px"; u.style.width = Math.max(2, (b - a) * PX) + "px"; L.append(u); }
+  const items = sp.words.concat(s.ins.filter(i => i.s === sp.s).map(i => ({ t: i.t, w: i.w, st: "ins" }))).sort((x, y) => x.t - y.t), ends = [];
+  for (const w of items) {
+    const [a, b] = w.st === "ins" ? ["+" + w.w, ""] : chipText(w); meas.font = '12px "IBM Plex Sans KR", sans-serif';
+    const wd = Math.ceil(meas.measureText(a + b).width) + 13, right = GUT + w.t * PX, left = Math.max(0, right - wd);
+    let r = ends.findIndex(x => x + 3 <= left); if (r < 0) { r = ends.length < 5 ? ends.length : ends.indexOf(Math.min(...ends)); }
+    ends[r] = left + wd;
+    const c = el("span", "w" + (w.st !== "ok" ? " " + w.st : "") + ((w.st === "del" || w.st === "sub") && w.pk !== "ok" ? " both" : ""), a);
+    if (b) c.append(el("small", null, b));
+    c.style.left = left + "px"; c.style.top = 38 + r * ROW + "px";
+    if (w.st !== "ok") c.tabIndex = 0;
+    const lines = tipFor(w, sp); c.addEventListener("pointerenter", e => showTip(e, lines)); c.addEventListener("focus", e => showTip(e, lines));
+    c.addEventListener("pointerleave", () => tip.hidden = true); c.addEventListener("blur", () => tip.hidden = true);
+    L.append(c);
+  }
+  L.style.height = 38 + Math.max(1, ends.length) * ROW + 6 + "px"; return L;
+}
+function card(s) {
+  const c = el("article", "card"), W = GUT * 2 + s.dur * PX, st = s.stat;
+  c.append(el("h3", null, KIND[s.kind]));
+  c.append(el("div", "meta", `${CORP[s.corpus]} · ${s.meeting} · ${fmt(s.t0)}–${fmt(s.t0 + s.dur)}`));
+  c.append(el("p", "note", `이 구간의 정답 단어 ${st.n} 개 가운데 삭제 ${st.dele} · 대치 ${st.sub} · 다른 화자 칸 ${st.attr}, 삽입 ${st.ins}. 우리가 놓친 ${st.miss} 단어 중 Parakeet 은 ${st.pk_hit} 단어를 받아썼습니다.`));
+  let au = null;
+  if (s.audio) { au = el("audio"); au.controls = true; au.preload = "none"; au.src = s.audio; au.id = "au-" + s.id; c.append(au); }
+  const tl = el("div", "tl"), inn = el("div", "tl-in"); inn.style.width = W + "px"; tl.tabIndex = 0; tl.setAttribute("aria-label", "화자별 시간축 — 좌우로 스크롤");
+  const ax = el("div", "axis");
+  for (let t = 0; t <= s.dur; t++) { const g = el("div", "grid"); g.style.left = GUT + t * PX + "px"; inn.append(g); if (t % 2 === 0) { const l = el("span", null, fmt(s.t0 + t)); l.style.left = GUT + t * PX + "px"; ax.append(l); } }
+  for (const [a, b] of s.ovl) { const o = el("div", "ovl"); o.style.left = GUT + a * PX + "px"; o.style.width = (b - a) * PX + "px"; inn.append(o); }
+  inn.append(ax); for (const sp of s.speakers) inn.append(lane(sp, s, W));
+  const orphan = s.ins.filter(i => i.s == null || !s.speakers.some(sp => sp.s === i.s));
+  if (orphan.length) inn.append(lane({ s: 7, utts: [], n3d: [], words: [] }, { ins: orphan.map(i => ({ ...i, s: 7 })) }, W));
+  const head = el("div", "head"); inn.append(head); tl.append(inn); c.append(tl);
+  if (orphan.length) inn.querySelectorAll(".lane .name")[s.speakers.length].textContent = "짝 없는 칸";
+  if (au) {
+    const tick = () => { head.style.display = "block"; head.style.left = GUT + au.currentTime * PX + "px"; if (!au.paused) requestAnimationFrame(tick); };
+    au.addEventListener("play", tick); au.addEventListener("seeked", tick);
+    inn.addEventListener("click", e => { const x = e.clientX - inn.getBoundingClientRect().left - GUT; au.currentTime = Math.max(0, Math.min(s.dur, x / PX)); au.play().catch(() => {}); });
+  }
+  return c;
+}
+function renderKinds() {
+  const g = document.getElementById("kinds"); g.replaceChildren();
+  const ks = ["all"].concat(DATA.ctx.map(c => c.key), ["attr", "ins"]).filter(k => k === "all" || DATA.samples.some(s => s.kind === k));
+  for (const k of ks) { const b = el("button", null, k === "all" ? "전체" : KIND[k]); b.type = "button"; b.setAttribute("aria-pressed", String(k === kind)); b.onclick = () => { kind = k; renderKinds(); renderSamples(); }; g.append(b); }
+}
+function renderSamples() {
+  const box = document.getElementById("samples"); box.replaceChildren();
+  const list = DATA.samples.filter(s => (kind === "all" || s.kind === kind) && s.corpus === cond);
+  if (!list.length) box.append(el("p", "note", "이 조건에는 해당 상황의 샘플이 없습니다. 위에서 녹음 조건을 바꿔 보세요."));
+  for (const s of list) box.append(card(s));
+}
+function start() { renderCond(); renderSummary(); renderKinds(); renderSamples(); }
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(start); else start();
+</script>

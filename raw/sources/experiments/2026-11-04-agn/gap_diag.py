@@ -35,6 +35,17 @@ def align_status(ref, hyp):
     return st, ins
 
 
+def align_full(ref, hyp):
+    """align_status 와 같은 정렬에서 (상태, 삽입 수, 참조 → 가설 색인(없으면 None), 삽입된 가설 색인) — 놓친 사례 시각화용(2026-11-12)."""
+    from vapasr.data.cst_eval import align
+    st = [None] * len(ref); hm = [None] * len(ref); extra = []
+    for i, j in align(ref, hyp):
+        if i is None: extra.append(j)
+        elif j is None: st[i] = "del"
+        else: st[i] = "ok" if ref[i] == hyp[j] else "sub"; hm[i] = j
+    return st, len(extra), hm, extra
+
+
 def runs(words, gap=2.0):
     """[(단어, 시각)] → [(시작, 끝, [단어])] — gap 넘게 끊기지 않는 묶음."""
     out = []
@@ -78,7 +89,8 @@ def main():
     ap.add_argument("--collar", type=float, default=5.0); ap.add_argument("--json", default=None)
     ap.add_argument("--relabel", type=lambda x: tuple(int(v) for v in x.split(",")), default=None, help="ours: 출력 재귀속 창 B,F(예 3,1 — 행 act_runs 활동)")
     ap.add_argument("--norm", choices=["ours", "whisper"], default="ours", help="whisper = 표준 cpWER 와 같은 Whisper 정규화(문장 단위)")
-    ap.add_argument("--dump", default=None, help="참조 단어마다 한 줄(jsonl: sys·corpus·cid·s·utt·t·ov·cp·orc·w) — 삭제 이어짐 진단(2026-11-10 del_runs.py)용, 새 파일에만 쓴다")
+    ap.add_argument("--dump", default=None, help="참조 단어마다 한 줄(jsonl: sys·corpus·cid·s·utt·t·ov·cp·orc·w, 2026-11-12 부터 맞춘 가설 단어 hw·ht·hs) — 삭제 이어짐 진단(2026-11-10 del_runs.py)·"
+                    "놓친 사례 시각화용. 삽입된 가설 단어({ins: 1, hs, w, t})와 화자 짝({map: {가설 화자: 참조 화자}})은 <dump>.extra.jsonl 에. 새 파일에만 쓴다")
     a = ap.parse_args()
     WN = None
     if a.norm == "whisper":
@@ -114,6 +126,7 @@ def main():
     out = {}
     if a.dump and os.path.exists(a.dump): sys.exit(f"이미 있다: {a.dump}")
     dump = open(a.dump, "w", encoding="utf-8") if a.dump else None
+    dump2 = open(a.dump + ".extra.jsonl", "w", encoding="utf-8") if a.dump else None           # 삽입된 가설 단어·화자 짝(참조 단어 줄과 섞지 않는다)
     for spec in a.sys:
         name, _, rest = spec.partition("="); kind, _, path = rest.partition(":")
         rows = [json.loads(l) for f in sorted(glob.glob(os.path.join(path, "predictions-rank*.jsonl"))) for l in open(f, encoding="utf-8")]
@@ -145,6 +158,7 @@ def main():
             for s in range(n):
                 for h in range(n): C[s, h] = ed([q["w"] for q in Rs[s]] if s < len(Rs) else [], hw[h] if h < len(hw) else [])
             ri, hi = linear_sum_assignment(C); ins_cp = 0
+            cpmap = {hk[h]: int(s) for s, h in zip(ri, hi) if s < len(Rs) and h < len(hk)}       # 가설 화자 → 참조 화자(cp 짝)
             for s, h in zip(ri, hi):
                 rr = Rs[s] if s < len(Rs) else []; st, ins = align_status([q["w"] for q in rr], hw[h] if h < len(hw) else []); ins_cp += ins
                 for q, x in zip(rr, st): q["cp"] = x
@@ -160,14 +174,23 @@ def main():
             assert len(asg) == len(rk), (len(asg), len(rk))
             by = collections.defaultdict(list)
             for u, hspk in zip(rk, asg): by[hspk] += sorted(segs[u], key=lambda q: q["t"])
-            ins_orc = 0; used = set()
+            ins_orc = 0; used = set(); INS = []
             for hspk, qs in by.items():
-                st, ins = align_status([q["w"] for q in qs], [w for w, _ in sorted(H.get(hspk, []), key=lambda x: x[1])]); ins_orc += ins; used.add(hspk)
-                for q, x in zip(qs, st): q["orc"] = x
-            ins_orc += sum(len(H[k]) for k in hk if k not in used)
+                hy = sorted(H.get(hspk, []), key=lambda x: x[1])
+                st, ins, hm, extra = align_full([q["w"] for q in qs], [w for w, _ in hy]); ins_orc += ins; used.add(hspk)
+                for q, x, j in zip(qs, st, hm):
+                    q["orc"] = x; q["hyp"] = (hy[j][0], round(float(hy[j][1]), 3), hspk) if j is not None else None
+                INS += [(hspk, hy[j][0], round(float(hy[j][1]), 3)) for j in extra]
+            for k in hk:
+                if k not in used: ins_orc += len(H[k]); INS += [(k, w, round(float(t_), 3)) for w, t_ in H[k]]
             g = agg[c]; g["ins_cp"] += ins_cp; g["ins_orc"] += ins_orc; g["meeteval_orc_err"] += res.errors; g["meeteval_orc_len"] += res.length
             if dump:
-                for q in R: dump.write(json.dumps(dict(sys=name, corpus=c, cid=cid, s=q["s"], utt=q["utt"][1], t=round(float(q["t"]), 3), ov=int(q["ov"]), cp=q["cp"], orc=q["orc"], w=q["w"]), ensure_ascii=False) + "\n")
+                for q in R:
+                    hy_ = q.get("hyp") or (None, None, None)
+                    dump.write(json.dumps(dict(sys=name, corpus=c, cid=cid, s=q["s"], utt=q["utt"][1], t=round(float(q["t"]), 3), ov=int(q["ov"]), cp=q["cp"], orc=q["orc"], w=q["w"],
+                                               hw=hy_[0], ht=hy_[1], hs=hy_[2]), ensure_ascii=False) + "\n")
+                for hs_, w_, t_ in INS: dump2.write(json.dumps(dict(sys=name, corpus=c, cid=cid, ins=1, hs=hs_, w=w_, t=t_), ensure_ascii=False) + "\n")
+                dump2.write(json.dumps(dict(sys=name, corpus=c, cid=cid, map=cpmap), ensure_ascii=False) + "\n")
             for q in R:
                 ov = "1" if q["ov"] <= 1 else "2" if q["ov"] == 2 else "3+"
                 for key in (ov, "all"):
@@ -190,7 +213,7 @@ def main():
                 print(f"    겹침 {key:3s} 몫 {x['share']:5.1f} % · 놓침 cp {x['cp_miss']:6.2f} = 받아쓰기(orc) {x['orc_miss']:6.2f}(삭제 {x['orc_del']:.2f} 대치 {x['orc_sub']:.2f}) + 귀속 {x['attr']:5.2f}", flush=True)
         out[name] = res_s
     if a.json: json.dump(out, open(a.json, "w"), indent=1, ensure_ascii=False)
-    if dump: dump.close()
+    if dump: dump.close(); dump2.close()
     # 격차 분해: 첫 시스템 − 둘째 시스템, 참조 단어 몫 가중(놓침 차이 × 몫 = 전체 놓침 차이에 대한 기여)
     names = list(out)
     if len(names) >= 2:
