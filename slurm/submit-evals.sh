@@ -51,6 +51,7 @@
 #   q17-e16*  E16 겹침 데이터(2026-11-08, slurm/submit-q17-e16.sh): q17-e15* 와 같은 묶음, 활동 기본 n3d.
 #   q17-e17*  E17 P2 레시피(2026-11-10, slurm/submit-q17-e17.sh): 같은 묶음, 활동 기본 n3d.
 #   q17-e18*  E18 인코더·LLM 함께 학습(2026-11-11, slurm/submit-q17-e18.sh): 같은 묶음, 활동 기본 n3d.
+#   q17-e19*  E19 활동 입력을 N3D 예측만으로(2026-11-12, slurm/submit-q17-e19.sh): 같은 묶음, 활동 기본 n3d.
 #   q17-e15*  E15a 인코더 위층 공동 학습(2026-11-04, slurm/submit-q17-e15a.sh — wiki output-agn-reduction-20261104): 종단간 평가 — 활동을 G2b 학생으로(GRAFT_EXPERT,
 #            인코더는 모델 것 그대로 — ENC_STATE 없음) AMI 창 δ10 8 몫·회의 통째 δ10 8 몫, 대화 번역(dlg)을 GPU 2 에. 학습 중이면 --after-job. GRAFT_RUN(기본 q17-graft-g2b).
 #            2026-11-05(사용자 "평가는 왜 5시간이나 걸리는 거지?" → "3번과 4번을 진행해줘"): SLOTS=N(1–8)이면 회의 통째를 8·N 몫으로 나눠(BAL=1 — 회의 길이로 고르게)
@@ -131,13 +132,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case $set_ in r1x-ami|v2-amifull|q17-e3|q17-e6-amifull|q17-e7-amifull-guide|q17-e6-amifull-d10|q17-e13-gate|q17-e13-trans|q17-e14-trans|trans8|q17-dretag|taxi-blk) ;; q17-s1) dep=${dep:-94809} ;; q17-v3) dep=${dep:-94814} ;;
-  q17-e15*|q17-e16*|q17-e17*|q17-e18*) TG=${TARGET:-final}; [[ $TG == final || $TG =~ ^checkpoint-[0-9]+$ ]] || { echo "TARGET 은 final·checkpoint-N: $TG" >&2; exit 2; }   # 2026-11-06 E15b 중간 체크포인트 먼저
+  q17-e15*|q17-e16*|q17-e17*|q17-e18*|q17-e19*) TG=${TARGET:-final}; [[ $TG == final || $TG =~ ^checkpoint-[0-9]+$ ]] || { echo "TARGET 은 final·checkpoint-N: $TG" >&2; exit 2; }   # 2026-11-06 E15b 중간 체크포인트 먼저
     if [[ $TG == final ]]; then [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; }
     else [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/$TG/trainer_state.json ]] || { echo "저장이 안 끝났다: stage3-$set_/$TG/trainer_state.json — 학습 뒤에 걸려면 --after-job(학습 job)" >&2; exit 2; }; fi ;;   # 2026-11-10 E17: 중간 체크포인트도 학습 job 뒤에 미리 건다(checkpoint 는 지우지 않는다)
   q17-e11|q17-e11b|q17-e12*|q17-e13*|q17-e14*) [[ -n $dep || -f /soundai/Model/VAPASR/stage3-$set_/DONE ]] || { echo "$set_ 는 학습이 안 끝났다(stage3-$set_/DONE 없음) — --after-job(학습 job)" >&2; exit 2; } ;;
   noeot-v3|mt4-v3|noeot-mt4-v3|q17-noeot-v3|q17-noeot-mt4-v3|q17-mt4-v3|mt4-amifull|q17-mt4-amifull|q17-e2-tgt|q17-f1|q17-e5|q17-e6|q17-e8|q17-e8-ami10|q17-e7b|q17-e9|q17-e9b|q17-e10|q17-e7-amifull|q17-graft|q17-u3-asr) [[ -n $dep ]] || { echo "$set_ 는 --after-job(학습 job)이 필요하다" >&2; exit 2; } ;;
   q17-e9-n3d|q17-e10-fix|q17-e10-n3d|q17-follow|q17-e11-gate|ext-vibevoice|ext-parakeet|ext-parakeet-g2|q17-g3|q17-e11-relax|q17-spk|q17-e13-trans|q17-e13-gate) ;;
-  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans | q17-e15* | q17-e16* | q17-e17* | q17-e18* | trans8 | q17-dretag | taxi-blk" >&2; exit 2 ;; esac
+  *) echo "묶음: r1x-ami | q17-s1 | q17-v3 | noeot-v3 | mt4-v3 | noeot-mt4-v3 | q17-noeot-v3 | q17-noeot-mt4-v3 | q17-mt4-v3 | v2-amifull | mt4-amifull | q17-mt4-amifull | q17-e2-tgt | q17-e3 | q17-f1 | q17-e5 | q17-e6 | q17-e8 | q17-e8-ami10 | q17-e7b | q17-e9 | q17-e9b | q17-e10 | q17-e7-amifull-guide | q17-e6-amifull-d10 | q17-e6-amifull | q17-e7-amifull | q17-e9-n3d | q17-e10-n3d | q17-e11 | q17-e12* | q17-e13* | q17-e13-trans | q17-e11b | q17-graft | q17-g3 | q17-e10-fix | q17-follow | q17-e11-gate | ext-vibevoice | ext-parakeet | ext-parakeet-g2 | q17-e11-relax | q17-spk | q17-u3-asr | q17-e13-gate | q17-e14* | q17-e14-trans | q17-e15* | q17-e16* | q17-e17* | q17-e18* | q17-e19* | trans8 | q17-dretag | taxi-blk" >&2; exit 2 ;; esac
 [[ -z $dep || $dep =~ ^[0-9]+(:[0-9]+)*$ ]] || { echo "--after-job·--after-any 는 job id(여럿은 ':' 로)" >&2; exit 2; }
 [[ $lbl =~ ^[A-Za-z0-9._-]*$ ]] || { echo "--label 은 영문·숫자·._- 만: $lbl" >&2; exit 2; }
 [[ $cks =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]] || { echo "--cks A,B(step 둘) — $cks" >&2; exit 2; }; CKA=${cks%,*}; CKB=${cks#*,}
@@ -204,8 +205,8 @@ case $set_ in
     for run in "${GRN[@]}"; do for t in ami amifull; do for r in 0 1 2 3 4 5 6 7; do L+=("$r|DELTAS=10 ENC_STATE=$G ENC_TAG=$GR GRAFT_EXPERT=$G GX_TAG=$GR bash $X $t $run final $r/8"); done; done; done ;;
   q17-e13-trans) L+=("0|bash $X dlg q17-e13 final" "1|bash $X dlg q17-e11 final") ;;
   q17-e14-trans) L+=("0|bash $X dlg q17-e14 final") ;;
-  q17-e15*|q17-e16*|q17-e17*|q17-e18*) GR=${GRAFT_RUN:-q17-graft-g2b}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt   # 2026-11-04 E15a: 종단간(2026-11-08 E16 겹침 데이터도 같은 묶음)
-    AC=${ACT:-$([[ $set_ == q17-e15b* || $set_ == q17-e16* || $set_ == q17-e17* || $set_ == q17-e18* ]] && echo n3d || echo g2b)}; [[ $AC =~ ^(n3d|g2b)$ ]] || { echo "ACT 는 n3d·g2b: $AC" >&2; exit 2; }   # 2026-11-06 E15b: 활동 = config 의 N3D(기본)
+  q17-e15*|q17-e16*|q17-e17*|q17-e18*|q17-e19*) GR=${GRAFT_RUN:-q17-graft-g2b}; G=/soundai/Model/VAPASR/graft-$GR/final/graft.pt   # 2026-11-04 E15a: 종단간(2026-11-08 E16 겹침 데이터도 같은 묶음)
+    AC=${ACT:-$([[ $set_ == q17-e15b* || $set_ == q17-e16* || $set_ == q17-e17* || $set_ == q17-e18* || $set_ == q17-e19* ]] && echo n3d || echo g2b)}; [[ $AC =~ ^(n3d|g2b)$ ]] || { echo "ACT 는 n3d·g2b: $AC" >&2; exit 2; }   # 2026-11-06 E15b: 활동 = config 의 N3D(기본)
     [[ $AC == n3d || -f $G ]] || { echo "이식 학생이 없다: $G" >&2; exit 1; }
     S=${SLOTS:-1}; [[ $S =~ ^[1-8]$ ]] || { echo "SLOTS 는 1–8: $S" >&2; exit 2; }; [[ -z ${SUBSET:-} || $SUBSET =~ ^(dev|eval)$ ]] || { echo "SUBSET 은 dev·eval: $SUBSET" >&2; exit 2; }
     gx=""; [[ $AC == g2b ]] && gx=" GRAFT_EXPERT=$G GX_TAG=$GR"                                  # 대입 안 $(… && …) 는 거짓이면 set -e 로 멈춘다(2026-11-05 와 같은 함정)
